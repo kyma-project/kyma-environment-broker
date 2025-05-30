@@ -12,37 +12,31 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/validator"
-	"github.com/santhosh-tekuri/jsonschema/v6"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
-	"github.com/hashicorp/go-multierror"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/santhosh-tekuri/jsonschema/v6"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -94,6 +88,7 @@ type ProvisionEndpoint struct {
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
 	schemaService          *SchemaService
+	providerConfigProvider config.ConfigMapConfigProvider
 }
 
 const (
@@ -117,6 +112,7 @@ func NewProvision(brokerConfig Config,
 	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
+	providerConfigProvider config.ConfigMapConfigProvider,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -144,6 +140,7 @@ func NewProvision(brokerConfig Config,
 		valuesProvider:           valuesProvider,
 		useSmallerMachineTypes:   useSmallerMachineTypes,
 		schemaService:            schemaService,
+		providerConfigProvider:   providerConfigProvider,
 	}
 }
 
@@ -317,6 +314,13 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	values, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
+	}
+
+	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
+	if enforceSameRegionForSeedAndShoot {
+		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), l); err != nil {
+			return fmt.Errorf("validation of the same region for seed and shoot: %w", err)
+		}
 	}
 
 	if !b.regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
@@ -774,6 +778,20 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName), ersContext, rawParameters); err != nil {
 		b.log.Error(fmt.Sprintf("failed to save provisioning request with additonal properties: %v", err))
 	}
+}
+
+func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region string, logger *slog.Logger) error {
+	providerConfig := &internal.ProviderConfig{}
+	if err := b.providerConfigProvider.Provide(providerType, providerConfig); err != nil {
+		logger.Error(fmt.Sprintf("while loading %s provider config with seed regions", providerType), "error", err)
+		return fmt.Errorf("unable to load %s provider config", providerType)
+	}
+	if !slices.Contains(providerConfig.SeedRegions, region) {
+		logger.Warn(fmt.Sprintf("missing seed region %s for provider %s", region, providerType))
+		return fmt.Errorf("seed does not exist in %s region. Provider %s has seeds in the following regions: %s", region, providerType, providerConfig.SeedRegions)
+	}
+
+	return nil
 }
 
 func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {

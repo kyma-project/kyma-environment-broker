@@ -9,7 +9,10 @@ import (
 )
 
 // comma separated list of required fields
-const RuntimeConfigurationRequiredFields = "kyma-template"
+const (
+	RuntimeConfigurationRequiredFields  = "kyma-template"
+	ProviderConfigurationRequiredFields = "seedRegions"
+)
 
 type ConfigMapKeysValidator struct{}
 

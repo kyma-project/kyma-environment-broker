@@ -193,7 +193,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "eu-central-1",
+						"region": "us-west-2",
 						"shootAndSeedSameRegion": false
 					}
 		}`)
@@ -223,7 +223,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "us-east-1",
+						"region": "eu-central-1",
 						"shootAndSeedSameRegion": true
 					}
 		}`)
@@ -236,6 +236,30 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	})
+
+	t.Run("should return error when seed does not exist in selected region and shootAndSeedSameRegion is set to true", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"shootAndSeedSameRegion": true
+					}
+		}`)
+
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Contains(t, string(parsedResponse), "validation of the same region for seed and shoot: seed does not exist in us-east-1 region")
 	})
 }
 

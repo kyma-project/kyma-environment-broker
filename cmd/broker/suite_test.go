@@ -193,11 +193,32 @@ kyma-template: |-
 		},
 	}
 
+	providerCfg := &coreV1.ConfigMap{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "gardener-seeds-cache",
+			Namespace: "kcp-system",
+		},
+		Data: map[string]string{
+			"aws": `
+seedRegions:
+- eu-central-1`,
+			"azure": `
+seedRegions:
+- westeurope`,
+			"gcp": `
+seedRegions:
+- europe-west1`,
+			"openstack": `
+seedRegions:
+- eu-de-1`,
+		},
+	}
+
 	for _, version := range additionalKymaVersions {
 		kebCfg.ObjectMeta.Labels[fmt.Sprintf("runtime-version-%s", version)] = "true"
 	}
 
-	resources = append(resources, override, scOverride, kebCfg)
+	resources = append(resources, override, scOverride, kebCfg, providerCfg)
 
 	return resources
 }
@@ -257,8 +278,9 @@ func fixConfig() *Config {
 				MaxBindingsCount:     10,
 				CreateBindingTimeout: 15 * time.Second,
 			},
-			WorkerHealthCheckInterval:     10 * time.Minute,
-			WorkerHealthCheckWarnInterval: 10 * time.Minute,
+			WorkerHealthCheckInterval:       10 * time.Minute,
+			WorkerHealthCheckWarnInterval:   10 * time.Minute,
+			GardenerSeedsCacheConfigMapName: "gardener-seeds-cache",
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		MaxPaginationPage:                         100,
