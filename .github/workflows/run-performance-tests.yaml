@@ -1,0 +1,26 @@
+name: Run performance tests
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
+
+jobs:
+  run-performance-tests:
+    uses: "./.github/workflows/run-performance-tests-reusable.yaml"
+    with:
+      last-k3s-versions: 1
+      release: "false"
+      version: ${{ github.event.pull_request.number }}
+      instances-number: 100
+      updates-number: 300
+      kim-delay-seconds: 0
+      provisioning-max-step-processing-time: 30s
+      provisioning-workers-amount: 25
+      update-max-step-processing-time: 30s
+      update-workers-amount: 25
+      deprovisioning-max-step-processing-time: 30s
+      deprovisioning-workers-amount: 25

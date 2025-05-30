@@ -53,6 +53,9 @@ kubectl apply -f resources/installation/secrets/
 # Create predefined secret bindings
 kubectl apply -f resources/installation/secretbindings/
 
+# Create resource templates
+kubectl apply -f resources/installation/templates/
+
 # Deploy KEB helm chart
 cd resources/keb
 if [[ "$VERSION" == PR* ]]; then

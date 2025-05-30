@@ -183,6 +183,10 @@ spec:
                 secretKeyRef:
                   name: kcp-postgresql
                   key: postgresql-broker-username
+            - name: APP_DEPROVISIONING_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.deprovisioning.maxStepProcessingTime }}"
+            - name: APP_DEPROVISIONING_WORKERS_AMOUNT
+              value: "{{ .Values.deprovisioning.workersAmount }}"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_DOMAIN_NAME
@@ -260,6 +264,10 @@ spec:
               value: "{{ .Values.profiler.memory }}"
             - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
               value: /config/providersConfig.yaml
+            - name: APP_PROVISIONING_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.provisioning.maxStepProcessingTime }}"
+            - name: APP_PROVISIONING_WORKERS_AMOUNT
+              value: "{{ .Values.provisioning.workersAmount }}"
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
@@ -278,8 +286,12 @@ spec:
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
+            - name: APP_UPDATE_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.update.maxStepProcessingTime }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
+            - name: APP_UPDATE_WORKERS_AMOUNT
+              value: "{{ .Values.update.workersAmount }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
