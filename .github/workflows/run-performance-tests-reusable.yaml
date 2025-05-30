@@ -978,7 +978,6 @@ jobs:
               --url "http://localhost:30080/runtimes" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
-            echo $STATUS_CODE
             if [[ "$STATUS_CODE" == "200" ]]; then
               SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             fi
