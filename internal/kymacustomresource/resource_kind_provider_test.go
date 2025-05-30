@@ -19,8 +19,7 @@ metadata:
 func TestResourceKindProvider(t *testing.T) {
 	// given
 	fakeCfgProvider := fakeConfigProvider{}
-	kymaVer := "2.20.0"
-	resourceKindProvider := NewResourceKindProvider(kymaVer, fakeCfgProvider)
+	resourceKindProvider := NewResourceKindProvider(fakeCfgProvider)
 
 	expectedGroup := "operator.kyma-project.io"
 	expectedVersion := "v1beta2"
@@ -49,6 +48,9 @@ func TestResourceKindProvider(t *testing.T) {
 
 type fakeConfigProvider struct{}
 
-func (f fakeConfigProvider) ProvideForGivenPlan(plan string) (*internal.ConfigForPlan, error) {
-	return &internal.ConfigForPlan{KymaTemplate: kymaTemplate}, nil
+func (f fakeConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
+	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
+	cfg.KymaTemplate = kymaTemplate
+	cfgDestObj = cfg
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -76,8 +75,9 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 type fakeConfigProvider struct {
 }
 
-func (fakeConfigProvider) ProvideForGivenPlan(_ string) (*internal.ConfigForPlan, error) {
-	return &internal.ConfigForPlan{
-		KymaTemplate: kymaTemplate,
-	}, nil
+func (fakeConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
+	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
+	cfg.KymaTemplate = kymaTemplate
+	cfgDestObj = cfg
+	return nil
 }

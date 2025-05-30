@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -13,12 +12,11 @@ import (
 const defaultPlan = "default"
 
 type ConfigurationProvider interface {
-	ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
+	Provide(cfgKeyName string, cfgDestObj any) error
 }
 
 type ResourceKindProvider struct {
-	runtimeConfigurationConfigMapName string
-	cfgProvider                       ConfigurationProvider
+	cfgProvider ConfigurationProvider
 }
 
 type apiVersionKind struct {
@@ -26,10 +24,9 @@ type apiVersionKind struct {
 	Kind       string `yaml:"kind"`
 }
 
-func NewResourceKindProvider(configMapName string, cfgProvider ConfigurationProvider) *ResourceKindProvider {
+func NewResourceKindProvider(cfgProvider ConfigurationProvider) *ResourceKindProvider {
 	return &ResourceKindProvider{
-		runtimeConfigurationConfigMapName: configMapName,
-		cfgProvider:                       cfgProvider,
+		cfgProvider: cfgProvider,
 	}
 }
 
@@ -47,7 +44,8 @@ func (p *ResourceKindProvider) DefaultGvr() (schema.GroupVersionResource, error)
 }
 
 func (p *ResourceKindProvider) DefaultGvk() (schema.GroupVersionKind, error) {
-	kymaCfg, err := p.cfgProvider.ProvideForGivenPlan(defaultPlan)
+	kymaCfg := &internal.ConfigForPlan{}
+	err := p.cfgProvider.Provide(defaultPlan, kymaCfg)
 	if err != nil {
 		return schema.GroupVersionKind{}, fmt.Errorf("while getting Kyma config: %w", err)
 	}

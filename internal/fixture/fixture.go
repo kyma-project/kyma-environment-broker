@@ -73,13 +73,14 @@ func FixProvisioningParameters(id string) internal.ProvisioningParameters {
 	trialCloudProvider := pkg.Azure
 
 	provisioningParametersDTO := pkg.ProvisioningParametersDTO{
-		Name:         "cluster-test",
-		VolumeSizeGb: ptr.Integer(50),
-		MachineType:  ptr.String("Standard_D8_v3"),
-		Region:       ptr.String(Region),
-		Purpose:      ptr.String("Purpose"),
-		LicenceType:  ptr.String("LicenceType"),
-		Zones:        []string{"1"},
+		Name:             "cluster-test",
+		VolumeSizeGb:     ptr.Integer(50),
+		MachineType:      ptr.String("Standard_D8_v3"),
+		Region:           ptr.String(Region),
+		Purpose:          ptr.String("Purpose"),
+		LicenceType:      ptr.String("LicenceType"),
+		Zones:            []string{"1"},
+		IngressFiltering: ptr.Bool(true),
 		AutoScalerParameters: pkg.AutoScalerParameters{
 			AutoScalerMin:  ptr.Integer(3),
 			AutoScalerMax:  ptr.Integer(10),

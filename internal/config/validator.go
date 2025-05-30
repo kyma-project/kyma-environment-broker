@@ -9,7 +9,10 @@ import (
 )
 
 // comma separated list of required fields
-const requiredFields = "kyma-template"
+const (
+	RuntimeConfigurationRequiredFields  = "kyma-template"
+	ProviderConfigurationRequiredFields = "seedRegions"
+)
 
 type ConfigMapKeysValidator struct{}
 
@@ -17,7 +20,7 @@ func NewConfigMapKeysValidator() *ConfigMapKeysValidator {
 	return &ConfigMapKeysValidator{}
 }
 
-func (v *ConfigMapKeysValidator) Validate(cfgString string) error {
+func (v *ConfigMapKeysValidator) Validate(requiredFields, cfgString string) error {
 	reqs := strings.Split(requiredFields, ",")
 	keys, err := v.getKeysFromConfigString(cfgString)
 	if err != nil {

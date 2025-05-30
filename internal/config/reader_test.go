@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -22,12 +23,8 @@ import (
 )
 
 const (
-	kebConfigYaml             = "keb-config.yaml"
-	expectedKebConfigYaml     = "keb-config-expected.yaml"
-	namespace                 = "kcp-system"
-	runtimeVersionLabelPrefix = "runtime-version-"
-	kebConfigLabel            = "keb-config"
-	defaultConfigKey          = "default"
+	configMapName    = "keb-config"
+	defaultConfigKey = "default"
 )
 
 func TestConfigReaderSuccessFlow(t *testing.T) {
@@ -40,11 +37,11 @@ func TestConfigReaderSuccessFlow(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log, "keb-config")
+	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log)
 
 	t.Run("should read default KEB config", func(t *testing.T) {
 		// when
-		rawCfg, err := cfgReader.Read(broker.AWSPlanName)
+		rawCfg, err := cfgReader.Read(configMapName, broker.AWSPlanName)
 
 		// then
 		require.NoError(t, err)
@@ -53,7 +50,7 @@ func TestConfigReaderSuccessFlow(t *testing.T) {
 
 	t.Run("should read KEB config for azure plan", func(t *testing.T) {
 		// when
-		rawCfg, err := cfgReader.Read(broker.AzurePlanName)
+		rawCfg, err := cfgReader.Read(configMapName, broker.AzurePlanName)
 
 		// then
 		require.NoError(t, err)
@@ -62,7 +59,7 @@ func TestConfigReaderSuccessFlow(t *testing.T) {
 
 	t.Run("should read KEB config for Kyma trial plan", func(t *testing.T) {
 		// when
-		rawCfg, err := cfgReader.Read(broker.TrialPlanName)
+		rawCfg, err := cfgReader.Read(configMapName, broker.TrialPlanName)
 
 		// then
 		require.NoError(t, err)
@@ -82,10 +79,10 @@ func TestConfigReaderErrors(t *testing.T) {
 
 	t.Run("should return error while fetching configmap on List() of K8s client", func(t *testing.T) {
 		// given
-		cfgReader := config.NewConfigMapReader(ctx, k8sClient, log, "keb-config")
+		cfgReader := config.NewConfigMapReader(ctx, k8sClient, log)
 
 		// when
-		rawCfg, err := cfgReader.Read(broker.AzurePlanName)
+		rawCfg, err := cfgReader.Read(configMapName, broker.AzurePlanName)
 
 		// then
 		require.Error(t, err)
@@ -95,10 +92,10 @@ func TestConfigReaderErrors(t *testing.T) {
 
 	t.Run("should return error while getting config string for a plan", func(t *testing.T) {
 		// given
-		cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log, "keb-config")
+		cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log)
 
 		// when
-		rawCfg, err := cfgReader.Read(broker.AzurePlanName)
+		rawCfg, err := cfgReader.Read(configMapName, broker.AzurePlanName)
 
 		// then
 		require.Error(t, err)
@@ -108,12 +105,13 @@ func TestConfigReaderErrors(t *testing.T) {
 }
 
 func fixConfigMap() (*coreV1.ConfigMap, error) {
-	yamlFilePath := path.Join("testdata", expectedKebConfigYaml)
+	yamlFilePath := path.Join("testdata", fmt.Sprintf("%s.yaml", configMapName))
 	contents, err := os.ReadFile(yamlFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("while reading configmap")
 	}
 
+	contents = bytes.ReplaceAll(contents, []byte("Kind"), []byte("kind"))
 	var tempCfgMap tempConfigMap
 	err = yaml.Unmarshal(contents, &tempCfgMap)
 	if err != nil {
@@ -125,7 +123,7 @@ func fixConfigMap() (*coreV1.ConfigMap, error) {
 
 type tempConfigMap struct {
 	APIVersion string            `yaml:"apiVersion,omitempty"`
-	Kind       string            `yaml:"kind,omitempty"`
+	Kind       string            `yaml:",omitempty"`
 	Metadata   tempMetadata      `yaml:"metadata,omitempty"`
 	Data       map[string]string `yaml:"data,omitempty"`
 }

@@ -1959,6 +1959,9 @@ func TestUpdateNetworkFilterForInternal(t *testing.T) {
 	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
 	suite.AssertNetworkFiltering(instance.InstanceID, true, true)
+	// check if updated parameters is populated to provisioning parameters - so it will be reflected in get instance response
+	instanceUpdated := suite.GetInstance(id)
+	assert.True(suite.t, *instanceUpdated.Parameters.Parameters.IngressFiltering)
 }
 
 func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {

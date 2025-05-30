@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -90,6 +91,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -162,6 +164,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -238,6 +241,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -285,6 +289,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when shootDomain is missing
@@ -357,6 +362,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -431,6 +437,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -479,6 +486,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -528,6 +536,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -591,6 +600,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -654,6 +664,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -697,6 +708,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -735,6 +747,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -772,6 +785,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -816,6 +830,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -865,6 +880,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -920,6 +936,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -974,6 +991,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1031,6 +1049,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
@@ -1086,6 +1105,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		testCases := []struct {
@@ -1183,6 +1203,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		testCases := []struct {
@@ -1268,6 +1289,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1311,6 +1333,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -1376,6 +1399,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -1431,6 +1455,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -1484,6 +1509,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -1527,6 +1553,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -1573,6 +1600,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1622,6 +1650,7 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1762,6 +1791,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
 			)
 
 			// when
@@ -1826,6 +1856,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1977,6 +2008,7 @@ func TestNetworkingValidation(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
 			)
 
 			// when
@@ -2076,6 +2108,7 @@ func TestRegionValidation(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
 			)
 
 			// when
@@ -2136,6 +2169,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2184,6 +2218,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2231,6 +2266,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2292,6 +2328,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
 	)
 
 	// when
@@ -2343,6 +2380,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
 	)
 
 	testCases := []struct {
@@ -2420,6 +2458,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2470,6 +2509,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
 	)
 
 	testCases := []struct {
@@ -2602,6 +2642,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2661,6 +2702,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixRegionsSupportingMachine(),
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -2730,6 +2772,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixRegionsSupportingMachine(),
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -2813,6 +2856,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixRegionsSupportingMachine(),
 			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -2830,6 +2874,123 @@ func TestAdditionalProperties(t *testing.T) {
 		contents, err := os.ReadFile(expectedFile)
 		assert.Nil(t, contents)
 		assert.Error(t, err)
+	})
+}
+
+func TestSameRegionForSeedAndShoot(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	existingAWSSeedRegions := []string{"eu-central-1"}
+
+	t.Run("should succeed if configuration contains region from provisioning parameters", func(t *testing.T) {
+		// given
+		const expectedRegion = "eu-central-1"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: false,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			regionssupportingmachine.RegionsSupportingMachine{},
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, expectedRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail if configuration does not contain region from provisioning parameters", func(t *testing.T) {
+		// given
+		const missingRegion = "eu-west-2"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			regionssupportingmachine.RegionsSupportingMachine{},
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+			instanceID, missingRegion, existingAWSSeedRegions)
+		expectedAPIResponse := apiresponses.NewFailureResponse(
+			expectedErr,
+			http.StatusBadRequest,
+			expectedErr.Error())
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, missingRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.Error(t, err)
+		assert.IsType(t, &apiresponses.FailureResponse{}, err)
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 }
 
