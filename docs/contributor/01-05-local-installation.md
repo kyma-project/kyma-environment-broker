@@ -60,7 +60,7 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-4. To simulate Infrastructure Manager and transition the runtime to the `Ready` state, use the following command:
+4. To simulate Kyma Infrastructure Manager and transition the runtime to the `Ready` state, use the following command:
 
    ```bash
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
