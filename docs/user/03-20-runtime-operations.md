@@ -40,9 +40,7 @@ You can find all the updating steps in the [update](../../cmd/broker/update.go) 
 
 ## Provide Additional Steps
 
-You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every o
-\
-peration (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on provisioning operation. Extensions for other processes follow the same steps but require their specific structures.
+You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every operation (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on the provisioning operation. Extensions for other processes follow the same steps but require their specific structures.
 
 <div tabs name="runtime-provisioning-deprovisioning" group="runtime-provisioning-deprovisioning">
   <details>
