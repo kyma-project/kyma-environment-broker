@@ -197,7 +197,7 @@ The workflow performs the following actions for all jobs:
   - Provisions multiple instances.
   - Sets the state of each created runtime to "Ready".
   - Sends a mix of concurrent provisioning, update, and deprovisioning requests.
-  - Sets the state of each created runtime to "Ready" after the specified delay..
+  - Sets the state of each created runtime to "Ready" after the specified delay.
   - Fetches metrics from `kyma-environment-broker` to measure success rate of provisioning, update, and deprovisioning requests, as well as the time taken to complete provisioning and deprovisioning operations.
   - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
