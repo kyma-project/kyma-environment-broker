@@ -135,12 +135,12 @@ The workflow performs the following actions for all jobs:
 
 - **Purpose**: Evaluate KEB performance when handling multiple concurrent provisioning requests.
 - **Steps**:
-    - Provisions multiple instances.
-    - Sets the state of each created runtime to "Ready" after the specified delay.
-    - Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete provisioning requests.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Provisions multiple instances.
+  - Sets the state of each created runtime to "Ready" after the specified delay.
+  - Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete provisioning requests.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate drops below the defined threshold.
 
 </details>
 
@@ -149,13 +149,13 @@ The workflow performs the following actions for all jobs:
 
 - **Purpose**: Assess KEB ability to process multiple concurrent updating requests.
 - **Steps**:
-    - Provisions multiple instances.
-    - Sets the state of each created runtime to "Ready".
-    - Updates created instances.
-    - Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Provisions multiple instances.
+  - Sets the state of each created runtime to "Ready".
+  - Updates created instances.
+  - Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate drops below the defined threshold.
 
 </details>
 
@@ -164,13 +164,13 @@ The workflow performs the following actions for all jobs:
 
 - **Purpose**: Test KEB behavior when processing multiple update requests for a single instance.
 - **Steps**:
-    - Provisions the instance.
-    - Sets the state of created runtime to "Ready".
-    - Updates the instance.
-    - Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Provisions the instance.
+  - Sets the state of created runtime to "Ready".
+  - Updates the instance.
+  - Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate drops below the defined threshold.
 
 </details>
 
@@ -179,29 +179,29 @@ The workflow performs the following actions for all jobs:
 
 - **Purpose**: Measure KEB performance when handling multiple concurrent deprovisioning requests.
 - **Steps**:
-    - Provisions multiple instances.
-    - Sets the state of each created runtime to "Ready".
-    - Deprovisions created instances.
-    - Fetches metrics from `kyma-environment-broker` to measure success rate of deprovisioning requests.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Provisions multiple instances.
+  - Sets the state of each created runtime to "Ready".
+  - Deprovisions created instances.
+  - Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete deprovisioning requests.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate drops below the defined threshold.
 
 </details>
 
 <details>
 <summary>Mixed Operations Test</summary>
 
-- **Purpose**: Analyze KEB performance when processing a mix of concurrent provisioning, updating, and deprovisioning requests.
+- **Purpose**: Analyze KEB performance when processing a mix of concurrent provisioning, update, and deprovisioning requests.
 - **Steps**:
-    - Provisions multiple instances.
-    - Sets the state of each created runtime to "Ready".
-    - Sends a mix of concurrent provisioning, update, and deprovisioning requests.
-    - Sets the state of each created runtime to "Ready" after the specified delay..
-    - Fetches metrics from `kyma-environment-broker` to measure success rate of deprovisioning requests.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Provisions multiple instances.
+  - Sets the state of each created runtime to "Ready".
+  - Sends a mix of concurrent provisioning, update, and deprovisioning requests.
+  - Sets the state of each created runtime to "Ready" after the specified delay..
+  - Fetches metrics from `kyma-environment-broker` to measure success rate of provisioning, update, and deprovisioning requests, as well as the time taken to complete provisioning and deprovisioning operations.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate of any operation type drops below the defined threshold.
 
 </details>
 
@@ -210,10 +210,10 @@ The workflow performs the following actions for all jobs:
 
 - **Purpose**: Test KEB efficiency in handling multiple GET Runtimes requests with a database containing thousands of instances and operations.
 - **Steps**:
-    - Populates the database with 1k, 10k, and 100k instances.
-    - Sends repeated GET requests to the `/runtimes` endpoint to measure availability and response times.
-    - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+  - Populates the database with 1k, 10k, and 100k instances.
+  - Sends repeated GET requests to the `/runtimes` endpoint to measure availability and response times.
+  - Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-    - Success rate drops below the defined threshold.
+  - Success rate drops below the defined threshold.
 
 </details>
