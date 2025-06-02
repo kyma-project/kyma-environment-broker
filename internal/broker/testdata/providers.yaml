@@ -1,4 +1,38 @@
 aws:
+  machines:
+    "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
+    "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
+    "m6i.2xlarge": "m6i.2xlarge (8vCPU, 32GB RAM)"
+    "m6i.4xlarge": "m6i.4xlarge (16vCPU, 64GB RAM)"
+    "m6i.8xlarge": "m6i.8xlarge (32vCPU, 128GB RAM)"
+    "m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)"
+    "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)"
+    "m5.large": "m5.large (2vCPU, 8GB RAM)"
+    "m5.xlarge": "m5.xlarge (4vCPU, 16GB RAM)"
+    "m5.2xlarge": "m5.2xlarge (8vCPU, 32GB RAM)"
+    "m5.4xlarge": "m5.4xlarge (16vCPU, 64GB RAM)"
+    "m5.8xlarge": "m5.8xlarge (32vCPU, 128GB RAM)"
+    "m5.12xlarge": "m5.12xlarge (48vCPU, 192GB RAM)"
+    "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)"
+    "c7i.large": "c7i.large (2vCPU, 4GB RAM)"
+    "c7i.xlarge": "c7i.xlarge (4vCPU, 8GB RAM)"
+    "c7i.2xlarge": "c7i.2xlarge (8vCPU, 16GB RAM)"
+    "c7i.4xlarge": "c7i.4xlarge (16vCPU, 32GB RAM)"
+    "c7i.8xlarge": "c7i.8xlarge (32vCPU, 64GB RAM)"
+    "c7i.12xlarge": "c7i.12xlarge (48vCPU, 96GB RAM)"
+    "c7i.16xlarge": "c7i.16xlarge (64vCPU, 128GB RAM)"
+    "g6.xlarge": "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+    "g6.2xlarge": "g6.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
+    "g6.4xlarge": "g6.4xlarge (1GPU, 16vCPU, 64GB RAM)*"
+    "g6.8xlarge": "g6.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
+    "g6.12xlarge": "g6.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
+    "g6.16xlarge": "g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
+    "g4dn.xlarge": "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+    "g4dn.2xlarge": "g4dn.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
+    "g4dn.4xlarge": "g4dn.4xlarge (1GPU, 16vCPU, 64GB RAM)*"
+    "g4dn.8xlarge": "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
+    "g4dn.12xlarge": "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
+    "g4dn.16xlarge": "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
   regions:
     eu-central-1:
       displayName: "eu-central-1 (Europe, Frankfurt)"
@@ -34,6 +68,31 @@ aws:
       displayName: "ap-southeast-2 (Asia Pacific, Sydney)"
       zones: [ "a", "b", "c" ]
 azure:
+  machines:
+    "Standard_D2s_v5": "Standard_D2s_v5 (2vCPU, 8GB RAM)"
+    "Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)"
+    "Standard_D8s_v5": "Standard_D8s_v5 (8vCPU, 32GB RAM)"
+    "Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)"
+    "Standard_D32s_v5": "Standard_D32s_v5 (32vCPU, 128GB RAM)"
+    "Standard_D48s_v5": "Standard_D48s_v5 (48vCPU, 192GB RAM)"
+    "Standard_D64s_v5": "Standard_D64s_v5 (64vCPU, 256GB RAM)"
+    "Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"
+    "Standard_D8_v3": "Standard_D8_v3 (8vCPU, 32GB RAM)"
+    "Standard_D16_v3": "Standard_D16_v3 (16vCPU, 64GB RAM)"
+    "Standard_D32_v3": "Standard_D32_v3 (32vCPU, 128GB RAM)"
+    "Standard_D48_v3": "Standard_D48_v3 (48vCPU, 192GB RAM)"
+    "Standard_D64_v3": "Standard_D64_v3 (64vCPU, 256GB RAM)"
+    "Standard_F2s_v2": "Standard_F2s_v2 (2vCPU, 4GB RAM)"
+    "Standard_F4s_v2": "Standard_F4s_v2 (4vCPU, 8GB RAM)"
+    "Standard_F8s_v2": "Standard_F8s_v2 (8vCPU, 16GB RAM)"
+    "Standard_F16s_v2": "Standard_F16s_v2 (16vCPU, 32GB RAM)"
+    "Standard_F32s_v2": "Standard_F32s_v2 (32vCPU, 64GB RAM)"
+    "Standard_F48s_v2": "Standard_F48s_v2 (48vCPU, 96GB RAM)"
+    "Standard_F64s_v2": "Standard_F64s_v2 (64vCPU, 128GB RAM)"
+    "Standard_NC4as_T4_v3": "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*"
+    "Standard_NC8as_T4_v3": "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)*"
+    "Standard_NC16as_T4_v3": "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)*"
+    "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*"
   regions:
     eastus:
       displayName: "eastus (US East, VA)"
@@ -72,6 +131,28 @@ azure:
       displayName: "switzerlandnorth (Switzerland, Zurich)"
       zones: [ "1", "2", "3" ]
 gcp:
+  machines:
+    "n2-standard-2": "n2-standard-2 (2vCPU, 8GB RAM)"
+    "n2-standard-4": "n2-standard-4 (4vCPU, 16GB RAM)"
+    "n2-standard-8": "n2-standard-8 (8vCPU, 32GB RAM)"
+    "n2-standard-16": "n2-standard-16 (16vCPU, 64GB RAM)"
+    "n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)"
+    "n2-standard-48": "n2-standard-48 (48vCPU, 192GB RAM)"
+    "n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)"
+    "c2d-highcpu-2": "c2d-highcpu-2 (2vCPU, 4GB RAM)"
+    "c2d-highcpu-4": "c2d-highcpu-4 (4vCPU, 8GB RAM)"
+    "c2d-highcpu-8": "c2d-highcpu-8 (8vCPU, 16GB RAM)"
+    "c2d-highcpu-16": "c2d-highcpu-16 (16vCPU, 32GB RAM)"
+    "c2d-highcpu-32": "c2d-highcpu-32 (32vCPU, 64GB RAM)"
+    "c2d-highcpu-56": "c2d-highcpu-56 (56vCPU, 112GB RAM)"
+    "g2-standard-4": "g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*"
+    "g2-standard-8": "g2-standard-8 (1GPU, 8vCPU, 32GB RAM)*"
+    "g2-standard-12": "g2-standard-12 (1GPU, 12vCPU, 48GB RAM)*"
+    "g2-standard-16": "g2-standard-16 (1GPU, 16vCPU, 64GB RAM)*"
+    "g2-standard-24": "g2-standard-24 (2GPU, 24vCPU, 96GB RAM)*"
+    "g2-standard-32": "g2-standard-32 (1GPU, 32vCPU, 128GB RAM)*"
+    "g2-standard-48": "g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*"
+
   regions:
     europe-west3:
       displayName: "europe-west3 (Europe, Frankfurt)"
@@ -114,6 +195,15 @@ gcp:
       displayName: "europe-west4 (Europe, Netherlands)"
       zones: [ "a", "b", "c" ]
 sap-converged-cloud:
+  machines:
+    "g_c2_m8": "g_c2_m8 (2vCPU, 8GB RAM)"
+    "g_c4_m16": "g_c4_m16 (4vCPU, 16GB RAM)"
+    "g_c6_m24": "g_c6_m24 (6vCPU, 24GB RAM)"
+    "g_c8_m32": "g_c8_m32 (8vCPU, 32GB RAM)"
+    "g_c12_m48": "g_c12_m48 (12vCPU, 48GB RAM)"
+    "g_c16_m64": "g_c16_m64 (16vCPU, 64GB RAM)"
+    "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)"
+    "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
   regions:
     eu-de-1:
       displayName: "eu-de-1"

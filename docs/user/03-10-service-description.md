@@ -80,7 +80,7 @@ These are the provisioning parameters for Azure that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.   |    No    | `["1"]`           |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
@@ -102,7 +102,7 @@ These are the provisioning parameters for Azure that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.   |    No    | `["1"]`           |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
@@ -128,7 +128,7 @@ These are the provisioning parameters for AWS that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.               |    No    | `["1"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
@@ -155,7 +155,7 @@ These are the provisioning parameters for GCP that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `n2-standard-2` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None            |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["a"]`         |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.   |    No    | `["a"]`         |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
@@ -182,7 +182,7 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["a"]`       |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.               |    No    | `["a"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
@@ -274,7 +274,7 @@ These are the provisioning parameters for the `preview` plan that you configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager creates a cluster.               |    No    | `["1"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |

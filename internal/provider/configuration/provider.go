@@ -20,7 +20,8 @@ type regionDTO struct {
 }
 
 type providerDTO struct {
-	Regions map[string]regionDTO `yaml:"regions"`
+	Regions             map[string]regionDTO `yaml:"regions"`
+	MachineDisplayNames map[string]string    `yaml:"machines"`
 }
 
 type dto map[runtime.CloudProvider]providerDTO
@@ -75,13 +76,24 @@ func (p *ProviderSpec) RandomZones(cp runtime.CloudProvider, region string, zone
 }
 
 func (p *ProviderSpec) findRegion(cp runtime.CloudProvider, region string) *regionDTO {
+
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return nil
+	}
+
+	if regionData, ok := providerData.Regions[region]; ok {
+		return &regionData
+	}
+
+	return nil
+}
+
+func (p *ProviderSpec) findProviderDTO(cp runtime.CloudProvider) *providerDTO {
 	for name, provider := range p.data {
 		// remove '-' to support "sap-converged-cloud" for CloudProvider SapConvergedCloud
-		if strings.ToLower(strings.ReplaceAll(string(name), "-", "")) != strings.ToLower(string(cp)) {
-			continue
-		}
-		if regionData, ok := provider.Regions[region]; ok {
-			return &regionData
+		if strings.ToLower(strings.ReplaceAll(string(name), "-", "")) == strings.ToLower(string(cp)) {
+			return &provider
 		}
 	}
 	return nil
@@ -98,4 +110,21 @@ func (p *ProviderSpec) Validate(provider runtime.CloudProvider, region string) e
 		return nil
 	}
 	return fmt.Errorf("region %s not found for provider %s", region, provider)
+}
+
+func (p *ProviderSpec) MachineDisplayNames(cp runtime.CloudProvider, machines []string) map[string]string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return nil
+	}
+
+	displayNames := map[string]string{}
+	for _, machine := range machines {
+		if displayName, ok := providerData.MachineDisplayNames[machine]; ok {
+			displayNames[machine] = displayName
+		} else {
+			displayNames[machine] = machine // fallback to machine name if no display name is found
+		}
+	}
+	return displayNames
 }

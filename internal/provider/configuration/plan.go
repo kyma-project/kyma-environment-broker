@@ -35,6 +35,9 @@ type PlanSpecificationsDTO map[string]planSpecificationDTO
 type planSpecificationDTO struct {
 	// platform region -> list of hyperscaler regions
 	Regions map[string][]string `yaml:"regions"`
+
+	RegularMachines    []string `yaml:"regularMachines"`
+	AdditionalMachines []string `yaml:"additionalMachines"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -64,4 +67,20 @@ func (p *PlanSpecifications) AllRegionsByPlan() map[string][]string {
 	}
 	return planRegions
 
+}
+
+func (p *PlanSpecifications) RegularMachines(planName string) []string {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return []string{}
+	}
+	return plan.RegularMachines
+}
+
+func (p *PlanSpecifications) AdditionalMachines(planName string) []string {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return []string{}
+	}
+	return plan.AdditionalMachines
 }

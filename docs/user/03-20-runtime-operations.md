@@ -23,7 +23,7 @@ You can find all the provisioning steps in the [provisioning](../../cmd/broker/p
 Each deprovisioning step is responsible for a separate part of cleaning Kyma runtime dependencies. To properly deprovision all the dependencies, you need the data used during the Kyma runtime provisioning. The first step finds the previous operation and copies the data.
 
 None of the deprovisioning steps should block the entire deprovisioning operation. Use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct to skip a step in case of a retry timeout. Set a 5-minute, at the most, timeout for retries in a step.
-Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. It fails the operation in case of a timeout while checking for the Infrastructure Manager to remove the shoot.
+Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. It fails the operation in case of a timeout while checking for the Kyma Infrastructure Manager to remove the shoot.
 Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
@@ -40,7 +40,7 @@ You can find all the updating steps in the [update](../../cmd/broker/update.go) 
 
 ## Provide Additional Steps
 
-You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every operation (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on provisioning operation. Extensions for other processes follow the same steps but require their specific structures.
+You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every operation (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on the provisioning operation. Extensions for other processes follow the same steps but require their specific structures.
 
 <div tabs name="runtime-provisioning-deprovisioning" group="runtime-provisioning-deprovisioning">
   <details>
@@ -85,7 +85,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         RuntimeVersion RuntimeVersionData `json:"runtime_version"`
 
         // These fields are not stored in the storage
-        InputCreator ProvisionerInputCreator `json:"-"`
+        InputCreator InputCreator `json:"-"`
     }
     ```
 
@@ -101,7 +101,6 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         "net/http"
         "time"
 
-        "github.com/kyma-incubator/compass/components/provisioner/pkg/gqlschema"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal/storage"
     )
