@@ -957,8 +957,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          LOG_FILE=/tmp/metrics.log
-          nohup bash scripts/monitor_metrics.sh > "$LOG_FILE" 2>&1 &
+          nohup bash scripts/monitor_metrics.sh > /tmp/metrics.log 2>&1 &
           echo $! > /tmp/metrics_pid
 
       - name: Fetch runtimes using GET endpoint
@@ -1038,8 +1037,10 @@ jobs:
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100"
             exit 1
           fi
+          
+      - name: Logs
+        run:
+          cat /tmp/metrics.log
 
       - name: Fetch metrics
-        run:
-          cat /tmp/metrics.log || echo "No metrics log found."
-          scripts/generate_charts.sh
+        run: scripts/generate_charts.sh
