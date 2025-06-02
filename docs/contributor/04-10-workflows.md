@@ -107,18 +107,18 @@ This [workflow](/.github/workflows/run-performance-tests-reusable.yaml) runs per
 
 | Parameter name                              | Required | Description                                                                        |
 |---------------------------------------------|:--------:|------------------------------------------------------------------------------------|
-| **last-k3s-versions**                       |    no    | number of most recent k3s versions to be used for tests, default = `1`             |
-| **release**                                 |    no    | determines if the workflow is called from release, default = `true`                |
-| **version**                                 |    no    | chart version, default = `0.0.0.0`                                                 |
-| **instances-number**                        |    no    | number of instances to be provisioned, default = `100`                             |
-| **updates-number**                          |    no    | number of updates on a single instance, default = `300`                            |
-| **kim-delay-seconds**                       |    no    | time to wait before transitioning the runtime CR to the Ready state, default = `0` |
-| **provisioning-max-step-processing-time**   |    no    | max time to process a step in provisioning queue, default = `30s`                  |
-| **provisioning-workers-amount**             |    no    | amount of workers in provisioning queue, default = `25`                            |
-| **update-max-step-processing-time**         |    no    | max time to process a step in update queue, default = `30s`                        |
-| **update-workers-amount**                   |    no    | amount of workers in update queue, default = `25`                                  |
-| **deprovisioning-max-step-processing-time** |    no    | max time to process a step in deprovisioning queue, default = `30s`                |
-| **deprovisioning-workers-amount**           |    no    | amount of workers in deprovisioning queue, default = `25`                          |
+| **last-k3s-versions**                       |    no    | Number of most recent k3s versions to be used for tests, default = `1`             |
+| **release**                                 |    no    | Determines if the workflow is called from release, default = `true`                |
+| **version**                                 |    no    | Chart version, default = `0.0.0.0`                                                 |
+| **instances-number**                        |    no    | Number of instances to be provisioned, default = `100`                             |
+| **updates-number**                          |    no    | Number of updates on a single instance, default = `300`                            |
+| **kim-delay-seconds**                       |    no    | Time to wait before transitioning the runtime CR to the Ready state, default = `0` |
+| **provisioning-max-step-processing-time**   |    no    | Max time to process a step in provisioning queue, default = `30s`                  |
+| **provisioning-workers-amount**             |    no    | Number of workers in provisioning queue, default = `25`                            |
+| **update-max-step-processing-time**         |    no    | Max time to process a step in update queue, default = `30s`                        |
+| **update-workers-amount**                   |    no    | Number of workers in update queue, default = `25`                                  |
+| **deprovisioning-max-step-processing-time** |    no    | Max time to process a step in deprovisioning queue, default = `30s`                |
+| **deprovisioning-workers-amount**           |    no    | Number of workers in deprovisioning queue, default = `25`                          |
 
 The workflow performs the following actions for all jobs:
 - Fetches the **last-k3s-versions** tag versions of k3s releases
