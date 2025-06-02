@@ -87,7 +87,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false) |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | None | - |
 | **APP_PROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the provisioning queue |
-| **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Amount of workers in provisioning queue |
+| **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue                                                                                                                                                                                    |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
 | **APP_SAP_CONVERGED_&#x200b;CLOUD_REGION_&#x200b;MAPPINGS_FILE_PATH** | None | - |
