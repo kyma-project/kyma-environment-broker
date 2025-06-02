@@ -957,7 +957,8 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh &
+          LOG_FILE=/tmp/metrics.log
+          nohup bash scripts/monitor_metrics.sh > "$LOG_FILE" 2>&1 &
           echo $! > /tmp/metrics_pid
 
       - name: Fetch runtimes using GET endpoint
@@ -1039,4 +1040,6 @@ jobs:
           fi
 
       - name: Fetch metrics
-        run: scripts/generate_charts.sh
+        run:
+          cat /tmp/metrics.log || echo "No metrics log found."
+          scripts/generate_charts.sh
