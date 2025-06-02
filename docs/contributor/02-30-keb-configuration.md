@@ -99,4 +99,4 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | None | - |
 | **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue |
 | **APP_UPDATE_&#x200b;PROCESSING_ENABLED** | <code>true</code> | If true, the broker processes update requests for service instances |
-| **APP_UPDATE_WORKERS_&#x200b;AMOUNT** | <code>20</code> | Amount of workers in update queue |
+| **APP_UPDATE_WORKERS_&#x200b;AMOUNT** | <code>20</code> | Number of workers in update queue |
