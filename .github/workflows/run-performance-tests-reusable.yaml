@@ -1038,6 +1038,8 @@ jobs:
             exit 1
           fi
           
+          echo "test" >> /tmp/metrics.log
+          
       - name: Logs
         run:
           cat /tmp/metrics.log
