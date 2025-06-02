@@ -127,7 +127,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Provision instances
@@ -237,7 +237,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Provision instances
@@ -390,7 +390,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Provision the instance
@@ -520,7 +520,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Provision instances
@@ -687,7 +687,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Provision instances
@@ -957,7 +957,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          nohup bash scripts/monitor_metrics.sh &
           echo $! > /tmp/metrics_pid
 
       - name: Fetch runtimes using GET endpoint
