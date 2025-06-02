@@ -48,7 +48,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
 | **APP_DATABASE_USER** | None | - |
 | **APP_DEPROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue |
-| **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Amount of workers in deprovisioning queue |
+| **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted |
 | **APP_DOMAIN_NAME** | <code>localhost</code> | - |
 | **APP_EDP_ADMIN_URL** | <code>TBD</code> | Base URL for the EDP admin API |
