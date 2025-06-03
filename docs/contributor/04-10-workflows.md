@@ -52,10 +52,10 @@ This [workflow](/.github/workflows/pr-checks.yaml) checks if all jobs, except th
 
 This [workflow](/.github/workflows/pull-validate-schema-migrator.yaml) runs a validation of database migrations performed by Schema Migrator.
 
-The workflow:
+The workflow performs the following steps:
 
 1. Checks out code
-2. Invokes the [validation script](/scripts/schemamigrator/validate.sh).
+2. Invokes the [validation script](/scripts/schemamigrator/validate.sh)
 
 ## Reusable Workflows
 
@@ -70,7 +70,7 @@ the execution of SQL statements during these tests. You can switch to in-memory 
 by setting the **DB_IN_MEMORY_FOR_E2E_TESTS** environment variable to `true`. However, by using PostgreSQL, the tests can effectively perform
 instance details serialization and deserialization, providing a clearer understanding of the impacts and outcomes of these processes.
 
-The workflow:
+The workflow performs the following steps:
 
 1. Checks out code and sets up the cache
 2. Sets up the Go environment
@@ -87,7 +87,7 @@ This [workflow](/.github/workflows/run-keb-chart-integration-tests-reusable.yaml
 | **release**  | no  | determines if the workflow is called from release, default = `true` |
 | **version**  | no  | chart version, default = `0.0.0.0` |
 
-The workflow:
+The workflow performs the following steps:
 
 1. Checks if the KEB chart is rendered successfully by Helm
 2. Fetches the **last-k3s-versions** tag versions of k3s releases 

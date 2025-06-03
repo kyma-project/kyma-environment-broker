@@ -1,6 +1,6 @@
 # Check Operation Status
 
-This tutorial shows how to check the operation status for the provisioning and deprovisioning operations.
+Check the operation status for the provisioning and deprovisioning operations.
 
 ## Steps
 

@@ -13,9 +13,7 @@ In that mode, the Job only logs the information about the number of expired serv
 
 ## Prerequisites
 
-The Job requires access to:
-
-* the KEB database to get the IDs of the expired service bindings
+* The KEB database to get the IDs of the expired service bindings
 * KEB to initiate the service binding deletion process
 
 ## Configuration

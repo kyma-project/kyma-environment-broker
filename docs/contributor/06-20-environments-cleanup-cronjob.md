@@ -10,8 +10,6 @@ Environments Cleanup CronJob removes Kyma runtimes which are older than 24h. The
 
 ## Prerequisites
 
-Environments Cleanup requires access to the following:
-
 * Gardener project of choice to filter Shoots without a proper label and remove lingering Shoots
 * The Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
 * KEB to trigger Kyma runtime deprovisioning

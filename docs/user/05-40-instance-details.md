@@ -1,6 +1,6 @@
 # Check SAP BTP, Kyma Runtime Instance Details
 
-This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
+Get the SAP BTP, Kyma runtime instance details.
 
 ## Steps
 
@@ -10,7 +10,8 @@ This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
    export INSTANCE_ID={SET_INSTANCE_ID}
    ```
 
-   > **NOTE:** Ensure that the BROKER_URL and INSTANCE_ID environment variables are exported as well before you proceed.
+   > [!NOTE]
+   > Ensure that the BROKER_URL and INSTANCE_ID environment variables are exported as well before you proceed.
 
 2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning/deprovisioning succeeded:
 
@@ -65,4 +66,5 @@ This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
       }
       ```
 
-  > **NOTE:**  The fields under the **parameters** field can differ depending on the provisioning input.
+  > [!NOTE]
+  > The fields under the **parameters** field can differ depending on the provisioning input.

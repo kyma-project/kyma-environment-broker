@@ -1,4 +1,4 @@
-# HAP Rule <!--is this term still relevant?--> Configuration
+# HAP Rule Configuration
 
 The Hyperscaler Account Pool (HAP) rule configuration is a functionality that allows you to control pool selection from a configurable helm property. 
 A pool is a set of Gardener's SecretBinding custom resources that share the same labels. 
@@ -80,7 +80,7 @@ Not all plans share their name with hyperscaler types, for example, the `sap-con
 
 In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following table shows the plan-provider type mapping:
 
-| Plan                	 | Provider Type  |
+| Plan                	| Provider Type  |
 |-----------------------|----------------|
 | `azure`               | `azure`        |
 | `azure_lite`          | `azure`        |

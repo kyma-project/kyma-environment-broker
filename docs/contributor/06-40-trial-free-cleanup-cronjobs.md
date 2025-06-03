@@ -1,6 +1,6 @@
 # Trial Cleanup CronJob and Free Cleanup CronJob
 
-Trial Cleanup CronJob and Free Cleanup CronJob are Jobs that make the SAP BTP, Kyma runtime instances with the `trial` or `free` plans expire 14 or 30 days after their creation, respectively.
+Trial Cleanup CronJob and Free Cleanup CronJob are Jobs that make the SAP BTP, Kyma runtime instances with the trial or free plans expire 14 or 30 days after their creation, respectively.
 Expiration means that the Kyma runtime instance is suspended and the `expired` flag is set.
 
 ## Details
@@ -15,9 +15,7 @@ In that mode, the Job only logs the information about the candidate instances, t
 
 ## Prerequisites
 
-Both Jobs require access to:
-
-* the KEB database to get the IDs of the instances with the `trial` or `free` plan which are not expired yet
+* The KEB database to get the IDs of the instances with the trial or free plan which are not expired yet
 * KEB to initiate the Kyma runtime instance suspension
 
 ## Configuration

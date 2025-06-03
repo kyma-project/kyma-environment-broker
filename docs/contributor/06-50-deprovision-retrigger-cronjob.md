@@ -11,8 +11,6 @@ The Job iterates over the instances, and for each one with `deletedAt` appropria
 
 ## Prerequisites
 
-Deprovision Retrigger Job requires access to:
-
 * The KEB database to get the IDs of the instances with not completed steps
 * KEB to request Kyma runtime deprovisioning
 

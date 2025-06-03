@@ -1,4 +1,4 @@
-# Kyma Binding Processes<!--the topic that covers all the sections; is it ok?-->
+# Kyma Binding Processes
 
 ## Creating a Kyma Binding
 

@@ -6,7 +6,7 @@ The default configuration must be defined. KEB must recognize this configuration
 While processing requests, KEB reads the configuration from the ConfigMap that holds data for a given plan.
 
 > [!NOTE]
-> Currently, only the Kyma custom resource (CR) template can be configured.
+> Only the Kyma custom resource (CR) template can be configured.
 
 ## ConfigMap  
 

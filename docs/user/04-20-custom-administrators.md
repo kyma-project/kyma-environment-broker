@@ -4,7 +4,7 @@ Kyma Environment Broker (KEB) allows you to set a custom list of runtime adminis
 To do so, specify the additional **administrators** parameter in the provisioning or update request.
 
 > [!NOTE]
-> Make sure to provide at least one administrator in the list. The empty list causes a validation error.
+> Provide at least one administrator in the list. The empty list causes a validation error.
 
 In the provisioning request, the **administrators** parameter overwrites the default administrator list that is taken from the **user_id** field.
 See the example:
