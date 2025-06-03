@@ -13,6 +13,8 @@ set -o errexit  # exit immediately when a command fails.
 set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
+sleep 10
+
 kill $(cat /tmp/metrics_pid) || echo "Metrics script not running"
 METRICS_FILE="/tmp/keb_metrics.jsonl"
 

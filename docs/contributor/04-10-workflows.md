@@ -142,7 +142,7 @@ The performance tests include the following:
   3. Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete provisioning requests.
   4. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate drops below the defined threshold.
+  - Success rate falls below 100%.
 
 </details>
 
@@ -157,7 +157,7 @@ The performance tests include the following:
   4. Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
   5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate drops below the defined threshold.
+  - Success rate falls below 100%.
 
 </details>
 
@@ -172,7 +172,7 @@ The performance tests include the following:
   4. Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
   5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate drops below the defined threshold.
+  - Success rate falls below 100%.
 
 </details>
 
@@ -187,7 +187,7 @@ The performance tests include the following:
   4. Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete deprovisioning requests.
   5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate drops below the defined threshold.
+  - Success rate falls below 100%.
 
 </details>
 
@@ -203,7 +203,7 @@ The performance tests include the following:
   5. Fetches metrics from `kyma-environment-broker` to measure success rate of provisioning, update, and deprovisioning requests, as well as the time taken to complete provisioning and deprovisioning operations.
   6. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate of any operation type drops below the defined threshold.
+  - Success rate of any operation type falls below 100%.
 
 </details>
 
@@ -216,6 +216,6 @@ The performance tests include the following:
   2. Sends repeated GET requests to the `/runtimes` endpoint to measure availability and response times.
   3. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
 - **The test fails in the following conditions**:
-  - Success rate drops below the defined threshold.
+  - Success rate falls below 100%.
 
 </details>
