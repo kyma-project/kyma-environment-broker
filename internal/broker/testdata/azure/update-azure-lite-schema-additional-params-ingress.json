@@ -82,7 +82,7 @@
     },
     "ingressFiltering": {
       "default": false,
-      "description": "If set to true ingress traffic from embargoed countries will be blocked.",
+      "description": "If set to true, ingress traffic from embargoed countries is blocked.",
       "title": "Enable ingress geo-blocking",
       "type": "boolean"
     },

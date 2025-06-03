@@ -31,34 +31,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.20.0
+      version: 1.20.2
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_expirator_job:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.20.0"
+      version: "1.20.2"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.20.0
+      version: 1.20.2
   ingress:
     domainName: localhost
   istio:
@@ -183,6 +183,22 @@ broker:
   updateCustomResourcesLabelsOnAccountMove: "false"
   # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime
   useAdditionalOIDCSchema: "false" # temporary feature flag
+  
+provisioning:
+  # Maximum time a worker is allowed to process a step before it must return to the provisioning queue
+  maxStepProcessingTime: 2m
+  # Number of workers in provisioning queue
+  workersAmount: 20
+update:
+  # Maximum time a worker is allowed to process a step before it must return to the update queue
+  maxStepProcessingTime: 2m
+  # Number of workers in update queue
+  workersAmount: 20
+deprovisioning:
+  # Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue
+  maxStepProcessingTime: 2m
+  # Number of workers in deprovisioning queue
+  workersAmount: 20
 
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database
