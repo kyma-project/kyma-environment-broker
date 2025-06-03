@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Kyma Environment Broker release pipeline creates proper artifacts:
+The Kyma Environment Broker (KEB) release pipeline creates proper artifacts:
 
 * `kyma-environment-broker` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-broker)
 * `kyma-environment-deprovision-retrigger` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)

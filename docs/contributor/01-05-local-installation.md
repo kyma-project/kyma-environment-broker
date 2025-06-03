@@ -1,4 +1,4 @@
-# Install the Kyma Environment Broker Locally
+# Install Kyma Environment Broker Locally
 
 ## Local Architecture
 
@@ -6,7 +6,7 @@
 
 The diagram illustrates the architecture based on an example provisioning request.
 1. The user sends a provisioning request.
-2. KEB requests an appropriate Secret Binding.
+2. Kyma Environment Broker (KEB) requests an appropriate Secret Binding.
 3. KEB creates a Runtime resource.
 4. KEB creates a Kyma resource.
 
@@ -18,7 +18,7 @@ The diagram illustrates the architecture based on an example provisioning reques
 
 ## Procedure
 
-1. To install Kyma Environment Broker, use one of the following commands:
+1. To install KEB, use one of the following commands:
 
     ```bash
     make install
@@ -60,13 +60,13 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-4. To simulate Kyma Infrastructure Manager and transition the runtime to the `Ready` state, use the following command:
+4. To simulate Kyma Infrastructure Manager (KIM) and transition the runtime to the `Ready` state, use the following command:
 
    ```bash
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
    ```
 
-5. To simulate Lifecycle Manager and transition the Kyma to the `Ready` state, use the following command:
+5. To simulate Lifecycle Manager and transition the Kyma instance to the `Ready` state, use the following command:
 
    ```bash
    make set-kyma-state KYMA_ID=<kyma_id> STATE=Ready

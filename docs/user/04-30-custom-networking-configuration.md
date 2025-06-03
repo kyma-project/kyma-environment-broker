@@ -1,6 +1,6 @@
 # Custom Networking Configuration
 
-To create a Kyma runtime with a custom IP range for worker Nodes, specify the additional **networking** provisioning parameters. See the example:
+To create a Kyma runtime with a custom IP range for worker nodes, specify the additional **networking** provisioning parameters. See the example:
 
 ```bash
    export VERSION=1.15.0

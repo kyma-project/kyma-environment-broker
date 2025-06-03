@@ -6,16 +6,16 @@
 > [!NOTE]
 > Environments Cleanup CronJob is applied manually. There is no automatic release process for the Job because of its destructiveness. To get more details on using the Job, visit its [`README`](../../utils/kyma-environments-cleanup-job/README.md).
 
-Environments Cleanup CronJob removes Kyma Environments which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
+Environments Cleanup CronJob removes Kyma runtimes which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
 
 ## Prerequisites
 
-Environments Cleanup requires access to:
+Environments Cleanup requires access to the following:
 
-* Gardener project of choice to filter Shoots without a proper label and remove lingering shoots
-* the Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
+* Gardener project of choice to filter Shoots without a proper label and remove lingering Shoots
+* The Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
 * KEB to trigger Kyma runtime deprovisioning
-* Kubernetes client to clean up Runtime CRs created directly using Kyma Infrastructure Manager and omitting KEB
+* Kubernetes client to clean up Runtime custom resources (CRs) created directly using Kyma Infrastructure Manager (KIM) and omitting KEB
 
 ## Configuration
 

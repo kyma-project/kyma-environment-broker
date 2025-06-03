@@ -1,14 +1,14 @@
 # Check API Using Swagger
 
-Using the Swagger UI, you can visualize Kyma Environment Broker's (KEB's) APIs on a single page.
+With the Swagger UI, you can visualize Kyma Environment Broker's (KEB's) APIs on a single page.
 
-The Swagger UI static files are copied from the [official source](https://github.com/swagger-api/swagger-ui/tree/master/dist) and then they are injected into KEB's container which exposes them on the root endpoint.
+The Swagger UI static files are copied from the [official source](https://github.com/swagger-api/swagger-ui/tree/master/dist) and then injected into KEB's container which exposes them on the root endpoint.
 
-KEB uses a [Swagger schema](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/files/swagger.yaml) file mounted as a volume to the Pod. You can use templates in the Swagger schema file to configure it.
+KEB uses a [Swagger schema](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/files/swagger.yaml) file mounted as a volume to the Pod. Use templates in the Swagger schema file to configure it.
 
 ## Port-Forward the Pod
 
-You can port-forward the Pod to expose and use the Swagger UI. To do it, use the following command:
+To port-forward the Pod to expose and use the Swagger UI, use the following command:
 
    ```bash
    kubectl port-forward -n kcp-system svc/kcp-kyma-environment-broker 8888:80

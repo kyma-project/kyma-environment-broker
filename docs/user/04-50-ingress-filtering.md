@@ -4,7 +4,7 @@
 > The ingress filtering feature is only available to SAP internal customers as it is integrated with SAP's geo-blocking solution.
 > The ingress filtering feature is available for the `aws`, `gcp`, and `azure` plans.
 
-Kyma Environment Broker allows you to enable or disable ingress filtering during SAP BTP, Kyma runtime provisioning and update operations.
+Kyma Environment Broker (KEB) allows you to enable or disable ingress filtering during SAP BTP, Kyma runtime provisioning and update operations.
 By default, ingress filtering is disabled.
 To enable it, set the additional **ingressFiltering** parameter to `true` in the provisioning or update request.
 
