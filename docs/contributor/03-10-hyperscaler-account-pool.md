@@ -1,7 +1,7 @@
 # Hyperscaler Account Pool
 
 > [!NOTE]
-> The feature referred to as Hyperscaler Account Pool (HAP) in our documentation is identified as SubscriptionSecret in code. You may encounter this terminology in code references such as ResolveSubscriptionSecretStep and SubscriptionSecretName.
+> The feature referred to as Hyperscaler Account Pool (HAP) in our documentation manages entities that are identified as `SubscriptionSecrets` in code. > You may encounter this terminology in code references such as `ResolveSubscriptionSecretStep` and `SubscriptionSecretName`.
 
 To provision clusters through Gardener using Kyma Infrastructure Manager (KIM), Kyma Environment Broker (KEB) requires a hyperscaler (Google Cloud, Microsoft Azure, AWS, etc.) account/subscription. Managing the available hyperscaler accounts is not in the scope of KEB. Instead, the available accounts are handled by Hyperscaler Account Pool (HAP).
 
