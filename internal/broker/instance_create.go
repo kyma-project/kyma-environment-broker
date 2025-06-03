@@ -51,17 +51,21 @@ type (
 		IsPlanSupport(planID string) bool
 		GetDefaultOIDC() *pkg.OIDCConfigDTO
 	}
+
+	PlanRegionsProvider interface {
+		Regions(planName string, platformRegion string) []string
+	}
+
+	ValuesProvider interface {
+		ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
+	}
+
+	RegionsSupporter interface {
+		IsSupported(region string, machineType string) bool
+		SupportedRegions(machineType string) []string
+		AvailableZones(machineType, region, planID string) ([]string, error)
+	}
 )
-
-type ValuesProvider interface {
-	ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
-}
-
-type RegionsSupporter interface {
-	IsSupported(region string, machineType string) bool
-	SupportedRegions(machineType string) []string
-	AvailableZones(machineType, region, planID string) ([]string, error)
-}
 
 type ProvisionEndpoint struct {
 	config                  Config
