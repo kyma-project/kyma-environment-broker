@@ -85,7 +85,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
         
       - name: Prepare values.yaml
         run: |
@@ -191,7 +191,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Prepare values.yaml
         run: |
@@ -344,7 +344,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Prepare values.yaml
         run: |
@@ -470,7 +470,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Prepare values.yaml
         run: |
@@ -633,7 +633,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Prepare values.yaml
         run: |
@@ -925,7 +925,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare K3s cluster and docker registry
-        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.versions }} --wait"
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Install KEB chart
         run: |
