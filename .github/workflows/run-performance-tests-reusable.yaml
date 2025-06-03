@@ -3,11 +3,6 @@ name: Run performance tests (reusable)
 on:
   workflow_call:
     inputs:
-      last-k3s-versions:
-        description: number of the most recent K3s versions to be used
-        required: false
-        default: 1
-        type: string
       release:
         description: 'Determines if the workflow is called from release'
         default: "true"

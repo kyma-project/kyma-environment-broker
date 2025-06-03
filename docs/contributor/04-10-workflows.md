@@ -107,7 +107,6 @@ This [workflow](/.github/workflows/run-performance-tests-reusable.yaml) runs per
 
 | Parameter name                              | Required | Description                                                         | Defaults  |
 |---------------------------------------------|:--------:|---------------------------------------------------------------------|:---------:|
-| **last-k3s-versions**                       |    no    | Number of most recent k3s versions to be used for tests             |    `1`    |
 | **release**                                 |    no    | Determines if the workflow is called from release                   |  `true`   |
 | **version**                                 |    no    | Chart version                                                       | `0.0.0.0` |
 | **instances-number**                        |    no    | Number of instances to be provisioned                               |   `100`   |

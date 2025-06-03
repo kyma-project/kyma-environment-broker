@@ -207,7 +207,6 @@ jobs:
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:
-      last-k3s-versions: 1
       release: "true"
       version: ${{ inputs.name }}
       instances-number: 100

@@ -12,7 +12,6 @@ jobs:
   run-performance-tests:
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     with:
-      last-k3s-versions: 1
       release: "false"
       version: ${{ github.event.pull_request.number }}
       instances-number: 100
