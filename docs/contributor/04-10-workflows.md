@@ -100,3 +100,121 @@ The workflow performs the following steps:
 9. Updates the instance  
 10. Deprovisions the instance  
 11. Waits for all tests to finish
+
+### Performance Tests
+
+This [workflow](/.github/workflows/run-performance-tests-reusable.yaml) runs performance tests on the k3s cluster. You pass the following parameters from the calling workflow:
+
+| Parameter name                              | Required | Description                                                         | Defaults  |
+|---------------------------------------------|:--------:|---------------------------------------------------------------------|:---------:|
+| **release**                                 |    no    | Determines if the workflow is called from release                   |  `true`   |
+| **version**                                 |    no    | Chart version                                                       | `0.0.0.0` |
+| **instances-number**                        |    no    | Number of instances to be provisioned                               |   `100`   |
+| **updates-number**                          |    no    | Number of updates on a single instance                              |   `300`   |
+| **kim-delay-seconds**                       |    no    | Time to wait before transitioning the runtime CR to the Ready state |    `0`    |
+| **provisioning-max-step-processing-time**   |    no    | Max time to process a step in provisioning queue                    |   `30s`   |
+| **provisioning-workers-amount**             |    no    | Number of workers in provisioning queue                             |   `25`    |
+| **update-max-step-processing-time**         |    no    | Max time to process a step in update queue                          |   `30s`   |
+| **update-workers-amount**                   |    no    | Number of workers in update queue                                   |   `25`    |
+| **deprovisioning-max-step-processing-time** |    no    | Max time to process a step in deprovisioning queue                  |   `30s`   |
+| **deprovisioning-workers-amount**           |    no    | Number of workers in deprovisioning queue                           |   `25`    |
+
+The workflow performs the following actions for all jobs:
+1. Fetches the **last-k3s-versions** tag versions of k3s releases
+2. Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
+3. Creates required namespaces
+4. Installs required dependencies by the KEB chart
+5. Installs the KEB chart in the k3s cluster using `helm install`
+6. Waits for the KEB Pod to be ready
+7. Populates database with a thousand of instances
+8. Starts metrics collector
+
+The performance tests include the following:
+
+<details>
+<summary>Concurrent Provisioning Test</summary>
+
+- **Purpose**: Evaluate KEB performance when handling multiple concurrent provisioning requests.
+- **Steps**:
+  1. Provisions multiple instances.
+  2. Sets the state of each created runtime to "Ready" after the specified delay.
+  3. Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete provisioning requests.
+  4. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate falls below 100%.
+
+</details>
+
+<details>
+<summary>Concurrent Update Test</summary>
+
+- **Purpose**: Assess KEB ability to process multiple concurrent updating requests.
+- **Steps**:
+  1. Provisions multiple instances.
+  2. Sets the state of each created runtime to "Ready".
+  3. Updates created instances.
+  4. Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
+  5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate falls below 100%.
+
+</details>
+
+<details>
+<summary>Multiple Updates on a Single Instance Test</summary>
+
+- **Purpose**: Test KEB behavior when processing multiple update requests for a single instance.
+- **Steps**:
+  1. Provisions the instance.
+  2. Sets the state of created runtime to "Ready".
+  3. Updates the instance.
+  4. Fetches metrics from `kyma-environment-broker` to measure success rate of update requests.
+  5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate falls below 100%.
+
+</details>
+
+<details>
+<summary>Concurrent Deprovisioning Test</summary>
+
+- **Purpose**: Measure KEB performance when handling multiple concurrent deprovisioning requests.
+- **Steps**:
+  1. Provisions multiple instances.
+  2. Sets the state of each created runtime to "Ready".
+  3. Deprovisions created instances.
+  4. Fetches metrics from `kyma-environment-broker` to measure success rate and average time taken to complete deprovisioning requests.
+  5. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate falls below 100%.
+
+</details>
+
+<details>
+<summary>Mixed Operations Test</summary>
+
+- **Purpose**: Analyze KEB performance when processing a mix of concurrent provisioning, update, and deprovisioning requests.
+- **Steps**:
+  1. Provisions multiple instances.
+  2. Sets the state of each created runtime to "Ready".
+  3. Sends a mix of concurrent provisioning, update, and deprovisioning requests.
+  4. Sets the state of each created runtime to "Ready" after the specified delay.
+  5. Fetches metrics from `kyma-environment-broker` to measure success rate of provisioning, update, and deprovisioning requests, as well as the time taken to complete provisioning and deprovisioning operations.
+  6. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate of any operation type falls below 100%.
+
+</details>
+
+<details>
+<summary>Runtimes Endpoint Test</summary>
+
+- **Purpose**: Test KEB efficiency in handling multiple GET Runtimes requests with a database containing thousands of instances and operations.
+- **Steps**:
+  1. Populates the database with 1k, 10k, and 100k instances.
+  2. Sends repeated GET requests to the `/runtimes` endpoint to measure availability and response times.
+  3. Fetches metrics such as goroutines, file descriptors, memory usage, and database connections from the metrics collector and generates visual summaries using Mermaid charts.
+- **The test fails in the following conditions**:
+  - Success rate falls below 100%.
+
+</details>

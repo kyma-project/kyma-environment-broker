@@ -47,6 +47,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_DATABASE_SSLMODE** | None | - |
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
 | **APP_DATABASE_USER** | None | - |
+| **APP_DEPROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue |
+| **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted |
 | **APP_DOMAIN_NAME** | <code>localhost</code> | - |
 | **APP_EDP_ADMIN_URL** | <code>TBD</code> | Base URL for the EDP admin API |
@@ -84,6 +86,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | None | - |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false) |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | None | - |
+| **APP_PROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the provisioning queue |
+| **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
 | **APP_SAP_CONVERGED_&#x200b;CLOUD_REGION_&#x200b;MAPPINGS_FILE_PATH** | None | - |
@@ -93,4 +97,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_DELETION** | <code>60m</code> | Maximum time to wait for a runtime resource to be deleted before considering the step as failed |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_UPDATE** | <code>180m</code> | Maximum time to wait for a runtime resource to be updated before considering the step as failed |
 | **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | None | - |
+| **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue |
 | **APP_UPDATE_&#x200b;PROCESSING_ENABLED** | <code>true</code> | If true, the broker processes update requests for service instances |
+| **APP_UPDATE_WORKERS_&#x200b;AMOUNT** | <code>20</code> | Number of workers in update queue |

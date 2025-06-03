@@ -481,9 +481,9 @@ func ShootDomainProperty() *Type {
 func ShootAndSeedSameRegionProperty() *Type {
 	return &Type{
 		Type:        "boolean",
-		Title:       "Enforce Same Location for Seed and Shoot",
+		Title:       "Enforce same location for Seed and Shoot",
 		Default:     false,
-		Description: "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is available in the region.",
+		Description: "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. The provisioning process fails if no seed is available in the region.",
 	}
 }
 
@@ -492,7 +492,7 @@ func IngressFilteringProperty() *Type {
 		Type:        "boolean",
 		Title:       "Enable ingress geo-blocking",
 		Default:     false,
-		Description: "If set to true ingress traffic from embargoed countries will be blocked.",
+		Description: "If set to true, ingress traffic from embargoed countries is blocked.",
 	}
 }
 

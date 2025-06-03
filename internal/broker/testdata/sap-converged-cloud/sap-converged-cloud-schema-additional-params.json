@@ -294,9 +294,9 @@
     },
     "shootAndSeedSameRegion": {
       "default": false,
-      "description": "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is available in the region.",
+      "description": "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. The provisioning process fails if no seed is available in the region.",
       "type": "boolean",
-      "title": "Enforce Same Location for Seed and Shoot" 
+      "title": "Enforce same location for Seed and Shoot"
     }
   },
   "required": [
