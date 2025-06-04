@@ -9,7 +9,7 @@ import (
 )
 
 type SchemaService struct {
-	planSpec          *configuration.PlanSpecifications
+	PlanSpec          *configuration.PlanSpecifications
 	providerSpec      *configuration.ProviderSpec
 	defaultOIDCConfig *pkg.OIDCConfigDTO
 
@@ -30,7 +30,7 @@ func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOID
 	}
 
 	return &SchemaService{
-		planSpec:                    planSpec,
+		PlanSpec:                    planSpec,
 		providerSpec:                providerSpec,
 		defaultOIDCConfig:           defaultOIDCConfig,
 		cfg:                         cfg,
@@ -40,7 +40,7 @@ func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOID
 }
 
 func (s *SchemaService) Validate() error {
-	for planName, regions := range s.planSpec.AllRegionsByPlan() {
+	for planName, regions := range s.PlanSpec.AllRegionsByPlan() {
 		var provider pkg.CloudProvider
 		switch planName {
 		case AWSPlanName, BuildRuntimeAWSPlanName, PreviewPlanName:
@@ -119,15 +119,15 @@ func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachi
 }
 
 func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegion string) (create, update *map[string]interface{}, available bool) {
-	regions := s.planSpec.Regions(planName, platformRegion)
+	regions := s.PlanSpec.Regions(planName, platformRegion)
 	if len(regions) == 0 {
 		return nil, nil, false
 	}
-	machines := s.planSpec.RegularMachines(planName)
+	machines := s.PlanSpec.RegularMachines(planName)
 	if len(machines) == 0 {
 		return nil, nil, false
 	}
-	regularAndAdditionalMachines := append(machines, s.planSpec.AdditionalMachines(planName)...)
+	regularAndAdditionalMachines := append(machines, s.PlanSpec.AdditionalMachines(planName)...)
 	flags := s.createFlags(planName)
 
 	createProperties := NewProvisioningProperties(
@@ -186,7 +186,7 @@ func (s *SchemaService) SapConvergedCloudSchemas(platformRegion string) (create,
 
 func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string, update bool) *map[string]interface{} {
 	flags := s.createFlags(AzureLitePlanName)
-	machines := s.planSpec.RegularMachines(AzureLitePlanName)
+	machines := s.PlanSpec.RegularMachines(AzureLitePlanName)
 	displayNames := s.providerSpec.MachineDisplayNames(pkg.Azure, machines)
 
 	properties := NewProvisioningProperties(
@@ -222,7 +222,7 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 }
 
 func (s *SchemaService) AzureLiteSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
-	regions := s.planSpec.Regions(AzureLitePlanName, platformRegion)
+	regions := s.PlanSpec.Regions(AzureLitePlanName, platformRegion)
 	if len(regions) == 0 {
 		return nil, nil, false
 	}
@@ -235,10 +235,10 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 	var regionsDisplayNames map[string]string
 	switch provider {
 	case pkg.Azure:
-		regions = s.planSpec.Regions(AzurePlanName, platformRegion)
+		regions = s.PlanSpec.Regions(AzurePlanName, platformRegion)
 		regionsDisplayNames = s.providerSpec.RegionDisplayNames(pkg.Azure, regions)
 	default: // AWS and other BTP regions
-		regions = s.planSpec.Regions(AWSPlanName, platformRegion)
+		regions = s.PlanSpec.Regions(AWSPlanName, platformRegion)
 		regionsDisplayNames = s.providerSpec.RegionDisplayNames(pkg.AWS, regions)
 	}
 	flags := s.createFlags(FreemiumPlanName)
