@@ -319,7 +319,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
 	if enforceSameRegionForSeedAndShoot {
 		platformRegion, _ := middleware.RegionFromContext(ctx)
-		supportedRegions := b.schemaService.PlanRegions(details.PlanID, platformRegion)
+		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)
 		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
 			return fmt.Errorf("validation of the same region for seed and shoot: %w", err)
 		}
