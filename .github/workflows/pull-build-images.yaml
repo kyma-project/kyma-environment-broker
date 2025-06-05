@@ -18,6 +18,8 @@ jobs:
       dockerfile: Dockerfile.keb
       context: .
       build-engine: buildx
+      platforms: |
+         linux/arm64
 
    archiver-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
