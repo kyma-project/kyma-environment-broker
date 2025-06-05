@@ -1,15 +1,18 @@
 # Build image
-FROM golang:1.24.3-alpine3.20 AS build
+FROM --platform=$BUILDPLATFORM golang:1.24.3-alpine3.20 AS build
 
 WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
 
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY cmd/schemamigrator cmd/schemamigrator
 COPY internal/schemamigrator internal/schemamigrator
-COPY go.mod go.mod
-COPY go.sum go.sum
 
-RUN go mod tidy && \
-CGO_ENABLED=0 go build -o /build/schema-migrator cmd/schemamigrator/main.go
+ARG TARGETOS TARGETARCH
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /build/schema-migrator cmd/schemamigrator/main.go
 
 # Final image
 FROM scratch
