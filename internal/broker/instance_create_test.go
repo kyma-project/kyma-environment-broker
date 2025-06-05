@@ -2881,7 +2881,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	existingAWSSeedRegions := []string{"eu-central-1"}
+	existingAWSSeedRegions := []string{"eu-central-1", "us-east-1"}
 
 	t.Run("should succeed if configuration contains region from provisioning parameters", func(t *testing.T) {
 		// given
@@ -2981,6 +2981,65 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.Error(t, err)
+		assert.IsType(t, &apiresponses.FailureResponse{}, err)
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+	})
+
+	t.Run("should fail for unsupported region", func(t *testing.T) {
+		// given
+		const unsupportedRegion = "eu-west-1"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			regionssupportingmachine.RegionsSupportingMachine{},
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+			instanceID, unsupportedRegion, existingAWSSeedRegions)
+		expectedAPIResponse := apiresponses.NewFailureResponse(
+			expectedErr,
+			http.StatusBadRequest,
+			expectedErr.Error())
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, unsupportedRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
