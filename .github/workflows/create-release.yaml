@@ -91,6 +91,7 @@ jobs:
       dockerfile: Dockerfile.keb
       context: .
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-archiver-image:
     needs: [validate-release]
@@ -101,6 +102,7 @@ jobs:
       context: .
       build-args: BIN=archiver
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-environments-cleanup-image:
     needs: [validate-release]
@@ -111,6 +113,7 @@ jobs:
       context: .
       build-args: BIN=environmentscleanup
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-deprovision-retrigger-image:
     needs: [validate-release]
@@ -121,6 +124,7 @@ jobs:
       context: .
       build-args: BIN=deprovisionretrigger
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-expirator-image:
     needs: [validate-release]
@@ -131,6 +135,7 @@ jobs:
       context: .
       build-args: BIN=expirator
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-runtime-reconciler-image:
     needs: [validate-release]
@@ -141,6 +146,7 @@ jobs:
       context: .
       build-args: BIN=runtime-reconciler
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-subaccount-cleanup-image:
     needs: [validate-release]
@@ -151,6 +157,7 @@ jobs:
       context: .
       build-args: BIN=accountcleanup
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-subaccount-sync-image:
     needs: [validate-release]
@@ -161,6 +168,7 @@ jobs:
       context: .
       build-args: BIN=subaccount-sync
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-globalaccounts-image:
       needs: [validate-release]
@@ -171,6 +179,7 @@ jobs:
          context: .
          build-args: BIN=globalaccounts
          tags: ${{ inputs.name }}
+         build-engine: buildx
 
   build-schema-migrator-image:
     needs: [ validate-release ]
@@ -180,6 +189,7 @@ jobs:
       dockerfile: Dockerfile.schemamigrator
       context: .
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   build-service-binding-cleanup-image:
     needs: [ validate-release ]
@@ -190,6 +200,7 @@ jobs:
       context: .
       build-args: BIN=servicebindingcleanup
       tags: ${{ inputs.name }}
+      build-engine: buildx
 
   run-keb-chart-integration-tests:
     name: Validate KEB chart 
