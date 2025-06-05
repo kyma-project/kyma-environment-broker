@@ -791,7 +791,8 @@ func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region stri
 	supportedSeedRegions := b.filterOutUnsupportedSeedRegions(supportedRegions, providerConfig.SeedRegions)
 	if !slices.Contains(supportedSeedRegions, region) {
 		logger.Warn(fmt.Sprintf("missing seed region %s for provider %s", region, providerType))
-		return fmt.Errorf("seed does not exist in %s region. Provider %s has seeds in the following regions: %s", region, providerType, providerConfig.SeedRegions)
+		msg := fmt.Sprintf("Provider %s has seeds in the following regions: %s", providerType, supportedSeedRegions)
+		return fmt.Errorf("seed does not exist in %s region. %s", region, msg)
 	}
 
 	return nil
