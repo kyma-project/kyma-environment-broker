@@ -64,8 +64,6 @@ type Config struct {
 
 	UseAdditionalOIDCSchema bool `envconfig:"default=false"`
 
-	MonitorAdditionalProperties     bool   `envconfig:"default=false"`
-	AdditionalPropertiesPath        string `envconfig:"default=/additional-properties"`
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
 }
 

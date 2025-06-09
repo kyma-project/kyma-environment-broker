@@ -154,8 +154,6 @@ broker:
   freeExpirationPeriod: 720h
   # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans
   includeAdditionalParamsInSchema: "false"
-  # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
-  monitorAdditionalProperties: false
   # If true, restricts each global account to only one free (freemium) Kyma runtime.
   # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned
   onlyOneFreePerGA: "false"

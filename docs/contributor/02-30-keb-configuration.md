@@ -22,7 +22,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | None | - |
 | **APP_BROKER_INCLUDE_&#x200b;ADDITIONAL_PARAMS_&#x200b;IN_SCHEMA** | <code>false</code> | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans |
-| **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one free (freemium) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned |
 | **APP_BROKER_ONLY_&#x200b;SINGLE_TRIAL_PER_GA** | <code>true</code> | If true, restricts each global account to only one active trial Kyma runtime at a time When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned |
 | **APP_BROKER_&#x200b;OPERATION_TIMEOUT** | <code>7h</code> | Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.) If the operation exceeds this timeout, it is marked as failed. Example: "7h" for 7 hours |
