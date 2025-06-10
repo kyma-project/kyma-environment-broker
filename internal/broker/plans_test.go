@@ -158,6 +158,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		IncludeAdditionalParamsInSchema: true,
 		EnableShootAndSeedSameRegion:    true,
 		UseAdditionalOIDCSchema:         false,
+		RejectUnsupportedParameters:     true,
 	}, true, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName})
 	require.NoError(t, err)
 	return schemaService
