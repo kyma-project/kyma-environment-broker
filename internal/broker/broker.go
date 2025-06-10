@@ -67,6 +67,8 @@ type Config struct {
 	MonitorAdditionalProperties     bool   `envconfig:"default=false"`
 	AdditionalPropertiesPath        string `envconfig:"default=/additional-properties"`
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
+
+	RejectUnsupportedParameters bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

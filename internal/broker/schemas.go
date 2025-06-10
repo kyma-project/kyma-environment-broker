@@ -111,8 +111,8 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 }
 
 func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, flags ControlFlagsObject) (create, update *map[string]interface{}) {
-	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false)
-	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true)
+	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false, flags.rejectUnsupportedParameters)
+	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true, flags.rejectUnsupportedParameters)
 
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags)
@@ -138,6 +138,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regularAndAdditionalMachines,
 		regions,
 		false,
+		flags.rejectUnsupportedParameters,
 	)
 	updateProperties := NewProvisioningProperties(
 		s.providerSpec.MachineDisplayNames(cp, machines),
@@ -147,6 +148,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regularAndAdditionalMachines,
 		regions,
 		true,
+		flags.rejectUnsupportedParameters,
 	)
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -197,6 +199,7 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		machines,
 		regions,
 		update,
+		flags.rejectUnsupportedParameters,
 	)
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -254,8 +257,8 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if !update {
-		properties.Networking = NewNetworkingSchema()
-		properties.Modules = NewModulesSchema()
+		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters)
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredSchemaProperties(), flags)
@@ -276,7 +279,7 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	}
 
 	if !update {
-		properties.Modules = NewModulesSchema()
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
 	if update && !flags.includeAdditionalParameters {
@@ -297,10 +300,10 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, []string{})
+		return createSchemaWith(properties.UpdateProperties, []string{}, s.cfg.RejectUnsupportedParameters)
 	} else {
-		properties.Modules = NewModulesSchema()
-		return createSchemaWith(properties, requiredOwnClusterSchemaProperties())
+		properties.Modules = NewModulesSchema(s.cfg.RejectUnsupportedParameters)
+		return createSchemaWith(properties, requiredOwnClusterSchemaProperties(), s.cfg.RejectUnsupportedParameters)
 	}
 }
 
@@ -310,6 +313,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.UseAdditionalOIDCSchema,
 		s.cfg.EnableShootAndSeedSameRegion,
 		s.ingressFilteringFeatureFlag && s.ingressFilteringPlans.Contains(planName),
+		s.cfg.RejectUnsupportedParameters,
 	)
 }
 
