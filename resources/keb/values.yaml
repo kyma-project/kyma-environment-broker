@@ -272,8 +272,6 @@ infrastructureManager:
   defaultShootPurpose: "development"
   # Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS
   defaultTrialProvider: "Azure"
-  # If true, enables ingress filtering for defined plans
-  enableIngressFiltering: "false"
   # Comma-separated list of plan names for which ingress filtering is available
   ingressFilteringPlans: "azure,gcp,aws"
   # Sets the default Kubernetes version for new clusters provisioned by the broker

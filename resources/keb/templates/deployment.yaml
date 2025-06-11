@@ -226,8 +226,6 @@ spec:
               value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER
               value: "{{ .Values.infrastructureManager.defaultTrialProvider }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_ENABLE_INGRESS_FILTERING
-              value: "{{ .Values.infrastructureManager.enableIngressFiltering }}"
             - name: APP_INFRASTRUCTURE_MANAGER_INGRESS_FILTERING_PLANS
               value: "{{ .Values.infrastructureManager.ingressFilteringPlans }}"
             - name: APP_INFRASTRUCTURE_MANAGER_KUBERNETES_VERSION
