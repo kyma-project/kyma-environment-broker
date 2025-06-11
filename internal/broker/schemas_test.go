@@ -29,7 +29,7 @@ aws:
             displayName: "eu-west-1"
             zones: ["a", "b", "c"]
 `)
-	svc, err := NewSchemaService(providers, plans, nil, Config{}, true, EnablePlans{"aws"})
+	svc, err := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
 	require.NoError(t, err)
 
 	// When
@@ -57,7 +57,7 @@ aws:
             displayName: "eu-central-1"
             zones: ["a", "b"]
 `)
-	svc, err := NewSchemaService(providers, plans, nil, Config{}, true, EnablePlans{"aws"})
+	svc, err := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
 	require.NoError(t, err)
 
 	// When
@@ -85,7 +85,8 @@ gcp:
             displayName: "eu-central-1"
             zones: ["a", "b"]
 `)
-	svc, err := NewSchemaService(providers, plans, nil, Config{}, true, EnablePlans{"aws"})
+	svc, err := NewSchemaService(providers, plans, nil, Config{},
+		EnablePlans{"aws"})
 	require.NoError(t, err)
 
 	// When

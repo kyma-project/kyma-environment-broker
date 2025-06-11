@@ -19,7 +19,7 @@ type SchemaService struct {
 	cfg Config
 }
 
-func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringEnabled bool, ingressFilteringPlans EnablePlans) (*SchemaService, error) {
+func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) (*SchemaService, error) {
 	planSpec, err := configuration.NewPlanSpecifications(planConfig)
 	if err != nil {
 		return nil, err
@@ -30,12 +30,11 @@ func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOID
 	}
 
 	return &SchemaService{
-		planSpec:                    planSpec,
-		providerSpec:                providerSpec,
-		defaultOIDCConfig:           defaultOIDCConfig,
-		cfg:                         cfg,
-		ingressFilteringFeatureFlag: ingressFilteringEnabled,
-		ingressFilteringPlans:       ingressFilteringPlans,
+		planSpec:              planSpec,
+		providerSpec:          providerSpec,
+		defaultOIDCConfig:     defaultOIDCConfig,
+		cfg:                   cfg,
+		ingressFilteringPlans: ingressFilteringPlans,
 	}, nil
 }
 

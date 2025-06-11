@@ -118,7 +118,6 @@ type InfrastructureManager struct {
 	MultiZoneCluster             bool              `envconfig:"default=false"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
-	EnableIngressFiltering       bool              `envconfig:"default=false"`
 	IngressFilteringPlans        EnablePlans       `envconfig:"default=no-plan"`
 
 	GcpVolumeSizeGb   int `envconfig:"default=80"`
