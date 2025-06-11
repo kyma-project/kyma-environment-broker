@@ -13,8 +13,7 @@ type SchemaService struct {
 	providerSpec      *configuration.ProviderSpec
 	defaultOIDCConfig *pkg.OIDCConfigDTO
 
-	ingressFilteringFeatureFlag bool
-	ingressFilteringPlans       EnablePlans
+	ingressFilteringPlans EnablePlans
 
 	cfg Config
 }
@@ -308,7 +307,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.IncludeAdditionalParamsInSchema,
 		s.cfg.UseAdditionalOIDCSchema,
 		s.cfg.EnableShootAndSeedSameRegion,
-		s.ingressFilteringFeatureFlag && s.ingressFilteringPlans.Contains(planName),
+		s.ingressFilteringPlans.Contains(planName),
 	)
 }
 
