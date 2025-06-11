@@ -67,7 +67,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters Possible values: empty (default), "node", or "zone" |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;GARDENER_SHOOT_&#x200b;PURPOSE** | <code>development</code> | Sets the default purpose for Gardener shoots (clusters) created by the broker Possible values: development, evaluation, production, testing |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;TRIAL_PROVIDER** | <code>Azure</code> | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS |
-| **APP_INFRASTRUCTURE_&#x200b;MANAGER_ENABLE_&#x200b;INGRESS_FILTERING** | <code>false</code> | If true, enables ingress filtering for defined plans |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_INGRESS_&#x200b;FILTERING_PLANS** | <code>azure,gcp,aws</code> | Comma-separated list of plan names for which ingress filtering is available |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_KUBERNETES_&#x200b;VERSION** | <code>1.16.9</code> | Sets the default Kubernetes version for new clusters provisioned by the broker |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE** | None | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used |

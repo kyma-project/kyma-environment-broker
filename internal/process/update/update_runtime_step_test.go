@@ -418,7 +418,7 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 			err := imv1.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
 
-			inputConfig := broker.InfrastructureManager{EnableIngressFiltering: testCase.ingressFilteringFlag,
+			inputConfig := broker.InfrastructureManager{
 				MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction,
 				IngressFilteringPlans: []string{"aws", "gcp", "azure"}}
 
