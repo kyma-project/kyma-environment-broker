@@ -119,20 +119,6 @@ func AzureRegions(euRestrictedAccess bool) []string {
 	}
 }
 
-func removeMachinesNamesFromList(machinesNames []string, machinesNamesToRemove ...string) []string {
-	for i, machineName := range machinesNames {
-		for _, machineNameToRemove := range machinesNamesToRemove {
-			if machineName == machineNameToRemove {
-				copy(machinesNames[i:], machinesNames[i+1:])
-				machinesNames[len(machinesNames)-1] = ""
-				machinesNames = machinesNames[:len(machinesNames)-1]
-			}
-		}
-	}
-
-	return machinesNames
-}
-
 func requiredSchemaProperties() []string {
 	return []string{"name", "region"}
 }
@@ -282,7 +268,7 @@ func filter(items *[]interface{}, included map[string]interface{}) interface{} {
 }
 
 func removeString(slice []string, str string) []string {
-	result := []string{}
+	var result []string
 	for _, v := range slice {
 		if v != str {
 			result = append(result, v)
