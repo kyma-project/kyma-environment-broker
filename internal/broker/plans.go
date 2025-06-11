@@ -268,7 +268,7 @@ func filter(items *[]interface{}, included map[string]interface{}) interface{} {
 }
 
 func removeString(slice []string, str string) []string {
-	var result []string
+	result := []string{}
 	for _, v := range slice {
 		if v != str {
 			result = append(result, v)
