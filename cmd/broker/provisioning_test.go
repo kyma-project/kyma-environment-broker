@@ -410,7 +410,6 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 func TestProvisioning_IngressFiltering_Disabled(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.InfrastructureManager.EnableIngressFiltering = false
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 

@@ -38,15 +38,14 @@ func NewServices(cfg Config, schemaService *SchemaService, servicesConfig Servic
 	}
 
 	return &ServicesEndpoint{
-		log:                         log.With("service", "ServicesEndpoint"),
-		cfg:                         cfg,
-		servicesConfig:              servicesConfig,
-		enabledPlanIDs:              enabledPlanIDs,
-		defaultOIDCConfig:           &defaultOIDCConfig,
-		useSmallerMachineTypes:      imConfig.UseSmallerMachineTypes,
-		ingressFilteringFeatureFlag: imConfig.EnableIngressFiltering,
-		ingressFilteringPlans:       imConfig.IngressFilteringPlans,
-		schemaService:               schemaService,
+		log:                    log.With("service", "ServicesEndpoint"),
+		cfg:                    cfg,
+		servicesConfig:         servicesConfig,
+		enabledPlanIDs:         enabledPlanIDs,
+		defaultOIDCConfig:      &defaultOIDCConfig,
+		useSmallerMachineTypes: imConfig.UseSmallerMachineTypes,
+		ingressFilteringPlans:  imConfig.IngressFilteringPlans,
+		schemaService:          schemaService,
 	}
 }
 

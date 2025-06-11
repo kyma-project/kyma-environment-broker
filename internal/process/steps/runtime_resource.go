@@ -80,8 +80,6 @@ func IsNotSapConvergedCloud(cloudProvider string) bool {
 }
 
 func IsIngressFilteringEnabled(planID string, config broker.InfrastructureManager, external bool) bool {
-	ingressFiltering := config.EnableIngressFiltering &&
-		config.IngressFilteringPlans.Contains(broker.PlanNamesMapping[planID]) &&
-		!external
+	ingressFiltering := config.IngressFilteringPlans.Contains(broker.PlanNamesMapping[planID]) && !external
 	return ingressFiltering
 }
