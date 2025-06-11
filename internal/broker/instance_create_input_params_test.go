@@ -21,8 +21,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 	}))
 	st := storage.NewMemoryStorage()
 	imConfig := InfrastructureManager{
-		EnableIngressFiltering: true,
-		IngressFilteringPlans:  []string{"aws", "azure", "gcp"},
+		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
 
 	t.Run("should parse shootAndSeedSameRegion - true", func(t *testing.T) {

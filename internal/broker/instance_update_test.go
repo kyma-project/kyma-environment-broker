@@ -50,7 +50,6 @@ var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.
 var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 var imConfigFixture = broker.InfrastructureManager{
 	UseSmallerMachineTypes: false,
-	EnableIngressFiltering: false,
 	IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
 }
 
@@ -1468,7 +1467,6 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 
 	imConfig := broker.InfrastructureManager{
 		UseSmallerMachineTypes: false,
-		EnableIngressFiltering: false,
 	}
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
@@ -1514,7 +1512,6 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
 
 	imConfig := broker.InfrastructureManager{
 		UseSmallerMachineTypes: false,
-		EnableIngressFiltering: false,
 	}
 
 	kcBuilder := &kcMock.KcBuilder{}
