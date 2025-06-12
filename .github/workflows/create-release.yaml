@@ -427,7 +427,7 @@ jobs:
 
       - name: Publish release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
           git checkout main
