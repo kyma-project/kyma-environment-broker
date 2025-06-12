@@ -9,10 +9,6 @@ data:
 {{- with .Values.trialRegionsMapping }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
-  sapConvergedCloudPlanRegionMappings.yaml: |-
-{{- with .Values.sapConvergedCloudPlanRegionMappings }}
-{{ tpl . $ | indent 4 }}
-{{- end }}
   skrOIDCDefaultValues.yaml: |-
 {{- with .Values.skrOIDCDefaultValues }}
 {{ tpl . $ | indent 4 }}

@@ -272,8 +272,6 @@ spec:
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
-            - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
-              value: /config/sapConvergedCloudPlanRegionMappings.yaml
             - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH
               value: /config/skrDNSProvidersValues.yaml
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH

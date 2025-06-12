@@ -99,8 +99,6 @@ type Config struct {
 
 	TrialRegionMappingFilePath string
 
-	SapConvergedCloudRegionMappingsFilePath string
-
 	MaxPaginationPage int `envconfig:"default=100"`
 
 	LogLevel string `envconfig:"default=info"`

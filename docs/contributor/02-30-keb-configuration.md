@@ -90,7 +90,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
-| **APP_SAP_CONVERGED_&#x200b;CLOUD_REGION_&#x200b;MAPPINGS_FILE_PATH** | None | - |
 | **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | None | - |
 | **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | None | - |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed |
