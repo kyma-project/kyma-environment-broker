@@ -198,7 +198,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
 	defaultOIDC := defaultOIDCValues()
-	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.EnableIngressFiltering, cfg.InfrastructureManager.IngressFilteringPlans)
+	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 	fatalOnError(err, log)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -381,7 +381,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	plansSource, err := os.Open(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
 	defaultOIDC := defaultOIDCValues()
-	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.EnableIngressFiltering, cfg.InfrastructureManager.IngressFilteringPlans)
+	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),

@@ -248,7 +248,6 @@ func fixConfig() *Config {
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
-			EnableIngressFiltering:       true,
 			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
 		},
 		StepTimeouts: StepTimeoutsConfig{

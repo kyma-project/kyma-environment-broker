@@ -310,11 +310,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		}
 	}
 
-	if b.infrastructureManagerConfig.EnableIngressFiltering {
-		err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
-		if err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
 	err = b.operationStorage.InsertOperation(operation)
@@ -328,7 +326,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		updateStorage = append(updateStorage, "OIDC")
 	}
 
-	if b.infrastructureManagerConfig.EnableIngressFiltering && params.IngressFiltering != nil {
+	if params.IngressFiltering != nil {
 		instance.Parameters.Parameters.IngressFiltering = params.IngressFiltering
 		updateStorage = append(updateStorage, "Ingress Filtering")
 	}

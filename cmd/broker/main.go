@@ -312,7 +312,7 @@ func main() {
 	fatalOnError(err, log)
 	providersConfiguration, err := os.Open(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
-	schemaService, err := broker.NewSchemaService(providersConfiguration, plansConfiguration, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.EnableIngressFiltering, cfg.InfrastructureManager.IngressFilteringPlans)
+	schemaService, err := broker.NewSchemaService(providersConfiguration, plansConfiguration, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")
@@ -411,7 +411,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
-	logs.Info(fmt.Sprintf("InfrastructureManager.EnableIngressFiltering: %v", cfg.InfrastructureManager.EnableIngressFiltering))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 }
 

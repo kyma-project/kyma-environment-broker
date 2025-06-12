@@ -386,7 +386,6 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 		initialEgressFiltering  bool
 		initialIngressFiltering bool
 
-		ingressFilteringFlag      bool
 		planID                    string
 		licenseType               string
 		ingressFilteringParameter *bool
@@ -394,31 +393,26 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 		expectedEgressResult  bool
 		expectedIngressResult bool
 	}{
-		// legacy behavior
-		{"Feature flag off - external", true, true, false, broker.SapConvergedCloudPlanID, "CUSTOMER", ptr.Bool(true), false, true},
-		{"Feature flag off - internal", false, true, false, broker.SapConvergedCloudPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
-		{"Feature flag off - internal", false, false, false, broker.SapConvergedCloudPlanID, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		// external account and no parameter - not updating ingress at all
+		{"External- SapConvergedCloud - no parameter", true, true, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, true},
+		{"External- SapConvergedCloud - no parameter", true, false, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, false},
+		{"External - AWS", true, true, broker.AWSPlanID, "CUSTOMER", nil, false, true},
+		{"External - AWS", true, false, broker.AWSPlanID, "CUSTOMER", nil, false, false},
 
-		// new behavior - external account and no parameter - not updating ingress at all
-		{"External- SapConvergedCloud - no parameter", true, true, true, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, true},
-		{"External- SapConvergedCloud - no parameter", true, false, true, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, false},
-		{"External - AWS", true, true, true, broker.AWSPlanID, "CUSTOMER", nil, false, true},
-		{"External - AWS", true, false, true, broker.AWSPlanID, "CUSTOMER", nil, false, false},
-
-		// new behavior - internal
-		{"Internal - AWS - no parameter", true, true, true, broker.AWSPlanID, "NON-CUSTOMER", nil, true, true},
-		{"Internal - AWS - turn on", true, true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
-		{"Internal - AWS - turn off", true, true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
-		{"Internal - AWS - no parameter", false, false, true, broker.AWSPlanID, "NON-CUSTOMER", nil, true, false},
-		{"Internal - AWS - turn on ingress", false, false, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
-		{"Internal - AWS - turn off ingress", false, false, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		// internal
+		{"Internal - AWS - no parameter", true, true, broker.AWSPlanID, "NON-CUSTOMER", nil, true, true},
+		{"Internal - AWS - turn on", true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off", true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		{"Internal - AWS - no parameter", false, false, broker.AWSPlanID, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on ingress", false, false, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off ingress", false, false, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
 			err := imv1.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
 
-			inputConfig := broker.InfrastructureManager{EnableIngressFiltering: testCase.ingressFilteringFlag,
+			inputConfig := broker.InfrastructureManager{
 				MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction,
 				IngressFilteringPlans: []string{"aws", "gcp", "azure"}}
 

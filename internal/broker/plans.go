@@ -121,20 +121,6 @@ func AzureRegions(euRestrictedAccess bool) []string {
 	}
 }
 
-func removeMachinesNamesFromList(machinesNames []string, machinesNamesToRemove ...string) []string {
-	for i, machineName := range machinesNames {
-		for _, machineNameToRemove := range machinesNamesToRemove {
-			if machineName == machineNameToRemove {
-				copy(machinesNames[i:], machinesNames[i+1:])
-				machinesNames[len(machinesNames)-1] = ""
-				machinesNames = machinesNames[:len(machinesNames)-1]
-			}
-		}
-	}
-
-	return machinesNames
-}
-
 func requiredSchemaProperties() []string {
 	return []string{"name", "region"}
 }

@@ -21,7 +21,6 @@ func TestServices_Services(t *testing.T) {
 	}))
 	imConfig := broker.InfrastructureManager{
 		IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
-		EnableIngressFiltering: true,
 		UseSmallerMachineTypes: false,
 	}
 
@@ -43,7 +42,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.EnableIngressFiltering, imConfig.IngressFilteringPlans)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
 		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
@@ -76,7 +75,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.EnableIngressFiltering, imConfig.IngressFilteringPlans)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
 		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
@@ -113,7 +112,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.EnableIngressFiltering, imConfig.IngressFilteringPlans)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
 		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
@@ -153,7 +152,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.EnableIngressFiltering, imConfig.IngressFilteringPlans)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
 		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
@@ -165,8 +164,8 @@ func TestServices_Services(t *testing.T) {
 	})
 }
 
-func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringEnabled bool, ingressFilteringPlans broker.EnablePlans) *broker.SchemaService {
-	service, err := broker.NewSchemaService(configSource(t, "testdata/providers.yaml"), configSource(t, "testdata/plans.yaml"), defaultOIDCConfig, cfg, ingressFilteringEnabled, ingressFilteringPlans)
+func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringPlans broker.EnablePlans) *broker.SchemaService {
+	service, err := broker.NewSchemaService(configSource(t, "testdata/providers.yaml"), configSource(t, "testdata/plans.yaml"), defaultOIDCConfig, cfg, ingressFilteringPlans)
 	require.NoError(t, err)
 	return service
 }

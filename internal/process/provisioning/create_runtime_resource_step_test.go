@@ -618,7 +618,7 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 
 			cli := getClientForTests(t)
 
-			infrastructureManagerConfig := broker.InfrastructureManager{EnableIngressFiltering: testCase.ingressFilteringFlag, MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone",
+			infrastructureManagerConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone",
 				DefaultGardenerShootPurpose: provider.PurposeProduction, IngressFilteringPlans: []string{"aws"}}
 			instance, operation := fixInstanceAndOperation(testCase.planID, "hyperscaler-region", "platform-region", infrastructureManagerConfig, testCase.cloudProvider)
 			assertInsertions(t, memoryStorage, instance, operation)
@@ -1044,7 +1044,7 @@ func Test_IsIngressFilteringEnabled(t *testing.T) {
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			//given
-			imConfig := broker.InfrastructureManager{EnableIngressFiltering: true, IngressFilteringPlans: []string{"aws", "gcp"}}
+			imConfig := broker.InfrastructureManager{IngressFilteringPlans: []string{"aws", "gcp"}}
 			// when
 			result := steps.IsIngressFilteringEnabled(testCase.planID, imConfig, testCase.externalAccount)
 			//then
