@@ -121,6 +121,8 @@ spec:
               value: "{{ .Values.broker.operationTimeout }}"
             - name: APP_BROKER_PORT
               value: "{{ .Values.broker.port }}"
+            - name: APP_BROKER_REJECT_UNSUPPORTED_PARAMETERS
+              value: "{{ .Values.broker.rejectUnsupportedParameters }}"
             - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
               value: "{{ .Values.broker.showFreeExpirationInfo }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO

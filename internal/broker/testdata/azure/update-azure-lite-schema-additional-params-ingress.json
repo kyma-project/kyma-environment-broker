@@ -11,6 +11,7 @@
   ],
   "_load_current_config": true,
   "_show_form_view": true,
+  "additionalProperties": false,
   "properties": {
     "additionalWorkerNodePools": {
       "description": "Specifies the list of additional worker node pools.",
@@ -20,6 +21,7 @@
         "type": "object",
         "required": ["name", "machineType", "autoScalerMin", "autoScalerMax"],
         "_controlsOrder": ["name", "machineType", "autoScalerMin", "autoScalerMax"],
+        "additionalProperties": false,
         "properties": {
           "name": {
             "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length. Do not use the name “cpu-worker-0” because it's reserved for the Kyma worker node pool.",
@@ -101,6 +103,7 @@
       "type":"string"
     },
     "oidc": {
+      "additionalProperties": false,
       "description": "OIDC configuration",
       "properties": {
         "clientID": {

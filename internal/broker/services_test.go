@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -165,7 +167,11 @@ func TestServices_Services(t *testing.T) {
 }
 
 func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringPlans broker.EnablePlans) *broker.SchemaService {
-	service, err := broker.NewSchemaService(configSource(t, "testdata/providers.yaml"), configSource(t, "testdata/plans.yaml"), defaultOIDCConfig, cfg, ingressFilteringPlans)
+	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
+
+	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans)
 	require.NoError(t, err)
 	return service
 }

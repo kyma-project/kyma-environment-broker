@@ -1,8 +1,6 @@
 package broker
 
 import (
-	"io"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -18,23 +16,14 @@ type SchemaService struct {
 	cfg Config
 }
 
-func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) (*SchemaService, error) {
-	planSpec, err := configuration.NewPlanSpecifications(planConfig)
-	if err != nil {
-		return nil, err
-	}
-	providerSpec, err := configuration.NewProviderSpec(providerConfig)
-	if err != nil {
-		return nil, err
-	}
-
+func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) *SchemaService {
 	return &SchemaService{
 		planSpec:              planSpec,
 		providerSpec:          providerSpec,
 		defaultOIDCConfig:     defaultOIDCConfig,
 		cfg:                   cfg,
 		ingressFilteringPlans: ingressFilteringPlans,
-	}, nil
+	}
 }
 
 func (s *SchemaService) Validate() error {
@@ -109,8 +98,8 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 }
 
 func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, flags ControlFlagsObject) (create, update *map[string]interface{}) {
-	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false)
-	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true)
+	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false, flags.rejectUnsupportedParameters)
+	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true, flags.rejectUnsupportedParameters)
 
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags)
@@ -136,6 +125,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regularAndAdditionalMachines,
 		regions,
 		false,
+		flags.rejectUnsupportedParameters,
 	)
 	updateProperties := NewProvisioningProperties(
 		s.providerSpec.MachineDisplayNames(cp, machines),
@@ -145,6 +135,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regularAndAdditionalMachines,
 		regions,
 		true,
+		flags.rejectUnsupportedParameters,
 	)
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -195,6 +186,7 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		machines,
 		regions,
 		update,
+		flags.rejectUnsupportedParameters,
 	)
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -252,8 +244,8 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if !update {
-		properties.Networking = NewNetworkingSchema()
-		properties.Modules = NewModulesSchema()
+		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters)
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredSchemaProperties(), flags)
@@ -274,7 +266,7 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	}
 
 	if !update {
-		properties.Modules = NewModulesSchema()
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
 	if update && !flags.includeAdditionalParameters {
@@ -295,10 +287,10 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, []string{})
+		return createSchemaWith(properties.UpdateProperties, []string{}, s.cfg.RejectUnsupportedParameters)
 	} else {
-		properties.Modules = NewModulesSchema()
-		return createSchemaWith(properties, requiredOwnClusterSchemaProperties())
+		properties.Modules = NewModulesSchema(s.cfg.RejectUnsupportedParameters)
+		return createSchemaWith(properties, requiredOwnClusterSchemaProperties(), s.cfg.RejectUnsupportedParameters)
 	}
 }
 
@@ -308,6 +300,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.UseAdditionalOIDCSchema,
 		s.cfg.EnableShootAndSeedSameRegion,
 		s.ingressFilteringPlans.Contains(planName),
+		s.cfg.RejectUnsupportedParameters,
 	)
 }
 

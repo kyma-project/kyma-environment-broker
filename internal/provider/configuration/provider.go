@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"gopkg.in/yaml.v2"
@@ -20,11 +23,24 @@ type regionDTO struct {
 }
 
 type providerDTO struct {
-	Regions             map[string]regionDTO `yaml:"regions"`
-	MachineDisplayNames map[string]string    `yaml:"machines"`
+	Regions             map[string]regionDTO     `yaml:"regions"`
+	MachineDisplayNames map[string]string        `yaml:"machines"`
+	SupportingMachines  RegionsSupportingMachine `yaml:"regionsSupportingMachine,omitempty"`
 }
 
 type dto map[runtime.CloudProvider]providerDTO
+
+func NewProviderSpecFromFile(filePath string) (*ProviderSpec, error) {
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// Use the existing function to parse the specifications
+	return NewProviderSpec(file)
+}
 
 func NewProviderSpec(r io.Reader) (*ProviderSpec, error) {
 	data := &dto{}
@@ -62,6 +78,28 @@ func (p *ProviderSpec) Zones(cp runtime.CloudProvider, region string) []string {
 		return []string{}
 	}
 	return dto.Zones
+}
+
+func (p *ProviderSpec) AvailableZonesForAdditionalWorkers(machineType, region, providerType string) ([]string, error) {
+	providerData := p.findProviderDTO(runtime.CloudProviderFromString(providerType))
+	if providerData == nil {
+		return []string{}, nil
+	}
+
+	if providerData.SupportingMachines == nil {
+		return []string{}, nil
+	}
+
+	if !providerData.SupportingMachines.IsSupported(region, machineType) {
+		return []string{}, nil
+	}
+
+	zones, err := providerData.SupportingMachines.AvailableZonesForAdditionalWorkers(machineType, region, providerType)
+	if err != nil {
+		return []string{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
+	}
+
+	return zones, nil
 }
 
 func (p *ProviderSpec) RandomZones(cp runtime.CloudProvider, region string, zonesCount int) []string {
@@ -127,4 +165,16 @@ func (p *ProviderSpec) MachineDisplayNames(cp runtime.CloudProvider, machines []
 		}
 	}
 	return displayNames
+}
+
+func (p *ProviderSpec) RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error) {
+	providerData := p.findProviderDTO(runtime.CloudProviderFromString(providerType))
+	if providerData == nil {
+		return RegionsSupportingMachine{}, nil
+	}
+
+	if providerData.SupportingMachines == nil {
+		return RegionsSupportingMachine{}, nil
+	}
+	return providerData.SupportingMachines, nil
 }

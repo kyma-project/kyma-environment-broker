@@ -73,14 +73,16 @@ type ControlFlagsObject struct {
 	useAdditionalOIDCSchema     bool
 	shootAndSeedFeatureEnabled  bool
 	ingressFilteringEnabled     bool
+	rejectUnsupportedParameters bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, shootAndSeedEnabled, ingressFilteringEnabled bool) ControlFlagsObject {
+func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, shootAndSeedEnabled, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		includeAdditionalParameters: includeAdditionalParameters,
 		useAdditionalOIDCSchema:     useAdditionalOIDC,
 		shootAndSeedFeatureEnabled:  shootAndSeedEnabled,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
+		rejectUnsupportedParameters: rejectUnsupportedParameters,
 	}
 }
 
@@ -143,9 +145,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	flags ControlFlagsObject) *map[string]interface{} {
 	if flags.includeAdditionalParameters {
 		if flags.useAdditionalOIDCSchema {
-			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update)
+			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
 		} else {
-			properties.OIDC = NewOIDCSchema()
+			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters)
 		}
 		properties.Administrators = AdministratorsProperty()
 		if flags.shootAndSeedFeatureEnabled {
@@ -157,14 +159,14 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, []string{})
+		return createSchemaWith(properties.UpdateProperties, []string{}, flags.rejectUnsupportedParameters)
 	} else {
-		return createSchemaWith(properties, required)
+		return createSchemaWith(properties, required, flags.rejectUnsupportedParameters)
 	}
 }
 
-func createSchemaWith(properties interface{}, required []string) *map[string]interface{} {
-	return unmarshalSchema(NewSchema(properties, required))
+func createSchemaWith(properties interface{}, required []string, rejectUnsupportedParameters bool) *map[string]interface{} {
+	return unmarshalSchema(NewSchema(properties, required, rejectUnsupportedParameters))
 }
 
 func unmarshalSchema(schema *RootSchema) *map[string]interface{} {

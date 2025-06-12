@@ -27,6 +27,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_ONLY_&#x200b;SINGLE_TRIAL_PER_GA** | <code>true</code> | If true, restricts each global account to only one active trial Kyma runtime at a time When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned |
 | **APP_BROKER_&#x200b;OPERATION_TIMEOUT** | <code>7h</code> | Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.) If the operation exceeds this timeout, it is marked as failed. Example: "7h" for 7 hours |
 | **APP_BROKER_PORT** | <code>8080</code> | Port for the broker HTTP server |
+| **APP_BROKER_REJECT_&#x200b;UNSUPPORTED_&#x200b;PARAMETERS** | <code>false</code> | If true, rejects requests that contain parameters that are not defined in schemas |
 | **APP_BROKER_SHOW_&#x200b;FREE_EXPIRATION_INFO** | <code>false</code> | If true, adds expiration information for free plan Kyma runtimes to API responses and UI labels |
 | **APP_BROKER_SHOW_&#x200b;TRIAL_EXPIRATION_&#x200b;INFO** | <code>false</code> | If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels |
 | **APP_BROKER_STATUS_&#x200b;PORT** | <code>8071</code> | Port for the broker status/health endpoint |

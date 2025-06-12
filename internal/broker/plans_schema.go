@@ -224,12 +224,12 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters bool) *OIDCs {
 	if defaultOIDCConfig == nil {
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
 
-	return &OIDCs{
+	OIDCs := &OIDCs{
 		Type: Type{
 			Type:        "object",
 			Description: "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
@@ -336,10 +336,17 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 			},
 		},
 	}
+	if rejectUnsupportedParameters {
+		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
+			oidcTypeExpanded.Type.AdditionalProperties = false
+			OIDCs.OneOf[1] = oidcTypeExpanded
+		}
+	}
+	return OIDCs
 }
 
-func NewOIDCSchema() *OIDCType {
-	return &OIDCType{
+func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
+	OIDCType := &OIDCType{
 		Type: Type{Type: "object", Description: "OIDC configuration"},
 		Properties: OIDCProperties{
 			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
@@ -357,10 +364,14 @@ func NewOIDCSchema() *OIDCType {
 		},
 		Required: []string{"clientID", "issuerURL"},
 	}
+	if rejectUnsupportedParameters {
+		OIDCType.Type.AdditionalProperties = false
+	}
+	return OIDCType
 }
 
-func NewModulesSchema() *Modules {
-	return &Modules{
+func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
+	modules := &Modules{
 		Type: Type{
 			Type:        "object",
 			Description: "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
@@ -436,6 +447,13 @@ func NewModulesSchema() *Modules {
 					}},
 			}},
 	}
+	if rejectUnsupportedParameters {
+		if modulesCustom, ok := modules.OneOf[1].(ModulesCustom); ok {
+			modulesCustom.Properties.List.Type.AdditionalProperties = false
+			modules.OneOf[1] = modulesCustom
+		}
+	}
+	return modules
 }
 
 func NameProperty() NameType {
@@ -498,7 +516,7 @@ func IngressFilteringProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -522,7 +540,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				EnumDisplayName: machineTypesDisplay,
 				Description:     "Specifies the type of the virtual machine.",
 			},
-			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes),
+			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, rejectUnsupportedParameters),
 		},
 		Name: NameProperty(),
 		Region: &Type{
@@ -531,8 +549,8 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			EnumDisplayName: regionsDisplay,
 			MinLength:       1,
 		},
-		Networking: NewNetworkingSchema(),
-		Modules:    NewModulesSchema(),
+		Networking: NewNetworkingSchema(rejectUnsupportedParameters),
+		Modules:    NewModulesSchema(rejectUnsupportedParameters),
 	}
 
 	if update {
@@ -543,9 +561,9 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 	return properties
 }
 
-func NewNetworkingSchema() *NetworkingType {
+func NewNetworkingSchema(rejectUnsupportedParameters bool) *NetworkingType {
 	seedCIDRs := strings.Join(networking.GardenerSeedCIDRs, ", ")
-	return &NetworkingType{
+	networkingType := &NetworkingType{
 		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another."},
 		Properties: NetworkingProperties{
 			Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
@@ -557,10 +575,14 @@ func NewNetworkingSchema() *NetworkingType {
 		},
 		Required: []string{"nodes"},
 	}
+	if rejectUnsupportedParameters {
+		networkingType.Type.AdditionalProperties = false
+	}
+	return networkingType
 }
 
-func NewSchema(properties interface{}, required []string) *RootSchema {
-	return &RootSchema{
+func NewSchema(properties interface{}, required []string, rejectUnsupportedParameters bool) *RootSchema {
+	rootSchema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
 			Type: "object",
@@ -570,6 +592,10 @@ func NewSchema(properties interface{}, required []string) *RootSchema {
 		Required:          required,
 		LoadCurrentConfig: true,
 	}
+	if rejectUnsupportedParameters {
+		rootSchema.Type.AdditionalProperties = false
+	}
+	return rootSchema
 }
 
 func unmarshalOrPanic(from, to interface{}) interface{} {
@@ -606,8 +632,8 @@ func AdministratorsProperty() *Type {
 	}
 }
 
-func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
-	return &AdditionalWorkerNodePoolsType{
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string, rejectUnsupportedParameters bool) *AdditionalWorkerNodePoolsType {
+	additionalWorkerNodePoolsType := &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
@@ -656,4 +682,8 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			},
 		},
 	}
+	if rejectUnsupportedParameters {
+		additionalWorkerNodePoolsType.Items.Type.AdditionalProperties = false
+	}
+	return additionalWorkerNodePoolsType
 }

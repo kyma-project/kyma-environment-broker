@@ -33,7 +33,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -191,14 +190,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
-	providersSource, err := os.Open(cfg.ProvidersConfigurationFilePath)
-	fatalOnError(err, log)
-	plansSource, err := os.Open(cfg.PlansConfigurationFilePath)
+	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
 	defaultOIDC := defaultOIDCValues()
-	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 	fatalOnError(err, log)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -213,13 +210,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		edpClient, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager))
+		workersProvider(cfg.InfrastructureManager, providerSpec))
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager), schemaService, plansSpec)
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec), schemaService, plansSpec)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -276,20 +273,10 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	}
 }
 
-func workersProvider(imConfig broker.InfrastructureManager) *workers.Provider {
+func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
 	return workers.NewProvider(
 		imConfig,
-		regionssupportingmachine.RegionsSupportingMachine{
-			"c7i": {
-				"us-east-1": {"w", "x", "y", "z"},
-			},
-			"g6": {
-				"us-east-1": {"x", "y"},
-			},
-			"g4dn": {
-				"us-east-1": {"x"},
-			},
-		},
+		spec,
 	)
 }
 
@@ -376,16 +363,15 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
 
-	providersSource, err := os.Open(cfg.ProvidersConfigurationFilePath)
+	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
-	plansSource, err := os.Open(cfg.PlansConfigurationFilePath)
-	fatalOnError(err, log)
+
 	defaultOIDC := defaultOIDCValues()
-	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
-		regionssupportingmachine.RegionsSupportingMachine{}, configProvider, planSpec)
+		providerSpec, configProvider, planSpec)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

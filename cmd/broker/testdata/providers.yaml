@@ -1,4 +1,11 @@
 aws:
+  regionsSupportingMachine:
+    "c7i":
+      "us-east-1": ["w", "x", "y", "z"]
+    "g6":
+      "us-east-1": ["x", "y"]
+    "g4dn":
+      "us-east-1": ["x"]
   machines:
     "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
     "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"

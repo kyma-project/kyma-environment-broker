@@ -10,7 +10,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -23,7 +26,6 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -88,7 +90,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -161,7 +163,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -238,7 +240,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -286,7 +288,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -359,7 +361,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -434,7 +436,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -483,7 +485,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -533,7 +535,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -597,7 +599,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -661,7 +663,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -705,7 +707,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -744,7 +746,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -782,7 +784,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -827,7 +829,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -877,7 +879,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -933,7 +935,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -988,7 +990,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1046,7 +1048,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1102,7 +1104,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1200,7 +1202,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1286,7 +1288,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1330,7 +1332,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1396,7 +1398,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1452,7 +1454,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1506,7 +1508,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1550,7 +1552,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1597,7 +1599,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1647,7 +1649,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -1788,7 +1790,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				newSchemaService(t),
-				regionssupportingmachine.RegionsSupportingMachine{},
+				newProviderSpec(t),
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
@@ -1853,7 +1855,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				newSchemaService(t),
-				regionssupportingmachine.RegionsSupportingMachine{},
+				newProviderSpec(t),
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
@@ -2005,7 +2007,7 @@ func TestNetworkingValidation(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				newSchemaService(t),
-				regionssupportingmachine.RegionsSupportingMachine{},
+				newProviderSpec(t),
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
@@ -2105,7 +2107,7 @@ func TestRegionValidation(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				newSchemaService(t),
-				regionssupportingmachine.RegionsSupportingMachine{},
+				newProviderSpec(t),
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
@@ -2166,7 +2168,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2215,7 +2217,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2263,7 +2265,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2325,7 +2327,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		fixRegionsSupportingMachine(),
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
@@ -2377,7 +2379,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		fixRegionsSupportingMachine(),
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
@@ -2455,7 +2457,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		fixRegionsSupportingMachine(),
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
@@ -2506,7 +2508,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		fixRegionsSupportingMachine(),
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
@@ -2639,7 +2641,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		fixRegionsSupportingMachine(),
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
@@ -2699,7 +2701,7 @@ func TestAdditionalProperties(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			fixRegionsSupportingMachine(),
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2769,7 +2771,7 @@ func TestAdditionalProperties(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			fixRegionsSupportingMachine(),
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2853,7 +2855,7 @@ func TestAdditionalProperties(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			fixRegionsSupportingMachine(),
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2913,7 +2915,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -2962,7 +2964,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -3021,7 +3023,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			newSchemaService(t),
-			regionssupportingmachine.RegionsSupportingMachine{},
+			newProviderSpec(t),
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
@@ -3105,8 +3107,8 @@ func fixDNSProviders() gardener.DNSProvidersData {
 	}
 }
 
-func fixRegionsSupportingMachine() regionssupportingmachine.RegionsSupportingMachine {
-	return regionssupportingmachine.RegionsSupportingMachine{
+func fixRegionsSupportingMachine() configuration.RegionsSupportingMachine {
+	return configuration.RegionsSupportingMachine{
 		"m8g": {
 			"ap-northeast-1": nil,
 			"ap-southeast-1": nil,
@@ -3132,15 +3134,13 @@ func fixRegionsSupportingMachine() regionssupportingmachine.RegionsSupportingMac
 }
 
 func newSchemaService(t *testing.T) *broker.SchemaService {
-	plans, err := os.Open("testdata/plans.yaml")
+	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)
-	defer plans.Close()
 
-	provider, err := os.Open("testdata/providers.yaml")
+	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
-	defer provider.Close()
 
-	schemaService, err := broker.NewSchemaService(provider, plans, nil, broker.Config{
+	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
 		IncludeAdditionalParamsInSchema: true,
 		EnableShootAndSeedSameRegion:    true,
 		UseAdditionalOIDCSchema:         true,
@@ -3148,4 +3148,15 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
 	require.NoError(t, err)
 	return schemaService
+}
+
+func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
+	spec, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+	return spec
+}
+
+func newEmptyProviderSpec() *configuration.ProviderSpec {
+	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
+	return spec
 }

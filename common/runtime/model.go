@@ -120,7 +120,7 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return Azure
 	case "gcp":
 		return GCP
-	case "sapconvergedcloud", "openstack":
+	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
 	default:
 		return UnknownProvider

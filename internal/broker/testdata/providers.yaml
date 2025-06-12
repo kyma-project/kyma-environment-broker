@@ -1,4 +1,15 @@
 aws:
+  regionsSupportingMachine:
+    "m8g":
+      "ap-northeast-1":
+      "ap-southeast-1":
+      "ca-central-1":
+    "m7g":
+      "us-west-2":
+    "g6":
+      "us-east-1": ["a"]
+      "westeurope": ["b"]
+      "eu-central-1":
   machines:
     "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
     "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
@@ -68,6 +79,10 @@ aws:
       displayName: "ap-southeast-2 (Asia Pacific, Sydney)"
       zones: [ "a", "b", "c" ]
 azure:
+  regionsSupportingMachine:
+    "Standard_D":
+      "uksouth":
+      "brazilsouth":
   machines:
     "Standard_D2s_v5": "Standard_D2s_v5 (2vCPU, 8GB RAM)"
     "Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)"
@@ -131,6 +146,10 @@ azure:
       displayName: "switzerlandnorth (Switzerland, Zurich)"
       zones: [ "1", "2", "3" ]
 gcp:
+  regionsSupportingMachine:
+    "c2d-highmem":
+      "us-central1":
+      "southamerica-east1":
   machines:
     "n2-standard-2": "n2-standard-2 (2vCPU, 8GB RAM)"
     "n2-standard-4": "n2-standard-4 (4vCPU, 16GB RAM)"

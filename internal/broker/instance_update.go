@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
@@ -53,14 +55,13 @@ type UpdateEndpoint struct {
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
 
-	regionsSupportingMachine RegionsSupporter
-
 	kcpClient                   client.Client
 	valuesProvider              ValuesProvider
 	useSmallerMachineTypes      bool
 	infrastructureManagerConfig InfrastructureManager
 
 	schemaService *SchemaService
+	providerSpec  *configuration.ProviderSpec
 }
 
 func NewUpdate(cfg Config,
@@ -76,7 +77,7 @@ func NewUpdate(cfg Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	kcpClient client.Client,
-	regionsSupportingMachine RegionsSupporter,
+	providerSpec *configuration.ProviderSpec,
 	imConfig InfrastructureManager,
 	schemaService *SchemaService,
 ) *UpdateEndpoint {
@@ -95,7 +96,7 @@ func NewUpdate(cfg Config,
 		dashboardConfig:                          dashboardConfig,
 		kcBuilder:                                kcBuilder,
 		kcpClient:                                kcpClient,
-		regionsSupportingMachine:                 regionsSupportingMachine,
+		providerSpec:                             providerSpec,
 		infrastructureManagerConfig:              imConfig,
 		schemaService:                            schemaService,
 	}
@@ -104,7 +105,7 @@ func NewUpdate(cfg Config,
 // Update modifies an existing service instance
 //
 //	PATCH /v2/service_instances/{instance_id}
-func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
 	logger.Info(fmt.Sprintf("Updating instanceID: %s", instanceID))
 	logger.Info(fmt.Sprintf("Updating asyncAllowed: %v", asyncAllowed))
@@ -177,7 +178,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		// NOTE: KEB currently can't process update parameters in one call along with context update
 		// this block makes it that KEB ignores any parameters updates if context update changed suspension state
 		if !suspendStatusChange && !instance.IsExpired() {
-			return b.processUpdateParameters(instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
+			return b.processUpdateParameters(ctx, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
 	return domain.UpdateServiceSpec{
@@ -214,7 +215,7 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 	return ersContext.ERSUpdate()
 }
 
-func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
 		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
@@ -243,12 +244,16 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
-	if !b.regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(lastProvisioningOperation.ProviderValues.ProviderType)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(instance.Parameters.Parameters.Region),
 			valueOfPtr(params.MachineType),
-			strings.Join(b.regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
 		)
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
@@ -296,7 +301,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.ValidateMachineTypesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
@@ -305,7 +310,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
-		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}

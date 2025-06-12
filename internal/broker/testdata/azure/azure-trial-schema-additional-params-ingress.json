@@ -9,6 +9,7 @@
   ],
   "_load_current_config": true,
   "_show_form_view": true,
+  "additionalProperties": false,
   "properties": {
     "administrators": {
       "description": "Specifies the list of runtime administrators",
@@ -51,6 +52,7 @@
           "description": "Define custom module list",
           "properties": {
             "list": {
+              "additionalProperties": false,
               "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
               "items": {
                 "_controlsOrder": [
@@ -120,6 +122,7 @@
       "type": "string"
     },
     "oidc": {
+      "additionalProperties": false,
       "description": "OIDC configuration",
       "properties": {
         "clientID": {
