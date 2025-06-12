@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -65,7 +64,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		newSchemaService(t),
-		regionssupportingmachine.RegionsSupportingMachine{},
+		newProviderSpec(t),
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},

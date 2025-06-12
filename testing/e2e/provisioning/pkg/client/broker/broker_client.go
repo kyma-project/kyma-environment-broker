@@ -100,10 +100,9 @@ type instanceDetailsResponse struct {
 }
 
 type provisionParameters struct {
-	Name        string   `json:"name"`
-	Region      string   `json:"region"`
-	Components  []string `json:"components"`
-	KymaVersion string   `json:"kymaVersion,omitempty"`
+	Name        string `json:"name"`
+	Region      string `json:"region"`
+	KymaVersion string `json:"kymaVersion,omitempty"`
 }
 
 // ProvisionRuntime requests Runtime provisioning in KEB
@@ -304,7 +303,6 @@ func (c *Client) FetchDashboardURL() (string, error) {
 func (c *Client) prepareProvisionDetails(customVersion string) ([]byte, error) {
 	parameters := provisionParameters{
 		Name:        c.clusterName,
-		Components:  []string{},    // fill with optional components
 		KymaVersion: customVersion, // If empty filed will be omitted
 	}
 	if c.brokerConfig.PlanID != trialPlanID {

@@ -1,12 +1,10 @@
-package regionssupportingmachine
+package configuration
 
 import (
 	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/utils"
 )
@@ -49,7 +47,7 @@ func (r RegionsSupportingMachine) SupportedRegions(machineType string) []string 
 	return []string{}
 }
 
-func (r RegionsSupportingMachine) AvailableZones(machineType, region, providerType string) ([]string, error) {
+func (r RegionsSupportingMachine) AvailableZonesForAdditionalWorkers(machineType, region, providerType string) ([]string, error) {
 	for machineFamily, regionsMap := range r {
 		if strings.HasPrefix(machineType, machineFamily) {
 			zones := regionsMap[region]
@@ -57,12 +55,7 @@ func (r RegionsSupportingMachine) AvailableZones(machineType, region, providerTy
 				return []string{}, nil
 			}
 			rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
-
-			var formattedZones []string
-			for _, zone := range zones {
-				formattedZones = append(formattedZones, provider.FullZoneName(providerType, region, zone))
-			}
-			return formattedZones, nil
+			return zones, nil
 		}
 	}
 

@@ -201,6 +201,18 @@ providersConfiguration:
       "g4dn.8xlarge": "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
       "g4dn.12xlarge": "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
       "g4dn.16xlarge": "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
+    regionsSupportingMachine:
+      g6:
+        us-west-2:
+        eu-central-1: [ a, b ]
+        ap-south-1: [ b ]
+        us-east-1: [ a, b, c, d ]
+      g4dn:
+        eu-central-1:
+        eu-west-2:
+        us-east-1:
+        ap-south-1:
+        us-west-2: [ a, b, c ]
     regions:
       eu-central-1:
         displayName: eu-central-1 (Europe, Frankfurt)
@@ -264,6 +276,11 @@ providersConfiguration:
       "Standard_NC8as_T4_v3": "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)*"
       "Standard_NC16as_T4_v3": "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)*"
       "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*"
+    regionsSupportingMachine:
+      Standard_NC:
+        westus2:
+        northeurope:
+        westeurope:
     regions:
       eastus:
         displayName: eastus (US East, VA)
@@ -323,7 +340,21 @@ providersConfiguration:
       "g2-standard-24": "g2-standard-24 (2GPU, 24vCPU, 96GB RAM)*"
       "g2-standard-32": "g2-standard-32 (1GPU, 32vCPU, 128GB RAM)*"
       "g2-standard-48": "g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*"
-
+    regionsSupportingMachine:
+      c2d-highcpu:
+        europe-west3:
+        asia-south1:
+        us-central1:
+        asia-southeast1:
+        us-west1:
+        us-east4:
+        europe-west4:
+      g2-standard:
+        asia-south1:
+        us-west1:
+        us-central1:
+        europe-west4:
+        europe-west3: [ a, b ]
     regions:
       europe-west3:
         displayName: europe-west3 (Europe, Frankfurt)

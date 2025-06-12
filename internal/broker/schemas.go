@@ -1,8 +1,6 @@
 package broker
 
 import (
-	"io"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -18,23 +16,14 @@ type SchemaService struct {
 	cfg Config
 }
 
-func NewSchemaService(providerConfig io.Reader, planConfig io.Reader, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) (*SchemaService, error) {
-	planSpec, err := configuration.NewPlanSpecifications(planConfig)
-	if err != nil {
-		return nil, err
-	}
-	providerSpec, err := configuration.NewProviderSpec(providerConfig)
-	if err != nil {
-		return nil, err
-	}
-
+func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) *SchemaService {
 	return &SchemaService{
 		planSpec:              planSpec,
 		providerSpec:          providerSpec,
 		defaultOIDCConfig:     defaultOIDCConfig,
 		cfg:                   cfg,
 		ingressFilteringPlans: ingressFilteringPlans,
-	}, nil
+	}
 }
 
 func (s *SchemaService) Validate() error {

@@ -4,22 +4,27 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type Provider struct {
-	imConfig                 broker.InfrastructureManager
-	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
+type RegionsSupportingMachine interface {
+	AvailableZonesForAdditionalWorkers(machineType, region, providerType string) ([]string, error)
 }
 
-func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine) *Provider {
+type Provider struct {
+	imConfig broker.InfrastructureManager
+
+	regionsSupportingMachine RegionsSupportingMachine
+}
+
+func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine RegionsSupportingMachine) *Provider {
 	return &Provider{
 		imConfig:                 imConfig,
 		regionsSupportingMachine: regionsSupportingMachine,
@@ -39,14 +44,18 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
-			customAvailableZones, err := p.regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
+			customAvailableZones, err := p.regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
 			if err != nil {
 				return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
 			}
 
 			// If custom zones are found, use them instead of the Kyma workload zones.
 			if len(customAvailableZones) > 0 {
-				workerZones = customAvailableZones
+				var formattedZones []string
+				for _, zone := range customAvailableZones {
+					formattedZones = append(formattedZones, provider.FullZoneName(values.ProviderType, values.Region, zone))
+				}
+				workerZones = formattedZones
 			}
 			// limit to 3 zones (if there is more than 3 available)
 			if len(workerZones) > 3 {

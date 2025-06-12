@@ -1,16 +1,17 @@
 package workers
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	provider2 "github.com/kyma-project/kyma-environment-broker/internal/provider"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +51,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with Kyma workload zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -81,7 +82,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with one zone if ha is disabled", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -109,7 +110,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker using zones from RegionsSupportingMachine", func(t *testing.T) {
 		// given
-		regionsSupportingMachine := regionssupportingmachine.RegionsSupportingMachine{
+		regionsSupportingMachine := configuration.RegionsSupportingMachine{
 			"standard": {
 				"eu-west-1": {"a", "b", "c"},
 			},
@@ -145,7 +146,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should skip volume for openstack provider", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -171,4 +172,9 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 		assert.Equal(t, "worker", workers[0].Name)
 		assert.Nil(t, workers[0].Volume)
 	})
+}
+
+func newEmptyProviderSpec() *configuration.ProviderSpec {
+	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
+	return spec
 }

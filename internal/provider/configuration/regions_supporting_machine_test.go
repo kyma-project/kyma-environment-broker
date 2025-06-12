@@ -1,7 +1,9 @@
-package regionssupportingmachine
+package configuration_test
 
 import (
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
@@ -11,7 +13,7 @@ import (
 
 func TestReadRegionsSupportingMachineFromFile(t *testing.T) {
 	// given/when
-	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
+	regionsSupportingMachine, err := configuration.ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
 	require.NoError(t, err)
 
 	// then
@@ -34,7 +36,7 @@ func TestReadRegionsSupportingMachineFromFile(t *testing.T) {
 
 func TestIsSupported(t *testing.T) {
 	// given
-	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
+	regionsSupportingMachine, err := configuration.ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -65,7 +67,7 @@ func TestIsSupported(t *testing.T) {
 
 func TestSupportedRegions(t *testing.T) {
 	// given
-	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
+	regionsSupportingMachine, err := configuration.ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -92,7 +94,7 @@ func TestSupportedRegions(t *testing.T) {
 
 func TestAvailableZones(t *testing.T) {
 	// given
-	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
+	regionsSupportingMachine, err := configuration.ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -107,21 +109,21 @@ func TestAvailableZones(t *testing.T) {
 			provider:    provider.AWSProviderType,
 			machineType: "c2d-highmem-32",
 			region:      "southamerica-east1",
-			expected:    []string{"southamerica-east1a", "southamerica-east1b", "southamerica-east1c"},
+			expected:    []string{"a", "b", "c"},
 		},
 		{
 			name:        "AWS plan - region with 2 zones",
 			provider:    provider.AWSProviderType,
 			machineType: "Standard_L8s_v3",
 			region:      "brazilsouth",
-			expected:    []string{"brazilsoutha", "brazilsouthb"},
+			expected:    []string{"a", "b"},
 		},
 		{
 			name:        "AWS plan - region with 1 zones",
 			provider:    provider.AWSProviderType,
 			machineType: "Standard_L8s_v3",
 			region:      "uksouth",
-			expected:    []string{"uksoutha"},
+			expected:    []string{"a"},
 		},
 		{
 			name:        "Azure plan - region with 3 zones",
@@ -149,21 +151,21 @@ func TestAvailableZones(t *testing.T) {
 			provider:    provider.GCPProviderType,
 			machineType: "c2d-highmem-32",
 			region:      "southamerica-east1",
-			expected:    []string{"southamerica-east1-a", "southamerica-east1-b", "southamerica-east1-c"},
+			expected:    []string{"a", "b", "c"},
 		},
 		{
 			name:        "GCP plan - region with 2 zones",
 			provider:    provider.GCPProviderType,
 			machineType: "Standard_L8s_v3",
 			region:      "brazilsouth",
-			expected:    []string{"brazilsouth-a", "brazilsouth-b"},
+			expected:    []string{"a", "b"},
 		},
 		{
 			name:        "GCP plan - region with 1 zones",
 			provider:    provider.GCPProviderType,
 			machineType: "Standard_L8s_v3",
 			region:      "uksouth",
-			expected:    []string{"uksouth-a"},
+			expected:    []string{"a"},
 		},
 		{
 			name:        "region with empty list of zones",
@@ -198,7 +200,7 @@ func TestAvailableZones(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// when
-			result, err := regionsSupportingMachine.AvailableZones(tt.machineType, tt.region, tt.provider)
+			result, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(tt.machineType, tt.region, tt.provider)
 			assert.NoError(t, err)
 
 			// then
@@ -209,7 +211,7 @@ func TestAvailableZones(t *testing.T) {
 
 func TestAvailableZonesForRegionWith4Zones(t *testing.T) {
 	// given
-	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
+	regionsSupportingMachine, err := configuration.ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine.yaml")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -220,7 +222,7 @@ func TestAvailableZonesForRegionWith4Zones(t *testing.T) {
 		{
 			name:     "AWS plan",
 			provider: provider.AWSProviderType,
-			expected: []string{"ap-northeast-1a", "ap-northeast-1b", "ap-northeast-1c", "ap-northeast-1d"},
+			expected: []string{"a", "b", "c", "d"},
 		},
 		{
 			name:     "Azure plan",
@@ -230,14 +232,14 @@ func TestAvailableZonesForRegionWith4Zones(t *testing.T) {
 		{
 			name:     "GCP plan",
 			provider: provider.GCPProviderType,
-			expected: []string{"ap-northeast-1-a", "ap-northeast-1-b", "ap-northeast-1-c", "ap-northeast-1-d"},
+			expected: []string{"a", "b", "c", "d"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//when
-			result, err := regionsSupportingMachine.AvailableZones("m8g", "ap-northeast-1", tt.provider)
+			result, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers("m8g", "ap-northeast-1", tt.provider)
 			assert.NoError(t, err)
 
 			//then

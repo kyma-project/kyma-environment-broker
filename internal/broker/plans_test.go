@@ -7,6 +7,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/stretchr/testify/assert"
 
@@ -146,15 +148,13 @@ func TestRemoveString(t *testing.T) {
 }
 
 func createSchemaService(t *testing.T) *SchemaService {
-	plans, err := os.Open("testdata/plans.yaml")
+	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)
-	defer plans.Close()
 
-	provider, err := os.Open("testdata/providers.yaml")
+	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
-	defer provider.Close()
 
-	schemaService, err := NewSchemaService(provider, plans, nil, Config{
+	schemaService := NewSchemaService(provider, plans, nil, Config{
 		IncludeAdditionalParamsInSchema: true,
 		EnableShootAndSeedSameRegion:    true,
 		UseAdditionalOIDCSchema:         false,

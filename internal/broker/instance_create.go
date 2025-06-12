@@ -56,10 +56,8 @@ type (
 		ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
 	}
 
-	RegionsSupporter interface {
-		IsSupported(region string, machineType string) bool
-		SupportedRegions(machineType string) []string
-		AvailableZones(machineType, region, planID string) ([]string, error)
+	RegionsSupporterProvider interface {
+		RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error)
 	}
 )
 
@@ -82,13 +80,12 @@ type ProvisionEndpoint struct {
 
 	freemiumWhiteList whitelist.Set
 
-	regionsSupportingMachine RegionsSupporter
-
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
+	providerSpec           RegionsSupporterProvider
 }
 
 const (
@@ -109,7 +106,7 @@ func NewProvision(brokerConfig Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	schemaService *SchemaService,
-	regionsSupportingMachine RegionsSupporter,
+	providerSpec RegionsSupporterProvider,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
@@ -121,26 +118,26 @@ func NewProvision(brokerConfig Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                   brokerConfig,
-		infrastructureManager:    imConfig,
-		operationsStorage:        db.Operations(),
-		instanceStorage:          db.Instances(),
-		instanceArchivedStorage:  db.InstancesArchived(),
-		queue:                    queue,
-		log:                      log.With("service", "ProvisionEndpoint"),
-		enabledPlanIDs:           enabledPlanIDs,
-		plansConfig:              plansConfig,
-		shootDomain:              gardenerConfig.ShootDomain,
-		shootProject:             gardenerConfig.Project,
-		shootDnsProviders:        gardenerConfig.DNSProviders,
-		dashboardConfig:          dashboardConfig,
-		freemiumWhiteList:        freemiumWhitelist,
-		kcBuilder:                kcBuilder,
-		regionsSupportingMachine: regionsSupportingMachine,
-		valuesProvider:           valuesProvider,
-		useSmallerMachineTypes:   useSmallerMachineTypes,
-		schemaService:            schemaService,
-		providerConfigProvider:   providerConfigProvider,
+		config:                  brokerConfig,
+		infrastructureManager:   imConfig,
+		operationsStorage:       db.Operations(),
+		instanceStorage:         db.Instances(),
+		instanceArchivedStorage: db.InstancesArchived(),
+		queue:                   queue,
+		log:                     log.With("service", "ProvisionEndpoint"),
+		enabledPlanIDs:          enabledPlanIDs,
+		plansConfig:             plansConfig,
+		shootDomain:             gardenerConfig.ShootDomain,
+		shootProject:            gardenerConfig.Project,
+		shootDnsProviders:       gardenerConfig.DNSProviders,
+		dashboardConfig:         dashboardConfig,
+		freemiumWhiteList:       freemiumWhitelist,
+		kcBuilder:               kcBuilder,
+		providerSpec:            providerSpec,
+		valuesProvider:          valuesProvider,
+		useSmallerMachineTypes:  useSmallerMachineTypes,
+		schemaService:           schemaService,
+		providerConfigProvider:  providerConfigProvider,
 	}
 }
 
@@ -325,12 +322,16 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	if !b.regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
+	if err != nil {
+		return fmt.Errorf("while obtaining regions supporting machine: %w", err)
+	}
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
 		return fmt.Errorf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(parameters.Region),
 			valueOfPtr(parameters.MachineType),
-			strings.Join(b.regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
 		)
 	}
 
@@ -356,11 +357,17 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			message := "names of additional worker node pools must be unique"
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
+
+		regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
+		if err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		}
+
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
+			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
@@ -369,7 +376,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
-		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
@@ -547,7 +554,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkUnsupportedMachines(regionsSupportingMachine RegionsSupporter, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	unsupportedMachines := make(map[string][]string)
 	var orderedMachineTypes []string
 
@@ -578,8 +585,8 @@ func checkUnsupportedMachines(regionsSupportingMachine RegionsSupporter, region 
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkAvailableZones(regionsSupportingMachine RegionsSupporter, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
-	zones, err := regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, region, planID)
+func checkAvailableZones(regionsSupportingMachine internal.RegionsSupporter, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
+	zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
 	if err != nil {
 		return fmt.Errorf("while getting available zones: %w", err)
 	}
