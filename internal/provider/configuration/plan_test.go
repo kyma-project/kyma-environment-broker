@@ -21,6 +21,7 @@ plan1,plan2:
                 - eu-west-1
                 - us-east-1
 plan3:
+        upgradableToPlans: [plan3-bis]
         regions:
             cf-eu11:
                 - westeurope
@@ -44,4 +45,10 @@ sap-converged-cloud:
 	assert.Equal(t, []string{"eu-central-1", "eu-west-1", "us-east-1"}, spec.Regions("plan1", "cf-us11"))
 	assert.Equal(t, []string{"eu-central-1", "eu-west-1", "us-east-1"}, spec.Regions("plan2", "cf-us11"))
 	assert.Equal(t, []string{"japaneast", "easteurope"}, spec.Regions("plan3", "cf-us11"))
+
+	// upgradable plans
+	assert.True(t, spec.IsUpgradableBetween("plan3", "plan3-bis"))
+	assert.False(t, spec.IsUpgradableBetween("plan3", "plan1"))
+	assert.False(t, spec.IsUpgradableBetween("plan1", "plan3-bis"))
+	assert.False(t, spec.IsUpgradableBetween("plan1-not-existing", "plan2"))
 }

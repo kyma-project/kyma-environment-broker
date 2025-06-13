@@ -104,8 +104,11 @@ preview,aws,build-runtime-aws:
     cf-eu11: [ "eu-central-1" ]
     default: [ "eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-2", "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2" ]
 
-azure,build-runtime-azure:
-  regularMachines:
+azure:
+  volumeSizeGb: 82
+  upgradableToPlans:
+   - build-runtime-azure
+  regularMachines: &azure_regular_machines
     - "Standard_D2s_v5"
     - "Standard_D4s_v5"
     - "Standard_D8s_v5"
@@ -119,7 +122,7 @@ azure,build-runtime-azure:
     - "Standard_D32_v3"
     - "Standard_D48_v3"
     - "Standard_D64_v3"
-  additionalMachines:
+  additionalMachines: &azure_additional_machines
     - "Standard_F2s_v2"
     - "Standard_F4s_v2"
     - "Standard_F8s_v2"
@@ -134,6 +137,12 @@ azure,build-runtime-azure:
   regions: &azure_regions
     cf-ch20: [ "switzerlandnorth" ]
     default: [ "eastus","centralus","westus2","uksouth","northeurope","westeurope","japaneast","southeastasia","australiaeast","brazilsouth","canadacentral" ]
+
+build-runtime-azure:
+  volumeSizeGb: 80
+  regularMachines: *azure_regular_machines
+  additionalMachines: *azure_additional_machines
+  regions: *azure_regions
 
 azure_lite:
   regularMachines:

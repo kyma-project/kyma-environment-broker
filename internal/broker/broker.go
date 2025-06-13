@@ -69,6 +69,7 @@ type Config struct {
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
 
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
+	EnablePlanUpgrades          bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

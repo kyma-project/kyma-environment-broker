@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/stretchr/testify/assert"
@@ -100,4 +102,15 @@ gcp:
 
 	// then
 	assert.Error(t, err)
+}
+
+func TestSchemaPlans(t *testing.T) {
+	// Given
+	schemaService := createSchemaService(t)
+
+	// When
+	result := schemaService.Plans(PlansConfig{}, "cf-eu31", runtime.Azure)
+
+	assert.True(t, *result[AzurePlanID].PlanUpdatable)
+	assert.False(t, *result[BuildRuntimeAzurePlanID].PlanUpdatable)
 }

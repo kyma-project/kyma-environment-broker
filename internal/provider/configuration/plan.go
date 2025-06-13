@@ -52,6 +52,7 @@ type planSpecificationDTO struct {
 	RegularMachines    []string `yaml:"regularMachines"`
 	AdditionalMachines []string `yaml:"additionalMachines"`
 	VolumeSizeGb       int      `yaml:"volumeSizeGb"`
+	UpgradableToPlans  []string `yaml:"upgradableToPlans,omitempty"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -108,4 +109,25 @@ func (p *PlanSpecifications) DefaultVolumeSizeGb(planName string) (int, bool) {
 		return 0, false
 	}
 	return plan.VolumeSizeGb, true
+}
+
+func (p *PlanSpecifications) IsUpgradableBetween(from, to string) bool {
+	plan, ok := p.plans[from]
+	if !ok {
+		return false
+	}
+	for _, upgradablePlan := range plan.UpgradableToPlans {
+		if strings.ToLower(upgradablePlan) == strings.ToLower(to) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *PlanSpecifications) IsUpgradable(planName string) bool {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return false
+	}
+	return len(plan.UpgradableToPlans) > 0
 }

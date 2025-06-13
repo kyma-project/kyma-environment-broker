@@ -117,6 +117,8 @@ plansConfiguration:
         - ap-southeast-1
         - ap-southeast-2
   azure,build-runtime-azure:
+    upgradableToPlans:
+      - build-runtime-azure
     regularMachines:
       - "Standard_D2s_v5"
       - "Standard_D4s_v5"

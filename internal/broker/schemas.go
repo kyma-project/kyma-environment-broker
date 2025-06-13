@@ -56,45 +56,68 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 	outputPlans := map[string]domain.ServicePlan{}
 
 	if createSchema, updateSchema, available := s.AWSSchemas(platformRegion); available {
-		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, createSchema, updateSchema)
+		outputPlans[AWSPlanID] = s.defaultServicePlan(AWSPlanID, AWSPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.GCPSchemas(platformRegion); available {
-		outputPlans[GCPPlanID] = defaultServicePlan(GCPPlanID, GCPPlanName, plans, createSchema, updateSchema)
+		outputPlans[GCPPlanID] = s.defaultServicePlan(GCPPlanID, GCPPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.AzureSchemas(platformRegion); available {
-		outputPlans[AzurePlanID] = defaultServicePlan(AzurePlanID, AzurePlanName, plans, createSchema, updateSchema)
+		outputPlans[AzurePlanID] = s.defaultServicePlan(AzurePlanID, AzurePlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.SapConvergedCloudSchemas(platformRegion); available {
-		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, createSchema, updateSchema)
+		outputPlans[SapConvergedCloudPlanID] = s.defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.PreviewSchemas(platformRegion); available {
-		outputPlans[PreviewPlanID] = defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, createSchema, updateSchema)
+		outputPlans[PreviewPlanID] = s.defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.BuildRuntimeAWSSchemas(platformRegion); available {
-		outputPlans[BuildRuntimeAWSPlanID] = defaultServicePlan(BuildRuntimeAWSPlanID, BuildRuntimeAWSPlanName, plans, createSchema, updateSchema)
+		outputPlans[BuildRuntimeAWSPlanID] = s.defaultServicePlan(BuildRuntimeAWSPlanID, BuildRuntimeAWSPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.BuildRuntimeGcpSchemas(platformRegion); available {
-		outputPlans[BuildRuntimeGCPPlanID] = defaultServicePlan(BuildRuntimeGCPPlanID, BuildRuntimeGCPPlanName, plans, createSchema, updateSchema)
+		outputPlans[BuildRuntimeGCPPlanID] = s.defaultServicePlan(BuildRuntimeGCPPlanID, BuildRuntimeGCPPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.BuildRuntimeAzureSchemas(platformRegion); available {
-		outputPlans[BuildRuntimeAzurePlanID] = defaultServicePlan(BuildRuntimeAzurePlanID, BuildRuntimeAzurePlanName, plans, createSchema, updateSchema)
+		outputPlans[BuildRuntimeAzurePlanID] = s.defaultServicePlan(BuildRuntimeAzurePlanID, BuildRuntimeAzurePlanName, plans, createSchema, updateSchema)
 	}
 	if azureLiteCreateSchema, azureLiteUpdateSchema, available := s.AzureLiteSchemas(platformRegion); available {
-		outputPlans[AzureLitePlanID] = defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteCreateSchema, azureLiteUpdateSchema)
+		outputPlans[AzureLitePlanID] = s.defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteCreateSchema, azureLiteUpdateSchema)
 	}
 	if freemiumCreateSchema, freemiumUpdateSchema, available := s.FreeSchemas(cp, platformRegion); available {
-		outputPlans[FreemiumPlanID] = defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumCreateSchema, freemiumUpdateSchema)
+		outputPlans[FreemiumPlanID] = s.defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumCreateSchema, freemiumUpdateSchema)
 	}
 
 	trialCreateSchema := s.TrialSchema(false)
 	trialUpdateSchema := s.TrialSchema(true)
-	outputPlans[TrialPlanID] = defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialCreateSchema, trialUpdateSchema)
+	outputPlans[TrialPlanID] = s.defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialCreateSchema, trialUpdateSchema)
 
 	ownClusterCreateSchema := s.OwnClusterSchema(false)
 	ownClusterUpdateSchema := s.OwnClusterSchema(true)
-	outputPlans[OwnClusterPlanID] = defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterCreateSchema, ownClusterUpdateSchema)
+	outputPlans[OwnClusterPlanID] = s.defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterCreateSchema, ownClusterUpdateSchema)
 
 	return outputPlans
+}
+
+func (s *SchemaService) defaultServicePlan(id, name string, plans PlansConfig, createParams, updateParams *map[string]interface{}) domain.ServicePlan {
+	updatable := s.planSpec.IsUpgradable(name) && s.cfg.EnablePlanUpgrades
+	servicePlan := domain.ServicePlan{
+		ID:          id,
+		Name:        name,
+		Description: defaultDescription(name, plans),
+		Metadata:    defaultMetadata(name, plans),
+		Schemas: &domain.ServiceSchemas{
+			Instance: domain.ServiceInstanceSchema{
+				Create: domain.Schema{
+					Parameters: *createParams,
+				},
+				Update: domain.Schema{
+					Parameters: *updateParams,
+				},
+			},
+		},
+		PlanUpdatable: &updatable,
+	}
+
+	return servicePlan
 }
 
 func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, flags ControlFlagsObject) (create, update *map[string]interface{}) {

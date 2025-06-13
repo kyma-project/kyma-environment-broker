@@ -183,27 +183,6 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 	return unmarshalled
 }
 
-func defaultServicePlan(id, name string, plans PlansConfig, createParams, updateParams *map[string]interface{}) domain.ServicePlan {
-	servicePlan := domain.ServicePlan{
-		ID:          id,
-		Name:        name,
-		Description: defaultDescription(name, plans),
-		Metadata:    defaultMetadata(name, plans),
-		Schemas: &domain.ServiceSchemas{
-			Instance: domain.ServiceInstanceSchema{
-				Create: domain.Schema{
-					Parameters: *createParams,
-				},
-				Update: domain.Schema{
-					Parameters: *updateParams,
-				},
-			},
-		},
-	}
-
-	return servicePlan
-}
-
 func defaultDescription(planName string, plans PlansConfig) string {
 	plan, ok := plans[planName]
 	if !ok || len(plan.Description) == 0 {
