@@ -57,6 +57,19 @@ The workflow performs the following steps:
 1. Checks out code
 2. Invokes the [validation script](/scripts/schemamigrator/validate.sh)
 
+## Upload Release Logs as Assets Workflow
+
+This [workflow](/.github/workflows/upload-release-logs.yaml) uploads the logs from the release workflow as assets to the corresponding GitHub release. It is triggered:
+
+* On every published release event
+
+The workflow performs the following steps:
+
+1. Checks out the repository
+2. Waits for the "Create and promote release" workflow to finish if it is still in progress
+3. Downloads logs from all attempts of the "Create and promote release" workflow for the current release
+4. Uploads the downloaded logs as assets to the current GitHub release
+
 ## Reusable Workflows
 
 There are reusable workflows created. Anyone with access to a reusable workflow can call it from another workflow.
