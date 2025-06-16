@@ -59,9 +59,7 @@ The workflow performs the following steps:
 
 ## Upload Release Logs as Assets Workflow
 
-This [workflow](/.github/workflows/upload-release-logs.yaml) uploads the logs from the release workflow as assets to the corresponding GitHub release. It is triggered:
-
-* On every published release event
+This [workflow](/.github/workflows/upload-release-logs.yaml) uploads the logs from the release workflow as assets to the corresponding GitHub release. It is triggered on every published release event.
 
 The workflow performs the following steps:
 
