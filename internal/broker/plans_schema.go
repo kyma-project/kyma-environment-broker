@@ -449,7 +449,7 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 	}
 	if rejectUnsupportedParameters {
 		if modulesCustom, ok := modules.OneOf[1].(ModulesCustom); ok {
-			modulesCustom.Properties.List.Type.AdditionalProperties = false
+			modulesCustom.Properties.List.Items.AdditionalProperties = false
 			modules.OneOf[1] = modulesCustom
 		}
 	}
