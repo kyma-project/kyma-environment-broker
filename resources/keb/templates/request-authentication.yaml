@@ -5,8 +5,15 @@ metadata:
   namespace: kcp-system
 spec:
   jwtRules:
-  - issuer: {{ tpl .Values.oidc.issuer $ }}
-    jwksUri: {{ tpl .Values.oidc.keysURL $ }}
+  {{- if .Values.oidc.issuers }}
+  {{- range $i, $p := .Values.oidc.issuers }}
+    - issuer: {{ tpl $p $ }}
+      jwksUri: {{ tpl (print $p "/oauth2/certs") $ }}
+  {{- end }}
+  {{- else }}
+    - issuer: {{ tpl .Values.oidc.issuer $ }}
+      jwksUri: {{ tpl (print .Values.oidc.issuer "/oauth2/certs") $ }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
