@@ -501,7 +501,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 		Type:        "boolean",
 		Title:       "Enforce same location for Seed and Shoot",
 		Default:     false,
-		Description: "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. The provisioning process fails if no seed is available in the region.",
+		Description: "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if no seed is available in the region.",
 	}
 }
 
