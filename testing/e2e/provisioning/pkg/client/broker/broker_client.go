@@ -101,7 +101,7 @@ type instanceDetailsResponse struct {
 
 type provisionParameters struct {
 	Name        string `json:"name"`
-	Region      string `json:"region"`
+	Region      string `json:"region,omitempty"`
 	KymaVersion string `json:"kymaVersion,omitempty"`
 }
 
