@@ -8,8 +8,6 @@ import (
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -70,18 +68,6 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 			logger.Info("Runtime resource already deleted")
 			return operation, 0, nil
 		}
-	}
-
-	// save the information about the controller of SKR (Provisioner or KIM) only once, when the first deprovisioning is triggered
-	if operation.KimDeprovisionsOnly == nil {
-		controlledByKimOnly := !runtime.IsControlledByProvisioner()
-		newOperation, backoff, _ := step.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
-			operation.KimDeprovisionsOnly = ptr.Bool(controlledByKimOnly)
-		}, logger)
-		if backoff > 0 {
-			return newOperation, backoff, nil
-		}
-		operation = newOperation
 	}
 
 	err = step.kcpClient.Delete(context.Background(), &runtime)

@@ -521,15 +521,17 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("initial-groups"),
-								GroupsPrefix:   ptr.String("initial-groups-prefix"),
-								IssuerURL:      ptr.String("initial-issuer-url"),
-								SigningAlgs:    []string{"initial-signingAlgs"},
-								UsernameClaim:  ptr.String("initial-sub"),
-								UsernamePrefix: ptr.String("initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("initial-groups"),
+									GroupsPrefix:   ptr.String("initial-groups-prefix"),
+									IssuerURL:      ptr.String("initial-issuer-url"),
+									SigningAlgs:    []string{"initial-signingAlgs"},
+									UsernameClaim:  ptr.String("initial-sub"),
+									UsernamePrefix: ptr.String("initial-username-prefix"),
+								},
 							},
 						},
 					},
@@ -562,33 +564,39 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("first-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("first-initial-groups"),
-								GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
-								IssuerURL:      ptr.String("first-initial-issuer-url"),
-								SigningAlgs:    []string{"first-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("first-initial-sub"),
-								UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("first-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("first-initial-groups"),
+									GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
+									IssuerURL:      ptr.String("first-initial-issuer-url"),
+									SigningAlgs:    []string{"first-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("first-initial-sub"),
+									UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("second-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("second-initial-groups"),
-								GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
-								IssuerURL:      ptr.String("second-initial-issuer-url"),
-								SigningAlgs:    []string{"second-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("second-initial-sub"),
-								UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("second-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("second-initial-groups"),
+									GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
+									IssuerURL:      ptr.String("second-initial-issuer-url"),
+									SigningAlgs:    []string{"second-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("second-initial-sub"),
+									UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("third-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("third-initial-groups"),
-								GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
-								IssuerURL:      ptr.String("third-initial-issuer-url"),
-								SigningAlgs:    []string{"third-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("third-initial-sub"),
-								UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("third-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("third-initial-groups"),
+									GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
+									IssuerURL:      ptr.String("third-initial-issuer-url"),
+									SigningAlgs:    []string{"third-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("third-initial-sub"),
+									UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								},
 							},
 						},
 					},

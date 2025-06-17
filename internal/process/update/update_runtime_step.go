@@ -102,7 +102,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
 		if oidc.List != nil {
-			oidcConfigs := make([]gardener.OIDCConfig, 0)
+			oidcConfigs := make([]imv1.OIDCConfig, 0)
 			for _, oidcConfig := range oidc.List {
 				requiredClaims := make(map[string]string)
 				for _, claim := range oidcConfig.RequiredClaims {
@@ -111,21 +111,23 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						requiredClaims[parts[0]] = parts[1]
 					}
 				}
-				oidcConfigs = append(oidcConfigs, gardener.OIDCConfig{
-					ClientID:       &oidcConfig.ClientID,
-					IssuerURL:      &oidcConfig.IssuerURL,
-					SigningAlgs:    oidcConfig.SigningAlgs,
-					GroupsClaim:    &oidcConfig.GroupsClaim,
-					UsernamePrefix: &oidcConfig.UsernamePrefix,
-					UsernameClaim:  &oidcConfig.UsernameClaim,
-					RequiredClaims: requiredClaims,
-					GroupsPrefix:   &oidcConfig.GroupsPrefix,
+				oidcConfigs = append(oidcConfigs, imv1.OIDCConfig{
+					OIDCConfig: gardener.OIDCConfig{
+						ClientID:       &oidcConfig.ClientID,
+						IssuerURL:      &oidcConfig.IssuerURL,
+						SigningAlgs:    oidcConfig.SigningAlgs,
+						GroupsClaim:    &oidcConfig.GroupsClaim,
+						UsernamePrefix: &oidcConfig.UsernamePrefix,
+						UsernameClaim:  &oidcConfig.UsernameClaim,
+						RequiredClaims: requiredClaims,
+						GroupsPrefix:   &oidcConfig.GroupsPrefix,
+					},
 				})
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
 		} else if dto := oidc.OIDCConfigDTO; dto != nil {
 			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
 			}
 			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 			if len(dto.SigningAlgs) > 0 {
