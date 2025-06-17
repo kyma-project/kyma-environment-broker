@@ -66,6 +66,8 @@ gcp,build-runtime-gcp:
 
 
 preview,aws,build-runtime-aws:
+  upgradableToPlans:
+    - build-runtime-aws
   volumeSizeGb: 81
   regularMachines:
     - "m6i.large"

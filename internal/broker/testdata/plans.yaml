@@ -65,6 +65,8 @@ gcp,build-runtime-gcp:
 
 
 preview,aws,build-runtime-aws:
+  upgradableToPlans:
+    - build-runtime-aws
   regularMachines:
     - "m6i.large"
     - "m6i.xlarge"

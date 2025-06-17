@@ -62,6 +62,7 @@ type UpdateEndpoint struct {
 
 	schemaService *SchemaService
 	providerSpec  *configuration.ProviderSpec
+	planSpec      *configuration.PlanSpecifications
 }
 
 func NewUpdate(cfg Config,
@@ -78,6 +79,7 @@ func NewUpdate(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	kcpClient client.Client,
 	providerSpec *configuration.ProviderSpec,
+	planSpec *configuration.PlanSpecifications,
 	imConfig InfrastructureManager,
 	schemaService *SchemaService,
 ) *UpdateEndpoint {
@@ -99,6 +101,7 @@ func NewUpdate(cfg Config,
 		providerSpec:                             providerSpec,
 		infrastructureManagerConfig:              imConfig,
 		schemaService:                            schemaService,
+		planSpec:                                 planSpec,
 	}
 }
 
@@ -213,6 +216,9 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 	if len(details.RawParameters) != 0 {
 		return true
 	}
+	if details.PlanID != instance.ServicePlanID {
+		return true
+	}
 	return ersContext.ERSUpdate()
 }
 
@@ -321,12 +327,29 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	var updateStorage []string
+	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
+		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
+		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
+			logger.Info(fmt.Sprintf("Plan change accepted."))
+			operation.UpdatedPlanID = details.PlanID
+			instance.Parameters.PlanID = details.PlanID
+			instance.ServicePlanID = details.PlanID
+			updateStorage = append(updateStorage, "Plan change")
+		} else {
+			logger.Info(fmt.Sprintf("Plan change not allowed."))
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
+				fmt.Errorf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+				http.StatusBadRequest,
+				fmt.Sprintf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+			)
+		}
+	}
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	var updateStorage []string
 	if params.OIDC.IsProvided() {
 		instance.Parameters.Parameters.OIDC = params.OIDC
 		updateStorage = append(updateStorage, "OIDC")

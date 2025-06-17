@@ -140,6 +140,9 @@ type Operation struct {
 	// UPDATING
 	UpdatingParameters UpdatingParametersDTO `json:"updating_parameters"`
 
+	// UpdatedPlanID is used to store the plan ID if the plan has been changed, "" if not changed
+	UpdatedPlanID string `json:"updated_plan_id,omitempty"`
+
 	// UPGRADE KYMA
 	RuntimeOperation            `json:"runtime_operation"`
 	ClusterConfigurationApplied bool `json:"cluster_configuration_applied"`

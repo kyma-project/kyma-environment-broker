@@ -3134,11 +3134,8 @@ func fixRegionsSupportingMachine() configuration.RegionsSupportingMachine {
 }
 
 func newSchemaService(t *testing.T) *broker.SchemaService {
-	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
-	require.NoError(t, err)
-
-	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
-	require.NoError(t, err)
+	plans := newPlanSpec(t)
+	provider := newProviderSpec(t)
 
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
 		IncludeAdditionalParamsInSchema: true,
@@ -3146,12 +3143,17 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 		UseAdditionalOIDCSchema:         true,
 	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
 		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
-	require.NoError(t, err)
 	return schemaService
 }
 
 func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
 	spec, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+	return spec
+}
+
+func newPlanSpec(t *testing.T) *configuration.PlanSpecifications {
+	spec, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)
 	return spec
 }
