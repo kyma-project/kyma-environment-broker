@@ -74,15 +74,17 @@ type ControlFlagsObject struct {
 	shootAndSeedFeatureEnabled  bool
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
+	enableJwksToken             bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, shootAndSeedEnabled, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
+func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, shootAndSeedEnabled, ingressFilteringEnabled, rejectUnsupportedParameters, enableJwksToken bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		includeAdditionalParameters: includeAdditionalParameters,
 		useAdditionalOIDCSchema:     useAdditionalOIDC,
 		shootAndSeedFeatureEnabled:  shootAndSeedEnabled,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
+		enableJwksToken:             enableJwksToken,
 	}
 }
 
@@ -145,9 +147,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	flags ControlFlagsObject) *map[string]interface{} {
 	if flags.includeAdditionalParameters {
 		if flags.useAdditionalOIDCSchema {
-			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
+			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters, flags.enableJwksToken)
 		} else {
-			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters)
+			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters, flags.enableJwksToken)
 		}
 		properties.Administrators = AdministratorsProperty()
 		if flags.shootAndSeedFeatureEnabled {
