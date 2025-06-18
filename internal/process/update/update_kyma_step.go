@@ -41,7 +41,7 @@ func (s *UpdateKymaStep) Name() string {
 
 func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.UpdatedPlanID == "" {
-		log.Info("")
+		log.Info("Plan did not change, skipping update Kyma resource step")
 		return operation, 0, nil
 	}
 
@@ -91,7 +91,7 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 		}
 	}
 	if kymaResourceName == "" {
-		log.Info("KymaResourceName is empty, skipping")
+		log.Info("KymaResourceName is empty, skipping update Kyma resource step")
 		return operation, 0, nil
 	}
 
@@ -108,7 +108,6 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 	log.Info(fmt.Sprintf("Updating Kyma resource: %s in namespace:%s", kymaResourceName, operation.KymaResourceNamespace))
 
 	kymaUnstructured.SetLabels(steps.UpdatePlanLabels(kymaUnstructured.GetLabels(), operation.UpdatedPlanID))
-
 	err = s.kcpClient.Update(context.Background(), kymaUnstructured)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Kyma Resource %s", kymaResourceName), err, 10*time.Second, 1*time.Minute, log)
