@@ -188,6 +188,8 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
 	}
 
+	runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
+
 	err = s.k8sClient.Update(context.Background(), &runtime)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)

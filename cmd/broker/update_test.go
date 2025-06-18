@@ -6,11 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -226,7 +228,11 @@ func TestUpdatePlan(t *testing.T) {
 	updateOperation := suite.GetOperation(updateOperationID)
 	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", updateOperation.ProvisioningParameters.PlanID)
 
-	// todo: assert runtime cr labels (and kyma cr)
+	suite.AssertRuntimeResourceLabels(updateOperationID)
+	suite.AssertKymaLabelsExist(updateOperationID, map[string]string{
+		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
+		customresources.PlanNameLabel: "build-runtime-aws",
+	})
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
