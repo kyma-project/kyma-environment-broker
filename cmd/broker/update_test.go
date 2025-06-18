@@ -8,6 +8,7 @@ import (
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -1584,14 +1585,16 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 	assert.Equal(t, surge, runtime.Spec.Shoot.Provider.Workers[0].MaxSurge.IntValue())
 	assert.Equal(t, unav, runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue())
 
-	assert.Equal(t, gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("https://issuer.url"),
-		SigningAlgs:    []string{"RS256"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: ptr.String("-"),
-		GroupsPrefix:   ptr.String("-"),
+	assert.Equal(t, imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("https://issuer.url"),
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("-"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
