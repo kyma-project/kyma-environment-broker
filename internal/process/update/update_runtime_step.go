@@ -188,7 +188,9 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
 	}
 
-	runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
+	if operation.UpdatedPlanID != "" {
+		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
+	}
 
 	err = s.k8sClient.Update(context.Background(), &runtime)
 	if err != nil {
