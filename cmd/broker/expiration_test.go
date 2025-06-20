@@ -192,7 +192,9 @@ func TestExpiration(t *testing.T) {
 			})
 
 			t.Run("should expire a trial instance after failed provisioning", func(t *testing.T) {
-				suite := NewBrokerSuiteTest(t)
+				cfg := fixConfig()
+				cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
+				suite := NewBrokerSuiteTestWithConfig(t, cfg)
 				defer suite.TearDown()
 				// given
 				instanceID := uuid.NewString()
