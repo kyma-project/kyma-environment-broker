@@ -1,6 +1,7 @@
 package fixture
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,7 +9,10 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -321,4 +325,40 @@ func FixExpiredBindingWithInstanceID(bindingID string, instanceID string, offset
 		ExpirationSeconds: 600,
 		CreatedBy:         "john.smith@email.com",
 	}
+}
+
+const KymaTemplate = `
+apiVersion: operator.kyma-project.io/v1beta2
+kind: Kyma
+metadata:
+  name: my-kyma
+  namespace: kyma-system
+spec:
+  sync:
+    strategy: secret
+  channel: stable
+  modules: []
+`
+
+type FakeKymaConfigProvider struct{}
+
+func (FakeKymaConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
+	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
+	cfg.KymaTemplate = KymaTemplate
+	cfgDestObj = cfg
+	return nil
+}
+
+func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceNamespace string, resourceName string) error {
+	return kcpClient.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "operator.kyma-project.io/v1beta2",
+		"kind":       "Kyma",
+		"metadata": map[string]interface{}{
+			"name":      resourceName,
+			"namespace": kymaResourceNamespace,
+		},
+		"spec": map[string]interface{}{
+			"channel": "stable",
+		},
+	}})
 }

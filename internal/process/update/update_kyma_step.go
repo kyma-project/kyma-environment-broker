@@ -78,13 +78,13 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 		instance, err := s.instances.GetByID(operation.InstanceID)
 		if err != nil {
 			log.Warn(fmt.Sprintf("Unable to get instance: %s", err.Error()))
-			return s.operationManager.RetryOperationWithoutFail(operation, err.Error(), "unable to get instance", 15*time.Second, 2*time.Minute, log, err)
+			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "unable to get instance", 15*time.Second, 2*time.Minute, log, err)
 		}
 		kymaResourceName = steps.KymaNameFromInstance(instance)
 		// save the kyma resource name if it was taken from the instance.runtimeID
 		backoff := time.Duration(0)
 		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-			op.KymaResourceNamespace = kymaResourceName
+			op.KymaResourceName = kymaResourceName
 		}, log)
 		if backoff > 0 {
 			return operation, backoff, nil
@@ -102,7 +102,7 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 		Name:      kymaResourceName,
 	}, kymaUnstructured)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get Kyma Resource %s", kymaResourceName), err, 10*time.Second, 1*time.Minute, log)
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("unable to get Kyma Resource %s", kymaResourceName), 10*time.Second, 1*time.Minute, log, err)
 	}
 
 	log.Info(fmt.Sprintf("Updating Kyma resource: %s in namespace:%s", kymaResourceName, operation.KymaResourceNamespace))
@@ -110,7 +110,7 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 	kymaUnstructured.SetLabels(steps.UpdatePlanLabels(kymaUnstructured.GetLabels(), operation.UpdatedPlanID))
 	err = s.kcpClient.Update(context.Background(), kymaUnstructured)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Kyma Resource %s", kymaResourceName), err, 10*time.Second, 1*time.Minute, log)
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("unable to update Kyma Resource %s", kymaResourceName), 10*time.Second, 1*time.Minute, log, err)
 	}
 
 	return operation, 0, nil
