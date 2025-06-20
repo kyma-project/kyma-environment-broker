@@ -9,6 +9,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -26,10 +27,27 @@ func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client,
 	return step
 }
 
+func NewCheckRuntimeResourceProvisioningStep(os storage.Operations, k8sClient client.Client, runtimeResourceStateRetry internal.RetryTuple, changeDescriptionThreshold time.Duration) *checkRuntimeResourceProvisioning {
+	step := &checkRuntimeResourceProvisioning{
+		k8sClient:                  k8sClient,
+		runtimeResourceStateRetry:  runtimeResourceStateRetry,
+		changeDescriptionThreshold: changeDescriptionThreshold,
+	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	return step
+}
+
 type checkRuntimeResource struct {
 	k8sClient                 client.Client
 	operationManager          *process.OperationManager
 	runtimeResourceStateRetry internal.RetryTuple
+}
+
+type checkRuntimeResourceProvisioning struct {
+	k8sClient                  client.Client
+	operationManager           *process.OperationManager
+	runtimeResourceStateRetry  internal.RetryTuple
+	changeDescriptionThreshold time.Duration
 }
 
 const (
@@ -38,7 +56,7 @@ const (
 )
 
 func (_ *checkRuntimeResource) Name() string {
-	return "Check_RuntimeResource"
+	return "Check_RuntimeResource_Update"
 }
 
 func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
@@ -63,9 +81,60 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logge
 	}
 }
 
+func (_ *checkRuntimeResourceProvisioning) Name() string {
+	return "Check_RuntimeResource_Provisioning"
+}
+
+func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
+	if err != nil {
+		log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, operation.RuntimeID))
+		return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, kcpRetryInterval, kcpRetryTimeout, log)
+	}
+
+	// check status
+	state := runtime.Status.State
+	log.Info(fmt.Sprintf("Runtime resource state: %s", state))
+	if state == imv1.RuntimeStateReady {
+		return operation, 0, nil
+	} else {
+		if time.Since(operation.CreatedAt) > s.changeDescriptionThreshold {
+			var backoff time.Duration
+			operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+				op.Description = fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", s.runtimeResourceStateRetry.Timeout)
+			}, log)
+			if backoff != 0 {
+				log.Error("cannot save the operation")
+				return operation, 5 * time.Second, nil
+			}
+		}
+		return s.RetryOrFail(operation, log, runtime)
+	}
+}
+
+func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
+	retryOperation, retry, err := s.operationManager.RetryOperation(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
+	if retryOperation.State == domain.Failed {
+		log.Error(fmt.Sprintf("runtime resource status: %v; failing operation and removing Runtime CR", runtime.Status))
+		err = s.k8sClient.Delete(context.Background(), runtime)
+		if err != nil {
+			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
+		}
+	}
+	return retryOperation, retry, err
+}
+
 func (s *checkRuntimeResource) GetRuntimeResource(name string, namespace string) (*imv1.Runtime, error) {
+	return GetRuntimeResource(name, namespace, s.k8sClient)
+}
+
+func (s *checkRuntimeResourceProvisioning) GetRuntimeResource(name string, namespace string) (*imv1.Runtime, error) {
+	return GetRuntimeResource(name, namespace, s.k8sClient)
+}
+
+func GetRuntimeResource(name string, namespace string, c client.Client) (*imv1.Runtime, error) {
 	runtime := imv1.Runtime{}
-	err := s.k8sClient.Get(context.Background(), client.ObjectKey{
+	err := c.Get(context.Background(), client.ObjectKey{
 		Namespace: namespace,
 		Name:      name,
 	}, &runtime)

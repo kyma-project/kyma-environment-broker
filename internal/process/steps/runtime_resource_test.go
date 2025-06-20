@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,13 +16,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const ProvisioningTakesLongerThanUsual = 20 * time.Minute
+const ProvisioningTimeout = 2 * time.Second
+
 func TestCheckRuntimeResourceStep(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	os := storage.NewMemoryStorage().Operations()
 
-	t.Run("run when ready", func(t *testing.T) {
+	t.Run("succeed when ready", func(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("1")
 		err = os.InsertOperation(operation)
@@ -40,7 +44,7 @@ func TestCheckRuntimeResourceStep(t *testing.T) {
 		assert.Zero(t, backoff)
 	})
 
-	t.Run("run when not ready and fail operation", func(t *testing.T) {
+	t.Run("fail operation when not ready and timeout", func(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("2")
 		operation.CreatedAt = time.Now().Add(-1 * time.Hour)
@@ -62,7 +66,7 @@ func TestCheckRuntimeResourceStep(t *testing.T) {
 		assert.Equal(t, domain.Failed, op.State)
 	})
 
-	t.Run("run when not ready and retry operation", func(t *testing.T) {
+	t.Run("retry operation when not ready and not timeout", func(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("3")
 		err = os.InsertOperation(operation)
@@ -81,7 +85,7 @@ func TestCheckRuntimeResourceStep(t *testing.T) {
 		assert.NotZero(t, backoff)
 	})
 
-	t.Run("run when failed and fail operation", func(t *testing.T) {
+	t.Run("fail operation when failed Runtime CR", func(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("4")
 		err = os.InsertOperation(operation)
@@ -99,6 +103,106 @@ func TestCheckRuntimeResourceStep(t *testing.T) {
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, domain.Failed, op.State)
+	})
+}
+
+func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	os := storage.NewMemoryStorage().Operations()
+
+	t.Run("succeed when ready", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("1")
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime(imv1.RuntimeStateReady)
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+
+		// when
+		_, backoff, err := step.Run(operation, fixLogger())
+
+		// then
+		assert.NoError(t, err)
+		assert.Zero(t, backoff)
+	})
+
+	t.Run("fail operation when not ready and timeout", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("2")
+		operation.CreatedAt = time.Now().Add(-1 * time.Hour)
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		// force immediate timeout
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeout, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsual)
+
+		// when
+		op, backoff, err := step.Run(operation, fixLogger())
+
+		// then
+		assert.Zero(t, backoff)
+		assert.Equal(t, domain.Failed, op.State)
+		// in the real life this resource could be still there, in the step we just trigger deletion (fire-and-forget)
+		_, err = GetRuntimeResource(existingRuntime.Name, existingRuntime.Namespace, k8sClient)
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "not found")
+	})
+
+	t.Run("retry operation when not ready and not timeout", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("3")
+		operation.Description = "Operation created"
+
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+
+		// when
+		postOperation, backoff, err := step.Run(operation, fixLogger())
+
+		// then
+		assert.NoError(t, err)
+		assert.NotZero(t, backoff)
+		assert.Equal(t, "Operation created", postOperation.Description)
+		dbOperation, _ := os.GetOperationByID("3")
+		assert.Equal(t, "Operation created", dbOperation.Description)
+	})
+
+	t.Run("retry operation when not ready and not timeout but operation takes longer than usual", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("4")
+		operation.CreatedAt = time.Now().Add(-1*ProvisioningTakesLongerThanUsual - time.Minute)
+		operation.Description = "Operation created"
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+
+		// when
+		postOperation, backoff, err := step.Run(operation, fixLogger())
+
+		// then
+		assert.NoError(t, err)
+		assert.NotZero(t, backoff)
+		assert.Equal(t, fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", ProvisioningTimeout), postOperation.Description)
+
+		dbOperation, _ := os.GetOperationByID("4")
+		assert.Equal(t, fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", ProvisioningTimeout), dbOperation.Description)
 	})
 }
 

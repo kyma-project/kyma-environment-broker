@@ -90,7 +90,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}),
+			step:      steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed

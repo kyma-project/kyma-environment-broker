@@ -237,7 +237,10 @@ func TestUpdatePlan(t *testing.T) {
 
 func TestUpdateFailedInstance(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t)
+	cfg := fixConfig()
+	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -261,7 +264,7 @@ func TestUpdateFailedInstance(t *testing.T) {
 				}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.failRuntimeByKIM(iid)
+	// just wait for timeout and failed operation
 	suite.WaitForOperationState(opID, domain.Failed)
 
 	// when

@@ -96,10 +96,11 @@ func (om *OperationManager) OperationCanceled(operation internal.Operation, desc
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed
 func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
-	log.Info(fmt.Sprintf("Retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
 
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
+		remainingTime := om.getRemainingTime(operation.ID, maxTime)
+		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %s left", maxTime.String(), retryInterval.String(), remainingTime.Round(time.Second).String()))
 		return operation, retryInterval, nil
 	}
 
@@ -211,4 +212,18 @@ func (om *OperationManager) isTimeoutOccurred(id string, maxTime time.Duration) 
 	om.mu.RLock()
 	defer om.mu.RUnlock()
 	return !om.retryTimestamps[id].IsZero() && time.Since(om.retryTimestamps[id]) > maxTime
+}
+
+func (om *OperationManager) getRemainingTime(id string, maxTime time.Duration) time.Duration {
+	om.mu.RLock()
+	defer om.mu.RUnlock()
+	if om.retryTimestamps[id].IsZero() {
+		return maxTime
+	} else {
+		remaining := maxTime - time.Since(om.retryTimestamps[id])
+		if remaining < 0 {
+			return 0
+		}
+		return remaining
+	}
 }

@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"io"
-	"net/http"
-	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -223,6 +222,7 @@ func TestFailedProvisioning(t *testing.T) {
 	cfg := fixConfig()
 	// Disable EDP to have all steps successfully executed
 	cfg.EDP.Disabled = true
+	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -244,7 +244,7 @@ func TestFailedProvisioning(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(response)
 	suite.WaitForOperationState(opID, domain.InProgress)
-	suite.failRuntimeByKIM(iid)
+	// just wait for timeout
 	suite.WaitForOperationState(opID, domain.Failed)
 
 	// when we create binding
