@@ -1,7 +1,6 @@
 package steps
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -199,10 +198,10 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.NotZero(t, backoff)
-		assert.Equal(t, fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", ProvisioningTimeout), postOperation.Description)
+		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeout), postOperation.Description)
 
 		dbOperation, _ := os.GetOperationByID("4")
-		assert.Equal(t, fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", ProvisioningTimeout), dbOperation.Description)
+		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeout), dbOperation.Description)
 	})
 }
 
