@@ -78,22 +78,24 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-custom"),
-		RequiredClaims: map[string]string{
-			"claim":  "value",
-			"claim2": "value2=value2",
-			"claim3": "=value3",
-			"claim4": "value4=",
-			"claim5": ",value5",
-			"claim6": "=",
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-custom"),
+			GroupsClaim:    ptr.String("gc-custom"),
+			IssuerURL:      ptr.String("issuer-url-custom"),
+			SigningAlgs:    []string{"sa-custom"},
+			UsernameClaim:  ptr.String("uc-custom"),
+			UsernamePrefix: ptr.String("up-custom"),
+			RequiredClaims: map[string]string{
+				"claim":  "value",
+				"claim2": "value2=value2",
+				"claim3": "=value3",
+				"claim4": "value4=",
+				"claim5": ",value5",
+				"claim6": "=",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{})
@@ -143,17 +145,19 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
-	expectedAdditionalOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-custom"),
-		RequiredClaims: map[string]string{
-			"claim": "value",
+	expectedAdditionalOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-custom"),
+			GroupsClaim:    ptr.String("gc-custom"),
+			IssuerURL:      ptr.String("issuer-url-custom"),
+			SigningAlgs:    []string{"sa-custom"},
+			UsernameClaim:  ptr.String("uc-custom"),
+			UsernamePrefix: ptr.String("up-custom"),
+			RequiredClaims: map[string]string{
+				"claim": "value",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{})
@@ -210,23 +214,27 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
-	firstExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("first-client-id-custom"),
-		GroupsClaim:    ptr.String("first-gc-custom"),
-		IssuerURL:      ptr.String("first-issuer-url-custom"),
-		SigningAlgs:    []string{"first-sa-custom"},
-		UsernameClaim:  ptr.String("first-uc-custom"),
-		UsernamePrefix: ptr.String("first-up-custom"),
-		GroupsPrefix:   ptr.String("-"),
+	firstExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("first-client-id-custom"),
+			GroupsClaim:    ptr.String("first-gc-custom"),
+			IssuerURL:      ptr.String("first-issuer-url-custom"),
+			SigningAlgs:    []string{"first-sa-custom"},
+			UsernameClaim:  ptr.String("first-uc-custom"),
+			UsernamePrefix: ptr.String("first-up-custom"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}
-	secondExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("second-client-id-custom"),
-		GroupsClaim:    ptr.String("second-gc-custom"),
-		IssuerURL:      ptr.String("second-issuer-url-custom"),
-		SigningAlgs:    []string{"second-sa-custom"},
-		UsernameClaim:  ptr.String("second-uc-custom"),
-		UsernamePrefix: ptr.String("second-up-custom"),
-		GroupsPrefix:   ptr.String("-"),
+	secondExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("second-client-id-custom"),
+			GroupsClaim:    ptr.String("second-gc-custom"),
+			IssuerURL:      ptr.String("second-issuer-url-custom"),
+			SigningAlgs:    []string{"second-sa-custom"},
+			UsernameClaim:  ptr.String("second-uc-custom"),
+			UsernamePrefix: ptr.String("second-up-custom"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{})
@@ -270,14 +278,16 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-default"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-default"),
-		GroupsPrefix:   ptr.String("-"),
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-custom"),
+			GroupsClaim:    ptr.String("gc-custom"),
+			IssuerURL:      ptr.String("issuer-url-custom"),
+			SigningAlgs:    []string{"sa-default"},
+			UsernameClaim:  ptr.String("uc-custom"),
+			UsernamePrefix: ptr.String("up-default"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{})
@@ -343,14 +353,16 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{}
 	assertInsertions(t, memoryStorage, instance, operation)
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-default"),
-		GroupsClaim:    ptr.String("gc-default"),
-		IssuerURL:      ptr.String("issuer-url-default"),
-		SigningAlgs:    []string{"sa-default"},
-		UsernameClaim:  ptr.String("uc-default"),
-		UsernamePrefix: ptr.String("up-default"),
-		GroupsPrefix:   ptr.String("-"),
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-default"),
+			GroupsClaim:    ptr.String("gc-default"),
+			IssuerURL:      ptr.String("issuer-url-default"),
+			SigningAlgs:    []string{"sa-default"},
+			UsernameClaim:  ptr.String("uc-default"),
+			UsernamePrefix: ptr.String("up-default"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{})

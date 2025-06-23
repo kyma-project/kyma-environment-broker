@@ -277,7 +277,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	}
 
 	if oidcInput == nil {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{oidc}
 	} else {
 		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = s.createOIDCConfigFromInput(oidcInput, oidc)
 	}
@@ -285,51 +285,55 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	return kubernetesConfig
 }
 
-func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() gardener.OIDCConfig {
-	return gardener.OIDCConfig{
-		ClientID:       &s.oidcDefaultValues.ClientID,
-		GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
-		IssuerURL:      &s.oidcDefaultValues.IssuerURL,
-		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
-		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
-		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
-		GroupsPrefix:   &s.oidcDefaultValues.GroupsPrefix,
+func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() imv1.OIDCConfig {
+	return imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       &s.oidcDefaultValues.ClientID,
+			GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
+			IssuerURL:      &s.oidcDefaultValues.IssuerURL,
+			SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
+			UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
+			UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
+			GroupsPrefix:   &s.oidcDefaultValues.GroupsPrefix,
+		},
 	}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCConnectDTO, defaultOIDC gardener.OIDCConfig) *[]gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCConnectDTO, defaultOIDC imv1.OIDCConfig) *[]imv1.OIDCConfig {
 	if oidcInput.List != nil {
 		return s.createOIDCConfigList(oidcInput.List)
 	}
 
 	if oidcInput.OIDCConfigDTO != nil {
-		return &[]gardener.OIDCConfig{s.mergeOIDCConfig(defaultOIDC, oidcInput.OIDCConfigDTO)}
+		return &[]imv1.OIDCConfig{s.mergeOIDCConfig(defaultOIDC, oidcInput.OIDCConfigDTO)}
 	}
 
-	return &[]gardener.OIDCConfig{defaultOIDC}
+	return &[]imv1.OIDCConfig{defaultOIDC}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
-	configs := make([]gardener.OIDCConfig, 0, len(oidcList))
+func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]imv1.OIDCConfig {
+	configs := make([]imv1.OIDCConfig, 0, len(oidcList))
 
 	for _, oidcConfig := range oidcList {
 		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
-		configs = append(configs, gardener.OIDCConfig{
-			ClientID:       &oidcConfig.ClientID,
-			IssuerURL:      &oidcConfig.IssuerURL,
-			SigningAlgs:    oidcConfig.SigningAlgs,
-			GroupsClaim:    &oidcConfig.GroupsClaim,
-			UsernamePrefix: &oidcConfig.UsernamePrefix,
-			UsernameClaim:  &oidcConfig.UsernameClaim,
-			RequiredClaims: requiredClaims,
-			GroupsPrefix:   ptr.String("-"),
+		configs = append(configs, imv1.OIDCConfig{
+			OIDCConfig: gardener.OIDCConfig{
+				ClientID:       &oidcConfig.ClientID,
+				IssuerURL:      &oidcConfig.IssuerURL,
+				SigningAlgs:    oidcConfig.SigningAlgs,
+				GroupsClaim:    &oidcConfig.GroupsClaim,
+				UsernamePrefix: &oidcConfig.UsernamePrefix,
+				UsernameClaim:  &oidcConfig.UsernameClaim,
+				GroupsPrefix:   ptr.String("-"),
+				RequiredClaims: requiredClaims,
+			},
 		})
 	}
 
 	return &configs
 }
 
-func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC gardener.OIDCConfig, inputOIDC *pkg.OIDCConfigDTO) gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig, inputOIDC *pkg.OIDCConfigDTO) imv1.OIDCConfig {
 	if inputOIDC.ClientID != "" {
 		defaultOIDC.ClientID = &inputOIDC.ClientID
 	}

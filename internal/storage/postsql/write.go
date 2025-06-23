@@ -170,6 +170,7 @@ func (ws writeSession) UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Set("subscription_global_account_id", instance.SubscriptionGlobalAccountID).
 		Set("service_id", instance.ServiceID).
 		Set("service_plan_id", instance.ServicePlanID).
+		Set("service_plan_name", instance.ServicePlanName).
 		Set("dashboard_url", instance.DashboardURL).
 		Set("provisioning_parameters", instance.ProvisioningParameters).
 		Set("provider_region", instance.ProviderRegion).

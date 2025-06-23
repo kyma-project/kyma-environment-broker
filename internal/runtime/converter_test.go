@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -60,14 +62,16 @@ func TestConverting_Updating(t *testing.T) {
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
 	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{{
 		Operation: internal.Operation{
-			CreatedAt: time.Now().Add(time.Second),
-			ID:        "prov-id",
-			State:     domain.InProgress,
+			CreatedAt:     time.Now().Add(time.Second),
+			ID:            "prov-id",
+			State:         domain.InProgress,
+			UpdatedPlanID: broker.BuildRuntimeAWSPlanID,
 		},
 	}}, 1)
 
 	// then
 	assert.Equal(t, runtime.StateUpdating, dto.Status.State)
+	assert.Equal(t, broker.BuildRuntimeAWSPlanName, dto.Status.Update.Data[0].UpdatedPlanName)
 }
 
 func TestConverting_UpdateFailed(t *testing.T) {

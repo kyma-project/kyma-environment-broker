@@ -93,18 +93,20 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("issuer-url"),
-		SigningAlgs:    []string{"signingAlgs"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: nil,
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: nil,
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -138,18 +140,20 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("issuer-url"),
-		SigningAlgs:    []string{"signingAlgs"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: ptr.String("initial-username-prefix"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("initial-username-prefix"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -208,27 +212,31 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 			},
 		},
 	}
-	firstExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("first-client-id-custom"),
-		GroupsClaim:    ptr.String("first-gc-custom"),
-		IssuerURL:      ptr.String("first-issuer-url-custom"),
-		SigningAlgs:    []string{"first-sa-custom"},
-		UsernameClaim:  ptr.String("first-uc-custom"),
-		UsernamePrefix: ptr.String("first-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	firstExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("first-client-id-custom"),
+			GroupsClaim:    ptr.String("first-gc-custom"),
+			IssuerURL:      ptr.String("first-issuer-url-custom"),
+			SigningAlgs:    []string{"first-sa-custom"},
+			UsernameClaim:  ptr.String("first-uc-custom"),
+			UsernamePrefix: ptr.String("first-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
-	secondExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("second-client-id-custom"),
-		GroupsClaim:    ptr.String("second-gc-custom"),
-		IssuerURL:      ptr.String("second-issuer-url-custom"),
-		SigningAlgs:    []string{"second-sa-custom"},
-		UsernameClaim:  ptr.String("second-uc-custom"),
-		UsernamePrefix: ptr.String("second-up-custom"),
-		GroupsPrefix:   ptr.String("second-gp-custom"),
+	secondExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("second-client-id-custom"),
+			GroupsClaim:    ptr.String("second-gc-custom"),
+			IssuerURL:      ptr.String("second-issuer-url-custom"),
+			SigningAlgs:    []string{"second-sa-custom"},
+			UsernameClaim:  ptr.String("second-uc-custom"),
+			UsernamePrefix: ptr.String("second-up-custom"),
+			GroupsPrefix:   ptr.String("second-gp-custom"),
+		},
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -289,31 +297,35 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			},
 		},
 	}
-	firstExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("first-client-id-custom"),
-		GroupsClaim:    ptr.String("first-gc-custom"),
-		IssuerURL:      ptr.String("first-issuer-url-custom"),
-		SigningAlgs:    []string{"first-sa-custom"},
-		UsernameClaim:  ptr.String("first-uc-custom"),
-		UsernamePrefix: ptr.String("first-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	firstExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("first-client-id-custom"),
+			GroupsClaim:    ptr.String("first-gc-custom"),
+			IssuerURL:      ptr.String("first-issuer-url-custom"),
+			SigningAlgs:    []string{"first-sa-custom"},
+			UsernameClaim:  ptr.String("first-uc-custom"),
+			UsernamePrefix: ptr.String("first-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
-	secondExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("second-client-id-custom"),
-		GroupsClaim:    ptr.String("second-gc-custom"),
-		IssuerURL:      ptr.String("second-issuer-url-custom"),
-		SigningAlgs:    []string{"second-sa-custom"},
-		UsernameClaim:  ptr.String("second-uc-custom"),
-		UsernamePrefix: ptr.String("second-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim3": "value3",
-			"claim4": "value4",
+	secondExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("second-client-id-custom"),
+			GroupsClaim:    ptr.String("second-gc-custom"),
+			IssuerURL:      ptr.String("second-issuer-url-custom"),
+			SigningAlgs:    []string{"second-sa-custom"},
+			UsernameClaim:  ptr.String("second-uc-custom"),
+			UsernamePrefix: ptr.String("second-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim3": "value3",
+				"claim4": "value4",
+			},
+			GroupsPrefix: ptr.String("second-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("second-gp-custom"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -521,15 +533,17 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("initial-groups"),
-								GroupsPrefix:   ptr.String("initial-groups-prefix"),
-								IssuerURL:      ptr.String("initial-issuer-url"),
-								SigningAlgs:    []string{"initial-signingAlgs"},
-								UsernameClaim:  ptr.String("initial-sub"),
-								UsernamePrefix: ptr.String("initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("initial-groups"),
+									GroupsPrefix:   ptr.String("initial-groups-prefix"),
+									IssuerURL:      ptr.String("initial-issuer-url"),
+									SigningAlgs:    []string{"initial-signingAlgs"},
+									UsernameClaim:  ptr.String("initial-sub"),
+									UsernamePrefix: ptr.String("initial-username-prefix"),
+								},
 							},
 						},
 					},
@@ -562,33 +576,39 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("first-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("first-initial-groups"),
-								GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
-								IssuerURL:      ptr.String("first-initial-issuer-url"),
-								SigningAlgs:    []string{"first-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("first-initial-sub"),
-								UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("first-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("first-initial-groups"),
+									GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
+									IssuerURL:      ptr.String("first-initial-issuer-url"),
+									SigningAlgs:    []string{"first-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("first-initial-sub"),
+									UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("second-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("second-initial-groups"),
-								GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
-								IssuerURL:      ptr.String("second-initial-issuer-url"),
-								SigningAlgs:    []string{"second-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("second-initial-sub"),
-								UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("second-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("second-initial-groups"),
+									GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
+									IssuerURL:      ptr.String("second-initial-issuer-url"),
+									SigningAlgs:    []string{"second-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("second-initial-sub"),
+									UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("third-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("third-initial-groups"),
-								GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
-								IssuerURL:      ptr.String("third-initial-issuer-url"),
-								SigningAlgs:    []string{"third-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("third-initial-sub"),
-								UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("third-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("third-initial-groups"),
+									GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
+									IssuerURL:      ptr.String("third-initial-issuer-url"),
+									SigningAlgs:    []string{"third-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("third-initial-sub"),
+									UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								},
 							},
 						},
 					},

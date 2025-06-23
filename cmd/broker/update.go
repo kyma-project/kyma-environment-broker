@@ -4,15 +4,14 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
@@ -20,7 +19,7 @@ import (
 )
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
-	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications) *process.Queue {
+	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -30,7 +29,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
 
-	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource"})
+	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource", "kyma_resource"})
 	updateSteps := []struct {
 		disabled  bool
 		stage     string
@@ -50,6 +49,10 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 			stage:     "check_runtime_resource",
 			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), kcpClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceUpdate, Interval: resourceStateRetryInterval}),
 			condition: update.SkipForOwnClusterPlan,
+		},
+		{
+			stage: "kyma_resource",
+			step:  update.NewUpdateKymaStep(db, kcpClient, config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 	}
 

@@ -374,6 +374,7 @@ type Operation struct {
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
 	Error                        *kebError.LastError       `json:"error,omitempty"`
+	UpdatedPlanName              string                    `json:"updatedPlanName,omitempty"`
 }
 
 type RuntimesPage struct {

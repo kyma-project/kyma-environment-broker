@@ -6,10 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -196,7 +199,7 @@ func TestUpdatePlan(t *testing.T) {
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		`{
 				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
 				   "context": {
 					   "sm_operator_credentials": {
 						   "clientid": "cid",
@@ -217,7 +220,19 @@ func TestUpdatePlan(t *testing.T) {
 
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 
-	// todo: assert runtime cr labels (and kyma cr)
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.ServicePlanID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.Parameters.PlanID)
+	assert.Equal(t, "build-runtime-aws", gotInstance.ServicePlanName)
+
+	updateOperation := suite.GetOperation(updateOperationID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", updateOperation.ProvisioningParameters.PlanID)
+
+	suite.AssertRuntimeResourceLabels(updateOperationID)
+	suite.AssertKymaLabelsExist(updateOperationID, map[string]string{
+		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
+		customresources.PlanNameLabel: "build-runtime-aws",
+	})
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
@@ -1584,14 +1599,16 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 	assert.Equal(t, surge, runtime.Spec.Shoot.Provider.Workers[0].MaxSurge.IntValue())
 	assert.Equal(t, unav, runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue())
 
-	assert.Equal(t, gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("https://issuer.url"),
-		SigningAlgs:    []string{"RS256"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: ptr.String("-"),
-		GroupsPrefix:   ptr.String("-"),
+	assert.Equal(t, imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("https://issuer.url"),
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("-"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)

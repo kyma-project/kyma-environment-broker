@@ -333,8 +333,10 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
 			logger.Info(fmt.Sprintf("Plan change accepted."))
 			operation.UpdatedPlanID = details.PlanID
+			operation.ProvisioningParameters.PlanID = details.PlanID
 			instance.Parameters.PlanID = details.PlanID
 			instance.ServicePlanID = details.PlanID
+			instance.ServicePlanName = PlanNamesMapping[details.PlanID]
 			updateStorage = append(updateStorage, "Plan change")
 		} else {
 			logger.Info(fmt.Sprintf("Plan change not allowed."))
