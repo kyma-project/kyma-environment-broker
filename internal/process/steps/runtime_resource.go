@@ -121,6 +121,7 @@ func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operat
 			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
 		}
 	}
+	log.Info(fmt.Sprintf("Runtime resource state (not failed): %s; retry %s; %v", retryOperation.State, retry, err))
 	return retryOperation, retry, err
 }
 
