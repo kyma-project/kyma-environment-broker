@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -210,6 +211,11 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	}
 	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
 	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
+	if o.OIDCConfigDTO.JwksToken != "" {
+		if _, err := base64.StdEncoding.DecodeString(o.OIDCConfigDTO.JwksToken); err != nil {
+			*errs = append(*errs, "jwksToken must be a valid base64 encoded value")
+		}
+	}
 	return nil
 }
 
@@ -222,6 +228,11 @@ func (o *OIDCConnectDTO) validateOIDCList(errs *[]string) {
 			*errs = append(*errs, fmt.Sprintf("issuerURL must not be empty for OIDC at index %d", i))
 		} else {
 			o.validateIssuerURL(oidc.IssuerURL, &i, errs)
+		}
+		if oidc.JwksToken != "" {
+			if _, err := base64.StdEncoding.DecodeString(oidc.JwksToken); err != nil {
+				*errs = append(*errs, fmt.Sprintf("jwksToken must be a valid base64 encoded value at index %d", i))
+			}
 		}
 		o.validateSigningAlgs(oidc.SigningAlgs, &i, errs)
 		o.validateRequiredClaims(oidc.RequiredClaims, &i, errs)
@@ -541,7 +552,6 @@ func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWork
 	}
 	return nil
 }
-
 func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {
