@@ -1,6 +1,7 @@
 package provider
 
 import (
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
@@ -16,6 +17,7 @@ type (
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 		FailureTolerance       string
+		ZonesProvider          ZonesProvider
 	}
 )
 
@@ -26,10 +28,13 @@ func (p *SapConvergedCloudInputProvider) Provide() internal.ProviderValues {
 	}
 	zonesCount := 1
 	if p.MultiZone {
-		zonesCount = CountZonesForSapConvergedCloud(region)
+		zonesCount = 3
 	}
 
-	zones := ZonesForSapConvergedCloud(region, zonesCount)
+	zones := ZonesForSapConvergedCloud(region, p.ZonesProvider.RandomZones(pkg.SapConvergedCloud, region, zonesCount))
+	if len(zones) < zonesCount {
+		zonesCount = len(zones)
+	}
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,

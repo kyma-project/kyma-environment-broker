@@ -19,7 +19,7 @@ func Test_OperationManager_RetryOperationOnce(t *testing.T) {
 	// given
 	memory := storage.NewMemoryStorage()
 	operations := memory.Operations()
-	opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
+	opManager := NewOperationManager(operations, "some_step", kebErr.InfrastructureManagerDependency)
 	op := internal.Operation{}
 	op.UpdatedAt = time.Now()
 	retryInterval := time.Millisecond
@@ -83,12 +83,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when all last error field set with 1 component v1", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.InfrastructureManagerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
-		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
+		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.GetStep())
@@ -111,12 +111,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no error passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.InfrastructureManagerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
-		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
+		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.GetStep())
@@ -125,12 +125,12 @@ func Test_OperationManager_LastError(t *testing.T) {
 	t.Run("when no description passed", func(t *testing.T) {
 		memory := storage.NewMemoryStorage()
 		operations := memory.Operations()
-		opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
+		opManager := NewOperationManager(operations, "some_step", kebErr.InfrastructureManagerDependency)
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
-		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
+		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
 		assert.EqualValues(t, "some_step", op.LastError.GetStep())

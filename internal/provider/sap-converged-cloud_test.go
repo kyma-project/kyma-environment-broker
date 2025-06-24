@@ -19,6 +19,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 			PlatformRegion: "cf-eu20",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c", "d"}),
 	}
 
 	// when
@@ -53,6 +54,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 			PlatformRegion: "cf-eu20",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b"}),
 	}
 
 	// when
@@ -87,6 +89,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 			PlatformRegion: "cf-eu20",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a"}),
 	}
 
 	// when

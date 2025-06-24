@@ -26,45 +26,34 @@ spec:
             - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_service_binding_cleanup_job.dir }}kyma-environment-service-binding-cleanup-job:{{ .Values.global.images.kyma_environment_service_binding_cleanup_job.version }}"
               name: service-binding-cleanup-job
               env:
-                {{if eq .Values.global.database.embedded.enabled true}}
-                - name: DATABASE_EMBEDDED
-                  value: "true"
-                {{end}}
-                {{if eq .Values.global.database.embedded.enabled false}}
-                - name: DATABASE_EMBEDDED
-                  value: "false"
-                {{end}}
+                - name: APP_BROKER_URL
+                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-serviceName
+                - name: APP_DATABASE_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-db-name
+                - name: APP_DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-password
+                - name: APP_DATABASE_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-servicePort
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
                       name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
                       key: secretKey
                       optional: true
-                - name: APP_DATABASE_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-username
-                - name: APP_DATABASE_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-password
-                - name: APP_DATABASE_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-serviceName
-                - name: APP_DATABASE_PORT
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-servicePort
-                - name: APP_DATABASE_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-db-name
                 - name: APP_DATABASE_SSLMODE
                   valueFrom:
                     secretKeyRef:
@@ -72,14 +61,19 @@ spec:
                       key: postgresql-sslMode
                 - name: APP_DATABASE_SSLROOTCERT
                   value: /secrets/cloudsql-sslrootcert/server-ca.pem
-                - name: APP_BROKER_URL
-                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_DATABASE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-username
                 - name: APP_JOB_DRY_RUN
                   value: "{{ .Values.serviceBindingCleanup.dryRun }}"
-                - name: APP_JOB_REQUEST_TIMEOUT
-                  value: "{{ .Values.serviceBindingCleanup.requestTimeout }}"
                 - name: APP_JOB_REQUEST_RETRIES
                   value: "{{ .Values.serviceBindingCleanup.requestRetries }}"
+                - name: APP_JOB_REQUEST_TIMEOUT
+                  value: "{{ .Values.serviceBindingCleanup.requestTimeout }}"
+                - name: DATABASE_EMBEDDED
+                  value: "{{ .Values.global.database.embedded.enabled }}"
               command:
                 - "/bin/main"
               volumeMounts:

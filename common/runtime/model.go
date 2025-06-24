@@ -78,7 +78,6 @@ type ProvisioningParametersDTO struct {
 
 	Name         string  `json:"name"`
 	TargetSecret *string `json:"targetSecret,omitempty"`
-	VolumeSizeGb *int    `json:"volumeSizeGb,omitempty"`
 	MachineType  *string `json:"machineType,omitempty"`
 	Region       *string `json:"region,omitempty"`
 	Purpose      *string `json:"purpose,omitempty"`
@@ -100,7 +99,10 @@ type ProvisioningParametersDTO struct {
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
+	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 }
+
+const HAAutoscalerMinimumValue = 3
 
 type AutoScalerParameters struct {
 	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
@@ -118,7 +120,7 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return Azure
 	case "gcp":
 		return GCP
-	case "sapconvergedcloud", "openstack":
+	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
 	default:
 		return UnknownProvider
@@ -372,6 +374,7 @@ type Operation struct {
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
 	Error                        *kebError.LastError       `json:"error,omitempty"`
+	UpdatedPlanName              string                    `json:"updatedPlanName,omitempty"`
 }
 
 type RuntimesPage struct {
@@ -516,10 +519,13 @@ type AdditionalWorkerNodePool struct {
 
 func (a AdditionalWorkerNodePool) Validate() error {
 	if a.AutoScalerMin > a.AutoScalerMax {
-		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+		return fmt.Errorf("AutoScalerMax value %v should be larger than AutoScalerMin value %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
 	}
-	if a.HAZones && a.AutoScalerMin < 3 {
-		return fmt.Errorf("AutoScalerMin %v should be at least 3 when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, a.Name)
+	if a.HAZones && a.AutoScalerMin < HAAutoscalerMinimumValue {
+		return fmt.Errorf("AutoScalerMin value %v should be at least %v when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, HAAutoscalerMinimumValue, a.Name)
+	}
+	if a.AutoScalerMin < 0 {
+		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
 	}
 	return nil
 }
@@ -529,6 +535,17 @@ func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWork
 		if a.Name == currentAdditionalWorkerNodePool.Name {
 			if a.HAZones != currentAdditionalWorkerNodePool.HAZones {
 				return fmt.Errorf("HA zones setting is permanent and cannot be changed for %s additional worker node pool", a.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
+		if a.Name == currentAdditionalWorkerNodePool.Name {
+			if a.MachineType != currentAdditionalWorkerNodePool.MachineType {
+				return fmt.Errorf("Machine type setting is permanent, and you cannot change it for the %s additional worker node pool", a.Name)
 			}
 		}
 	}

@@ -3,7 +3,7 @@
 
 ## Overview
 
-Kyma Environment Broker (KEB) is a component that allows you to provision [SAP BTP, Kyma runtime](https://kyma-project.io/#/?id=kyma-and-sap-btp-kyma-runtime) in clusters provided by third-party providers. In the process, KEB first uses Provisioner to create a cluster. Then, it uses Lifecycle Manager to install Kyma runtime in the cluster.
+Kyma Environment Broker (KEB) is a component that allows you to provision [SAP BTP, Kyma runtime](https://kyma-project.io/#/?id=kyma-and-sap-btp-kyma-runtime) in clusters provided by third-party providers. In the process, KEB first uses Kyma Infrastructure Manager (KIM) to create a cluster. Then, it uses Lifecycle Manager to install Kyma runtime in the cluster.
 
 ## Read More
 

@@ -60,7 +60,13 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[scp]
       values:
@@ -106,7 +112,13 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[scp]
       values:
@@ -133,7 +145,13 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -175,7 +193,13 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -217,7 +241,13 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -245,11 +275,34 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
       - {{ .Values.oidc.groups.orchestrations }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: istio-additional-properties
+  namespace: kcp-system
+spec:
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths:
+        - /additional_properties
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}

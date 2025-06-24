@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"gopkg.in/yaml.v2"
 )
 
@@ -11,10 +10,9 @@ func NewConfigMapConverter() *ConfigMapConverter {
 	return &ConfigMapConverter{}
 }
 
-func (c *ConfigMapConverter) ConvertToStruct(cfgString string) (internal.ConfigForPlan, error) {
-	var cfg internal.ConfigForPlan
-	if err := yaml.Unmarshal([]byte(cfgString), &cfg); err != nil {
-		return internal.ConfigForPlan{}, err
+func (c *ConfigMapConverter) Convert(from string, to any) error {
+	if err := yaml.Unmarshal([]byte(from), to); err != nil {
+		return err
 	}
-	return cfg, nil
+	return nil
 }

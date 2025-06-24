@@ -3,7 +3,7 @@
 Kyma Environment Broker (KEB) metrics are exposed with the `/metrics` endpoint, which is called by Prometheus in a job manner every given duration of
 time and gathers the metrics, which are later pushed to Victoria metrics and Plutno dashboard and alerts.
 
-The metrics are counted in KEB's memory in two ways:
+The metrics are counted in KEB's memory in the following ways:
 
 * Pulling data from the database and updating in-memory metrics.
 * Publishing events sent across systems from business processes to corresponding subscribers, which update metrics in memory.

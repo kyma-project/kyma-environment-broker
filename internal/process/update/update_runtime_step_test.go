@@ -4,15 +4,13 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"strconv"
+	"strings"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/stretchr/testify/require"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -20,14 +18,20 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var memoryStorage = storage.NewMemoryStorage()
 
 func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	// given
@@ -43,7 +47,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -57,8 +61,8 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -84,23 +88,25 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("clinet-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("issuer-url"),
-		SigningAlgs:    []string{"signingAlgs"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: nil,
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: nil,
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -129,23 +135,25 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("clinet-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("issuer-url"),
-		SigningAlgs:    []string{"signingAlgs"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: ptr.String("initial-username-prefix"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("initial-username-prefix"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("-"),
 		},
-		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -174,8 +182,8 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -204,27 +212,31 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 			},
 		},
 	}
-	firstExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("first-client-id-custom"),
-		GroupsClaim:    ptr.String("first-gc-custom"),
-		IssuerURL:      ptr.String("first-issuer-url-custom"),
-		SigningAlgs:    []string{"first-sa-custom"},
-		UsernameClaim:  ptr.String("first-uc-custom"),
-		UsernamePrefix: ptr.String("first-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	firstExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("first-client-id-custom"),
+			GroupsClaim:    ptr.String("first-gc-custom"),
+			IssuerURL:      ptr.String("first-issuer-url-custom"),
+			SigningAlgs:    []string{"first-sa-custom"},
+			UsernameClaim:  ptr.String("first-uc-custom"),
+			UsernamePrefix: ptr.String("first-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
-	secondExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("second-client-id-custom"),
-		GroupsClaim:    ptr.String("second-gc-custom"),
-		IssuerURL:      ptr.String("second-issuer-url-custom"),
-		SigningAlgs:    []string{"second-sa-custom"},
-		UsernameClaim:  ptr.String("second-uc-custom"),
-		UsernamePrefix: ptr.String("second-up-custom"),
-		GroupsPrefix:   ptr.String("second-gp-custom"),
+	secondExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("second-client-id-custom"),
+			GroupsClaim:    ptr.String("second-gc-custom"),
+			IssuerURL:      ptr.String("second-issuer-url-custom"),
+			SigningAlgs:    []string{"second-sa-custom"},
+			UsernameClaim:  ptr.String("second-uc-custom"),
+			UsernamePrefix: ptr.String("second-up-custom"),
+			GroupsPrefix:   ptr.String("second-gp-custom"),
+		},
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -254,8 +266,8 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -285,31 +297,35 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			},
 		},
 	}
-	firstExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("first-client-id-custom"),
-		GroupsClaim:    ptr.String("first-gc-custom"),
-		IssuerURL:      ptr.String("first-issuer-url-custom"),
-		SigningAlgs:    []string{"first-sa-custom"},
-		UsernameClaim:  ptr.String("first-uc-custom"),
-		UsernamePrefix: ptr.String("first-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim1": "value1",
-			"claim2": "value2",
+	firstExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("first-client-id-custom"),
+			GroupsClaim:    ptr.String("first-gc-custom"),
+			IssuerURL:      ptr.String("first-issuer-url-custom"),
+			SigningAlgs:    []string{"first-sa-custom"},
+			UsernameClaim:  ptr.String("first-uc-custom"),
+			UsernamePrefix: ptr.String("first-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
+			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
-	secondExpectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("second-client-id-custom"),
-		GroupsClaim:    ptr.String("second-gc-custom"),
-		IssuerURL:      ptr.String("second-issuer-url-custom"),
-		SigningAlgs:    []string{"second-sa-custom"},
-		UsernameClaim:  ptr.String("second-uc-custom"),
-		UsernamePrefix: ptr.String("second-up-custom"),
-		RequiredClaims: map[string]string{
-			"claim3": "value3",
-			"claim4": "value4",
+	secondExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("second-client-id-custom"),
+			GroupsClaim:    ptr.String("second-gc-custom"),
+			IssuerURL:      ptr.String("second-issuer-url-custom"),
+			SigningAlgs:    []string{"second-sa-custom"},
+			UsernameClaim:  ptr.String("second-uc-custom"),
+			UsernamePrefix: ptr.String("second-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim3": "value3",
+				"claim4": "value4",
+			},
+			GroupsPrefix: ptr.String("second-gp-custom"),
 		},
-		GroupsPrefix: ptr.String("second-gp-custom"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -341,8 +357,8 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -374,16 +390,84 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 0)
 }
 
-func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Object {
+func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
+	// given
+	for _, testCase := range []struct {
+		name string
+
+		initialEgressFiltering  bool
+		initialIngressFiltering bool
+
+		planID                    string
+		licenseType               string
+		ingressFilteringParameter *bool
+
+		expectedEgressResult  bool
+		expectedIngressResult bool
+	}{
+		// external account and no parameter - not updating ingress at all
+		{"External- SapConvergedCloud - no parameter", true, true, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, true},
+		{"External- SapConvergedCloud - no parameter", true, false, broker.SapConvergedCloudPlanID, "CUSTOMER", nil, false, false},
+		{"External - AWS", true, true, broker.AWSPlanID, "CUSTOMER", nil, false, true},
+		{"External - AWS", true, false, broker.AWSPlanID, "CUSTOMER", nil, false, false},
+
+		// internal
+		{"Internal - AWS - no parameter", true, true, broker.AWSPlanID, "NON-CUSTOMER", nil, true, true},
+		{"Internal - AWS - turn on", true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off", true, true, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		{"Internal - AWS - no parameter", false, false, broker.AWSPlanID, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on ingress", false, false, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off ingress", false, false, broker.AWSPlanID, "NON-CUSTOMER", ptr.Bool(false), true, false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// when
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+
+			inputConfig := broker.InfrastructureManager{
+				MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction,
+				IngressFilteringPlans: []string{"aws", "gcp", "azure"}}
+
+			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+			operation.RuntimeResourceName = "runtime-name"
+			operation.KymaResourceNamespace = "kcp-system"
+			operation.UpdatingParameters = internal.UpdatingParametersDTO{
+				IngressFiltering: testCase.ingressFilteringParameter,
+			}
+
+			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
+			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
+
+			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithNetworkFilter("runtime-name", testCase.initialIngressFiltering, testCase.initialEgressFiltering)).Build()
+			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, inputConfig, nil, true, &workers.Provider{}, fixValuesProvider())
+
+			// when
+			_, backoff, err := step.Run(operation, fixLogger())
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, backoff)
+
+			runtime := imv1.Runtime{}
+			err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &runtime)
+			require.NoError(t, err)
+
+			assert.Equal(t, imv1.Egress{Enabled: testCase.expectedEgressResult}, runtime.Spec.Security.Networking.Filter.Egress)
+			assert.Equal(t, &imv1.Ingress{Enabled: testCase.expectedIngressResult}, runtime.Spec.Security.Networking.Filter.Ingress)
+
+		})
+	}
+}
+
+// fixtures
+
+func fixRuntimeResource(name string) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
-			},
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -403,30 +487,63 @@ func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Objec
 	}
 }
 
-func fixRuntimeResourceWithOneAdditionalOidc(name string, controlledByProvisioner bool) runtime.Object {
+func fixRuntimeResourceWithNetworkFilter(name string, ingressFilter, egressFilter bool) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
+		},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine: gardener.Machine{
+								Type: "original-type",
+							},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
 			},
+			Security: imv1.Security{
+				Networking: imv1.NetworkingSecurity{
+					Filter: imv1.Filter{
+						Ingress: &imv1.Ingress{Enabled: ingressFilter},
+						Egress:  imv1.Egress{Enabled: egressFilter},
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	return &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: "kcp-system",
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("initial-groups"),
-								GroupsPrefix:   ptr.String("initial-groups-prefix"),
-								IssuerURL:      ptr.String("initial-issuer-url"),
-								SigningAlgs:    []string{"initial-signingAlgs"},
-								UsernameClaim:  ptr.String("initial-sub"),
-								UsernamePrefix: ptr.String("initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("initial-groups"),
+									GroupsPrefix:   ptr.String("initial-groups-prefix"),
+									IssuerURL:      ptr.String("initial-issuer-url"),
+									SigningAlgs:    []string{"initial-signingAlgs"},
+									UsernameClaim:  ptr.String("initial-sub"),
+									UsernamePrefix: ptr.String("initial-username-prefix"),
+								},
 							},
 						},
 					},
@@ -447,48 +564,51 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string, controlledByProvisione
 	}
 }
 
-func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvisioner bool) runtime.Object {
+func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
-			},
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
 				Kubernetes: imv1.Kubernetes{
 					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
 							{
-								ClientID:       ptr.String("first-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("first-initial-groups"),
-								GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
-								IssuerURL:      ptr.String("first-initial-issuer-url"),
-								SigningAlgs:    []string{"first-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("first-initial-sub"),
-								UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("first-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("first-initial-groups"),
+									GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
+									IssuerURL:      ptr.String("first-initial-issuer-url"),
+									SigningAlgs:    []string{"first-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("first-initial-sub"),
+									UsernamePrefix: ptr.String("first-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("second-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("second-initial-groups"),
-								GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
-								IssuerURL:      ptr.String("second-initial-issuer-url"),
-								SigningAlgs:    []string{"second-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("second-initial-sub"),
-								UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("second-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("second-initial-groups"),
+									GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
+									IssuerURL:      ptr.String("second-initial-issuer-url"),
+									SigningAlgs:    []string{"second-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("second-initial-sub"),
+									UsernamePrefix: ptr.String("second-initial-username-prefix"),
+								},
 							},
 							{
-								ClientID:       ptr.String("third-initial-client-id-oidc"),
-								GroupsClaim:    ptr.String("third-initial-groups"),
-								GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
-								IssuerURL:      ptr.String("third-initial-issuer-url"),
-								SigningAlgs:    []string{"third-initial-signingAlgs"},
-								UsernameClaim:  ptr.String("third-initial-sub"),
-								UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("third-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("third-initial-groups"),
+									GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
+									IssuerURL:      ptr.String("third-initial-issuer-url"),
+									SigningAlgs:    []string{"third-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("third-initial-sub"),
+									UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								},
 							},
 						},
 					},
@@ -513,4 +633,33 @@ func fixLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})).With("testing", true)
+}
+
+func fixValuesProvider() broker.ValuesProvider {
+	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(`
+aws:
+  volumeSizeGb: 80
+`))
+	return provider.NewPlanSpecificValuesProvider(
+		broker.InfrastructureManager{
+			MultiZoneCluster:             true,
+			DefaultTrialProvider:         pkg.AWS,
+			UseSmallerMachineTypes:       true,
+			ControlPlaneFailureTolerance: "",
+			DefaultGardenerShootPurpose:  provider.PurposeProduction,
+		}, nil, newZonesProvider(), planSpec)
+}
+
+type fakeZonesProvider struct {
+	zones []string
+}
+
+func (f *fakeZonesProvider) RandomZones(cp pkg.CloudProvider, region string, zonesCount int) []string {
+	return f.zones
+}
+
+func newZonesProvider() provider.ZonesProvider {
+	return &fakeZonesProvider{
+		zones: []string{"a", "b", "c"},
+	}
 }

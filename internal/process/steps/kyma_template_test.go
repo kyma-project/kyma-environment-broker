@@ -31,9 +31,9 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 
 type fakeConfigProvider struct{}
 
-func (f fakeConfigProvider) ProvideForGivenPlan(plan string) (*internal.ConfigForPlan, error) {
-	return &internal.ConfigForPlan{KymaTemplate: `
-apiVersion: operator.kyma-project.io/v1beta2
+func (f fakeConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
+	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
+	cfg.KymaTemplate = `apiVersion: operator.kyma-project.io/v1beta2
 kind: Kyma
 metadata:
     name: my-kyma
@@ -43,5 +43,7 @@ spec:
         strategy: secret
     channel: stable
     modules: []
-`}, nil
+`
+	cfgDestObj = cfg
+	return nil
 }

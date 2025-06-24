@@ -6,7 +6,7 @@ The default configuration must be defined. KEB must recognize this configuration
 While processing requests, KEB reads the configuration from the ConfigMap that holds data for a given plan.
 
 > [!NOTE]
-> Currently, only the Kyma custom resource template can be configured.
+> Only the Kyma custom resource (CR) template can be configured.
 
 ## ConfigMap  
 
@@ -19,7 +19,7 @@ keb-config: "true"
 > [!NOTE]
 > Each ConfigMap that defines the configuration must have this label assigned.
 
-The actual configuration is stored in ConfigMap's `data` object. Add `default` key under `data` object:
+The actual configuration is stored in ConfigMap's `data` object. Add the `default` key under the `data` object:
 
 ```yaml
 data:
@@ -43,12 +43,12 @@ data:
         namespace: "kyma-system"
 ```
 
-You must define a default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of `kyma-template.metadata.name` field as KEB generates the name for Kyma CR during provisioning operation.
+You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for Kyma CR during the provisioning operation.
 
 > [!NOTE]
 > The `kyma-template` configuration is required.
 
-See the example of a ConfigMap with the default configuration for Kyma and specific configurations for `plan1`, `plan2`, and `trial` plans:
+See an example of a ConfigMap with the default configuration for Kyma and specific configurations for `plan1`, `plan2`, and `trial`:
 
 ```yaml
 # keb-config.yaml

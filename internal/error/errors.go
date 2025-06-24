@@ -32,7 +32,6 @@ type LastError struct {
 const (
 	KEBInternalCode         Reason = "err_keb_internal"
 	KEBTimeOutCode          Reason = "err_keb_timeout"
-	ProvisionerCode         Reason = "err_provisioner_nil_last_error"
 	HttpStatusCode          Reason = "err_http_status_code"
 	ClusterNotFoundCode     Reason = "err_cluster_not_found"
 	K8SUnexpectedServerCode Reason = "err_k8s_unexpected_server_error"
@@ -46,7 +45,6 @@ const (
 	K8sDependency                   Component = "k8s client - keb"
 	KEBDependency                   Component = "keb"
 	EDPDependency                   Component = "edp"
-	ProvisionerDependency           Component = "provisioner"
 	ReconcileDependency             Component = "reconciler"
 	InfrastructureManagerDependency Component = "infrastructure-manager"
 	LifeCycleManagerDependency      Component = "lifecycle-manager"

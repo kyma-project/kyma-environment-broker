@@ -21,7 +21,7 @@ func TestValidate(t *testing.T) {
 		cfgString := `kyma-template: ""`
 
 		// when
-		err := cfgValidator.Validate(cfgString)
+		err := cfgValidator.Validate(kymaTemplateConfigKey, cfgString)
 
 		// then
 		require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestValidate(t *testing.T) {
 		cfgString := `optional-field: "optional"`
 
 		// when
-		err := cfgValidator.Validate(cfgString)
+		err := cfgValidator.Validate(kymaTemplateConfigKey, cfgString)
 
 		// then
 		require.Error(t, err)

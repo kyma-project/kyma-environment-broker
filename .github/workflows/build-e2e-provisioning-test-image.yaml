@@ -24,3 +24,4 @@ jobs:
       name: e2e-provisioning-test
       dockerfile: Dockerfile
       context: testing/e2e/provisioning
+      build-engine: buildx

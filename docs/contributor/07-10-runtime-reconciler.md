@@ -39,4 +39,3 @@ Use the following environment variables to configure the application:
 | **RUNTIME_RECONCILER_DATABASE_NAME**                             | Specifies the name of the database.                                                                                              | `broker`      |
 | **RUNTIME_RECONCILER_DATABASE_SSLMODE**                          | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).       | `disable`     |
 | **RUNTIME_RECONCILER_DATABASE_SSLROOTCERT**                      | Specifies the location of CA cert of PostgreSQL. (Optional)                                                                      |  optional     |
-| **RUNTIME_RECONCILER_PROVISIONER_URL**                           | Specifies URL for intergration with Provisioner.                                                                                 |   -           |

@@ -6,10 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,7 +142,7 @@ func TestUpdateWithKIM(t *testing.T) {
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
        "context": {
            "globalaccount_id": "g-account-id",
            "user_id": "john.smith@email.com"
@@ -161,9 +164,83 @@ func TestUpdateWithKIM(t *testing.T) {
 	assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
 }
 
-func TestUpdateFailedInstance(t *testing.T) {
+func TestUpdatePlan(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+			}
+   }`)
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.ServicePlanID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.Parameters.PlanID)
+	assert.Equal(t, "build-runtime-aws", gotInstance.ServicePlanName)
+
+	updateOperation := suite.GetOperation(updateOperationID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", updateOperation.ProvisioningParameters.PlanID)
+
+	suite.AssertRuntimeResourceLabels(updateOperationID)
+	suite.AssertKymaLabelsExist(updateOperationID, map[string]string{
+		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
+		customresources.PlanNameLabel: "build-runtime-aws",
+	})
+}
+
+func TestUpdateFailedInstance(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -187,7 +264,7 @@ func TestUpdateFailedInstance(t *testing.T) {
 				}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.failRuntimeByKIM(iid)
+	// just wait for timeout and failed operation
 	suite.WaitForOperationState(opID, domain.Failed)
 
 	// when
@@ -220,7 +297,7 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true&plan_id=03b812ac-c991-4528-b5bd-08b303523a63&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true&plan_id=03b812ac-c991-4528-b5bd-08b303523a63&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		`{
 				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 				   "plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -252,7 +329,7 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 
 	// when
 	// OSB update:
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
        "plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -286,7 +363,7 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region":          "eu-de-1",
-		"kyma-project.io/platform-region": "cf-eu20-staging",
+		"kyma-project.io/platform-region": "cf-eu20",
 	})
 }
 
@@ -1525,14 +1602,16 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 	assert.Equal(t, surge, runtime.Spec.Shoot.Provider.Workers[0].MaxSurge.IntValue())
 	assert.Equal(t, unav, runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue())
 
-	assert.Equal(t, gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-oidc"),
-		GroupsClaim:    ptr.String("groups"),
-		IssuerURL:      ptr.String("https://issuer.url"),
-		SigningAlgs:    []string{"RS256"},
-		UsernameClaim:  ptr.String("sub"),
-		UsernamePrefix: ptr.String("-"),
-		GroupsPrefix:   ptr.String("-"),
+	assert.Equal(t, imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("https://issuer.url"),
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("-"),
+			GroupsPrefix:   ptr.String("-"),
+		},
 	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
@@ -1822,7 +1901,7 @@ func TestUpdateMachineType(t *testing.T) {
 	assert.Equal(t, "m5.2xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 
 }
-func TestUpdateNetworkFilterPersisted(t *testing.T) {
+func TestUpdateNetworkFilterForExternal(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1857,7 +1936,7 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 
 	// then
 
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
+	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -1887,9 +1966,147 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
+	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
+}
+
+func TestUpdateNetworkFilterForInternal(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	id := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"sm_operator_credentials": {
+							"clientid": "testClientID",
+							"clientsecret": "testClientSecret",
+							"sm_url": "https://service-manager.kyma.com",
+							"url": "https://test.auth.com",
+							"xsappname": "testXsappname"
+						},
+						"license_type": "NON-CUSTOMER",
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	instance := suite.GetInstance(id)
+
+	// then
+
+	suite.AssertNetworkFiltering(instance.InstanceID, true, false)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
+		{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com",
+				"sm_operator_credentials": {
+					"clientid": "testClientID",
+					"clientsecret": "testClientSecret",
+					"sm_url": "https://service-manager.kyma.com",
+					"url": "https://test.auth.com",
+					"xsappname": "testXsappname"
+				}
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"ingressFiltering": true
+			}
+		}`)
+
+	// then
+	require.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
+	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
+	suite.AssertNetworkFiltering(instance.InstanceID, true, true)
+	// check if updated parameters is populated to provisioning parameters - so it will be reflected in get instance response
+	instanceUpdated := suite.GetInstance(id)
+	assert.True(suite.t, *instanceUpdated.Parameters.Parameters.IngressFiltering)
+}
+
+func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	id := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+						"sm_operator_credentials": {
+							"clientid": "testClientID",
+							"clientsecret": "testClientSecret",
+							"sm_url": "https://service-manager.kyma.com",
+							"url": "https://test.auth.com",
+							"xsappname": "testXsappname"
+						},
+						"license_type": "CUSTOMER",
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster"
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	instance := suite.GetInstance(id)
+
+	// then
+
+	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
+	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
+		{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com",
+				"sm_operator_credentials": {
+					"clientid": "testClientID",
+					"clientsecret": "testClientSecret",
+					"sm_url": "https://service-manager.kyma.com",
+					"url": "https://test.auth.com",
+					"xsappname": "testXsappname"
+				}
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"ingressFiltering": true
+			}
+		}`)
+
+	// then
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+	parsedResponse := suite.ReadResponse(resp)
+	assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
 }
 
 func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
@@ -1925,7 +2142,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	instance := suite.GetInstance(id)
 
 	// then
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, false)
+	suite.AssertNetworkFiltering(instance.InstanceID, true, false)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -1956,7 +2173,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
 	instance2 := suite.GetInstance(id)
 	// license_type should be stored in the instance table for ERS context and future upgrades
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
+	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
 }
 
@@ -1993,7 +2210,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	instance := suite.GetInstance(id)
 
 	// then
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, false)
+	suite.AssertNetworkFiltering(instance.InstanceID, true, false)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -2029,7 +2246,8 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	suite.WaitForOperationState(updateOperation2ID, domain.Succeeded)
 	instance3 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance3.Parameters.ErsContext.LicenseType)
-	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
+	// we do not support updating network filtering accordingly when the license type is changed
+	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 }
 
 func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
@@ -2475,12 +2693,88 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		assert.Equal(t, worker3Zones, updatedWorker3Zones)
 		assert.Equal(t, worker4Zones, updatedWorker4Zones)
 	})
+
+	t.Run("should add additional worker node pools with zones from zone mapping", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "us-east-1"
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "c7i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "name-2",
+									"machineType": "g6.xlarge",
+									"haZones": false,
+									"autoScalerMin": 1,
+									"autoScalerMax": 1
+								},
+								{
+									"name": "name-3",
+									"machineType": "g4dn.xlarge",
+									"haZones": false,
+									"autoScalerMin": 1,
+									"autoScalerMax": 1
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "us-east-1w", "us-east-1x", "us-east-1y", "us-east-1z")
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
+	})
 }
 
 func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC object with OIDC list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.IncludeAdditionalParamsInSchema = false
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2513,7 +2807,7 @@ func TestUpdateOIDC(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
 				"context": {
 					"globalaccount_id": "g-account-id",
 					"user_id": "john.smith@email.com"
@@ -2580,7 +2874,7 @@ func TestUpdateOIDC(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
 				"context": {
 					"globalaccount_id": "g-account-id",
 					"user_id": "john.smith@email.com"
@@ -2604,7 +2898,9 @@ func TestUpdateOIDC(t *testing.T) {
 	})
 	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2623,11 +2919,19 @@ func TestUpdateOIDC(t *testing.T) {
 						"list": [
 							{
 								"clientID": "id-ooo",
-								"signingAlgs": ["RS256"],
+								"signingAlgs": ["RS256"],	
+								"groupsClaim": "fakeGroups",
+								"usernameClaim": "fakeUsernameClaim",
+								"usernamePrefix": "::",
+								"groupsPrefix": "-",
 								"issuerURL": "https://issuer.url.com"
 							},
 							{
 								"clientID": "id-ooo2",
+								"groupsClaim": "fakeGroups",
+								"usernameClaim": "fakeUsernameClaim",
+								"usernamePrefix": "::",
+								"groupsPrefix": "-",
 								"signingAlgs": ["RS256"],
 								"issuerURL": "https://issuer.url.com"
 							}
@@ -2646,7 +2950,7 @@ func TestUpdateOIDC(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
 				"context": {
 					"globalaccount_id": "g-account-id",
 					"user_id": "john.smith@email.com"
@@ -2663,7 +2967,9 @@ func TestUpdateOIDC(t *testing.T) {
 	})
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2682,11 +2988,19 @@ func TestUpdateOIDC(t *testing.T) {
 						"list": [
 							{
 								"clientID": "id-ooo",
-								"signingAlgs": ["RS256"],
+								"signingAlgs": ["RS256"],	
+								"groupsClaim": "fakeGroups",
+								"usernameClaim": "fakeUsernameClaim",
+								"usernamePrefix": "::",
+								"groupsPrefix": "-",
 								"issuerURL": "https://issuer.url.com"
 							},
 							{
 								"clientID": "id-ooo2",
+								"groupsClaim": "fakeGroups",
+								"usernameClaim": "fakeUsernameClaim",
+								"usernamePrefix": "::",
+								"groupsPrefix": "-",
 								"signingAlgs": ["RS256"],
 								"issuerURL": "https://issuer.url.com"
 							}
@@ -2705,7 +3019,7 @@ func TestUpdateOIDC(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
 				"context": {
 					"globalaccount_id": "g-account-id",
 					"user_id": "john.smith@email.com"
@@ -2715,7 +3029,11 @@ func TestUpdateOIDC(t *testing.T) {
 						"list": [
 							{
 								"clientID": "new-id-ooo",
+								"groupsClaim": "fakeGroups",
+								"usernameClaim": "fakeUsernameClaim",
+								"usernamePrefix": "::",
 								"signingAlgs": ["RS256"],
+								"groupsPrefix": "-",
 								"issuerURL": "https://issuer.url.com"
 							}
 						]
@@ -2733,7 +3051,10 @@ func TestUpdateOIDC(t *testing.T) {
 	})
 	t.Run("should update OIDC object with empty OIDC list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.IncludeAdditionalParamsInSchema = false
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2766,7 +3087,7 @@ func TestUpdateOIDC(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
 				"context": {
 					"globalaccount_id": "g-account-id",
 					"user_id": "john.smith@email.com"

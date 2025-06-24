@@ -19,6 +19,7 @@ func TestGCPDefaults(t *testing.T) {
 			PlatformRegion: "cf-eu11",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -54,6 +55,7 @@ func TestGCPSpecific(t *testing.T) {
 			PlatformRegion: "cf-eu11",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -85,6 +87,7 @@ func TestGCPTrial_Defaults(t *testing.T) {
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: pkg.ProvisioningParametersDTO{Region: nil},
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -114,6 +117,7 @@ func TestGCPTrial_AbstractRegion(t *testing.T) {
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: pkg.ProvisioningParametersDTO{Region: ptr.String("us")},
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -144,6 +148,7 @@ func TestGCPTrial_PlatformRegion(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-us10",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -174,6 +179,7 @@ func TestGCPTrial_PlatformRegionNotInMapping(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-us11",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -204,6 +210,7 @@ func TestGCPTrial_PlatformRegionNotInMapping_AbstractRegion(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("us")},
 			PlatformRegion: "cf-us11",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -233,6 +240,7 @@ func TestGCPTrial_InvalidAbstractRegion(t *testing.T) {
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: pkg.ProvisioningParametersDTO{Region: ptr.String("usa")},
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -265,6 +273,7 @@ func TestGCPTrial_RegionNotConsistentWithPlatformRegion(t *testing.T) {
 			},
 			PlatformRegion: "cf-ap21",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -298,6 +307,7 @@ func TestGCPTrial_KSA(t *testing.T) {
 			},
 			PlatformRegion: "cf-sa30",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when

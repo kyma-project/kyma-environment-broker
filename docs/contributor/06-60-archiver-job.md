@@ -25,4 +25,4 @@ If the value is set to `false`, the archiver job only archives the data.
 | **APP_DATABASE_PASSWORD** | Specifies the user password for the database.                                                     | `password`                               |
 | **APP_DATABASE_HOST** | Specifies the host of the database.                                                               | `localhost`                              |
 | **APP_DATABASE_PORT** | Specifies the port for the database.                                                              | `5432`                                   |
-| **APP_DATABASE_NAME** | Specifies the name of the database.                                                               | `provisioner`                            |
+| **APP_DATABASE_NAME** | Specifies the name of the database.                                                               | `broker`                            |

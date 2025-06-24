@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"sort"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
@@ -25,13 +22,15 @@ type ServicesEndpoint struct {
 	cfg            Config
 	servicesConfig ServicesConfig
 
-	enabledPlanIDs                map[string]struct{}
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
-	defaultOIDCConfig             *pkg.OIDCConfigDTO
-	useSmallerMachineTypes        bool
+	enabledPlanIDs              map[string]struct{}
+	defaultOIDCConfig           *pkg.OIDCConfigDTO
+	useSmallerMachineTypes      bool
+	ingressFilteringFeatureFlag bool
+	ingressFilteringPlans       EnablePlans
+	schemaService               *SchemaService
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, useSmallerMachineTypes bool) *ServicesEndpoint {
+func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig, log *slog.Logger, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -39,52 +38,47 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 	}
 
 	return &ServicesEndpoint{
-		log:                           log.With("service", "ServicesEndpoint"),
-		cfg:                           cfg,
-		servicesConfig:                servicesConfig,
-		enabledPlanIDs:                enabledPlanIDs,
-		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
-		defaultOIDCConfig:             &defaultOIDCConfig,
-		useSmallerMachineTypes:        useSmallerMachineTypes,
+		log:                    log.With("service", "ServicesEndpoint"),
+		cfg:                    cfg,
+		servicesConfig:         servicesConfig,
+		enabledPlanIDs:         enabledPlanIDs,
+		defaultOIDCConfig:      &defaultOIDCConfig,
+		useSmallerMachineTypes: imConfig.UseSmallerMachineTypes,
+		ingressFilteringPlans:  imConfig.IngressFilteringPlans,
+		schemaService:          schemaService,
 	}
 }
 
 // Services gets the catalog of services offered by the service broker
 //
 //	GET /v2/catalog
-func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, error) {
+func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, error) {
 	var availableServicePlans []domain.ServicePlan
 	bindable := true
 	// we scope to the kymaruntime service only
-	class, ok := b.servicesConfig[KymaServiceName]
+	class, ok := se.servicesConfig[KymaServiceName]
 	if !ok {
 		return nil, fmt.Errorf("while getting %s class data", KymaServiceName)
 	}
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
-	for _, plan := range Plans(class.Plans,
-		provider,
-		b.defaultOIDCConfig,
-		b.cfg.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion),
-		b.useSmallerMachineTypes,
-		b.cfg.EnableShootAndSeedSameRegion,
-		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
-		assuredworkloads.IsKSA(platformRegion),
-		b.cfg.UseAdditionalOIDCSchema,
-	) {
 
+	for _, plan := range se.schemaService.Plans(class.Plans, platformRegion, provider) {
 		// filter out not enabled plans
-		if _, exists := b.enabledPlanIDs[plan.ID]; !exists {
+		if _, exists := se.enabledPlanIDs[plan.ID]; !exists {
 			continue
 		}
-		if b.cfg.Binding.Enabled && b.cfg.Binding.BindablePlans.Contains(plan.Name) {
+
+		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}
-
 		availableServicePlans = append(availableServicePlans, plan)
 	}
+
+	sort.Slice(availableServicePlans, func(i, j int) bool {
+		return availableServicePlans[i].Name < availableServicePlans[j].Name
+	})
 
 	return []domain.Service{
 		{

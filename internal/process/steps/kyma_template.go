@@ -17,12 +17,12 @@ import (
 
 type InitKymaTemplate struct {
 	operationManager *process.OperationManager
-	configProvider   config.ConfigurationProvider
+	configProvider   config.ConfigMapConfigProvider
 }
 
 var _ process.Step = &InitKymaTemplate{}
 
-func NewInitKymaTemplate(os storage.Operations, configProvider config.ConfigurationProvider) *InitKymaTemplate {
+func NewInitKymaTemplate(os storage.Operations, configProvider config.ConfigMapConfigProvider) *InitKymaTemplate {
 	step := &InitKymaTemplate{
 		configProvider: configProvider,
 	}
@@ -39,11 +39,12 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger
 	if !found {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("PlanID %s not found in PlanNamesMapping", operation.ProvisioningParameters.PlanID), nil, logger)
 	}
-	config, err := s.configProvider.ProvideForGivenPlan(planName)
+	cfg := &internal.ConfigForPlan{}
+	err := s.configProvider.Provide(planName, cfg)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to provide configuration for plan %s", planName), err, 10*time.Second, 30*time.Second, logger)
 	}
-	obj, err := DecodeKymaTemplate(config.KymaTemplate)
+	obj, err := DecodeKymaTemplate(cfg.KymaTemplate)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to create kyma template: %s", err.Error()))
 		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
@@ -51,6 +52,6 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger
 	logger.Info(fmt.Sprintf("Decoded kyma template: %v", obj))
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
-		op.KymaTemplate = config.KymaTemplate
+		op.KymaTemplate = cfg.KymaTemplate
 	}, logger)
 }

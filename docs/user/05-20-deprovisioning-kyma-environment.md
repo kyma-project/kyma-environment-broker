@@ -1,6 +1,6 @@
 # Deprovision SAP BTP, Kyma Runtime Using Kyma Environment Broker
 
-This tutorial shows how to deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
+Deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
 ## Steps
 

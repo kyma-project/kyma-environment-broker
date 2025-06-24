@@ -1,51 +1,69 @@
 package config
 
-import (
-	"github.com/kyma-project/kyma-environment-broker/internal"
-)
-
 type (
-	ConfigurationProvider interface {
-		ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
+	Provider interface {
+		Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error
 	}
 
-	ConfigReader interface {
-		Read(planName string) (string, error)
+	Reader interface {
+		Read(objectName, configKey string) (string, error)
 	}
 
-	ConfigValidator interface {
-		Validate(cfgString string) error
+	Validator interface {
+		Validate(requiredFields, cfgString string) error
 	}
 
-	ConfigConverter interface {
-		ConvertToStruct(cfgString string) (internal.ConfigForPlan, error)
+	Converter interface {
+		Convert(from string, to any) error
+	}
+
+	ConfigMapConfigProvider interface {
+		Provide(cfgKeyName string, cfgDestObj any) error
 	}
 )
 
-type ConfigProvider struct {
-	Reader    ConfigReader
-	Validator ConfigValidator
-	Converter ConfigConverter
+type configMapConfigProvider struct {
+	Provider
+	configMapName string
+	reqCfgKeys    string
 }
 
-func NewConfigProvider(reader ConfigReader, validator ConfigValidator, converter ConfigConverter) *ConfigProvider {
-	return &ConfigProvider{Reader: reader, Validator: validator, Converter: converter}
+func NewConfigMapConfigProvider(provider Provider, configMapName string, reqCfgKeys string) ConfigMapConfigProvider {
+	return &configMapConfigProvider{
+		Provider:      provider,
+		configMapName: configMapName,
+		reqCfgKeys:    reqCfgKeys,
+	}
 }
 
-func (p *ConfigProvider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
-	cfgString, err := p.Reader.Read(planName)
+func (p *configMapConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
+	return p.Provider.Provide(p.configMapName, cfgKeyName, p.reqCfgKeys, cfgDestObj)
+}
+
+type provider struct {
+	reader    Reader
+	validator Validator
+	converter Converter
+}
+
+func NewConfigProvider(reader Reader, validator Validator, converter Converter) Provider {
+	return &provider{reader: reader, validator: validator, converter: converter}
+}
+
+func (p *provider) Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error {
+	cfgString, err := p.reader.Read(cfgSrcName, cfgKeyName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err = p.Validator.Validate(cfgString); err != nil {
-		return nil, err
+	if err = p.validator.Validate(reqCfgKeys, cfgString); err != nil {
+		return err
 	}
 
-	cfg, err := p.Converter.ConvertToStruct(cfgString)
+	err = p.converter.Convert(cfgString, cfgDestObj)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &cfg, nil
+	return nil
 }

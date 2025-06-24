@@ -1,19 +1,24 @@
 package broker_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -41,6 +46,10 @@ import (
 
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
 var fakeKcpK8sClient = fake.NewClientBuilder().Build()
+var imConfigFixture = broker.InfrastructureManager{
+	UseSmallerMachineTypes: false,
+	IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
+}
 
 type handler struct {
 	Instance   internal.Instance
@@ -95,10 +104,8 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		fixLogger(),
 		dashboardConfig,
 		kcBuilder,
-		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fakeKcpK8sClient,
-		nil,
-		false)
+		nil, nil, imConfigFixture, newSchemaService(t))
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -153,7 +160,7 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		nil, fixLogger(),
-		dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t))
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -174,6 +181,81 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	assert.False(t, response.IsAsync)
 }
 
+func TestUpgradePlan(t *testing.T) {
+	// given
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AWSPlanID,
+			ErsContext: internal.ERSContext{
+				TenantID:        "",
+				SubAccountID:    "",
+				GlobalAccountID: "",
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	provisioningOperation := fixProvisioningOperation("01")
+	provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
+	err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+	require.NoError(t, err)
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewUpdate(broker.Config{
+		EnablePlanUpgrades: true,
+	}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(),
+		dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
+
+	t.Run("should fail when the upgrade is not allowed", func(t *testing.T) {
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:      "",
+			PlanID:         broker.GCPPlanID,
+			RawParameters:  json.RawMessage("{}"),
+			PreviousValues: domain.PreviousValues{},
+			RawContext:     json.RawMessage("{}"),
+		}, true)
+
+		require.NotNil(t, err)
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
+		assert.False(t, response.IsAsync)
+
+	})
+
+	t.Run("should allow Plan change", func(t *testing.T) {
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:      "",
+			PlanID:         broker.BuildRuntimeAWSPlanID,
+			RawParameters:  json.RawMessage("{}"),
+			PreviousValues: domain.PreviousValues{},
+			RawContext:     json.RawMessage("{}"),
+		}, true)
+
+		require.NoError(t, err)
+
+		ops, err := st.Operations().ListOperationsByInstanceID(instanceID)
+		var updateOperation internal.Operation
+		for _, o := range ops {
+			if o.Type == internal.OperationTypeUpdate {
+				updateOperation = o
+			}
+		}
+		require.NotNil(t, updateOperation, "Update operation should be found")
+		assert.Equal(t, broker.BuildRuntimeAWSPlanID, updateOperation.UpdatedPlanID, "Plan ID should be updated to BuildRuntimeAWSPlanID")
+		inst, err := st.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, broker.BuildRuntimeAWSPlanID, inst.ServicePlanID, "ServicePlanID should be updated to BuildRuntimeAWSPlanID")
+	})
+}
+
 func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	// given
 	instance := internal.Instance{
@@ -192,7 +274,11 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	provisioning := fixProvisioningOperation("01")
+	provisioning.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
+	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -201,8 +287,8 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
-		fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -293,7 +379,8 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		nil, fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -341,8 +428,8 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
-		fakeKcpK8sClient, nil, false)
+		nil, fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t))
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -370,9 +457,10 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
-		fakeKcpK8sClient, nil, false)
+		nil, fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t))
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -392,7 +480,9 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 
 func fixProvisioningOperation(id string) internal.ProvisioningOperation {
 	provisioningOperation := fixture.FixProvisioningOperation(id, instanceID)
-
+	provisioningOperation.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 	return internal.ProvisioningOperation{Operation: provisioningOperation}
 }
 
@@ -435,8 +525,9 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		nil, fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t))
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -479,7 +570,11 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
+	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -487,8 +582,9 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("Should accept update to OIDC object", func(t *testing.T) {
 		// given
@@ -516,9 +612,10 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			UsernamePrefix: "-",
 		}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
 	})
+
 	t.Run("Should accept update to OIDC list", func(t *testing.T) {
 		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-","groupsPrefix":"-","requiredClaims":[]`
 
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -540,6 +637,8 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			SigningAlgs:    []string{"RS256"},
 			UsernameClaim:  "email",
 			UsernamePrefix: "-",
+			GroupsPrefix:   "-",
+			RequiredClaims: []string{},
 		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
 	})
 	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
@@ -578,7 +677,11 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
+	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -586,8 +689,9 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("Should reject update to OIDC object", func(t *testing.T) {
 		// given
@@ -608,7 +712,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	})
 	t.Run("Should accept update to OIDC list", func(t *testing.T) {
 		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-","groupsPrefix":"-","requiredClaims":[]`
 
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -619,6 +723,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -630,6 +735,8 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			SigningAlgs:    []string{"RS256"},
 			UsernameClaim:  "email",
 			UsernamePrefix: "-",
+			GroupsPrefix:   "-",
+			RequiredClaims: []string{},
 		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
 	})
 	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
@@ -740,8 +847,9 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -784,8 +892,9 @@ func TestHAZones(t *testing.T) {
 		q.On("Add", mock.AnythingOfType("string"))
 
 		kcBuilder := &kcMock.KcBuilder{}
+
 		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -825,8 +934,9 @@ func TestHAZones(t *testing.T) {
 		q.On("Add", mock.AnythingOfType("string"))
 
 		kcBuilder := &kcMock.KcBuilder{}
+
 		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -869,8 +979,9 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			q.On("Add", mock.AnythingOfType("string"))
 
 			kcBuilder := &kcMock.KcBuilder{}
+
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -920,7 +1031,7 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st, handler, true, false, true, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -970,9 +1081,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
-
 	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage, handler, true, false, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1057,7 +1167,7 @@ func TestSubaccountMovement(t *testing.T) {
 	queue.On("Add", mock.AnythingOfType("string"))
 
 	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1145,7 +1255,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	queue.On("Add", mock.AnythingOfType("string"))
 
 	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
 		// initial state of instance - moving account was never donex
@@ -1211,7 +1321,11 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues = &internal.ProviderValues{
+		ProviderType: "azure",
+	}
+	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1220,7 +1334,7 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine(), false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1233,7 +1347,7 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	}, true)
 
 	// then
-	assert.EqualError(t, err, "In the region westeurope, the machine type Standard_D16s_v5 is not available, it is supported in the uksouth, brazilsouth")
+	assert.EqualError(t, err, "In the region westeurope, the machine type Standard_D16s_v5 is not available, it is supported in the brazilsouth, uksouth")
 }
 
 func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
@@ -1242,7 +1356,11 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues = &internal.ProviderValues{
+		ProviderType: "azure",
+	}
+	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1251,7 +1369,7 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine(), false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	testCases := []struct {
 		name                      string
@@ -1261,17 +1379,17 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 		{
 			name:                      "Single unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the brazilsouth, uksouth",
 		},
 		{
 			name:                      "Multiple unsupported machine types",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D16s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth; Standard_D16s_v5 (used in: name-2), it is supported in the uksouth, brazilsouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the brazilsouth, uksouth; Standard_D16s_v5 (used in: name-2), it is supported in the brazilsouth, uksouth",
 		},
 		{
 			name:                      "Duplicate unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), it is supported in the uksouth, brazilsouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), it is supported in the brazilsouth, uksouth",
 		},
 	}
 
@@ -1296,10 +1414,15 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.Region = ptr.String("uksouth")
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+
+	err = st.Operations().InsertProvisioningOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1309,7 +1432,7 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 	// when
@@ -1400,7 +1523,16 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			provisioning := fixProvisioningOperation("provisioning01")
+			switch tc.planID {
+			case broker.AWSPlanID:
+				provisioning.ProviderValues.ProviderType = "aws"
+			case broker.GCPPlanID:
+				provisioning.ProviderValues.ProviderType = "gcp"
+			case broker.AzurePlanID:
+				provisioning.ProviderValues.ProviderType = "azure"
+			}
+			err = st.Operations().InsertProvisioningOperation(provisioning)
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -1409,7 +1541,7 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), nil, imConfigFixture, newSchemaService(t))
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1427,8 +1559,265 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 	}
 }
 
-func fixValueProvider() broker.ValuesProvider {
-	return provider.NewPlanSpecificValuesProvider(true, pkg.AWS, true, nil, "production", "")
+func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.PlanID = broker.AWSPlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProvisioningParameters.PlanID = broker.AWSPlanID
+	provisioning.ProvisioningParameters.Parameters.Region = ptr.String("westeurope")
+	err = st.Operations().InsertProvisioningOperation(provisioning)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+
+	imConfig := broker.InfrastructureManager{
+		UseSmallerMachineTypes: false,
+	}
+
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t))
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AWSPlanID,
+		RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "In the westeurope, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
+}
+
+func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "name-1",
+			MachineType:   "Standard_NC8as_T4_v3",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+	}
+	instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
+	err = st.Operations().InsertProvisioningOperation(op)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	imConfig := broker.InfrastructureManager{
+		UseSmallerMachineTypes: false,
+	}
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t))
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type setting is permanent, and you cannot change it for the name-1 additional worker node pool")
+}
+
+func TestUpdateAdditionalProperties(t *testing.T) {
+	t.Run("file should contain request with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Greater(t, len(lines), 0)
+		var entry map[string]interface{}
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
+	t.Run("file should contain two requests with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		assert.NoError(t, err)
+
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		assert.NoError(t, err)
+
+		// then
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Equal(t, len(lines), 3)
+		var entry map[string]interface{}
+
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+
+		err = json.Unmarshal(lines[1], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
+	t.Run("file should not contain request without additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t))
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.Nil(t, contents)
+		assert.Error(t, err)
+	})
+}
+
+func fixValueProvider(t *testing.T) broker.ValuesProvider {
+	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
+	return provider.NewPlanSpecificValuesProvider(
+		broker.InfrastructureManager{
+			DefaultGardenerShootPurpose:  "production",
+			DefaultTrialProvider:         pkg.AWS,
+			MultiZoneCluster:             true,
+			ControlPlaneFailureTolerance: "",
+			UseSmallerMachineTypes:       true,
+		}, nil,
+		newSchemaService(t), planSpec)
 }
 
 func registerCRD() {

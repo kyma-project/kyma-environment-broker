@@ -35,42 +35,12 @@ spec:
             name: http
             protocol: TCP
           env:
-            - name: SUBACCOUNT_SYNC_METRICS_PORT
-              value: {{ .Values.subaccountSync.metricsPort | quote }}
-            - name: SUBACCOUNT_SYNC_LOG_LEVEL
-              value: {{ .Values.subaccountSync.logLevel | quote }}
-            - name: SUBACCOUNT_SYNC_UPDATE_RESOURCES
-              value: {{ .Values.subaccountSync.updateResources | quote }}
-            - name: SUBACCOUNT_SYNC_ALWAYS_SUBACCOUNT_FROM_DATABASE
-              value: {{ .Values.subaccountSync.alwaysSubaccountFromDatabase | quote }}
             - name: SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL
               value: {{ .Values.subaccountSync.accountSyncInterval | quote }}
-            - name: SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL
-              value: {{ .Values.subaccountSync.storageSyncInterval | quote }}
-            - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE
-              value: {{ .Values.subaccountSync.eventsWindowSize | quote }}
-            - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL
-              value: {{ .Values.subaccountSync.eventsWindowInterval | quote }}
-            - name: SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL
-              value: {{ .Values.subaccountSync.queueSleepInterval | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
-                  key: id
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
-                  key: secret
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
-              value: {{ .Values.cis.v2.authURL | required "please specify .Values.cis.v2.authURL" | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
-              value: {{ .Values.cis.v2.eventServiceURL | required "please specify .Values.cis.v2.eventServiceURL" | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
-              value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL
-              value: {{ .Values.subaccountSync.cisRateLimits.events.maxRequestsPerInterval | quote }}
+            - name: SUBACCOUNT_SYNC_ALWAYS_SUBACCOUNT_FROM_DATABASE
+              value: {{ .Values.subaccountSync.alwaysSubaccountFromDatabase | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL
+              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -81,45 +51,56 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}
                   key: secret
-            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL
-              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL
-              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
-            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL
-              value: {{ .Values.subaccountSync.cisRateLimits.accounts.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.accounts.maxRequestsPerInterval | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL
+              value: {{ .Values.subaccountSync.cisRateLimits.accounts.rateLimitingInterval | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL
+              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
+              value: {{ .Values.cis.v2.authURL | required "please specify .Values.cis.v2.authURL" | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
+                  key: id
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
+                  key: secret
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL
+              value: {{ .Values.subaccountSync.cisRateLimits.events.maxRequestsPerInterval | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
+              value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
+            - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
+              value: {{ .Values.cis.v2.eventServiceURL | required "please specify .Values.cis.v2.eventServiceURL" | quote }}
+            - name: SUBACCOUNT_SYNC_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-serviceName
+            - name: SUBACCOUNT_SYNC_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-db-name
+            - name: SUBACCOUNT_SYNC_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-password
+            - name: SUBACCOUNT_SYNC_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-servicePort
             - name: SUBACCOUNT_SYNC_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: kcp-storage-client-secret
                   key: secretKey
                   optional: true
-            - name: SUBACCOUNT_SYNC_DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
-            - name: SUBACCOUNT_SYNC_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
-            - name: SUBACCOUNT_SYNC_DATABASE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
-            - name: SUBACCOUNT_SYNC_DATABASE_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
-            - name: SUBACCOUNT_SYNC_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
             - name: SUBACCOUNT_SYNC_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
@@ -127,8 +108,27 @@ spec:
                   key: postgresql-sslMode
             - name: SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
+            - name: SUBACCOUNT_SYNC_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-username
+            - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL
+              value: {{ .Values.subaccountSync.eventsWindowInterval | quote }}
+            - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE
+              value: {{ .Values.subaccountSync.eventsWindowSize | quote }}
+            - name: SUBACCOUNT_SYNC_LOG_LEVEL
+              value: {{ .Values.subaccountSync.logLevel | quote }}
+            - name: SUBACCOUNT_SYNC_METRICS_PORT
+              value: {{ .Values.subaccountSync.metricsPort | quote }}
+            - name: SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL
+              value: {{ .Values.subaccountSync.queueSleepInterval | quote }}
             - name: SUBACCOUNT_SYNC_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
+            - name: SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL
+              value: {{ .Values.subaccountSync.storageSyncInterval | quote }}
+            - name: SUBACCOUNT_SYNC_UPDATE_RESOURCES
+              value: {{ .Values.subaccountSync.updateResources | quote }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
               - name: cloudsql-sslrootcert

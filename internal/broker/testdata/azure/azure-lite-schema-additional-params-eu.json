@@ -33,7 +33,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -50,7 +50,8 @@
           "autoScalerMin": {
             "description": "Specifies the minimum number of virtual machines to create.",
             "type": "integer",
-            "minimum": 1,
+            "minimum": 0,
+            "maximum": 40,
             "default": 2
           },
           "autoScalerMax": {
@@ -81,6 +82,7 @@
     "autoScalerMin": {
       "default": 2,
       "description": "Specifies the minimum number of virtual machines to create",
+      "maximum": 40,
       "minimum": 2,
       "type": "integer"
     },
@@ -269,9 +271,9 @@
     },
     "shootAndSeedSameRegion": {
       "default": false,
-      "description": "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+      "description": "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if no seed is available in the region.",
       "type": "boolean",
-      "title": "Enforce Same Location for Seed and Shoot" 
+      "title": "Enforce same location for Seed and Shoot"
     }
   },
   "required": [

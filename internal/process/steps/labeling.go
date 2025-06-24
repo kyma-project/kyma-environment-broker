@@ -23,3 +23,12 @@ func SetCommonLabels(labels map[string]string, operation internal.Operation) map
 	labels[customresources.KymaNameLabel] = operation.KymaResourceName
 	return labels
 }
+
+func UpdatePlanLabels(labels map[string]string, planID string) map[string]string {
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[customresources.PlanIdLabel] = planID
+	labels[customresources.PlanNameLabel] = broker.PlanNamesMapping[planID]
+	return labels
+}

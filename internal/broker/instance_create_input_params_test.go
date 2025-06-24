@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -19,6 +20,9 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		Level: slog.LevelInfo,
 	}))
 	st := storage.NewMemoryStorage()
+	imConfig := InfrastructureManager{
+		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
+	}
 
 	t.Run("should parse shootAndSeedSameRegion - true", func(t *testing.T) {
 		// given
@@ -30,6 +34,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
+			imConfig,
 			st,
 			nil,
 			nil,
@@ -37,10 +42,11 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -61,6 +67,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
+			imConfig,
 			st,
 			nil,
 			nil,
@@ -68,10 +75,11 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when
@@ -91,6 +99,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
+			imConfig,
 			st,
 			nil,
 			nil,
@@ -98,10 +107,11 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
 			false,
+			config.FakeProviderConfigProvider{},
 		)
 
 		// when

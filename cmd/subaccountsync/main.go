@@ -64,12 +64,12 @@ func main() {
 
 	// create config provider
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logger.With("component", "config-map-reader"), cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, cli, logger.With("component", "config-map-reader")),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
 	// create Kyma GVR
-	kymaGVR := getResourceKindProvider(cfg.RuntimeConfigurationConfigMapName, configProvider)
+	kymaGVR := getResourceKindProvider(kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields))
 
 	// create DB connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
@@ -139,8 +139,8 @@ func createDynamicK8sClient() dynamic.Interface {
 	return clusterClient
 }
 
-func getResourceKindProvider(kymaVersion string, configProvider *kebConfig.ConfigProvider) schema.GroupVersionResource {
-	resourceKindProvider := kymacustomresource.NewResourceKindProvider(kymaVersion, configProvider)
+func getResourceKindProvider(configProvider kebConfig.ConfigMapConfigProvider) schema.GroupVersionResource {
+	resourceKindProvider := kymacustomresource.NewResourceKindProvider(configProvider)
 	kymaGVR, err := resourceKindProvider.DefaultGvr()
 	fatalOnError(err)
 	return kymaGVR

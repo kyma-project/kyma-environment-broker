@@ -1,6 +1,7 @@
 package provider
 
 import (
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -31,15 +32,18 @@ type (
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 		FailureTolerance       string
+		ZonesProvider          ZonesProvider
 	}
 	AWSTrialInputProvider struct {
 		PlatformRegionMapping  map[string]string
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
+		ZonesProvider          ZonesProvider
 	}
 	AWSFreemiumInputProvider struct {
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
+		ZonesProvider          ZonesProvider
 	}
 )
 
@@ -61,10 +65,13 @@ var awsZones = map[string]string{
 
 func (p *AWSInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
-	zones := p.zones()
 	region := DefaultAWSRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
+	}
+	zones := AWSZones(region, p.ZonesProvider.RandomZones(pkg.AWS, region, zonesCount))
+	if len(zones) < zonesCount {
+		zonesCount = len(zones)
 	}
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
@@ -89,14 +96,6 @@ func (p *AWSInputProvider) zonesCount() int {
 	return zonesCount
 }
 
-func (p *AWSInputProvider) zones() []string {
-	region := DefaultAWSRegion
-	if p.ProvisioningParameters.Parameters.Region != nil {
-		region = *p.ProvisioningParameters.Parameters.Region
-	}
-	return MultipleZonesForAWSRegion(region, p.zonesCount())
-}
-
 func (p *AWSTrialInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAWSTrialMachineType
 	if p.UseSmallerMachineTypes {
@@ -108,7 +107,7 @@ func (p *AWSTrialInputProvider) Provide() internal.ProviderValues {
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
-		Zones:                MultipleZonesForAWSRegion(region, 1),
+		Zones:                AWSZones(region, p.ZonesProvider.RandomZones(pkg.AWS, region, 1)),
 		ProviderType:         "aws",
 		DefaultMachineType:   machineType,
 		Region:               region,
@@ -147,12 +146,11 @@ func (p *AWSFreemiumInputProvider) Provide() internal.ProviderValues {
 		machineType = DefaultAWSMachineType
 	}
 	region := p.region()
-
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
-		Zones:                MultipleZonesForAWSRegion(region, 1),
+		Zones:                AWSZones(region, p.ZonesProvider.RandomZones(pkg.AWS, region, 1)),
 		ProviderType:         AWSProviderType,
 		DefaultMachineType:   machineType,
 		Region:               region,
@@ -168,4 +166,12 @@ func (p *AWSFreemiumInputProvider) region() string {
 		return DefaultEuAccessAWSRegion
 	}
 	return DefaultAWSRegion
+}
+
+func AWSZones(region string, availableZones []string) []string {
+	var generatedZones []string
+	for _, zone := range availableZones {
+		generatedZones = append(generatedZones, FullZoneName(AWSProviderType, region, zone))
+	}
+	return generatedZones
 }

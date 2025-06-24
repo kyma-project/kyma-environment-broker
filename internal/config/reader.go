@@ -12,74 +12,59 @@ import (
 )
 
 const (
-	namespace                 = "kcp-system"
-	runtimeVersionLabelPrefix = "runtime-version-"
-	kebConfigLabel            = "keb-config-runtime-configuration"
-	defaultConfigKey          = "default"
+	namespace        = "kcp-system"
+	defaultConfigKey = "default"
 )
 
 type ConfigMapReader struct {
-	ctx           context.Context
-	k8sClient     client.Client
-	logger        *slog.Logger
-	configMapName string
+	ctx       context.Context
+	k8sClient client.Client
+	logger    *slog.Logger
 }
 
-func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger *slog.Logger, cmName string) ConfigReader {
-	return &argoReader{target: &ConfigMapReader{
-		ctx:           ctx,
-		k8sClient:     k8sClient,
-		logger:        logger,
-		configMapName: cmName,
-	}}
-}
-
-func (r *ConfigMapReader) Read(planName string) (string, error) {
-	r.logger.Info(fmt.Sprintf("getting configuration for %v plan", planName))
-
-	cfgMap, err := r.getConfigMap()
-	if err != nil {
-		return "", fmt.Errorf("while getting configuration configmap: %w", err)
+func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger *slog.Logger) Reader {
+	return &ConfigMapReader{
+		ctx:       ctx,
+		k8sClient: k8sClient,
+		logger:    logger,
 	}
-	cfgString, err := r.getConfigStringForPlanOrDefaults(cfgMap, planName)
+}
+
+func (r *ConfigMapReader) Read(objectName, configKey string) (string, error) {
+	r.logger.Info(fmt.Sprintf("getting %s configuration from %s configmap", configKey, objectName))
+
+	cfgMap, err := r.getConfigMap(objectName)
+	if err != nil {
+		return "", fmt.Errorf("while getting configmap: %w", err)
+	}
+	cfgString, err := r.getConfigStringOrDefaults(cfgMap.Data, configKey)
 	if err != nil {
 		return "", fmt.Errorf("while getting configuration string: %w", err)
 	}
 
+	// a workaround for the issue with the ArgoCD, see https://github.com/argoproj/argo-cd/pull/4729/files
+	cfgString = strings.Replace(cfgString, "Kind:", "kind:", -1)
+
 	return cfgString, nil
 }
 
-func (r *ConfigMapReader) getConfigMap() (*coreV1.ConfigMap, error) {
+func (r *ConfigMapReader) getConfigMap(configMapName string) (*coreV1.ConfigMap, error) {
 	cfgMap := &coreV1.ConfigMap{}
-	err := r.k8sClient.Get(r.ctx, client.ObjectKey{Namespace: namespace, Name: r.configMapName}, cfgMap)
+	err := r.k8sClient.Get(r.ctx, client.ObjectKey{Namespace: namespace, Name: configMapName}, cfgMap)
 	if errors.IsNotFound(err) {
-		return nil, fmt.Errorf("configmap %s with configuration does not exist", r.configMapName)
+		return nil, fmt.Errorf("configmap %s does not exist in %s namespace", configMapName, namespace)
 	}
 	return cfgMap, err
 }
 
-func (r *ConfigMapReader) getConfigStringForPlanOrDefaults(cfgMap *coreV1.ConfigMap, planName string) (string, error) {
-	cfgString, exists := cfgMap.Data[planName]
+func (r *ConfigMapReader) getConfigStringOrDefaults(configMapData map[string]string, configKey string) (string, error) {
+	cfgString, exists := configMapData[configKey]
 	if !exists {
-		r.logger.Info(fmt.Sprintf("configuration for plan %v does not exist. Using default values", planName))
-		cfgString, exists = cfgMap.Data[defaultConfigKey]
+		r.logger.Info(fmt.Sprintf("configuration key %s does not exist. Using default values", configKey))
+		cfgString, exists = configMapData[defaultConfigKey]
 		if !exists {
 			return "", fmt.Errorf("default configuration does not exist")
 		}
 	}
 	return cfgString, nil
-}
-
-type argoReader struct {
-	target ConfigReader
-}
-
-func (r *argoReader) Read(planName string) (string, error) {
-	content, err := r.target.Read(planName)
-	if err != nil {
-		return "", err
-	}
-	// a workaround for the issue with the Argo CD, see https://github.com/argoproj/argo-cd/pull/4729/files
-	content = strings.Replace(content, "Kind:", "kind:", -1)
-	return content, nil
 }
