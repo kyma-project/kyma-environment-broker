@@ -294,7 +294,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
-							Required: []string{"clientID", "issuerURL", "groupsClaim", "usernameClaim", "usernamePrefix", "signingAlgs", "groupsPrefix", "requiredClaims"},
+							Required: []string{"clientID", "issuerURL", "groupsClaim", "usernameClaim", "usernamePrefix", "signingAlgs", "groupsPrefix"},
 						},
 					},
 				},
