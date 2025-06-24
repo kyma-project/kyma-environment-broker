@@ -121,7 +121,6 @@ func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operat
 			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
 		}
 	}
-	log.Info(fmt.Sprintf("Runtime resource state (not failed): %s; retry %s; %v", retryOperation.State, retry, err))
 	return retryOperation, retry, err
 }
 
@@ -155,5 +154,5 @@ func IsIngressFilteringEnabled(planID string, config broker.InfrastructureManage
 }
 
 func ProvisioningTakesLongerMessage(changeDescriptionThreshold time.Duration) string {
-	return fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %d minutes max.", int(changeDescriptionThreshold.Minutes()))
+	return fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %d minutes.", int(changeDescriptionThreshold.Minutes()))
 }
