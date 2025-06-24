@@ -318,7 +318,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 
 	for _, oidcConfig := range oidcList {
 		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
-		configs = append(configs, imv1.OIDCConfig{
+		oidc := imv1.OIDCConfig{
 			OIDCConfig: gardener.OIDCConfig{
 				ClientID:       &oidcConfig.ClientID,
 				IssuerURL:      &oidcConfig.IssuerURL,
@@ -329,8 +329,11 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				GroupsPrefix:   ptr.String("-"),
 				RequiredClaims: requiredClaims,
 			},
-			JWKS: []byte(oidcConfig.JwksToken),
-		})
+		}
+		if s.enableJwksToken {
+			oidc.JWKS = []byte(oidcConfig.JwksToken)
+		}
+		configs = append(configs, oidc)
 	}
 
 	return &configs
