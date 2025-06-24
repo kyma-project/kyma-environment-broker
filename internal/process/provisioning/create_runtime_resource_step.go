@@ -46,10 +46,11 @@ type CreateRuntimeResourceStep struct {
 	oidcDefaultValues       pkg.OIDCConfigDTO
 	useAdditionalOIDCSchema bool
 	workersProvider         *workers.Provider
+	enableJwksToken         bool
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwksToken bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
@@ -57,6 +58,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 		workersProvider:         workersProvider,
+		enableJwksToken:         enableJwksToken,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -327,6 +329,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				GroupsPrefix:   ptr.String("-"),
 				RequiredClaims: requiredClaims,
 			},
+			JWKS: []byte(oidcConfig.JWKS),
 		})
 	}
 
@@ -354,6 +357,9 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	}
 	if s.useAdditionalOIDCSchema {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
+	}
+	if s.enableJwksToken && inputOIDC.JWKS != "" {
+		defaultOIDC.JWKS = []byte(inputOIDC.JWKS)
 	}
 	return defaultOIDC
 }

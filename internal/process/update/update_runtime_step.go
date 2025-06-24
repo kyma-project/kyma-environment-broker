@@ -34,10 +34,11 @@ type UpdateRuntimeStep struct {
 	useAdditionalOIDCSchema    bool
 	workersProvider            *workers.Provider
 	valuesProvider             broker.ValuesProvider
+	enableJwksToken            bool
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, enableJwksToken bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
@@ -47,6 +48,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 		workersProvider:            workersProvider,
 		valuesProvider:             valuesProvider,
+		enableJwksToken:            enableJwksToken,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -122,6 +124,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						RequiredClaims: requiredClaims,
 						GroupsPrefix:   &oidcConfig.GroupsPrefix,
 					},
+					JWKS: []byte(oidcConfig.JWKS),
 				})
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
@@ -160,6 +163,9 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					}
 				}
 				config.RequiredClaims = requiredClaims
+			}
+			if s.enableJwksToken && dto.JWKS != "" {
+				config.JWKS = []byte(dto.JWKS)
 			}
 		}
 	}
