@@ -124,7 +124,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						RequiredClaims: requiredClaims,
 						GroupsPrefix:   &oidcConfig.GroupsPrefix,
 					},
-					JWKS: []byte(oidcConfig.JWKS),
+					JWKS: []byte(oidcConfig.JwksToken),
 				})
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
@@ -164,8 +164,8 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				}
 				config.RequiredClaims = requiredClaims
 			}
-			if s.enableJwksToken && dto.JWKS != "" {
-				config.JWKS = []byte(dto.JWKS)
+			if s.enableJwksToken && dto.JwksToken != "" {
+				config.JWKS = []byte(dto.JwksToken)
 			}
 		}
 	}

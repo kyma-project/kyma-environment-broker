@@ -329,7 +329,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				GroupsPrefix:   ptr.String("-"),
 				RequiredClaims: requiredClaims,
 			},
-			JWKS: []byte(oidcConfig.JWKS),
+			JWKS: []byte(oidcConfig.JwksToken),
 		})
 	}
 
@@ -358,8 +358,8 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if s.useAdditionalOIDCSchema {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
-	if s.enableJwksToken && inputOIDC.JWKS != "" {
-		defaultOIDC.JWKS = []byte(inputOIDC.JWKS)
+	if s.enableJwksToken && inputOIDC.JwksToken != "" {
+		defaultOIDC.JWKS = []byte(inputOIDC.JwksToken)
 	}
 	return defaultOIDC
 }

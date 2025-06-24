@@ -160,7 +160,7 @@ type OIDCConfigDTO struct {
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
 	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
 	RequiredClaims []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
-	JWKS           string   `json:"jwksURL,omitempty" yaml:"jwksURL,omitempty"`
+	JwksToken      string   `json:"jwksToken,omitempty" yaml:"jwksToken,omitempty"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"

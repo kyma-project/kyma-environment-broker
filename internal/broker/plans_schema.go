@@ -344,8 +344,10 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 		}
 	}
 	if enableJwksToken {
-		if additionalOidc, ok := OIDCs.OneOf[1].(AdditionalOIDC); ok {
+		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
 			additionalOidc.Properties.List.Items.Properties.JwksToken = Type{Type: "string", Description: "JWKS token encoded in base64."}
+			required := additionalOidc.Properties.List.Items.Required
+			additionalOidc.Properties.List.Items.Required = append(required, "jwksToken")
 			OIDCs.OneOf[0] = additionalOidc
 		}
 		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
