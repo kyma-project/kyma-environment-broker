@@ -224,7 +224,7 @@ edp:
   environment: "dev"
   # EDP namespace to use
   namespace: "kyma-dev"
-  # If true, EDP integration is required for provisioning
+  # If true, EDP integration is required
   required: false
   # OAuth2 client secret for EDP
   secret: "TBD"
