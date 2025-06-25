@@ -14,6 +14,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_BINDING_&#x200b;MAX_BINDINGS_COUNT** | <code>10</code> | Maximum number of non-expired bindings allowed per instance |
 | **APP_BROKER_BINDING_&#x200b;MAX_EXPIRATION_&#x200b;SECONDS** | <code>7200</code> | Maximum allowed expiration time (in seconds) for a binding |
 | **APP_BROKER_BINDING_&#x200b;MIN_EXPIRATION_&#x200b;SECONDS** | <code>600</code> | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener |
+| **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified |
 | **APP_BROKER_DISABLE_&#x200b;SAP_CONVERGED_CLOUD** | <code>false</code> | If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB |
