@@ -113,7 +113,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						requiredClaims[parts[0]] = parts[1]
 					}
 				}
-				oidcConfigs = append(oidcConfigs, imv1.OIDCConfig{
+				oidcConfigObj := imv1.OIDCConfig{
 					OIDCConfig: gardener.OIDCConfig{
 						ClientID:       &oidcConfig.ClientID,
 						IssuerURL:      &oidcConfig.IssuerURL,
@@ -124,8 +124,12 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						RequiredClaims: requiredClaims,
 						GroupsPrefix:   &oidcConfig.GroupsPrefix,
 					},
-					JWKS: []byte(oidcConfig.JwksToken),
-				})
+				}
+				if s.enableJwksToken {
+					oidcConfigObj.JWKS = []byte(oidcConfig.JwksToken)
+				}
+				oidcConfigs = append(oidcConfigs, oidcConfigObj)
+
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
 		} else if dto := oidc.OIDCConfigDTO; dto != nil {
