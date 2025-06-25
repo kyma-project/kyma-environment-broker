@@ -71,6 +71,10 @@ func (s *ResolveSubscriptionSecretStep) Name() string {
 }
 
 func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if operation.ProvisioningParameters.Parameters.TargetSecret != nil && *operation.ProvisioningParameters.Parameters.TargetSecret != "" {
+		log.Info("target secret is already set, skipping resolve step")
+		return operation, 0, nil
+	}
 	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
 		msg := fmt.Sprintf("resolving secret name")

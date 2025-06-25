@@ -148,11 +148,8 @@ func TestEDPRegistrationStep_selectServicePlan(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			// given
-			step := NewEDPRegistrationStep(nil, nil, edp.Config{})
-
 			// when
-			envKey := step.selectServicePlan(tc.planID)
+			envKey := SelectServicePlan(tc.planID)
 
 			// then
 			assert.Equal(t, tc.expected, envKey)

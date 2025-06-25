@@ -1414,10 +1414,15 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.Region = ptr.String("uksouth")
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+
+	err = st.Operations().InsertProvisioningOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1558,13 +1563,13 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
 	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.PlanID = broker.AWSPlanID
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
 	provisioning := fixProvisioningOperation("provisioning01")
-	provisioning.ProviderValues = &internal.ProviderValues{
-		ProviderType: "aws",
-	}
+	provisioning.ProvisioningParameters.PlanID = broker.AWSPlanID
+	provisioning.ProvisioningParameters.Parameters.Region = ptr.String("westeurope")
 	err = st.Operations().InsertProvisioningOperation(provisioning)
 	require.NoError(t, err)
 
@@ -1608,10 +1613,13 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
 			AutoScalerMax: 20,
 		},
 	}
+	instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
+	err = st.Operations().InsertProvisioningOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1648,10 +1656,13 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		tempDir := t.TempDir()
 		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
 		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -1695,10 +1706,13 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		tempDir := t.TempDir()
 		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
 		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -1756,10 +1770,13 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		tempDir := t.TempDir()
 		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
 		instance := fixture.FixInstance(instanceID)
+		instance.Parameters.Parameters.Region = ptr.String("uksouth")
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		op := fixProvisioningOperation("provisioning01")
+		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
+		err = st.Operations().InsertProvisioningOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}

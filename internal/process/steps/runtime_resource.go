@@ -101,7 +101,7 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 		if time.Since(operation.CreatedAt) > s.changeDescriptionThreshold {
 			var backoff time.Duration
 			operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-				op.Description = fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %s max.", s.runtimeResourceStateRetry.Timeout)
+				op.Description = ProvisioningTakesLongerMessage(s.runtimeResourceStateRetry.Timeout)
 			}, log)
 			if backoff != 0 {
 				log.Error("cannot save the operation")
@@ -151,4 +151,8 @@ func IsNotSapConvergedCloud(cloudProvider string) bool {
 func IsIngressFilteringEnabled(planID string, config broker.InfrastructureManager, external bool) bool {
 	ingressFiltering := config.IngressFilteringPlans.Contains(broker.PlanNamesMapping[planID]) && !external
 	return ingressFiltering
+}
+
+func ProvisioningTakesLongerMessage(changeDescriptionThreshold time.Duration) string {
+	return fmt.Sprintf("Operation created. Cluster provisioning takes longer than usual. It takes up to %d minutes.", int(changeDescriptionThreshold.Minutes()))
 }
