@@ -168,8 +168,12 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				}
 				config.RequiredClaims = requiredClaims
 			}
-			if s.enableJwksToken && dto.JwksToken != "" {
-				config.JWKS = []byte(dto.JwksToken)
+			if s.enableJwksToken {
+				if dto.JwksToken == "-" {
+					config.JWKS = nil
+				} else if dto.JwksToken != "" {
+					config.JWKS = []byte(dto.JwksToken)
+				}
 			}
 		}
 	}

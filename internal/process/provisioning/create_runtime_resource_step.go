@@ -361,7 +361,7 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if s.useAdditionalOIDCSchema {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
-	if s.enableJwksToken && inputOIDC.JwksToken != "" {
+	if s.enableJwksToken && inputOIDC.JwksToken != "" && inputOIDC.JwksToken != "-" {
 		defaultOIDC.JWKS = []byte(inputOIDC.JwksToken)
 	}
 	return defaultOIDC

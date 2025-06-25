@@ -211,9 +211,9 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	}
 	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
 	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
-	if o.OIDCConfigDTO.JwksToken != "" {
+	if o.OIDCConfigDTO.JwksToken != "" && o.OIDCConfigDTO.JwksToken != "-" {
 		if _, err := base64.StdEncoding.DecodeString(o.OIDCConfigDTO.JwksToken); err != nil {
-			*errs = append(*errs, "jwksToken must be a valid base64 encoded value")
+			*errs = append(*errs, "jwksToken must be a valid base64 encoded value or equal to '-' to disable it if used previously")
 		}
 	}
 	return nil
