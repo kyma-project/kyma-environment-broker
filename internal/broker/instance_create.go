@@ -26,7 +26,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -43,6 +42,7 @@ import (
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
 //go:generate mockery --name=PlanValidator --output=automock --outpkg=automock --case=underscore
+//go:generate mockery --name=QuotaClient --output=automock --outpkg=automock --case=underscore
 
 type (
 	Queue interface {
@@ -60,6 +60,10 @@ type (
 
 	RegionsSupporterProvider interface {
 		RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error)
+	}
+
+	QuotaClient interface {
+		GetQuota(subAccountID, planName string) (int, error)
 	}
 )
 
@@ -88,7 +92,7 @@ type ProvisionEndpoint struct {
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           RegionsSupporterProvider
-	quotaClient            *quota.Client
+	quotaClient            QuotaClient
 }
 
 const (
@@ -113,7 +117,7 @@ func NewProvision(brokerConfig Config,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
-	quotaClient *quota.Client,
+	quotaClient QuotaClient,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -319,10 +323,30 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if b.config.CheckQuotaLimit {
-		_, err := b.quotaClient.GetQuota(provisioningParameters.ErsContext.SubAccountID, PlanNamesMapping[provisioningParameters.PlanID])
+		instanceFilter := dbmodel.InstanceFilter{
+			SubAccountIDs: []string{provisioningParameters.ErsContext.SubAccountID},
+			PlanIDs:       []string{provisioningParameters.PlanID},
+		}
+		_, _, usedQuota, err := b.instanceStorage.List(instanceFilter)
 		if err != nil {
-			b.log.Error(fmt.Sprintf("while getting assigned quota: %v", err))
-			return fmt.Errorf("The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+			return fmt.Errorf(
+				"while listing instances for subaccount %s and plan ID %s: %w",
+				provisioningParameters.ErsContext.SubAccountID,
+				provisioningParameters.PlanID,
+				err,
+			)
+		}
+
+		if usedQuota > 0 {
+			assignedQuota, err := b.quotaClient.GetQuota(provisioningParameters.ErsContext.SubAccountID, PlanNamesMapping[provisioningParameters.PlanID])
+			if err != nil {
+				b.log.Error(fmt.Sprintf("while getting assigned quota: %v", err))
+				return fmt.Errorf("The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+			}
+
+			if usedQuota >= assignedQuota {
+				return fmt.Errorf("The quota for this service plan has been exceeded. Please contact your Operator for help.")
+			}
 		}
 	}
 

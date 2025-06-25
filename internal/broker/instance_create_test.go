@@ -3101,6 +3101,214 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 	})
 }
 
+func TestQuotaLimitCheck(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	t.Run("should create new operation if there is no instances", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if there is no unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(1, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "The quota for this service plan has been exceeded. Please contact your Operator for help.")
+	})
+
+	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(2, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if quota client returns error", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error"))
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+	})
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion

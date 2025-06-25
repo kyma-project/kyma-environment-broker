@@ -3,7 +3,6 @@ package quota
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -15,42 +14,29 @@ import (
 
 func TestGetQuota_Success(t *testing.T) {
 	// given
-	expectedQuota := 2
-	expectedPlan := "aws"
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := Response{
-			Plan:  expectedPlan,
-			Quota: expectedQuota,
-		}
-		err := json.NewEncoder(w).Encode(resp)
-		require.NoError(t, err)
-	}))
-	defer server.Close()
-
-	client := newTestClient(server)
+	response := Response{
+		Plan:  "aws",
+		Quota: 2,
+	}
+	client, cleanup := fixClient(t, http.StatusOK, response)
+	defer cleanup()
 
 	// when
-	quota, err := client.GetQuota("test-subaccount", expectedPlan)
+	quota, err := client.GetQuota("test-subaccount", response.Plan)
 
 	// then
 	assert.NoError(t, err)
-	assert.Equal(t, expectedQuota, quota)
+	assert.Equal(t, response.Quota, quota)
 }
 
 func TestGetQuota_WrongPlan(t *testing.T) {
 	// given
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := Response{
-			Plan:  "different-plan",
-			Quota: 100,
-		}
-		err := json.NewEncoder(w).Encode(resp)
-		require.NoError(t, err)
-	}))
-	defer server.Close()
-
-	client := newTestClient(server)
+	response := Response{
+		Plan:  "different-plan",
+		Quota: 100,
+	}
+	client, cleanup := fixClient(t, http.StatusOK, response)
+	defer cleanup()
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", "expected-plan")
@@ -62,40 +48,40 @@ func TestGetQuota_WrongPlan(t *testing.T) {
 
 func TestGetQuota_APIError(t *testing.T) {
 	// given
-	apiErrMsg := "not authorized"
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusForbidden)
-		err := json.NewEncoder(w).Encode(map[string]any{
-			"error": map[string]string{"message": apiErrMsg},
-		})
-		require.NoError(t, err)
-	}))
-	defer server.Close()
-
-	client := newTestClient(server)
+	APIErr := map[string]any{
+		"error": map[string]string{"message": "not authorized"},
+	}
+	client, cleanup := fixClient(t, http.StatusForbidden, APIErr)
+	defer cleanup()
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", "aws")
 
 	// then
-	assert.EqualError(t, err, fmt.Sprintf("API error: %s", apiErrMsg))
+	assert.EqualError(t, err, "API error: not authorized")
 	assert.Zero(t, quota)
 }
 
-func newTestClient(server *httptest.Server) *Client {
+func fixClient(t *testing.T, statusCode int, response any) (*Client, func()) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(statusCode)
+		err := json.NewEncoder(w).Encode(response)
+		require.NoError(t, err)
+	}))
 	cfg := Config{
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 		AuthURL:      server.URL,
 		ServiceURL:   server.URL,
 	}
-
 	client := &Client{
 		ctx:        context.Background(),
 		httpClient: server.Client(),
 		config:     cfg,
 		log:        slog.Default(),
 	}
-
-	return client
+	cleanup := func() {
+		server.Close()
+	}
+	return client, cleanup
 }
