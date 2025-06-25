@@ -140,6 +140,8 @@ broker:
     maxExpirationSeconds: 7200
     # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener
     minExpirationSeconds: 600
+  # If true, validates during provisioning that the assigned quota for the subaccount is not exceeded
+  checkQuotaLimit: false
   # Default platform region for requests if not specified
   defaultRequestRegion: "cf-eu10"
   # If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters

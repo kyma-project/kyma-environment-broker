@@ -15,8 +15,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-multierror"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -28,11 +26,15 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -86,6 +88,7 @@ type ProvisionEndpoint struct {
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           RegionsSupporterProvider
+	quotaClient            *quota.Client
 }
 
 const (
@@ -110,6 +113,7 @@ func NewProvision(brokerConfig Config,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
+	quotaClient *quota.Client,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -138,6 +142,7 @@ func NewProvision(brokerConfig Config,
 		useSmallerMachineTypes:  useSmallerMachineTypes,
 		schemaService:           schemaService,
 		providerConfigProvider:  providerConfigProvider,
+		quotaClient:             quotaClient,
 	}
 }
 
@@ -311,6 +316,14 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	values, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
+	}
+
+	if b.config.CheckQuotaLimit {
+		_, err := b.quotaClient.GetQuota(provisioningParameters.ErsContext.SubAccountID, PlanNamesMapping[provisioningParameters.PlanID])
+		if err != nil {
+			b.log.Error(fmt.Sprintf("while getting assigned quota: %v", err))
+			return fmt.Errorf("The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+		}
 	}
 
 	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
