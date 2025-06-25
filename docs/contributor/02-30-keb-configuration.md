@@ -58,7 +58,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_EDP_DISABLED** | <code>true</code> | If true, disables EDP integration |
 | **APP_EDP_ENVIRONMENT** | <code>dev</code> | EDP environment, for example, dev, prod |
 | **APP_EDP_NAMESPACE** | <code>kyma-dev</code> | EDP namespace to use |
-| **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required for provisioning |
+| **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required |
 | **APP_EDP_SECRET** | None | - |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the /events API and event storage for operation events (true/false) |
 | **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | None | - |
