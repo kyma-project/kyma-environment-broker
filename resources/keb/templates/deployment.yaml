@@ -270,6 +270,20 @@ spec:
               value: "{{ .Values.provisioning.maxStepProcessingTime }}"
             - name: APP_PROVISIONING_WORKERS_AMOUNT
               value: "{{ .Values.provisioning.workersAmount }}"
+            - name: APP_QUOTA_AUTH_URL
+              value: "{{ .Values.cis.v2.authURL }}"
+            - name: APP_QUOTA_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.cis.v2.secretName }}"
+                  key: id
+            - name: APP_QUOTA_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.cis.v2.secretName }}"
+                  key: secret
+            - name: APP_QUOTA_SERVICE_URL
+              value: "{{ .Values.cis.v2.provisioningServiceURL }}"
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME

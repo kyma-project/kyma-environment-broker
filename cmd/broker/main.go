@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -35,6 +33,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
@@ -136,6 +136,8 @@ type Config struct {
 	ProvidersConfigurationFilePath string
 
 	PlansConfigurationFilePath string
+
+	Quota quota.Config
 }
 
 type ProfilerConfig struct {

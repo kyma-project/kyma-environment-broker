@@ -15,17 +15,17 @@ const (
 	quotaServicePath = "%s/api/v2.0/subaccounts/%s/services/kymaruntime/plan/%s"
 )
 
-type CisConfig struct {
+type Config struct {
 	ClientID     string
 	ClientSecret string
 	AuthURL      string
 	ServiceURL   string
 }
 
-type CisClient struct {
+type Client struct {
 	ctx        context.Context
 	httpClient *http.Client
-	config     CisConfig
+	config     Config
 	log        *slog.Logger
 }
 
@@ -37,7 +37,7 @@ type Response struct {
 	Quota int    `json:"quota"`
 }
 
-func NewCisClient(ctx context.Context, config CisConfig, log *slog.Logger) *CisClient {
+func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -45,7 +45,7 @@ func NewCisClient(ctx context.Context, config CisConfig, log *slog.Logger) *CisC
 	}
 	httpClientOAuth := cfg.Client(ctx)
 
-	return &CisClient{
+	return &Client{
 		ctx:        ctx,
 		httpClient: httpClientOAuth,
 		config:     config,
@@ -53,7 +53,7 @@ func NewCisClient(ctx context.Context, config CisConfig, log *slog.Logger) *CisC
 	}
 }
 
-func (c *CisClient) GetQuota(subAccountID, planName string) (int, error) {
+func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
 	req, err := http.NewRequestWithContext(c.ctx, http.MethodGet, fmt.Sprintf(quotaServicePath, c.config.ServiceURL, subAccountID, planName), nil)
 	if err != nil {
 		return 0, fmt.Errorf("while creating request: %w", err)

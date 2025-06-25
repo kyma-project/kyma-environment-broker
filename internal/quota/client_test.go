@@ -28,7 +28,7 @@ func TestGetQuota_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestCisClient(server)
+	client := newTestClient(server)
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", expectedPlan)
@@ -50,7 +50,7 @@ func TestGetQuota_WrongPlan(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestCisClient(server)
+	client := newTestClient(server)
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", "expected-plan")
@@ -72,7 +72,7 @@ func TestGetQuota_APIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := newTestCisClient(server)
+	client := newTestClient(server)
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", "aws")
@@ -82,15 +82,15 @@ func TestGetQuota_APIError(t *testing.T) {
 	assert.Zero(t, quota)
 }
 
-func newTestCisClient(server *httptest.Server) *CisClient {
-	cfg := CisConfig{
+func newTestClient(server *httptest.Server) *Client {
+	cfg := Config{
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 		AuthURL:      server.URL,
 		ServiceURL:   server.URL,
 	}
 
-	client := &CisClient{
+	client := &Client{
 		ctx:        context.Background(),
 		httpClient: server.Client(),
 		config:     cfg,

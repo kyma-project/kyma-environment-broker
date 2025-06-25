@@ -437,6 +437,8 @@ cis:
     maxRequestRetries: "3"
     # The minimum interval between requests to the CIS v2 API in case of errors
     rateLimitingInterval: "2s"
+    # The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments
+    provisioningServiceURL: "TBD"
     # The interval between requests to the CIS v2 API
     requestInterval: "200ms"
 # =================================================
