@@ -252,15 +252,14 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
 							Default: []interface{}{
 								map[string]interface{}{
-									"clientID":         defaultOIDCConfig.ClientID,
-									"issuerURL":        defaultOIDCConfig.IssuerURL,
-									"groupsClaim":      defaultOIDCConfig.GroupsClaim,
-									"signingAlgs":      defaultOIDCConfig.SigningAlgs,
-									"usernameClaim":    defaultOIDCConfig.UsernameClaim,
-									"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
-									"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
-									"requiredClaims":   []interface{}{},
-									"encodedJwksArray": "",
+									"clientID":       defaultOIDCConfig.ClientID,
+									"issuerURL":      defaultOIDCConfig.IssuerURL,
+									"groupsClaim":    defaultOIDCConfig.GroupsClaim,
+									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
+									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
+									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+									"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
+									"requiredClaims": []interface{}{},
 								},
 							},
 						},
@@ -349,6 +348,19 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
 			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. Leave empty to not use it or to remove a previously set value."}
 			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+			additionalOidc.Properties.List.Default = []interface{}{
+				map[string]interface{}{
+					"clientID":         defaultOIDCConfig.ClientID,
+					"issuerURL":        defaultOIDCConfig.IssuerURL,
+					"groupsClaim":      defaultOIDCConfig.GroupsClaim,
+					"signingAlgs":      defaultOIDCConfig.SigningAlgs,
+					"usernameClaim":    defaultOIDCConfig.UsernameClaim,
+					"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
+					"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
+					"requiredClaims":   []interface{}{},
+					"encodedJwksArray": "",
+				},
+			}
 			OIDCs.OneOf[0] = additionalOidc
 		}
 		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
