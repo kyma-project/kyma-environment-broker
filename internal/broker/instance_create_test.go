@@ -3205,7 +3205,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.EqualError(t, err, "The quota for this service plan has been exceeded. Please contact your Operator for help.")
+		assert.EqualError(t, err, "Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
 	})
 
 	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {

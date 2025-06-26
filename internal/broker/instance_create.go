@@ -345,7 +345,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			}
 
 			if usedQuota >= assignedQuota {
-				return fmt.Errorf("The quota for this service plan has been exceeded. Please contact your Operator for help.")
+				return fmt.Errorf("Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
 			}
 		}
 	}
