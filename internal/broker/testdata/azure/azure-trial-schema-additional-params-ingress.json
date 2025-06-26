@@ -122,6 +122,14 @@
       "type": "string"
     },
     "oidc": {
+      "_controlsOrder": [
+        "clientID",
+        "groupsClaim",
+        "issuerURL",
+        "signingAlgs",
+        "usernameClaim",
+        "usernamePrefix"
+      ],
       "additionalProperties": false,
       "description": "OIDC configuration",
       "properties": {

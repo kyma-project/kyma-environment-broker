@@ -249,6 +249,14 @@
       "type": "object"
     },
     "oidc": {
+      "_controlsOrder": [
+        "clientID",
+        "groupsClaim",
+        "issuerURL",
+        "signingAlgs",
+        "usernameClaim",
+        "usernamePrefix"
+      ],
       "description": "OIDC configuration",
       "properties": {
         "clientID": {
