@@ -131,6 +131,50 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	assert.Equal(t, expectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
+func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidcWithJWKS("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, false, &workers.Provider{}, fixValuesProvider(), true)
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = "runtime-name"
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.UpdatingParameters.OIDC.JwksToken = "-"
+	expectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: ptr.String("initial-username-prefix"),
+			GroupsPrefix:   ptr.String("-"),
+		},
+	}
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	t.Logf("gotRuntime: %+v", gotRuntime)
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
+	assert.Equal(t, expectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+}
+
 func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -267,7 +311,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
-	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider(), false)
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider(), true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -283,6 +327,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 					UsernameClaim:  "first-uc-custom",
 					UsernamePrefix: "first-up-custom",
 					RequiredClaims: []string{"claim1=value1", "claim2=value2"},
+					JwksToken:      "Y3VzdG9tLWp3a3MtdG9rZW4=",
 				},
 				{
 					ClientID:       "second-client-id-custom",
@@ -311,6 +356,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			},
 			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
+		JWKS: []byte("Y3VzdG9tLWp3a3MtdG9rZW4="),
 	}
 	secondExpectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
@@ -564,6 +610,50 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
 	}
 }
 
+func fixRuntimeResourceWithOneAdditionalOidcWithJWKS(name string) runtime.Object {
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	return &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: "kcp-system",
+		},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Kubernetes: imv1.Kubernetes{
+					KubeAPIServer: imv1.APIServer{
+						AdditionalOidcConfig: &[]imv1.OIDCConfig{
+							{
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("initial-groups"),
+									GroupsPrefix:   ptr.String("initial-groups-prefix"),
+									IssuerURL:      ptr.String("initial-issuer-url"),
+									SigningAlgs:    []string{"initial-signingAlgs"},
+									UsernameClaim:  ptr.String("initial-sub"),
+									UsernamePrefix: ptr.String("initial-username-prefix"),
+								},
+								JWKS: []byte("andrcy10b2tlbi1kZGVmYXVsdA=="),
+							},
+						},
+					},
+				},
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine: gardener.Machine{
+								Type: "original-type",
+							},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
@@ -587,6 +677,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 									UsernameClaim:  ptr.String("first-initial-sub"),
 									UsernamePrefix: ptr.String("first-initial-username-prefix"),
 								},
+								JWKS: []byte("andrcy10b2tlbi1kZGVmYXVsdA=="),
 							},
 							{
 								OIDCConfig: gardener.OIDCConfig{
@@ -598,6 +689,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 									UsernameClaim:  ptr.String("second-initial-sub"),
 									UsernamePrefix: ptr.String("second-initial-username-prefix"),
 								},
+								JWKS: []byte("b3RoZXItandrcy10b2tlbg=="),
 							},
 							{
 								OIDCConfig: gardener.OIDCConfig{
