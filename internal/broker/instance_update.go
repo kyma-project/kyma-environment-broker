@@ -251,7 +251,13 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(lastProvisioningOperation.ProviderValues.ProviderType)
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
+		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
+	}
+
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
@@ -277,12 +283,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
-
-	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
-	if err != nil {
-		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
-	}
 
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))

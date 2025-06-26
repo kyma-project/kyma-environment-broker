@@ -69,6 +69,7 @@ const (
 	instanceName               = "my-service-instance"
 	bindingName                = "my-binding"
 	kymaNamespace              = "kyma-system"
+	testSuiteSpeedUpFactor     = 10000
 )
 
 var (
@@ -141,11 +142,6 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 	return broker
 }
 
-func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
-}
-
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	defer func() {
 		if r := recover(); r != nil {
@@ -212,21 +208,21 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		edpClient, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
 		workersProvider(cfg.InfrastructureManager, providerSpec))
 
-	provisioningQueue.SpeedUp(10000)
-	provisionManager.SpeedUp(10000)
+	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
+	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec), schemaService, plansSpec, configProvider)
-	updateQueue.SpeedUp(10000)
-	updateManager.SpeedUp(10000)
+	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
+	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
 		edpClient, accountProvider, k8sClientProvider, cli, configProvider, log)
-	deprovisionManager.SpeedUp(10000)
+	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
-	deprovisioningQueue.SpeedUp(10000)
+	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 
 	ts := &BrokerSuiteTest{
 		db:             db,
@@ -253,12 +249,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	return ts
-}
-
-func fakeK8sClientProvider(k8sCli client.Client) func(s string) (client.Client, error) {
-	return func(s string) (client.Client, error) {
-		return k8sCli, nil
-	}
 }
 
 func defaultOIDCValues() pkg.OIDCConfigDTO {

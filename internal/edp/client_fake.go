@@ -74,6 +74,22 @@ func (f *FakeClient) CreateMetadataTenant(name, env string, data MetadataTenantP
 	return nil
 }
 
+func (f *FakeClient) UpdateMetadataTenant(name, env string, metadataKey, metadataValue string, log *slog.Logger) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	mapKey := generateMetadataTenantMapKey(name, env, metadataKey)
+
+	item, found := f.metadataTenantData[mapKey]
+	if !found {
+		return fmt.Errorf("metadatatenant does not exist")
+	}
+
+	item.Value = metadataValue
+	f.metadataTenantData[mapKey] = item
+	return nil
+}
+
 func (f *FakeClient) DeleteDataTenant(name, env string, log *slog.Logger) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
