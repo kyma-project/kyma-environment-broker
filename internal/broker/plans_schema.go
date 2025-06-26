@@ -347,7 +347,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 	}
 	if enableJwks {
 		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
-			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64."}
+			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. Leave empty to not use it or to remove a previously set value."}
 			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
 			OIDCs.OneOf[0] = additionalOidc
 		}
