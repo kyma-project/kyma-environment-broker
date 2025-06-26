@@ -144,6 +144,8 @@ broker:
   defaultRequestRegion: "cf-eu10"
   # If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters
   disableSapConvergedCloud: false
+  # If true, enables the handling of the encded JWKS array, temporary feature flag
+  enableJwks: "false"
   # Comma-separated list of plan names enabled and available for provisioning in KEB
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, allows users to upgrade their plans (if a plan supports upgrades)

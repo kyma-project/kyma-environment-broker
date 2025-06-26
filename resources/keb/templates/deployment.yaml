@@ -99,6 +99,8 @@ spec:
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.broker.disableSapConvergedCloud }}"
+            - name: APP_BROKER_ENABLE_JWKS
+              value: "{{ .Values.broker.enableJwks }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
