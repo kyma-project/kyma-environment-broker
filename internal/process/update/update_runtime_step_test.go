@@ -140,7 +140,7 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	operation.UpdatingParameters.OIDC.JwksToken = "-"
+	operation.UpdatingParameters.OIDC.EncodedJwksArray = "-"
 	expectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
 			ClientID:       ptr.String("client-id-oidc"),
@@ -319,15 +319,15 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
-					ClientID:       "first-client-id-custom",
-					GroupsClaim:    "first-gc-custom",
-					GroupsPrefix:   "first-gp-custom",
-					IssuerURL:      "first-issuer-url-custom",
-					SigningAlgs:    []string{"first-sa-custom"},
-					UsernameClaim:  "first-uc-custom",
-					UsernamePrefix: "first-up-custom",
-					RequiredClaims: []string{"claim1=value1", "claim2=value2"},
-					JwksToken:      "Y3VzdG9tLWp3a3MtdG9rZW4=",
+					ClientID:         "first-client-id-custom",
+					GroupsClaim:      "first-gc-custom",
+					GroupsPrefix:     "first-gp-custom",
+					IssuerURL:        "first-issuer-url-custom",
+					SigningAlgs:      []string{"first-sa-custom"},
+					UsernameClaim:    "first-uc-custom",
+					UsernamePrefix:   "first-up-custom",
+					RequiredClaims:   []string{"claim1=value1", "claim2=value2"},
+					EncodedJwksArray: "Y3VzdG9tLWp3a3MtdG9rZW4=",
 				},
 				{
 					ClientID:       "second-client-id-custom",

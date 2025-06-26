@@ -70,7 +70,7 @@ type Config struct {
 
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
-	EnableJwksToken             bool `envconfig:"default=false"`
+	EnableJwks                  bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

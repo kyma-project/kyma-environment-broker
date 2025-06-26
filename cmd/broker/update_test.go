@@ -3106,7 +3106,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwksToken = true
+		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3126,7 +3126,7 @@ func TestUpdateOIDC(t *testing.T) {
 						"clientID": "id-initial",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com",
-						"jwksToken": "andrcy10b2tlbi1kZGVmYXVsdA=="
+						"encodedJwksArray": "andrcy10b2tlbi1kZGVmYXVsdA=="
 					},
 					"region": "eu-central-1"
 				}
@@ -3151,7 +3151,7 @@ func TestUpdateOIDC(t *testing.T) {
 						"clientID": "id-ooo",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com",
-						"jwksToken": "-"
+						"encodedJwksArray": "-"
 					}
 				}
 			}`)
@@ -3168,7 +3168,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should not remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwksToken = true
+		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3188,7 +3188,7 @@ func TestUpdateOIDC(t *testing.T) {
 						"clientID": "id-initial",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com",
-						"jwksToken": "andrcy10b2tlbi1kZGVmYXVsdA=="
+						"encodedJwksArray": "andrcy10b2tlbi1kZGVmYXVsdA=="
 					},
 					"region": "eu-central-1"
 				}

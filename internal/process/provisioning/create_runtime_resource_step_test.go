@@ -398,13 +398,13 @@ func TestCreateRuntimeResourceStep_HandleOIDCWithJwks(t *testing.T) {
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
 		OIDCConfigDTO: &pkg.OIDCConfigDTO{
-			ClientID:       "client-id-custom",
-			GroupsClaim:    "gc-custom",
-			IssuerURL:      "issuer-url-custom",
-			SigningAlgs:    []string{"sa-custom"},
-			UsernameClaim:  "uc-custom",
-			UsernamePrefix: "up-custom",
-			JwksToken:      "andrcy10b2tlbi1kZWZhdWx0",
+			ClientID:         "client-id-custom",
+			GroupsClaim:      "gc-custom",
+			IssuerURL:        "issuer-url-custom",
+			SigningAlgs:      []string{"sa-custom"},
+			UsernameClaim:    "uc-custom",
+			UsernamePrefix:   "up-custom",
+			EncodedJwksArray: "andrcy10b2tlbi1kZWZhdWx0",
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -457,22 +457,22 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
 		List: []pkg.OIDCConfigDTO{
 			{
-				ClientID:       "first-client-id-custom",
-				GroupsClaim:    "first-gc-custom",
-				IssuerURL:      "first-issuer-url-custom",
-				SigningAlgs:    []string{"first-sa-custom"},
-				UsernameClaim:  "first-uc-custom",
-				UsernamePrefix: "first-up-custom",
-				JwksToken:      "andrcy10b2tlbi1kZWZhdWx0",
+				ClientID:         "first-client-id-custom",
+				GroupsClaim:      "first-gc-custom",
+				IssuerURL:        "first-issuer-url-custom",
+				SigningAlgs:      []string{"first-sa-custom"},
+				UsernameClaim:    "first-uc-custom",
+				UsernamePrefix:   "first-up-custom",
+				EncodedJwksArray: "andrcy10b2tlbi1kZWZhdWx0",
 			},
 			{
-				ClientID:       "second-client-id-custom",
-				GroupsClaim:    "second-gc-custom",
-				IssuerURL:      "second-issuer-url-custom",
-				SigningAlgs:    []string{"second-sa-custom"},
-				UsernameClaim:  "second-uc-custom",
-				UsernamePrefix: "second-up-custom",
-				JwksToken:      "",
+				ClientID:         "second-client-id-custom",
+				GroupsClaim:      "second-gc-custom",
+				IssuerURL:        "second-issuer-url-custom",
+				SigningAlgs:      []string{"second-sa-custom"},
+				UsernameClaim:    "second-uc-custom",
+				UsernamePrefix:   "second-up-custom",
+				EncodedJwksArray: "",
 			},
 		},
 	}

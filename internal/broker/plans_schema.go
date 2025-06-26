@@ -67,13 +67,13 @@ type NetworkingType struct {
 }
 
 type OIDCProperties struct {
-	ClientID       Type `json:"clientID"`
-	GroupsClaim    Type `json:"groupsClaim"`
-	IssuerURL      Type `json:"issuerURL"`
-	SigningAlgs    Type `json:"signingAlgs"`
-	UsernameClaim  Type `json:"usernameClaim"`
-	UsernamePrefix Type `json:"usernamePrefix"`
-	JwksToken      Type `json:"jwksToken,omitzero"`
+	ClientID         Type `json:"clientID"`
+	GroupsClaim      Type `json:"groupsClaim"`
+	IssuerURL        Type `json:"issuerURL"`
+	SigningAlgs      Type `json:"signingAlgs"`
+	UsernameClaim    Type `json:"usernameClaim"`
+	UsernamePrefix   Type `json:"usernamePrefix"`
+	EncodedJwksArray Type `json:"encodedJwksArray,omitzero"`
 }
 
 type OIDCPropertiesExpanded struct {
@@ -225,7 +225,7 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters, enableJwksToken bool) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters, enableJwks bool) *OIDCs {
 	if defaultOIDCConfig == nil {
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
@@ -343,22 +343,22 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 			OIDCs.OneOf[1] = oidcTypeExpanded
 		}
 	}
-	if enableJwksToken {
+	if enableJwks {
 		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
-			additionalOidc.Properties.List.Items.Properties.JwksToken = Type{Type: "string", Description: "JWKS token encoded in base64."}
+			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64."}
 			required := additionalOidc.Properties.List.Items.Required
-			additionalOidc.Properties.List.Items.Required = append(required, "jwksToken")
+			additionalOidc.Properties.List.Items.Required = append(required, "encodedJwksArray")
 			OIDCs.OneOf[0] = additionalOidc
 		}
 		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
-			oidcTypeExpanded.Properties.JwksToken = Type{Type: "string", ReadOnly: !update, Description: "JWKS token encoded in base64."}
+			oidcTypeExpanded.Properties.EncodedJwksArray = Type{Type: "string", ReadOnly: !update, Description: "JWKS array encoded in base64."}
 			OIDCs.OneOf[1] = oidcTypeExpanded
 		}
 	}
 	return OIDCs
 }
 
-func NewOIDCSchema(rejectUnsupportedParameters, enableJwksToken bool) *OIDCType {
+func NewOIDCSchema(rejectUnsupportedParameters, enableJwks bool) *OIDCType {
 	OIDCType := &OIDCType{
 		Type: Type{Type: "object", Description: "OIDC configuration"},
 		Properties: OIDCProperties{
@@ -380,8 +380,8 @@ func NewOIDCSchema(rejectUnsupportedParameters, enableJwksToken bool) *OIDCType 
 	if rejectUnsupportedParameters {
 		OIDCType.Type.AdditionalProperties = false
 	}
-	if enableJwksToken {
-		OIDCType.Properties.JwksToken = Type{Type: "string", Description: "JWKS token encoded in base64."}
+	if enableJwks {
+		OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64."}
 	}
 	return OIDCType
 }

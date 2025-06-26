@@ -46,11 +46,11 @@ type CreateRuntimeResourceStep struct {
 	oidcDefaultValues       pkg.OIDCConfigDTO
 	useAdditionalOIDCSchema bool
 	workersProvider         *workers.Provider
-	enableJwksToken         bool
+	enableJwks              bool
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwksToken bool) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwks bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
@@ -58,7 +58,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 		workersProvider:         workersProvider,
-		enableJwksToken:         enableJwksToken,
+		enableJwks:              enableJwks,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -330,8 +330,8 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				RequiredClaims: requiredClaims,
 			},
 		}
-		if s.enableJwksToken {
-			oidc.JWKS = []byte(oidcConfig.JwksToken)
+		if s.enableJwks {
+			oidc.JWKS = []byte(oidcConfig.EncodedJwksArray)
 		}
 		configs = append(configs, oidc)
 	}
@@ -361,8 +361,8 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if s.useAdditionalOIDCSchema {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
-	if s.enableJwksToken && inputOIDC.JwksToken != "" && inputOIDC.JwksToken != "-" {
-		defaultOIDC.JWKS = []byte(inputOIDC.JwksToken)
+	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
+		defaultOIDC.JWKS = []byte(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC
 }
