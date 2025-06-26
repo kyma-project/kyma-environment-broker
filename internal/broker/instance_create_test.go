@@ -94,6 +94,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -167,6 +168,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -244,6 +246,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -292,6 +295,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when shootDomain is missing
@@ -365,6 +369,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -440,6 +445,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -489,6 +495,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -539,6 +546,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -603,6 +611,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -667,6 +676,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -711,6 +721,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -750,6 +761,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -788,6 +800,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -833,6 +846,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -883,6 +897,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -939,6 +954,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -994,6 +1010,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1052,6 +1069,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
@@ -1108,6 +1126,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		testCases := []struct {
@@ -1206,6 +1225,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		testCases := []struct {
@@ -1292,6 +1312,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1336,6 +1357,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -1402,6 +1424,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -1458,6 +1481,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -1512,6 +1536,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -1556,6 +1581,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -1603,6 +1629,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1653,6 +1680,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1794,6 +1822,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
 			)
 
 			// when
@@ -1859,6 +1888,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2011,6 +2041,7 @@ func TestNetworkingValidation(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
 			)
 
 			// when
@@ -2111,6 +2142,7 @@ func TestRegionValidation(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
 			)
 
 			// when
@@ -2172,6 +2204,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2221,6 +2254,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2269,6 +2303,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2331,6 +2366,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 	)
 
 	// when
@@ -2383,6 +2419,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 	)
 
 	testCases := []struct {
@@ -2461,6 +2498,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2512,6 +2550,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 	)
 
 	testCases := []struct {
@@ -2645,6 +2684,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2705,6 +2745,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -2775,6 +2816,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -2859,6 +2901,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		// when
@@ -2919,6 +2962,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2968,6 +3012,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3027,6 +3072,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3052,6 +3098,214 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		apierr := err.(*apiresponses.FailureResponse)
 		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+	})
+}
+
+func TestQuotaLimitCheck(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	t.Run("should create new operation if there is no instances", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if there is no unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(1, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
+	})
+
+	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(2, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if quota client returns error", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error"))
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
 	})
 }
 
