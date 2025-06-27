@@ -437,7 +437,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	quotaClient := quota.NewClient(context.Background(), cfg.Quota, logs)
 	quotaWhitelistedSubaccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.QuotaWhitelistedSubaccountsFilePath)
 	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("Number of subaccountIds for unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
+	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
