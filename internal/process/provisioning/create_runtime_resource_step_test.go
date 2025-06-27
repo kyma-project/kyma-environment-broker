@@ -474,6 +474,15 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 				UsernamePrefix:   "second-up-custom",
 				EncodedJwksArray: "",
 			},
+			{
+				ClientID:         "third-client-id-custom",
+				GroupsClaim:      "third-gc-custom",
+				IssuerURL:        "third-issuer-url-custom",
+				SigningAlgs:      []string{"third-sa-custom"},
+				UsernameClaim:    "third-uc-custom",
+				UsernamePrefix:   "third-up-custom",
+				EncodedJwksArray: "-",
+			},
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -500,6 +509,18 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 			GroupsPrefix:   ptr.String("-"),
 		},
 	}
+	thirdExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("third-client-id-custom"),
+			GroupsClaim:    ptr.String("third-gc-custom"),
+			IssuerURL:      ptr.String("third-issuer-url-custom"),
+			SigningAlgs:    []string{"third-sa-custom"},
+			UsernameClaim:  ptr.String("third-uc-custom"),
+			UsernamePrefix: ptr.String("third-up-custom"),
+			GroupsPrefix:   ptr.String("-"),
+		},
+		JWKS: []byte("-"),
+	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{}, true)
 	// when
@@ -522,6 +543,7 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
 	assert.Equal(t, firstExpectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 	assert.Equal(t, secondExpectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[1])
+	assert.Equal(t, thirdExpectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[2])
 }
 
 func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
