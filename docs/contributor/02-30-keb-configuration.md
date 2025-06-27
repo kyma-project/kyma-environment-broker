@@ -94,6 +94,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_QUOTA_CLIENT_ID** | None | - |
 | **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | - |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
+| **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | None | - |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
 | **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | None | - |
