@@ -3129,7 +3129,7 @@ func TestUpdateOIDC(t *testing.T) {
 						"clientID": "id-initial",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com",
-						"encodedJwksArray": "andrcy10b2tlbi1kZGVmYXVsdA=="
+						"encodedJwksArray": "andrcy10b2tlbi1kZWZhdWx0"
 					},
 					"region": "eu-central-1"
 				}
@@ -3191,7 +3191,7 @@ func TestUpdateOIDC(t *testing.T) {
 						"clientID": "id-initial",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com",
-						"encodedJwksArray": "andrcy10b2tlbi1kZGVmYXVsdA=="
+						"encodedJwksArray": "andrcy10b2tlbi1kZWZhdWx0"
 					},
 					"region": "eu-central-1"
 				}
@@ -3226,7 +3226,7 @@ func TestUpdateOIDC(t *testing.T) {
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
 		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
-		assert.Equal(t, []byte("andrcy10b2tlbi1kZGVmYXVsdA=="), (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
+		assert.Equal(t, []byte("andrcy10b2tlbi1kZWZhdWx0"), (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
 	})
 }

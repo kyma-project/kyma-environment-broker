@@ -661,7 +661,7 @@ func fixRuntimeResourceWithOneAdditionalOidcWithJWKS(name string) runtime.Object
 									UsernameClaim:  ptr.String("initial-sub"),
 									UsernamePrefix: ptr.String("initial-username-prefix"),
 								},
-								JWKS: []byte("andrcy10b2tlbi1kZGVmYXVsdA=="),
+								JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
 							},
 						},
 					},
@@ -705,7 +705,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 									UsernameClaim:  ptr.String("first-initial-sub"),
 									UsernamePrefix: ptr.String("first-initial-username-prefix"),
 								},
-								JWKS: []byte("andrcy10b2tlbi1kZGVmYXVsdA=="),
+								JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
 							},
 							{
 								OIDCConfig: gardener.OIDCConfig{
