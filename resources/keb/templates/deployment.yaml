@@ -286,6 +286,8 @@ spec:
                   key: secret
             - name: APP_QUOTA_SERVICE_URL
               value: "{{ .Values.cis.v2.provisioningServiceURL }}"
+            - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
+              value: /config/quotaWhitelistedSubaccountIds.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME

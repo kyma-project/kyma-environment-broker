@@ -12,16 +12,16 @@ const (
 
 type Set map[string]struct{}
 
-func IsNotWhitelisted(globalAccountId string, whitelist Set) bool {
-	_, found := whitelist[globalAccountId]
+func IsNotWhitelisted(id string, whitelist Set) bool {
+	_, found := whitelist[id]
 	return !found
 }
 
-func ReadWhitelistedGlobalAccountIdsFromFile(filename string) (Set, error) {
+func ReadWhitelistedIdsFromFile(filename string) (Set, error) {
 	yamlData := make(map[string][]string)
 	err := utils.UnmarshalYamlFile(filename, &yamlData)
 	if err != nil {
-		return Set{}, fmt.Errorf("while unmarshalling a file with whitelisted GlobalAccountIds config: %w", err)
+		return Set{}, fmt.Errorf("while unmarshalling a file with whitelisted ids config: %w", err)
 	}
 
 	whitelistSet := Set{}

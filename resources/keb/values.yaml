@@ -326,6 +326,11 @@ profiler:
 
 providersConfiguration: {}
 
+# List of subaccount IDs that have unlimited quota for Kyma runtimes.
+# Only subaccounts listed here can provision beyond their assigned quota limits
+quotaWhitelistedSubaccountIds: |-
+  whitelist:
+
 # Defines which machine type families are available in which regions (and optionally, zones)
 # Restricts provisioning of listed machine types to the specified regions/zones only
 # If a machine type is not listed, it is considered available in all regions

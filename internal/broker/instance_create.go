@@ -93,6 +93,7 @@ type ProvisionEndpoint struct {
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           RegionsSupporterProvider
 	quotaClient            QuotaClient
+	quotaWhitelist         whitelist.Set
 }
 
 const (
@@ -118,6 +119,7 @@ func NewProvision(brokerConfig Config,
 	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
+	quotaWhitelist whitelist.Set,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -147,6 +149,7 @@ func NewProvision(brokerConfig Config,
 		schemaService:           schemaService,
 		providerConfigProvider:  providerConfigProvider,
 		quotaClient:             quotaClient,
+		quotaWhitelist:          quotaWhitelist,
 	}
 }
 
@@ -322,7 +325,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
-	if b.config.CheckQuotaLimit {
+	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
 		instanceFilter := dbmodel.InstanceFilter{
 			SubAccountIDs: []string{provisioningParameters.ErsContext.SubAccountID},
 			PlanIDs:       []string{provisioningParameters.PlanID},
