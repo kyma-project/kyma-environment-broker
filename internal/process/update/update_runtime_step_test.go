@@ -339,6 +339,17 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 					UsernamePrefix: "second-up-custom",
 					RequiredClaims: []string{"claim3=value3", "claim4=value4"},
 				},
+				{
+					ClientID:         "third-client-id-custom",
+					GroupsClaim:      "third-gc-custom",
+					GroupsPrefix:     "third-gp-custom",
+					IssuerURL:        "third-issuer-url-custom",
+					SigningAlgs:      []string{"third-sa-custom"},
+					UsernameClaim:    "third-uc-custom",
+					UsernamePrefix:   "third-up-custom",
+					RequiredClaims:   []string{"claim5=value5", "claim6=value6"},
+					EncodedJwksArray: "dGhpcmQtam9icy10b2tlbg==",
+				},
 			},
 		},
 	}
@@ -373,6 +384,22 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			GroupsPrefix: ptr.String("second-gp-custom"),
 		},
 	}
+	thirdExpectedOIDCConfig := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("third-client-id-custom"),
+			GroupsClaim:    ptr.String("third-gc-custom"),
+			IssuerURL:      ptr.String("third-issuer-url-custom"),
+			SigningAlgs:    []string{"third-sa-custom"},
+			UsernameClaim:  ptr.String("third-uc-custom"),
+			UsernamePrefix: ptr.String("third-up-custom"),
+			RequiredClaims: map[string]string{
+				"claim5": "value5",
+				"claim6": "value6",
+			},
+			GroupsPrefix: ptr.String("third-gp-custom"),
+		},
+		JWKS: []byte("dGhpcmQtam9icy10b2tlbg=="),
+	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
 	require.NoError(t, err)
@@ -394,9 +421,10 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.RequiredClaims)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
-	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 2)
+	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 3)
 	assert.Equal(t, firstExpectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 	assert.Equal(t, secondExpectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[1])
+	assert.Equal(t, thirdExpectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[2])
 }
 
 func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC(t *testing.T) {
@@ -700,6 +728,17 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 									SigningAlgs:    []string{"third-initial-signingAlgs"},
 									UsernameClaim:  ptr.String("third-initial-sub"),
 									UsernamePrefix: ptr.String("third-initial-username-prefix"),
+								},
+							},
+							{
+								OIDCConfig: gardener.OIDCConfig{
+									ClientID:       ptr.String("fourth-initial-client-id-oidc"),
+									GroupsClaim:    ptr.String("fourth-initial-groups"),
+									GroupsPrefix:   ptr.String("fourth-initial-groups-prefix"),
+									IssuerURL:      ptr.String("fourth-initial-issuer-url"),
+									SigningAlgs:    []string{"fourth-initial-signingAlgs"},
+									UsernameClaim:  ptr.String("fourth-initial-sub"),
+									UsernamePrefix: ptr.String("fourth-initial-username-prefix"),
 								},
 							},
 						},
