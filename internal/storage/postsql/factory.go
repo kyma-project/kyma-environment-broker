@@ -59,6 +59,7 @@ type ReadSession interface {
 	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
 	ListExpiredBindings() ([]dbmodel.BindingDTO, error)
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
+	ListActions(instanceID string) ([]internal.Action, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -78,6 +79,7 @@ type WriteSession interface {
 	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
 	UpdateInstanceLastOperation(instanceID, operationID string) error
+	InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) dberr.Error
 }
 
 type Transaction interface {

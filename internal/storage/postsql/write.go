@@ -3,12 +3,13 @@ package postsql
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/gocraft/dbr"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -324,6 +325,22 @@ func (ws writeSession) DeleteOperationByID(id string) dberr.Error {
 		Exec()
 	if err != nil {
 		return dberr.Internal("unable to delete operation %s: %s", id, err.Error())
+	}
+	return nil
+}
+
+func (ws writeSession) InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) dberr.Error {
+	_, err := ws.insertInto(ActionsTableName).
+		Pair("id", uuid.NewString()).
+		Pair("type", actionType).
+		Pair("instance_id", instanceID).
+		Pair("message", message).
+		Pair("old_value", oldValue).
+		Pair("new_value", newValue).
+		Pair("created_at", time.Now()).
+		Exec()
+	if err != nil {
+		return dberr.Internal("failed to insert action: %s", err)
 	}
 	return nil
 }

@@ -233,6 +233,14 @@ func TestUpdatePlan(t *testing.T) {
 		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
 		customresources.PlanNameLabel: "build-runtime-aws",
 	})
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, internal.PlanUpdateActionType)
+	assert.Equal(t, actions[0].Message, "Plan updated from 361c511f-f939-4621-b228-d0fb79a1fe15 to 6aae0ff3-89f7-4f12-86de-51466145422e.")
+	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
+	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
@@ -3291,4 +3299,71 @@ func TestUpdateOIDC(t *testing.T) {
 		assert.Equal(t, []byte("andrcy10b2tlbi1kZWZhdWx0"), (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
 	})
+}
+
+func TestUpdateGlobalAccountID(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.SubaccountMovementEnabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "new-g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+			}
+   }`)
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, internal.SubaccountMovementActionType)
+	assert.Equal(t, actions[0].Message, "Subaccount sub-id moved from Global Account g-account-id to new-g-account-id.")
+	assert.Equal(t, actions[0].OldValue, "g-account-id")
+	assert.Equal(t, actions[0].NewValue, "new-g-account-id")
 }

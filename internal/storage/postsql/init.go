@@ -19,6 +19,7 @@ const (
 	CreatedAtField             = "created_at"
 	InstancesArchivedTableName = "instances_archived"
 	BindingsTableName          = "bindings"
+	ActionsTableName           = "actions"
 )
 
 // InitializeDatabase opens database connection and initializes schema if it does not exist

@@ -955,6 +955,18 @@ func (r readSession) getInstanceArchivedCount(filter dbmodel.InstanceFilter) (in
 	return res.Total, err
 }
 
+func (r readSession) ListActions(instanceID string) ([]internal.Action, error) {
+	var actions []internal.Action
+	if len(instanceID) == 0 {
+		return actions, fmt.Errorf("instanceID cannot be empty")
+	}
+	stmt := r.session.Select("*").From(ActionsTableName)
+	stmt.Where(dbr.Eq("instance_id", instanceID))
+	stmt.OrderDesc("created_at")
+	_, err := stmt.Load(&actions)
+	return actions, err
+}
+
 func addInstanceArchivedFilter(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	if len(filter.InstanceIDs) > 0 {
 		stmt.Where("instance_id IN ?", filter.InstanceIDs)

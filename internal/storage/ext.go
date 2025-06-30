@@ -116,3 +116,8 @@ type Bindings interface {
 	ListExpired() ([]internal.Binding, error)
 	GetStatistics() (internal.BindingStats, error)
 }
+
+type Actions interface {
+	InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string)
+	ListActionsByInstanceID(instanceID string) ([]internal.Action, error)
+}
