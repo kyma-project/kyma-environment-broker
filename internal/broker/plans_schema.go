@@ -285,14 +285,14 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 										Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 									},
 								},
-								GroupsPrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsPrefix, Description: "If specified, causes claims mapping to group names to be prefixed with the value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
+								GroupsPrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsPrefix, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
 										Type:    "string",
 										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+									Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
 							Required: []string{"clientID", "issuerURL", "groupsClaim", "usernameClaim", "usernamePrefix", "signingAlgs", "groupsPrefix"},
@@ -323,7 +323,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 							Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 						},
 					},
-					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "If specified, causes claims mapping to group names to be prefixed with the value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
+					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
@@ -331,7 +331,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 							Pattern: "^([^=]+=[^=]+|-)$",
 						},
 						ReadOnly:    !update,
-						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. The value '-' (dash character without additional characters) can be used to remove the previously set claims.",
+						Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. To remove the previously set claims, use the value '-' (dash character without additional characters).",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
