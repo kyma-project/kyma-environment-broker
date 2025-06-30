@@ -331,7 +331,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 							Pattern: "^([^=]+=[^=]+|-)$",
 						},
 						ReadOnly:    !update,
-						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. The value '-' can be used to remove the previously set claims.",
+						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. The value '-' (dash character without additional characters) can be used to remove the previously set claims.",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
