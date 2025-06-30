@@ -2893,8 +2893,8 @@ func TestUpdateOIDC(t *testing.T) {
 		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
-		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
 	})
 	t.Run("should remove previously set required claims", func(t *testing.T) {
 		// given
