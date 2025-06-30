@@ -533,6 +533,49 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 	}
 }
 
+func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	initialRuntime := fixRuntimeResource("runtime-name").(*imv1.Runtime)
+	initialRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       ptr.String("client-id-oidc"),
+			GroupsClaim:    ptr.String("groups"),
+			IssuerURL:      ptr.String("issuer-url"),
+			SigningAlgs:    []string{"signingAlgs"},
+			UsernameClaim:  ptr.String("sub"),
+			UsernamePrefix: nil,
+			RequiredClaims: map[string]string{"claim1": "value1", "claim2": "value2"},
+			GroupsPrefix:   ptr.String("-"),
+		},
+	}}
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(initialRuntime).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, true, &workers.Provider{}, fixValuesProvider(), false)
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = "runtime-name"
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.UpdatingParameters.OIDC.OIDCConfigDTO.RequiredClaims = []string{"-"}
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
+	assert.NotEmpty(t, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
+	assert.Equal(t, map[string]string(nil), (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
+}
+
 // fixtures
 
 func fixRuntimeResource(name string) runtime.Object {

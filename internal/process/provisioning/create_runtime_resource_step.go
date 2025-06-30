@@ -358,7 +358,7 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if inputOIDC.UsernamePrefix != "" {
 		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
 	}
-	if s.useAdditionalOIDCSchema {
+	if s.useAdditionalOIDCSchema && len(inputOIDC.RequiredClaims) > 0 {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
 	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
@@ -369,6 +369,9 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 
 func (s *CreateRuntimeResourceStep) parseRequiredClaims(claims []string) map[string]string {
 	requiredClaims := make(map[string]string)
+	if len(claims) == 1 && claims[0] == "-" {
+		return requiredClaims
+	}
 	for _, claim := range claims {
 		parts := strings.SplitN(claim, "=", 2)
 		requiredClaims[parts[0]] = parts[1]

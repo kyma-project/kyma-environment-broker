@@ -159,14 +159,18 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				config.GroupsPrefix = &dto.GroupsPrefix
 			}
 			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
-				requiredClaims := make(map[string]string)
-				for _, claim := range dto.RequiredClaims {
-					parts := strings.SplitN(claim, "=", 2)
-					if len(parts) == 2 {
-						requiredClaims[parts[0]] = parts[1]
+				if len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-" {
+					config.RequiredClaims = map[string]string{}
+				} else {
+					requiredClaims := make(map[string]string)
+					for _, claim := range dto.RequiredClaims {
+						parts := strings.SplitN(claim, "=", 2)
+						if len(parts) == 2 {
+							requiredClaims[parts[0]] = parts[1]
+						}
 					}
+					config.RequiredClaims = requiredClaims
 				}
-				config.RequiredClaims = requiredClaims
 			}
 			if s.enableJwks {
 				if dto.EncodedJwksArray == "-" {
