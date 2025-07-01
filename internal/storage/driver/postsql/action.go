@@ -19,14 +19,6 @@ func (a *Action) InsertAction(actionType internal.ActionType, instanceID, messag
 	return a.Factory.NewWriteSession().InsertAction(actionType, instanceID, message, oldValue, newValue)
 }
 
-func (a *Action) UpdateAction(action internal.Action) error {
-	return a.Factory.NewWriteSession().UpdateAction(action)
-}
-
 func (a *Action) ListActionsByInstanceID(instanceID string) ([]internal.Action, error) {
-	return a.Factory.NewReadSession().ListActionsByInstanceID(instanceID)
-}
-
-func (a *Action) ListActionsByInstanceArchivedID(instanceArchivedID string) ([]internal.Action, error) {
-	return a.Factory.NewReadSession().ListActionsByInstanceArchivedID(instanceArchivedID)
+	return a.Factory.NewReadSession().ListActions(instanceID)
 }

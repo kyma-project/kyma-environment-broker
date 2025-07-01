@@ -119,7 +119,5 @@ type Bindings interface {
 
 type Actions interface {
 	InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) error
-	UpdateAction(action internal.Action) error
 	ListActionsByInstanceID(instanceID string) ([]internal.Action, error)
-	ListActionsByInstanceArchivedID(instanceArchivedID string) ([]internal.Action, error)
 }

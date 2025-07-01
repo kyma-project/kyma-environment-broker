@@ -547,12 +547,11 @@ const (
 )
 
 type Action struct {
-	ID                 string
-	Type               ActionType
-	InstanceID         *string
-	InstanceArchivedID *string
-	Message            string
-	OldValue           string
-	NewValue           string
-	CreatedAt          time.Time
+	ID         string
+	Type       ActionType
+	InstanceID *string
+	Message    string
+	OldValue   string
+	NewValue   string
+	CreatedAt  time.Time
 }

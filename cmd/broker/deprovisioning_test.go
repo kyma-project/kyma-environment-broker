@@ -20,7 +20,7 @@ const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_i
 func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
+	cfg.EDP.Disabled = true // disable EDP to have all steps successfully executed
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -89,7 +89,7 @@ func TestReDeprovision(t *testing.T) {
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
+	cfg.EDP.Disabled = true // disable EDP to have all steps successfully executed
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -257,83 +257,4 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	assert.Len(t, runtimes.Data, 1)
 	assert.Equal(t, iid2, runtimes.Data[0].InstanceID)
-}
-
-func TestDeprovisioning_Actions(t *testing.T) {
-	// given
-	cfg := fixConfig()
-	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-					"context": {
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster",
-						"region": "eu-central-1"
-					}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processKIMProvisioningByOperationID(opID)
-
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// when
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		`{
-				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
-				   "context": {
-					   "sm_operator_credentials": {
-						   "clientid": "cid",
-						   "clientsecret": "cs",
-						   "url": "url",
-						   "sm_url": "sm_url"
-					   },
-					   "globalaccount_id": "g-account-id",
-					   "subaccount_id": "sub-id",
-					   "user_id": "john.smith@email.com"
-				   },
-					"parameters": {
-			}
-   }`)
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	updateOperationID := suite.DecodeOperationID(resp)
-
-	// then
-	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
-
-	// when
-	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		``)
-	opID = suite.DecodeOperationID(resp)
-	suite.FinishDeprovisioningOperationByKIM(opID)
-
-	// then
-	suite.WaitForInstanceArchivedCreated(iid)
-	suite.WaitFor(func() bool {
-		resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), ``)
-		defer resp.Body.Close()
-		data := suite.ParseLastOperationResponse(resp)
-		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
-	})
-	suite.WaitForOperationsNotExists(iid)
-
-	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
-	assert.NoError(t, err)
-	assert.Len(t, actions, 0)
-
-	actions, err = suite.db.Actions().ListActionsByInstanceArchivedID(iid)
-	assert.NoError(t, err)
-	assert.Len(t, actions, 1)
 }

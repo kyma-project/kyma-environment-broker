@@ -955,19 +955,10 @@ func (r readSession) getInstanceArchivedCount(filter dbmodel.InstanceFilter) (in
 	return res.Total, err
 }
 
-func (r readSession) ListActionsByInstanceID(instanceID string) ([]internal.Action, error) {
+func (r readSession) ListActions(instanceID string) ([]internal.Action, error) {
 	var actions []internal.Action
 	stmt := r.session.Select("*").From(ActionsTableName)
 	stmt.Where(dbr.Eq("instance_id", instanceID))
-	stmt.OrderDesc("created_at")
-	_, err := stmt.Load(&actions)
-	return actions, err
-}
-
-func (r readSession) ListActionsByInstanceArchivedID(instanceArchivedID string) ([]internal.Action, error) {
-	var actions []internal.Action
-	stmt := r.session.Select("*").From(ActionsTableName)
-	stmt.Where(dbr.Eq("instance_archived_id", instanceArchivedID))
 	stmt.OrderDesc("created_at")
 	_, err := stmt.Load(&actions)
 	return actions, err
