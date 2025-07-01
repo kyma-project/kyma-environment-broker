@@ -549,7 +549,7 @@ const (
 type Action struct {
 	ID         string
 	Type       ActionType
-	InstanceID *string
+	InstanceID string
 	Message    string
 	OldValue   string
 	NewValue   string

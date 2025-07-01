@@ -37,8 +37,7 @@ func TestAction(t *testing.T) {
 
 	assert.NotEmpty(t, actions[0].ID)
 	assert.Equal(t, actions[0].Type, internal.SubaccountMovementActionType)
-	require.NotNil(t, actions[0].InstanceID)
-	assert.Equal(t, *actions[0].InstanceID, instanceID)
+	assert.Equal(t, actions[0].InstanceID, instanceID)
 	assert.Equal(t, actions[0].Message, "test-message-2")
 	assert.Equal(t, actions[0].OldValue, "old-value-2")
 	assert.Equal(t, actions[0].NewValue, "new-value-2")
@@ -46,8 +45,7 @@ func TestAction(t *testing.T) {
 
 	assert.NotEmpty(t, actions[1].ID)
 	assert.Equal(t, actions[1].Type, internal.PlanUpdateActionType)
-	require.NotNil(t, actions[1].InstanceID)
-	assert.Equal(t, *actions[1].InstanceID, instanceID)
+	assert.Equal(t, actions[1].InstanceID, instanceID)
 	assert.Equal(t, actions[1].Message, "test-message-1")
 	assert.Equal(t, actions[1].OldValue, "old-value-1")
 	assert.Equal(t, actions[1].NewValue, "new-value-1")

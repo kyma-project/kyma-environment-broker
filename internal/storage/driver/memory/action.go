@@ -21,7 +21,7 @@ func (a *Action) InsertAction(actionType internal.ActionType, instanceID, messag
 	a.actions = append(a.actions, internal.Action{
 		ID:         uuid.NewString(),
 		Type:       actionType,
-		InstanceID: &instanceID,
+		InstanceID: instanceID,
 		Message:    message,
 		OldValue:   oldValue,
 		NewValue:   newValue,
@@ -33,7 +33,7 @@ func (a *Action) InsertAction(actionType internal.ActionType, instanceID, messag
 func (a *Action) ListActionsByInstanceID(instanceID string) ([]internal.Action, error) {
 	filtered := make([]internal.Action, 0)
 	for _, action := range a.actions {
-		if action.InstanceID != nil && *action.InstanceID == instanceID {
+		if action.InstanceID == instanceID {
 			filtered = append(filtered, action)
 		}
 	}
