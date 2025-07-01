@@ -19,6 +19,7 @@ type ArchivingStep struct {
 	operations        storage.Operations
 	instances         storage.Instances
 	instancesArchived storage.InstancesArchived
+	actions           storage.Actions
 	dryRun            bool
 }
 
@@ -27,6 +28,7 @@ func NewArchivingStep(db storage.BrokerStorage, dryRun bool) *ArchivingStep {
 		operations:        db.Operations(),
 		instances:         db.Instances(),
 		instancesArchived: db.InstancesArchived(),
+		actions:           db.Actions(),
 		dryRun:            dryRun,
 	}
 }
@@ -97,6 +99,17 @@ func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to insert archived instance: %s", err.Error()))
 		return operation, dbRetryBackoff, nil
+	}
+
+	actions, err := s.actions.ListActionsByInstanceID(operation.InstanceID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to get actions for given instance %s: %s", operation.InstanceID, err.Error()))
+		return operation, 0, nil
+	}
+	for _, action := range actions {
+		if err := s.actions.UpdateAction(action); err != nil {
+			logger.Error(fmt.Sprintf("unable to update action %s: %s", action.ID, err.Error()))
+		}
 	}
 
 	return operation, 0, nil

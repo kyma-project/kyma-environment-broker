@@ -345,6 +345,19 @@ func (ws writeSession) InsertAction(actionType internal.ActionType, instanceID, 
 	return nil
 }
 
+func (ws writeSession) UpdateAction(action internal.Action) dberr.Error {
+	_, err := ws.update(ActionsTableName).
+		Set("instance_archived_id", action.InstanceID).
+		Where(dbr.Eq("id", action.ID)).
+		Exec()
+
+	if err != nil {
+		return dberr.Internal("failed to update action %s: %s", action.ID, err)
+	}
+
+	return nil
+}
+
 func (ws writeSession) Commit() dberr.Error {
 	err := ws.transaction.Commit()
 	if err != nil {

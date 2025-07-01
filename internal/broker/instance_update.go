@@ -401,13 +401,16 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 
 		if slices.Contains(updateStorage, "Plan change") {
-			b.actionStorage.InsertAction(
+			message := fmt.Sprintf("Plan updated from %s to %s.", oldPlanID, details.PlanID)
+			if err := b.actionStorage.InsertAction(
 				internal.PlanUpdateActionType,
 				instance.InstanceID,
-				fmt.Sprintf("Plan updated from %s to %s.", oldPlanID, details.PlanID),
+				message,
 				oldPlanID,
 				details.PlanID,
-			)
+			); err != nil {
+				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", internal.PlanUpdateActionType, message, instance.InstanceID, err))
+			}
 		}
 	}
 	logger.Debug("Adding update operation to the processing queue")
@@ -464,13 +467,16 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	needUpdateCustomResources := false
 	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
-		b.actionStorage.InsertAction(
+		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
+		if err := b.actionStorage.InsertAction(
 			internal.SubaccountMovementActionType,
 			instance.InstanceID,
-			fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID),
+			message,
 			instance.GlobalAccountID,
 			ersContext.GlobalAccountID,
-		)
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", internal.SubaccountMovementActionType, message, instance.InstanceID, err))
+		}
 		if instance.SubscriptionGlobalAccountID == "" {
 			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 		}

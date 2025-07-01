@@ -26,8 +26,14 @@ func TestAction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, actions, 0)
 
-	brokerStorage.Actions().InsertAction(internal.PlanUpdateActionType, instanceID, "test-message-1", "old-value-1", "new-value-1")
-	brokerStorage.Actions().InsertAction(internal.SubaccountMovementActionType, instanceID, "test-message-2", "old-value-2", "new-value-2")
+	actions, err = brokerStorage.Actions().ListActionsByInstanceArchivedID(instanceID)
+	assert.NoError(t, err)
+	assert.Len(t, actions, 0)
+
+	err = brokerStorage.Actions().InsertAction(internal.PlanUpdateActionType, instanceID, "test-message-1", "old-value-1", "new-value-1")
+	assert.NoError(t, err)
+	err = brokerStorage.Actions().InsertAction(internal.SubaccountMovementActionType, instanceID, "test-message-2", "old-value-2", "new-value-2")
+	assert.NoError(t, err)
 
 	actions, err = brokerStorage.Actions().ListActionsByInstanceID(instanceID)
 	assert.NoError(t, err)
@@ -51,6 +57,22 @@ func TestAction(t *testing.T) {
 	assert.Equal(t, actions[1].NewValue, "new-value-1")
 	assert.NotEmpty(t, actions[1].CreatedAt)
 
+	err = brokerStorage.InstancesArchived().Insert(fixInstanceArchive(instanceArchiveData{InstanceID: instanceID}))
+	assert.NoError(t, err)
+
+	err = brokerStorage.Actions().UpdateAction(actions[0])
+	assert.NoError(t, err)
+	err = brokerStorage.Actions().UpdateAction(actions[1])
+	assert.NoError(t, err)
+
 	err = brokerStorage.Instances().Delete(instanceID)
 	assert.NoError(t, err)
+
+	actions, err = brokerStorage.Actions().ListActionsByInstanceID(instanceID)
+	assert.NoError(t, err)
+	assert.Len(t, actions, 0)
+
+	actions, err = brokerStorage.Actions().ListActionsByInstanceArchivedID(instanceID)
+	assert.NoError(t, err)
+	assert.Len(t, actions, 2)
 }
