@@ -18,5 +18,6 @@ CREATE TABLE IF NOT EXISTS actions (
 );
 
 CREATE INDEX IF NOT EXISTS actions_instance_id ON actions USING HASH (instance_id);
+CREATE INDEX IF NOT EXISTS actions_instance_archived_id ON actions USING HASH (instance_archived_id);
 
 COMMIT;
