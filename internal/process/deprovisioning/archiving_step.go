@@ -107,6 +107,7 @@ func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (
 		return operation, 0, nil
 	}
 	for _, action := range actions {
+		action.InstanceArchivedID = &operation.InstanceID
 		if err := s.actions.UpdateAction(action); err != nil {
 			logger.Error(fmt.Sprintf("unable to update action %s: %s", action.ID, err.Error()))
 		}

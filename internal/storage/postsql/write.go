@@ -347,7 +347,7 @@ func (ws writeSession) InsertAction(actionType internal.ActionType, instanceID, 
 
 func (ws writeSession) UpdateAction(action internal.Action) dberr.Error {
 	_, err := ws.update(ActionsTableName).
-		Set("instance_archived_id", action.InstanceID).
+		Set("instance_archived_id", action.InstanceArchivedID).
 		Where(dbr.Eq("id", action.ID)).
 		Exec()
 

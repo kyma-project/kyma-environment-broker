@@ -35,7 +35,6 @@ func (a *Action) InsertAction(actionType internal.ActionType, instanceID, messag
 func (a *Action) UpdateAction(updated internal.Action) error {
 	for i, action := range a.actions {
 		if action.ID == updated.ID {
-			updated.InstanceArchivedID = updated.InstanceID
 			a.actions[i] = updated
 			return nil
 		}

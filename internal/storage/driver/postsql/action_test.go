@@ -60,8 +60,10 @@ func TestAction(t *testing.T) {
 	err = brokerStorage.InstancesArchived().Insert(fixInstanceArchive(instanceArchiveData{InstanceID: instanceID}))
 	assert.NoError(t, err)
 
+	actions[0].InstanceArchivedID = &instanceID
 	err = brokerStorage.Actions().UpdateAction(actions[0])
 	assert.NoError(t, err)
+	actions[1].InstanceArchivedID = &instanceID
 	err = brokerStorage.Actions().UpdateAction(actions[1])
 	assert.NoError(t, err)
 
