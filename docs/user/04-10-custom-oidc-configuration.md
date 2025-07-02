@@ -270,7 +270,7 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   ```
 
 2. **Update Request**  
-  The user sends an HTTP PATCH request with the following payload to update the OIDC configuration:
+  To update this OIDC configuration, send an HTTP PATCH request with the following payload:
 
   ```json
   {
