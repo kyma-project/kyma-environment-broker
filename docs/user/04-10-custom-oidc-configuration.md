@@ -125,7 +125,7 @@ This example demonstrates a request without specifying any `oidc` configuration.
 
 ---
 
-### Example 2: With the `oidc` List
+### Configuration with the `oidc` List
 
 This example shows a request with an `oidc` list containing a single configuration. The list allows defining multiple OIDC configurations.
 
