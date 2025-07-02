@@ -355,8 +355,7 @@ Result: You see a configuration with the values provided in the request, similar
   }
   ```
 
-2. **Update Request**  
-  The user sends an HTTP PATCH request with the following payload to update the OIDC configuration:
+1. To update the OIDC configuration, send an HTTP PATCH request with the following payload:
 
   ```json
   {
