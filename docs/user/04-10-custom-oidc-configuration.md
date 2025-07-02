@@ -48,7 +48,7 @@ See an example with the OIDC list:
 This solution is not recommended. It is only supported for backward compatibility with existing automations.
 
 > [!NOTE]
-> `clientID` and `issuerURL` values are mandatory when using the single `oidc` object for for custom OIDC configuration.
+> You must provide the **clientID** and **issuerURL**  values when using a single `oidc` object for custom OIDC configuration. Otherwise, you get a provisioning error.
 
 ```bash
    export VERSION=1.15.0
