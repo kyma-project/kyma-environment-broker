@@ -84,8 +84,6 @@ This solution is not recommended. It is only supported for backward compatibilit
 
 </details>
 
-If you do not include the `oidc` list or the single `oidc` object in the provisioning request, the default OIDC configuration is applied. However, if you provide an empty `oidc` list (with zero elements), no OIDC configuration will be applied to the instance. Unlike the single `oidc` object, which defaults to the predefined values when its properties are left empty, the `oidc` list does not inherit default values for its items and they need to be explicitly defined.
-
 ### Example 1: Without the `oidc` Object or List
 
 This example demonstrates a request without specifying any `oidc` configuration. The default OIDC configuration is applied automatically.
