@@ -482,6 +482,8 @@ type ListParameters struct {
 	Expired bool
 	// Events parameter fetches tracing events per instance
 	Events string
+	// Actions specifies whether audit logs should be included in the response for each runtime
+	Actions bool
 }
 
 func (rt RuntimeDTO) LastOperation() Operation {
