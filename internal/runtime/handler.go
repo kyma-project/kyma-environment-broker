@@ -258,7 +258,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		if actions {
 			actions, err := h.actionsDb.ListActionsByInstanceID(dto.InstanceID)
 			if err != nil {
-				h.logger.Warn(fmt.Sprintf("unable to apply actions: %s", err.Error()))
+				h.logger.Warn(fmt.Sprintf("unable to list actions: %s", err.Error()))
 				httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 				return
 			}
