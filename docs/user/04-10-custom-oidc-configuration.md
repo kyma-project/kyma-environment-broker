@@ -2,7 +2,7 @@
 
 Configure a custom Open ID Connect (OIDC) as a list of `oidc` objects. Alternatively, for backward compatibility, you can configure it as a single `oidc` object.
 
-To create an SAP BTP, Kyma runtime with a custom Open ID Connect (OIDC) configuration, you can specify either a single `oidc` object or a list of `oidc` objects as provisioning parameters. While both options are supported, using a list of `oidc` objects is the recommended approach, even if you are defining only one OIDC configuration. The list allows you to define multiple OIDC configurations. The single `oidc` object is only supported for backward compatibility.
+To create SAP BTP, Kyma runtime with a custom OIDC configuration, you can specify either a list of `oidc` objects or a single `oidc` object as a provisioning parameter. While both options are supported, using a list of `oidc` objects is the recommended approach, even if you are defining only one OIDC configuration. The list allows you to define multiple OIDC configurations. The single `oidc` object is only supported for backward compatibility.
 
 See an example with the OIDC list:
 
