@@ -239,7 +239,7 @@ To update the OIDC configuration, provide values for the mandatory properties. W
 
 ---
 
-### Scenario 1: Updating an Instance with an OIDC Object List
+### Updating an Instance with an OIDC List of Objects
 
 1. **Current OIDC Configuration**  
   The instance has the following OIDC object list configuration:
