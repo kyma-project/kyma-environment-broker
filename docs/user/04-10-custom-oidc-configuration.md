@@ -7,7 +7,7 @@ To create SAP BTP, Kyma runtime with a custom OIDC configuration, you can specif
 See an example with the OIDC list:
 
 > [!NOTE]
-> All fields except `requiredClaims` are mandatory when using the `oidc` list for custom OIDC configuration.
+> When using the `oidc` list for custom OIDC configuration, you must provide values for all fields except **requiredClaims**. Otherwise, you get a provisioning error.
 
 ```bash
    export VERSION=1.15.0
