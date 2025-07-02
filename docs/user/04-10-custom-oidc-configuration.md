@@ -43,7 +43,9 @@ See an example with the OIDC list:
    }"
 ```
 <details>
-<summary>This solution is not recommended. It is only supported for backward compatibility with existing automations.</summary>
+<summary>Configuration with a Single `oidc` Object</summary>
+
+This solution is not recommended. It is only supported for backward compatibility with existing automations.
 
 > [!NOTE]
 > `clientID` and `issuerURL` values are mandatory when using the single `oidc` object for for custom OIDC configuration.
