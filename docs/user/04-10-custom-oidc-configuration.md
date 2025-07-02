@@ -84,7 +84,7 @@ This solution is not recommended. It is only supported for backward compatibilit
 
 </details>
 
-### Example 1: Without the `oidc` Object or List
+### Configuration with No `oidc` Object and No List
 
 This example demonstrates a request without specifying any `oidc` configuration. The default OIDC configuration is applied automatically.
 
