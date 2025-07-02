@@ -4,36 +4,31 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -47,21 +42,25 @@ type CreateRuntimeResourceStep struct {
 	operationManager        *process.OperationManager
 	instanceStorage         storage.Instances
 	k8sClient               client.Client
-	config                  infrastructure_manager.InfrastructureManagerConfig
+	config                  broker.InfrastructureManager
 	oidcDefaultValues       pkg.OIDCConfigDTO
 	useAdditionalOIDCSchema bool
+	workersProvider         *workers.Provider
+	enableJwks              bool
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool) *CreateRuntimeResourceStep {
+func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwks bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:         is,
+		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
 		config:                  infrastructureManagerConfig,
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
+		workersProvider:         workersProvider,
+		enableJwks:              enableJwks,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -88,6 +87,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 		return operation, 0, nil
 	} else {
+		var backoff time.Duration
 		err = s.updateRuntimeResourceObject(*operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
@@ -99,7 +99,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		}
 		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
-		operation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
 		}, log)
@@ -121,8 +121,8 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 			log.Error(fmt.Sprintf("cannot update instance: %s", err))
 			return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
+		return operation, 0, nil
 	}
-	return operation, 0, nil
 }
 
 func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
@@ -173,12 +173,17 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
 	}
 
-	// In Runtime CR logic is positive, so we need to negate the value
-	disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-	security.Networking.Filter.Egress.Enabled = !disabled
+	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
 
-	// Ingress is not supported yet, nevertheless we set it for completeness
-	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
+	// In Runtime CR logic is positive, so we need to negate the value
+	security.Networking.Filter.Egress.Enabled = !external
+
+	var ingressFiltering bool
+	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) {
+		ingressFiltering = operation.ProvisioningParameters.Parameters.IngressFiltering != nil && *operation.ProvisioningParameters.Parameters.IngressFiltering
+	}
+	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: ingressFiltering}
+
 	return security
 }
 
@@ -211,16 +216,19 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		},
 	}
 
-	if values.ProviderType != "openstack" {
-		volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
+	if steps.IsNotSapConvergedCloud(operation.CloudProvider) {
 		provider.Workers[0].Volume = &gardener.Volume{
 			Type:       ptr.String(values.DiskType),
-			VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+			VolumeSize: fmt.Sprintf("%dGi", values.VolumeSizeGb),
 		}
 	}
 
 	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
-		additionalWorkers := CreateAdditionalWorkers(s.config, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
+		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools,
+			values.Zones, operation.ProvisioningParameters.PlanID)
+		if err != nil {
+			return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
+		}
 		provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -271,7 +279,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	}
 
 	if oidcInput == nil {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{oidc}
 	} else {
 		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = s.createOIDCConfigFromInput(oidcInput, oidc)
 	}
@@ -279,51 +287,59 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	return kubernetesConfig
 }
 
-func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() gardener.OIDCConfig {
-	return gardener.OIDCConfig{
-		ClientID:       &s.oidcDefaultValues.ClientID,
-		GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
-		IssuerURL:      &s.oidcDefaultValues.IssuerURL,
-		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
-		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
-		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
-		GroupsPrefix:   &s.oidcDefaultValues.GroupsPrefix,
+func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() imv1.OIDCConfig {
+	return imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       &s.oidcDefaultValues.ClientID,
+			GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
+			IssuerURL:      &s.oidcDefaultValues.IssuerURL,
+			SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
+			UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
+			UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
+			GroupsPrefix:   &s.oidcDefaultValues.GroupsPrefix,
+		},
 	}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCConnectDTO, defaultOIDC gardener.OIDCConfig) *[]gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCConnectDTO, defaultOIDC imv1.OIDCConfig) *[]imv1.OIDCConfig {
 	if oidcInput.List != nil {
 		return s.createOIDCConfigList(oidcInput.List)
 	}
 
 	if oidcInput.OIDCConfigDTO != nil {
-		return &[]gardener.OIDCConfig{s.mergeOIDCConfig(defaultOIDC, oidcInput.OIDCConfigDTO)}
+		return &[]imv1.OIDCConfig{s.mergeOIDCConfig(defaultOIDC, oidcInput.OIDCConfigDTO)}
 	}
 
-	return &[]gardener.OIDCConfig{defaultOIDC}
+	return &[]imv1.OIDCConfig{defaultOIDC}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
-	configs := make([]gardener.OIDCConfig, 0, len(oidcList))
+func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]imv1.OIDCConfig {
+	configs := make([]imv1.OIDCConfig, 0, len(oidcList))
 
 	for _, oidcConfig := range oidcList {
 		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
-		configs = append(configs, gardener.OIDCConfig{
-			ClientID:       &oidcConfig.ClientID,
-			IssuerURL:      &oidcConfig.IssuerURL,
-			SigningAlgs:    oidcConfig.SigningAlgs,
-			GroupsClaim:    &oidcConfig.GroupsClaim,
-			UsernamePrefix: &oidcConfig.UsernamePrefix,
-			UsernameClaim:  &oidcConfig.UsernameClaim,
-			RequiredClaims: requiredClaims,
-			GroupsPrefix:   ptr.String("-"),
-		})
+		oidc := imv1.OIDCConfig{
+			OIDCConfig: gardener.OIDCConfig{
+				ClientID:       &oidcConfig.ClientID,
+				IssuerURL:      &oidcConfig.IssuerURL,
+				SigningAlgs:    oidcConfig.SigningAlgs,
+				GroupsClaim:    &oidcConfig.GroupsClaim,
+				UsernamePrefix: &oidcConfig.UsernamePrefix,
+				UsernameClaim:  &oidcConfig.UsernameClaim,
+				GroupsPrefix:   ptr.String("-"),
+				RequiredClaims: requiredClaims,
+			},
+		}
+		if s.enableJwks {
+			oidc.JWKS = []byte(oidcConfig.EncodedJwksArray)
+		}
+		configs = append(configs, oidc)
 	}
 
 	return &configs
 }
 
-func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC gardener.OIDCConfig, inputOIDC *pkg.OIDCConfigDTO) gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig, inputOIDC *pkg.OIDCConfigDTO) imv1.OIDCConfig {
 	if inputOIDC.ClientID != "" {
 		defaultOIDC.ClientID = &inputOIDC.ClientID
 	}
@@ -342,14 +358,20 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC gardener.OIDCCon
 	if inputOIDC.UsernamePrefix != "" {
 		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
 	}
-	if s.useAdditionalOIDCSchema {
+	if s.useAdditionalOIDCSchema && len(inputOIDC.RequiredClaims) > 0 {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
+	}
+	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
+		defaultOIDC.JWKS = []byte(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC
 }
 
 func (s *CreateRuntimeResourceStep) parseRequiredClaims(claims []string) map[string]string {
 	requiredClaims := make(map[string]string)
+	if len(claims) == 1 && claims[0] == "-" {
+		return requiredClaims
+	}
 	for _, claim := range claims {
 		parts := strings.SplitN(claim, "=", 2)
 		requiredClaims[parts[0]] = parts[1]
@@ -391,53 +413,4 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
-}
-
-func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
-	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
-	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
-
-	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
-		currentAdditionalWorker, exists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
-
-		var workerZones []string
-		if exists {
-			workerZones = currentAdditionalWorker.Zones
-		} else {
-			workerZones = zones
-			if !additionalWorkerNodePool.HAZones {
-				rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })
-				workerZones = workerZones[:1]
-			}
-		}
-		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
-
-		worker := gardener.Worker{
-			Name: additionalWorkerNodePool.Name,
-			Machine: gardener.Machine{
-				Type: additionalWorkerNodePool.MachineType,
-				Image: &gardener.ShootMachineImage{
-					Name:    imConfig.MachineImage,
-					Version: &imConfig.MachineImageVersion,
-				},
-			},
-			Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
-			Minimum:        int32(additionalWorkerNodePool.AutoScalerMin),
-			MaxSurge:       &workerMaxSurge,
-			MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
-			Zones:          workerZones,
-		}
-
-		if values.ProviderType != "openstack" {
-			volumeSize := strconv.Itoa(values.VolumeSizeGb)
-			worker.Volume = &gardener.Volume{
-				Type:       ptr.String(values.DiskType),
-				VolumeSize: fmt.Sprintf("%sGi", volumeSize),
-			}
-		}
-
-		workers = append(workers, worker)
-	}
-
-	return workers
 }

@@ -30,7 +30,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -45,7 +45,8 @@
           "autoScalerMin": {
             "description": "Specifies the minimum number of virtual machines to create.",
             "type": "integer",
-            "minimum": 1,
+            "minimum": 0,
+            "maximum": 40,
             "default": 2
           },
           "autoScalerMax": {
@@ -68,6 +69,7 @@
     "autoScalerMin": {
       "default": 2,
       "description": "Specifies the minimum number of virtual machines to create",
+      "maximum": 40,
       "minimum": 2,
       "type": "integer"
     },

@@ -13,52 +13,47 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
-
-	"golang.org/x/exp/maps"
-	"k8s.io/apimachinery/pkg/util/sets"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-
-	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-
-	"code.cloudfoundry.org/lager"
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
+	"code.cloudfoundry.org/lager"
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -74,6 +69,7 @@ const (
 	instanceName               = "my-service-instance"
 	bindingName                = "my-binding"
 	kymaNamespace              = "kyma-system"
+	testSuiteSpeedUpFactor     = 10000
 )
 
 var (
@@ -129,12 +125,6 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
-func NewBrokerSuiteTestWithConvergedCloudRegionMappings(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	cfg.SapConvergedCloudRegionMappingsFilePath = "testdata/sap-converged-cloud-region-mappings.yaml"
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
-}
-
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	defer func() {
 		if r := recover(); r != nil {
@@ -150,11 +140,6 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db, cfg.MetricsV2, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
-}
-
-func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
@@ -182,7 +167,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}))
 
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
@@ -201,9 +186,17 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
+	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
+	fatalOnError(err, log)
+	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
+	fatalOnError(err, log)
+	defaultOIDC := defaultOIDCValues()
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+	fatalOnError(err, log)
+
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 
 	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	require.NoError(t, err)
@@ -212,23 +205,24 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
-		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService)
+		edpClient, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
+		workersProvider(cfg.InfrastructureManager, providerSpec))
 
-	provisioningQueue.SpeedUp(10000)
-	provisionManager.SpeedUp(10000)
+	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
+	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log)
-	updateQueue.SpeedUp(10000)
-	updateManager.SpeedUp(10000)
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec), schemaService, plansSpec, configProvider)
+	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
+	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
 		edpClient, accountProvider, k8sClientProvider, cli, configProvider, log)
-	deprovisionManager.SpeedUp(10000)
+	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
-	deprovisioningQueue.SpeedUp(10000)
+	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 
 	ts := &BrokerSuiteTest{
 		db:             db,
@@ -244,23 +238,17 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker)
+	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
 
-	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.DefaultRequestRegion, cli, log)
+	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.Broker.DefaultRequestRegion, cli, log)
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	return ts
-}
-
-func fakeK8sClientProvider(k8sCli client.Client) func(s string) (client.Client, error) {
-	return func(s string) (client.Client, error) {
-		return k8sCli, nil
-	}
 }
 
 func defaultOIDCValues() pkg.OIDCConfigDTO {
@@ -273,6 +261,13 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 		UsernameClaim:  "sub",
 		UsernamePrefix: "-",
 	}
+}
+
+func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
+	return workers.NewProvider(
+		imConfig,
+		spec,
+	)
 }
 
 func (s *BrokerSuiteTest) SetRuntimeResourceStateReady(runtimeID string) {
@@ -315,7 +310,9 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	return resp
 }
 
-func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger, skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub) {
+func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
+	deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger,
+	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -355,8 +352,16 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
-	createAPI(s.router, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues())
+
+	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
+	fatalOnError(err, log)
+
+	defaultOIDC := defaultOIDCValues()
+	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+
+	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
+		providerSpec, configProvider, planSpec)
 
 	s.httpServer = httptest.NewServer(s.router)
 }
@@ -830,9 +835,10 @@ func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []st
 	assert.Equal(s.t, admins, runtime.Spec.Security.Administrators)
 }
 
-func (s *BrokerSuiteTest) AssertNetworkFilteringDisabled(iid string, expected bool) {
+func (s *BrokerSuiteTest) AssertNetworkFiltering(iid string, egressExpected bool, ingressExpected bool) {
 	runtime := s.GetRuntimeResourceByInstanceID(iid)
-	assert.Equal(s.t, !expected, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+	assert.Equal(s.t, egressExpected, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+	assert.Equal(s.t, ingressExpected, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
 }
 
 func (s *BrokerSuiteTest) failRuntimeByKIM(iid string) {
@@ -898,4 +904,18 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 	assert.Equal(t, int32(autoScalerMax), worker.Maximum)
 	assert.Equal(t, zonesNumer, worker.MaxSurge.IntValue())
 	assert.Len(t, worker.Zones, zonesNumer)
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.Len(t, worker.Zones, zonesNumber)
+	for _, v := range worker.Zones {
+		assert.Contains(t, zones, v)
+	}
 }

@@ -73,7 +73,7 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger
 		edp.MaasConsumerEnvironmentKey: s.selectEnvironmentKey(operation.ProvisioningParameters.PlatformRegion, log),
 		edp.MaasConsumerRegionKey:      operation.ProvisioningParameters.PlatformRegion,
 		edp.MaasConsumerSubAccountKey:  subAccountID,
-		edp.MaasConsumerServicePlan:    s.selectServicePlan(operation.ProvisioningParameters.PlanID),
+		edp.MaasConsumerServicePlan:    SelectServicePlan(operation.ProvisioningParameters.PlanID),
 	} {
 		payload := edp.MetadataTenantPayload{
 			Key:   key,
@@ -136,13 +136,13 @@ func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log *slog.Logg
 	}
 }
 
-func (s *EDPRegistrationStep) selectServicePlan(planID string) string {
+func SelectServicePlan(planID string) string {
 	switch planID {
 	case broker.FreemiumPlanID:
 		return "free"
 	case broker.AzureLitePlanID:
 		return "tdd"
-	case broker.BuildRuntimeAWSPlanID, broker.BuildRuntimeGCPPlanID, broker.BuildRuntimeAzurePlanID:
+	case broker.BuildRuntimeAWSPlanID, broker.BuildRuntimeGCPPlanID, broker.BuildRuntimeAzurePlanID, broker.PreviewPlanID:
 		return "build-runtime"
 	default:
 		return "standard"

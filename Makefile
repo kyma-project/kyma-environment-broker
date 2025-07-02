@@ -64,3 +64,21 @@ fix: go-lint-install ## try to fix automatically issues
 .PHONY: build-hap
 build-hap:
 	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o ../../$(ARTIFACTS)/hap
+
+##@ Installation
+
+.PHONY: install
+install:
+	./scripts/installation.sh $(VERSION)
+
+##@ Patching Runtime to specified state
+
+.PHONY: set-runtime-state
+set-runtime-state:
+	./scripts/set_runtime_state.sh $(RUNTIME_ID) $(STATE)
+
+##@ Patching Kyma to specified state
+
+.PHONY: set-kyma-state
+set-kyma-state:
+	./scripts/set_kyma_state.sh $(KYMA_ID) $(STATE)

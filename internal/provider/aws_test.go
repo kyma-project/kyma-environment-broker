@@ -22,6 +22,7 @@ func TestAWSDefaults(t *testing.T) {
 			PlatformRegion: "cf-eu11",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -57,6 +58,7 @@ func TestAWSSpecific(t *testing.T) {
 			PlatformRegion: "cf-eu11",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -89,6 +91,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -122,6 +125,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 			},
 			PlatformRegion: "cf-ap21",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when

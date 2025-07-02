@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma runtime end-to-end provisioning test checks if [runtime provisioning](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/01-10-architecture.md) works as expected. The test is based on the implementation of the Kyma Environment Broker (KEB) and Runtime Provisioner. External dependencies relevant to this scenario are mocked.
+The Kyma runtime end-to-end provisioning test checks if [runtime provisioning](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/01-10-architecture.md) works as expected. The test is based on the implementation of the Kyma Environment Broker (KEB) and Kyma Infrastructure Manager (KIM). External dependencies relevant to this scenario are mocked.
 
 The test is executed on a dev cluster. It is executed after every merge to the `kyma` repository that changes the `compass` chart.
 
@@ -10,7 +10,7 @@ The test is executed on a dev cluster. It is executed after every merge to the `
 
 - Gardener Secret per provider
 - Service Manager Secret
-- Kyma Environment Broker [configured](../../../docs/contributor/01-10-authorization.md) to use these Secrets to create Kyma runtime successfully
+- KEB [configured](../../../docs/contributor/01-10-authorization.md) to use these Secrets to create Kyma runtime successfully
 
 ## Details
 
@@ -21,7 +21,7 @@ The provisioning end-to-end test contains a broker-client implementation that mo
 
 During the provisioning phase, the test performs the following steps:
 
-1. Sends a call to KEB to provision a Kyma runtime. KEB creates the operation and sends a request to Runtime Provisioner. The test waits until the operation is successful. It takes about 30 minutes on Google Cloud and a few hours on Azure. You can configure the timeout using the environment variable.
+1. Sends a call to KEB to provision a Kyma runtime. KEB creates the operation and sends a request to KIM. The test waits until the operation is successful. It takes about 30 minutes on Google Cloud and a few hours on Azure. You can configure the timeout using the environment variable.
 
 2. Creates a ConfigMap with **instanceId** specified.
 
@@ -41,9 +41,9 @@ The cleanup logic is executed at the end of the end-to-end test or when the prov
 
 2. Removes the test's Secret and ConfigMap.
 
-3. Fetches the runtime kubeconfig from Runtime Provisioner and uses it to clean up resources that block the cluster from being deprovisioned.
+3. Fetches the runtime kubeconfig from KIM and uses it to clean up resources that block the cluster from being deprovisioned.
 
-4. Sends a request to deprovision the runtime to KEB. The request is passed to Runtime Provisioner, which deprovisions the runtime.
+4. Sends a request to deprovision the runtime to KEB. The request is passed to KIM, which deprovisions the runtime.
 
 5. Waits until the deprovisioning is successful. It takes about 20 minutes to complete. You can configure the timeout using the environment variable.
 
@@ -76,7 +76,6 @@ You can configure the test execution by using the following environment variable
 | **APP_BROKER_PROVISION_GCP** | Specifies if a runtime cluster is hosted on Google Cloud. If set to `false`, it is provisioned on Azure. | `true` |
 | **APP_BROKER_AUTH_USERNAME** | Specifies the username for the basic authentication in KEB. | `broker` |
 | **APP_BROKER_AUTH_PASSWORD** | Specifies the password for the basic authentication in KEB. | None |
-| **APP_RUNTIME_PROVISIONER_URL** | Specifies the Runtime Provisioner URL. | None |
 | **APP_RUNTIME_UUA_INSTANCE_NAME** | Specifies the name of the UUA instance which is provisioned in the Runtime. | `uua-issuer` |
 | **APP_RUNTIME_UUA_INSTANCE_NAMESPACE** | Specifies the namespace of the UUA instance which is provisioned in the runtime. | `kyma-system` |
 | **APP_TENANT_ID** | Specifies TenantID which is used in the test. | None |

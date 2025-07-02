@@ -1,8 +1,5 @@
 # HAP Rule Configuration
 
-> [!NOTE]
-> This feature is still being developed and will be available soon.
-
 The Hyperscaler Account Pool (HAP) rule configuration is a functionality that allows you to control pool selection from a configurable helm property. 
 A pool is a set of Gardener's SecretBinding custom resources that share the same labels. 
 Pool selection is a process that decides which SecretBinding pool is the most suitable for every SAP BTP, Kyma runtime creation request.
@@ -12,10 +9,10 @@ The label selector requirements are used to query Gardener's SecretBindings.
 
 ## Rule Configuration
 
-The rule is configured in `values.yaml` in the `hap.rule` property.
+The rule is configured in the `hap.rule` property in the `values.yaml` file.
 It is a list of strings, where each string is a single rule entry that corresponds to a single pool.
 Each rule entry is evaluated during cluster provisioning.
-If more than one rule applies, the best matching rule is selected based on the [priority](#uniqueness-and-priority). See an example configuration in `values.yaml`:
+If more than one rule applies, the best matching rule is selected based on [priority](#uniqueness-and-priority). See an example configuration in `values.yaml`:
 
 ```
 hap: 
@@ -36,10 +33,10 @@ See the following example of a rule entry format:
 PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_ATTR_1, OUTPUT_ATTR_2, ..., OUTPUT_ATTR_M
 ```
 
-Every rule entry consists of input and output attributes separated by the arrow symbol - `->`.
-The input attributes match a rule entry with the Kyma runtime request and modify [label selector](#label-selector). The output attributes only add requirements to the label selector.
+Every rule entry consists of input and output attributes separated by the arrow symbol: `->`.
+The input attributes match the rule entry with the Kyma runtime request and modify the [label selector](#label-selector). The output attributes only add requirements to the label selector.
 In its minimal form, each rule consists of a **PLAN** that the rule applies to.
-In its extended form, a rule entry contains plan and a list of input attributes. Their values are passed as `ATTR=VAL` pairs in parentheses.
+In its extended form, a rule entry contains a plan and a list of input attributes. Their values are passed as `ATTR=VAL` pairs in parentheses.
 
 > [!NOTE]
 > If you do not provide any values, use empty parentheses or do not use them at all, for example:
@@ -60,7 +57,7 @@ hap:
 The input attributes include **platformRegion** (**PR**) and **hyperscalerRegion** (**HR**). 
 The output attributes include: **platformRegion** (**PR**), **hyperscalerRegion** (**HR**), **shared** (**S**) and **euAccess** (**EU**). 
 You can only use each input attribute once in the input attributes section of a single rule entry.
-And you can only use each output attribute once in the output attributes section in a single rule entry.
+You can only use each output attribute once in the output attributes section in a single rule entry.
 
 ## Rule Evaluation
 
@@ -83,7 +80,7 @@ Not all plans share their name with hyperscaler types, for example, the `sap-con
 
 In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following table shows the plan-provider type mapping:
 
-| Plan                	 | Provider Type  |
+| Plan                	| Provider Type  |
 |-----------------------|----------------|
 | `azure`               | `azure`        |
 | `azure_lite`          | `azure`        |
@@ -94,7 +91,7 @@ In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following ta
 | `sap-converged-cloud` | `openstack`    |
 | `trial`               | `aws`          |
 
-The **tenantName** label holds the tenant's global account ID, which allows the tenant to reuse of an already claimed SecretBinding by the tenant. The label is skipped when there is no associated SecretBinding to the tenant.
+The **tenantName** label holds the tenant's global account ID, which allows the tenant to reuse a SecretBinding already claimed by the tenant. The label is skipped when there is no associated SecretBinding to the tenant.
 
 The **dirty** label marks the SecretBinding while it is being released from the tenant. SecretBindings are marked with the **dirty** label during the instance deprovisioning process. The label remains in the SecretBinding until the Subscription Cleanup Job removes the tenant's data in the hyperscaler.
 
@@ -125,7 +122,7 @@ If an attribute exists in a rule, it constrains a set of clusters it applies to 
 
 To extend a rule entry with a specified platform region, add the **PR** rule attribute. If the value of Kyma runtime's platform region attribute matches the **PR** rule attribute, the `hyperscalerType: <HYPERSCALER_NAME>_<PLATFORM_REGION>` label is used.
 
-The following configuration means that if a `gcp` cluster is provisioned in the cf-sa30 platform region, KEB searches for SecretBindings with the `hyperscalerType: gcp_cf-sa30` label. 
+The following configuration means that if a `gcp` cluster is provisioned in the `cf-sa30` platform region, KEB searches for SecretBindings with the `hyperscalerType: gcp_cf-sa30` label. 
 
 ```
 hap: 
@@ -133,7 +130,7 @@ hap:
     - gcp(PR=cf-sa30) -> PR           # hyperscalerType=gcp_cf-sa30, !dirty
 ```
 
-The next configuration means that if a `gcp` cluster is provisioned in the cf-sa30 platform region, KEB searches for SecretBindings with the `hyperscalerType: gcp` label.
+The next configuration means that if a `gcp` cluster is provisioned in the `cf-sa30` platform region, KEB searches for SecretBindings with the `hyperscalerType: gcp` label.
 
 ```
 hap: 
@@ -153,7 +150,7 @@ hap:
 
 ### Shared and EU Access Attributes
 
-Use these attributes only to add label selector requirements. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared=true` or `euAccess=true` requirements are added to the [label selector](#label-selector). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [Hyperscaler Account Pool](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared SecretBindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of SecretBindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
+Use these attributes only to add label selector requirements. If the rule entry contains either of the attributes, then, when the rule is triggered, the `shared=true` or `euAccess=true` requirements are added to the [label selector](#label-selector). The **shared** label on a SecretBinding marks it as assignable to more than one Kyma runtime, and **euAccess** is used to mark EU regions (see [Hyperscaler Account Pool](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared SecretBindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region `cf-ch20` use a pool of SecretBindings marked with labels `hyperscalerType: azure`, and `euAccess: true`. 
 
 ```
 hap: 
@@ -172,7 +169,7 @@ Output parameters are not taken into account when establishing rule entry unique
 hap:
   rule: 
     - gcp 
-    - gcp -> S                      # invalid entry, output attributes do not take part into uniqueness check
+    - gcp -> S                      # invalid entry, output attributes do not take part in uniqueness check
     - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
     - gcp(HR=europe-west3)          # invalid entry, duplicate of the previous one 
 ```
@@ -199,19 +196,19 @@ KEB validates HAP rules during startup. If the configuration is invalid, KEB doe
 The constraints used for validation during KEB startup include the following:
 * Rules format check: All the rules must comply with the specified format.
 * Every supported plan needs at least one rule entry; if no rule entry is defined for a plan,  an error is returned during KEB startup.
-* Uniqueness validation check: KEB checks if all rule entries are unique in the rule's scope. You must not specify more than one entry with the same number of identification attributes. Otherwise, the error is returned, failing KEB's startup. For more details, see the [Uniqueness and Priority](#uniqueness-and-priority) section. 
+* Uniqueness validation check: KEB checks if all rule entries are unique in the rule's scope. You must not specify more than one entry with the same number of identification attributes. Otherwise, the error failing KEB's startup is returned. For more details, see the [Uniqueness and Priority](#uniqueness-and-priority) section. 
 
 ## Initial Configuration
 
-The following example shows the initial configuration created to mimic KEB behavior. The configuration enforces the following:
+The following example shows the initial configuration created to mimic KEB's behavior. The configuration enforces the following:
 * The `azure`, `aws`, and `gcp` plans have their own pools of dedicated bindings.
 * The `free` plan uses `aws` or `azure` dedicated bindings, depending on the provider value.
-* `gcp` clusters in the cf-sa30 region use the pool of SecretBindings marked with the `hyperscalerType: gcp_cf-sa30` label.
+* `gcp` clusters in the `cf-sa30` region use the pool of SecretBindings marked with the `hyperscalerType: gcp_cf-sa30` label.
 * `sap-converged-cloud` clusters use the pool of SecretBindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
 * `trial` clusters can use one of two pools of shared SecretBindings marked with labels `hyperscalerType: azure` or `hyperscalerType: aws`, depending on the `trial` provider type used.
-* `azure` clusters in the cf-ch20 region and `aws` clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
+* `azure` clusters in the `cf-ch20` region and `aws` clusters in the `cf-eu11` region have their own dedicated pools and are euAccess specific.
 
-See an example of the initial configuration created to mimic KEB behavior.
+See an example of the initial configuration created to mimic KEB's behavior.
 ```
 hap:
  rule:                                  # label selector:

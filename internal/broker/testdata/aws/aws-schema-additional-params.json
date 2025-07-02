@@ -33,7 +33,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -84,7 +84,7 @@
             }
           },
           "haZones": {
-            "description": "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+            "description": "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting autoScalerMin to 0 and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
             "title": "HA zones",
             "type": "boolean",
             "default": true
@@ -92,7 +92,8 @@
           "autoScalerMin": {
             "description": "Specifies the minimum number of virtual machines to create.",
             "type": "integer",
-            "minimum": 1,
+            "minimum": 0,
+            "maximum": 300,
             "default": 3
           },
           "autoScalerMax": {
@@ -106,7 +107,7 @@
       }
     },
     "administrators": {
-      "description": "Specifies the list of runtime administrators",
+      "description": "Specifies the list of runtime administrators.",
       "items": {
         "type": "string"
       },
@@ -123,6 +124,7 @@
     "autoScalerMin": {
       "default": 3,
       "description": "Specifies the minimum number of virtual machines to create",
+      "maximum": 300,
       "minimum": 3,
       "type": "integer"
     },
@@ -285,6 +287,14 @@
       "type": "object"
     },
     "oidc": {
+      "_controlsOrder": [
+        "clientID",
+        "groupsClaim",
+        "issuerURL",
+        "signingAlgs",
+        "usernameClaim",
+        "usernamePrefix"
+      ],
       "description": "OIDC configuration",
       "properties": {
         "clientID": {
@@ -300,7 +310,7 @@
           "type": "string"
         },
         "signingAlgs": {
-          "description": "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+          "description": "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
           "items": {
             "type": "string"
           },
@@ -311,7 +321,7 @@
           "type": "string"
         },
         "usernamePrefix": {
-          "description": "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters).",
+          "description": "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters).",
           "type": "string"
         }
       },
@@ -353,9 +363,9 @@
     },
     "shootAndSeedSameRegion": {
       "default": false,
-      "description": "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+      "description": "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if no seed is available in the region.",
       "type": "boolean",
-      "title": "Enforce Same Location for Seed and Shoot" 
+      "title": "Enforce same location for Seed and Shoot"
     }
   },
   "required": [

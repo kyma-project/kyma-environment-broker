@@ -1,6 +1,7 @@
 package broker_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,23 +9,28 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -75,6 +81,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -82,10 +89,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -146,6 +156,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -153,10 +164,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -221,6 +235,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -228,10 +243,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -267,6 +285,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -274,10 +293,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when shootDomain is missing
@@ -338,6 +360,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -345,10 +368,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -411,6 +437,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -418,10 +445,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -458,6 +488,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -465,10 +496,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -506,6 +540,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: false},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -513,10 +548,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -568,6 +606,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -575,10 +614,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -630,6 +672,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -637,10 +680,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -672,6 +718,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -679,10 +726,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -709,6 +759,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -716,10 +767,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -745,6 +799,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -752,10 +807,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -788,6 +846,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -795,10 +854,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -836,6 +898,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -843,10 +906,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -890,6 +956,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -897,10 +964,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -943,6 +1013,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -950,10 +1021,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -999,6 +1073,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1006,13 +1081,16 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
 
 		// when
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -1053,6 +1131,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1060,10 +1139,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		testCases := []struct {
@@ -1149,6 +1231,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1156,10 +1239,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		testCases := []struct {
@@ -1233,6 +1319,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1240,16 +1327,19 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 
 		// when
-		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu11"), instanceID, domain.ProvisionDetails{
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-ch20"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "switzerlandnorth", oidcParams)),
@@ -1275,6 +1365,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1282,10 +1373,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -1339,6 +1433,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1346,10 +1441,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -1393,6 +1491,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1400,10 +1499,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -1445,6 +1547,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -1452,10 +1555,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -1487,6 +1593,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -1494,10 +1601,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		// when
@@ -1532,6 +1642,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1539,10 +1650,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1580,6 +1694,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1587,10 +1702,13 @@ func TestProvision_Provision(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1686,6 +1804,14 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "cpu-worker-0", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
+		"Min values of AutoScalerMin and AutoScalerMax when HA zones are disabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 0, "autoScalerMax": 1}]`,
+			expectedError:             false,
+		},
+		"AutoScalerMin set to zero when HA zones are enabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 0, "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -1711,6 +1837,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -1718,10 +1845,13 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
-				&broker.OneForAllConvergedCloudRegionsProvider{},
-				nil,
-				fixValueProvider(),
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
 			)
 
 			// when
@@ -1774,6 +1904,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -1781,10 +1912,13 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
-				&broker.OneForAllConvergedCloudRegionsProvider{},
-				nil,
-				fixValueProvider(),
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1924,6 +2058,7 @@ func TestNetworkingValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -1931,10 +2066,13 @@ func TestNetworkingValidation(t *testing.T) {
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
-				&broker.OneForAllConvergedCloudRegionsProvider{},
-				nil,
-				fixValueProvider(),
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
 			)
 
 			// when
@@ -2022,6 +2160,7 @@ func TestRegionValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, OnlySingleTrialPerGA: true},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -2029,10 +2168,13 @@ func TestRegionValidation(t *testing.T) {
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
-				&broker.OneForAllConvergedCloudRegionsProvider{},
-				nil,
-				fixValueProvider(),
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
 				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
 			)
 
 			// when
@@ -2081,6 +2223,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: false,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2088,16 +2231,19 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 
 		// when
-		_, err := provisionEndpoint.Provision(fixRequestContext(t, "eu-de-1"), instanceID, domain.ProvisionDetails{
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu20"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.SapConvergedCloudPlanID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "eu-de-1", oidcParams)),
@@ -2128,6 +2274,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2135,10 +2282,13 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2147,7 +2297,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu11"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "switzerlandnorth", oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "eastus", oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -2174,6 +2324,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2181,15 +2332,18 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-			fixValueProvider(),
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
 			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		err := fmt.Errorf(broker.CONVERGED_CLOUD_BLOCKED_MSG)
-		errMsg := broker.CONVERGED_CLOUD_BLOCKED_MSG
+		err := fmt.Errorf(broker.ConvergedCloudBlockedMsg)
+		errMsg := broker.ConvergedCloudBlockedMsg
 		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
 		// when
@@ -2234,6 +2388,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2241,10 +2396,13 @@ func TestUnsupportedMachineType(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
-		fixRegionsSupportingMachine(),
-		fixValueProvider(),
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
 	)
 
 	// when
@@ -2257,7 +2415,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 	t.Logf("%+v\n", *provisionEndpoint)
 
 	// then
-	assert.EqualError(t, err, "In the region europe-west3, the machine type c2d-highmem-32 is not available, it is supported in the us-central1, southamerica-east1")
+	assert.EqualError(t, err, "In the region europe-west3, the machine type c2d-highmem-32 is not available, it is supported in the southamerica-east1, us-central1")
 }
 
 func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
@@ -2284,6 +2442,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2291,10 +2450,13 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
-		fixRegionsSupportingMachine(),
-		fixValueProvider(),
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
 	)
 
 	testCases := []struct {
@@ -2360,6 +2522,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2367,10 +2530,13 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
-		fixRegionsSupportingMachine(),
-		fixValueProvider(),
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2408,6 +2574,8 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2415,10 +2583,13 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
-		fixRegionsSupportingMachine(),
-		fixValueProvider(),
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
 	)
 
 	testCases := []struct {
@@ -2518,6 +2689,727 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 	}
 }
 
+func TestAvailableZonesValidation(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+	)
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "us-east-1", additionalWorkerNodePools)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+	t.Logf("%+v\n", *provisionEndpoint)
+
+	// then
+	assert.EqualError(t, err, "In the us-east-1, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
+}
+
+func TestAdditionalProperties(t *testing.T) {
+	t.Run("file should contain request with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.ProvisioningRequestsFileName)
+
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:                 []string{"aws"},
+				URL:                         brokerURL,
+				OnlySingleTrialPerGA:        true,
+				MonitorAdditionalProperties: true,
+				AdditionalPropertiesPath:    tempDir,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "test": "test"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Greater(t, len(lines), 0)
+		var entry map[string]interface{}
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "any-global-account-id", entry["globalAccountID"])
+		assert.Equal(t, subAccountID, entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
+	t.Run("file should contain two requests with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.ProvisioningRequestsFileName)
+
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:                 []string{"aws"},
+				URL:                         brokerURL,
+				OnlySingleTrialPerGA:        true,
+				MonitorAdditionalProperties: true,
+				AdditionalPropertiesPath:    tempDir,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "test": "test"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+		assert.NoError(t, err)
+
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "test": "test"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+		assert.NoError(t, err)
+
+		// then
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Equal(t, len(lines), 3)
+		var entry map[string]interface{}
+
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "any-global-account-id", entry["globalAccountID"])
+		assert.Equal(t, subAccountID, entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+
+		err = json.Unmarshal(lines[1], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "any-global-account-id", entry["globalAccountID"])
+		assert.Equal(t, subAccountID, entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
+	t.Run("file should not contain request without additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.ProvisioningRequestsFileName)
+
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:                 []string{"aws"},
+				URL:                         brokerURL,
+				OnlySingleTrialPerGA:        true,
+				MonitorAdditionalProperties: true,
+				AdditionalPropertiesPath:    tempDir,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.Nil(t, contents)
+		assert.Error(t, err)
+	})
+}
+
+func TestSameRegionForSeedAndShoot(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	existingAWSSeedRegions := []string{"eu-central-1", "us-east-1"}
+
+	t.Run("should succeed if configuration contains region from provisioning parameters", func(t *testing.T) {
+		// given
+		const expectedRegion = "eu-central-1"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: false,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, expectedRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail if configuration does not contain region from provisioning parameters", func(t *testing.T) {
+		// given
+		const missingRegion = "eu-west-2"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+			instanceID, missingRegion, existingAWSSeedRegions)
+		expectedAPIResponse := apiresponses.NewFailureResponse(
+			expectedErr,
+			http.StatusBadRequest,
+			expectedErr.Error())
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, missingRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.Error(t, err)
+		assert.IsType(t, &apiresponses.FailureResponse{}, err)
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+	})
+
+	t.Run("should fail for unsupported region", func(t *testing.T) {
+		// given
+		const unsupportedRegion = "eu-west-1"
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{broker.AWSPlanName},
+				URL:                      brokerURL,
+				DisableSapConvergedCloud: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+			instanceID, unsupportedRegion, existingAWSSeedRegions)
+		expectedAPIResponse := apiresponses.NewFailureResponse(
+			expectedErr,
+			http.StatusBadRequest,
+			expectedErr.Error())
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, unsupportedRegion), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.Error(t, err)
+		assert.IsType(t, &apiresponses.FailureResponse{}, err)
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedAPIResponse.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+	})
+}
+
+func TestQuotaLimitCheck(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	t.Run("should create new operation if there is no instances", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if there is no unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(1, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+			nil,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
+	})
+
+	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(2, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+			nil,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should fail if quota client returns error", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error"))
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+			nil,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.EqualError(t, err, "The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+	})
+
+	t.Run("should create new operation if there is no unassigned quota but whitelisted subaccount", func(t *testing.T) {
+		// given
+		// #setup memory storage
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixInstance()
+		instance.SubAccountID = subAccountID
+		err := memoryStorage.Instances().Insert(instance)
+		assert.NoError(t, err)
+
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(1, nil)
+
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				CheckQuotaLimit:      true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			newSchemaService(t),
+			newProviderSpec(t),
+			fixValueProvider(t),
+			false,
+			config.FakeProviderConfigProvider{},
+			quotaClient,
+			whitelist.Set{subAccountID: struct{}{}},
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		assert.NoError(t, err)
+	})
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
@@ -2570,11 +3462,58 @@ func fixDNSProviders() gardener.DNSProvidersData {
 	}
 }
 
-func fixRegionsSupportingMachine() map[string][]string {
-	return map[string][]string{
-		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
-		"m7g":         {"us-west-2"},
-		"c2d-highmem": {"us-central1", "southamerica-east1"},
-		"Standard_D":  {"uksouth", "brazilsouth"},
+func fixRegionsSupportingMachine() configuration.RegionsSupportingMachine {
+	return configuration.RegionsSupportingMachine{
+		"m8g": {
+			"ap-northeast-1": nil,
+			"ap-southeast-1": nil,
+			"ca-central-1":   nil,
+		},
+		"m7g": {
+			"us-west-2": nil,
+		},
+		"c2d-highmem": {
+			"us-central1":        nil,
+			"southamerica-east1": nil,
+		},
+		"Standard_D": {
+			"uksouth":     nil,
+			"brazilsouth": nil,
+		},
+		"g6": {
+			"us-east-1":    []string{"a"},
+			"westeurope":   []string{"b"},
+			"eu-central-1": nil,
+		},
 	}
+}
+
+func newSchemaService(t *testing.T) *broker.SchemaService {
+	plans := newPlanSpec(t)
+	provider := newProviderSpec(t)
+
+	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
+		IncludeAdditionalParamsInSchema: true,
+		EnableShootAndSeedSameRegion:    true,
+		UseAdditionalOIDCSchema:         true,
+	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
+		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
+	return schemaService
+}
+
+func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
+	spec, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+	return spec
+}
+
+func newPlanSpec(t *testing.T) *configuration.PlanSpecifications {
+	spec, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
+	require.NoError(t, err)
+	return spec
+}
+
+func newEmptyProviderSpec() *configuration.ProviderSpec {
+	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
+	return spec
 }

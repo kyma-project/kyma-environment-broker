@@ -4,27 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
-
-const kymaTemplate = `
-apiVersion: operator.kyma-project.io/v1beta2
-kind: Kyma
-metadata:
-  name: my-kyma
-  namespace: kyma-system
-spec:
-  sync:
-    strategy: secret
-  channel: stable
-  modules: []
-`
 
 func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	// Given
@@ -36,7 +22,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fixture.FakeKymaConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
@@ -60,7 +46,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fixture.FakeKymaConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 	err = memoryStorage.Instances().Insert(instance)
@@ -71,13 +57,4 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 
 	// Then
 	assert.Zero(t, backoff)
-}
-
-type fakeConfigProvider struct {
-}
-
-func (fakeConfigProvider) ProvideForGivenPlan(_ string) (*internal.ConfigForPlan, error) {
-	return &internal.ConfigForPlan{
-		KymaTemplate: kymaTemplate,
-	}, nil
 }

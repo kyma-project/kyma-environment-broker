@@ -17,7 +17,7 @@ import (
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.ConfigurationProvider, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -35,11 +35,11 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, configProvider),
+			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient, cfg.KymaResourceDeletionTimeout),
+			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient),
 		},
 		{
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db, kcpClient),
@@ -51,8 +51,8 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewReleaseSubscriptionStep(db, accountProvider),
 		},
 		{
-			disabled: !cfg.ArchiveEnabled,
-			step:     deprovisioning.NewArchivingStep(db, cfg.ArchiveDryRun),
+			disabled: !cfg.ArchivingEnabled,
+			step:     deprovisioning.NewArchivingStep(db, cfg.ArchivingDryRun),
 		},
 		{
 			step: deprovisioning.NewRemoveInstanceStep(db),

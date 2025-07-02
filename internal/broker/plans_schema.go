@@ -9,6 +9,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
 
+const (
+	nonHAAutoscalerMinMinimumValue = 0
+	nonHAAutoscalerMaxMinimumValue = 1
+	autoscalerMaximumValue         = 300
+	autoscalerMaxDefaultValue      = 20
+)
+
 type RootSchema struct {
 	Schema string `json:"$schema"`
 	Type
@@ -36,23 +43,15 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig    *Type `json:"kubeconfig,omitempty"`
-	AutoScalerMin *Type `json:"autoScalerMin,omitempty"`
-	AutoScalerMax *Type `json:"autoScalerMax,omitempty"`
+	Kubeconfig    *Type           `json:"kubeconfig,omitempty"`
+	AutoScalerMin *AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax *AutoscalerType `json:"autoScalerMax,omitempty"`
 	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
 	OIDC                      interface{}                    `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
-}
-
-func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) {
-	if useAdditionalOIDCSchema {
-		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update)
-	} else {
-		up.OIDC = NewOIDCSchema()
-	}
-	up.Administrators = AdministratorsProperty()
+	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 }
 
 type NetworkingProperties struct {
@@ -68,12 +67,13 @@ type NetworkingType struct {
 }
 
 type OIDCProperties struct {
-	ClientID       Type `json:"clientID"`
-	GroupsClaim    Type `json:"groupsClaim"`
-	IssuerURL      Type `json:"issuerURL"`
-	SigningAlgs    Type `json:"signingAlgs"`
-	UsernameClaim  Type `json:"usernameClaim"`
-	UsernamePrefix Type `json:"usernamePrefix"`
+	ClientID         Type `json:"clientID"`
+	GroupsClaim      Type `json:"groupsClaim"`
+	IssuerURL        Type `json:"issuerURL"`
+	SigningAlgs      Type `json:"signingAlgs"`
+	UsernameClaim    Type `json:"usernameClaim"`
+	UsernamePrefix   Type `json:"usernamePrefix"`
+	EncodedJwksArray Type `json:"encodedJwksArray,omitzero"`
 }
 
 type OIDCPropertiesExpanded struct {
@@ -84,8 +84,9 @@ type OIDCPropertiesExpanded struct {
 
 type OIDCType struct {
 	Type
-	Properties OIDCProperties `json:"properties"`
-	Required   []string       `json:"required"`
+	Properties    OIDCProperties `json:"properties"`
+	Required      []string       `json:"required"`
+	ControlsOrder []string       `json:"_controlsOrder,omitempty"`
 }
 
 type OIDCTypeExpanded struct {
@@ -103,6 +104,8 @@ type Type struct {
 	Maximum     int    `json:"maximum,omitempty"`
 	MinLength   int    `json:"minLength,omitempty"`
 	MaxLength   int    `json:"maxLength,omitempty"`
+	MinItems    int    `json:"minItems,omitempty"`
+	MaxItems    int    `json:"maxItems,omitempty"`
 
 	// Regex pattern to match against string type of fields.
 	// If not specified for strings user can pass empty string with whitespaces only.
@@ -116,6 +119,14 @@ type Type struct {
 	UniqueItems          interface{}       `json:"uniqueItems,omitempty"`
 	ReadOnly             interface{}       `json:"readOnly,omitempty"`
 	AdditionalProperties interface{}       `json:"additionalProperties,omitempty"`
+}
+
+type AutoscalerType struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Minimum     int         `json:"minimum"`
+	Maximum     int         `json:"maximum"`
+	Default     interface{} `json:"default,omitempty"`
 }
 
 type NameType struct {
@@ -182,11 +193,11 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name          Type  `json:"name,omitempty"`
-	MachineType   Type  `json:"machineType,omitempty"`
-	HAZones       *Type `json:"haZones,omitempty"`
-	AutoScalerMin Type  `json:"autoScalerMin,omitempty"`
-	AutoScalerMax Type  `json:"autoScalerMax,omitempty"`
+	Name          Type           `json:"name,omitempty"`
+	MachineType   Type           `json:"machineType,omitempty"`
+	HAZones       *Type          `json:"haZones,omitempty"`
+	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
 }
 
 type OIDCs struct {
@@ -215,15 +226,15 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters, enableJwks bool) *OIDCs {
 	if defaultOIDCConfig == nil {
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
 
-	return &OIDCs{
+	OIDCs := &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
+			Description: "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -247,7 +258,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
 									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
 									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
-									"groupsPrefix":   "-",
+									"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
 									"requiredClaims": []interface{}{},
 								},
 							},
@@ -259,30 +270,32 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 							},
 							Properties: OIDCPropertiesExpanded{
 								OIDCProperties: OIDCProperties{
-									ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-									IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-									GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-									UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-									UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+									ClientID:       Type{Type: "string", MinLength: 1, Description: "The client ID for the OpenID Connect client."},
+									IssuerURL:      Type{Type: "string", MinLength: 1, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+									GroupsClaim:    Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsClaim, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+									UsernameClaim:  Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.UsernameClaim, Description: "The OpenID claim to use as the user name."},
+									UsernamePrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.UsernamePrefix, Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 									SigningAlgs: Type{
-										Type: "array",
+										Type:     "array",
+										MinItems: 1,
 										Items: &Type{
 											Type: "string",
 										},
-										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+										Default:     defaultOIDCConfig.SigningAlgs,
+										Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 									},
 								},
-								GroupsPrefix: Type{Type: "string", Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
+								GroupsPrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsPrefix, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
 										Type:    "string",
 										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+									Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
-							Required: []string{"clientID", "issuerURL"},
+							Required: []string{"clientID", "issuerURL", "groupsClaim", "usernameClaim", "usernamePrefix", "signingAlgs", "groupsPrefix"},
 						},
 					},
 				},
@@ -300,56 +313,97 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 						GroupsClaim:    Type{Type: "string", ReadOnly: !update, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 						UsernameClaim:  Type{Type: "string", ReadOnly: !update, Description: "The OpenID claim to use as the user name."},
-						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 						SigningAlgs: Type{
 							Type: "array",
 							Items: &Type{
 								Type: "string",
 							},
 							ReadOnly:    !update,
-							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+							Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 						},
 					},
-					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
+					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
 							Type:    "string",
-							Pattern: "^[^=]+=[^=]+$",
+							Pattern: "^([^=]+=[^=]+|-)$",
 						},
 						ReadOnly:    !update,
-						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+						Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. To remove the previously set claims, use the value '-' (dash character without additional characters).",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
 			},
 		},
 	}
+	if rejectUnsupportedParameters {
+		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
+			oidcTypeExpanded.Type.AdditionalProperties = false
+			OIDCs.OneOf[1] = oidcTypeExpanded
+		}
+	}
+	if enableJwks {
+		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
+			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "The JWKS array encoded in base64. Leave empty to not use it or to remove the previously set value."}
+			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+			additionalOidc.Properties.List.Default = []interface{}{
+				map[string]interface{}{
+					"clientID":         defaultOIDCConfig.ClientID,
+					"issuerURL":        defaultOIDCConfig.IssuerURL,
+					"groupsClaim":      defaultOIDCConfig.GroupsClaim,
+					"signingAlgs":      defaultOIDCConfig.SigningAlgs,
+					"usernameClaim":    defaultOIDCConfig.UsernameClaim,
+					"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
+					"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
+					"requiredClaims":   []interface{}{},
+					"encodedJwksArray": "",
+				},
+			}
+			OIDCs.OneOf[0] = additionalOidc
+		}
+		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
+			oidcTypeExpanded.Properties.EncodedJwksArray = Type{Type: "string", ReadOnly: !update, Description: "The JWKS array encoded in base64. To remove the previously set value, enter the value '-' (dash character without additional characters)."}
+			oidcTypeExpanded.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+			OIDCs.OneOf[1] = oidcTypeExpanded
+		}
+	}
+	return OIDCs
 }
 
-func NewOIDCSchema() *OIDCType {
-	return &OIDCType{
-		Type: Type{Type: "object", Description: "OIDC configuration"},
+func NewOIDCSchema(rejectUnsupportedParameters, enableJwks bool) *OIDCType {
+	OIDCType := &OIDCType{
+		ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix"},
+		Type:          Type{Type: "object", Description: "OIDC configuration"},
 		Properties: OIDCProperties{
 			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
 			IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 			GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 			UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 			SigningAlgs: Type{
 				Type: "array",
 				Items: &Type{
 					Type: "string",
 				},
-				Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+				Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 			},
 		},
 		Required: []string{"clientID", "issuerURL"},
 	}
+	if rejectUnsupportedParameters {
+		OIDCType.Type.AdditionalProperties = false
+	}
+	if enableJwks {
+		OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
+		OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
+	}
+	return OIDCType
 }
 
-func NewModulesSchema() *Modules {
-	return &Modules{
+func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
+	modules := &Modules{
 		Type: Type{
 			Type:        "object",
 			Description: "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
@@ -425,6 +479,13 @@ func NewModulesSchema() *Modules {
 					}},
 			}},
 	}
+	if rejectUnsupportedParameters {
+		if modulesCustom, ok := modules.OneOf[1].(ModulesCustom); ok {
+			modulesCustom.Properties.List.Items.AdditionalProperties = false
+			modules.OneOf[1] = modulesCustom
+		}
+	}
+	return modules
 }
 
 func NameProperty() NameType {
@@ -470,29 +531,39 @@ func ShootDomainProperty() *Type {
 func ShootAndSeedSameRegionProperty() *Type {
 	return &Type{
 		Type:        "boolean",
-		Title:       "Enforce Same Location for Seed and Shoot",
+		Title:       "Enforce same location for Seed and Shoot",
 		Default:     false,
-		Description: "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+		Description: "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if no seed is available in the region.",
+	}
+}
+
+func IngressFilteringProperty() *Type {
+	return &Type{
+		Type:        "boolean",
+		Title:       "Enable ingress geo-blocking",
+		Default:     false,
+		Description: "If set to true, ingress traffic from embargoed countries is blocked.",
 	}
 }
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
-			AutoScalerMin: &Type{
+			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     3,
-				Default:     3,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     pkg.HAAutoscalerMinimumValue,
 				Description: "Specifies the minimum number of virtual machines to create",
 			},
-			AutoScalerMax: &Type{
+			AutoScalerMax: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     3,
-				Maximum:     300,
-				Default:     20,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     autoscalerMaxDefaultValue,
 				Description: "Specifies the maximum number of virtual machines to create",
 			},
 			MachineType: &Type{
@@ -501,7 +572,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				EnumDisplayName: machineTypesDisplay,
 				Description:     "Specifies the type of the virtual machine.",
 			},
-			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes),
+			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, rejectUnsupportedParameters),
 		},
 		Name: NameProperty(),
 		Region: &Type{
@@ -510,8 +581,8 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			EnumDisplayName: regionsDisplay,
 			MinLength:       1,
 		},
-		Networking: NewNetworkingSchema(),
-		Modules:    NewModulesSchema(),
+		Networking: NewNetworkingSchema(rejectUnsupportedParameters),
+		Modules:    NewModulesSchema(rejectUnsupportedParameters),
 	}
 
 	if update {
@@ -522,9 +593,9 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 	return properties
 }
 
-func NewNetworkingSchema() *NetworkingType {
+func NewNetworkingSchema(rejectUnsupportedParameters bool) *NetworkingType {
 	seedCIDRs := strings.Join(networking.GardenerSeedCIDRs, ", ")
-	return &NetworkingType{
+	networkingType := &NetworkingType{
 		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another."},
 		Properties: NetworkingProperties{
 			Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
@@ -536,10 +607,14 @@ func NewNetworkingSchema() *NetworkingType {
 		},
 		Required: []string{"nodes"},
 	}
+	if rejectUnsupportedParameters {
+		networkingType.Type.AdditionalProperties = false
+	}
+	return networkingType
 }
 
-func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
-	schema := &RootSchema{
+func NewSchema(properties interface{}, required []string, rejectUnsupportedParameters bool) *RootSchema {
+	rootSchema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
 			Type: "object",
@@ -549,12 +624,10 @@ func NewSchema(properties interface{}, update bool, required []string) *RootSche
 		Required:          required,
 		LoadCurrentConfig: true,
 	}
-
-	if update {
-		schema.Required = []string{}
+	if rejectUnsupportedParameters {
+		rootSchema.Type.AdditionalProperties = false
 	}
-
-	return schema
+	return rootSchema
 }
 
 func unmarshalOrPanic(from, to interface{}) interface{} {
@@ -569,7 +642,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -584,15 +657,15 @@ func AdministratorsProperty() *Type {
 	return &Type{
 		Type:        "array",
 		Title:       "Administrators",
-		Description: "Specifies the list of runtime administrators",
+		Description: "Specifies the list of runtime administrators.",
 		Items: &Type{
 			Type: "string",
 		},
 	}
 }
 
-func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
-	return &AdditionalWorkerNodePoolsType{
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string, rejectUnsupportedParameters bool) *AdditionalWorkerNodePoolsType {
+	additionalWorkerNodePoolsType := &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
@@ -616,28 +689,33 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength:       1,
 					Enum:            ToInterfaceSlice(machineTypes),
 					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
 				},
 				HAZones: &Type{
 					Type:        "boolean",
 					Title:       "HA zones",
 					Default:     true,
-					Description: "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+					Description: "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting autoScalerMin to 0 and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
 				},
-				AutoScalerMin: Type{
+				AutoScalerMin: AutoscalerType{
 					Type:        "integer",
-					Minimum:     1,
-					Default:     3,
+					Minimum:     nonHAAutoscalerMinMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     pkg.HAAutoscalerMinimumValue,
 					Description: "Specifies the minimum number of virtual machines to create.",
 				},
-				AutoScalerMax: Type{
+				AutoScalerMax: AutoscalerType{
 					Type:        "integer",
-					Minimum:     1,
-					Maximum:     300,
-					Default:     20,
+					Minimum:     nonHAAutoscalerMaxMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     autoscalerMaxDefaultValue,
 					Description: "Specifies the maximum number of virtual machines to create.",
 				},
 			},
 		},
 	}
+	if rejectUnsupportedParameters {
+		additionalWorkerNodePoolsType.Items.Type.AdditionalProperties = false
+	}
+	return additionalWorkerNodePoolsType
 }

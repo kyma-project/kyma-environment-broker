@@ -11,27 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/maps"
-	"k8s.io/apimachinery/pkg/util/sets"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
-
-	"k8s.io/client-go/kubernetes"
-
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"code.cloudfoundry.org/lager"
-	"github.com/dlmiddlecote/sqlstats"
-	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -41,23 +26,35 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
+	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
+	"code.cloudfoundry.org/lager"
+	"github.com/dlmiddlecote/sqlstats"
+	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/vrischmann/envconfig"
+	"golang.org/x/exp/maps"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,50 +79,28 @@ type Config struct {
 	// Currently works only with /info endpoints.
 	DevelopmentMode bool `envconfig:"default=false"`
 
-	// DumpProvisionerRequests enables dumping Provisioner requests. Must be disabled on Production environments
-	// because some data must not be visible in the log file.
-	DumpProvisionerRequests bool `envconfig:"default=false"`
-
-	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.
-	// It is used for provisioning and deprovisioning operations.
-	OperationTimeout time.Duration `envconfig:"default=24h"`
-
-	Host       string `envconfig:"optional"`
-	Port       string `envconfig:"default=8080"`
-	StatusPort string `envconfig:"default=8071"`
-
-	InfrastructureManager infrastructure_manager.InfrastructureManagerConfig
+	InfrastructureManager broker.InfrastructureManager
 	Database              storage.Config
 	Gardener              gardener.Config
 	Kubeconfig            kubeconfig.Config
 	StepTimeouts          StepTimeoutsConfig
 
-	SkrOidcDefaultValuesYAMLFilePath         string
-	SkrDnsProvidersValuesYAMLFilePath        string
-	DefaultRequestRegion                     string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
-	ResolveSubscriptionSecretStepDisabled    bool   `envconfig:"default=true"`
-	Broker                                   broker.Config
-	CatalogFilePath                          string
+	SkrOidcDefaultValuesYAMLFilePath    string
+	SkrDnsProvidersValuesYAMLFilePath   string
+	UpdateProcessingEnabled             bool `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled bool `envconfig:"default=true"`
+	Broker                              broker.Config
+	CatalogFilePath                     string
 
 	EDP edp.Config
-
-	Notification notification.Config
 
 	KymaDashboardConfig dashboard.Config
 
 	TrialRegionMappingFilePath string
 
-	SapConvergedCloudRegionMappingsFilePath string
-
 	MaxPaginationPage int `envconfig:"default=100"`
 
 	LogLevel string `envconfig:"default=info"`
-
-	// FreemiumProviders is a list of providers for freemium
-	FreemiumProviders []string `envconfig:"default=aws"`
 
 	FreemiumWhitelistedGlobalAccountsFilePath string
 
@@ -140,15 +115,13 @@ type Config struct {
 
 	MetricsV2 metricsv2.Config
 
-	Provisioning    process.StagedManagerConfiguration
-	Deprovisioning  process.StagedManagerConfiguration
-	Update          process.StagedManagerConfiguration
-	ArchiveEnabled  bool `envconfig:"default=false"`
-	ArchiveDryRun   bool `envconfig:"default=true"`
-	CleaningEnabled bool `envconfig:"default=false"`
-	CleaningDryRun  bool `envconfig:"default=true"`
-
-	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
+	Provisioning     process.StagedManagerConfiguration
+	Deprovisioning   process.StagedManagerConfiguration
+	Update           process.StagedManagerConfiguration
+	ArchivingEnabled bool `envconfig:"default=false"`
+	ArchivingDryRun  bool `envconfig:"default=true"`
+	CleaningEnabled  bool `envconfig:"default=false"`
+	CleaningDryRun   bool `envconfig:"default=true"`
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
@@ -159,6 +132,13 @@ type Config struct {
 	HapRuleFilePath string
 
 	MultipleContexts bool `envconfig:"default=false"`
+
+	ProvidersConfigurationFilePath string
+
+	PlansConfigurationFilePath string
+
+	Quota                               quota.Config
+	QuotaWhitelistedSubaccountsFilePath string
 }
 
 type ProfilerConfig struct {
@@ -183,11 +163,12 @@ type KubeconfigProvider interface {
 }
 
 const (
-	createRuntimeStageName      = "create_runtime"
-	checkKymaStageName          = "check_kyma"
-	createKymaResourceStageName = "create_kyma_resource"
-	startStageName              = "start"
-	brokerAPISubrouterName      = "brokerAPI"
+	createRuntimeStageName         = "create_runtime"
+	checkKymaStageName             = "check_kyma"
+	createKymaResourceStageName    = "create_kyma_resource"
+	startStageName                 = "start"
+	brokerAPISubrouterName         = "brokerAPI"
+	provisioningTakesLongThreshold = 20 * time.Minute
 )
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
@@ -248,7 +229,7 @@ func main() {
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info("Registering healthz endpoint for health probes")
-	health.NewServer(cfg.Host, cfg.StatusPort, log).ServeAsync()
+	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
@@ -259,6 +240,11 @@ func main() {
 	kcpK8sClient, err := initClient(kcpK8sConfig)
 	fatalOnError(err, log)
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpK8sClient)
+
+	if cfg.Broker.MonitorAdditionalProperties {
+		err := os.MkdirAll(cfg.Broker.AdditionalPropertiesPath, os.ModePerm)
+		fatalOnError(err, log)
+	}
 
 	// create storage
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
@@ -275,7 +261,7 @@ func main() {
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log, cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
@@ -308,27 +294,34 @@ func main() {
 	rulesetValid := rulesService.IsRulesetValid()
 
 	if !rulesetValid {
-		log.Error("There are errors in rules configuration:")
+		log.Error("There are errors in subscription secret rules configuration:")
 		for _, ve := range rulesService.ValidationInfo.All() {
 			log.Error(fmt.Sprintf("%s", ve))
 		}
-		// when the ruleservice is used (the step is not disabled) - the configuration must be valid
-		if !cfg.ResolveSubscriptionSecretStepDisabled {
-			fatalOnError(err, log)
-		}
+		fatalOnError(err, log)
 	}
 
-	// run queues
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
-	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService)
+	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
+	fatalOnError(err, log)
+	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
+	fatalOnError(err, log)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+	fatalOnError(err, log)
+	fatalOnError(schemaService.Validate(), log)
+	log.Info("Plans and providers configuration is valid")
+	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
+	// run queues
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
+		edpClient, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider)
+
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log)
+	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -339,8 +332,9 @@ func main() {
 	// create server
 	router := httputil.NewRouter()
 
-	createAPI(router, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues)
+	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
+		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues,
+		providerSpec, configProvider, plansSpec)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -369,10 +363,14 @@ func main() {
 
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
-		cfg.DefaultRequestRegion,
+		cfg.Broker.DefaultRequestRegion,
 		kcpK8sClient,
 		log)
 	runtimeHandler.AttachRoutes(router)
+
+	// create list requests with additional properties endpoint
+	additionalPropertiesHandler := additionalproperties.NewHandler(log, cfg.Broker.AdditionalPropertiesPath)
+	additionalPropertiesHandler.AttachRoutes(router)
 
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
@@ -387,13 +385,13 @@ func main() {
 		router.ServeHTTP(rec, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
 	})
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
+	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
-	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
-	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
+	logs.Info(fmt.Sprintf("EnablePlans: %s", cfg.Broker.EnablePlans))
+	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchivingEnabled, cfg.ArchivingDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
@@ -407,19 +405,18 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
-
-	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
+	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 }
 
-func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
+func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
-	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO) {
+	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO,
+	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications) {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
-	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager.MultiZoneCluster, cfg.InfrastructureManager.DefaultTrialProvider,
-		cfg.InfrastructureManager.UseSmallerMachineTypes, regions, cfg.InfrastructureManager.DefaultGardenerShootPurpose, cfg.InfrastructureManager.ControlPlaneFailureTolerance)
+	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
@@ -433,30 +430,26 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	fatalOnError(err, logs)
 	logger.RegisterSink(errorSink)
 
-	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of globalAccountIds for unlimited freemium: %d", len(freemiumGlobalAccountIds)))
 
-	// backward compatibility for tests
-	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
+	quotaClient := quota.NewClient(context.Background(), cfg.Quota, logs)
+	quotaWhitelistedSubaccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.QuotaWhitelistedSubaccountsFilePath)
 	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
-
-	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath)
-	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
+	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
-		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, oidcDefaultValues, cfg.InfrastructureManager.UseSmallerMachineTypes),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db,
+		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig, logs, oidcDefaultValues, cfg.InfrastructureManager),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
-			convergedCloudRegionProvider, regionsSupportingMachine, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
-		),
+			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
+			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine, cfg.InfrastructureManager.UseSmallerMachineTypes),
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.MultipleContexts),
@@ -468,11 +461,11 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	prefixes := []string{"/{region}", ""}
 	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
 	fatalOnError(err, logs)
-	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.DefaultRequestRegion, prefixes)
+	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.Broker.DefaultRequestRegion, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
 }

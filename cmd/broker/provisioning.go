@@ -5,19 +5,17 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/config"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -29,14 +27,10 @@ const (
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, configProvider config.ConfigurationProvider,
-	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
-
-	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	if err != nil {
-		fatalOnError(err, logs)
-	}
+	db storage.BrokerStorage, configProvider config.Provider,
+	edpClient provisioning.EDPClient,
+	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
+	workersProvider *workers.Provider) *process.Queue {
 
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
@@ -52,8 +46,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			Once the stage is done it will never be retried.
 	*/
 
-	fatalOnError(err, logs)
-
 	provisioningSteps := []struct {
 		disabled  bool
 		stage     string
@@ -66,11 +58,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewInitProviderValuesStep(db.Operations(), db.Instances(), cfg.InfrastructureManager, trialRegionsMapping),
-		},
-		{
-			stage: createRuntimeStageName,
-			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider),
+			step:  steps.NewInitKymaTemplate(db.Operations(), config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 		{
 			stage: createRuntimeStageName,
@@ -78,15 +66,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider, rulesService),
-			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  !cfg.ResolveSubscriptionSecretStepDisabled,
-		},
-		{
-			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  cfg.ResolveSubscriptionSecretStepDisabled,
 		},
 		{
 			stage:     createRuntimeStageName,
@@ -98,20 +79,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),
 		},
-		// postcondition: operation.RuntimeID is set
 		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
-		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema),
+			step:      provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema, workersProvider, cfg.Broker.EnableJwks),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}),
+			step:      steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed

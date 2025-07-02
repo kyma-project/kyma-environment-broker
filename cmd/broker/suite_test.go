@@ -16,9 +16,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -194,21 +193,34 @@ kyma-template: |-
 		},
 	}
 
+	providerCfg := &coreV1.ConfigMap{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "gardener-seeds-cache",
+			Namespace: "kcp-system",
+		},
+		Data: map[string]string{
+			"aws": `
+seedRegions:
+- eu-central-1`,
+			"azure": `
+seedRegions:
+- westeurope`,
+			"gcp": `
+seedRegions:
+- europe-west1`,
+			"openstack": `
+seedRegions:
+- eu-de-1`,
+		},
+	}
+
 	for _, version := range additionalKymaVersions {
 		kebCfg.ObjectMeta.Labels[fmt.Sprintf("runtime-version-%s", version)] = "true"
 	}
 
-	resources = append(resources, override, scOverride, kebCfg)
+	resources = append(resources, override, scOverride, kebCfg, providerCfg)
 
 	return resources
-}
-
-func regularSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("regular-%s", ht.GetKey())
-}
-
-func sharedSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("shared-%s", ht.GetKey())
 }
 
 func fixConfig() *Config {
@@ -227,18 +239,16 @@ func fixConfig() *Config {
 	}
 
 	return &Config{
-		DbInMemory:                            true,
-		DisableProcessOperationsInProgress:    false,
-		ResolveSubscriptionSecretStepDisabled: true,
-		DevelopmentMode:                       true,
-		DumpProvisionerRequests:               true,
-		OperationTimeout:                      2 * time.Minute,
-		InfrastructureManager: infrastructure_manager.InfrastructureManagerConfig{
+		DbInMemory:                         true,
+		DisableProcessOperationsInProgress: false,
+		DevelopmentMode:                    true,
+		InfrastructureManager: broker.InfrastructureManager{
 			MachineImage:                 "gardenlinux",
 			MachineImageVersion:          "12345.6",
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
+			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
@@ -255,6 +265,8 @@ func fixConfig() *Config {
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans:                           brokerConfigPlans,
+			OperationTimeout:                      2 * time.Minute,
+			IncludeAdditionalParamsInSchema:       true,
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
@@ -265,22 +277,18 @@ func fixConfig() *Config {
 				MaxBindingsCount:     10,
 				CreateBindingTimeout: 15 * time.Second,
 			},
-			WorkerHealthCheckInterval:     10 * time.Minute,
-			WorkerHealthCheckWarnInterval: 10 * time.Minute,
-		},
-		Notification: notification.Config{
-			Url: "http://host:8080/",
+			WorkerHealthCheckInterval:       10 * time.Minute,
+			WorkerHealthCheckWarnInterval:   10 * time.Minute,
+			GardenerSeedsCacheConfigMapName: "gardener-seeds-cache",
+			EnablePlanUpgrades:              true,
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
-		SapConvergedCloudRegionMappingsFilePath:   "testdata/old-sap-converged-cloud-region-mappings.yaml",
 		MaxPaginationPage:                         100,
-		FreemiumProviders:                         []string{"aws", "azure"},
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
-		RegionsSupportingMachineFilePath:          "testdata/regions-supporting-machine.yaml",
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
-		ArchiveEnabled:                            true,
+		ArchivingEnabled:                          true,
 		CleaningEnabled:                           true,
 		UpdateRuntimeResourceDelay:                time.Millisecond,
 		MetricsV2: metricsv2.Config{
@@ -291,6 +299,10 @@ func fixConfig() *Config {
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
 		},
+		ProvidersConfigurationFilePath:      "testdata/providers.yaml",
+		PlansConfigurationFilePath:          "testdata/plans.yaml",
+		RuntimeConfigurationConfigMapName:   "keb-runtime-config",
+		QuotaWhitelistedSubaccountsFilePath: "testdata/quota_whitelist.yaml",
 	}
 }
 

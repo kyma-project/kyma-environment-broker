@@ -1,36 +1,34 @@
 package broker
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/validator"
-	"github.com/santhosh-tekuri/jsonschema/v6"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/santhosh-tekuri/jsonschema/v6"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ContextUpdateHandler interface {
@@ -49,6 +47,7 @@ type UpdateEndpoint struct {
 	updateCustomResourcesLabelsOnAccountMove bool
 
 	operationStorage storage.Operations
+	actionStorage    storage.Actions
 
 	updatingQueue Queue
 
@@ -57,13 +56,14 @@ type UpdateEndpoint struct {
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
 
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
+	kcpClient                   client.Client
+	valuesProvider              ValuesProvider
+	useSmallerMachineTypes      bool
+	infrastructureManagerConfig InfrastructureManager
 
-	regionsSupportingMachine map[string][]string
-
-	kcpClient              client.Client
-	valuesProvider         ValuesProvider
-	useSmallerMachineTypes bool
+	schemaService *SchemaService
+	providerSpec  *configuration.ProviderSpec
+	planSpec      *configuration.PlanSpecifications
 }
 
 func NewUpdate(cfg Config,
@@ -78,16 +78,18 @@ func NewUpdate(cfg Config,
 	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
-	regionsSupportingMachine map[string][]string,
-	useSmallerMachineTypes bool,
+	providerSpec *configuration.ProviderSpec,
+	planSpec *configuration.PlanSpecifications,
+	imConfig InfrastructureManager,
+	schemaService *SchemaService,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
 		instanceStorage:                          db.Instances(),
 		operationStorage:                         db.Operations(),
+		actionStorage:                            db.Actions(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,
 		subaccountMovementEnabled:                subaccountMovementEnabled,
@@ -97,21 +99,23 @@ func NewUpdate(cfg Config,
 		valuesProvider:                           valuesProvider,
 		dashboardConfig:                          dashboardConfig,
 		kcBuilder:                                kcBuilder,
-		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
-		regionsSupportingMachine:                 regionsSupportingMachine,
-		useSmallerMachineTypes:                   useSmallerMachineTypes,
+		providerSpec:                             providerSpec,
+		infrastructureManagerConfig:              imConfig,
+		schemaService:                            schemaService,
+		planSpec:                                 planSpec,
 	}
 }
 
 // Update modifies an existing service instance
 //
 //	PATCH /v2/service_instances/{instance_id}
-func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
 	logger.Info(fmt.Sprintf("Updating instanceID: %s", instanceID))
 	logger.Info(fmt.Sprintf("Updating asyncAllowed: %v", asyncAllowed))
 	logger.Info(fmt.Sprintf("Parameters: '%s'", string(details.RawParameters)))
+	logger.Info(fmt.Sprintf("Plan ID: '%s'", details.PlanID))
 	instance, err := b.instanceStorage.GetByID(instanceID)
 	if err != nil && dberr.IsNotFound(err) {
 		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
@@ -129,6 +133,9 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 	logger.Info(fmt.Sprintf("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active)))
 	logger.Info(fmt.Sprintf("Received context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext))))
+	if b.config.MonitorAdditionalProperties {
+		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
+	}
 	// validation of incoming input
 	if err := b.validateWithJsonSchemaValidator(details, instance); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "validation failed")
@@ -177,7 +184,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		// NOTE: KEB currently can't process update parameters in one call along with context update
 		// this block makes it that KEB ignores any parameters updates if context update changed suspension state
 		if !suspendStatusChange && !instance.IsExpired() {
-			return b.processUpdateParameters(instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
+			return b.processUpdateParameters(ctx, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
 	return domain.UpdateServiceSpec{
@@ -211,10 +218,13 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 	if len(details.RawParameters) != 0 {
 		return true
 	}
+	if details.PlanID != instance.ServicePlanID {
+		return true
+	}
 	return ersContext.ERSUpdate()
 }
 
-func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
 		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
@@ -243,12 +253,22 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
-	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
+		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
+	}
+
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(instance.Parameters.Parameters.Region),
 			valueOfPtr(params.MachineType),
-			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
 		)
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
@@ -265,12 +285,6 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
-
-	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
-	if err != nil {
-		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
-	}
 
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
@@ -293,26 +307,62 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
+			if err := additionalWorkerNodePool.ValidateMachineTypesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
 		}
-		if isExternalCustomer(ersContext) {
+		if IsExternalCustomer(ersContext) {
 			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
-		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 
+	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	var updateStorage []string
+	oldPlanID := instance.ServicePlanID
+	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
+		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
+		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
+			logger.Info(fmt.Sprintf("Plan change accepted."))
+			operation.UpdatedPlanID = details.PlanID
+			operation.ProvisioningParameters.PlanID = details.PlanID
+			instance.Parameters.PlanID = details.PlanID
+			instance.ServicePlanID = details.PlanID
+			instance.ServicePlanName = PlanNamesMapping[details.PlanID]
+			updateStorage = append(updateStorage, "Plan change")
+		} else {
+			logger.Info(fmt.Sprintf("Plan change not allowed."))
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
+				fmt.Errorf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+				http.StatusBadRequest,
+				fmt.Sprintf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+			)
+		}
+	}
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	var updateStorage []string
 	if params.OIDC.IsProvided() {
 		instance.Parameters.Parameters.OIDC = params.OIDC
 		updateStorage = append(updateStorage, "OIDC")
+	}
+
+	if params.IngressFiltering != nil {
+		instance.Parameters.Parameters.IngressFiltering = params.IngressFiltering
+		updateStorage = append(updateStorage, "Ingress Filtering")
 	}
 
 	if len(params.RuntimeAdministrators) != 0 {
@@ -348,6 +398,19 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		}); err != nil {
 			response := apiresponses.NewFailureResponse(fmt.Errorf("Update operation failed"), http.StatusInternalServerError, err.Error())
 			return domain.UpdateServiceSpec{}, response
+		}
+
+		if slices.Contains(updateStorage, "Plan change") {
+			message := fmt.Sprintf("Plan updated from %s to %s.", oldPlanID, details.PlanID)
+			if err := b.actionStorage.InsertAction(
+				pkg.PlanUpdateActionType,
+				instance.InstanceID,
+				message,
+				oldPlanID,
+				details.PlanID,
+			); err != nil {
+				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
+			}
 		}
 	}
 	logger.Debug("Adding update operation to the processing queue")
@@ -404,6 +467,16 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	needUpdateCustomResources := false
 	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
+		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
+		if err := b.actionStorage.InsertAction(
+			pkg.SubaccountMovementActionType,
+			instance.InstanceID,
+			message,
+			instance.GlobalAccountID,
+			ersContext.GlobalAccountID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
+		}
 		if instance.SubscriptionGlobalAccountID == "" {
 			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 		}
@@ -449,8 +522,21 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+
+	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)
+}
+
+func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersContext internal.ERSContext, rawParameters json.RawMessage) {
+	var parameters internal.UpdatingParametersDTO
+	decoder := json.NewDecoder(bytes.NewReader(rawParameters))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&parameters); err == nil {
+		return
+	}
+	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
+		b.log.Error(fmt.Sprintf("failed to save update request with additonal properties: %v", err))
+	}
 }

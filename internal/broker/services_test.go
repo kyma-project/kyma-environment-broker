@@ -2,10 +2,13 @@ package broker_test
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -18,6 +21,10 @@ func TestServices_Services(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+	imConfig := broker.InfrastructureManager{
+		IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
+		UseSmallerMachineTypes: false,
+	}
 
 	t.Run("should get service and plans without OIDC", func(t *testing.T) {
 		// given
@@ -27,7 +34,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans: []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
+			EnablePlans: []string{"gcp", "azure", "aws", "free"},
 		}
 		servicesConfig := map[string]broker.Service{
 			broker.KymaServiceName: {
@@ -37,7 +44,8 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -45,7 +53,7 @@ func TestServices_Services(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Len(t, services, 1)
-		assert.Len(t, services[0].Plans, 5)
+		assert.Len(t, services[0].Plans, 4)
 
 		assert.Equal(t, name, services[0].Metadata.DisplayName)
 		assert.Equal(t, supportURL, services[0].Metadata.SupportUrl)
@@ -58,7 +66,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 		}
 		servicesConfig := map[string]broker.Service{
@@ -69,7 +77,8 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -77,7 +86,7 @@ func TestServices_Services(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Len(t, services, 1)
-		assert.Len(t, services[0].Plans, 5)
+		assert.Len(t, services[0].Plans, 4)
 
 		assert.Equal(t, name, services[0].Metadata.DisplayName)
 		assert.Equal(t, supportURL, services[0].Metadata.SupportUrl)
@@ -94,7 +103,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 		}
 		servicesConfig := map[string]broker.Service{
@@ -105,7 +114,8 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -113,7 +123,7 @@ func TestServices_Services(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Len(t, services, 1)
-		assert.Len(t, services[0].Plans, 5)
+		assert.Len(t, services[0].Plans, 4)
 
 		assert.Equal(t, name, services[0].Metadata.DisplayName)
 		assert.Equal(t, supportURL, services[0].Metadata.SupportUrl)
@@ -144,7 +154,8 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -153,6 +164,16 @@ func TestServices_Services(t *testing.T) {
 		assertBindableForPlan(t, services, "gcp")
 		assertNotBindableForPlan(t, services, "azure")
 	})
+}
+
+func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringPlans broker.EnablePlans) *broker.SchemaService {
+	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
+
+	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans)
+	require.NoError(t, err)
+	return service
 }
 
 func assertBindableForPlan(t *testing.T, services []domain.Service, planName string) {
@@ -194,4 +215,10 @@ func assertPlanContainsPropertyInUpdateSchema(t *testing.T, plan domain.ServiceP
 	if _, exists := propertiesMap[property]; !exists {
 		t.Errorf("plan %s does not contain %s property in Update schema", plan.Name, property)
 	}
+}
+
+func configSource(t *testing.T, filename string) io.Reader {
+	plans, err := os.Open(filename)
+	require.NoError(t, err)
+	return plans
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -953,6 +954,15 @@ func (r readSession) getInstanceArchivedCount(filter dbmodel.InstanceFilter) (in
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
+}
+
+func (r readSession) ListActions(instanceID string) ([]runtime.Action, error) {
+	var actions []runtime.Action
+	stmt := r.session.Select("*").From(ActionsTableName)
+	stmt.Where(dbr.Eq("instance_id", instanceID))
+	stmt.OrderDesc("created_at")
+	_, err := stmt.Load(&actions)
+	return actions, err
 }
 
 func addInstanceArchivedFilter(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {

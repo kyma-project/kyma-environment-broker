@@ -7,19 +7,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -28,13 +28,17 @@ type UpdateRuntimeStep struct {
 	operationManager           *process.OperationManager
 	k8sClient                  client.Client
 	delay                      time.Duration
-	config                     infrastructure_manager.InfrastructureManagerConfig
+	config                     broker.InfrastructureManager
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
 	useAdditionalOIDCSchema    bool
+	workersProvider            *workers.Provider
+	valuesProvider             broker.ValuesProvider
+	enableJwks                 bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, enableJwks bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
@@ -42,8 +46,11 @@ func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay 
 		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
+		workersProvider:            workersProvider,
+		valuesProvider:             valuesProvider,
+		enableJwks:                 enableJwks,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -75,8 +82,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
 	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
-		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.config.UseSmallerMachineTypes, s.trialPlatformRegionMapping,
-			s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
+		values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}
@@ -88,13 +94,17 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 		}
 
-		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
+			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID)
+		if err != nil {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
+		}
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
 	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
 		if oidc.List != nil {
-			oidcConfigs := make([]gardener.OIDCConfig, 0)
+			oidcConfigs := make([]imv1.OIDCConfig, 0)
 			for _, oidcConfig := range oidc.List {
 				requiredClaims := make(map[string]string)
 				for _, claim := range oidcConfig.RequiredClaims {
@@ -103,21 +113,28 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						requiredClaims[parts[0]] = parts[1]
 					}
 				}
-				oidcConfigs = append(oidcConfigs, gardener.OIDCConfig{
-					ClientID:       &oidcConfig.ClientID,
-					IssuerURL:      &oidcConfig.IssuerURL,
-					SigningAlgs:    oidcConfig.SigningAlgs,
-					GroupsClaim:    &oidcConfig.GroupsClaim,
-					UsernamePrefix: &oidcConfig.UsernamePrefix,
-					UsernameClaim:  &oidcConfig.UsernameClaim,
-					RequiredClaims: requiredClaims,
-					GroupsPrefix:   &oidcConfig.GroupsPrefix,
-				})
+				oidcConfigObj := imv1.OIDCConfig{
+					OIDCConfig: gardener.OIDCConfig{
+						ClientID:       &oidcConfig.ClientID,
+						IssuerURL:      &oidcConfig.IssuerURL,
+						SigningAlgs:    oidcConfig.SigningAlgs,
+						GroupsClaim:    &oidcConfig.GroupsClaim,
+						UsernamePrefix: &oidcConfig.UsernamePrefix,
+						UsernameClaim:  &oidcConfig.UsernameClaim,
+						RequiredClaims: requiredClaims,
+						GroupsPrefix:   &oidcConfig.GroupsPrefix,
+					},
+				}
+				if s.enableJwks {
+					oidcConfigObj.JWKS = []byte(oidcConfig.EncodedJwksArray)
+				}
+				oidcConfigs = append(oidcConfigs, oidcConfigObj)
+
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
 		} else if dto := oidc.OIDCConfigDTO; dto != nil {
 			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
 			}
 			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 			if len(dto.SigningAlgs) > 0 {
@@ -142,14 +159,25 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				config.GroupsPrefix = &dto.GroupsPrefix
 			}
 			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
-				requiredClaims := make(map[string]string)
-				for _, claim := range dto.RequiredClaims {
-					parts := strings.SplitN(claim, "=", 2)
-					if len(parts) == 2 {
-						requiredClaims[parts[0]] = parts[1]
+				if len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-" {
+					config.RequiredClaims = map[string]string{}
+				} else {
+					requiredClaims := make(map[string]string)
+					for _, claim := range dto.RequiredClaims {
+						parts := strings.SplitN(claim, "=", 2)
+						if len(parts) == 2 {
+							requiredClaims[parts[0]] = parts[1]
+						}
 					}
+					config.RequiredClaims = requiredClaims
 				}
-				config.RequiredClaims = requiredClaims
+			}
+			if s.enableJwks {
+				if dto.EncodedJwksArray == "-" {
+					config.JWKS = nil
+				} else if dto.EncodedJwksArray != "" {
+					config.JWKS = []byte(dto.EncodedJwksArray)
+				}
 			}
 		}
 	}
@@ -166,14 +194,20 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			// get default admin (user_id from provisioning operation)
 			runtime.Spec.Security.Administrators = []string{operation.ProvisioningParameters.ErsContext.UserID}
 		} else {
-			// some old clusters does not have an user_id
+			// some old clusters does not have a user_id
 			runtime.Spec.Security.Administrators = []string{}
 		}
 	}
 
-	if operation.ProvisioningParameters.ErsContext.LicenseType != nil {
-		disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-		runtime.Spec.Security.Networking.Filter.Egress.Enabled = !disabled
+	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
+	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
+
+	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) && operation.UpdatingParameters.IngressFiltering != nil {
+		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
+	}
+
+	if operation.UpdatedPlanID != "" {
+		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
 	}
 
 	err = s.k8sClient.Update(context.Background(), &runtime)

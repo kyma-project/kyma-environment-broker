@@ -21,6 +21,7 @@ func TestAzureDefaults(t *testing.T) {
 			PlatformRegion: "cf-eu11",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when
@@ -52,6 +53,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when
@@ -83,6 +85,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when
@@ -119,6 +122,7 @@ func TestAzureSpecific(t *testing.T) {
 			PlatformProvider: "azure",
 		},
 		FailureTolerance: "zone",
+		ZonesProvider:    FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when
@@ -156,6 +160,7 @@ func TestAzureTrialSpecific(t *testing.T) {
 			PlatformRegion:   "cf-ap21",
 			PlatformProvider: "azure",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when
@@ -192,6 +197,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 			PlatformRegion:   "cf-eu11",
 			PlatformProvider: "azure",
 		},
+		ZonesProvider: FakeZonesProvider([]string{"1", "2", "3"}),
 	}
 
 	// when

@@ -3,7 +3,6 @@ package deprovisioning
 import (
 	"context"
 	"testing"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -23,18 +22,18 @@ func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
 	operation.KymaResourceNamespace = "kyma-system"
-	operation.KymaTemplate = kymaTemplate
+	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()
 
-	err := fixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
+	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
 	require.NoError(t, err)
 
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient, 30*time.Second)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient)
 
 	// When
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -50,18 +49,18 @@ func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 	operation.KymaResourceNamespace = "kyma-system"
 	operation.RuntimeID = ""
 	operation.KymaResourceName = ""
-	operation.KymaTemplate = kymaTemplate
+	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()
 
-	err := fixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
+	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
 	require.NoError(t, err)
 
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient, 30*time.Second)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient)
 
 	// When
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -75,18 +74,18 @@ func TestCheckKymaResourceDeleted_RetryWhenStillExists(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
 	operation.KymaResourceNamespace = "kyma-system"
-	operation.KymaTemplate = kymaTemplate
+	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()
 
-	err := fixKymaResourceWithGivenRuntimeID(kcpClient, operation.KymaResourceNamespace, operation.RuntimeID)
+	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, operation.KymaResourceNamespace, operation.RuntimeID)
 	require.NoError(t, err)
 
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient, 30*time.Second)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage, kcpClient)
 
 	// When
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -108,18 +107,4 @@ func assertNoKymaResourceWithGivenRuntimeID(t *testing.T, kcpClient client.Clien
 		Name:      resourceName,
 	}, kymaUnstructured)
 	assert.True(t, errors.IsNotFound(err))
-}
-
-func fixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceNamespace string, resourceName string) error {
-	return kcpClient.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": "operator.kyma-project.io/v1beta2",
-		"kind":       "Kyma",
-		"metadata": map[string]interface{}{
-			"name":      resourceName,
-			"namespace": kymaResourceNamespace,
-		},
-		"spec": map[string]interface{}{
-			"channel": "stable",
-		},
-	}})
 }

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gardener-seeds-cache
+  namespace: kcp-system
+data:
+  alicloud: |-
+    seedRegions:
+    - eu-central-1
+  aws: |-
+    seedRegions:
+    - eu-west-1
+    - eu-central-1
+    - us-east-1
+  azure: |-
+    seedRegions:
+    - westeurope
+    - northeurope
+    - westus2
+    - eastus
+    - eastus2
+  gcp: |-
+    seedRegions:
+    - europe-west1
+    - us-central1
+  openstack: |-
+    seedRegions:
+    - eu-de-1

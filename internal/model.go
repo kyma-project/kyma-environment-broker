@@ -67,8 +67,8 @@ func (i *Instance) GetSubscriptionGlobalAccoundID() string {
 
 func (i *Instance) GetInstanceDetails() (InstanceDetails, error) {
 	result := i.InstanceDetails
-	//overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
-	//needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
+	// overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
+	// needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
 	result.RuntimeID = i.RuntimeID
 	return result, nil
 }
@@ -128,8 +128,7 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	DashboardURL   string          `json:"dashboardURL"`
-	ProviderValues *ProviderValues `json:"providerValues"`
+	DashboardURL string `json:"dashboardURL"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
@@ -140,6 +139,9 @@ type Operation struct {
 
 	// UPDATING
 	UpdatingParameters UpdatingParametersDTO `json:"updating_parameters"`
+
+	// UpdatedPlanID is used to store the plan ID if the plan has been changed, "" if not changed
+	UpdatedPlanID string `json:"updated_plan_id,omitempty"`
 
 	// UPGRADE KYMA
 	RuntimeOperation            `json:"runtime_operation"`
@@ -224,8 +226,7 @@ type InstanceDetails struct {
 
 	CloudProvider string `json:"cloud_provider"`
 
-	// Used during KIM integration while deprovisioning - to be removed later on when provisioner not used anymore
-	KimDeprovisionsOnly *bool `json:"kim_deprovisions_only"`
+	ProviderValues *ProviderValues `json:"providerValues"`
 }
 
 func (i *InstanceDetails) GetRuntimeResourceName() string {
@@ -526,4 +527,14 @@ type Binding struct {
 type RetryTuple struct {
 	Timeout  time.Duration
 	Interval time.Duration
+}
+
+type ProviderConfig struct {
+	SeedRegions []string `json:"seedRegions" yaml:"seedRegions"`
+}
+
+type RegionsSupporter interface {
+	IsSupported(region string, machineType string) bool
+	SupportedRegions(machineType string) []string
+	AvailableZonesForAdditionalWorkers(machineType, region, planID string) ([]string, error)
 }

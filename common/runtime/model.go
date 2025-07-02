@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -61,6 +62,7 @@ type RuntimeDTO struct {
 	SubscriptionSecretName      *string                   `json:"subscriptionSecretName,omitempty"`
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
+	Actions                     []Action                  `json:"actions,omitempty"`
 }
 
 type CloudProvider string
@@ -78,7 +80,6 @@ type ProvisioningParametersDTO struct {
 
 	Name         string  `json:"name"`
 	TargetSecret *string `json:"targetSecret,omitempty"`
-	VolumeSizeGb *int    `json:"volumeSizeGb,omitempty"`
 	MachineType  *string `json:"machineType,omitempty"`
 	Region       *string `json:"region,omitempty"`
 	Purpose      *string `json:"purpose,omitempty"`
@@ -100,7 +101,10 @@ type ProvisioningParametersDTO struct {
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
+	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 }
+
+const HAAutoscalerMinimumValue = 3
 
 type AutoScalerParameters struct {
 	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
@@ -118,7 +122,7 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return Azure
 	case "gcp":
 		return GCP
-	case "sapconvergedcloud", "openstack":
+	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
 	default:
 		return UnknownProvider
@@ -150,14 +154,15 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 }
 
 type OIDCConfigDTO struct {
-	ClientID       string   `json:"clientID" yaml:"clientID"`
-	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
-	GroupsPrefix   string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
-	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
-	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
-	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
-	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
-	RequiredClaims []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
+	ClientID         string   `json:"clientID" yaml:"clientID"`
+	GroupsClaim      string   `json:"groupsClaim" yaml:"groupsClaim"`
+	GroupsPrefix     string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
+	IssuerURL        string   `json:"issuerURL" yaml:"issuerURL"`
+	SigningAlgs      []string `json:"signingAlgs" yaml:"signingAlgs"`
+	UsernameClaim    string   `json:"usernameClaim" yaml:"usernameClaim"`
+	UsernamePrefix   string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+	RequiredClaims   []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
+	EncodedJwksArray string   `json:"encodedJwksArray,omitempty" yaml:"encodedJwksArray,omitempty"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
@@ -166,7 +171,7 @@ func (o *OIDCConnectDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
-	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "") {
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "" || o.OIDCConfigDTO.EncodedJwksArray != "") {
 		return true
 	}
 	return o.List != nil
@@ -207,6 +212,11 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	}
 	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
 	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
+	if o.OIDCConfigDTO.EncodedJwksArray != "" && o.OIDCConfigDTO.EncodedJwksArray != "-" {
+		if _, err := base64.StdEncoding.DecodeString(o.OIDCConfigDTO.EncodedJwksArray); err != nil {
+			*errs = append(*errs, "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
+		}
+	}
 	return nil
 }
 
@@ -219,6 +229,11 @@ func (o *OIDCConnectDTO) validateOIDCList(errs *[]string) {
 			*errs = append(*errs, fmt.Sprintf("issuerURL must not be empty for OIDC at index %d", i))
 		} else {
 			o.validateIssuerURL(oidc.IssuerURL, &i, errs)
+		}
+		if oidc.EncodedJwksArray != "" {
+			if _, err := base64.StdEncoding.DecodeString(oidc.EncodedJwksArray); err != nil {
+				*errs = append(*errs, fmt.Sprintf("encodedJwksArray must be a valid base64 encoded value at index %d", i))
+			}
 		}
 		o.validateSigningAlgs(oidc.SigningAlgs, &i, errs)
 		o.validateRequiredClaims(oidc.RequiredClaims, &i, errs)
@@ -283,6 +298,9 @@ func (o *OIDCConnectDTO) validateSigningAlgs(signingAlgs []string, index *int, e
 
 func (o *OIDCConnectDTO) validateRequiredClaims(requiredClaims []string, index *int, errs *[]string) {
 	if len(requiredClaims) != 0 {
+		if index == nil && len(requiredClaims) == 1 && requiredClaims[0] == "-" {
+			return
+		}
 		for _, claim := range requiredClaims {
 			if !strings.Contains(claim, "=") {
 				if index != nil {
@@ -330,6 +348,23 @@ type BindingDTO struct {
 	CreatedBy         string    `json:"createdBy"`
 }
 
+type ActionType string
+
+const (
+	PlanUpdateActionType         ActionType = "plan_update"
+	SubaccountMovementActionType ActionType = "subaccount_movement"
+)
+
+type Action struct {
+	ID         string     `json:"ID,omitempty"`
+	Type       ActionType `json:"type,omitempty"`
+	InstanceID string     `json:"-"`
+	Message    string     `json:"message,omitempty"`
+	OldValue   string     `json:"oldValue,omitempty"`
+	NewValue   string     `json:"newValue,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt,omitempty"`
+}
+
 type RuntimeStatus struct {
 	CreatedAt        time.Time       `json:"createdAt"`
 	ModifiedAt       time.Time       `json:"modifiedAt"`
@@ -372,6 +407,7 @@ type Operation struct {
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
 	Error                        *kebError.LastError       `json:"error,omitempty"`
+	UpdatedPlanName              string                    `json:"updatedPlanName,omitempty"`
 }
 
 type RuntimesPage struct {
@@ -397,6 +433,7 @@ const (
 	RuntimeConfigParam   = "runtime_config"
 	BindingsParam        = "bindings"
 	WithBindingsParam    = "with_bindings"
+	ActionsParam         = "actions"
 )
 
 type OperationDetail string
@@ -516,10 +553,13 @@ type AdditionalWorkerNodePool struct {
 
 func (a AdditionalWorkerNodePool) Validate() error {
 	if a.AutoScalerMin > a.AutoScalerMax {
-		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+		return fmt.Errorf("AutoScalerMax value %v should be larger than AutoScalerMin value %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
 	}
-	if a.HAZones && a.AutoScalerMin < 3 {
-		return fmt.Errorf("AutoScalerMin %v should be at least 3 when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, a.Name)
+	if a.HAZones && a.AutoScalerMin < HAAutoscalerMinimumValue {
+		return fmt.Errorf("AutoScalerMin value %v should be at least %v when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, HAAutoscalerMinimumValue, a.Name)
+	}
+	if a.AutoScalerMin < 0 {
+		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
 	}
 	return nil
 }
@@ -529,6 +569,16 @@ func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWork
 		if a.Name == currentAdditionalWorkerNodePool.Name {
 			if a.HAZones != currentAdditionalWorkerNodePool.HAZones {
 				return fmt.Errorf("HA zones setting is permanent and cannot be changed for %s additional worker node pool", a.Name)
+			}
+		}
+	}
+	return nil
+}
+func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
+		if a.Name == currentAdditionalWorkerNodePool.Name {
+			if a.MachineType != currentAdditionalWorkerNodePool.MachineType {
+				return fmt.Errorf("Machine type setting is permanent, and you cannot change it for the %s additional worker node pool", a.Name)
 			}
 		}
 	}

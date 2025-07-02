@@ -134,6 +134,32 @@ func TestClient_DeleteMetadataTenant(t *testing.T) {
 	assert.Len(t, data, 0)
 }
 
+func TestClient_UpdateMetadata(t *testing.T) {
+	// given
+	key := "tK"
+	testServer := fixHTTPServer(t)
+	defer testServer.Close()
+
+	config := Config{
+		AdminURL:  testServer.URL,
+		Namespace: testNamespace,
+	}
+	client := NewClient(config)
+	client.setHttpClient(testServer.Client())
+
+	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: key, Value: "tV"}, fixLogger())
+	assert.NoError(t, err)
+
+	// when
+	err = client.UpdateMetadataTenant(subAccountID, environment, key, "newValue", fixLogger())
+
+	assert.NoError(t, err)
+	data, err := client.GetMetadataTenant(subAccountID, environment)
+	assert.NoError(t, err)
+	assert.Len(t, data, 1)
+	assert.Equal(t, "newValue", data[0].Value)
+}
+
 func fixHTTPServer(t *testing.T) *httptest.Server {
 	r := httputil.NewRouter()
 	srv := newServer(t)
@@ -142,6 +168,7 @@ func fixHTTPServer(t *testing.T) *httptest.Server {
 	r.HandleFunc("DELETE /namespaces/{namespace}/dataTenants/{name}/{env}", srv.deleteDataTenant)
 
 	r.HandleFunc("POST /namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.createMetadata)
+	r.HandleFunc("PUT /namespaces/{namespace}/dataTenants/{name}/{env}/metadata/{key}", srv.updateMetadata)
 	r.HandleFunc("GET /namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.getMetadata)
 	r.HandleFunc("DELETE /namespaces/{namespace}/dataTenants/{name}/{env}/metadata/{key}", srv.deleteMetadata)
 
@@ -274,6 +301,30 @@ func (s *server) createMetadata(w http.ResponseWriter, r *http.Request) {
 
 	s.metadata = append(s.metadata, item)
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *server) updateMetadata(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.checkNamespace(w, r); !ok {
+		return
+	}
+	key := r.PathValue("key")
+
+	var item MetadataItem
+	err := json.NewDecoder(r.Body).Decode(&item)
+	if err != nil {
+		s.t.Errorf("cannot decode request body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for i, existingItem := range s.metadata {
+		if key == existingItem.Key {
+			s.metadata[i].Value = item.Value
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *server) deleteMetadata(w http.ResponseWriter, r *http.Request) {

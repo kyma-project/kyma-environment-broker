@@ -33,10 +33,8 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 ## Prerequisites
 
-Subaccount Cleanup requires access to:
-
 * CIS service to receive all **SUBACCOUNT_DELETE** events
-* the KEB database to get the instance ID for each subaccount ID from the **SUBACCOUNT_DELETE** event
+* The KEB database to get the instance ID for each subaccount ID from the **SUBACCOUNT_DELETE** event
 * KEB to trigger Kyma runtime instance deprovisioning
 
 ## Configuration

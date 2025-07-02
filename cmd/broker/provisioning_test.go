@@ -71,12 +71,9 @@ func TestCatalog(t *testing.T) {
 	}
 }
 
-func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
+func TestProvisioningForTrial(t *testing.T) {
 
 	cfg := fixConfig()
-
-	cfg.InfrastructureManager.DefaultTrialProvider = pkg.AWS
-
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -110,7 +107,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 	assert.Equal(t, "g-account-id", op.GlobalAccountID)
 }
 
-func TestProvisioningWithKIMOnlyForAWS(t *testing.T) {
+func TestProvisioningForAWS(t *testing.T) {
 
 	cfg := fixConfig()
 
@@ -196,7 +193,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "eu-central-1",
+						"region": "us-west-2",
 						"shootAndSeedSameRegion": false
 					}
 		}`)
@@ -226,7 +223,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "us-east-1",
+						"region": "eu-central-1",
 						"shootAndSeedSameRegion": true
 					}
 		}`)
@@ -240,17 +237,185 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
 	})
+
+	t.Run("should return error when seed does not exist in selected region and shootAndSeedSameRegion is set to true", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"shootAndSeedSameRegion": true
+					}
+		}`)
+
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Contains(t, string(parsedResponse), "validation of the same region for seed and shoot: seed does not exist in us-east-1 region")
+	})
+}
+
+func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+
+	t.Run("should accept the ingress filtering param and set Filter.Ingress.Enabled to true in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should accept the ingress filtering param and set Filter.Ingress.Enabled to false in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": false
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should set Filter.Ingress.Enabled to default false when there is no parameter", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should not accept the enabling ingress filtering for SapConvergedCloud plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1",
+							"ingressFiltering": true
+						}
+			}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+	})
+
+	t.Run("should not accept the disabling ingress filtering for SapConvergedCloud plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1",
+							"ingressFiltering": true
+						}
+			}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+	})
+
 }
 
 func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	iid := uuid.New().String()
 
 	t.Run("should provision SAP Converged Cloud", func(t *testing.T) {
+		iid := uuid.New().String()
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -276,6 +441,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - invalid platform region", func(t *testing.T) {
+		iid := uuid.New().String()
 		// when
 		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/invalid/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
@@ -296,6 +462,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - default platform region", func(t *testing.T) {
+		iid := uuid.New().String()
 
 		// when
 		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -317,9 +484,10 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - invalid Kyma region", func(t *testing.T) {
+		iid := uuid.New().String()
 
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -869,6 +1037,8 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		expectedMaximumNumberOfNodes int
 		expectedMachineType          string
 		expectedSubscriptionName     string
+		expectedVolumeSize           string
+		expectedZones                []string
 	}{
 		"Regular trial": {
 			planID: broker.TrialPlanID,
@@ -878,6 +1048,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          "m5.xlarge",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
+			expectedVolumeSize:           "50Gi",
 		},
 		"Regular trial with smaller machines": {
 			planID:                 broker.TrialPlanID,
@@ -948,6 +1119,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          provider.DefaultAzureMachineType,
 			expectedProvider:             "azure",
 			expectedSubscriptionName:     "sb-azure",
+			expectedVolumeSize:           "82Gi",
 		},
 		"Production Multi-AZ Azure": {
 			planID:                       broker.AzurePlanID,
@@ -961,6 +1133,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          provider.DefaultAzureMachineType,
 			expectedProvider:             "azure",
 			expectedSubscriptionName:     "sb-azure",
+			expectedZones:                []string{"1", "2", "3"},
 		},
 		"Production AWS": {
 			planID:                       broker.AWSPlanID,
@@ -978,7 +1151,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		},
 		"Production Multi-AZ AWS": {
 			planID:                       broker.AWSPlanID,
-			region:                       "us-east-1",
+			region:                       "sa-east-1",
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
@@ -988,6 +1161,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          provider.DefaultAWSMachineType,
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws",
+			expectedZones:                []string{"sa-east-1a", "sa-east-1b", "sa-east-1c"},
 		},
 		"Production GCP": {
 			planID:                       broker.GCPPlanID,
@@ -1033,7 +1207,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			planID: broker.SapConvergedCloudPlanID,
 			region: "eu-de-1",
 			// this is mandatory because the plan is not existing if the platform region is not in the list (cmd/broker/testdata/old-sap-converged-cloud-region-mappings)
-			platformRegionPart:           "cf-eu20-staging/",
+			platformRegionPart:           "cf-eu20/",
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
@@ -1043,11 +1217,13 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          provider.DefaultSapConvergedCloudMachineType,
 			expectedProvider:             "openstack",
 			expectedSubscriptionName:     "sb-openstack_eu-de-1",
+
+			expectedZones: []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"},
 		},
 		"sap converged cloud eu-de-2": {
 			planID:                       broker.SapConvergedCloudPlanID,
 			region:                       "eu-de-2",
-			platformRegionPart:           "cf-eu20-staging/",
+			platformRegionPart:           "cf-eu10/",
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
@@ -1120,6 +1296,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			if tc.expectedSubscriptionName != "" {
 				assert.Equal(t, tc.expectedSubscriptionName, runtimeCR.Spec.Shoot.SecretBindingName)
 			}
+			if tc.expectedVolumeSize != "" {
+				assert.Equal(t, tc.expectedVolumeSize, runtimeCR.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+			}
+			if len(tc.expectedZones) > 0 {
+				assert.ElementsMatch(t, tc.expectedZones, runtimeCR.Spec.Shoot.Provider.Workers[0].Zones)
+			}
 		})
 
 	}
@@ -1172,7 +1354,9 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1201,6 +1385,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 									"issuerURL": "https://testurl.local",
 									"signingAlgs": ["RS256", "RS384"],
 									"usernameClaim": "fakeUsernameClaim",
+									"groupsPrefix": "-",
 									"usernamePrefix": "::",
 									"requiredClaims": ["claim=value"]
 								}
@@ -1228,7 +1413,9 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply empty OIDC list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1367,7 +1554,10 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply default OIDC values when all OIDC object's fields are not present", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.IncludeAdditionalParamsInSchema = false
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1407,6 +1597,46 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		assert.Equal(t, defaultOIDCValues().SigningAlgs, (*gotOIDC)[0].SigningAlgs)
 		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
 		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
+	})
+	t.Run("should reject non base64 JWKS value", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.EnableJwks = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			fmt.Sprintf(`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "%s",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"region": "eu-central-1",
+						"name": "testing-cluster",
+						"oidc": {
+							"clientID": "fake-client-id-1",
+							"groupsClaim": "fakeGroups",
+							"issuerURL": "https://testurl.local",
+							"signingAlgs": ["RS256", "RS384"],
+							"usernameClaim": "fakeUsernameClaim",
+							"usernamePrefix": "::",
+							"encodedJwksArray": "not-base64"
+						}
+					}
+		}`, broker.AWSPlanID))
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
 	})
 }
 
@@ -1521,7 +1751,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	})
 }
 
-func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
+func TestProvisioning_WithNetworkFilters(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1531,7 +1761,7 @@ func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
 						"sm_platform_credentials": {
 							  "url": "https://sm.url",
@@ -1542,19 +1772,22 @@ func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
+	require.NotEmpty(t, opID)
 	suite.processKIMProvisioningByOperationID(opID)
 	instance := suite.GetInstance(iid)
 
 	// then
-	suite.AssertNetworkFilteringDisabled(iid, false)
+	suite.AssertNetworkFiltering(iid, true, true)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 }
 
-func TestProvisioning_WithNetworkFilter(t *testing.T) {
+func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1564,7 +1797,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
 						"sm_platform_credentials": {
 							  "url": "https://sm.url",
@@ -1576,17 +1809,44 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
 					}
 		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processKIMProvisioningByOperationID(opID)
-	instance := suite.GetInstance(iid)
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+	parsedResponse := suite.ReadResponse(resp)
+	assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+}
 
-	// then
+func TestProvisioning_NetworkFilter_External_False(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	iid := uuid.New().String()
 
-	suite.AssertNetworkFilteringDisabled(iid, true)
-	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"license_type": "CUSTOMER",
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": false
+					}
+		}`)
+	assert.Equal(t, resp.StatusCode, http.StatusAccepted)
 }
 
 func TestProvisioning_Modules(t *testing.T) {
@@ -2083,6 +2343,65 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 
 }
 
+func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	cfg := fixConfig()
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "c7i.large",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "g6.xlarge",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							},
+							{
+								"name": "name-3",
+								"machineType": "g4dn.xlarge",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByInstanceID(iid)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "us-east-1w", "us-east-1x", "us-east-1y", "us-east-1z")
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
+}
+
 func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
@@ -2236,7 +2555,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		"sap converged cloud eu-de-1": {
 			planID:         broker.SapConvergedCloudPlanID,
 			region:         "eu-de-1",
-			platformRegion: "cf-eu20-staging",
+			platformRegion: "cf-eu20",
 
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-1",
@@ -2244,7 +2563,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		"sap converged cloud eu-de-2": {
 			planID:         broker.SapConvergedCloudPlanID,
 			region:         "eu-de-2",
-			platformRegion: "cf-eu20-staging",
+			platformRegion: "cf-eu10",
 
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-2",
@@ -2254,7 +2573,6 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 			// given
 			cfg := fixConfig()
 			cfg.Broker.EnablePlans = append(cfg.Broker.EnablePlans, "azure_lite")
-			cfg.ResolveSubscriptionSecretStepDisabled = false
 			suite := NewBrokerSuiteTestWithConfig(t, cfg)
 			defer suite.TearDown()
 			iid := uuid.New().String()

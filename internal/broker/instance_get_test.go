@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -54,6 +55,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	createSvc := broker.NewProvision(
 		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
+		broker.InfrastructureManager{},
 		st,
 		queue,
 		broker.PlansConfig{},
@@ -61,10 +63,13 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
-		nil,
-		fixValueProvider(),
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
 		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
 	)
 	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 

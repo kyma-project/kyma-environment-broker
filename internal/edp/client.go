@@ -104,6 +104,18 @@ func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPaylo
 	return c.post(c.metadataTenantURL(name, env), rawData, name, log)
 }
 
+func (c *Client) UpdateMetadataTenant(name, env string, metadataKey, metadataValue string, log *slog.Logger) error {
+	URL := fmt.Sprintf("%s/%s", c.metadataTenantURL(name, env), metadataKey)
+	type body struct {
+		Value string `json:"value"`
+	}
+	rawData, err := json.Marshal(body{Value: metadataValue})
+	if err != nil {
+		return fmt.Errorf("while marshaling metadata tenant payload: %w", err)
+	}
+	return c.put(URL, rawData, name, log)
+}
+
 func (c *Client) DeleteMetadataTenant(name, env, key string, log *slog.Logger) (err error) {
 	URL := fmt.Sprintf("%s/%s", c.metadataTenantURL(name, env), key)
 	request, err := http.NewRequest(http.MethodDelete, URL, nil)
@@ -153,9 +165,17 @@ func (c *Client) GetMetadataTenant(name, env string) (_ []MetadataItem, err erro
 }
 
 func (c *Client) post(URL string, data []byte, id string, log *slog.Logger) (err error) {
-	request, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(data))
+	return c.execute(http.MethodPost, URL, data, id, log)
+}
+
+func (c *Client) put(URL string, data []byte, id string, log *slog.Logger) (err error) {
+	return c.execute(http.MethodPut, URL, data, id, log)
+}
+
+func (c *Client) execute(method, URL string, data []byte, id string, log *slog.Logger) (err error) {
+	request, err := http.NewRequest(method, URL, bytes.NewBuffer(data))
 	if err != nil {
-		return fmt.Errorf("while creating POST request for %s: %w", URL, err)
+		return fmt.Errorf("while creating %s request for %s: %w", method, URL, err)
 	}
 	request.Header.Set("Content-Type", "application/json")
 
@@ -166,7 +186,7 @@ func (c *Client) post(URL string, data []byte, id string, log *slog.Logger) (err
 		}
 	}()
 	if err != nil {
-		return kebError.AsTemporaryError(err, "while sending POST request on %s", URL)
+		return kebError.AsTemporaryError(err, "while sending %s request on %s", method, URL)
 	}
 
 	return c.processResponse(response, false, id, log)

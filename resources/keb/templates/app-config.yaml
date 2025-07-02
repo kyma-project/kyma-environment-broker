@@ -9,10 +9,6 @@ data:
 {{- with .Values.trialRegionsMapping }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
-  sapConvergedCloudPlanRegionMappings.yaml: |-
-{{- with .Values.sapConvergedCloudPlanRegionMappings }}
-{{ tpl . $ | indent 4 }}
-{{- end }}
   skrOIDCDefaultValues.yaml: |-
 {{- with .Values.skrOIDCDefaultValues }}
 {{ tpl . $ | indent 4 }}
@@ -34,3 +30,11 @@ data:
   hapRule.yaml: |-
     rule:
 {{ toYaml .Values.hap.rule | indent 4  }}
+  providersConfig.yaml: |-
+{{ toYaml .Values.providersConfiguration | indent 4 }}
+  plansConfig.yaml: |-
+{{ toYaml .Values.plansConfiguration | indent 4 }}
+  quotaWhitelistedSubaccountIds.yaml: |-
+{{- with .Values.quotaWhitelistedSubaccountIds }}
+{{ tpl . $ | indent 4 }}
+{{- end }}

@@ -75,17 +75,17 @@ These are the provisioning parameters for Azure that you can configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                       | Type   | Description                                                                         | Required | Default value     |
-|------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
-| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
-| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
-| **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
+| Parameter name                                       | Type   | Description                                                                             | Required | Default value     |
+|------------------------------------------------------|--------|-----------------------------------------------------------------------------------------|:--------:|-------------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                   |    No    | `Standard_D2s_v5` |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                  |    No    | `50`              |
+| **region**                                           | string | Defines the cluster region.                                                             |   Yes    | None              |
+| **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager (KIM) creates a cluster. |    No    | `["1"]`           |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                             |    No    | `2`               |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.         |    No    | `10`              |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.     |    No    | `4`               |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.           |    No    | `1`               |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                   |    No    | None              |
 
 <!-- markdown-link-check-enable-->
 
@@ -102,7 +102,7 @@ These are the provisioning parameters for Azure that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                           |    No    | `["1"]`           |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
@@ -128,7 +128,7 @@ These are the provisioning parameters for AWS that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["1"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
@@ -155,7 +155,7 @@ These are the provisioning parameters for GCP that you can configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `n2-standard-2` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None            |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["a"]`         |
+| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                           |    No    | `["a"]`         |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
@@ -182,7 +182,7 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["a"]`       |
+| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["a"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
@@ -190,8 +190,6 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 | **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 <!-- markdown-link-check-enable -->
-
-The SAP Converged Cloud plan cannot be provisioned in all SKR regions. This restriction is enforced through the region mapping functionality configured by [`sapConvergedCloudPlanRegionMappings`](https://github.com/kyma-project/kyma-environment-broker/blob/48d5f55dfacfc511ead132fb77f522abc7e382e7/resources/keb/values.yaml#L215). The lists enable you to map a BTP region, which is passed to the provisioning endpoint in an HTTP path parameter (map key), to Kyma regions (list entries). Based on that configuration and the passed path parameter, the broker schema is populated only with values from the mapped list. In case of an empty mapping configuration or passing a provisioning path parameter that does not contain the configured region, the `sap-converged-cloud` plan is not rendered in the schema.
 
  </details>
  </div>
@@ -274,7 +272,7 @@ These are the provisioning parameters for the `preview` plan that you configure:
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["1"]`       |
 | **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
 | **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
 | **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
