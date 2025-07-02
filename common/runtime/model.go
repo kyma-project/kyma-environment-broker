@@ -62,6 +62,7 @@ type RuntimeDTO struct {
 	SubscriptionSecretName      *string                   `json:"subscriptionSecretName,omitempty"`
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
+	Actions                     []Action                  `json:"actions,omitempty"`
 }
 
 type CloudProvider string
@@ -347,6 +348,23 @@ type BindingDTO struct {
 	CreatedBy         string    `json:"createdBy"`
 }
 
+type ActionType string
+
+const (
+	PlanUpdateActionType         ActionType = "plan_update"
+	SubaccountMovementActionType ActionType = "subaccount_movement"
+)
+
+type Action struct {
+	ID         string     `json:"ID,omitempty"`
+	Type       ActionType `json:"type,omitempty"`
+	InstanceID string     `json:"-"`
+	Message    string     `json:"message,omitempty"`
+	OldValue   string     `json:"oldValue,omitempty"`
+	NewValue   string     `json:"newValue,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt,omitempty"`
+}
+
 type RuntimeStatus struct {
 	CreatedAt        time.Time       `json:"createdAt"`
 	ModifiedAt       time.Time       `json:"modifiedAt"`
@@ -415,6 +433,7 @@ const (
 	RuntimeConfigParam   = "runtime_config"
 	BindingsParam        = "bindings"
 	WithBindingsParam    = "with_bindings"
+	ActionsParam         = "actions"
 )
 
 type OperationDetail string

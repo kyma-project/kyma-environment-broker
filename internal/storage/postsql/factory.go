@@ -3,12 +3,14 @@ package postsql
 import (
 	"time"
 
-	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
+
+	"github.com/gocraft/dbr"
 )
 
 //go:generate mockery --name=Factory
@@ -59,7 +61,7 @@ type ReadSession interface {
 	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
 	ListExpiredBindings() ([]dbmodel.BindingDTO, error)
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
-	ListActions(instanceID string) ([]internal.Action, error)
+	ListActions(instanceID string) ([]runtime.Action, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -79,7 +81,7 @@ type WriteSession interface {
 	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
 	UpdateInstanceLastOperation(instanceID, operationID string) error
-	InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) dberr.Error
+	InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) dberr.Error
 }
 
 type Transaction interface {

@@ -538,20 +538,3 @@ type RegionsSupporter interface {
 	SupportedRegions(machineType string) []string
 	AvailableZonesForAdditionalWorkers(machineType, region, planID string) ([]string, error)
 }
-
-type ActionType string
-
-const (
-	PlanUpdateActionType         ActionType = "plan_update"
-	SubaccountMovementActionType ActionType = "subaccount_movement"
-)
-
-type Action struct {
-	ID         string
-	Type       ActionType
-	InstanceID string
-	Message    string
-	OldValue   string
-	NewValue   string
-	CreatedAt  time.Time
-}

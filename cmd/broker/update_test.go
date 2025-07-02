@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -237,7 +238,7 @@ func TestUpdatePlan(t *testing.T) {
 	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
 	assert.NoError(t, err)
 	require.Len(t, actions, 1)
-	assert.Equal(t, actions[0].Type, internal.PlanUpdateActionType)
+	assert.Equal(t, actions[0].Type, pkg.PlanUpdateActionType)
 	assert.Equal(t, actions[0].Message, "Plan updated from 361c511f-f939-4621-b228-d0fb79a1fe15 to 6aae0ff3-89f7-4f12-86de-51466145422e.")
 	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
 	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
@@ -3362,7 +3363,7 @@ func TestUpdateGlobalAccountID(t *testing.T) {
 	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
 	assert.NoError(t, err)
 	require.Len(t, actions, 1)
-	assert.Equal(t, actions[0].Type, internal.SubaccountMovementActionType)
+	assert.Equal(t, actions[0].Type, pkg.SubaccountMovementActionType)
 	assert.Equal(t, actions[0].Message, "Subaccount sub-id moved from Global Account g-account-id to new-g-account-id.")
 	assert.Equal(t, actions[0].OldValue, "g-account-id")
 	assert.Equal(t, actions[0].NewValue, "new-g-account-id")

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/events"
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
@@ -329,7 +329,7 @@ func (ws writeSession) DeleteOperationByID(id string) dberr.Error {
 	return nil
 }
 
-func (ws writeSession) InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) dberr.Error {
+func (ws writeSession) InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) dberr.Error {
 	_, err := ws.insertInto(ActionsTableName).
 		Pair("id", uuid.NewString()).
 		Pair("type", actionType).

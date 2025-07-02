@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
@@ -118,6 +119,6 @@ type Bindings interface {
 }
 
 type Actions interface {
-	InsertAction(actionType internal.ActionType, instanceID, message, oldValue, newValue string) error
-	ListActionsByInstanceID(instanceID string) ([]internal.Action, error)
+	InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) error
+	ListActionsByInstanceID(instanceID string) ([]runtime.Action, error)
 }

@@ -3,7 +3,7 @@ package postsql_test
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/stretchr/testify/assert"
@@ -26,9 +26,9 @@ func TestAction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, actions, 0)
 
-	err = brokerStorage.Actions().InsertAction(internal.PlanUpdateActionType, instanceID, "test-message-1", "old-value-1", "new-value-1")
+	err = brokerStorage.Actions().InsertAction(runtime.PlanUpdateActionType, instanceID, "test-message-1", "old-value-1", "new-value-1")
 	assert.NoError(t, err)
-	err = brokerStorage.Actions().InsertAction(internal.SubaccountMovementActionType, instanceID, "test-message-2", "old-value-2", "new-value-2")
+	err = brokerStorage.Actions().InsertAction(runtime.SubaccountMovementActionType, instanceID, "test-message-2", "old-value-2", "new-value-2")
 	assert.NoError(t, err)
 
 	actions, err = brokerStorage.Actions().ListActionsByInstanceID(instanceID)
@@ -36,7 +36,7 @@ func TestAction(t *testing.T) {
 	assert.Len(t, actions, 2)
 
 	assert.NotEmpty(t, actions[0].ID)
-	assert.Equal(t, actions[0].Type, internal.SubaccountMovementActionType)
+	assert.Equal(t, actions[0].Type, runtime.SubaccountMovementActionType)
 	assert.Equal(t, actions[0].InstanceID, instanceID)
 	assert.Equal(t, actions[0].Message, "test-message-2")
 	assert.Equal(t, actions[0].OldValue, "old-value-2")
@@ -44,7 +44,7 @@ func TestAction(t *testing.T) {
 	assert.NotEmpty(t, actions[0].CreatedAt)
 
 	assert.NotEmpty(t, actions[1].ID)
-	assert.Equal(t, actions[1].Type, internal.PlanUpdateActionType)
+	assert.Equal(t, actions[1].Type, runtime.PlanUpdateActionType)
 	assert.Equal(t, actions[1].InstanceID, instanceID)
 	assert.Equal(t, actions[1].Message, "test-message-1")
 	assert.Equal(t, actions[1].OldValue, "old-value-1")
