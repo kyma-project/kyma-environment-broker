@@ -88,8 +88,6 @@ This solution is not recommended. It is only supported for backward compatibilit
 
 To have the default OIDC configuration automatically applied, send a request without specifying any `oidc` configuration:
 
-**Request:**
-
 ```json
 {
   "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
