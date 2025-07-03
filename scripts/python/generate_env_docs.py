@@ -26,6 +26,21 @@ SUBACC_CLEANUP_YAML = "resources/keb/templates/subaccount-cleanup-job.yaml"
 VALUES_YAML = "resources/keb/values.yaml"
 OUTPUT_MD = "docs/contributor/02-30-keb-configuration.md"
 SUBACC_MD = "docs/contributor/06-30-subaccount-cleanup-cronjob.md"
+TRIAL_CLEANUP_YAML = "resources/keb/templates/trial-cleanup-job.yaml"
+FREE_CLEANUP_YAML = "resources/keb/templates/free-cleanup-job.yaml"
+TRIAL_FREE_MD = "docs/contributor/06-40-trial-free-cleanup-cronjobs.md"
+DEPROV_RETRIGGER_YAML = "resources/keb/templates/deprovision-retrigger-job.yaml"
+DEPROV_RETRIGGER_MD = "docs/contributor/06-50-deprovision-retrigger-cronjob.md"
+ARCHIVER_YAML = "utils/archiver/kyma-environment-broker-archiver.yaml"
+ARCHIVER_MD = "docs/contributor/06-60-archiver-job.md"
+SERVICE_BINDING_CLEANUP_YAML = "resources/keb/templates/service-binding-cleanup-job.yaml"
+SERVICE_BINDING_CLEANUP_MD = "docs/contributor/06-70-service-binding-cleanup-cronjob.md"
+RUNTIME_RECONCILER_YAML = "resources/keb/templates/runtime-reconciler-deployment.yaml"
+RUNTIME_RECONCILER_MD = "docs/contributor/07-10-runtime-reconciler.md"
+SUBACCOUNT_SYNC_YAML = "resources/keb/templates/subaccount-sync-deployment.yaml"
+SUBACCOUNT_SYNC_MD = "docs/contributor/07-20-subaccount-sync.md"
+SCHEMA_MIGRATOR_YAML = "resources/keb/templates/migrator-job.yaml"
+SCHEMA_MIGRATOR_MD = "docs/contributor/07-30-schema-migrator.md"
 
 def extract_env_vars_with_paths(deployment_yaml_path):
     """
@@ -281,7 +296,7 @@ def replace_env_table_in_md(md_path, new_table):
 
 def main():
     """
-    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation for both KEB and Subaccount Cleanup.
+    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation for all jobs.
     """
     values_doc = parse_values_yaml_with_comments(VALUES_YAML)
     # KEB deployment
@@ -295,6 +310,54 @@ def main():
     new_table = extract_table_markdown(subacc_env_docs)
     replace_env_table_in_md(SUBACC_MD, new_table)
     print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
+    # Trial Cleanup
+    trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
+    trial_env_docs = map_env_to_values(trial_env_vars, values_doc)
+    trial_table = extract_table_markdown(trial_env_docs)
+    # Free Cleanup
+    free_env_vars = extract_env_vars_with_paths(FREE_CLEANUP_YAML)
+    free_env_docs = map_env_to_values(free_env_vars, values_doc)
+    free_table = extract_table_markdown(free_env_docs)
+    # Combine for doc: two tables, with headers
+    combined = "### Trial Cleanup CronJob\n\n" + trial_table + "\n\n### Free Cleanup CronJob\n\n" + free_table + "\n"
+    replace_env_table_in_md(TRIAL_FREE_MD, combined)
+    print(f"Trial/Free Cleanup env documentation updated in {TRIAL_FREE_MD}")
+    # Deprovision Retrigger
+    deprov_env_vars = extract_env_vars_with_paths(DEPROV_RETRIGGER_YAML)
+    deprov_env_docs = map_env_to_values(deprov_env_vars, values_doc)
+    deprov_table = extract_table_markdown(deprov_env_docs)
+    replace_env_table_in_md(DEPROV_RETRIGGER_MD, deprov_table)
+    print(f"Deprovision Retrigger env documentation updated in {DEPROV_RETRIGGER_MD}")
+    # Archiver Job
+    archiver_env_vars = extract_env_vars_with_paths(ARCHIVER_YAML)
+    archiver_env_docs = map_env_to_values(archiver_env_vars, values_doc)
+    archiver_table = extract_table_markdown(archiver_env_docs)
+    replace_env_table_in_md(ARCHIVER_MD, archiver_table)
+    print(f"Archiver env documentation updated in {ARCHIVER_MD}")
+    # Service Binding Cleanup Job
+    sbc_env_vars = extract_env_vars_with_paths(SERVICE_BINDING_CLEANUP_YAML)
+    sbc_env_docs = map_env_to_values(sbc_env_vars, values_doc)
+    sbc_table = extract_table_markdown(sbc_env_docs)
+    replace_env_table_in_md(SERVICE_BINDING_CLEANUP_MD, sbc_table)
+    print(f"Service Binding Cleanup env documentation updated in {SERVICE_BINDING_CLEANUP_MD}")
+    # Runtime Reconciler
+    rr_env_vars = extract_env_vars_with_paths(RUNTIME_RECONCILER_YAML)
+    rr_env_docs = map_env_to_values(rr_env_vars, values_doc)
+    rr_table = extract_table_markdown(rr_env_docs)
+    replace_env_table_in_md(RUNTIME_RECONCILER_MD, rr_table)
+    print(f"Runtime Reconciler env documentation updated in {RUNTIME_RECONCILER_MD}")
+    # Subaccount Sync
+    sync_env_vars = extract_env_vars_with_paths(SUBACCOUNT_SYNC_YAML)
+    sync_env_docs = map_env_to_values(sync_env_vars, values_doc)
+    sync_table = extract_table_markdown(sync_env_docs)
+    replace_env_table_in_md(SUBACCOUNT_SYNC_MD, sync_table)
+    print(f"Subaccount Sync env documentation updated in {SUBACCOUNT_SYNC_MD}")
+    # Schema Migrator
+    migrator_env_vars = extract_env_vars_with_paths(SCHEMA_MIGRATOR_YAML)
+    migrator_env_docs = map_env_to_values(migrator_env_vars, values_doc)
+    migrator_table = extract_table_markdown(migrator_env_docs)
+    replace_env_table_in_md(SCHEMA_MIGRATOR_MD, migrator_table)
+    print(f"Schema Migrator env documentation updated in {SCHEMA_MIGRATOR_MD}")
 
 if __name__ == "__main__":
     main()
