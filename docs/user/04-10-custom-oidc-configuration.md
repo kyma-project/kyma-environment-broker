@@ -235,7 +235,11 @@ This example illustrates a request with an `oidc` object where all properties ar
 
 ## Updating the OIDC Configuration
 
-To update the OIDC configuration, provide values for the mandatory properties. Without these values, a validation error occurs. If you omit the `oidc` list or the single `oidc` object in the update request, the existing OIDC configuration remains unchanged. Providing an empty `oidc` list clears the OIDC configuration for the instance. The update operation overwrites the OIDC configuration values provided in JSON for the `oidc` list, meaning that OIDC properties with empty values are considered valid and will replace the existing values. However, for the single `oidc` object, empty values do not change the configuration, and only the provided values are updated. It is possible to update the configuration from a single `oidc` object to an `oidc` list. However, updating from an `oidc` list to a single `oidc` object is not supported.
+To update the OIDC configuration, provide values for the mandatory properties. Without these values, a validation error occurs. If you provide no `oidc` list and no single `oidc` object in the update request, the existing OIDC configuration remains unchanged. Providing an empty `oidc` list clears the OIDC configuration for the instance.
+
+The update operation overwrites the OIDC configuration values provided in JSON for the `oidc` list, meaning that OIDC properties with empty values are considered valid and replace the existing values. However, for a single `oidc` object, empty values do not change the configuration, and only the provided values are updated. 
+
+You can update the OIDC configuration from a single `oidc` object to an `oidc` list. However, updating from an `oidc` list to a single `oidc` object is not supported.
 
 ---
 
