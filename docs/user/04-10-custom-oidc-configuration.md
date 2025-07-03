@@ -235,7 +235,6 @@ The update operation overwrites the OIDC configuration values provided in JSON f
 
 You can update the OIDC configuration from a single `oidc` object to an `oidc` list. However, updating from an `oidc` list to a single `oidc` object is not supported.
 
----
 
 ### Updating an Instance with an OIDC List of Objects
 
