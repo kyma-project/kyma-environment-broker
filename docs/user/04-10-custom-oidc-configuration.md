@@ -208,7 +208,7 @@ To apply the default OIDC configuration, send a request with an `oidc` object wh
 }
 ```
 
-**Applied OIDC Configuration:**
+Result: You see the default OIDC configuration, similar to this one:
 
 ```json
 {
