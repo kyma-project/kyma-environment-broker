@@ -182,9 +182,7 @@ Result: You see a configuration similar to this one:
 
 ### Configuration with an Empty `oidc` Object
 
-This example illustrates a request with an `oidc` object where all properties are left empty. The default OIDC configuration is applied.
-
-**Request:**
+To apply the default OIDC configuration, send a request with an `oidc` object where all properties are left empty:
 
 ```json
 {
