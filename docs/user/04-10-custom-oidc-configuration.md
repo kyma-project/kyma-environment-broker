@@ -125,7 +125,7 @@ Result: You see a configuration with empty properties in the `oidc` object, simi
 
 ### Configuration with the `oidc` List
 
-This example shows a request with an `oidc` list containing a single configuration. The list allows defining multiple OIDC configurations.
+To define one OIDC configuration, send a request with an `oidc` list containing a single configuration:
 
 **Request:**
 
