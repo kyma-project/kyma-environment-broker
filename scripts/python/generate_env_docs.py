@@ -22,8 +22,10 @@ StrLoader.add_constructor('tag:yaml.org,2002:bool', str_constructor)
 StrLoader.add_constructor('tag:yaml.org,2002:str', str_constructor)
 
 DEPLOYMENT_YAML = "resources/keb/templates/deployment.yaml"
+SUBACC_CLEANUP_YAML = "resources/keb/templates/subaccount-cleanup-job.yaml"
 VALUES_YAML = "resources/keb/values.yaml"
 OUTPUT_MD = "docs/contributor/02-30-keb-configuration.md"
+SUBACC_MD = "docs/contributor/06-30-subaccount-cleanup-cronjob.md"
 
 def extract_env_vars_with_paths(deployment_yaml_path):
     """
@@ -205,21 +207,20 @@ def soft_break(text, max_len, prefer_char=None):
             start += max_len
     return result
 
-def write_markdown_table(env_docs, output_path):
+def write_markdown_table(env_docs, output_path, header=None, intro=None):
     """
     Write the environment variable documentation as a Markdown table.
-    Fields with missing description or value are rendered as '-'.
-    Long values in the first and second columns are split with a soft break (S\u200b;), except the value column, which is not split.
-    The description column is visually wider.
+    If header/intro are provided, use them instead of defaults.
     """
     with open(output_path, "w") as f:
-        f.write("## Kyma Environment Broker Configuration\n\n")
-        f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
+        if header:
+            f.write(header + "\n\n")
+        if intro:
+            f.write(intro + "\n\n")
         f.write("| Environment Variable | Current Value | Description |")
         f.write("\n|---------------------|------------------------------|---------------------------------------------------------------|\n")
         for doc in env_docs:
             desc = doc['description'] if doc['description'] else '-'
-            # Format default value for Markdown
             if doc['default'] is None or doc['default'] == '':
                 default = 'None'
             else:
@@ -229,19 +230,71 @@ def write_markdown_table(env_docs, output_path):
             if default == 'None':
                 val_col = 'None'
             else:
-                # Do not split or break the value column at all
                 val_col = f'<code>{str(default)}</code>'
             f.write(f"| {env_col} | {val_col} | {desc} |\n")
 
+import io
+
+def extract_table_markdown(env_docs):
+    buf = io.StringIO()
+    buf.write("| Environment Variable | Current Value | Description |\n")
+    buf.write("|---------------------|------------------------------|---------------------------------------------------------------|\n")
+    for doc in env_docs:
+        desc = doc['description'] if doc['description'] else '-'
+        if doc['default'] is None or doc['default'] == '':
+            default = 'None'
+        else:
+            default = doc["default"]
+        env_val = soft_break(doc["env"], 20, prefer_char='_')
+        env_col = f'**{env_val}**'
+        if default == 'None':
+            val_col = 'None'
+        else:
+            val_col = f'<code>{str(default)}</code>'
+        buf.write(f"| {env_col} | {val_col} | {desc} |\n")
+    return buf.getvalue()
+
+def replace_env_table_in_md(md_path, new_table):
+    with open(md_path, 'r') as f:
+        lines = f.readlines()
+    out = []
+    in_table = False
+    table_started = False
+    for line in lines:
+        if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
+            in_table = True
+            table_started = True
+            out.append(new_table)
+            continue
+        if in_table:
+            if not line.strip().startswith('|'):
+                in_table = False
+                if line.strip():
+                    out.append(line)
+            continue
+        out.append(line)
+    if not table_started:
+        # If no table found, append at end
+        out.append('\n' + new_table + '\n')
+    with open(md_path, 'w') as f:
+        f.writelines(out)
+
 def main():
     """
-    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation.
+    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation for both KEB and Subaccount Cleanup.
     """
-    env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     values_doc = parse_values_yaml_with_comments(VALUES_YAML)
+    # KEB deployment
+    env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     env_docs = map_env_to_values(env_vars, values_doc)
     write_markdown_table(env_docs, OUTPUT_MD)
     print(f"Markdown documentation generated in {OUTPUT_MD}")
+    # Subaccount Cleanup
+    subacc_env_vars = extract_env_vars_with_paths(SUBACC_CLEANUP_YAML)
+    subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
+    new_table = extract_table_markdown(subacc_env_docs)
+    replace_env_table_in_md(SUBACC_MD, new_table)
+    print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
 
 if __name__ == "__main__":
     main()
