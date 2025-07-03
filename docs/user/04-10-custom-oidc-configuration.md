@@ -380,8 +380,7 @@ Result: You see a configuration with the values provided in the request, similar
   }
   ```
 
-3. **Updated OIDC Configuration**  
-  After the update, the OIDC configuration is modified to reflect the values provided in the request:
+   Result: You see a configuration with the values provided in the request, similar to this one:
 
   ```json
   {
