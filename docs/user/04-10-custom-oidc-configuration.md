@@ -129,8 +129,6 @@ This method allows you to define one or multiple OIDC configurations, depending 
 
 To define one OIDC configuration, send a request with an `oidc` list containing a single configuration:
 
-**Request:**
-
 ```json
 {
   "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
