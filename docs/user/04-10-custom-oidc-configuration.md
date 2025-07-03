@@ -245,8 +245,7 @@ You can update the OIDC configuration from a single `oidc` object to an `oidc` l
 
 ### Updating an Instance with an OIDC List of Objects
 
-1. **Current OIDC Configuration**  
-  The instance has the following OIDC object list configuration:
+  The current OIDC object list configuration you want to update is the following :
 
   ```json
   [
