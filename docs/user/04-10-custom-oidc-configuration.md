@@ -157,7 +157,7 @@ To define one OIDC configuration, send a request with an `oidc` list containing 
 }
 ```
 
-**Applied OIDC Configuration:**
+Result: You see a configuration similar to this one:
 
 ```json
 {
