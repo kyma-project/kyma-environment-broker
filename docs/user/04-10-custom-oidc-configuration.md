@@ -331,9 +331,7 @@ Result: You see a configuration with the values provided in the request, similar
   ]
   ```
 
----
-
-### Scenario 2: Updating an Instance with a Single OIDC Object
+### Updating an Instance with a Single OIDC Object
 
 1. **Current OIDC Configuration**  
   The instance has the following OIDC object configuration:
