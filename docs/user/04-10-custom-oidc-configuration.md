@@ -102,7 +102,7 @@ To have the default OIDC configuration automatically applied, send a request wit
 }
 ```
 
-**Applied OIDC Configuration:**
+Result: You see a configuration with empty properties in the `oidc` object, similar to this one:
 
 ```json
 {
