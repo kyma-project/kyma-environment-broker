@@ -21,8 +21,8 @@ type Config struct {
 	ClientSecret string
 	AuthURL      string
 	ServiceURL   string
+	Retries      int           `envconfig:"default=5"`
 	Interval     time.Duration `envconfig:"default=1s"`
-	Timeout      time.Duration `envconfig:"default=5s"`
 }
 
 type Client struct {
@@ -54,10 +54,9 @@ func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 }
 
 func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
-	deadline := time.Now().Add(c.config.Timeout)
 	var lastErr error
 
-	for time.Now().Before(deadline) {
+	for i := 0; i < c.config.Retries; i++ {
 		quota, err, retry := c.do(subAccountID, planName)
 		if err == nil {
 			return quota, nil
@@ -65,7 +64,7 @@ func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
 
 		lastErr = err
 		if !retry {
-			break
+			return 0, lastErr
 		}
 
 		c.log.Warn(fmt.Sprintf("Error fetching quota, retrying in %s: %v", c.config.Interval, err))

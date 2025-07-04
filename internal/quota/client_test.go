@@ -216,7 +216,7 @@ func fixConfig(authURL, serviceURL string) Config {
 		ClientSecret: "client-secret",
 		AuthURL:      authURL,
 		ServiceURL:   serviceURL,
+		Retries:      5,
 		Interval:     10 * time.Millisecond,
-		Timeout:      100 * time.Millisecond,
 	}
 }
