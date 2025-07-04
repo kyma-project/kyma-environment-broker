@@ -14,6 +14,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_BINDING_&#x200b;MAX_BINDINGS_COUNT** | <code>10</code> | Maximum number of non-expired bindings allowed per instance |
 | **APP_BROKER_BINDING_&#x200b;MAX_EXPIRATION_&#x200b;SECONDS** | <code>7200</code> | Maximum allowed expiration time (in seconds) for a binding |
 | **APP_BROKER_BINDING_&#x200b;MIN_EXPIRATION_&#x200b;SECONDS** | <code>600</code> | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener |
+| **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified |
 | **APP_BROKER_DISABLE_&#x200b;SAP_CONVERGED_CLOUD** | <code>false</code> | If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters |
 | **APP_BROKER_ENABLE_&#x200b;JWKS** | <code>false</code> | If true, enables the handling of the encoded JWKS array, temporary feature flag |
@@ -93,6 +94,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
 | **APP_QUOTA_CLIENT_ID** | None | - |
 | **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Quota Assignments API in case of errors |
+| **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Quota Assignments API request fails |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | None | - |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
