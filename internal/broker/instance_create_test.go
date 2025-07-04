@@ -3253,7 +3253,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.EqualError(t, err, "Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
+		assert.EqualError(t, err, "Kyma instances quota exceeded. assignedQuota: 1, remainingQuota: 0. Contact your administrator.")
 	})
 
 	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {
@@ -3317,7 +3317,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		assert.NoError(t, err)
 
 		quotaClient := &automock.QuotaClient{}
-		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error"))
+		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error message"))
 
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
@@ -3355,7 +3355,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.EqualError(t, err, "The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+		assert.EqualError(t, err, "Failed to get assigned quota: error message.")
 	})
 
 	t.Run("should create new operation if there is no unassigned quota but whitelisted subaccount", func(t *testing.T) {

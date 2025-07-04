@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -20,6 +21,8 @@ type Config struct {
 	ClientSecret string
 	AuthURL      string
 	ServiceURL   string
+	Retries      int           `envconfig:"default=5"`
+	Interval     time.Duration `envconfig:"default=1s"`
 }
 
 type Client struct {
@@ -30,9 +33,6 @@ type Client struct {
 }
 
 type Response struct {
-	Error struct {
-		Message string `json:"message"`
-	} `json:"error"`
 	Plan  string `json:"plan"`
 	Quota int    `json:"quota"`
 }
@@ -54,14 +54,36 @@ func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 }
 
 func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
+	var lastErr error
+
+	for i := 0; i < c.config.Retries; i++ {
+		quota, err, retry := c.do(subAccountID, planName)
+		if err == nil {
+			return quota, nil
+		}
+
+		lastErr = err
+		if !retry {
+			return 0, lastErr
+		}
+
+		c.log.Warn(fmt.Sprintf("Error fetching quota, retrying in %s: %v", c.config.Interval, err))
+		time.Sleep(c.config.Interval)
+	}
+
+	return 0, lastErr
+}
+
+func (c *Client) do(subAccountID, planName string) (int, error, bool) {
 	req, err := http.NewRequestWithContext(c.ctx, http.MethodGet, fmt.Sprintf(quotaServicePath, c.config.ServiceURL, subAccountID, planName), nil)
 	if err != nil {
-		return 0, fmt.Errorf("while creating request: %w", err)
+		return 0, fmt.Errorf("while creating request: %w", err), false
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("while performing request: %w", err)
+		c.log.Error(fmt.Sprintf("Authentication API returned: %v", err))
+		return 0, fmt.Errorf("The authentication service is currently unavailable. Please try again later"), true
 	}
 
 	defer func(body io.ReadCloser) {
@@ -72,21 +94,24 @@ func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
 	}(resp.Body)
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("while reading response body: %w", err)
+		return 0, fmt.Errorf("while reading response body: %w", err), true
 	}
 
-	var response Response
-	if err := json.Unmarshal(bodyBytes, &response); err != nil {
-		return 0, fmt.Errorf("while unmarshaling response: %w", err)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var response Response
+		if err := json.Unmarshal(bodyBytes, &response); err != nil {
+			return 0, fmt.Errorf("while unmarshaling response: %w", err), true
+		}
+		if response.Plan != planName {
+			return 0, nil, false
+		}
+		return response.Quota, nil, false
+	case http.StatusNotFound:
+		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, string(bodyBytes)))
+		return 0, fmt.Errorf("Subaccount %s does not exist", subAccountID), false
+	default:
+		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, string(bodyBytes)))
+		return 0, fmt.Errorf("The provisioning service is currently unavailable. Please try again later"), true
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("API error: %s", response.Error.Message)
-	}
-
-	if response.Plan != planName {
-		return 0, nil
-	}
-
-	return response.Quota, nil
 }

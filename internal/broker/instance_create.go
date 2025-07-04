@@ -343,12 +343,11 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		if usedQuota > 0 {
 			assignedQuota, err := b.quotaClient.GetQuota(provisioningParameters.ErsContext.SubAccountID, PlanNamesMapping[provisioningParameters.PlanID])
 			if err != nil {
-				b.log.Error(fmt.Sprintf("while getting assigned quota: %v", err))
-				return fmt.Errorf("The creation of the service instance has temporarily failed. Please try again later or contact SAP BTP support.")
+				return fmt.Errorf("Failed to get assigned quota: %w.", err)
 			}
 
 			if usedQuota >= assignedQuota {
-				return fmt.Errorf("Creating a new instance would exceed the allowed quota. Please contact your Operator for help.")
+				return fmt.Errorf("Kyma instances quota exceeded. assignedQuota: %d, remainingQuota: 0. Contact your administrator.", assignedQuota)
 			}
 		}
 	}
