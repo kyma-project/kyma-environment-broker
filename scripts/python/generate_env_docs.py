@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import re
 import yaml
+import io
 
 # This script generates Markdown documentation for environment variables defined in a Helm deployment YAML and values.yaml.
 # It extracts environment variables from the deployment template, maps them to their descriptions and default values from values.yaml (including comments),
@@ -222,34 +223,6 @@ def soft_break(text, max_len, prefer_char=None):
             start += max_len
     return result
 
-def write_markdown_table(env_docs, output_path, header=None, intro=None):
-    """
-    Write the environment variable documentation as a Markdown table.
-    If header/intro are provided, use them instead of defaults.
-    """
-    with open(output_path, "w") as f:
-        if header:
-            f.write(header + "\n\n")
-        if intro:
-            f.write(intro + "\n\n")
-        f.write("| Environment Variable | Current Value | Description |")
-        f.write("\n|---------------------|------------------------------|---------------------------------------------------------------|\n")
-        for doc in env_docs:
-            desc = doc['description'] if doc['description'] else '-'
-            if doc['default'] is None or doc['default'] == '':
-                default = 'None'
-            else:
-                default = doc["default"]
-            env_val = soft_break(doc["env"], 20, prefer_char='_')
-            env_col = f'**{env_val}**'
-            if default == 'None':
-                val_col = 'None'
-            else:
-                val_col = f'<code>{str(default)}</code>'
-            f.write(f"| {env_col} | {val_col} | {desc} |\n")
-
-import io
-
 def extract_table_markdown(env_docs):
     buf = io.StringIO()
     buf.write("| Environment Variable | Current Value | Description |\n")
@@ -302,13 +275,14 @@ def main():
     # KEB deployment
     env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     env_docs = map_env_to_values(env_vars, values_doc)
-    write_markdown_table(env_docs, OUTPUT_MD)
-    print(f"Markdown documentation generated in {OUTPUT_MD}")
+    table = extract_table_markdown(env_docs)
+    replace_env_table_in_md(OUTPUT_MD, table)
+    print(f"Markdown documentation table replaced in {OUTPUT_MD}")
     # Subaccount Cleanup
     subacc_env_vars = extract_env_vars_with_paths(SUBACC_CLEANUP_YAML)
     subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
-    new_table = extract_table_markdown(subacc_env_docs)
-    replace_env_table_in_md(SUBACC_MD, new_table)
+    subacc_table = extract_table_markdown(subacc_env_docs)
+    replace_env_table_in_md(SUBACC_MD, subacc_table)
     print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
     # Trial Cleanup
     trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
@@ -318,7 +292,6 @@ def main():
     free_env_vars = extract_env_vars_with_paths(FREE_CLEANUP_YAML)
     free_env_docs = map_env_to_values(free_env_vars, values_doc)
     free_table = extract_table_markdown(free_env_docs)
-    # Combine for doc: two tables, with headers
     combined = "### Trial Cleanup CronJob\n\n" + trial_table + "\n\n### Free Cleanup CronJob\n\n" + free_table + "\n"
     replace_env_table_in_md(TRIAL_FREE_MD, combined)
     print(f"Trial/Free Cleanup env documentation updated in {TRIAL_FREE_MD}")
