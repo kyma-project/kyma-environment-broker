@@ -12,6 +12,8 @@ If you do not include an `oidc` list or a single `oidc` object in the provisioni
 > [!NOTE]
 > When using the `oidc` list for custom OIDC configuration, you must provide values for all fields except **requiredClaims**. Otherwise, you get a provisioning error.
 
+See an example with the OIDC list:
+
 ```bash
    export VERSION=1.15.0
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
