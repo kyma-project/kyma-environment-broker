@@ -6,7 +6,7 @@ To create SAP BTP, Kyma runtime with a custom OIDC configuration, you can specif
 
 If you do not include an `oidc` list or a single `oidc` object in the provisioning request, the default OIDC configuration is applied. However, if you provide an empty `oidc` list with zero elements, no OIDC configuration is applied to the instance. 
 
-> The single `oidc` object defaults to the predefined values when its properties are left empty. However, you must explicitly define the `oidc` list because it does not inherit the default values for its items.
+The single `oidc` object defaults to the predefined values when its properties are left empty. However, you must explicitly define the `oidc` list because it does not inherit the default values for its items.
 
 > [!NOTE]
 > When using the `oidc` list for custom OIDC configuration, you must provide values for all fields except **requiredClaims**. Otherwise, you get a provisioning error.
