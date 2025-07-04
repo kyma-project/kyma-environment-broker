@@ -101,6 +101,8 @@ spec:
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.broker.disableSapConvergedCloud }}"
+            - name: APP_BROKER_ENABLE_JWKS
+              value: "{{ .Values.broker.enableJwks }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
@@ -286,6 +288,8 @@ spec:
                   key: secret
             - name: APP_QUOTA_SERVICE_URL
               value: "{{ .Values.cis.v2.provisioningServiceURL }}"
+            - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
+              value: /config/quotaWhitelistedSubaccountIds.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME

@@ -67,12 +67,13 @@ type NetworkingType struct {
 }
 
 type OIDCProperties struct {
-	ClientID       Type `json:"clientID"`
-	GroupsClaim    Type `json:"groupsClaim"`
-	IssuerURL      Type `json:"issuerURL"`
-	SigningAlgs    Type `json:"signingAlgs"`
-	UsernameClaim  Type `json:"usernameClaim"`
-	UsernamePrefix Type `json:"usernamePrefix"`
+	ClientID         Type `json:"clientID"`
+	GroupsClaim      Type `json:"groupsClaim"`
+	IssuerURL        Type `json:"issuerURL"`
+	SigningAlgs      Type `json:"signingAlgs"`
+	UsernameClaim    Type `json:"usernameClaim"`
+	UsernamePrefix   Type `json:"usernamePrefix"`
+	EncodedJwksArray Type `json:"encodedJwksArray,omitzero"`
 }
 
 type OIDCPropertiesExpanded struct {
@@ -83,8 +84,9 @@ type OIDCPropertiesExpanded struct {
 
 type OIDCType struct {
 	Type
-	Properties OIDCProperties `json:"properties"`
-	Required   []string       `json:"required"`
+	Properties    OIDCProperties `json:"properties"`
+	Required      []string       `json:"required"`
+	ControlsOrder []string       `json:"_controlsOrder,omitempty"`
 }
 
 type OIDCTypeExpanded struct {
@@ -224,7 +226,7 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters bool) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters, enableJwks bool) *OIDCs {
 	if defaultOIDCConfig == nil {
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
@@ -272,7 +274,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 									IssuerURL:      Type{Type: "string", MinLength: 1, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 									GroupsClaim:    Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsClaim, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 									UsernameClaim:  Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.UsernameClaim, Description: "The OpenID claim to use as the user name."},
-									UsernamePrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.UsernamePrefix, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+									UsernamePrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.UsernamePrefix, Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 									SigningAlgs: Type{
 										Type:     "array",
 										MinItems: 1,
@@ -280,17 +282,17 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 											Type: "string",
 										},
 										Default:     defaultOIDCConfig.SigningAlgs,
-										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+										Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 									},
 								},
-								GroupsPrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsPrefix, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
+								GroupsPrefix: Type{Type: "string", MinLength: 1, Default: defaultOIDCConfig.GroupsPrefix, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
 										Type:    "string",
 										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+									Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
 							Required: []string{"clientID", "issuerURL", "groupsClaim", "usernameClaim", "usernamePrefix", "signingAlgs", "groupsPrefix"},
@@ -311,25 +313,25 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 						GroupsClaim:    Type{Type: "string", ReadOnly: !update, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 						UsernameClaim:  Type{Type: "string", ReadOnly: !update, Description: "The OpenID claim to use as the user name."},
-						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 						SigningAlgs: Type{
 							Type: "array",
 							Items: &Type{
 								Type: "string",
 							},
 							ReadOnly:    !update,
-							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+							Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 						},
 					},
-					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
+					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "If specified, causes claims mapping to group names to be prefixed with the current value. The 'oidc:' value results in groups like 'oidc:engineering' and 'oidc:marketing'. The value '-' (dash character without additional characters) can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
 							Type:    "string",
-							Pattern: "^[^=]+=[^=]+$",
+							Pattern: "^([^=]+=[^=]+|-)$",
 						},
 						ReadOnly:    !update,
-						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+						Description: "A list of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. To remove the previously set claims, use the value '-' (dash character without additional characters).",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
@@ -342,30 +344,60 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 			OIDCs.OneOf[1] = oidcTypeExpanded
 		}
 	}
+	if enableJwks {
+		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
+			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "The JWKS array encoded in base64. Leave empty to not use it or to remove the previously set value."}
+			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+			additionalOidc.Properties.List.Default = []interface{}{
+				map[string]interface{}{
+					"clientID":         defaultOIDCConfig.ClientID,
+					"issuerURL":        defaultOIDCConfig.IssuerURL,
+					"groupsClaim":      defaultOIDCConfig.GroupsClaim,
+					"signingAlgs":      defaultOIDCConfig.SigningAlgs,
+					"usernameClaim":    defaultOIDCConfig.UsernameClaim,
+					"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
+					"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
+					"requiredClaims":   []interface{}{},
+					"encodedJwksArray": "",
+				},
+			}
+			OIDCs.OneOf[0] = additionalOidc
+		}
+		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
+			oidcTypeExpanded.Properties.EncodedJwksArray = Type{Type: "string", ReadOnly: !update, Description: "The JWKS array encoded in base64. To remove the previously set value, enter the value '-' (dash character without additional characters)."}
+			oidcTypeExpanded.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+			OIDCs.OneOf[1] = oidcTypeExpanded
+		}
+	}
 	return OIDCs
 }
 
-func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
+func NewOIDCSchema(rejectUnsupportedParameters, enableJwks bool) *OIDCType {
 	OIDCType := &OIDCType{
-		Type: Type{Type: "object", Description: "OIDC configuration"},
+		ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix"},
+		Type:          Type{Type: "object", Description: "OIDC configuration"},
 		Properties: OIDCProperties{
 			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
 			IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 			GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 			UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 			SigningAlgs: Type{
 				Type: "array",
 				Items: &Type{
 					Type: "string",
 				},
-				Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+				Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
 			},
 		},
 		Required: []string{"clientID", "issuerURL"},
 	}
 	if rejectUnsupportedParameters {
 		OIDCType.Type.AdditionalProperties = false
+	}
+	if enableJwks {
+		OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
+		OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
 	}
 	return OIDCType
 }
@@ -625,7 +657,7 @@ func AdministratorsProperty() *Type {
 	return &Type{
 		Type:        "array",
 		Title:       "Administrators",
-		Description: "Specifies the list of runtime administrators",
+		Description: "Specifies the list of runtime administrators.",
 		Items: &Type{
 			Type: "string",
 		},

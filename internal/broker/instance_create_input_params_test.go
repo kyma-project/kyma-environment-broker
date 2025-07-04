@@ -48,6 +48,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			nil,
+			nil,
 		)
 
 		// when
@@ -82,6 +83,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			nil,
+			nil,
 		)
 
 		// when
@@ -114,6 +116,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 		)
 

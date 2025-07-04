@@ -46,10 +46,11 @@ type CreateRuntimeResourceStep struct {
 	oidcDefaultValues       pkg.OIDCConfigDTO
 	useAdditionalOIDCSchema bool
 	workersProvider         *workers.Provider
+	enableJwks              bool
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwks bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
@@ -57,6 +58,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 		workersProvider:         workersProvider,
+		enableJwks:              enableJwks,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -316,7 +318,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 
 	for _, oidcConfig := range oidcList {
 		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
-		configs = append(configs, imv1.OIDCConfig{
+		oidc := imv1.OIDCConfig{
 			OIDCConfig: gardener.OIDCConfig{
 				ClientID:       &oidcConfig.ClientID,
 				IssuerURL:      &oidcConfig.IssuerURL,
@@ -327,7 +329,11 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				GroupsPrefix:   ptr.String("-"),
 				RequiredClaims: requiredClaims,
 			},
-		})
+		}
+		if s.enableJwks {
+			oidc.JWKS = []byte(oidcConfig.EncodedJwksArray)
+		}
+		configs = append(configs, oidc)
 	}
 
 	return &configs
@@ -352,14 +358,20 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if inputOIDC.UsernamePrefix != "" {
 		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
 	}
-	if s.useAdditionalOIDCSchema {
+	if s.useAdditionalOIDCSchema && len(inputOIDC.RequiredClaims) > 0 {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
+	}
+	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
+		defaultOIDC.JWKS = []byte(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC
 }
 
 func (s *CreateRuntimeResourceStep) parseRequiredClaims(claims []string) map[string]string {
 	requiredClaims := make(map[string]string)
+	if len(claims) == 1 && claims[0] == "-" {
+		return requiredClaims
+	}
 	for _, claim := range claims {
 		parts := strings.SplitN(claim, "=", 2)
 		requiredClaims[parts[0]] = parts[1]

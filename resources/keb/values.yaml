@@ -31,34 +31,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.20.19
+      version: 1.21.2
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_expirator_job:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.20.19"
+      version: "1.21.2"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.20.19
+      version: 1.21.2
   ingress:
     domainName: localhost
   istio:
@@ -146,6 +146,8 @@ broker:
   defaultRequestRegion: "cf-eu10"
   # If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters
   disableSapConvergedCloud: false
+  # If true, enables the handling of the encoded JWKS array, temporary feature flag
+  enableJwks: "false"
   # Comma-separated list of plan names enabled and available for provisioning in KEB
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, allows users to upgrade their plans (if a plan supports upgrades)
@@ -326,6 +328,11 @@ profiler:
 
 providersConfiguration: {}
 
+# List of subaccount IDs that have unlimited quota for Kyma runtimes.
+# Only subaccounts listed here can provision beyond their assigned quota limits
+quotaWhitelistedSubaccountIds: |-
+  whitelist:
+
 # Defines which machine type families are available in which regions (and optionally, zones)
 # Restricts provisioning of listed machine types to the specified regions/zones only
 # If a machine type is not listed, it is considered available in all regions
@@ -346,15 +353,6 @@ runtimeConfiguration: |-
         channel: fast
         modules: []
     additional-components: []
-
-# Restricts where the SAP Cloud Infrastructure plan is available. If a region is not listed, the plan is not offered for that platform region
-sapConvergedCloudPlanRegionMappings: |-
-  cf-eu20-staging:
-    - eu-de-1
-    - eu-de-2
-  cf-eu21-staging:
-    - eu-de-3
-    - eu-de-4
 
 # Contains DNS provider configuration for SKR clusters
 skrDNSProvidersValues: |-

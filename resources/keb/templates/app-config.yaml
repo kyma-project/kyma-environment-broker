@@ -34,3 +34,7 @@ data:
 {{ toYaml .Values.providersConfiguration | indent 4 }}
   plansConfig.yaml: |-
 {{ toYaml .Values.plansConfiguration | indent 4 }}
+  quotaWhitelistedSubaccountIds.yaml: |-
+{{- with .Values.quotaWhitelistedSubaccountIds }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
