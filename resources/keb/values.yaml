@@ -211,6 +211,33 @@ cleaning:
   dryRun: true
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database
   enabled: false
+  
+configPaths:
+  # Path to the service catalog configuration file
+  catalog: "/config/catalog.yaml"
+  # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes
+  # Only accounts listed here can provision more than the default limit of free environments
+  freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
+  # Path to the rules for mapping plans and regions to hyperscaler account pools
+  hapRule: "/config/hapRule.yaml"
+  # Path to the plans configuration file, which defines available service plans
+  plansConfig: "/config/plansConfig.yaml"
+  # Path to the providers configuration file, which defines hyperscaler/provider settings
+  providersConfig: "/config/providersConfig.yaml"
+  # Path to the list of subaccount IDs that are allowed to bypass quota restrictions
+  quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
+  # Path to the list of regions that support machine-type selection
+  regionsSupportingMachine: "/config/regionsSupportingMachine.yaml"
+  # Path to the DNS providers values
+  skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
+  # Path to the default OIDC values
+  skrOIDCDefaultValues: "/config/skrOIDCDefaultValues.yaml"
+  # Path to the region mapping for trial environments
+  trialRegionMapping: "/config/trialRegionMapping.yaml"
+  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
+  gardenerSeedsCache: "gardener-seeds-cache"
+  # Path to the Cloud SQL SSL root certificate file
+  cloudsqlSSLRootCert: "/secrets/cloudsql-sslrootcert/server-ca.pem"
 
 # If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted
 disableProcessOperationsInProgress: "false"
