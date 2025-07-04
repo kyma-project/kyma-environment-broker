@@ -46,19 +46,32 @@ func TestGetQuota_WrongPlan(t *testing.T) {
 	assert.Zero(t, quota)
 }
 
-func TestGetQuota_APIError(t *testing.T) {
+func TestGetQuota_SubaccountNotExits(t *testing.T) {
 	// given
 	APIErr := map[string]any{
-		"error": map[string]string{"message": "not authorized"},
+		"error": map[string]string{"message": "Tenant doesn't exist under subaccount [test-subaccount]"},
 	}
-	client, cleanup := fixClient(t, http.StatusForbidden, APIErr)
+	client, cleanup := fixClient(t, http.StatusNotFound, APIErr)
 	defer cleanup()
 
 	// when
 	quota, err := client.GetQuota("test-subaccount", "aws")
 
 	// then
-	assert.EqualError(t, err, "API error: not authorized")
+	assert.EqualError(t, err, "Subaccount test-subaccount does not exist")
+	assert.Zero(t, quota)
+}
+
+func TestGetQuota_ServiceNotAvailable(t *testing.T) {
+	// given
+	client, cleanup := fixClient(t, http.StatusInternalServerError, map[string]any{})
+	defer cleanup()
+
+	// when
+	quota, err := client.GetQuota("test-subaccount", "aws")
+
+	// then
+	assert.EqualError(t, err, "The provisioning service is currently unavailable. Please try again later")
 	assert.Zero(t, quota)
 }
 

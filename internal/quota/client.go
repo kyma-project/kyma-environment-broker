@@ -80,13 +80,17 @@ func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
 		return 0, fmt.Errorf("while unmarshaling response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("API error: %s", response.Error.Message)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		if response.Plan != planName {
+			return 0, nil
+		}
+		return response.Quota, nil
+	case http.StatusNotFound:
+		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, response.Error.Message))
+		return 0, fmt.Errorf("Subaccount %s does not exist", subAccountID)
+	default:
+		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, response.Error.Message))
+		return 0, fmt.Errorf("The provisioning service is currently unavailable. Please try again later")
 	}
-
-	if response.Plan != planName {
-		return 0, nil
-	}
-
-	return response.Quota, nil
 }
