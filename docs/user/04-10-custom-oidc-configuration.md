@@ -9,7 +9,7 @@ If you do not include an `oidc` list or a single `oidc` object in the provisioni
 The single `oidc` object defaults to the predefined values when its properties are left empty. However, you must explicitly define the `oidc` list because it does not inherit the default values for its items.
 
 > [!NOTE]
-> When using the `oidc` list for custom OIDC configuration, you must provide values for all fields except **requiredClaims**. Otherwise, you get a provisioning error.
+> When using the `oidc` list for custom OIDC configuration, you must provide values for each element in the list except for **requiredClaims**. Otherwise, you get a provisioning error.
 
 See an example with the OIDC list:
 
