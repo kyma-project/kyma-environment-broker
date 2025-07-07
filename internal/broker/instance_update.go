@@ -21,6 +21,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -61,9 +62,11 @@ type UpdateEndpoint struct {
 	useSmallerMachineTypes      bool
 	infrastructureManagerConfig InfrastructureManager
 
-	schemaService *SchemaService
-	providerSpec  *configuration.ProviderSpec
-	planSpec      *configuration.PlanSpecifications
+	schemaService  *SchemaService
+	providerSpec   *configuration.ProviderSpec
+	planSpec       *configuration.PlanSpecifications
+	quotaClient    QuotaClient
+	quotaWhitelist whitelist.Set
 }
 
 func NewUpdate(cfg Config,
@@ -83,6 +86,8 @@ func NewUpdate(cfg Config,
 	planSpec *configuration.PlanSpecifications,
 	imConfig InfrastructureManager,
 	schemaService *SchemaService,
+	quotaClient QuotaClient,
+	quotaWhitelist whitelist.Set,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -104,6 +109,8 @@ func NewUpdate(cfg Config,
 		infrastructureManagerConfig:              imConfig,
 		schemaService:                            schemaService,
 		planSpec:                                 planSpec,
+		quotaClient:                              quotaClient,
+		quotaWhitelist:                           quotaWhitelist,
 	}
 }
 
@@ -334,6 +341,11 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
 		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
+			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
+				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID); err != nil {
+					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+				}
+			}
 			logger.Info(fmt.Sprintf("Plan change accepted."))
 			operation.UpdatedPlanID = details.PlanID
 			operation.ProvisioningParameters.PlanID = details.PlanID

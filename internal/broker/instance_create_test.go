@@ -3253,7 +3253,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.EqualError(t, err, "Kyma instances quota exceeded. assignedQuota: 1, remainingQuota: 0. Contact your administrator.")
+		assert.EqualError(t, err, "Kyma instances quota exceeded for plan azure. assignedQuota: 1, remainingQuota: 0. Contact your administrator.")
 	})
 
 	t.Run("should create new operation if there is unassigned quota", func(t *testing.T) {
@@ -3355,7 +3355,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.EqualError(t, err, "Failed to get assigned quota: error message.")
+		assert.EqualError(t, err, "Failed to get assigned quota for plan azure: error message.")
 	})
 
 	t.Run("should create new operation if there is no unassigned quota but whitelisted subaccount", func(t *testing.T) {

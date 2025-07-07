@@ -326,29 +326,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
-		instanceFilter := dbmodel.InstanceFilter{
-			SubAccountIDs: []string{provisioningParameters.ErsContext.SubAccountID},
-			PlanIDs:       []string{provisioningParameters.PlanID},
-		}
-		_, _, usedQuota, err := b.instanceStorage.List(instanceFilter)
-		if err != nil {
-			return fmt.Errorf(
-				"while listing instances for subaccount %s and plan ID %s: %w",
-				provisioningParameters.ErsContext.SubAccountID,
-				provisioningParameters.PlanID,
-				err,
-			)
-		}
-
-		if usedQuota > 0 {
-			assignedQuota, err := b.quotaClient.GetQuota(provisioningParameters.ErsContext.SubAccountID, PlanNamesMapping[provisioningParameters.PlanID])
-			if err != nil {
-				return fmt.Errorf("Failed to get assigned quota: %w.", err)
-			}
-
-			if usedQuota >= assignedQuota {
-				return fmt.Errorf("Kyma instances quota exceeded. assignedQuota: %d, remainingQuota: 0. Contact your administrator.", assignedQuota)
-			}
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID); err != nil {
+			return err
 		}
 	}
 
@@ -885,6 +864,35 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 
 	if n1.Contains(n2.IP) || n2.Contains(n1.IP) {
 		return fmt.Errorf("%s overlaps %s", n1.String(), n2.String())
+	}
+
+	return nil
+}
+
+func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClient, subAccountID, planID string) error {
+	instanceFilter := dbmodel.InstanceFilter{
+		SubAccountIDs: []string{subAccountID},
+		PlanIDs:       []string{planID},
+	}
+	_, _, usedQuota, err := instanceStorage.List(instanceFilter)
+	if err != nil {
+		return fmt.Errorf(
+			"while listing instances for subaccount %s and plan ID %s: %w",
+			subAccountID,
+			planID,
+			err,
+		)
+	}
+
+	if usedQuota > 0 {
+		assignedQuota, err := quotaClient.GetQuota(subAccountID, PlanNamesMapping[planID])
+		if err != nil {
+			return fmt.Errorf("Failed to get assigned quota for plan %s: %w.", PlanNamesMapping[planID], err)
+		}
+
+		if usedQuota >= assignedQuota {
+			return fmt.Errorf("Kyma instances quota exceeded for plan %s. assignedQuota: %d, remainingQuota: 0. Contact your administrator.", PlanNamesMapping[planID], assignedQuota)
+		}
 	}
 
 	return nil
