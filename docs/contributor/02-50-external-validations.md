@@ -3,7 +3,7 @@
 ## Kyma Instances Quota
 
 Each service or environment is responsible for managing its own quota usage. During provisioning requests, the kyma-environment-broker initiates a call 
-to the Provisioning Service to retrieve the assigned quota for the target subaccount. These calls are also made during update requests if the plan changes.
+to the Provisioning Service to retrieve the assigned quota for the target subaccount and plan. These calls are also made during update requests if the plan changes.
 If the assigned quota is less than or equal to the number of instances stored in the database, the request will fail. 
 
 The quota check is only performed when there is more than one Kyma environment per subaccount and the subaccount ID is not whitelisted. If the request to 
