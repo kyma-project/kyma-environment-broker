@@ -9,7 +9,8 @@ If the assigned quota is less than or equal to the number of instances stored in
 The quota check is only performed when there is more than one Kyma environment per subaccount and the subaccount ID is not whitelisted. If the request to 
 the Provisioning Service fails, it is retried at configured intervals. If the retries are unsuccessful, the provisioning or update request is rejected.
 
-Sample Configuration:
+The following configuration enables quota limit checks and specifies the required URLs, credentials, and retry behavior. 
+Whitelisted subaccount IDs are excluded from quota validation.
 ```yaml
 cis:
   v2:
