@@ -46,8 +46,8 @@ SCHEMA_MIGRATOR_MD = "docs/contributor/07-30-schema-migrator.md"
 def extract_env_vars_with_paths(deployment_yaml_path):
     """
     Extract environment variables and their value sources from a Helm deployment YAML.
-    Handles static values, single .Values references, composite values, and valueFrom (e.g., secretKeyRef/configMapKeyRef with .Values).
-    Returns a list of tuples: (env_var_name, value_path_or_literal or list of value paths)
+    Handles static values, single .Values references, and composite values (multiple .Values references in one value).
+    Returns a list of tuples: (env_var_name, value_path_or_literal)
     """
     env_vars = []
     with open(deployment_yaml_path, "r") as f:
@@ -62,41 +62,25 @@ def extract_env_vars_with_paths(deployment_yaml_path):
             m = re.match(r"\s*-\s*name:\s*([A-Z0-9_]+)", line)
             if m:
                 current_env = m.group(1)
-                # Look ahead for value or valueFrom
-                value_found = False
-                for j in range(i+1, min(i+10, len(lines))):  # Look ahead more lines for valueFrom
+                # Look ahead for value line
+                for j in range(i+1, min(i+2, len(lines))):
                     val_line = lines[j]
-                    # Composite value
+                    # Check for composite value with multiple .Values references
                     if re.search(r'{{.*\.Values\..*}}.*{{.*\.Values\..*}}', val_line):
+                        # Extract the whole value string inside 'value:'
                         mval = re.search(r'value:\s*"?(.+?)"?$', val_line)
                         if mval:
                             env_vars.append((current_env, mval.group(1).strip()))
-                            value_found = True
                             break
                     else:
                         mval = re.search(r'value:\s*"?{{\s*\.Values\.([^"}}]+)\s*}}"?', val_line)
                         if mval:
                             env_vars.append((current_env, mval.group(1)))
-                            value_found = True
                             break
                         elif 'valueFrom:' in val_line:
-                            # Look for secretKeyRef/configMapKeyRef with .Values
-                            value_paths = []
-                            for k in range(j+1, min(j+10, len(lines))):
-                                sub_line = lines[k]
-                                # Extract all .Values references in the line
-                                for msub in re.finditer(r'\s*(name|key):\s*{{\s*\.Values\.([^"}}]+)\s*}}', sub_line):
-                                    value_paths.append(msub.group(2))
-                                # Stop if next env or end of env block
-                                if re.match(r'\s*-\s*name:', sub_line) or re.match(r'\s*ports:', sub_line) or re.match(r'\s*#', sub_line):
-                                    break
-                            if value_paths:
-                                env_vars.append((current_env, value_paths))
-                            else:
-                                env_vars.append((current_env, None))
-                            value_found = True
+                            env_vars.append((current_env, None))
                             break
-                if not value_found:
+                else:
                     env_vars.append((current_env, None))
             elif re.match(r"\s*-\s*name:", line):
                 continue
@@ -168,9 +152,6 @@ def map_env_to_values(env_vars, values_doc):
       - Static values (not mapped to .Values): description and value are '-'.
       - Single .Values references: use description and default from values.yaml if available.
       - Composite values (multiple .Values references): join descriptions and defaults from all referenced keys.
-      - valueFrom (e.g., secretKeyRef): join descriptions/defaults for all referenced keys.
-      - For nested secret references (e.g., secrets.databasePort.name), if the field has no description, use the parent key's description as fallback.
-      - Avoid duplicate descriptions if parent and child have the same description.
     Returns a list of dicts: {env, description, default}
     """
     result = []
@@ -178,85 +159,35 @@ def map_env_to_values(env_vars, values_doc):
     for env, path in env_vars:
         desc = ''
         default = ''
+        path = path.strip() if path else ''
         doc_entry = None
-        # Handle valueFrom with multiple .Values references (list)
-        if isinstance(path, list):
+        norm_path = normalize_path(path) if path else ''
+        # Handle composite values like '{{ .Values.host }}.{{ .Values.global.ingress.domainName }}'
+        if path and re.search(r'\{\{\s*\.Values\.', path) and '}}.{{' in path:
+            # Extract all .Values paths in the composite
+            parts = re.findall(r'\.Values\.([a-zA-Z0-9_.]+)', path)
             descs = []
             defaults = []
-            for part in path:
+            for part in parts:
                 doc = values_doc.get(part) or norm_doc_map.get(normalize_path(part))
-                # Fallback: if no description, try parent key
-                parent_desc = None
-                if (not doc or not doc.get('description')) and '.' in part:
-                    parent = '.'.join(part.split('.')[:-1])
-                    parent_doc = values_doc.get(parent) or norm_doc_map.get(normalize_path(parent))
-                    if parent_doc and parent_doc.get('description'):
-                        parent_desc = parent_doc['description']
-                child_desc = doc['description'] if doc and doc.get('description') else None
-                # Only add if not duplicate
-                if child_desc and child_desc != parent_desc:
-                    descs.append(child_desc)
-                elif parent_desc:
-                    descs.append(parent_desc)
-                if doc and doc.get('default', ''):
-                    defaults.append(str(doc['default']))
-            # Remove duplicates while preserving order
-            seen = set()
-            descs_unique = []
-            for d in descs:
-                if d and d not in seen:
-                    descs_unique.append(d)
-                    seen.add(d)
-            desc = ' / '.join(descs_unique) if descs_unique else '-'
-            default = ' / '.join(defaults) if defaults else '-'
-        else:
-            path = path.strip() if path else ''
-            norm_path = normalize_path(path) if path else ''
-            # Composite values like '{{ .Values.host }}.{{ .Values.global.ingress.domainName }}'
-            if path and re.search(r'\{\{\s*\.Values\.', path) and '}}.{{' in path:
-                parts = re.findall(r'\.Values\.([a-zA-Z0-9_.]+)', path)
-                descs = []
-                defaults = []
-                for part in parts:
-                    doc = values_doc.get(part) or norm_doc_map.get(normalize_path(part))
-                    parent_desc = None
-                    if (not doc or not doc.get('description')) and '.' in part:
-                        parent = '.'.join(part.split('.')[:-1])
-                        parent_doc = values_doc.get(parent) or norm_doc_map.get(normalize_path(parent))
-                        if parent_doc and parent_doc.get('description'):
-                            parent_desc = parent_doc['description']
-                    child_desc = doc['description'] if doc and doc.get('description') else None
-                    if child_desc and child_desc != parent_desc:
-                        descs.append(child_desc)
-                    elif parent_desc:
-                        descs.append(parent_desc)
-                    if doc and doc.get('default', ''):
+                if doc:
+                    if doc.get('description', ''):
+                        descs.append(doc['description'])
+                    if doc.get('default', ''):
                         defaults.append(str(doc['default']))
-                # Remove duplicates while preserving order
-                seen = set()
-                descs_unique = []
-                for d in descs:
-                    if d and d not in seen:
-                        descs_unique.append(d)
-                        seen.add(d)
-                desc = ' / '.join(descs_unique) if descs_unique else '-'
-                default = '.'.join(defaults) if defaults else '-'
-            elif path and path in values_doc:
-                doc_entry = values_doc[path]
-                if doc_entry:
-                    desc = doc_entry.get('description', '')
-                    default = doc_entry.get('default', '')
-            elif norm_path and norm_path in norm_doc_map:
-                doc_entry = norm_doc_map[norm_path]
-                if doc_entry:
-                    desc = doc_entry.get('description', '')
-                    default = doc_entry.get('default', '')
-            # Fallback: if no description, try parent key
-            if not desc and path and '.' in path:
-                parent = '.'.join(path.split('.')[:-1])
-                parent_doc = values_doc.get(parent) or norm_doc_map.get(normalize_path(parent))
-                if parent_doc and parent_doc.get('description'):
-                    desc = parent_doc['description']
+            desc = ' / '.join(descs) if descs else '-'
+            default = '.'.join(defaults) if defaults else '-'
+        elif path and path in values_doc:
+            doc_entry = values_doc[path]
+            if doc_entry:
+                desc = doc_entry.get('description', '')
+                default = doc_entry.get('default', '')
+        elif norm_path and norm_path in norm_doc_map:
+            doc_entry = norm_doc_map[norm_path]
+            if doc_entry:
+                desc = doc_entry.get('description', '')
+                default = doc_entry.get('default', '')
+        # Otherwise, leave desc and default blank (will render as '-')
         result.append({
             'env': env,
             'description': desc,
