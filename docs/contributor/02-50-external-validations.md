@@ -26,5 +26,3 @@ quotaWhitelistedSubaccountIds: |-
     - whitelisted-subaccount-1
     - whitelisted-subaccount-2
 ```
-This configuration enables quota limit checks and specifies the required URLs, credentials, and retry behavior. Whitelisted subaccount IDs are excluded from 
-quota validation.
