@@ -2,7 +2,7 @@
 
 ## Kyma Instances Quota
 
-Each service or environment is responsible for managing its own quota usage. During provisioning requests, the kyma-environment-broker initiates a call 
+Each service or environment is responsible for managing its own quota usage. During provisioning requests, Kyma Environment Broker (KEB) initiates a call 
 to the Provisioning Service to retrieve the assigned quota for the target subaccount and plan. These calls are also made during update requests if the plan changes.
 If the assigned quota is less than or equal to the number of instances stored in the database, the request will fail. 
 
