@@ -239,7 +239,8 @@ func (om *OperationManager) storeCreatedAtIfMissing(id string, createdAt time.Ti
 func (om *OperationManager) isTimeoutOccurred(id string, maxTime time.Duration) bool {
 	om.mu.RLock()
 	defer om.mu.RUnlock()
-	return !om.retryTimestamps[id].IsZero() && time.Since(om.retryTimestamps[id]) > maxTime
+	since := time.Since(om.retryTimestamps[id])
+	return !om.retryTimestamps[id].IsZero() && since > maxTime
 }
 
 func (om *OperationManager) getRemainingTime(id string, maxTime time.Duration) time.Duration {

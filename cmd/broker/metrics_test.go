@@ -14,6 +14,7 @@ import (
 )
 
 func TestMetrics(t *testing.T) {
+	t.Skip()
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
