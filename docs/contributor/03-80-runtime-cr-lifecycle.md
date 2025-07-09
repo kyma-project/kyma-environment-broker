@@ -1,4 +1,4 @@
-# Runtime CR Lifecycle
+# Runtime Custom Resource Lifecycle
 
 ## Overview
 
