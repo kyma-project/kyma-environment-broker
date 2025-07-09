@@ -265,7 +265,6 @@ You can update the OIDC configuration from a single `oidc` object to an `oidc` l
   ]
   ```
 
-2. **Update Request**  
   To update this OIDC configuration, send an HTTP PATCH request with the following payload:
 
   ```json
@@ -333,7 +332,6 @@ Result: You see a configuration with the values provided in the request, similar
 
 ### Updating an Instance with a Single OIDC Object
 
-1. **Current OIDC Configuration**  
   The instance has the following OIDC object configuration:
 
   ```json
@@ -349,7 +347,7 @@ Result: You see a configuration with the values provided in the request, similar
   }
   ```
 
-1. To update the OIDC configuration, send an HTTP PATCH request with the following payload:
+ To update the OIDC configuration, send an HTTP PATCH request with the following payload:
 
   ```json
   {
