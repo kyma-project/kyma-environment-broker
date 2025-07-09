@@ -2,7 +2,7 @@
 
 ## Overview
 
-Runtime Custom Resource is created by KEB during the provisioning process. Its specification describes the desired configuration of the runtime. 
+Kyma Environment Broker (KEB) creates a Runtime Custom Resource (CR) during the provisioning process. Its specification describes the desired runtime configuration. 
 Runtime CR state is reconciled by the Kyma Infrastructure Manager (KIM).
 
 ## Provisioning
