@@ -8,10 +8,10 @@ Runtime CR state is reconciled by the Kyma Infrastructure Manager (KIM).
 ## Provisioning
 KEB creates the Runtime CR during the provisioning process. The Runtime CR is created with the desired configuration of the runtime, which includes information about the cluster, machine types, network configuration, and other settings.
 After the Runtime CR is created, KEB waits for the KIM to set the state of the Runtime CR to `Ready`. When the state is set to `Ready`, KEB considers the provisioning process successful.
-If the KIM fails to set the state of the Runtime CR to `Ready` within the timeout period (currently set to 60 minutes), KEB considers the provisioning process failed and removes the Runtime CR.
+If the KIM fails to set the state of the Runtime CR to `Ready` within the timeout period (currently set to 60 minutes), KEB considers the provisioning process failed and initiates the Runtime CR removal.
 
 ## Deprovisioning and Suspension
-During the deprovisioning process, KEB removes the Runtime CR. 
+During the deprovisioning process, KEB removes the Runtime CR and waits till the resource is deleted.
 
 ## Unsuspension
 When the SKR is unsuspended, KEB creates a new Runtime CR with the same specification as the previous one. The process is identical to the provisioning process, where KEB waits for the KIM to set the state of the new Runtime CR to `Ready`.
