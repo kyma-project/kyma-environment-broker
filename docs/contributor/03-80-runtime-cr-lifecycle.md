@@ -1,0 +1,21 @@
+# Runtime CR Lifecycle
+
+## Overview
+
+Runtime Custom Resource is created by KEB during the provisioning process. Its specification describes the desired configuration of the runtime. 
+Runtime CR state is reconciled by the Kyma Infrastructure Manager (KIM).
+
+## Provisioning
+KEB creates the Runtime CR during the provisioning process. The Runtime CR is created with the desired configuration of the runtime, which includes information about the cluster, machine types, network configuration, and other settings.
+After the Runtime CR is created, KEB waits for the KIM to set the state of the Runtime CR to `Ready`. When the state is set to `Ready`, KEB considers the provisioning process successful.
+If the KIM fails to set the state of the Runtime CR to `Ready` within the timeout period (currently set to 60 minutes), KEB considers the provisioning process failed and removes the Runtime CR.
+
+## Deprovisioning and Suspension
+During the deprovisioning process, KEB removes the Runtime CR. 
+
+## Unsuspension
+When the SKR is unsuspended, KEB creates a new Runtime CR with the same specification as the previous one. The process is identical to the provisioning process, where KEB waits for the KIM to set the state of the new Runtime CR to `Ready`.
+
+## Update
+When the SKR is updated, KEB updates the Runtime CR with the new specification. Then KEB waits for the KIM to set the state of the Runtime CR to either `Ready` or `Failed`. If the state is set to `Ready`, KEB considers the update process successful. If the state is set to `Failed`, KEB considers the update process failed.
+If the state of the Runtime CR to is neither `Ready` nor `Failed` KEB waits till the timeout period (currently set to 120 minutes) expires and then considers the update process failed.
