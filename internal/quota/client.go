@@ -17,8 +17,8 @@ const (
 )
 
 type Config struct {
-	ClientID     string
-	ClientSecret string
+	ClientID     string `envconfig:"optional"`
+	ClientSecret string `envconfig:"optional"`
 	AuthURL      string
 	ServiceURL   string
 	Retries      int           `envconfig:"default=5"`
