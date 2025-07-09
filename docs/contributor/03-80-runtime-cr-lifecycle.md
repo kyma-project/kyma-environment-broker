@@ -17,5 +17,5 @@ During the deprovisioning process, KEB removes the Runtime CR and waits till the
 When the Kyma runtime is unsuspended, KEB creates a new Runtime CR with the same specification as the previous one. The process is identical to the provisioning process, where KEB waits for KIM to set the state of the new Runtime CR to `Ready`.
 
 ## Update
-When the SKR is updated, KEB updates the Runtime CR with the new specification. Then KEB waits for the KIM to set the state of the Runtime CR to either `Ready` or `Failed`. If the state is set to `Ready`, KEB considers the update process successful. If the state is set to `Failed`, KEB considers the update process failed.
+When the Kyma runtime is updated, KEB updates the Runtime CR with the new specification. Then, KEB waits for KIM to set the state of the Runtime CR to either `Ready` or `Failed`. If the state is set to `Ready`, KEB considers the update process successful. If the state is set to `Failed`, KEB considers the update process failed.
 If the state of the Runtime CR to is neither `Ready` nor `Failed` KEB waits till the timeout period (currently set to 120 minutes) expires and then considers the update process failed.
