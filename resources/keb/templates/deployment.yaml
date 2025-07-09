@@ -96,7 +96,7 @@ spec:
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.broker.binding.minExpirationSeconds}}"
             - name: APP_BROKER_CHECK_QUOTA_LIMIT
-              value: "{{ .Values.broker.checkQuotaLimit }}"
+              value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
@@ -286,6 +286,10 @@ spec:
                 secretKeyRef:
                   name: "{{ .Values.cis.v2.secretName }}"
                   key: secret
+            - name: APP_QUOTA_INTERVAL
+              value: "{{ .Values.quotaLimitCheck.interval }}"
+            - name: APP_QUOTA_RETRIES
+              value: "{{ .Values.quotaLimitCheck.retries }}"
             - name: APP_QUOTA_SERVICE_URL
               value: "{{ .Values.cis.v2.provisioningServiceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH

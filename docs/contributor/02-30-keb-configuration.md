@@ -94,6 +94,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
 | **APP_QUOTA_CLIENT_ID** | None | - |
 | **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Quota Assignments API in case of errors |
+| **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Quota Assignments API request fails |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | None | - |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
