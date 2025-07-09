@@ -96,11 +96,13 @@ spec:
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.broker.binding.minExpirationSeconds}}"
             - name: APP_BROKER_CHECK_QUOTA_LIMIT
-              value: "{{ .Values.broker.checkQuotaLimit }}"
+              value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.broker.disableSapConvergedCloud }}"
+            - name: APP_BROKER_ENABLE_JWKS
+              value: "{{ .Values.broker.enableJwks }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
@@ -274,6 +276,7 @@ spec:
               value: "{{ .Values.provisioning.workersAmount }}"
             - name: APP_QUOTA_AUTH_URL
               value: "{{ .Values.cis.v2.authURL }}"
+          {{- if .Values.quotaLimitCheck.enabled }}
             - name: APP_QUOTA_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -284,8 +287,15 @@ spec:
                 secretKeyRef:
                   name: "{{ .Values.cis.v2.secretName }}"
                   key: secret
+          {{- end }}
+            - name: APP_QUOTA_INTERVAL
+              value: "{{ .Values.quotaLimitCheck.interval }}"
+            - name: APP_QUOTA_RETRIES
+              value: "{{ .Values.quotaLimitCheck.retries }}"
             - name: APP_QUOTA_SERVICE_URL
               value: "{{ .Values.cis.v2.provisioningServiceURL }}"
+            - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
+              value: /config/quotaWhitelistedSubaccountIds.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME

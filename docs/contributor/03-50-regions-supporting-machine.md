@@ -20,19 +20,21 @@ When a new worker node pool is created, three zones are randomly selected from t
 |      `m8g`       | `ap-northeast-1` |      `[a, b]`       |  `[a, b, c]`   |  true  |     Error message saying that machine type is not available in 3 zones     |
 |      `m8g`       | `ap-northeast-1` |      `[a, b]`       |  `[a, b, c]`   | false  |   Worker node pool provisioned in a single random zone, for example, `a`   |
 
-See a sample configuration:
+The **regionsSupportingMachine** is a part of **providersConfiguration**, and you can define it for every provider. For example:
 
 ```yaml
-regionsSupportingMachine: |-
-  m8g:
-    ap-northeast-1: [a, b]
-    ap-southeast-1:
-    ca-central-1:
-  c2d-highmem:
-    us-central1:
-    southamerica-east1:
-  Standard_L:
-    uksouth:
-    japaneast: [a, b, c, d]
-    brazilsouth:
+providersConfiguration:
+    aws:
+        regionsSupportingMachine:
+            g6:
+                us-west-2:
+                eu-central-1: [a, b]
+                ap-south-1: [b]
+                us-east-1: [a, b, c, d]
+            g4dn:
+                eu-central-1:
+                eu-west-2:
+                us-east-1:
+                ap-south-1:
+                us-west-2: [a, b, c]
 ```

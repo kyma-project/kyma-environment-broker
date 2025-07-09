@@ -191,8 +191,6 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 
 <!-- markdown-link-check-enable -->
 
-The SAP Converged Cloud plan cannot be provisioned in all SKR regions. This restriction is enforced through the region mapping functionality configured by [`sapConvergedCloudPlanRegionMappings`](https://github.com/kyma-project/kyma-environment-broker/blob/48d5f55dfacfc511ead132fb77f522abc7e382e7/resources/keb/values.yaml#L215). The lists enable you to map a BTP region, which is passed to the provisioning endpoint in an HTTP path parameter (map key), to Kyma regions (list entries). Based on that configuration and the passed path parameter, the broker schema is populated only with values from the mapped list. In case of an empty mapping configuration or passing a provisioning path parameter that does not contain the configured region, the `sap-converged-cloud` plan is not rendered in the schema.
-
  </details>
  </div>
 

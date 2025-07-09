@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -61,6 +62,7 @@ type RuntimeDTO struct {
 	SubscriptionSecretName      *string                   `json:"subscriptionSecretName,omitempty"`
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
+	Actions                     []Action                  `json:"actions,omitempty"`
 }
 
 type CloudProvider string
@@ -152,14 +154,15 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 }
 
 type OIDCConfigDTO struct {
-	ClientID       string   `json:"clientID" yaml:"clientID"`
-	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
-	GroupsPrefix   string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
-	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
-	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
-	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
-	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
-	RequiredClaims []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
+	ClientID         string   `json:"clientID" yaml:"clientID"`
+	GroupsClaim      string   `json:"groupsClaim" yaml:"groupsClaim"`
+	GroupsPrefix     string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
+	IssuerURL        string   `json:"issuerURL" yaml:"issuerURL"`
+	SigningAlgs      []string `json:"signingAlgs" yaml:"signingAlgs"`
+	UsernameClaim    string   `json:"usernameClaim" yaml:"usernameClaim"`
+	UsernamePrefix   string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+	RequiredClaims   []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
+	EncodedJwksArray string   `json:"encodedJwksArray,omitempty" yaml:"encodedJwksArray,omitempty"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
@@ -168,7 +171,7 @@ func (o *OIDCConnectDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
-	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "") {
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "" || o.OIDCConfigDTO.EncodedJwksArray != "") {
 		return true
 	}
 	return o.List != nil
@@ -209,6 +212,11 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	}
 	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
 	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
+	if o.OIDCConfigDTO.EncodedJwksArray != "" && o.OIDCConfigDTO.EncodedJwksArray != "-" {
+		if _, err := base64.StdEncoding.DecodeString(o.OIDCConfigDTO.EncodedJwksArray); err != nil {
+			*errs = append(*errs, "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
+		}
+	}
 	return nil
 }
 
@@ -221,6 +229,11 @@ func (o *OIDCConnectDTO) validateOIDCList(errs *[]string) {
 			*errs = append(*errs, fmt.Sprintf("issuerURL must not be empty for OIDC at index %d", i))
 		} else {
 			o.validateIssuerURL(oidc.IssuerURL, &i, errs)
+		}
+		if oidc.EncodedJwksArray != "" {
+			if _, err := base64.StdEncoding.DecodeString(oidc.EncodedJwksArray); err != nil {
+				*errs = append(*errs, fmt.Sprintf("encodedJwksArray must be a valid base64 encoded value at index %d", i))
+			}
 		}
 		o.validateSigningAlgs(oidc.SigningAlgs, &i, errs)
 		o.validateRequiredClaims(oidc.RequiredClaims, &i, errs)
@@ -285,6 +298,9 @@ func (o *OIDCConnectDTO) validateSigningAlgs(signingAlgs []string, index *int, e
 
 func (o *OIDCConnectDTO) validateRequiredClaims(requiredClaims []string, index *int, errs *[]string) {
 	if len(requiredClaims) != 0 {
+		if index == nil && len(requiredClaims) == 1 && requiredClaims[0] == "-" {
+			return
+		}
 		for _, claim := range requiredClaims {
 			if !strings.Contains(claim, "=") {
 				if index != nil {
@@ -330,6 +346,23 @@ type BindingDTO struct {
 	ExpiresAt         time.Time `json:"expiresAt"`
 	KubeconfigExists  bool      `json:"kubeconfigExists"`
 	CreatedBy         string    `json:"createdBy"`
+}
+
+type ActionType string
+
+const (
+	PlanUpdateActionType         ActionType = "plan_update"
+	SubaccountMovementActionType ActionType = "subaccount_movement"
+)
+
+type Action struct {
+	ID         string     `json:"ID,omitempty"`
+	Type       ActionType `json:"type,omitempty"`
+	InstanceID string     `json:"-"`
+	Message    string     `json:"message,omitempty"`
+	OldValue   string     `json:"oldValue,omitempty"`
+	NewValue   string     `json:"newValue,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt,omitempty"`
 }
 
 type RuntimeStatus struct {
@@ -400,6 +433,7 @@ const (
 	RuntimeConfigParam   = "runtime_config"
 	BindingsParam        = "bindings"
 	WithBindingsParam    = "with_bindings"
+	ActionsParam         = "actions"
 )
 
 type OperationDetail string
@@ -448,6 +482,8 @@ type ListParameters struct {
 	Expired bool
 	// Events parameter fetches tracing events per instance
 	Events string
+	// Actions specifies whether audit logs should be included in the response for each runtime
+	Actions bool
 }
 
 func (rt RuntimeDTO) LastOperation() Operation {
@@ -540,7 +576,6 @@ func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWork
 	}
 	return nil
 }
-
 func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {

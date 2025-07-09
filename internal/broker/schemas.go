@@ -324,6 +324,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.EnableShootAndSeedSameRegion,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
+		s.cfg.EnableJwks,
 	)
 }
 
