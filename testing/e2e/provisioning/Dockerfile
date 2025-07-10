@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.23.5-alpine3.20 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24.5-alpine3.22 AS builder
 
 ENV SRC_DIR=/go/src/github.com/kyma-project/kyma-environment-broker/tests/e2e/provisioning
 
