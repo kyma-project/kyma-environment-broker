@@ -26,7 +26,6 @@ global:
       encryptionSecretKey: secretKey
       # Key in the database Secret for the database host
       hostSecretKey: "postgresql-serviceName"
-      # Instance connection name for GCP Cloud SQL (used by cloudsql-proxy, not as an env var)
       instanceConnectionName: ""
       # Key in the database Secret for the database name
       nameSecretKey: "postgresql-broker-db-name"
@@ -173,6 +172,8 @@ broker:
   freeDocsURL: "https://help.sap.com/docs/"
   # Determines when to show expiration info to users
   freeExpirationPeriod: 720h
+  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
+  gardenerSeedsCache: "gardener-seeds-cache"
   # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans
   includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
@@ -251,8 +252,6 @@ configPaths:
   skrOIDCDefaultValues: "/config/skrOIDCDefaultValues.yaml"
   # Path to the region mapping for trial environments
   trialRegionMapping: "/config/trialRegionMapping.yaml"
-  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
-  gardenerSeedsCache: "gardener-seeds-cache"
   # Path to the Cloud SQL SSL root certificate file
   cloudsqlSSLRootCert: "/secrets/cloudsql-sslrootcert/server-ca.pem"
 
