@@ -1,12 +1,6 @@
-# Kyma Environment Broker Configuration for a Given Kyma Plan
+# Kyma Custom Resource Template Configuration
 
-Some Kyma Environment Broker (KEB) processes can be configured to deliver different results. KEB needs a ConfigMap with the configuration for a given Kyma plan to process the requests.
-The default configuration must be defined. KEB must recognize this configuration as applicable to all supported plans. You can also set a separate configuration for each plan.
-  
-While processing requests, KEB reads the configuration from the ConfigMap that holds data for a given plan.
-
-> [!NOTE]
-> Only the Kyma custom resource (CR) template can be configured.
+Kyma Environment Broker (KEB) provisioning process creates Kyma custom resource based on the configured template. KEB needs a ConfigMap with the configuration.
 
 ## ConfigMap  
 
@@ -38,9 +32,6 @@ data:
         modules:
         - name: module1
         - name: module2
-    additional-components:
-      - name: "additional-component1"
-        namespace: "kyma-system"
 ```
 
 You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for Kyma CR during the provisioning operation.
@@ -122,3 +113,5 @@ data:
         channel: regular
         modules: []
 ```
+
+The content of the ConfigMap is stored in values.yaml as `runtimeConfiguration`. More details about Kyma custom resource you can find in [Kyma CR documentation](https://github.com/kyma-project/lifecycle-manager/blob/main/docs/contributor/resources/01-kyma.md)
