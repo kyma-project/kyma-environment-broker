@@ -120,4 +120,4 @@ jobs:
               echo "PR already exists, no need to create new one"
               exit 0
           fi
-          gh pr create -B chart/keb-sap -H ${BRANCH_NAME} -R https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/ --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"
+          gh pr create -B chart/keb-sap -H ${BRANCH_NAME} -R https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/ --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}" | tee $GITHUB_STEP_SUMMARY
