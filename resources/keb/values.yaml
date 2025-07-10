@@ -20,9 +20,26 @@ global:
       enabled: true
     # Values for GCP managed PostgreSQL database
     managedGCP:
-      # secret with a secret key used to encrypt particular data
+      # Name of the Kubernetes Secret containing the encryption
       encryptionSecretName: "kcp-storage-client-secret"
+      # Key in the encryption Secret for the encryption key
+      encryptionSecretKey: secretKey
+      # Key in the database Secret for the database host
+      hostSecretKey: "postgresql-serviceName"
+      # Instance connection name for GCP Cloud SQL (used by cloudsql-proxy, not as an env var)
       instanceConnectionName: ""
+      # Key in the database Secret for the database name
+      nameSecretKey: "postgresql-broker-db-name"
+      # Key in the database Secret for the database password
+      passwordSecretKey: "postgresql-broker-password"
+      # Key in the database Secret for the database port
+      portSecretKey: "postgresql-servicePort"
+      # Name of the Kubernetes Secret containing DB connection values
+      secretName: "kcp-postgresql"
+      # Key in the database Secret for the SSL mode
+      sslModeSecretKey: "postgresql-sslMode"
+      # Key in the database Secret for the database user
+      userNameSecretKey: "postgresql-broker-username"
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
@@ -258,7 +275,9 @@ edp:
   # OAuth2 client secret for EDP
   secret: "TBD"
   # Name of the Kubernetes Secret containing EDP credentials
-  secretName: "edp-creds"
+  secretName: "edp-creds" 
+  # OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret
+  secretKey: secret
 
 events:
   # Enables or disables the /events API and event storage for operation events (true/false)
@@ -474,6 +493,10 @@ cis:
     provisioningServiceURL: "TBD"
     # The interval between requests to the CIS v2 API
     requestInterval: "200ms"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
 # =================================================
 
 
