@@ -137,7 +137,8 @@ type Config struct {
 
 	PlansConfigurationFilePath string
 
-	Quota quota.Config
+	Quota                               quota.Config
+	QuotaWhitelistedSubaccountsFilePath string
 }
 
 type ProfilerConfig struct {
@@ -429,11 +430,14 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logger.RegisterSink(errorSink)
 
-	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of globalAccountIds for unlimited freemium: %d", len(freemiumGlobalAccountIds)))
 
 	quotaClient := quota.NewClient(context.Background(), cfg.Quota, logs)
+	quotaWhitelistedSubaccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.QuotaWhitelistedSubaccountsFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
@@ -441,11 +445,11 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
-			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient),
+			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService),
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient, quotaWhitelistedSubaccountIds),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.MultipleContexts),

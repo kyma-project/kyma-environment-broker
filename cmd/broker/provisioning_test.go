@@ -1598,6 +1598,46 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
 		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
 	})
+	t.Run("should reject non base64 JWKS value", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.EnableJwks = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			fmt.Sprintf(`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "%s",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"region": "eu-central-1",
+						"name": "testing-cluster",
+						"oidc": {
+							"clientID": "fake-client-id-1",
+							"groupsClaim": "fakeGroups",
+							"issuerURL": "https://testurl.local",
+							"signingAlgs": ["RS256", "RS384"],
+							"usernameClaim": "fakeUsernameClaim",
+							"usernamePrefix": "::",
+							"encodedJwksArray": "not-base64"
+						}
+					}
+		}`, broker.AWSPlanID))
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
+	})
 }
 
 func TestProvisioning_RuntimeAdministrators(t *testing.T) {

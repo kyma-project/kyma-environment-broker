@@ -36,6 +36,7 @@ type Handler struct {
 	bindingsDb          storage.Bindings
 	instancesArchivedDb storage.InstancesArchived
 	subaccountStatesDb  storage.SubaccountStates
+	actionsDb           storage.Actions
 	converter           Converter
 	defaultMaxPage      int
 	k8sClient           client.Client
@@ -50,6 +51,7 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 		bindingsDb:          storage.Bindings(),
 		instancesArchivedDb: storage.InstancesArchived(),
 		subaccountStatesDb:  storage.SubaccountStates(),
+		actionsDb:           storage.Actions(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
 		k8sClient:           k8sClient,
@@ -185,6 +187,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	opDetail := getOpDetail(req)
 	runtimeResourceConfig := getBoolParam(pkg.RuntimeConfigParam, req)
 	bindings := getBoolParam(pkg.BindingsParam, req)
+	actions := getBoolParam(pkg.ActionsParam, req)
 
 	instances, count, totalCount, err := h.listInstances(filter)
 	if err != nil {
@@ -251,6 +254,15 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 				httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 				return
 			}
+		}
+		if actions {
+			actions, err := h.actionsDb.ListActionsByInstanceID(dto.InstanceID)
+			if err != nil {
+				h.logger.Warn(fmt.Sprintf("unable to list actions: %s", err.Error()))
+				httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+				return
+			}
+			dto.Actions = actions
 		}
 
 		toReturn = append(toReturn, dto)

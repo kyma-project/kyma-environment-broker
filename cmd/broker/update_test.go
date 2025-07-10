@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -233,6 +234,14 @@ func TestUpdatePlan(t *testing.T) {
 		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
 		customresources.PlanNameLabel: "build-runtime-aws",
 	})
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, pkg.PlanUpdateActionType)
+	assert.Equal(t, actions[0].Message, "Plan updated from 361c511f-f939-4621-b228-d0fb79a1fe15 to 6aae0ff3-89f7-4f12-86de-51466145422e.")
+	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
+	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
@@ -2893,7 +2902,69 @@ func TestUpdateOIDC(t *testing.T) {
 		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
 		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+	})
+	t.Run("should remove previously set required claims", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com",
+						"requiredClaims": ["claim1=value1", "claim2=value2"]
+					},
+					"region": "eu-central-1"
+				}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "id-ooo",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com",
+						"requiredClaims": ["-"]
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Nil(t, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
 	})
 	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
@@ -3106,4 +3177,194 @@ func TestUpdateOIDC(t *testing.T) {
 
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 0)
 	})
+	t.Run("should remove JWKS from OIDC config", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.EnableJwks = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com",
+						"encodedJwksArray": "andrcy10b2tlbi1kZWZhdWx0"
+					},
+					"region": "eu-central-1"
+				}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "id-ooo",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com",
+						"encodedJwksArray": "-"
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Nil(t, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
+	})
+	t.Run("should not remove JWKS from OIDC config", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.EnableJwks = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com",
+						"encodedJwksArray": "andrcy10b2tlbi1kZWZhdWx0"
+					},
+					"region": "eu-central-1"
+				}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "id-ooo",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Equal(t, []byte("andrcy10b2tlbi1kZWZhdWx0"), (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
+	})
+}
+
+func TestUpdateGlobalAccountID(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.SubaccountMovementEnabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "new-g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+			}
+   }`)
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, pkg.SubaccountMovementActionType)
+	assert.Equal(t, actions[0].Message, "Subaccount sub-id moved from Global Account g-account-id to new-g-account-id.")
+	assert.Equal(t, actions[0].OldValue, "g-account-id")
+	assert.Equal(t, actions[0].NewValue, "new-g-account-id")
 }

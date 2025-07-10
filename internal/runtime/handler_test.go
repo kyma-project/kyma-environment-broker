@@ -907,6 +907,88 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		require.NotNil(t, out.Data[0].CommercialModel)
 		assert.Equal(t, commercialModel, *out.Data[0].CommercialModel)
 	})
+
+	t.Run("test empty actions", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstanceForPreview(testID, testTime)
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+
+		rr := httptest.NewRecorder()
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes?actions=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+		assert.Nil(t, out.Data[0].Actions)
+	})
+
+	t.Run("test actions", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		actions := db.Actions()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstanceForPreview(testID, testTime)
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		err = actions.InsertAction(pkg.PlanUpdateActionType, testID, "test-message-1", "old-value-1", "new-value-1")
+		assert.NoError(t, err)
+		err = actions.InsertAction(pkg.SubaccountMovementActionType, testID, "test-message-2", "old-value-2", "new-value-2")
+		assert.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+
+		rr := httptest.NewRecorder()
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes?actions=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+		assert.Len(t, out.Data[0].Actions, 2)
+		assert.Equal(t, out.Data[0].Actions[0].Type, pkg.SubaccountMovementActionType)
+		assert.Equal(t, out.Data[0].Actions[1].Type, pkg.PlanUpdateActionType)
+	})
 }
 
 func fixInstance(id string, t time.Time) internal.Instance {

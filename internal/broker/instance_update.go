@@ -11,22 +11,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -47,6 +48,7 @@ type UpdateEndpoint struct {
 	updateCustomResourcesLabelsOnAccountMove bool
 
 	operationStorage storage.Operations
+	actionStorage    storage.Actions
 
 	updatingQueue Queue
 
@@ -60,9 +62,11 @@ type UpdateEndpoint struct {
 	useSmallerMachineTypes      bool
 	infrastructureManagerConfig InfrastructureManager
 
-	schemaService *SchemaService
-	providerSpec  *configuration.ProviderSpec
-	planSpec      *configuration.PlanSpecifications
+	schemaService  *SchemaService
+	providerSpec   *configuration.ProviderSpec
+	planSpec       *configuration.PlanSpecifications
+	quotaClient    QuotaClient
+	quotaWhitelist whitelist.Set
 }
 
 func NewUpdate(cfg Config,
@@ -82,12 +86,15 @@ func NewUpdate(cfg Config,
 	planSpec *configuration.PlanSpecifications,
 	imConfig InfrastructureManager,
 	schemaService *SchemaService,
+	quotaClient QuotaClient,
+	quotaWhitelist whitelist.Set,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
 		instanceStorage:                          db.Instances(),
 		operationStorage:                         db.Operations(),
+		actionStorage:                            db.Actions(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,
 		subaccountMovementEnabled:                subaccountMovementEnabled,
@@ -102,6 +109,8 @@ func NewUpdate(cfg Config,
 		infrastructureManagerConfig:              imConfig,
 		schemaService:                            schemaService,
 		planSpec:                                 planSpec,
+		quotaClient:                              quotaClient,
+		quotaWhitelist:                           quotaWhitelist,
 	}
 }
 
@@ -328,9 +337,15 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	}
 
 	var updateStorage []string
+	oldPlanID := instance.ServicePlanID
 	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
 		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
+			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
+				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID); err != nil {
+					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+				}
+			}
 			logger.Info(fmt.Sprintf("Plan change accepted."))
 			operation.UpdatedPlanID = details.PlanID
 			operation.ProvisioningParameters.PlanID = details.PlanID
@@ -396,6 +411,19 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			response := apiresponses.NewFailureResponse(fmt.Errorf("Update operation failed"), http.StatusInternalServerError, err.Error())
 			return domain.UpdateServiceSpec{}, response
 		}
+
+		if slices.Contains(updateStorage, "Plan change") {
+			message := fmt.Sprintf("Plan updated from %s to %s.", oldPlanID, details.PlanID)
+			if err := b.actionStorage.InsertAction(
+				pkg.PlanUpdateActionType,
+				instance.InstanceID,
+				message,
+				oldPlanID,
+				details.PlanID,
+			); err != nil {
+				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
+			}
+		}
 	}
 	logger.Debug("Adding update operation to the processing queue")
 	b.updatingQueue.Add(operationID)
@@ -451,6 +479,16 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	needUpdateCustomResources := false
 	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
+		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
+		if err := b.actionStorage.InsertAction(
+			pkg.SubaccountMovementActionType,
+			instance.InstanceID,
+			message,
+			instance.GlobalAccountID,
+			ersContext.GlobalAccountID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
+		}
 		if instance.SubscriptionGlobalAccountID == "" {
 			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 		}
