@@ -15,8 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const ProvisioningTakesLongerThanUsual = 20 * time.Minute
-const ProvisioningTimeout = 2 * time.Second
+const ProvisioningTakesLongerThanUsualForTesting = 20 * time.Second
+const ProvisioningTimeoutForTesting = 120 * time.Second
 
 func TestCheckRuntimeResourceStep(t *testing.T) {
 	// given
@@ -120,7 +120,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime(imv1.RuntimeStateReady)
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		_, backoff, err := step.Run(operation, fixLogger())
@@ -141,7 +141,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
 		// force immediate timeout
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeout, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsual)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		op, backoff, err := step.Run(operation, fixLogger())
@@ -166,7 +166,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime("In Progress")
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		postOperation, backoff, err := step.Run(operation, fixLogger())
@@ -182,7 +182,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 	t.Run("retry operation when not ready and not timeout but operation takes longer than usual", func(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("4")
-		operation.CreatedAt = time.Now().Add(-1*ProvisioningTakesLongerThanUsual - time.Minute)
+		operation.CreatedAt = time.Now().Add(-1*ProvisioningTakesLongerThanUsualForTesting - 20*time.Second)
 		operation.Description = "Operation created"
 		err = os.InsertOperation(operation)
 		assert.NoError(t, err)
@@ -190,7 +190,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime("In Progress")
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeout, Interval: time.Second}, ProvisioningTakesLongerThanUsual)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		postOperation, backoff, err := step.Run(operation, fixLogger())
@@ -198,10 +198,10 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.NotZero(t, backoff)
-		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeout), postOperation.Description)
+		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeoutForTesting), postOperation.Description)
 
 		dbOperation, _ := os.GetOperationByID("4")
-		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeout), dbOperation.Description)
+		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeoutForTesting), dbOperation.Description)
 	})
 }
 

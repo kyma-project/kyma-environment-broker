@@ -100,7 +100,27 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		remainingTime := om.getRemainingTime(operation.ID, maxTime)
-		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %s left", maxTime.String(), retryInterval.String(), remainingTime.Round(time.Second).String()))
+		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
+		return operation, retryInterval, nil
+	}
+
+	log.Error(fmt.Sprintf("Failing operation after %s of failing retries", maxTime.String()))
+	op, retry, err := om.OperationFailed(operation, errorMessage, err, log)
+	if err == nil {
+		err = fmt.Errorf("too many retries")
+	} else {
+		err = fmt.Errorf("failed to set status `Failed` for operation after too many retries: %v", err)
+	}
+	return op, retry, err
+}
+
+func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
+
+	om.storeCreatedAtIfMissing(operation.ID, operation.CreatedAt)
+	if !om.isTimeoutOccurred(operation.ID, maxTime) {
+		remainingTime := om.getRemainingTime(operation.ID, maxTime)
+		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
 		return operation, retryInterval, nil
 	}
 
@@ -208,10 +228,19 @@ func (om *OperationManager) storeTimestampIfMissing(id string) {
 	}
 }
 
+func (om *OperationManager) storeCreatedAtIfMissing(id string, createdAt time.Time) {
+	om.mu.Lock()
+	defer om.mu.Unlock()
+	if om.retryTimestamps[id].IsZero() {
+		om.retryTimestamps[id] = createdAt
+	}
+}
+
 func (om *OperationManager) isTimeoutOccurred(id string, maxTime time.Duration) bool {
 	om.mu.RLock()
 	defer om.mu.RUnlock()
-	return !om.retryTimestamps[id].IsZero() && time.Since(om.retryTimestamps[id]) > maxTime
+	since := time.Since(om.retryTimestamps[id])
+	return !om.retryTimestamps[id].IsZero() && since > maxTime
 }
 
 func (om *OperationManager) getRemainingTime(id string, maxTime time.Duration) time.Duration {

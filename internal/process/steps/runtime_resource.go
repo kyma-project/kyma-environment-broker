@@ -113,7 +113,7 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 }
 
 func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
-	retryOperation, retry, err := s.operationManager.RetryOperation(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
+	retryOperation, retry, err := s.operationManager.RetryOperationWithCreatedAt(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
 	if retryOperation.State == domain.Failed {
 		log.Error(fmt.Sprintf("runtime resource status: %v; failing operation and removing Runtime CR", runtime.Status))
 		err = s.k8sClient.Delete(context.Background(), runtime)
