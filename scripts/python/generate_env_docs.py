@@ -93,6 +93,7 @@ def extract_env_vars_with_paths_multiple_jobs(deployment_yaml_path):
     """
     Extract environment variables for each job in a multi-job YAML file (split by ---).
     Returns a list of lists: [[(env_var_name, value_path_or_literal), ...], ...] for each job.
+    Improved: Extracts full Helm value template for each env var, just like main deployment extraction.
     """
     with open(deployment_yaml_path, "r") as f:
         content = f.read()
@@ -112,21 +113,22 @@ def extract_env_vars_with_paths_multiple_jobs(deployment_yaml_path):
                 if m:
                     current_env = m.group(1)
                     # Look ahead for value line
-                    for j in range(i+1, min(i+2, len(lines))):
+                    for j in range(i+1, min(i+3, len(lines))):
                         val_line = lines[j]
-                        if re.search(r'{{.*\\.Values\\..*}}.*{{.*\\.Values\\..*}}', val_line):
-                            mval = re.search(r'value:\s*"?(.+?)"?$', val_line)
-                            if mval:
-                                env_vars.append((current_env, mval.group(1).strip()))
+                        # Extract full Helm value template if present
+                        mval = re.search(r'value:\s*"?({{.*?}})"?', val_line)
+                        if mval:
+                            env_vars.append((current_env, mval.group(1).strip()))
+                            break
+                        # Composite value: multiple .Values in one line
+                        elif re.search(r'{{.*\\.Values\\..*}}.*{{.*\\.Values\\..*}}', val_line):
+                            mval2 = re.search(r'value:\s*"?(.+?)"?$', val_line)
+                            if mval2:
+                                env_vars.append((current_env, mval2.group(1).strip()))
                                 break
-                        else:
-                            mval = re.search(r'value:\s*"?{{\s*\\.Values\\.([^"}}]+)\s*}}"?', val_line)
-                            if mval:
-                                env_vars.append((current_env, mval.group(1)))
-                                break
-                            elif 'valueFrom:' in val_line:
-                                env_vars.append((current_env, None))
-                                break
+                        elif 'valueFrom:' in val_line:
+                            env_vars.append((current_env, None))
+                            break
                     else:
                         env_vars.append((current_env, None))
                 elif re.match(r"\s*-\s*name:", line):
@@ -303,16 +305,14 @@ def extract_table_markdown(env_docs):
     buf.write("|---------------------|------------------------------|---------------------------------------------------------------|\n")
     for doc in env_docs:
         desc = doc['description'] if doc['description'] else '-'
-        if doc['default'] is None or doc['default'] == '':
-            default = 'None'
-        else:
-            default = doc["default"]
-        env_val = soft_break(doc["env"], 20, prefer_char='_')
-        env_col = f'**{env_val}**'
-        if default == 'None':
+        default_val = doc['default']
+        # Treat only None or empty string as None, but show 'TBD' and any other value as-is
+        if default_val is None or str(default_val).strip() == '':
             val_col = 'None'
         else:
-            val_col = f'<code>{str(default)}</code>'
+            val_col = f'<code>{str(default_val)}</code>'
+        env_val = soft_break(doc["env"], 20, prefer_char='_')
+        env_col = f'**{env_val}**'
         buf.write(f"| {env_col} | {val_col} | {desc} |\n")
     return buf.getvalue()
 
