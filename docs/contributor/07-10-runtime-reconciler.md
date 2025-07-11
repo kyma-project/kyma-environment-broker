@@ -37,4 +37,4 @@ Use the following environment variables to configure the application:
 | **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>false</code> | If true, enables the periodic reconciliation job |
 | **RUNTIME_RECONCILER_&#x200b;JOB_INTERVAL** | <code>1440</code> | Interval (in minutes) between reconciliation job runs |
 | **RUNTIME_RECONCILER_&#x200b;JOB_RECONCILIATION_&#x200b;DELAY** | <code>1s</code> | Delay before starting reconciliation after job trigger (e.g., "1s") |
-| **RUNTIME_RECONCILER_&#x200b;METRICS_PORT** | None | - |
+| **RUNTIME_RECONCILER_&#x200b;METRICS_PORT** | <code>8081</code> | Port on which the reconciler exposes Prometheus metrics |
