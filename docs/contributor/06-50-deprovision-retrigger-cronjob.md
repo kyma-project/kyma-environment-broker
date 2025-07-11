@@ -29,18 +29,16 @@ kyma-environment-broker.trialCleanup.schedule: "0,15,30,45 * * * *"
 
 Use the following environment variables to configure the Job:
 
-| Environment variable | Description                                                                                                             | Default value                            |
-|---|-------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| **APP_DRY_RUN** | Specifies whether to run the Job in the [dry-run mode](#details).                                                       | `true`                                   |
-| **APP_DATABASE_USER** | Specifies the username for the database.                                                                                | `postgres`                               |
-| **APP_DATABASE_PASSWORD** | Specifies the user password for the database.                                                                           | `password`                               |
-| **APP_DATABASE_HOST** | Specifies the host of the database.                                                                                     | `localhost`                              |
-| **APP_DATABASE_PORT** | Specifies the port for the database.                                                                                    | `5432`                                   |
-| **APP_DATABASE_NAME** | Specifies the name of the database.                                                                                     | `broker`                            |
-| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html). | `disable`                                |
-| **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)                                          | None                                |
-| **APP_BROKER_URL**  | Specifies the KEB URL.                                                                                                  | `https://kyma-env-broker.kyma.local`     |
-| **APP_BROKER_TOKEN_URL** | Specifies the KEB OAuth token endpoint.                                                                                 | `https://oauth.2kyma.local/oauth2/token` |
-| **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB.                                                            | None                                     |
-| **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB.                                                            | None                                     |
-| **APP_BROKER_SCOPE** | Specifies the scope for the OAuth2 authentication in KEB.                                                               | None                                     |
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_URL** | None | - |
+| **APP_DATABASE_HOST** | None | - |
+| **APP_DATABASE_NAME** | None | - |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
+| **APP_DATABASE_PORT** | None | - |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
+| **APP_DATABASE_SSLMODE** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_USER** | None | - |
+| **APP_DRY_RUN** | <code>true</code> | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning |
+| **DATABASE_EMBEDDED** | <code>true</code> | - |

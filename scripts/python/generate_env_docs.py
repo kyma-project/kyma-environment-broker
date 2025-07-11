@@ -88,6 +88,54 @@ def extract_env_vars_with_paths(deployment_yaml_path):
                 in_env = False
     return env_vars
 
+def extract_env_vars_with_paths_multiple_jobs(deployment_yaml_path):
+    """
+    Extract environment variables for each job in a multi-job YAML file (split by ---).
+    Returns a list of lists: [[(env_var_name, value_path_or_literal), ...], ...] for each job.
+    """
+    with open(deployment_yaml_path, "r") as f:
+        content = f.read()
+    job_yamls = content.split('---')
+    all_env_vars = []
+    for job_yaml in job_yamls:
+        lines = job_yaml.splitlines()
+        env_vars = []
+        in_env = False
+        current_env = None
+        for i, line in enumerate(lines):
+            if re.match(r"\s*env:\s*$", line):
+                in_env = True
+                continue
+            if in_env:
+                m = re.match(r"\s*-\s*name:\s*([A-Z0-9_]+)", line)
+                if m:
+                    current_env = m.group(1)
+                    # Look ahead for value line
+                    for j in range(i+1, min(i+2, len(lines))):
+                        val_line = lines[j]
+                        if re.search(r'{{.*\\.Values\\..*}}.*{{.*\\.Values\\..*}}', val_line):
+                            mval = re.search(r'value:\s*"?(.+?)"?$', val_line)
+                            if mval:
+                                env_vars.append((current_env, mval.group(1).strip()))
+                                break
+                        else:
+                            mval = re.search(r'value:\s*"?{{\s*\\.Values\\.([^"}}]+)\s*}}"?', val_line)
+                            if mval:
+                                env_vars.append((current_env, mval.group(1)))
+                                break
+                            elif 'valueFrom:' in val_line:
+                                env_vars.append((current_env, None))
+                                break
+                    else:
+                        env_vars.append((current_env, None))
+                elif re.match(r"\s*-\s*name:", line):
+                    continue
+                elif re.match(r"\s*ports:\s*", line):
+                    in_env = False
+        if env_vars:
+            all_env_vars.append(env_vars)
+    return all_env_vars
+
 def parse_values_yaml_with_comments(values_yaml_path):
     """
     Parse values.yaml, extracting a mapping from dot-paths to (description, default value).
@@ -243,6 +291,40 @@ def extract_table_markdown(env_docs):
     return buf.getvalue()
 
 def replace_env_table_in_md(md_path, new_table):
+    # Special handling for TRIAL_FREE_MD: replace from section header to end
+    if md_path == TRIAL_FREE_MD:
+        with open(md_path, 'r') as f:
+            lines = f.readlines()
+        out = []
+        found_section = False
+        for idx, line in enumerate(lines):
+            if line.strip().startswith('### Trial Cleanup CronJob'):
+                out.append(new_table)
+                found_section = True
+                break
+            out.append(line)
+        if not found_section:
+            out.append('\n' + new_table + '\n')
+        with open(md_path, 'w') as f:
+            f.writelines(out)
+        return
+    # Special handling for SUBACC_MD: replace from first v1 header to end
+    if md_path == SUBACC_MD:
+        with open(md_path, 'r') as f:
+            lines = f.readlines()
+        out = []
+        found_section = False
+        for idx, line in enumerate(lines):
+            if line.strip().startswith('### Subaccount Cleanup CronJob v1'):
+                out.append(new_table)
+                found_section = True
+                break
+            out.append(line)
+        if not found_section:
+            out.append('\n' + new_table + '\n')
+        with open(md_path, 'w') as f:
+            f.writelines(out)
+        return
     with open(md_path, 'r') as f:
         lines = f.readlines()
     out = []
@@ -278,11 +360,15 @@ def main():
     table = extract_table_markdown(env_docs)
     replace_env_table_in_md(OUTPUT_MD, table)
     print(f"Markdown documentation table replaced in {OUTPUT_MD}")
-    # Subaccount Cleanup
-    subacc_env_vars = extract_env_vars_with_paths(SUBACC_CLEANUP_YAML)
-    subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
-    subacc_table = extract_table_markdown(subacc_env_docs)
-    replace_env_table_in_md(SUBACC_MD, subacc_table)
+    # Subaccount Cleanup (multi-job)
+    subacc_env_vars_list = extract_env_vars_with_paths_multiple_jobs(SUBACC_CLEANUP_YAML)
+    subacc_tables = []
+    for idx, subacc_env_vars in enumerate(subacc_env_vars_list):
+        subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
+        version = f"v{idx+1}"
+        subacc_tables.append(f"### Subaccount Cleanup CronJob {version}\n\n" + extract_table_markdown(subacc_env_docs))
+    subacc_combined = "\n\n".join(subacc_tables) + "\n"
+    replace_env_table_in_md(SUBACC_MD, subacc_combined)
     print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
     # Trial Cleanup
     trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
