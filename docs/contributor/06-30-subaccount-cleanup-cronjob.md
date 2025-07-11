@@ -62,3 +62,48 @@ Use the following environment variables to configure the application:
 | **APP_BROKER_SCOPE** | Specifies the scope of the OAuth2 authentication in KEB.|
 
 For more details, see the [resource definition](../../resources/keb/templates/subaccount-cleanup-job.yaml) file.
+
+### Subaccount Cleanup CronJob v1
+
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_URL** | None | - |
+| **APP_CIS_AUTH_URL** | None | - |
+| **APP_CIS_CLIENT_ID** | None | - |
+| **APP_CIS_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_CIS_EVENT_&#x200b;SERVICE_URL** | None | - |
+| **APP_CLIENT_VERSION** | None | - |
+| **APP_DATABASE_HOST** | None | - |
+| **APP_DATABASE_NAME** | None | - |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
+| **APP_DATABASE_PORT** | None | - |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
+| **APP_DATABASE_SSLMODE** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_USER** | None | - |
+| **DATABASE_EMBEDDED** | None | - |
+
+
+### Subaccount Cleanup CronJob v2
+
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_URL** | None | - |
+| **APP_CIS_AUTH_URL** | None | - |
+| **APP_CIS_CLIENT_ID** | None | - |
+| **APP_CIS_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_CIS_EVENT_&#x200b;SERVICE_URL** | None | - |
+| **APP_CIS_MAX_REQUEST_&#x200b;RETRIES** | None | - |
+| **APP_CIS_RATE_&#x200b;LIMITING_INTERVAL** | None | - |
+| **APP_CIS_REQUEST_&#x200b;INTERVAL** | None | - |
+| **APP_CLIENT_VERSION** | None | - |
+| **APP_DATABASE_HOST** | None | - |
+| **APP_DATABASE_NAME** | None | - |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
+| **APP_DATABASE_PORT** | None | - |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
+| **APP_DATABASE_SSLMODE** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_USER** | None | - |
+| **DATABASE_EMBEDDED** | None | - |
+
