@@ -73,9 +73,10 @@ def extract_env_vars_with_paths(deployment_yaml_path):
                             env_vars.append((current_env, mval.group(1).strip()))
                             break
                     else:
-                        mval = re.search(r'value:\s*"?{{\s*\.Values\.([^"}}]+)\s*}}"?', val_line)
+                        # Match any Helm template, including filters
+                        mval = re.search(r'value:\s*"?({{.*?}})"?', val_line)
                         if mval:
-                            env_vars.append((current_env, mval.group(1)))
+                            env_vars.append((current_env, mval.group(1).strip()))
                             break
                         elif 'valueFrom:' in val_line:
                             env_vars.append((current_env, None))
@@ -193,6 +194,24 @@ def normalize_path(path):
         return ''
     return path.replace('_', '.').replace('-', '.').lower()
 
+def extract_helm_value_path(value):
+    """
+    Extracts the .Values path from a Helm template value string.
+    E.g., '{{ .Values.cis.v2.eventServiceURL | required "..." | quote }}' -> 'cis.v2.eventServiceURL'
+    Returns None if not found.
+    """
+    if not value:
+        return None
+    # Match .Values.<path> optionally followed by filters (| ...)
+    m = re.search(r'\{\{\s*\.Values\.([a-zA-Z0-9_.]+)', value)
+    if m:
+        return m.group(1)
+    # Also match if value is just .Values.<path> (no curly braces)
+    m2 = re.match(r'\.Values\.([a-zA-Z0-9_.]+)', value)
+    if m2:
+        return m2.group(1)
+    return None
+
 def map_env_to_values(env_vars, values_doc):
     """
     Map extracted environment variables to their descriptions and default values from values.yaml.
@@ -225,17 +244,24 @@ def map_env_to_values(env_vars, values_doc):
                         defaults.append(str(doc['default']))
             desc = ' / '.join(descs) if descs else '-'
             default = '.'.join(defaults) if defaults else '-'
-        elif path and path in values_doc:
-            doc_entry = values_doc[path]
-            if doc_entry:
-                desc = doc_entry.get('description', '')
-                default = doc_entry.get('default', '')
-        elif norm_path and norm_path in norm_doc_map:
-            doc_entry = norm_doc_map[norm_path]
-            if doc_entry:
-                desc = doc_entry.get('description', '')
-                default = doc_entry.get('default', '')
-        # Otherwise, leave desc and default blank (will render as '-')
+        else:
+            # Try to extract .Values.<path> from any Helm template in the value
+            helm_path = extract_helm_value_path(path)
+            if helm_path:
+                doc_entry = values_doc.get(helm_path) or norm_doc_map.get(normalize_path(helm_path))
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
+            elif path and path in values_doc:
+                doc_entry = values_doc[path]
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
+            elif norm_path and norm_path in norm_doc_map:
+                doc_entry = norm_doc_map[norm_path]
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
         result.append({
             'env': env,
             'description': desc,
