@@ -15,6 +15,8 @@ If the value is set to `false`, the archiver job only archives the data.
 
 ## Configuration
 
+Use the following environment variables to configure the application:
+
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_LOG_LEVEL** | None | - |

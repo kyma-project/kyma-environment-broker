@@ -8,6 +8,10 @@ To modify the database schema, you must add migration files to the `/resources/k
 
 Make sure to validate the migration files by running the [validation script](/scripts/schemamigrator/validate.sh).
 
+## Configuration
+
+Use the following environment variables to configure the application:
+
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
