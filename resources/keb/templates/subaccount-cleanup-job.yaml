@@ -215,7 +215,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Values.global.database.managedGCP.secretName }}
-                      key: {{ .Values.global.database.managedGCP.clientIdKey }}
+                      key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
                 - name: APP_DATABASE_PORT
                   valueFrom:
                     secretKeyRef:
