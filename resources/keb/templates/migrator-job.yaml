@@ -92,14 +92,14 @@ spec:
                   name: {{ .Values.global.database.managedGCP.secretName }}
                   key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: DB_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.database.managedGCP.secretName }}
                   key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: DIRECTION
-              value: "up"
+              value: "{{ .Values.migratorJobs.direction }}"
           volumeMounts:
             - name: kyma-environment-broker
               mountPath: /migrate/new-migrations

@@ -36,50 +36,50 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
-                  key: id
+                  key: {{ .Values.cis.accounts.clientIdKey | required "please specify .Values.cis.accounts.clientIdKey" | quote }}  
             - name: GLOBALACCOUNTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
-                  key: secret
+                  key: {{ .Values.cis.accounts.secretKey | required "please specify .Values.cis.accounts.secretKey" | quote }} 
             - name: GLOBALACCOUNTS_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-serviceName
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.hostSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_NAME
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-broker-db-name
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.nameSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-broker-password
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_PORT
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-servicePort
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.portSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: kcp-storage-client-secret
-                  key: secretKey
+                  name: {{ .Values.global.database.managedGCP.encryptionSecretName }}
+                  key: {{ .Values.global.database.managedGCP.encryptionSecretKey }}
                   optional: true
             - name: GLOBALACCOUNTS_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-sslMode
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
             - name: GLOBALACCOUNTS_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  key: postgresql-broker-username
-                  name: kcp-postgresql
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: GLOBALACCOUNTS_DRY_RUN
               value: {{ .Values.globalaccounts.dryRun | quote }}
             - name: GLOBALACCOUNTS_SERVICE_URL

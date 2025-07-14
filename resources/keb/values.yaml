@@ -460,6 +460,10 @@ cis:
     secretName: "cis-creds-accounts"
     # The base URL of the CIS Accounts API endpoint, used for fetching subaccount data
     serviceURL: "TBD"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
   v1:
     # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests
     authURL: "TBD"
@@ -471,6 +475,10 @@ cis:
     secret: "TBD"
     # The name of the Kubernetes Secret containing the CIS v1 client ID and secret
     secretName: "cis-creds-v1"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
   v2:
     # The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests
     authURL: "TBD"
@@ -523,6 +531,8 @@ freeCleanup:
   enabled: true
   # Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days)
   expirationPeriod: 2160h # 90 days
+  # The ID of the free plan to be used for cleanup
+  planID: "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
   schedule: "0,15,30,45 * * * *"
   # If true, runs the job in test mode (no real deletions, for testing purposes)
   testRun: false
@@ -555,6 +565,8 @@ migratorJobs:
     enabled: false
     # The sync wave value for ArgoCD hooks
     syncwave: "0"
+  # Defines the direction of the schema migration, either "up" or "down"
+  direction: "up"
   # If true, enables all migrator jobs
   enabled: true
   helmhook:
@@ -627,6 +639,10 @@ subaccountCleanup:
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
+  # Client version
+  clientV1VersionName: "v1.0"
+  # Client version
+  clientV2VersionName: "v2.0"
 # =================================================
 
 

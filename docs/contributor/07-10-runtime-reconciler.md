@@ -31,7 +31,7 @@ Use the following environment variables to configure the application:
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_PORT** | None | - |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SECRET_KEY** | None | - |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | - |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | None | - |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | - |
 | **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>true</code> | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions) |
 | **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>false</code> | If true, enables the periodic reconciliation job |

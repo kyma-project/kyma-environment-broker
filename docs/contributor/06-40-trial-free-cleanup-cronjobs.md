@@ -48,7 +48,7 @@ Use the following environment variables to configure the Jobs:
 | **APP_DATABASE_PORT** | None | - |
 | **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
 | **APP_DATABASE_SSLMODE** | None | - |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
 | **APP_DATABASE_USER** | None | - |
 | **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data |
 | **APP_EXPIRATION_&#x200b;PERIOD** | <code>336h</code> | Specifies how long a trial instance can exist before being expired |
@@ -69,11 +69,11 @@ Use the following environment variables to configure the Jobs:
 | **APP_DATABASE_PORT** | None | - |
 | **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
 | **APP_DATABASE_SSLMODE** | None | - |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
 | **APP_DATABASE_USER** | None | - |
 | **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data |
 | **APP_EXPIRATION_&#x200b;PERIOD** | <code>2160h</code> | Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days) |
-| **APP_PLAN_ID** | None | - |
+| **APP_PLAN_ID** | <code>b1a5764e-2ea1-4f95-94c0-2b4538b37b55</code> | The ID of the free plan to be used for cleanup |
 | **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode (no real deletions, for testing purposes) |
 | **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |

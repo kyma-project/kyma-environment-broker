@@ -20,6 +20,6 @@ Use the following environment variables to configure the application:
 | **DB_PASSWORD** | None | - |
 | **DB_PORT** | None | - |
 | **DB_SSL** | None | - |
-| **DB_SSLROOTCERT** | None | - |
+| **DB_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
 | **DB_USER** | None | - |
-| **DIRECTION** | None | - |
+| **DIRECTION** | <code>up</code> | Defines the direction of the schema migration, either "up" or "down" |

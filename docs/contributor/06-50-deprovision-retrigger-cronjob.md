@@ -38,7 +38,7 @@ Use the following environment variables to configure the Job:
 | **APP_DATABASE_PORT** | None | - |
 | **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
 | **APP_DATABASE_SSLMODE** | None | - |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
 | **APP_DATABASE_USER** | None | - |
 | **APP_DRY_RUN** | <code>true</code> | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |

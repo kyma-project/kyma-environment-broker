@@ -50,7 +50,7 @@ Use the following environment variables to configure the application:
 | **APP_CIS_CLIENT_ID** | None | - |
 | **APP_CIS_CLIENT_&#x200b;SECRET** | None | - |
 | **APP_CIS_EVENT_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the CIS v1 event service, used to fetch subaccount events |
-| **APP_CLIENT_VERSION** | None | - |
+| **APP_CLIENT_VERSION** | <code>v1.0</code> | Client version |
 | **APP_DATABASE_HOST** | None | - |
 | **APP_DATABASE_NAME** | None | - |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | - |
@@ -74,7 +74,7 @@ Use the following environment variables to configure the application:
 | **APP_CIS_MAX_REQUEST_&#x200b;RETRIES** | <code>3</code> | The maximum number of request retries to the CIS v2 API in case of errors |
 | **APP_CIS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | The minimum interval between requests to the CIS v2 API in case of errors |
 | **APP_CIS_REQUEST_&#x200b;INTERVAL** | <code>200ms</code> | The interval between requests to the CIS v2 API |
-| **APP_CLIENT_VERSION** | None | - |
+| **APP_CLIENT_VERSION** | <code>v2.0</code> | Client version |
 | **APP_DATABASE_HOST** | None | - |
 | **APP_DATABASE_NAME** | None | - |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | - |
