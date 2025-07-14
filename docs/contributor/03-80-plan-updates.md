@@ -22,8 +22,8 @@ The plan update request is similar to a regular update request. You must provide
 ```http
 PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 {
-    “service_id”: “47c9dcbf-ff30-448e-ab36-d3bad66ba281", //Kyma ID
-    “plan_id": “{TARGET_PLAN_ID}”
+    "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281", //Kyma ID
+    "plan_id": "{TARGET_PLAN_ID}"
 }
 ```
 
