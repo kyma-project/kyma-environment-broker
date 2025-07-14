@@ -16,7 +16,7 @@ import (
 func TestMetrics(t *testing.T) {
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true
-	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
+	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / 1000 // reduce timeout to speed up the test
 	suite := NewBrokerSuitTestWithMetrics(t, cfg)
 	defer suite.TearDown()
 
@@ -112,6 +112,7 @@ func TestMetrics(t *testing.T) {
 		instance4 := uuid.New().String()
 		opID = provisionReq(instance4, broker.AzurePlanID)
 		suite.failRuntimeByKIM(instance4)
+		// should fail when timeout is reached
 		suite.WaitForOperationState(opID, domain.Failed)
 		op4 := suite.GetOperation(opID)
 		assert.NotNil(t, op4)
