@@ -368,9 +368,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	}
 
 	if params.OIDC.IsProvided() {
-		if params.OIDC.OIDCConfigDTO.ClientID != "" || params.OIDC.OIDCConfigDTO.IssuerURL != "" || params.OIDC.OIDCConfigDTO.GroupsClaim != "" ||
+		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO.ClientID != "" || params.OIDC.OIDCConfigDTO.IssuerURL != "" || params.OIDC.OIDCConfigDTO.GroupsClaim != "" ||
 			params.OIDC.OIDCConfigDTO.UsernamePrefix != "" || params.OIDC.OIDCConfigDTO.UsernameClaim != "" || len(params.OIDC.OIDCConfigDTO.SigningAlgs) > 0 ||
-			len(params.OIDC.OIDCConfigDTO.RequiredClaims) > 0 || params.OIDC.OIDCConfigDTO.GroupsPrefix != "" || params.OIDC.OIDCConfigDTO.EncodedJwksArray != "" {
+			len(params.OIDC.OIDCConfigDTO.RequiredClaims) > 0 || params.OIDC.OIDCConfigDTO.GroupsPrefix != "" || params.OIDC.OIDCConfigDTO.EncodedJwksArray != "") {
 
 			instance.Parameters.Parameters.OIDC = params.OIDC
 			updateStorage = append(updateStorage, "OIDC")
