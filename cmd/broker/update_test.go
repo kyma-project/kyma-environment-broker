@@ -3028,13 +3028,63 @@ func TestUpdateOIDC(t *testing.T) {
 				},
 				"parameters": {
 					"oidc": {
-						"clientID": "id-client,
+						"clientID": "id-client",
 						"signingAlgs": ["PS512"],
 						"issuerURL": "https://issuer.url.com"
 					}
 				}
 			}`)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+	t.Run("should reject update empty OIDC list with OIDC object that has no values", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"list": []
+					},
+					"region": "eu-central-1"
+				}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "",
+						"signingAlgs": [],
+						"issuerURL": ""
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
 		// given
