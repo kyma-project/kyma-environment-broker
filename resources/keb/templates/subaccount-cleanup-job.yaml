@@ -88,7 +88,7 @@ spec:
                       name: {{ .Values.global.database.managedGCP.secretName }}
                       key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
                 - name: APP_DATABASE_SSLROOTCERT
-                  value: "{{ .Values.global.database.sslRootCertPath }}"
+                  value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
                 - name: APP_DATABASE_USER
                   valueFrom:
                     secretKeyRef:
@@ -233,7 +233,7 @@ spec:
                       name: {{ .Values.global.database.managedGCP.secretName }}
                       key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
                 - name: APP_DATABASE_SSLROOTCERT
-                  value: "{{ .Values.global.database.sslRootCertPath }}"
+                  value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
                 - name: APP_DATABASE_USER
                   valueFrom:
                     secretKeyRef:
