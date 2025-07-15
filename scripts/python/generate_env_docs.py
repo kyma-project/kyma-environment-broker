@@ -299,20 +299,58 @@ def soft_break(text, max_len, prefer_char=None):
             start += max_len
     return result
 
-def extract_table_markdown(env_docs):
+def parse_existing_table(md_path):
+    """
+    Parse the first Markdown table in the file. Returns a dict mapping env var (no formatting) to {'default': val, 'description': desc}.
+    """
+    table = {}
+    with open(md_path, 'r') as f:
+        lines = f.readlines()
+    in_table = False
+    for line in lines:
+        if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
+            in_table = True
+            continue
+        if in_table:
+            if not line.strip().startswith('|') or line.strip().startswith('|-'):
+                if line.strip() == '' or line.strip().startswith('|-'):
+                    continue
+                else:
+                    break
+            parts = [p.strip() for p in line.strip().strip('|').split('|')]
+            if len(parts) < 3:
+                continue
+            env = parts[0]
+            # Remove formatting
+            env_clean = env.replace('**', '').replace('&#x200b;', '').replace('<br>', '').replace('<br/>', '').replace('<br />', '').replace('\u200b', '').replace('\u200B', '').replace(' ', '').replace('\n', '').replace('\r', '')
+            default = parts[1]
+            desc = parts[2]
+            table[env_clean] = {'default': default, 'description': desc}
+    return table
+
+def extract_table_markdown(env_docs, existing_table=None):
     buf = io.StringIO()
     buf.write("| Environment Variable | Current Value | Description |\n")
     buf.write("|---------------------|------------------------------|---------------------------------------------------------------|\n")
     for doc in env_docs:
         desc = doc['description'] if doc['description'] else '-'
         default_val = doc['default']
-        # Treat only None or empty string as None, but show 'TBD' and any other value as-is
-        if default_val is None or str(default_val).strip() == '':
-            val_col = 'None'
-        else:
-            val_col = f'<code>{str(default_val)}</code>'
         env_val = soft_break(doc["env"], 20, prefer_char='_')
         env_col = f'**{env_val}**'
+        env_key = doc["env"].replace('**', '').replace('&#x200b;', '').replace('<br>', '').replace('<br/>', '').replace('<br />', '').replace('\u200b', '').replace('\u200B', '').replace(' ', '').replace('\n', '').replace('\r', '')
+        # Use existing value if new is None or '-'
+        if existing_table and env_key in existing_table:
+            if default_val is None or str(default_val).strip() == '' or str(default_val).strip() == '-':
+                val_col = existing_table[env_key]['default']
+            else:
+                val_col = f'<code>{str(default_val)}</code>'
+            if desc is None or desc.strip() == '' or desc.strip() == '-':
+                desc = existing_table[env_key]['description']
+        else:
+            if default_val is None or str(default_val).strip() == '':
+                val_col = 'None'
+            else:
+                val_col = f'<code>{str(default_val)}</code>'
         buf.write(f"| {env_col} | {val_col} | {desc} |\n")
     return buf.getvalue()
 
@@ -383,7 +421,8 @@ def main():
     # KEB deployment
     env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     env_docs = map_env_to_values(env_vars, values_doc)
-    table = extract_table_markdown(env_docs)
+    existing_table = parse_existing_table(OUTPUT_MD)
+    table = extract_table_markdown(env_docs, existing_table)
     replace_env_table_in_md(OUTPUT_MD, table)
     print(f"Markdown documentation table replaced in {OUTPUT_MD}")
     # Subaccount Cleanup (multi-job)
@@ -391,56 +430,64 @@ def main():
     subacc_tables = []
     for idx, subacc_env_vars in enumerate(subacc_env_vars_list):
         subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
+        existing_table = parse_existing_table(SUBACC_MD)
         version = f"v{idx+1}"
-        subacc_tables.append(f"### Subaccount Cleanup CronJob {version}\n\n" + extract_table_markdown(subacc_env_docs))
+        subacc_tables.append(f"### Subaccount Cleanup CronJob {version}\n\n" + extract_table_markdown(subacc_env_docs, existing_table))
     subacc_combined = "\n\n".join(subacc_tables) + "\n"
     replace_env_table_in_md(SUBACC_MD, subacc_combined)
     print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
     # Trial Cleanup
     trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
     trial_env_docs = map_env_to_values(trial_env_vars, values_doc)
-    trial_table = extract_table_markdown(trial_env_docs)
+    existing_table = parse_existing_table(TRIAL_FREE_MD)
+    trial_table = extract_table_markdown(trial_env_docs, existing_table)
     # Free Cleanup
     free_env_vars = extract_env_vars_with_paths(FREE_CLEANUP_YAML)
     free_env_docs = map_env_to_values(free_env_vars, values_doc)
-    free_table = extract_table_markdown(free_env_docs)
+    free_table = extract_table_markdown(free_env_docs, existing_table)
     combined = "### Trial Cleanup CronJob\n\n" + trial_table + "\n\n### Free Cleanup CronJob\n\n" + free_table + "\n"
     replace_env_table_in_md(TRIAL_FREE_MD, combined)
     print(f"Trial/Free Cleanup env documentation updated in {TRIAL_FREE_MD}")
     # Deprovision Retrigger
     deprov_env_vars = extract_env_vars_with_paths(DEPROV_RETRIGGER_YAML)
     deprov_env_docs = map_env_to_values(deprov_env_vars, values_doc)
-    deprov_table = extract_table_markdown(deprov_env_docs)
+    existing_table = parse_existing_table(DEPROV_RETRIGGER_MD)
+    deprov_table = extract_table_markdown(deprov_env_docs, existing_table)
     replace_env_table_in_md(DEPROV_RETRIGGER_MD, deprov_table)
     print(f"Deprovision Retrigger env documentation updated in {DEPROV_RETRIGGER_MD}")
     # Archiver Job
     archiver_env_vars = extract_env_vars_with_paths(ARCHIVER_YAML)
     archiver_env_docs = map_env_to_values(archiver_env_vars, values_doc)
-    archiver_table = extract_table_markdown(archiver_env_docs)
+    existing_table = parse_existing_table(ARCHIVER_MD)
+    archiver_table = extract_table_markdown(archiver_env_docs, existing_table)
     replace_env_table_in_md(ARCHIVER_MD, archiver_table)
     print(f"Archiver env documentation updated in {ARCHIVER_MD}")
     # Service Binding Cleanup Job
     sbc_env_vars = extract_env_vars_with_paths(SERVICE_BINDING_CLEANUP_YAML)
     sbc_env_docs = map_env_to_values(sbc_env_vars, values_doc)
-    sbc_table = extract_table_markdown(sbc_env_docs)
+    existing_table = parse_existing_table(SERVICE_BINDING_CLEANUP_MD)
+    sbc_table = extract_table_markdown(sbc_env_docs, existing_table)
     replace_env_table_in_md(SERVICE_BINDING_CLEANUP_MD, sbc_table)
     print(f"Service Binding Cleanup env documentation updated in {SERVICE_BINDING_CLEANUP_MD}")
     # Runtime Reconciler
     rr_env_vars = extract_env_vars_with_paths(RUNTIME_RECONCILER_YAML)
     rr_env_docs = map_env_to_values(rr_env_vars, values_doc)
-    rr_table = extract_table_markdown(rr_env_docs)
+    existing_table = parse_existing_table(RUNTIME_RECONCILER_MD)
+    rr_table = extract_table_markdown(rr_env_docs, existing_table)
     replace_env_table_in_md(RUNTIME_RECONCILER_MD, rr_table)
     print(f"Runtime Reconciler env documentation updated in {RUNTIME_RECONCILER_MD}")
     # Subaccount Sync
     sync_env_vars = extract_env_vars_with_paths(SUBACCOUNT_SYNC_YAML)
     sync_env_docs = map_env_to_values(sync_env_vars, values_doc)
-    sync_table = extract_table_markdown(sync_env_docs)
+    existing_table = parse_existing_table(SUBACCOUNT_SYNC_MD)
+    sync_table = extract_table_markdown(sync_env_docs, existing_table)
     replace_env_table_in_md(SUBACCOUNT_SYNC_MD, sync_table)
     print(f"Subaccount Sync env documentation updated in {SUBACCOUNT_SYNC_MD}")
     # Schema Migrator
     migrator_env_vars = extract_env_vars_with_paths(SCHEMA_MIGRATOR_YAML)
     migrator_env_docs = map_env_to_values(migrator_env_vars, values_doc)
-    migrator_table = extract_table_markdown(migrator_env_docs)
+    existing_table = parse_existing_table(SCHEMA_MIGRATOR_MD)
+    migrator_table = extract_table_markdown(migrator_env_docs, existing_table)
     replace_env_table_in_md(SCHEMA_MIGRATOR_MD, migrator_table)
     print(f"Schema Migrator env documentation updated in {SCHEMA_MIGRATOR_MD}")
 

@@ -70,7 +70,7 @@ spec:
                 - name: APP_EXPIRATION_PERIOD
                   value: "{{ .Values.trialCleanup.expirationPeriod }}"
                 - name: APP_PLAN_ID
-                  value: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+                  value: "{{ .Values.trialCleanup.planID }}"
                 - name: APP_TEST_RUN
                   value: "{{ .Values.trialCleanup.testRun }}"
                 - name: APP_TEST_SUBACCOUNT_ID

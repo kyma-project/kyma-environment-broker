@@ -698,6 +698,8 @@ trialCleanup:
   enabled: true
   # Specifies how long a trial instance can exist before being expired
   expirationPeriod: 336h
+  # The ID of the trial plan to be used for cleanup
+  planID: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
   schedule: "15 1 * * *"
   # If true, runs the job in test mode
   testRun: false

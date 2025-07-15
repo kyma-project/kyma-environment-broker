@@ -43,14 +43,14 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file |
 | **APP_CLEANING_DRY_RUN** | <code>true</code> | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database |
 | **APP_CLEANING_ENABLED** | <code>false</code> | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database |
-| **APP_DATABASE_HOST** | None | - |
-| **APP_DATABASE_NAME** | None | - |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
-| **APP_DATABASE_PORT** | None | - |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
-| **APP_DATABASE_SSLMODE** | None | - |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
-| **APP_DATABASE_USER** | None | - |
+| **APP_DATABASE_USER** | None | Specifies the username for the database |
 | **APP_DEPROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue |
 | **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted |
@@ -61,7 +61,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_EDP_ENVIRONMENT** | <code>dev</code> | EDP environment, for example, dev, prod |
 | **APP_EDP_NAMESPACE** | <code>kyma-dev</code> | EDP namespace to use |
 | **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required |
-| **APP_EDP_SECRET** | None | - |
+| **APP_EDP_SECRET** | None | Secret containing EDP credentials |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the /events API and event storage for operation events (true/false) |
 | **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments |
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster |
@@ -92,14 +92,14 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the provisioning queue |
 | **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue |
 | **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
-| **APP_QUOTA_CLIENT_ID** | None | - |
-| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_QUOTA_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS v2. |
+| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS v2. |
 | **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Quota Assignments API in case of errors |
 | **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Quota Assignments API request fails |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | <code>/config/quotaWhitelistedSubaccountIds.yaml</code> | Path to the list of subaccount IDs that are allowed to bypass quota restrictions |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | <code>/config/regionsSupportingMachine.yaml</code> | Path to the list of regions that support machine-type selection |
-| **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
+| **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template |
 | **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | <code>/config/skrDNSProvidersValues.yaml</code> | Path to the DNS providers values |
 | **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | <code>/config/skrOIDCDefaultValues.yaml</code> | Path to the default OIDC values |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed |
