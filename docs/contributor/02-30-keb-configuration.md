@@ -63,7 +63,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required |
 | **APP_EDP_SECRET** | None | - |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the /events API and event storage for operation events (true/false) |
-| **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes Only accounts listed here can provision more than the default limit of free environments |
+| **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments |
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster |
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener |
