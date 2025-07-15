@@ -171,6 +171,12 @@ func (o *OIDCConnectDTO) IsProvided() bool {
 	return o != nil && (o.OIDCConfigDTO != nil || o.List != nil)
 }
 
+func (o *OIDCConfigDTO) IsEmpty() bool {
+	return o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" &&
+		o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 &&
+		len(o.RequiredClaims) == 0 && o.GroupsPrefix == "" && o.EncodedJwksArray == ""
+}
+
 func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
 	if o.List != nil && o.OIDCConfigDTO != nil {
 		return fmt.Errorf("both list and object OIDC cannot be set")
@@ -196,10 +202,7 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
 		return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
 	}
-	if o.OIDCConfigDTO.ClientID == "" && o.OIDCConfigDTO.IssuerURL == "" && o.OIDCConfigDTO.GroupsClaim == "" &&
-		o.OIDCConfigDTO.UsernamePrefix == "" && o.OIDCConfigDTO.UsernameClaim == "" && len(o.OIDCConfigDTO.SigningAlgs) == 0 &&
-		len(o.OIDCConfigDTO.RequiredClaims) == 0 && o.OIDCConfigDTO.GroupsPrefix == "" && o.OIDCConfigDTO.EncodedJwksArray == "" {
-
+	if o.OIDCConfigDTO.IsEmpty() {
 		return nil
 	}
 	if len(o.OIDCConfigDTO.ClientID) == 0 {
