@@ -233,7 +233,7 @@ cleaning:
 configPaths:
   # Path to the service catalog configuration file
   catalog: "/config/catalog.yaml"
-  # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes
+  # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
   # Only accounts listed here can provision more than the default limit of free environments
   freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
   # Path to the rules for mapping plans and regions to hyperscaler account pools
