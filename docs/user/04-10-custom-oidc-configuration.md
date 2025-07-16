@@ -244,7 +244,7 @@ When updating your OIDC configuration, you have the following options:
 -   If you provide no `oidc` object in the update request, the existing OIDC configuration remains unchanged.
 -   If you update using a single `oidc` object, empty keys do not change the configuration, and only the provided values are updated.
 
-### Example
+#### Example
 
 -   Updating an instance with a single `oidc` object.
 
