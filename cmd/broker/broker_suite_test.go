@@ -655,6 +655,33 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
 	assert.NoError(s.t, err)
 }
 
+func (s *BrokerSuiteTest) AssertRuntimeResourceMachineType(obj *unstructured.Unstructured, machineType string) {
+	workers, found, err := unstructured.NestedSlice(obj.Object, "spec", "shoot", "provider", "workers")
+	assert.NoError(s.t, err)
+	assert.True(s.t, found, "Workers should be present in the runtime resource spec")
+	actualMachineType, found, err := unstructured.NestedString(workers[0].(map[string]interface{}), "machine", "type")
+	assert.NoError(s.t, err)
+	assert.True(s.t, found, "Machine type should be present in the worker spec")
+	assert.Equal(s.t, machineType, actualMachineType, "Machine type in the runtime resource spec should match the expected value")
+}
+
+func (s *BrokerSuiteTest) GetUnstructuredRuntimeResource(opId string) *unstructured.Unstructured {
+
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	gvk, err := customresources.GvkByName(customresources.RuntimeCr)
+	assert.NoError(s.t, err)
+	obj.SetGroupVersionKind(gvk)
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+	assert.NoError(s.t, err)
+
+	return obj
+}
+
 func (s *BrokerSuiteTest) AssertRuntimeResourceLabels(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)

@@ -89,7 +89,8 @@ func TestProvisioningForTrial(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
+						"machineType": "unsupported-machine-type"
 					}
 		}`)
 
@@ -100,6 +101,9 @@ func TestProvisioningForTrial(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	runtimeResource := suite.GetUnstructuredRuntimeResource(opID)
+	suite.AssertRuntimeResourceMachineType(runtimeResource, "m5.xlarge")
 
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)
