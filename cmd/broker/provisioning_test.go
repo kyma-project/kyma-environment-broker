@@ -89,8 +89,7 @@ func TestProvisioningForTrial(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
-						"machineType": "jarek"
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 					}
 		}`)
 
