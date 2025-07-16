@@ -30,47 +30,47 @@ spec:
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-serviceName
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.hostSecretKey }}
                 - name: APP_DATABASE_NAME
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-db-name
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.nameSecretKey }}
                 - name: APP_DATABASE_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-password
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
                 - name: APP_DATABASE_PORT
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-servicePort
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.portSecretKey }}
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
-                      key: secretKey
+                      name: {{ .Values.global.database.managedGCP.encryptionSecretName }}
+                      key: {{ .Values.global.database.managedGCP.encryptionSecretKey }}
                       optional: true
                 - name: APP_DATABASE_SSLMODE
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-sslMode
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
                 - name: APP_DATABASE_SSLROOTCERT
-                  value: /secrets/cloudsql-sslrootcert/server-ca.pem
+                  value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
                 - name: APP_DATABASE_USER
                   valueFrom:
                     secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-username
+                      name: {{ .Values.global.database.managedGCP.secretName }}
+                      key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
                 - name: APP_DRY_RUN
                   value: "{{ .Values.trialCleanup.dryRun }}"
                 - name: APP_EXPIRATION_PERIOD
                   value: "{{ .Values.trialCleanup.expirationPeriod }}"
                 - name: APP_PLAN_ID
-                  value: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+                  value: "{{ .Values.trialCleanup.planID }}"
                 - name: APP_TEST_RUN
                   value: "{{ .Values.trialCleanup.testRun }}"
                 - name: APP_TEST_SUBACCOUNT_ID

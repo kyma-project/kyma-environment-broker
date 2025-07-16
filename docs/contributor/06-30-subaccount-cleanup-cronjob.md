@@ -41,24 +41,47 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 Use the following environment variables to configure the application:
 
-| Environment variable | Description |
-|---|---|
-| **APP_CLIENT_VERSION** | Specifies the service version from which events are fetched. The possible values are  `v1.0` or `v2.0`.|
-| **APP_CIS_CLIENT_ID** | Specifies the client ID for the OAuth2 authentication in CIS.|
-| **APP_CIS_CLIENT_SECRET** | Specifies the client secret for the OAuth2 authentication in CIS.|
-| **APP_CIS_AUTH_URL** | Specifies the endpoint for the CIS OAuth token.|
-| **APP_CIS_EVENT_SERVICE_URL** | Specifies the endpoint for CIS events.|
-| **APP_DATABASE_USER** | Specifies the username for the database.|
-| **APP_DATABASE_PASSWORD** | Specifies the user password for the database.|
-| **APP_DATABASE_HOST** | Specifies the host of the database.|
-| **APP_DATABASE_PORT** | Specifies the port for the database.|
-| **APP_DATABASE_NAME** | Specifies the name of the database.|
-| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).|
-| **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)|
-| **APP_BROKER_URL**  | Specifies the Kyma Environment Broker URL.|
-| **APP_BROKER_TOKEN_URL** | Specifies the endpoint for the Kyma Environment Broker OAuth token.|
-| **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB.|
-| **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB.|
-| **APP_BROKER_SCOPE** | Specifies the scope of the OAuth2 authentication in KEB.|
+### Subaccount Cleanup CronJob v1
 
-For more details, see the [resource definition](../../resources/keb/templates/subaccount-cleanup-job.yaml) file.
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_URL** | None | - |
+| **APP_CIS_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests |
+| **APP_CIS_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS |
+| **APP_CIS_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS |
+| **APP_CIS_EVENT_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the CIS v1 event service, used to fetch subaccount events |
+| **APP_CLIENT_VERSION** | <code>v1.0</code> | Client version |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
+| **APP_DATABASE_USER** | None | Specifies the username for the database |
+| **DATABASE_EMBEDDED** | <code>true</code> | - |
+
+
+### Subaccount Cleanup CronJob v2
+
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_URL** | None | - |
+| **APP_CIS_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
+| **APP_CIS_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS |
+| **APP_CIS_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS |
+| **APP_CIS_EVENT_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the CIS v2 event service, used to fetch subaccount events |
+| **APP_CIS_MAX_REQUEST_&#x200b;RETRIES** | <code>3</code> | The maximum number of request retries to the CIS v2 API in case of errors |
+| **APP_CIS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | The minimum interval between requests to the CIS v2 API in case of errors |
+| **APP_CIS_REQUEST_&#x200b;INTERVAL** | <code>200ms</code> | The interval between requests to the CIS v2 API |
+| **APP_CLIENT_VERSION** | <code>v2.0</code> | Client version |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
+| **APP_DATABASE_USER** | None | Specifies the username for the database |
+| **DATABASE_EMBEDDED** | <code>true</code> | - |
+

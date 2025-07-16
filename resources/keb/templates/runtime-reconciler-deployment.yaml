@@ -38,41 +38,41 @@ spec:
             - name: RUNTIME_RECONCILER_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.hostSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_NAME
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.nameSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_PORT
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.portSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: kcp-storage-client-secret
-                  key: secretKey
+                  name: {{ .Values.global.database.managedGCP.encryptionSecretName }}
+                  key: {{ .Values.global.database.managedGCP.encryptionSecretKey }}
                   optional: true
             - name: RUNTIME_RECONCILER_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-sslMode
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
             - name: RUNTIME_RECONCILER_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: RUNTIME_RECONCILER_DRY_RUN
               value: "{{ .Values.runtimeReconciler.dryRun }}"
             - name: RUNTIME_RECONCILER_JOB_ENABLED

@@ -20,9 +20,25 @@ global:
       enabled: true
     # Values for GCP managed PostgreSQL database
     managedGCP:
-      # secret with a secret key used to encrypt particular data
+      # Name of the Kubernetes Secret containing the encryption
       encryptionSecretName: "kcp-storage-client-secret"
+      # Key in the encryption Secret for the encryption key
+      encryptionSecretKey: secretKey
+      # Key in the database Secret for the database host
+      hostSecretKey: "postgresql-serviceName"
       instanceConnectionName: ""
+      # Key in the database Secret for the database name
+      nameSecretKey: "postgresql-broker-db-name"
+      # Key in the database Secret for the database password
+      passwordSecretKey: "postgresql-broker-password"
+      # Key in the database Secret for the database port
+      portSecretKey: "postgresql-servicePort"
+      # Name of the Kubernetes Secret containing DB connection values
+      secretName: "kcp-postgresql"
+      # Key in the database Secret for the SSL mode
+      sslModeSecretKey: "postgresql-sslMode"
+      # Key in the database Secret for the database user
+      userNameSecretKey: "postgresql-broker-username"
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
@@ -31,34 +47,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.21.6
+      version: 1.21.7
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_expirator_job:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.21.6"
+      version: "1.21.7"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.21.6
+      version: 1.21.7
   ingress:
     domainName: localhost
   istio:
@@ -156,6 +172,8 @@ broker:
   freeDocsURL: "https://help.sap.com/docs/"
   # Determines when to show expiration info to users
   freeExpirationPeriod: 720h
+  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
+  gardenerSeedsCache: "gardener-seeds-cache"
   # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans
   includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
@@ -211,6 +229,31 @@ cleaning:
   dryRun: true
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database
   enabled: false
+  
+configPaths:
+  # Path to the service catalog configuration file
+  catalog: "/config/catalog.yaml"
+  # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
+  # Only accounts listed here can provision more than the default limit of free environments
+  freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
+  # Path to the rules for mapping plans and regions to hyperscaler account pools
+  hapRule: "/config/hapRule.yaml"
+  # Path to the plans configuration file, which defines available service plans
+  plansConfig: "/config/plansConfig.yaml"
+  # Path to the providers configuration file, which defines hyperscaler/provider settings
+  providersConfig: "/config/providersConfig.yaml"
+  # Path to the list of subaccount IDs that are allowed to bypass quota restrictions
+  quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
+  # Path to the list of regions that support machine-type selection
+  regionsSupportingMachine: "/config/regionsSupportingMachine.yaml"
+  # Path to the DNS providers values
+  skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
+  # Path to the default OIDC values
+  skrOIDCDefaultValues: "/config/skrOIDCDefaultValues.yaml"
+  # Path to the region mapping for trial environments
+  trialRegionMapping: "/config/trialRegionMapping.yaml"
+  # Path to the Cloud SQL SSL root certificate file
+  cloudsqlSSLRootCert: "/secrets/cloudsql-sslrootcert/server-ca.pem"
 
 # If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted
 disableProcessOperationsInProgress: "false"
@@ -231,7 +274,9 @@ edp:
   # OAuth2 client secret for EDP
   secret: "TBD"
   # Name of the Kubernetes Secret containing EDP credentials
-  secretName: "edp-creds"
+  secretName: "edp-creds" 
+  # OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret
+  secretKey: secret
 
 events:
   # Enables or disables the /events API and event storage for operation events (true/false)
@@ -415,6 +460,10 @@ cis:
     secretName: "cis-creds-accounts"
     # The base URL of the CIS Accounts API endpoint, used for fetching subaccount data
     serviceURL: "TBD"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
   v1:
     # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests
     authURL: "TBD"
@@ -426,6 +475,10 @@ cis:
     secret: "TBD"
     # The name of the Kubernetes Secret containing the CIS v1 client ID and secret
     secretName: "cis-creds-v1"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
   v2:
     # The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests
     authURL: "TBD"
@@ -447,6 +500,10 @@ cis:
     provisioningServiceURL: "TBD"
     # The interval between requests to the CIS v2 API
     requestInterval: "200ms"
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
 # =================================================
 
 
@@ -474,6 +531,8 @@ freeCleanup:
   enabled: true
   # Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days)
   expirationPeriod: 2160h # 90 days
+  # The ID of the free plan to be used for cleanup
+  planID: "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
   schedule: "0,15,30,45 * * * *"
   # If true, runs the job in test mode (no real deletions, for testing purposes)
   testRun: false
@@ -506,6 +565,8 @@ migratorJobs:
     enabled: false
     # The sync wave value for ArgoCD hooks
     syncwave: "0"
+  # Defines the direction of the schema migration, either "up" or "down"
+  direction: "up"
   # If true, enables all migrator jobs
   enabled: true
   helmhook:
@@ -578,6 +639,10 @@ subaccountCleanup:
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
+  # Client version
+  clientV1VersionName: "v1.0"
+  # Client version
+  clientV2VersionName: "v2.0"
 # =================================================
 
 
@@ -633,6 +698,8 @@ trialCleanup:
   enabled: true
   # Specifies how long a trial instance can exist before being expired
   expirationPeriod: 336h
+  # The ID of the trial plan to be used for cleanup
+  planID: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
   schedule: "15 1 * * *"
   # If true, runs the job in test mode
   testRun: false

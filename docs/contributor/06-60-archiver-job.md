@@ -15,14 +15,19 @@ If the value is set to `false`, the archiver job only archives the data.
 
 ## Configuration
 
-| Environment variable | Description                                                                                       | Default value                            |
-|---|---------------------------------------------------------------------------------------------------|------------------------------------------|
-| **APP_DRY_RUN** | Specifies whether to run the job in the `dry-run` mode.                                           | `true`                                   |
-| **APP_LOG_LEVEL** | Specifies the log level for the application. Possible values: `debug`, `info`, `warn`, `error`    | `info`.                                   |
-| **APP_BATCH_SIZE** | Specifies the number of instances to be archived in one batch.                                    | `100`                                    |
-| **APP_PERFORM_DELETION** | Specifies whether to perform the deletion of the operations and runtime states from the database. | `false`                                  |
-| **APP_DATABASE_USER** | Specifies the username for the database.                                                          | `postgres`                               |
-| **APP_DATABASE_PASSWORD** | Specifies the user password for the database.                                                     | `password`                               |
-| **APP_DATABASE_HOST** | Specifies the host of the database.                                                               | `localhost`                              |
-| **APP_DATABASE_PORT** | Specifies the port for the database.                                                              | `5432`                                   |
-| **APP_DATABASE_NAME** | Specifies the name of the database.                                                               | `broker`                            |
+Use the following environment variables to configure the application:
+
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_LOG_LEVEL** | None | - |
+| **APP_BATCH_SIZE** | None | - |
+| **APP_DRY_RUN** | None | - |
+| **APP_PERFORM_DELETION** | None | - |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
+| **APP_DATABASE_USER** | None | - |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
+| **APP_DATABASE_HOST** | None | - |
+| **APP_DATABASE_PORT** | None | - |
+| **APP_DATABASE_NAME** | None | - |
+| **APP_DATABASE_SSLMODE** | None | - |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |

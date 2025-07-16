@@ -45,12 +45,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}
-                  key: id
+                  key: {{ .Values.cis.accounts.clientIdKey | required "please specify .Values.cis.accounts.clientIdKey" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}
-                  key: secret
+                  key: {{ .Values.cis.accounts.secretKey | required "please specify .Values.cis.accounts.secretKey" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.accounts.maxRequestsPerInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL
@@ -63,12 +63,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
-                  key: id
+                  key: {{ .Values.cis.v2.clientIdKey | required "please specify .Values.cis.v2.clientIdKey" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
-                  key: secret
+                  key: {{ .Values.cis.v2.secretKey | required "please specify .Values.cis.v2.secretKey" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.events.maxRequestsPerInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
@@ -78,41 +78,41 @@ spec:
             - name: SUBACCOUNT_SYNC_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.hostSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_NAME
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.nameSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_PORT
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.portSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: kcp-storage-client-secret
-                  key: secretKey
+                  name: {{ .Values.global.database.managedGCP.encryptionSecretName }}
+                  key: {{ .Values.global.database.managedGCP.encryptionSecretKey }}
                   optional: true
             - name: SUBACCOUNT_SYNC_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-sslMode
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
             - name: SUBACCOUNT_SYNC_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL
               value: {{ .Values.subaccountSync.eventsWindowInterval | quote }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE

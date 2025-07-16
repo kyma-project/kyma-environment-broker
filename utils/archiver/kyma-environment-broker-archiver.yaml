@@ -74,4 +74,4 @@ spec:
       template:
         spec:
           containers:
-            - image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.21.6
+            - image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.21.7

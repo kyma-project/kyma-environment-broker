@@ -23,19 +23,18 @@ The application is defined as a Kubernetes deployment.
 
 Use the following environment variables to configure the application:
 
-| Environment variable                                             | Description                                                                                                                      | Default value |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| **RUNTIME_RECONCILER_WATCHER_ENABLED**                           | Specifies whether the application should use Runtime Watcher for reconciliation.                                                                   | `false`        |
-| **RUNTIME_RECONCILER_JOB_ENABLED**                               | Specifies whether the application should use the job to reconcile.                                                                       | `false`        |
-| **RUNTIME_RECONCILER_DRY_RUN**                                   | Specifies whether to run the application in the dry-run mode.                                                                    | `true`        |
-| **RUNTIME_RECONCILER_BTP_MANAGER_SECRET_WATCHER_ADDR**           | Specifies Runtime Watcher's port.                                                                                                       | `0`           |
-| **RUNTIME_RECONCILER_BTP_MANAGER_SECRET_WATCHER_COMPONENT_NAME** | Specifies the component name for Runtime Watcher.                                                                                               | `NA`          |
-| **RUNTIME_RECONCILER_AUTO_RECONCILE_INTERVAL**                   | Specifies at what intervals the job runs  (in hours).                                                                       | `24`          |
-| **RUNTIME_RECONCILER_DATABASE_SECRET_KEY**                       | Specifies the Secret key for the database.                                                                                       | optional      |
-| **RUNTIME_RECONCILER_DATABASE_USER**                             | Specifies the username for the database.                                                                                         | `postgres`    |
-| **RUNTIME_RECONCILER_DATABASE_PASSWORD**                         | Specifies the user password for the database.                                                                                    | `password`    |
-| **RUNTIME_RECONCILER_DATABASE_HOST**                             | Specifies the host of the database.                                                                                              | `localhost`   |
-| **RUNTIME_RECONCILER_DATABASE_PORT**                             | Specifies the port for the database.                                                                                             | `5432`        |
-| **RUNTIME_RECONCILER_DATABASE_NAME**                             | Specifies the name of the database.                                                                                              | `broker`      |
-| **RUNTIME_RECONCILER_DATABASE_SSLMODE**                          | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).       | `disable`     |
-| **RUNTIME_RECONCILER_DATABASE_SSLROOTCERT**                      | Specifies the location of CA cert of PostgreSQL. (Optional)                                                                      |  optional     |
+| Environment Variable | Current Value | Description |
+|---------------------|------------------------------|---------------------------------------------------------------|
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_HOST** | None | Specifies the host of the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_NAME** | None | Specifies the name of the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_PASSWORD** | None | Specifies the user password for the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_PORT** | None | Specifies the port for the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SECRET_KEY** | None | Specifies the Secret key for the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | Specifies the username for the database |
+| **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>true</code> | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions) |
+| **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>false</code> | If true, enables the periodic reconciliation job |
+| **RUNTIME_RECONCILER_&#x200b;JOB_INTERVAL** | <code>1440</code> | Interval (in minutes) between reconciliation job runs |
+| **RUNTIME_RECONCILER_&#x200b;JOB_RECONCILIATION_&#x200b;DELAY** | <code>1s</code> | Delay before starting reconciliation after job trigger (e.g., "1s") |
+| **RUNTIME_RECONCILER_&#x200b;METRICS_PORT** | <code>8081</code> | Port on which the reconciler exposes Prometheus metrics |
