@@ -188,7 +188,7 @@ When configuring your OIDC setup, you have the following options:
 -   If you do not include an `oidc` object in the provisioning request at all, the default OIDC configuration is applied.
 -   If you leave the parameters of a single `oidc` object empty, it defaults to the predefined values.
 
-### Example
+#### Example
 
 -   See a request with an `oidc` object with empty keys:
 
