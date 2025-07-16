@@ -121,7 +121,10 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		} else {
 			trialProvider = *provisioningParameters.Parameters.Provider
 		}
-		provisioningParameters.Parameters.MachineType = nil // reset machine type to default for trial plans
+		// Remove parameters that are not needed for trial clusters (then default values will be used)
+		provisioningParameters.Parameters.MachineType = nil
+		provisioningParameters.Parameters.AutoScalerMin = nil
+		provisioningParameters.Parameters.AutoScalerMax = nil
 		switch trialProvider {
 		case pkg.AWS:
 			p = &AWSTrialInputProvider{

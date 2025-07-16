@@ -90,7 +90,9 @@ func TestProvisioningForTrial(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
-						"machineType": "unsupported-machine-type"
+						"machineType": "unsupported-machine-type",
+						"autoscalerMax": 13,
+						"autoscalerMin": 13
 					}
 		}`)
 
@@ -103,7 +105,7 @@ func TestProvisioningForTrial(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 
 	runtimeResource := suite.GetUnstructuredRuntimeResource(opID)
-	suite.AssertRuntimeResourceMachineType(runtimeResource, "m5.xlarge")
+	suite.AssertRuntimeResourceWorkers(runtimeResource, "m5.xlarge", 1, 1)
 
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)

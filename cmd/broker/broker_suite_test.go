@@ -655,7 +655,7 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) AssertRuntimeResourceMachineType(obj *unstructured.Unstructured, machineType string) {
+func (s *BrokerSuiteTest) AssertRuntimeResourceWorkers(obj *unstructured.Unstructured, machineType string, autoscalerMax, autoscalerMin int64) {
 	workers, found, err := unstructured.NestedSlice(obj.Object, "spec", "shoot", "provider", "workers")
 	assert.NoError(s.t, err)
 	assert.True(s.t, found, "Workers should be present in the runtime resource spec")
@@ -663,6 +663,14 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceMachineType(obj *unstructured.Uns
 	assert.NoError(s.t, err)
 	assert.True(s.t, found, "Machine type should be present in the worker spec")
 	assert.Equal(s.t, machineType, actualMachineType, "Machine type in the runtime resource spec should match the expected value")
+	actualMax, found, err := unstructured.NestedInt64(workers[0].(map[string]interface{}), "maximum")
+	assert.NoError(s.t, err)
+	assert.True(s.t, found, "Autoscaler maximum should be present in the worker spec")
+	assert.Equal(s.t, autoscalerMax, actualMax, "Autoscaler maximum in the runtime resource spec should match the expected value")
+	actualMin, found, err := unstructured.NestedInt64(workers[0].(map[string]interface{}), "minimum")
+	assert.NoError(s.t, err)
+	assert.True(s.t, found, "Autoscaler minimum should be present in the worker spec")
+	assert.Equal(s.t, autoscalerMin, actualMin, "Autoscaler minimum in the runtime resource spec should match the expected value")
 }
 
 func (s *BrokerSuiteTest) GetUnstructuredRuntimeResource(opId string) *unstructured.Unstructured {
