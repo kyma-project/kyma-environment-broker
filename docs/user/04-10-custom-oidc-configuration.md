@@ -311,7 +311,7 @@ You can provision or update your Kyma runtime without providing the OIDC propert
 
 If you do not include an `oidc` parameter in the provisioning request at all, the default OIDC configuration is applied.
 
-### Example
+#### Example
 
 -   See an example of a provisioning request without specifying any `oidc` configuration:
 
