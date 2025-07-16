@@ -82,7 +82,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
 	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
-		values, err := s.valuesProvider.ValuesForPlanAndParameters(*operation.ProvisioningParameters)
+		values, err := s.valuesProvider.ValuesForPlanAndParameters(&operation.ProvisioningParameters)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}

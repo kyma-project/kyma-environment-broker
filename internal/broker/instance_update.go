@@ -260,7 +260,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
-	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(*instance.Parameters)
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(&instance.Parameters)
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
