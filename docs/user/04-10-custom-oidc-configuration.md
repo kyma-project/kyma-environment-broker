@@ -12,7 +12,7 @@ When configuring your OIDC setup, you have the following options:
 -   If you use an `oidc` list, you must explicitly define values for all its elements, because they do not inherit default values.
 -   If you provide an empty `oidc` list with zero elements, no OIDC configuration is applied to the instance.
 
-### Example
+#### Example
 
 -   Configuring the `oidc` list.
 
