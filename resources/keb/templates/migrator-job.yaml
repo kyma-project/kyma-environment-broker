@@ -69,37 +69,37 @@ spec:
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.hostSecretKey }}
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.nameSecretKey }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort     
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.portSecretKey }}
             - name: DB_SSL
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-sslMode
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: DB_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: DIRECTION
-              value: "up"
+              value: "{{ .Values.migratorJobs.direction }}"
           volumeMounts:
             - name: kyma-environment-broker
               mountPath: /migrate/new-migrations
