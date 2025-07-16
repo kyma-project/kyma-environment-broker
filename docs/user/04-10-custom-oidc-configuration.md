@@ -348,6 +348,6 @@ If you do not include an `oidc` parameter in the provisioning request at all, th
     }
     ```
 
-## Updating Kyma Runtime with No OIDC Property
+### Updating Kyma Runtime with No OIDC Property
 
 If you provide no `oidc` property in the update request, the existing OIDC configuration remains unchanged.
