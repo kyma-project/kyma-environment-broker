@@ -181,7 +181,7 @@ This solution is not recommended, and is only supported for maintaining backward
 
 In the SAP BTP cockpit, you can only see the parameters that you configure yourself. Since you must provide values only for `clientID` and `issuerURL` in a single `oidc` object, the visibility of your complete OIDC configuration may be limited.
 
-## Provisioning Kyma Runtime with a Single `oidc` Object
+### Provisioning Kyma Runtime with a Single `oidc` Object
 
 When configuring your OIDC setup, you have the following options:
 
