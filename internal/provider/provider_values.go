@@ -47,14 +47,14 @@ func NewPlanSpecificValuesProvider(cfg broker.InfrastructureManager,
 	}
 }
 
-func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error) {
+func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningParameters *internal.ProvisioningParameters) (internal.ProviderValues, error) {
 	var p Provider
 	switch provisioningParameters.PlanID {
 	case broker.AWSPlanID, broker.BuildRuntimeAWSPlanID:
 		p = &AWSInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -62,7 +62,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		p = &AWSInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -70,7 +70,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		p = &AzureInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -78,14 +78,14 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		p = &AzureLiteInputProvider{
 			Purpose:                s.defaultPurpose,
 			UseSmallerMachineTypes: s.useSmallerMachineTypes,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.GCPPlanID, broker.BuildRuntimeGCPPlanID:
 		p = &GCPInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -94,13 +94,13 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		case pkg.AWS:
 			p = &AWSFreemiumInputProvider{
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: provisioningParameters,
+				ProvisioningParameters: *provisioningParameters,
 				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.Azure:
 			p = &AzureFreemiumInputProvider{
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: provisioningParameters,
+				ProvisioningParameters: *provisioningParameters,
 				ZonesProvider:          s.zonesProvider,
 			}
 		default:
@@ -110,7 +110,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		p = &SapConvergedCloudInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,
-			ProvisioningParameters: provisioningParameters,
+			ProvisioningParameters: *provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -127,20 +127,20 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			p = &AWSTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: provisioningParameters,
+				ProvisioningParameters: *provisioningParameters,
 				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.GCP:
 			p = &GCPTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				ProvisioningParameters: provisioningParameters,
+				ProvisioningParameters: *provisioningParameters,
 				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.Azure:
 			p = &AzureTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: provisioningParameters,
+				ProvisioningParameters: *provisioningParameters,
 				ZonesProvider:          s.zonesProvider,
 			}
 		default:

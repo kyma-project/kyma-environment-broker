@@ -55,7 +55,7 @@ type (
 	}
 
 	ValuesProvider interface {
-		ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
+		ValuesForPlanAndParameters(provisioningParameters *internal.ProvisioningParameters) (internal.ProviderValues, error)
 	}
 
 	RegionsSupporterProvider interface {
@@ -197,7 +197,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformRegion:   region,
 		PlatformProvider: platformProvider,
 	}
-	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(*provisioningParameters)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to provide default values for instance %s: %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
@@ -320,7 +320,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
-	values, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
+	values, err := b.valuesProvider.ValuesForPlanAndParameters(*provisioningParameters)
 	if err != nil {
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
