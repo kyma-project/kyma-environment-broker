@@ -79,7 +79,7 @@ When updating your OIDC configuration, you have the following options:
 -   The update operation overwrites the OIDC configuration values provided in JSON for the `oidc` list, so if you provide OIDC parameters with empty values, they are considered valid and replace the existing settings.
 -   If you provide an empty `oidc` list, it clears the OIDC configuration for the instance.
 
-### Example
+#### Example
 
 -   Updating an instance with a list of `oidc` objects.
 
