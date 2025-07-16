@@ -121,6 +121,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		} else {
 			trialProvider = *provisioningParameters.Parameters.Provider
 		}
+		provisioningParameters.Parameters.MachineType = nil // reset machine type to default for trial plans
 		switch trialProvider {
 		case pkg.AWS:
 			p = &AWSTrialInputProvider{
