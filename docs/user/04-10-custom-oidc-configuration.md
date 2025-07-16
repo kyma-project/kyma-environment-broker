@@ -6,7 +6,7 @@ During SAP BTP, Kyma runtime provisioning or update, you can provide your custom
 
 Configure the `oidc` property as a list of `oidc` objects. In this way, you can define zero, one, or multiple OIDC configurations. When using the list of `oidc` objects, you must provide values for each element except for `requiredClaims`. By configuring the OIDC details yourself, you gain full visibility of your settings within the SAP BTP cockpit. For your convenience, in the SAP BTP cockpit, one `oidc` object has the predefined values filled in, but you can change them. For each additional `oidc` object, you must provide your own settings.
 
-## Provisioning Kyma Runtime with the `oidc` List
+### Provisioning Kyma Runtime with the `oidc` List
 
 When configuring your OIDC setup, you have the following options:
 -   If you use an `oidc` list, you must explicitly define values for all its elements, because they do not inherit default values.
