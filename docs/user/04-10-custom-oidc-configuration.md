@@ -235,7 +235,7 @@ When configuring your OIDC setup, you have the following options:
     }
     ```
 
-## Updating Kyma Runtime with a Single `oidc` Object
+### Updating Kyma Runtime with a Single `oidc` Object
 
 You can update the OIDC configuration from a single `oidc` object to an `oidc` list, but updating from an `oidc` list to a single `oidc` object is not supported.
 
