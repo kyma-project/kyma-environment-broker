@@ -1393,7 +1393,7 @@ modules: []
 	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
 	valuesProvider := provider.NewPlanSpecificValuesProvider(inputConfig, nil, provider.FakeZonesProvider([]string{"a", "b", "c"}), planSpec)
 
-	values, _ := valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
+	values, _ := valuesProvider.ValuesForPlanAndParameters(&operation.ProvisioningParameters)
 	operation.ProviderValues = &values
 	return operation
 }
