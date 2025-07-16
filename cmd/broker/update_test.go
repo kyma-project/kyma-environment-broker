@@ -1708,6 +1708,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, opID)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
@@ -1771,6 +1772,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID = suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime = suite.GetRuntimeResourceByInstanceID(id)
 	assert.Equal(t, 14, int(runtime.Spec.Shoot.Provider.Workers[0].Minimum))
