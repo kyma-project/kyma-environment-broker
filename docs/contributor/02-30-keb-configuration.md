@@ -23,7 +23,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_ENABLE_&#x200b;SHOOT_AND_SEED_SAME_&#x200b;REGION** | <code>false</code> | If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users |
-| **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | None | - |
+| **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds |
 | **APP_BROKER_INCLUDE_&#x200b;ADDITIONAL_PARAMS_&#x200b;IN_SCHEMA** | <code>false</code> | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one free (freemium) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned |
@@ -40,17 +40,17 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
 | **APP_BROKER_USE_&#x200b;ADDITIONAL_OIDC_&#x200b;SCHEMA** | <code>false</code> | If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime |
-| **APP_CATALOG_FILE_&#x200b;PATH** | None | - |
+| **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file |
 | **APP_CLEANING_DRY_RUN** | <code>true</code> | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database |
 | **APP_CLEANING_ENABLED** | <code>false</code> | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database |
-| **APP_DATABASE_HOST** | None | - |
-| **APP_DATABASE_NAME** | None | - |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | - |
-| **APP_DATABASE_PORT** | None | - |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | - |
-| **APP_DATABASE_SSLMODE** | None | - |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | None | - |
-| **APP_DATABASE_USER** | None | - |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
+| **APP_DATABASE_USER** | None | Specifies the username for the database |
 | **APP_DEPROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue |
 | **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted |
@@ -61,13 +61,13 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_EDP_ENVIRONMENT** | <code>dev</code> | EDP environment, for example, dev, prod |
 | **APP_EDP_NAMESPACE** | <code>kyma-dev</code> | EDP namespace to use |
 | **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required |
-| **APP_EDP_SECRET** | None | - |
+| **APP_EDP_SECRET** | None | Secret containing EDP credentials |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the /events API and event storage for operation events (true/false) |
-| **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | None | - |
+| **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments |
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster |
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener |
-| **APP_HAP_RULE_FILE_&#x200b;PATH** | None | - |
+| **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters Possible values: empty (default), "node", or "zone" |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;GARDENER_SHOOT_&#x200b;PURPOSE** | <code>development</code> | Sets the default purpose for Gardener shoots (clusters) created by the broker Possible values: development, evaluation, production, testing |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;TRIAL_PROVIDER** | <code>Azure</code> | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS |
@@ -86,26 +86,26 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;RETENTION_PERIOD** | <code>1h</code> | Duration of retaining operation results |
 | **APP_METRICSV2_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics |
 | **APP_MULTIPLE_&#x200b;CONTEXTS** | <code>false</code> | If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context |
-| **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | None | - |
+| **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/plansConfig.yaml</code> | Path to the plans configuration file, which defines available service plans |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false) |
-| **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | None | - |
+| **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings |
 | **APP_PROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the provisioning queue |
 | **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue |
 | **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
-| **APP_QUOTA_CLIENT_ID** | None | - |
-| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | - |
+| **APP_QUOTA_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS v2. |
+| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS v2. |
 | **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Quota Assignments API in case of errors |
 | **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Quota Assignments API request fails |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
-| **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | None | - |
-| **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | None | - |
-| **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | - |
-| **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | None | - |
-| **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | None | - |
+| **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | <code>/config/quotaWhitelistedSubaccountIds.yaml</code> | Path to the list of subaccount IDs that are allowed to bypass quota restrictions |
+| **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | <code>/config/regionsSupportingMachine.yaml</code> | Path to the list of regions that support machine-type selection |
+| **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template |
+| **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | <code>/config/skrDNSProvidersValues.yaml</code> | Path to the DNS providers values |
+| **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | <code>/config/skrOIDCDefaultValues.yaml</code> | Path to the default OIDC values |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_DELETION** | <code>60m</code> | Maximum time to wait for a runtime resource to be deleted before considering the step as failed |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_UPDATE** | <code>180m</code> | Maximum time to wait for a runtime resource to be updated before considering the step as failed |
-| **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | None | - |
+| **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | <code>/config/trialRegionMapping.yaml</code> | Path to the region mapping for trial environments |
 | **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue |
 | **APP_UPDATE_&#x200b;PROCESSING_ENABLED** | <code>true</code> | If true, the broker processes update requests for service instances |
 | **APP_UPDATE_WORKERS_&#x200b;AMOUNT** | <code>20</code> | Number of workers in update queue |

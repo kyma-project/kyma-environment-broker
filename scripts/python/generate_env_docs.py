@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import re
 import yaml
+import io
 
 # This script generates Markdown documentation for environment variables defined in a Helm deployment YAML and values.yaml.
 # It extracts environment variables from the deployment template, maps them to their descriptions and default values from values.yaml (including comments),
@@ -22,8 +23,25 @@ StrLoader.add_constructor('tag:yaml.org,2002:bool', str_constructor)
 StrLoader.add_constructor('tag:yaml.org,2002:str', str_constructor)
 
 DEPLOYMENT_YAML = "resources/keb/templates/deployment.yaml"
+SUBACC_CLEANUP_YAML = "resources/keb/templates/subaccount-cleanup-job.yaml"
 VALUES_YAML = "resources/keb/values.yaml"
 OUTPUT_MD = "docs/contributor/02-30-keb-configuration.md"
+SUBACC_MD = "docs/contributor/06-30-subaccount-cleanup-cronjob.md"
+TRIAL_CLEANUP_YAML = "resources/keb/templates/trial-cleanup-job.yaml"
+FREE_CLEANUP_YAML = "resources/keb/templates/free-cleanup-job.yaml"
+TRIAL_FREE_MD = "docs/contributor/06-40-trial-free-cleanup-cronjobs.md"
+DEPROV_RETRIGGER_YAML = "resources/keb/templates/deprovision-retrigger-job.yaml"
+DEPROV_RETRIGGER_MD = "docs/contributor/06-50-deprovision-retrigger-cronjob.md"
+ARCHIVER_YAML = "utils/archiver/kyma-environment-broker-archiver.yaml"
+ARCHIVER_MD = "docs/contributor/06-60-archiver-job.md"
+SERVICE_BINDING_CLEANUP_YAML = "resources/keb/templates/service-binding-cleanup-job.yaml"
+SERVICE_BINDING_CLEANUP_MD = "docs/contributor/06-70-service-binding-cleanup-cronjob.md"
+RUNTIME_RECONCILER_YAML = "resources/keb/templates/runtime-reconciler-deployment.yaml"
+RUNTIME_RECONCILER_MD = "docs/contributor/07-10-runtime-reconciler.md"
+SUBACCOUNT_SYNC_YAML = "resources/keb/templates/subaccount-sync-deployment.yaml"
+SUBACCOUNT_SYNC_MD = "docs/contributor/07-20-subaccount-sync.md"
+SCHEMA_MIGRATOR_YAML = "resources/keb/templates/migrator-job.yaml"
+SCHEMA_MIGRATOR_MD = "docs/contributor/07-30-schema-migrator.md"
 
 def extract_env_vars_with_paths(deployment_yaml_path):
     """
@@ -55,9 +73,10 @@ def extract_env_vars_with_paths(deployment_yaml_path):
                             env_vars.append((current_env, mval.group(1).strip()))
                             break
                     else:
-                        mval = re.search(r'value:\s*"?{{\s*\.Values\.([^"}}]+)\s*}}"?', val_line)
+                        # Match any Helm template, including filters
+                        mval = re.search(r'value:\s*"?({{.*?}})"?', val_line)
                         if mval:
-                            env_vars.append((current_env, mval.group(1)))
+                            env_vars.append((current_env, mval.group(1).strip()))
                             break
                         elif 'valueFrom:' in val_line:
                             env_vars.append((current_env, None))
@@ -69,6 +88,56 @@ def extract_env_vars_with_paths(deployment_yaml_path):
             elif re.match(r"\s*ports:\s*", line):
                 in_env = False
     return env_vars
+
+def extract_env_vars_with_paths_multiple_jobs(deployment_yaml_path):
+    """
+    Extract environment variables for each job in a multi-job YAML file (split by ---).
+    Returns a list of lists: [[(env_var_name, value_path_or_literal), ...], ...] for each job.
+    Improved: Extracts full Helm value template for each env var, just like main deployment extraction.
+    """
+    with open(deployment_yaml_path, "r") as f:
+        content = f.read()
+    job_yamls = content.split('---')
+    all_env_vars = []
+    for job_yaml in job_yamls:
+        lines = job_yaml.splitlines()
+        env_vars = []
+        in_env = False
+        current_env = None
+        for i, line in enumerate(lines):
+            if re.match(r"\s*env:\s*$", line):
+                in_env = True
+                continue
+            if in_env:
+                m = re.match(r"\s*-\s*name:\s*([A-Z0-9_]+)", line)
+                if m:
+                    current_env = m.group(1)
+                    # Look ahead for value line
+                    for j in range(i+1, min(i+3, len(lines))):
+                        val_line = lines[j]
+                        # Extract full Helm value template if present
+                        mval = re.search(r'value:\s*"?({{.*?}})"?', val_line)
+                        if mval:
+                            env_vars.append((current_env, mval.group(1).strip()))
+                            break
+                        # Composite value: multiple .Values in one line
+                        elif re.search(r'{{.*\\.Values\\..*}}.*{{.*\\.Values\\..*}}', val_line):
+                            mval2 = re.search(r'value:\s*"?(.+?)"?$', val_line)
+                            if mval2:
+                                env_vars.append((current_env, mval2.group(1).strip()))
+                                break
+                        elif 'valueFrom:' in val_line:
+                            env_vars.append((current_env, None))
+                            break
+                    else:
+                        env_vars.append((current_env, None))
+                elif re.match(r"\s*-\s*name:", line):
+                    continue
+                elif re.match(r"\s*ports:\s*", line):
+                    in_env = False
+        if env_vars:
+            all_env_vars.append(env_vars)
+    return all_env_vars
 
 def parse_values_yaml_with_comments(values_yaml_path):
     """
@@ -127,6 +196,24 @@ def normalize_path(path):
         return ''
     return path.replace('_', '.').replace('-', '.').lower()
 
+def extract_helm_value_path(value):
+    """
+    Extracts the .Values path from a Helm template value string.
+    E.g., '{{ .Values.cis.v2.eventServiceURL | required "..." | quote }}' -> 'cis.v2.eventServiceURL'
+    Returns None if not found.
+    """
+    if not value:
+        return None
+    # Match .Values.<path> optionally followed by filters (| ...)
+    m = re.search(r'\{\{\s*\.Values\.([a-zA-Z0-9_.]+)', value)
+    if m:
+        return m.group(1)
+    # Also match if value is just .Values.<path> (no curly braces)
+    m2 = re.match(r'\.Values\.([a-zA-Z0-9_.]+)', value)
+    if m2:
+        return m2.group(1)
+    return None
+
 def map_env_to_values(env_vars, values_doc):
     """
     Map extracted environment variables to their descriptions and default values from values.yaml.
@@ -159,17 +246,24 @@ def map_env_to_values(env_vars, values_doc):
                         defaults.append(str(doc['default']))
             desc = ' / '.join(descs) if descs else '-'
             default = '.'.join(defaults) if defaults else '-'
-        elif path and path in values_doc:
-            doc_entry = values_doc[path]
-            if doc_entry:
-                desc = doc_entry.get('description', '')
-                default = doc_entry.get('default', '')
-        elif norm_path and norm_path in norm_doc_map:
-            doc_entry = norm_doc_map[norm_path]
-            if doc_entry:
-                desc = doc_entry.get('description', '')
-                default = doc_entry.get('default', '')
-        # Otherwise, leave desc and default blank (will render as '-')
+        else:
+            # Try to extract .Values.<path> from any Helm template in the value
+            helm_path = extract_helm_value_path(path)
+            if helm_path:
+                doc_entry = values_doc.get(helm_path) or norm_doc_map.get(normalize_path(helm_path))
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
+            elif path and path in values_doc:
+                doc_entry = values_doc[path]
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
+            elif norm_path and norm_path in norm_doc_map:
+                doc_entry = norm_doc_map[norm_path]
+                if doc_entry:
+                    desc = doc_entry.get('description', '')
+                    default = doc_entry.get('default', '')
         result.append({
             'env': env,
             'description': desc,
@@ -205,43 +299,197 @@ def soft_break(text, max_len, prefer_char=None):
             start += max_len
     return result
 
-def write_markdown_table(env_docs, output_path):
+def parse_existing_table(md_path):
     """
-    Write the environment variable documentation as a Markdown table.
-    Fields with missing description or value are rendered as '-'.
-    Long values in the first and second columns are split with a soft break (S\u200b;), except the value column, which is not split.
-    The description column is visually wider.
+    Parse the first Markdown table in the file. Returns a dict mapping env var (no formatting) to {'default': val, 'description': desc}.
     """
-    with open(output_path, "w") as f:
-        f.write("## Kyma Environment Broker Configuration\n\n")
-        f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
-        f.write("| Environment Variable | Current Value | Description |")
-        f.write("\n|---------------------|------------------------------|---------------------------------------------------------------|\n")
-        for doc in env_docs:
-            desc = doc['description'] if doc['description'] else '-'
-            # Format default value for Markdown
-            if doc['default'] is None or doc['default'] == '':
-                default = 'None'
+    table = {}
+    with open(md_path, 'r') as f:
+        lines = f.readlines()
+    in_table = False
+    for line in lines:
+        if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
+            in_table = True
+            continue
+        if in_table:
+            if not line.strip().startswith('|') or line.strip().startswith('|-'):
+                if line.strip() == '' or line.strip().startswith('|-'):
+                    continue
+                else:
+                    break
+            parts = [p.strip() for p in line.strip().strip('|').split('|')]
+            if len(parts) < 3:
+                continue
+            env = parts[0]
+            # Remove formatting
+            env_clean = env.replace('**', '').replace('&#x200b;', '').replace('<br>', '').replace('<br/>', '').replace('<br />', '').replace('\u200b', '').replace('\u200B', '').replace(' ', '').replace('\n', '').replace('\r', '')
+            default = parts[1]
+            desc = parts[2]
+            table[env_clean] = {'default': default, 'description': desc}
+    return table
+
+def extract_table_markdown(env_docs, existing_table=None):
+    buf = io.StringIO()
+    buf.write("| Environment Variable | Current Value | Description |\n")
+    buf.write("|---------------------|------------------------------|---------------------------------------------------------------|\n")
+    for doc in env_docs:
+        desc = doc['description'] if doc['description'] else '-'
+        default_val = doc['default']
+        env_val = soft_break(doc["env"], 20, prefer_char='_')
+        env_col = f'**{env_val}**'
+        env_key = doc["env"].replace('**', '').replace('&#x200b;', '').replace('<br>', '').replace('<br/>', '').replace('<br />', '').replace('\u200b', '').replace('\u200B', '').replace(' ', '').replace('\n', '').replace('\r', '')
+        # Use existing value if new is None or '-'
+        if existing_table and env_key in existing_table:
+            if default_val is None or str(default_val).strip() == '' or str(default_val).strip() == '-':
+                val_col = existing_table[env_key]['default']
             else:
-                default = doc["default"]
-            env_val = soft_break(doc["env"], 20, prefer_char='_')
-            env_col = f'**{env_val}**'
-            if default == 'None':
+                val_col = f'<code>{str(default_val)}</code>'
+            if desc is None or desc.strip() == '' or desc.strip() == '-':
+                desc = existing_table[env_key]['description']
+        else:
+            if default_val is None or str(default_val).strip() == '':
                 val_col = 'None'
             else:
-                # Do not split or break the value column at all
-                val_col = f'<code>{str(default)}</code>'
-            f.write(f"| {env_col} | {val_col} | {desc} |\n")
+                val_col = f'<code>{str(default_val)}</code>'
+        buf.write(f"| {env_col} | {val_col} | {desc} |\n")
+    return buf.getvalue()
+
+def replace_env_table_in_md(md_path, new_table):
+    # Special handling for TRIAL_FREE_MD: replace from section header to end
+    if md_path == TRIAL_FREE_MD:
+        with open(md_path, 'r') as f:
+            lines = f.readlines()
+        out = []
+        found_section = False
+        for idx, line in enumerate(lines):
+            if line.strip().startswith('### Trial Cleanup CronJob'):
+                out.append(new_table)
+                found_section = True
+                break
+            out.append(line)
+        if not found_section:
+            out.append('\n' + new_table + '\n')
+        with open(md_path, 'w') as f:
+            f.writelines(out)
+        return
+    # Special handling for SUBACC_MD: replace from first v1 header to end
+    if md_path == SUBACC_MD:
+        with open(md_path, 'r') as f:
+            lines = f.readlines()
+        out = []
+        found_section = False
+        for idx, line in enumerate(lines):
+            if line.strip().startswith('### Subaccount Cleanup CronJob v1'):
+                out.append(new_table)
+                found_section = True
+                break
+            out.append(line)
+        if not found_section:
+            out.append('\n' + new_table + '\n')
+        with open(md_path, 'w') as f:
+            f.writelines(out)
+        return
+    with open(md_path, 'r') as f:
+        lines = f.readlines()
+    out = []
+    in_table = False
+    table_started = False
+    for line in lines:
+        if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
+            in_table = True
+            table_started = True
+            out.append(new_table)
+            continue
+        if in_table:
+            if not line.strip().startswith('|'):
+                in_table = False
+                if line.strip():
+                    out.append(line)
+            continue
+        out.append(line)
+    if not table_started:
+        # If no table found, append at end
+        out.append('\n' + new_table + '\n')
+    with open(md_path, 'w') as f:
+        f.writelines(out)
 
 def main():
     """
-    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation.
+    Main entry point: extract env vars, map to values.yaml, and write Markdown documentation for all jobs.
     """
-    env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     values_doc = parse_values_yaml_with_comments(VALUES_YAML)
+    # KEB deployment
+    env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
     env_docs = map_env_to_values(env_vars, values_doc)
-    write_markdown_table(env_docs, OUTPUT_MD)
-    print(f"Markdown documentation generated in {OUTPUT_MD}")
+    existing_table = parse_existing_table(OUTPUT_MD)
+    table = extract_table_markdown(env_docs, existing_table)
+    replace_env_table_in_md(OUTPUT_MD, table)
+    print(f"Markdown documentation table replaced in {OUTPUT_MD}")
+    # Subaccount Cleanup (multi-job)
+    subacc_env_vars_list = extract_env_vars_with_paths_multiple_jobs(SUBACC_CLEANUP_YAML)
+    subacc_tables = []
+    for idx, subacc_env_vars in enumerate(subacc_env_vars_list):
+        subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
+        existing_table = parse_existing_table(SUBACC_MD)
+        version = f"v{idx+1}"
+        subacc_tables.append(f"### Subaccount Cleanup CronJob {version}\n\n" + extract_table_markdown(subacc_env_docs, existing_table))
+    subacc_combined = "\n\n".join(subacc_tables) + "\n"
+    replace_env_table_in_md(SUBACC_MD, subacc_combined)
+    print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
+    # Trial Cleanup
+    trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
+    trial_env_docs = map_env_to_values(trial_env_vars, values_doc)
+    existing_table = parse_existing_table(TRIAL_FREE_MD)
+    trial_table = extract_table_markdown(trial_env_docs, existing_table)
+    # Free Cleanup
+    free_env_vars = extract_env_vars_with_paths(FREE_CLEANUP_YAML)
+    free_env_docs = map_env_to_values(free_env_vars, values_doc)
+    free_table = extract_table_markdown(free_env_docs, existing_table)
+    combined = "### Trial Cleanup CronJob\n\n" + trial_table + "\n\n### Free Cleanup CronJob\n\n" + free_table + "\n"
+    replace_env_table_in_md(TRIAL_FREE_MD, combined)
+    print(f"Trial/Free Cleanup env documentation updated in {TRIAL_FREE_MD}")
+    # Deprovision Retrigger
+    deprov_env_vars = extract_env_vars_with_paths(DEPROV_RETRIGGER_YAML)
+    deprov_env_docs = map_env_to_values(deprov_env_vars, values_doc)
+    existing_table = parse_existing_table(DEPROV_RETRIGGER_MD)
+    deprov_table = extract_table_markdown(deprov_env_docs, existing_table)
+    replace_env_table_in_md(DEPROV_RETRIGGER_MD, deprov_table)
+    print(f"Deprovision Retrigger env documentation updated in {DEPROV_RETRIGGER_MD}")
+    # Archiver Job
+    archiver_env_vars = extract_env_vars_with_paths(ARCHIVER_YAML)
+    archiver_env_docs = map_env_to_values(archiver_env_vars, values_doc)
+    existing_table = parse_existing_table(ARCHIVER_MD)
+    archiver_table = extract_table_markdown(archiver_env_docs, existing_table)
+    replace_env_table_in_md(ARCHIVER_MD, archiver_table)
+    print(f"Archiver env documentation updated in {ARCHIVER_MD}")
+    # Service Binding Cleanup Job
+    sbc_env_vars = extract_env_vars_with_paths(SERVICE_BINDING_CLEANUP_YAML)
+    sbc_env_docs = map_env_to_values(sbc_env_vars, values_doc)
+    existing_table = parse_existing_table(SERVICE_BINDING_CLEANUP_MD)
+    sbc_table = extract_table_markdown(sbc_env_docs, existing_table)
+    replace_env_table_in_md(SERVICE_BINDING_CLEANUP_MD, sbc_table)
+    print(f"Service Binding Cleanup env documentation updated in {SERVICE_BINDING_CLEANUP_MD}")
+    # Runtime Reconciler
+    rr_env_vars = extract_env_vars_with_paths(RUNTIME_RECONCILER_YAML)
+    rr_env_docs = map_env_to_values(rr_env_vars, values_doc)
+    existing_table = parse_existing_table(RUNTIME_RECONCILER_MD)
+    rr_table = extract_table_markdown(rr_env_docs, existing_table)
+    replace_env_table_in_md(RUNTIME_RECONCILER_MD, rr_table)
+    print(f"Runtime Reconciler env documentation updated in {RUNTIME_RECONCILER_MD}")
+    # Subaccount Sync
+    sync_env_vars = extract_env_vars_with_paths(SUBACCOUNT_SYNC_YAML)
+    sync_env_docs = map_env_to_values(sync_env_vars, values_doc)
+    existing_table = parse_existing_table(SUBACCOUNT_SYNC_MD)
+    sync_table = extract_table_markdown(sync_env_docs, existing_table)
+    replace_env_table_in_md(SUBACCOUNT_SYNC_MD, sync_table)
+    print(f"Subaccount Sync env documentation updated in {SUBACCOUNT_SYNC_MD}")
+    # Schema Migrator
+    migrator_env_vars = extract_env_vars_with_paths(SCHEMA_MIGRATOR_YAML)
+    migrator_env_docs = map_env_to_values(migrator_env_vars, values_doc)
+    existing_table = parse_existing_table(SCHEMA_MIGRATOR_MD)
+    migrator_table = extract_table_markdown(migrator_env_docs, existing_table)
+    replace_env_table_in_md(SCHEMA_MIGRATOR_MD, migrator_table)
+    print(f"Schema Migrator env documentation updated in {SCHEMA_MIGRATOR_MD}")
 
 if __name__ == "__main__":
     main()

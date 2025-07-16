@@ -114,7 +114,7 @@ spec:
             - name: APP_BROKER_FREE_EXPIRATION_PERIOD
               value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
-              value: "gardener-seeds-cache"
+              value: "{{ .Values.broker.gardenerSeedsCache }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
               value: "{{ .Values.broker.includeAdditionalParamsInSchema }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
@@ -148,7 +148,7 @@ spec:
             - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
               value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
             - name: APP_CATALOG_FILE_PATH
-              value: /config/catalog.yaml
+              value: {{ .Values.configPaths.catalog }}
             - name: APP_CLEANING_DRY_RUN
               value: "{{ .Values.cleaning.dryRun }}"
             - name: APP_CLEANING_ENABLED
@@ -156,41 +156,41 @@ spec:
             - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.hostSecretKey }}
             - name: APP_DATABASE_NAME
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.nameSecretKey }}
             - name: APP_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.passwordSecretKey }}
             - name: APP_DATABASE_PORT
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.portSecretKey }}
             - name: APP_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
-                  key: secretKey
+                  key: {{ .Values.global.database.managedGCP.encryptionSecretKey }}
                   optional: true
             - name: APP_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-sslMode
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: APP_DATABASE_SSLROOTCERT
-              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+              value: {{ .Values.configPaths.cloudsqlSSLRootCert }}
             - name: APP_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
+                  name: {{ .Values.global.database.managedGCP.secretName }}
+                  key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: APP_DEPROVISIONING_MAX_STEP_PROCESSING_TIME
               value: "{{ .Values.deprovisioning.maxStepProcessingTime }}"
             - name: APP_DEPROVISIONING_WORKERS_AMOUNT
@@ -215,11 +215,11 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.edp.secretName }}"
-                  key: secret
+                  key: {{ .Values.edp.secretKey }}
             - name: APP_EVENTS_ENABLED
               value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
-              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
+              value: {{ .Values.configPaths.freemiumWhitelistedGlobalAccountIds }}
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_GARDENER_PROJECT
@@ -227,7 +227,7 @@ spec:
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_HAP_RULE_FILE_PATH
-              value: /config/hapRule.yaml
+              value: {{ .Values.configPaths.hapRule }}
             - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
@@ -265,11 +265,11 @@ spec:
             - name: APP_MULTIPLE_CONTEXTS
               value: "{{ .Values.multipleContexts }}"
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
-              value: /config/plansConfig.yaml
+              value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY
               value: "{{ .Values.profiler.memory }}"
             - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
-              value: /config/providersConfig.yaml
+              value: {{ .Values.configPaths.providersConfig }}
             - name: APP_PROVISIONING_MAX_STEP_PROCESSING_TIME
               value: "{{ .Values.provisioning.maxStepProcessingTime }}"
             - name: APP_PROVISIONING_WORKERS_AMOUNT
@@ -281,12 +281,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.cis.v2.secretName }}"
-                  key: id
+                  key: {{ .Values.cis.v2.clientIdKey }}
             - name: APP_QUOTA_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.cis.v2.secretName }}"
-                  key: secret
+                  key: {{ .Values.cis.v2.secretKey }}
           {{- end }}
             - name: APP_QUOTA_INTERVAL
               value: "{{ .Values.quotaLimitCheck.interval }}"
@@ -295,15 +295,15 @@ spec:
             - name: APP_QUOTA_SERVICE_URL
               value: "{{ .Values.cis.v2.provisioningServiceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
-              value: /config/quotaWhitelistedSubaccountIds.yaml
+              value: {{ .Values.configPaths.quotaWhitelistedSubaccountIds }}
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
-              value: /config/regionsSupportingMachine.yaml
+              value: {{ .Values.configPaths.regionsSupportingMachine }}
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH
-              value: /config/skrDNSProvidersValues.yaml
+              value: {{ .Values.configPaths.skrDNSProvidersValues }}
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
-              value: /config/skrOIDCDefaultValues.yaml
+              value: {{ .Values.configPaths.skrOIDCDefaultValues }}
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_CREATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
@@ -311,7 +311,7 @@ spec:
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
-              value: /config/trialRegionMapping.yaml
+              value: {{ .Values.configPaths.trialRegionMapping }}
             - name: APP_UPDATE_MAX_STEP_PROCESSING_TIME
               value: "{{ .Values.update.maxStepProcessingTime }}"
             - name: APP_UPDATE_PROCESSING_ENABLED

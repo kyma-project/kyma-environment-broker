@@ -168,13 +168,13 @@ type OIDCConfigDTO struct {
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
 func (o *OIDCConnectDTO) IsProvided() bool {
-	if o == nil {
-		return false
-	}
-	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "" || o.OIDCConfigDTO.EncodedJwksArray != "") {
-		return true
-	}
-	return o.List != nil
+	return o != nil && (o.OIDCConfigDTO != nil || o.List != nil)
+}
+
+func (o *OIDCConfigDTO) IsEmpty() bool {
+	return o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" &&
+		o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 &&
+		len(o.RequiredClaims) == 0 && o.GroupsPrefix == "" && o.EncodedJwksArray == ""
 }
 
 func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
@@ -201,6 +201,9 @@ func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
 func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, errs *[]string) error {
 	if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
 		return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
+	}
+	if o.OIDCConfigDTO.IsEmpty() {
+		return nil
 	}
 	if len(o.OIDCConfigDTO.ClientID) == 0 {
 		*errs = append(*errs, "clientID must not be empty")

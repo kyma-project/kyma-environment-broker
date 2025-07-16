@@ -283,7 +283,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 
@@ -368,8 +368,10 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	}
 
 	if params.OIDC.IsProvided() {
-		instance.Parameters.Parameters.OIDC = params.OIDC
-		updateStorage = append(updateStorage, "OIDC")
+		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
+			instance.Parameters.Parameters.OIDC = params.OIDC
+			updateStorage = append(updateStorage, "OIDC")
+		}
 	}
 
 	if params.IngressFiltering != nil {
