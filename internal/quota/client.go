@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	quotaServicePath = "%s/api/v2.0/subaccounts/%s/services/kymaruntime/plan/%s"
+	entitlementsServicePath = "%s/entitlements/v1/services/kymaruntime/plans/%s/subaccounts/%s/entitlements"
 )
 
 type Config struct {
@@ -33,8 +33,7 @@ type Client struct {
 }
 
 type Response struct {
-	Plan  string `json:"plan"`
-	Quota int    `json:"quota"`
+	Amount float64 `json:"amount"`
 }
 
 func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
@@ -75,7 +74,7 @@ func (c *Client) GetQuota(subAccountID, planName string) (int, error) {
 }
 
 func (c *Client) do(subAccountID, planName string) (int, error, bool) {
-	req, err := http.NewRequestWithContext(c.ctx, http.MethodGet, fmt.Sprintf(quotaServicePath, c.config.ServiceURL, subAccountID, planName), nil)
+	req, err := http.NewRequestWithContext(c.ctx, http.MethodGet, fmt.Sprintf(entitlementsServicePath, c.config.ServiceURL, planName, subAccountID), nil)
 	if err != nil {
 		return 0, fmt.Errorf("while creating request: %w", err), false
 	}
@@ -103,15 +102,12 @@ func (c *Client) do(subAccountID, planName string) (int, error, bool) {
 		if err := json.Unmarshal(bodyBytes, &response); err != nil {
 			return 0, fmt.Errorf("while unmarshaling response: %w", err), true
 		}
-		if response.Plan != planName {
-			return 0, nil, false
-		}
-		return response.Quota, nil, false
+		return int(response.Amount), nil, false
 	case http.StatusNotFound:
-		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, string(bodyBytes)))
+		c.log.Error(fmt.Sprintf("Entitlements API returned %d: %s", resp.StatusCode, string(bodyBytes)))
 		return 0, fmt.Errorf("Subaccount %s does not exist", subAccountID), false
 	default:
-		c.log.Error(fmt.Sprintf("Quota API returned %d: %s", resp.StatusCode, string(bodyBytes)))
-		return 0, fmt.Errorf("The provisioning service is currently unavailable. Please try again later"), true
+		c.log.Error(fmt.Sprintf("Entitlements API returned %d: %s", resp.StatusCode, string(bodyBytes)))
+		return 0, fmt.Errorf("The entitlements service is currently unavailable. Please try again later"), true
 	}
 }

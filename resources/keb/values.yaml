@@ -374,9 +374,9 @@ providersConfiguration: {}
 quotaLimitCheck:
   # If true, validates during provisioning that the assigned quota for the subaccount is not exceeded
   enabled: false
-  # The interval between requests to the Quota Assignments API in case of errors
+  # The interval between requests to the Entitlements API in case of errors
   interval: 1s
-  # The number of retry attempts made when the Quota Assignments API request fails
+  # The number of retry attempts made when the Entitlements API request fails
   retries: 5
 
 # List of subaccount IDs that have unlimited quota for Kyma runtimes.
@@ -496,13 +496,26 @@ cis:
     maxRequestRetries: "3"
     # The minimum interval between requests to the CIS v2 API in case of errors
     rateLimitingInterval: "2s"
-    # The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments
-    provisioningServiceURL: "TBD"
     # The interval between requests to the CIS v2 API
     requestInterval: "200ms"
     # The key in the Kubernetes Secret that contains the CIS v2 client ID
     clientIdKey: id
     # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    secretKey: secret
+  entitlements:
+    # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API
+    authURL: "TBD"
+    # The OAuth2 client ID used for authenticating requests to the CIS Entitlements API
+    id: "TBD"
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API
+    secret: "TBD"
+    # The name of the Kubernetes Secret containing the CIS Entitlements client ID and secret
+    secretName: "cis-creds-entitlements"
+    # The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments
+    serviceURL: "TBD"
+    # The key in the Kubernetes Secret that contains the CIS Entitlements client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the CIS Entitlements client secret
     secretKey: secret
 # =================================================
 
