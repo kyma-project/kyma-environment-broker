@@ -1632,10 +1632,10 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 	defer suite.TearDown()
 	id := uuid.New().String()
 
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
 {
 	"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-	"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+	"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 	"context": {
 		"sm_operator_credentials": {
 			"clientid": "cid",
@@ -1648,6 +1648,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 		"user_id": "john.smith@email.com"
 	},
 	"parameters": {
+		"region":"eu-central-1",
 		"name": "testing-cluster",
 		"autoScalerMin":5,
 		"autoScalerMax":7,
@@ -1657,6 +1658,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, opID)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
@@ -1664,7 +1666,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
 {
 	"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-	"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+	"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 	"context": {
 		"globalaccount_id": "g-account-id",
 		"user_id": "jack.anvil@email.com"
