@@ -239,7 +239,7 @@ func TestUpdatePlan(t *testing.T) {
 	assert.NoError(t, err)
 	require.Len(t, actions, 1)
 	assert.Equal(t, actions[0].Type, pkg.PlanUpdateActionType)
-	assert.Equal(t, actions[0].Message, "Plan updated from 361c511f-f939-4621-b228-d0fb79a1fe15 to 6aae0ff3-89f7-4f12-86de-51466145422e.")
+	assert.Equal(t, actions[0].Message, "Plan updated from aws (PlanID: 361c511f-f939-4621-b228-d0fb79a1fe15) to build-runtime-aws (PlanID: 6aae0ff3-89f7-4f12-86de-51466145422e).")
 	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
 	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
 }

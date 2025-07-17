@@ -356,9 +356,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		} else {
 			logger.Info(fmt.Sprintf("Plan change not allowed."))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
-				fmt.Errorf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+				fmt.Errorf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", PlanNamesMapping[instance.ServicePlanID], instance.ServicePlanID, PlanNamesMapping[details.PlanID], details.PlanID),
 				http.StatusBadRequest,
-				fmt.Sprintf("plan upgrade from %s to %s is not allowed", instance.ServicePlanID, details.PlanID),
+				fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", PlanNamesMapping[instance.ServicePlanID], instance.ServicePlanID, PlanNamesMapping[details.PlanID], details.PlanID),
 			)
 		}
 	}
@@ -415,7 +415,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 
 		if slices.Contains(updateStorage, "Plan change") {
-			message := fmt.Sprintf("Plan updated from %s to %s.", oldPlanID, details.PlanID)
+			oldPlan := PlanNamesMapping[oldPlanID]
+			newPlan := PlanNamesMapping[details.PlanID]
+			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)
 			if err := b.actionStorage.InsertAction(
 				pkg.PlanUpdateActionType,
 				instance.InstanceID,
