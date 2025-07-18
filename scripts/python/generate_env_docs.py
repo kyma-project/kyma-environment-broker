@@ -418,7 +418,7 @@ def main():
     """
     values_doc = parse_values_yaml_with_comments(VALUES_YAML)
 
-    # 1. Single deployment YAMLs
+    # 1. Single YAMLs in one template file
     for yaml_path, md_path in SINGLE_JOBS:
         env_vars = extract_env_vars_with_paths(yaml_path)
         env_docs = map_env_to_values(env_vars, values_doc)
@@ -427,7 +427,7 @@ def main():
         replace_env_table_in_md(md_path, table)
         print(f"Markdown documentation table replaced in {md_path}")
 
-    # 2. Multi-job YAMLs in one template
+    # 2. Multiple YAMLs in one template file
     for yaml_path, md_path, section_title in MULTI_JOBS_IN_ONE_TEMPLATE:
         env_vars_list = extract_env_vars_with_paths_multiple_jobs(yaml_path)
         tables = []
