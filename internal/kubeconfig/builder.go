@@ -177,6 +177,7 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 	if additionalConfigs == nil {
 		return nil, fmt.Errorf("Runtime Resource contains no additional OIDC config")
 	}
+	count := len(*additionalConfigs)
 	for i, config := range *additionalConfigs {
 		if config.IssuerURL == nil {
 			return nil, fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
@@ -185,8 +186,8 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 			return nil, fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
 		}
 		name := currentContext
-		if i > 0 {
-			name = fmt.Sprintf("%s-%d", currentContext, i+1)
+		if b.multipleContexts && count > 1 {
+			name = fmt.Sprintf("%s-%d", currentContext, i)
 		}
 		oidcConfigs = append(oidcConfigs, OIDCConfig{
 			Name:      name,
