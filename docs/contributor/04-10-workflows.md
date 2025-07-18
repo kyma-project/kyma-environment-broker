@@ -32,7 +32,7 @@ The documentation check uses the [`scripts/python/generate_env_docs.py`](../../s
 **To add a new documentation file to this check:**
 1. Add the template and the corresponding Markdown file to the `SINGLE_JOBS`, `MULTI_JOBS_IN_ONE_TEMPLATE`, or `COMBINED_JOBS_IN_ONE_MD` lists in `generate_env_docs.py`.
 2. Ensure the Markdown file contains a table for environment variables, or a section header where the table should be inserted.
-3. The script will automatically update the documentation table when run.
+3. The script automatically updates the documentation table when run.
 
 Run the script with:
 ```sh
