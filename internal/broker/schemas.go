@@ -1,6 +1,8 @@
 package broker
 
 import (
+	"strings"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -334,4 +336,31 @@ func (s *SchemaService) RandomZones(cp pkg.CloudProvider, region string, zonesCo
 
 func (s *SchemaService) PlanRegions(planName, platformRegion string) []string {
 	return s.planSpec.Regions(planName, platformRegion)
+}
+
+func (s *SchemaService) FlattenSchemaProperties(schema *map[string]interface{}) []string {
+	if schema == nil || (*schema)["properties"] == nil {
+		return nil
+	}
+	properties := (*schema)["properties"].(map[string]interface{})
+	keys := make([]string, 0, len(properties))
+	s.flattenSchema(&properties, "", &keys)
+	leafKeys := make([]string, 0, len(keys))
+	for _, key := range keys {
+		index := strings.LastIndex(key, ".")
+		if len(key) > 0 && index == len(key)-len(".type") {
+			leafKeys = append(leafKeys, key[:index])
+		}
+	}
+	return leafKeys
+}
+
+func (s *SchemaService) flattenSchema(schema *map[string]interface{}, prefix string, accumulator *[]string) {
+	for key, value := range *schema {
+		if subSchema, ok := value.(map[string]interface{}); ok {
+			s.flattenSchema(&subSchema, prefix+key+".", accumulator)
+		} else {
+			*accumulator = append(*accumulator, prefix+key)
+		}
+	}
 }
