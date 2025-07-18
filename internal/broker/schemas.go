@@ -338,9 +338,9 @@ func (s *SchemaService) PlanRegions(planName, platformRegion string) []string {
 	return s.planSpec.Regions(planName, platformRegion)
 }
 
-func (s *SchemaService) FlattenSchemaProperties(schema *map[string]interface{}) []string {
+func (s *SchemaService) FlattenSchemaProperties(schema *map[string]interface{}) ([]string, []string) {
 	if schema == nil || (*schema)["properties"] == nil {
-		return nil
+		return nil, nil
 	}
 	properties := (*schema)["properties"].(map[string]interface{})
 	keys := make([]string, 0, len(properties))
@@ -348,11 +348,11 @@ func (s *SchemaService) FlattenSchemaProperties(schema *map[string]interface{}) 
 	leafKeys := make([]string, 0, len(keys))
 	for _, key := range keys {
 		index := strings.LastIndex(key, ".")
-		if len(key) > 0 && index == len(key)-len(".type") {
+		if len(key) > 0 && key[index:] == ".type" {
 			leafKeys = append(leafKeys, key[:index])
 		}
 	}
-	return leafKeys
+	return keys, leafKeys
 }
 
 func (s *SchemaService) flattenSchema(schema *map[string]interface{}, prefix string, accumulator *[]string) {

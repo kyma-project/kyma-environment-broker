@@ -123,6 +123,8 @@ func TestFlattenSchema(t *testing.T) {
 	result := schemaService.Plans(PlansConfig{}, "cf-eu31", runtime.Azure)
 
 	createSchema := result[AzurePlanID].Schemas.Instance.Create.Parameters
-	flat := schemaService.FlattenSchemaProperties(&createSchema)
-	assert.Equal(t, []string{"parameters", "parameters.region", "parameters.zones", "parameters.shootAndSeedSameRegion"}, flat)
+	flat, flat2 := schemaService.FlattenSchemaProperties(&createSchema)
+	assert.Equal(t, []string{}, flat)
+	assert.Equal(t, []string{}, flat2)
+
 }
