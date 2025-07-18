@@ -25,7 +25,7 @@ This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on t
 
 ## Verify KEB Workflow
 
-This [workflow](/.github/workflows/run-verify.yaml) runs the reusable [unit tests workflow](/.github/workflows/run-unit-tests-reusable.yaml), executes Go-related checks (such as dependency and formatting checks), runs the Go linter, and verifies that the documentation describing environment variables is up to date.
+This [workflow](/.github/workflows/run-verify.yaml) calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests, executes Go-related checks (such as dependency and formatting checks), runs the Go linter, and verifies that the documentation describing environment variables is up to date.
 
 The documentation check uses the [`scripts/python/generate_env_docs.py`](../../scripts/python/generate_env_docs.py) script to ensure that environment variable tables in the documentation are up to date with the Helm chart and values.yaml. The script extracts environment variables from templates, matches them with descriptions and defaults from `values.yaml`, and updates the relevant Markdown files.
 
