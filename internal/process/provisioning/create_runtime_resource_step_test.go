@@ -1237,7 +1237,7 @@ func Test_IsExternalCustomer(t *testing.T) {
 		{"other license", internal.ERSContext{LicenseType: ptr.String("any other")}, false}} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
-			result := broker.IsExternalAccount(testCase.ersContext)
+			result := broker.IsExternalLicenseType(testCase.ersContext)
 			// then
 			assert.Equal(t, testCase.expectedResult, result)
 		})
