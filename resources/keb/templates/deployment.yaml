@@ -275,25 +275,25 @@ spec:
             - name: APP_PROVISIONING_WORKERS_AMOUNT
               value: "{{ .Values.provisioning.workersAmount }}"
             - name: APP_QUOTA_AUTH_URL
-              value: "{{ .Values.cis.v2.authURL }}"
+              value: "{{ .Values.cis.entitlements.authURL }}"
           {{- if .Values.quotaLimitCheck.enabled }}
             - name: APP_QUOTA_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: "{{ .Values.cis.v2.secretName }}"
-                  key: {{ .Values.cis.v2.clientIdKey }}
+                  name: "{{ .Values.cis.entitlements.secretName }}"
+                  key: {{ .Values.cis.entitlements.clientIdKey }}
             - name: APP_QUOTA_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: "{{ .Values.cis.v2.secretName }}"
-                  key: {{ .Values.cis.v2.secretKey }}
+                  name: "{{ .Values.cis.entitlements.secretName }}"
+                  key: {{ .Values.cis.entitlements.secretKey }}
           {{- end }}
             - name: APP_QUOTA_INTERVAL
               value: "{{ .Values.quotaLimitCheck.interval }}"
             - name: APP_QUOTA_RETRIES
               value: "{{ .Values.quotaLimitCheck.retries }}"
             - name: APP_QUOTA_SERVICE_URL
-              value: "{{ .Values.cis.v2.provisioningServiceURL }}"
+              value: "{{ .Values.cis.entitlements.serviceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.quotaWhitelistedSubaccountIds }}
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH

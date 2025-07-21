@@ -259,6 +259,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
+	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
+	if details.PlanID == TrialPlanID {
+		params.MachineType = nil
+		params.AutoScalerMin = nil
+		params.AutoScalerMax = nil
+	}
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {

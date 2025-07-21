@@ -197,6 +197,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformRegion:   region,
 		PlatformProvider: platformProvider,
 	}
+	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
+	if details.PlanID == TrialPlanID {
+		provisioningParameters.Parameters.MachineType = nil
+		provisioningParameters.Parameters.AutoScalerMin = nil
+		provisioningParameters.Parameters.AutoScalerMax = nil
+	}
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to provide default values for instance %s: %s", instanceID, err)
