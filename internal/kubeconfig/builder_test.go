@@ -428,16 +428,16 @@ clusters:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--ac0d8d9
+- name: shoot--kyma-dev--ac0d8d9-0
   context:
     cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9
-- name: shoot--kyma-dev--ac0d8d9-2
+    user: shoot--kyma-dev--ac0d8d9-0
+- name: shoot--kyma-dev--ac0d8d9-1
   context:
     cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9-2
+    user: shoot--kyma-dev--ac0d8d9-1
 users:
-- name: shoot--kyma-dev--ac0d8d9
+- name: shoot--kyma-dev--ac0d8d9-0
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -458,7 +458,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--ac0d8d9-2
+- name: shoot--kyma-dev--ac0d8d9-1
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -555,16 +555,16 @@ clusters:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--admin
+- name: shoot--kyma-dev--admin-0
   context:
     cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin
-- name: shoot--kyma-dev--admin-2
+    user: shoot--kyma-dev--admin-0
+- name: shoot--kyma-dev--admin-1
   context:
     cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin-2
+    user: shoot--kyma-dev--admin-1
 users:
-- name: shoot--kyma-dev--admin
+- name: shoot--kyma-dev--admin-0
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -585,7 +585,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--admin-2
+- name: shoot--kyma-dev--admin-1
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
