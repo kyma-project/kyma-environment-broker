@@ -173,7 +173,7 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
 	}
 
-	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
+	external := broker.IsExternalAccount(operation.ProvisioningParameters.ErsContext)
 
 	// In Runtime CR logic is positive, so we need to negate the value
 	security.Networking.Filter.Egress.Enabled = !external

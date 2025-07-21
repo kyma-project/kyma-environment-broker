@@ -65,5 +65,5 @@ func CreateKymaNameFromOperation(operation internal.Operation) string {
 }
 
 func isKymaResourceInternal(operation internal.Operation) bool {
-	return !*operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
+	return !*operation.ProvisioningParameters.ErsContext.ExternalLicenseType()
 }

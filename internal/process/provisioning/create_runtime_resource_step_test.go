@@ -761,7 +761,6 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 	// given
 	for _, testCase := range []struct {
 		name                      string
-		ingressFilteringFlag      bool
 		planID                    string
 		cloudProvider             pkg.CloudProvider
 		licenseType               string
@@ -770,14 +769,14 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 		expectedEgressResult  bool
 		expectedIngressResult bool
 	}{
-		{"Feature flag off - external", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, false},
-		{"Feature flag off - internal", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
-		{"External- SapConvergedCloud", true, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
-		{"External - AWS", true, broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
-		{"Internal - AWS - no parameter", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
-		{"Internal - AWS - turn on", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
-		{"Internal - Azure - turn on", true, broker.AzurePlanID, pkg.Azure, "NON-CUSTOMER", ptr.Bool(true), true, false},
-		{"Internal - AWS - turn off", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		{"External - not supported plan - turn on", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, false},
+		{"Internal - not supported plan - turn on", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		{"External - not supported plan", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
+		{"External - AWS", broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
+		{"Internal - AWS - no parameter", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - Azure - turn on", broker.AzurePlanID, pkg.Azure, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		{"Internal - AWS - turn off", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
@@ -1238,7 +1237,7 @@ func Test_IsExternalCustomer(t *testing.T) {
 		{"other license", internal.ERSContext{LicenseType: ptr.String("any other")}, false}} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
-			result := broker.IsExternalCustomer(testCase.ersContext)
+			result := broker.IsExternalAccount(testCase.ersContext)
 			// then
 			assert.Equal(t, testCase.expectedResult, result)
 		})
