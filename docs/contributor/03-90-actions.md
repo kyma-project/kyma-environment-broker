@@ -10,5 +10,5 @@ Actions are stored in persistent storage and are not deleted even when a runtime
 
 |     Action Type      | Description                                                                                                              |
 |:--------------------:|--------------------------------------------------------------------------------------------------------------------------|
-| `SubaccountMovement` | Represents the reassignment of a Kyma runtime to a different Global Account. [Learn more.](03-75-subaccount-movement.md) |
+| `SubaccountMovement` | Represents the reassignment of a Kyma runtime to a different global account. [Learn more](03-75-subaccount-movement.md). |
 |     `PlanUpdate`     | Indicates a change in the service plan for a Kyma runtime. [Learn more.](03-80-plan-updates.md)                          |
