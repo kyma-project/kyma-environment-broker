@@ -4,7 +4,7 @@ Kyma Environment Broker (KEB) records actions as part of its audit logging and o
 
 ## Overview
 
-Actions are stored in persistent storage and are not deleted even when a runtime instance is deprovisioned. This enables historical tracking and auditing of important lifecycle events. The audit logs can be accessed via the KCP CLI and include metadata such as instance ID, timestamps, messages, action types, and old/new values.
+Actions are stored in persistent storage and are not deleted even when a runtime instance is deprovisioned. This enables historical tracking and auditing of important lifecycle events. Audit logs can be retrieved from the `/runtimes` endpoint by setting the `actions` query parameter to `true`. They are accessible via the KCP CLI and include metadata such as instance ID, timestamps, messages, action types, and old/new values.
 
 ## Supported Action Types
 
