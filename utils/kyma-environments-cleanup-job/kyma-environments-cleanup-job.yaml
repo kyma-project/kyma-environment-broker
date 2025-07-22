@@ -24,7 +24,7 @@ spec:
           serviceAccountName: kcp-kyma-environment-broker
           securityContext:
             runAsUser: 2000
-          restartPolicy: Never
+          restartPolicy: OnFailure
           containers:
             - name: kyma-environments-cleanup
               command: ["/bin/main"]
