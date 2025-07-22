@@ -7,7 +7,7 @@ Kyma Environment Broker (KEB) supports subaccount movement. This feature allows 
 
 ## Configuration
 
-To enable the feature, set the value: `subaccountMovementEnabled: true`.
+To enable the feature, set the value of `subaccountMovementEnabled` to `true`.
 
 ## Subaccount Movement Request
 
