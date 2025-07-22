@@ -200,7 +200,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "us-west-2",
-						"shootAndSeedSameRegion": false
+						"colocateControlPlane": false
 					}
 		}`)
 		opID := suite.DecodeOperationID(resp)
@@ -230,7 +230,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"shootAndSeedSameRegion": true
+						"colocateControlPlane": true
 					}
 		}`)
 		opID := suite.DecodeOperationID(resp)
@@ -244,7 +244,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
 	})
 
-	t.Run("should return error when seed does not exist in selected region and shootAndSeedSameRegion is set to true", func(t *testing.T) {
+	t.Run("should return error when seed does not exist in selected region and colocateControlPlane is set to true", func(t *testing.T) {
 		iid := uuid.New().String()
 
 		// when
@@ -260,7 +260,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "us-east-1",
-						"shootAndSeedSameRegion": true
+						"colocateControlPlane": true
 					}
 		}`)
 

@@ -3015,7 +3015,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, expectedRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -3072,7 +3072,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, missingRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -3133,7 +3133,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, unsupportedRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)

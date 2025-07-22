@@ -43,7 +43,7 @@ var defaultNetworking = imv1.Networking{
 	Nodes:    networking.DefaultNodesCIDR,
 	Pods:     networking.DefaultPodsCIDR,
 	Services: networking.DefaultServicesCIDR,
-	//TODO: remove after KIM is handling this properly
+	// TODO: remove after KIM is handling this properly
 	Type: ptr.String("calico"),
 }
 
@@ -673,7 +673,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
-	operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion = ptr.Bool(true)
+	operation.ProvisioningParameters.Parameters.ColocateControlPlane = ptr.Bool(true)
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
@@ -915,7 +915,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 		Nodes:    "192.168.48.0/20",
 		Pods:     "10.104.0.0/24",
 		Services: "10.105.0.0/24",
-		//TODO remove after KIM is handling this properly
+		// TODO remove after KIM is handling this properly
 		Type: ptr.String("calico"),
 	}, runtime.Spec.Shoot.Networking)
 
@@ -1179,8 +1179,8 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 // testing auxiliary functions
 
 func Test_Defaults(t *testing.T) {
-	//given
-	//when
+	// given
+	// when
 
 	nilToDefaultString := DefaultIfParamNotSet("default value", nil)
 	nonDefaultString := DefaultIfParamNotSet("default value", ptr.String("initial value"))
@@ -1188,7 +1188,7 @@ func Test_Defaults(t *testing.T) {
 	nilToDefaultInt := DefaultIfParamNotSet(42, nil)
 	nonDefaultInt := DefaultIfParamNotSet(42, ptr.Integer(7))
 
-	//then
+	// then
 	assert.Equal(t, "initial value", nonDefaultString)
 	assert.Equal(t, "default value", nilToDefaultString)
 	assert.Equal(t, 42, nilToDefaultInt)
@@ -1211,11 +1211,11 @@ func Test_IsIngressFilteringEnabled(t *testing.T) {
 		{"external GCP", true, broker.GCPPlanID, false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			//given
+			// given
 			imConfig := broker.InfrastructureManager{IngressFilteringPlans: []string{"aws", "gcp"}}
 			// when
 			result := steps.IsIngressFilteringEnabled(testCase.planID, imConfig, testCase.externalAccount)
-			//then
+			// then
 			assert.Equal(t, testCase.expectedResult, result)
 		})
 	}
