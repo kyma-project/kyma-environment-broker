@@ -16,7 +16,7 @@ The subaccount movement request is similar to a regular update request. You must
 ```http
 PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 {
-   "service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281", //Kyma ID
+   "service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281",
    "plan_id":"361c511f-f939-4621-b228-d0fb79a1fe15",
    "context":{
       "globalaccount_id":"new-globalaccount-id"
