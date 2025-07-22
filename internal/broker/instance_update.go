@@ -542,7 +542,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 }
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
-	// shootAndSeedSameRegion is never enabled for update
+	// colocateControlPlane is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
 
 	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)

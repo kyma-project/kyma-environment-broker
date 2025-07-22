@@ -216,9 +216,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 	}
 
-	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ShootAndSeedSameRegion=%t, ProvisioningParameters.MachineType=%s",
+	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ColocateControlPlane=%t, ProvisioningParameters.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region),
-		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType)))
+		valueOfBoolPtr(parameters.ColocateControlPlane), valueOfPtr(parameters.MachineType)))
 	logParametersWithMaskedKubeconfig(parameters, logger)
 
 	// check if operation with instance ID already created
@@ -337,7 +337,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
+	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ColocateControlPlane)
 	if enforceSameRegionForSeedAndShoot {
 		platformRegion, _ := middleware.RegionFromContext(ctx)
 		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)

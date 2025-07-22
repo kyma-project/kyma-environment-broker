@@ -147,7 +147,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.
 		runtime.Spec.Shoot.ControlPlane = &gardener.ControlPlane{}
 	}
 	runtime.Spec.Shoot.ControlPlane = s.createHighAvailabilityConfiguration(values.FailureTolerance)
-	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
+	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ColocateControlPlane
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
 
@@ -251,7 +251,7 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
 		Nodes:    nodes,
-		//TODO remove when KIM is ready with setting this value
+		// TODO remove when KIM is ready with setting this value
 		Type: ptr.String("calico"),
 	}
 }
