@@ -3,7 +3,7 @@
 Kyma Environment Broker (KEB) supports subaccount movement. This feature allows you to change the global account associated with a Kyma runtime without deprovisioning and recreating the instance.
 
 > [!NOTE]
-> For more information on recording subaccount movement as part of KEB's audit logging and operational observability, see [Actions](03-90-actions.md).
+> For more information on recording subaccount movement as part of KEB's audit logging and operational observability, see [Actions](03-90-actions-recording.md).
 
 ## Configuration
 
