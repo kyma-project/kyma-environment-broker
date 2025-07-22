@@ -24,4 +24,4 @@ PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 }
 ```
 
-If subaccount movement is not enabled, any changes to the global account ID will be ignored.
+If subaccount movement is not enabled, any changes to the global account ID are ignored.
