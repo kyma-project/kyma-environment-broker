@@ -5,7 +5,7 @@ to the Entitlements Service to retrieve the assigned quota for the target subacc
 If the assigned quota is less than or equal to the number of instances stored in the database, the request fails. 
 
 The quota check is performed during provisioning when there is more than one Kyma environment per subaccount and the subaccount ID is not whitelisted.
-During update requests, the quota check is always performed. If the request to the Entitlements Service fails, it is retried at configured intervals. 
+During update requests, the quota check is not performed if the subaccount ID is whitelisted. If the request to the Entitlements Service fails, it is retried at configured intervals. 
 If the retries are unsuccessful, the provisioning or update request is rejected.
 
 The following configuration enables quota limit checks and specifies the required URLs, credentials, and retry behavior. 
