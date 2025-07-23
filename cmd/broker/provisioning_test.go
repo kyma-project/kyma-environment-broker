@@ -179,7 +179,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 }
 
-func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
+func TestProvisioning_ColocateControlPlane(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -265,7 +265,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 		}`)
 
 		parsedResponse := suite.ReadResponse(resp)
-		assert.Contains(t, string(parsedResponse), "validation of the same region for seed and shoot: seed does not exist in us-east-1 region")
+		assert.Contains(t, string(parsedResponse), "validation of the region for colocating the control plane: cannot colocate the control plane in the us-east-1 region")
 	})
 }
 

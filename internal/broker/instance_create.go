@@ -337,12 +337,12 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ColocateControlPlane)
-	if enforceSameRegionForSeedAndShoot {
+	colocateControlPlane := valueOfBoolPtr(parameters.ColocateControlPlane)
+	if colocateControlPlane {
 		platformRegion, _ := middleware.RegionFromContext(ctx)
 		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)
-		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
-			return fmt.Errorf("validation of the same region for seed and shoot: %w", err)
+		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
+			return fmt.Errorf("validation of the region for colocating the control plane: %w", err)
 		}
 	}
 
@@ -811,17 +811,17 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 }
 
-func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region string, supportedRegions []string, logger *slog.Logger) error {
+func (b *ProvisionEndpoint) validateColocationRegion(providerType, region string, supportedRegions []string, logger *slog.Logger) error {
 	providerConfig := &internal.ProviderConfig{}
 	if err := b.providerConfigProvider.Provide(providerType, providerConfig); err != nil {
-		logger.Error(fmt.Sprintf("while loading %s provider config with seed regions", providerType), "error", err)
+		logger.Error(fmt.Sprintf("while loading %s provider config", providerType), "error", err)
 		return fmt.Errorf("unable to load %s provider config", providerType)
 	}
 	supportedSeedRegions := b.filterOutUnsupportedSeedRegions(supportedRegions, providerConfig.SeedRegions)
 	if !slices.Contains(supportedSeedRegions, region) {
 		logger.Warn(fmt.Sprintf("missing seed region %s for provider %s", region, providerType))
-		msg := fmt.Sprintf("Provider %s has seeds in the following regions: %s", providerType, supportedSeedRegions)
-		return fmt.Errorf("seed does not exist in %s region. %s", region, msg)
+		msg := fmt.Sprintf("Provider %s can have control planes in the following regions: %s", providerType, supportedSeedRegions)
+		return fmt.Errorf("cannot colocate the control plane in the %s region. %s", region, msg)
 	}
 
 	return nil

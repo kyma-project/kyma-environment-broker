@@ -3061,7 +3061,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the region for colocating the control plane: cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, missingRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
 			expectedErr,
@@ -3122,7 +3122,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the region for colocating the control plane: cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, unsupportedRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
 			expectedErr,
