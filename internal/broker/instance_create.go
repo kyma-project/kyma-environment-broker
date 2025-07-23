@@ -332,7 +332,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
-		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID); err != nil {
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
 			return err
 		}
 	}
@@ -875,7 +875,7 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 	return nil
 }
 
-func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClient, subAccountID, planID string) error {
+func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClient, subAccountID, planID string, update bool) error {
 	instanceFilter := dbmodel.InstanceFilter{
 		SubAccountIDs: []string{subAccountID},
 		PlanIDs:       []string{planID},
@@ -890,7 +890,7 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 		)
 	}
 
-	if usedQuota > 0 {
+	if usedQuota > 0 || update {
 		assignedQuota, err := quotaClient.GetQuota(subAccountID, PlanNamesMapping[planID])
 		if err != nil {
 			return fmt.Errorf("Failed to get assigned quota for plan %s: %w.", PlanNamesMapping[planID], err)

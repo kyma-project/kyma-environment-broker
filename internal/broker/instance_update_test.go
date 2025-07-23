@@ -1829,12 +1829,14 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
 		require.NoError(t, err)
+		quotaClient := &automock.QuotaClient{}
+		quotaClient.On("GetQuota", subAccountID, broker.BuildRuntimeAWSPlanName).Return(1, nil)
 		svc := broker.NewUpdate(broker.Config{
 			EnablePlanUpgrades: true,
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1842,7 +1844,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			PlanID:         broker.BuildRuntimeAWSPlanID,
 			RawParameters:  json.RawMessage("{}"),
 			PreviousValues: domain.PreviousValues{},
-			RawContext:     json.RawMessage("{}"),
+			RawContext:     json.RawMessage(fmt.Sprintf(`{"subaccount_id": "%s"}`, subAccountID)),
 		}, true)
 
 		// then
