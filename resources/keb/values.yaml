@@ -805,4 +805,21 @@ vsoSecrets:
         data:
           id: {}
           secret: {}
+    cis-entitlements:
+      path: cis
+      secretName: "{{ .Values.cis.entitlements.secretName | required \"please specify .Values.cis.entitlements.secretName\"}}"
+      restartTargets:
+        - kind: Deployment
+          name: >-
+            {{- template "kyma-env-broker.fullname" . -}}
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: entitlements_id
+          secret: entitlements_secret
+        data:
+          id: {}
+          secret: {}
 # =================================================
