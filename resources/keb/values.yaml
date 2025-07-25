@@ -506,6 +506,28 @@ cis:
     secretKey: secret
 # =================================================
 
+# =================================================
+# ANS Related Settings
+# =================================================
+ans:
+  # The OAuth2 token endpoint (authorization URL) for ANS v2, used to obtain access tokens for authenticating requests
+  authURL: "TBD"
+  # The endpoint URL for the ANS v2 event service, used to fetch subaccount events
+  serviceURL: "TBD"
+  # The OAuth2 client ID used for authenticating requests to the ANS v2 API
+  id: "TBD"
+  # The OAuth2 client secret used together with the client ID for authentication with the ANS v2 API
+  secret: "TBD"
+  # The name of the Kubernetes Secret containing the ANS v2 client ID and secret
+  secretName: "cis-creds-v2"
+  # The minimum interval between requests to the ANS v2 API in case of errors
+  rateLimitingInterval: "2s"
+  # The endpoint URL for the ANS v2 provisioning service, used to fetch quota assignments
+  requestInterval: "200ms"
+  # The key in the Kubernetes Secret that contains the ANS v2 client ID
+  clientIdKey: id
+  # The key in the Kubernetes Secret that contains the ANS v2 client secret
+  secretKey: secret
 
 
 # =================================================
