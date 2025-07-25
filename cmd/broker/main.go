@@ -17,6 +17,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -93,6 +94,8 @@ type Config struct {
 	CatalogFilePath                     string
 
 	EDP edp.Config
+
+	ANS ans.Config
 
 	KymaDashboardConfig dashboard.Config
 
@@ -234,6 +237,18 @@ func main() {
 
 	logConfiguration(log, cfg)
 
+	logAnsConfiguration(log, cfg)
+
+	// create ANS service
+	notificationService := ans.NewAnsService(ctx, cfg.ANS, log)
+	// and send test notification
+	err = notificationService.PostNotification(*ans.NewNotification("POC_MailOnlyType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
+	if err != nil {
+		log.Error("Failed to post test notification to ANS", "error", err)
+	} else {
+		log.Info("Test notification posted successfully")
+	}
+
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, log)
@@ -334,7 +349,7 @@ func main() {
 
 	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues,
-		providerSpec, configProvider, plansSpec)
+		providerSpec, configProvider, plansSpec, notificationService)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -408,10 +423,18 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 }
 
+func logAnsConfiguration(logs *slog.Logger, cfg Config) {
+	logs.Info(fmt.Sprintf("ANS Enabled: %t", cfg.ANS.Enabled))
+	logs.Info(fmt.Sprintf("ANS ServiceURL: %s", cfg.ANS.ServiceURL))
+	logs.Info(fmt.Sprintf("ANS AuthURL: %s", cfg.ANS.AuthURL))
+	logs.Info(fmt.Sprintf("ANS RateLimitingInterval: %s", cfg.ANS.RateLimitingInterval))
+	logs.Info(fmt.Sprintf("ANS MaxRequestsPerInterval: %d", cfg.ANS.MaxRequestsPerInterval))
+}
+
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO,
-	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications) {
+	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, notificationService *ans.Service) {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
@@ -445,7 +468,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
-			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds),
+			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields),
+			quotaClient, quotaWhitelistedSubaccountIds, notificationService),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
