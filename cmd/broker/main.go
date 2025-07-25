@@ -17,6 +17,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -93,6 +94,8 @@ type Config struct {
 	CatalogFilePath                     string
 
 	EDP edp.Config
+
+	AnsConfig ans.Config
 
 	KymaDashboardConfig dashboard.Config
 
