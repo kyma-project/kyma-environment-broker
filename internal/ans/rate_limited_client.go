@@ -65,6 +65,7 @@ func (c *RateLimitedAnsClient) handleErrorStatusCode(response *http.Response) st
 }
 
 type Config struct {
+	Enabled                bool
 	ClientID               string
 	ClientSecret           string
 	AuthURL                string
