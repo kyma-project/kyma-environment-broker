@@ -70,6 +70,91 @@ func NewNotification(typeKey string, recipients []Recipient, options ...func(*No
 	return &Notification{}
 }
 
+func (n *Notification) WithID(id string) *Notification {
+	n.ID = id
+	return n
+}
+
+func (n *Notification) WithOriginID(originID string) *Notification {
+	n.OriginID = originID
+	return n
+}
+
+func (n *Notification) WithNotificationTypeID(notificationTypeID string) *Notification {
+	n.NotificationTypeID = notificationTypeID
+	return n
+}
+
+func (n *Notification) WithNotificationTypeVersion(notificationTypeVersion string) *Notification {
+	n.NotificationTypeVersion = notificationTypeVersion
+	return n
+}
+
+func (n *Notification) WithNotificationTypeTimestamp(notificationTypeTimestamp string) *Notification {
+	n.NotificationTypeTimestamp = notificationTypeTimestamp
+	return n
+}
+
+func (n *Notification) WithNotificationTemplateKey(notificationTemplateKey string) *Notification {
+	n.NotificationTemplateKey = notificationTemplateKey
+	return n
+}
+
+func (n *Notification) WithPriority(priority Priority) *Notification {
+	n.Priority = priority
+	return n
+}
+
+func (n *Notification) WithProviderID(providerID string) *Notification {
+	n.ProviderID = providerID
+	return n
+}
+
+func (n *Notification) WithRecipients(recipients []Recipient) *Notification {
+	n.Recipients = recipients
+	return n
+}
+
+func (n *Notification) WithProperties(properties []Property) *Notification {
+	n.Properties = properties
+	return n
+}
+
+func (n *Notification) WithTargetParameters(targetParameters []TargetParameter) *Notification {
+	n.TargetParameters = targetParameters
+	return n
+}
+
+func (n *Notification) WithAttachments(attachments []Attachment) *Notification {
+	n.Attachments = attachments
+	return n
+}
+
+func (n *Notification) WithNavigationTargetObject(navigationTargetObject string) *Notification {
+	n.NavigationTargetObject = navigationTargetObject
+	return n
+}
+
+func (n *Notification) WithNavigationTargetAction(navigationTargetAction string) *Notification {
+	n.NavigationTargetAction = navigationTargetAction
+	return n
+}
+
+func (n *Notification) WithActorID(actorID string) *Notification {
+	n.ActorID = actorID
+	return n
+}
+
+func (n *Notification) WithActorDisplayText(actorDisplayText string) *Notification {
+	n.ActorDisplayText = actorDisplayText
+	return n
+}
+
+func (n *Notification) WithActorImageURL(actorImageURL string) *Notification {
+	n.ActorImageURL = actorImageURL
+	return n
+}
+
 func NewTargetParameter(key, value string) TargetParameter {
 	return TargetParameter{
 		Key:   key,
