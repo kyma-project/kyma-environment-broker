@@ -70,6 +70,40 @@ func NewNotification(typeKey string, recipients []Recipient, options ...func(*No
 	return &Notification{}
 }
 
+func NewTargetParameter(key, value string) TargetParameter {
+	return TargetParameter{
+		Key:   key,
+		Value: value,
+	}
+}
+
+func NewAttachment(headers Headers, content Content) Attachment {
+	return Attachment{
+		Headers: headers,
+		Content: content,
+	}
+}
+
+func NewHeaders(contentType, contentDisposition, contentID string) Headers {
+	return Headers{
+		ContentType:        contentType,
+		ContentDisposition: contentDisposition,
+		ContentID:          contentID,
+	}
+}
+
+func NewContent(external External) Content {
+	return Content{
+		External: external,
+	}
+}
+
+func NewExternal(path string) External {
+	return External{
+		Path: path,
+	}
+}
+
 func NewProperty(key, value string, options ...func(*Property)) *Property {
 	property := &Property{
 		Key:   key,
