@@ -66,6 +66,55 @@ type (
 	XsuaaLevel   string
 )
 
+func NewNotification(typeKey string, recipients []Recipient, options ...func(*Notification)) *Notification {
+	return &Notification{}
+}
+
+func NewRecipient(recipientID string, options ...func(*Recipient)) *Recipient {
+	recipient := &Recipient{
+		RecipientId: recipientID,
+	}
+	for _, option := range options {
+		option(recipient)
+	}
+	return recipient
+}
+
+func (r *Recipient) WithGlobalUserID(globalUserID string) *Recipient {
+	r.GlobalUserId = globalUserID
+	return r
+}
+
+func (r *Recipient) WithXsuaaLevel(xsuaaLevel XsuaaLevel) *Recipient {
+	r.XsuaaLevel = xsuaaLevel
+	return r
+}
+
+func (r *Recipient) WithTenantID(tenantID string) *Recipient {
+	r.TenantId = tenantID
+	return r
+}
+
+func (r *Recipient) WithRoleName(roleName string) *Recipient {
+	r.RoleName = roleName
+	return r
+}
+
+func (r *Recipient) WithLanguage(language string) *Recipient {
+	r.Language = language
+	return r
+}
+
+func (r *Recipient) WithIasGroupID(iasGroupID string) *Recipient {
+	r.IasGroupId = iasGroupID
+	return r
+}
+
+func (r *Recipient) WithProviderRecipientID(providerRecipientID string) *Recipient {
+	r.ProviderRecipientId = providerRecipientID
+	return r
+}
+
 const (
 	PriorityLow             Priority     = "LOW"
 	PriorityNeutral         Priority     = "NEUTRAL"
