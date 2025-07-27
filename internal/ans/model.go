@@ -70,6 +70,32 @@ func NewNotification(typeKey string, recipients []Recipient, options ...func(*No
 	return &Notification{}
 }
 
+func NewProperty(key, value string, options ...func(*Property)) *Property {
+	property := &Property{
+		Key:   key,
+		Value: value,
+	}
+	for _, option := range options {
+		option(property)
+	}
+	return property
+}
+
+func (p *Property) WithLanguage(language string) *Property {
+	p.Language = language
+	return p
+}
+
+func (p *Property) WithType(propertyType PropertyType) *Property {
+	p.PropertyType = propertyType
+	return p
+}
+
+func (p *Property) WithIsSensitive(isSensitive bool) *Property {
+	p.IsSensitive = isSensitive
+	return p
+}
+
 func NewRecipient(recipientID string, options ...func(*Recipient)) *Recipient {
 	recipient := &Recipient{
 		RecipientId: recipientID,
