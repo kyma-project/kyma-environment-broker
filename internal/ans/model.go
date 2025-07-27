@@ -15,49 +15,49 @@ type (
 		Properties                []Property        `json:"Properties"`
 		TargetParameters          []TargetParameter `json:"TargetParameters"`
 		Attachments               []Attachment      `json:"Attachments"`
-		NavigationTargetObject    string            `json:"navigationTargetObject"`
-		NavigationTargetAction    string            `json:"navigationTargetAction"`
+		NavigationTargetObject    string            `json:"NavigationTargetObject"`
+		NavigationTargetAction    string            `json:"NavigationTargetAction"`
 		ActorID                   string            `json:"ActorId"`
 		ActorDisplayText          string            `json:"ActorDisplayText"`
 		ActorImageURL             string            `json:"ActorImageUrl"`
 	}
 	Recipient struct {
-		GlobalUserId        string     `json:"globalUserId"`
-		RecipientId         string     `json:"recipientId"`
-		ProviderRecipientId string     `json:"providerRecipientId"`
-		IasGroupId          string     `json:"iasGroupId"`
+		GlobalUserId        string     `json:"GlobalUserId"`
+		RecipientId         string     `json:"RecipientId"`
+		ProviderRecipientId string     `json:"ProviderRecipientId"`
+		IasGroupId          string     `json:"IasGroupId"`
 		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel"`
-		TenantId            string     `json:"tenantId"`
-		RoleName            string     `json:"roleName"`
-		Language            string     `json:"language"`
+		TenantId            string     `json:"TenantId"`
+		RoleName            string     `json:"RoleName"`
+		Language            string     `json:"Language"`
 	}
 	Property struct {
-		Language     string       `json:"language"`
-		Key          string       `json:"key"`
-		Value        string       `json:"value"`
-		PropertyType PropertyType `json:"type"`
-		IsSensitive  bool         `json:"isSensitive"`
+		Language     string       `json:"Language"`
+		Key          string       `json:"Key"`
+		Value        string       `json:"Value"`
+		PropertyType PropertyType `json:"Type"`
+		IsSensitive  bool         `json:"IsSensitive"`
 	}
 	Attachment struct {
-		Headers Headers `json:"headers"`
-		Content Content `json:"content"`
+		Headers Headers `json:"Headers"`
+		Content Content `json:"Content"`
 	}
 	Headers struct {
-		ContentType        string `json:"contentType"`
-		ContentDisposition string `json:"contentDisposition"`
-		ContentID          string `json:"contentId"`
+		ContentType        string `json:"ContentType"`
+		ContentDisposition string `json:"ContentDisposition"`
+		ContentID          string `json:"ContentId"`
 	}
 
 	Content struct {
-		External External `json:"external"`
+		External External `json:"External"`
 	}
 
 	External struct {
-		Path string `json:"path"`
+		Path string `json:"Path"`
 	}
 	TargetParameter struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
+		Key   string `json:"Key"`
+		Value string `json:"Value"`
 	}
 
 	PropertyType string
@@ -73,6 +73,6 @@ const (
 	PriorityHigh            Priority     = "HIGH"
 	XsuaaLevelGlobalAccount XsuaaLevel   = "GLOBAL_ACCOUNT"
 	XsuaaLevelSubaccount    XsuaaLevel   = "SUBACCOUNT"
-	PropertyTypeString      PropertyType = "string"
-	PropertyTypeJSON        PropertyType = "jsonobject"
+	PropertyTypeString      PropertyType = "String"
+	PropertyTypeJSON        PropertyType = "JsonObject"
 )
