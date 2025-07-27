@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
@@ -62,14 +61,4 @@ func (c *RateLimitedAnsClient) handleErrorStatusCode(response *http.Response) st
 	}
 
 	return fmt.Sprintf("server returned %d status code, body: %s", response.StatusCode, string(body))
-}
-
-type Config struct {
-	Enabled                bool
-	ClientID               string
-	ClientSecret           string
-	AuthURL                string
-	ServiceURL             string
-	RateLimitingInterval   time.Duration `envconfig:"default=2s,optional"`
-	MaxRequestsPerInterval int           `envconfig:"default=5,optional"`
 }
