@@ -87,7 +87,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.ans.notifications.secretName | required "please specify .Values.ans.notifications.secretName" | quote }}
                   key: {{ .Values.ans.notifications.secretKey | required "please specify .Values.ans.notifications.secretKey" | quote }}
-            - name: APP_ANS_DISABLED
+            - name: APP_ANS_ENABLED
               value: "{{ .Values.ans.enabled }}"
             - name: APP_ANS_MAX_REQUESTS_PER_INTERVAL
               value: {{ .Values.ans.notifications.maxRequestsPerInterval | quote }}
