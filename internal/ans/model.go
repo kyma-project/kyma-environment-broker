@@ -67,7 +67,15 @@ type (
 )
 
 func NewNotification(typeKey string, recipients []Recipient, options ...func(*Notification)) *Notification {
-	return &Notification{}
+
+	notification := &Notification{
+		NotificationTypeKey: typeKey,
+		Recipients:          recipients,
+	}
+	for _, option := range options {
+		option(notification)
+	}
+	return notification
 }
 
 func (n *Notification) WithID(id string) *Notification {
