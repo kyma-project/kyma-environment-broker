@@ -429,9 +429,6 @@ func logAnsConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("ANS AuthURL: %s", cfg.ANS.AuthURL))
 	logs.Info(fmt.Sprintf("ANS RateLimitingInterval: %s", cfg.ANS.RateLimitingInterval))
 	logs.Info(fmt.Sprintf("ANS MaxRequestsPerInterval: %d", cfg.ANS.MaxRequestsPerInterval))
-	logs.Info(fmt.Sprintf("ANS ClientID: %s", cfg.ANS.ClientID))
-	logs.Info(fmt.Sprintf("ANS ClientID: %s", cfg.ANS.ClientSecret[0:2]))
-	logs.Info(fmt.Sprintf("ANS ClientID: %s", cfg.ANS.ClientSecret[len(cfg.ANS.ClientSecret)-2:len(cfg.ANS.ClientSecret)]))
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
