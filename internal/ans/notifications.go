@@ -24,7 +24,7 @@ func (c *RateLimitedAnsClient) postNotification(notification Notification) error
 	request.Header.Add("Accept", "application/json")
 	request.Header.Add("DataServiceVersion", "2.0")
 
-	c.log.Info(fmt.Sprintf("Request: %s, Headers: %v", request.URL.String(), request.Header))
+	c.log.Info(fmt.Sprintf("Request: %s, Headers: %v, Body %s", request.URL.String(), request.Header, requestBody))
 
 	response, err := c.httpClient.Do(request)
 
