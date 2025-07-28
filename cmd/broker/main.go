@@ -242,7 +242,12 @@ func main() {
 	// create ANS service
 	notificationService := ans.NewAnsService(ctx, cfg.ANS, log)
 	// and send test notification
-	notificationService.PostNotification(*ans.NewNotification("POC_SimpleMailType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
+	err = notificationService.PostNotification(*ans.NewNotification("POC_SimpleMailType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
+	if err != nil {
+		log.Error("Failed to post test notification to ANS", "error", err)
+	} else {
+		log.Info("Test notification posted successfully")
+	}
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
