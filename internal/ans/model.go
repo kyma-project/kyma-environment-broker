@@ -2,34 +2,34 @@ package ans
 
 type (
 	Notification struct {
-		ID                        string            `json:"id"`
-		OriginID                  string            `json:"originId"`
+		ID                        string            `json:"id,omitempty"`
+		OriginID                  string            `json:"originId,omitempty"`
 		NotificationTypeKey       string            `json:"NotificationTypeKey"`
-		NotificationTypeID        string            `json:"NotificationTypeId"`
-		NotificationTypeVersion   string            `json:"NotificationTypeVersion"`
-		NotificationTypeTimestamp string            `json:"NotificationTypeTimestamp"`
-		NotificationTemplateKey   string            `json:"NotificationTemplateKey"`
-		Priority                  Priority          `json:"Priority"`
-		ProviderID                string            `json:"ProviderId"`
+		NotificationTypeID        string            `json:"NotificationTypeId,omitempty"`
+		NotificationTypeVersion   string            `json:"NotificationTypeVersion,omitempty"`
+		NotificationTypeTimestamp string            `json:"NotificationTypeTimestamp,omitempty"`
+		NotificationTemplateKey   string            `json:"NotificationTemplateKey,omitempty"`
+		Priority                  Priority          `json:"Priority,omitempty"`
+		ProviderID                string            `json:"ProviderId,omitempty"`
 		Recipients                []Recipient       `json:"Recipients"`
-		Properties                []Property        `json:"Properties"`
-		TargetParameters          []TargetParameter `json:"TargetParameters"`
-		Attachments               []Attachment      `json:"Attachments"`
-		NavigationTargetObject    string            `json:"NavigationTargetObject"`
-		NavigationTargetAction    string            `json:"NavigationTargetAction"`
-		ActorID                   string            `json:"ActorId"`
-		ActorDisplayText          string            `json:"ActorDisplayText"`
-		ActorImageURL             string            `json:"ActorImageUrl"`
+		Properties                []Property        `json:"Properties,omitempty"`
+		TargetParameters          []TargetParameter `json:"TargetParameters,omitempty"`
+		Attachments               []Attachment      `json:"Attachments,omitempty"`
+		NavigationTargetObject    string            `json:"NavigationTargetObject,omitempty"`
+		NavigationTargetAction    string            `json:"NavigationTargetAction,omitempty"`
+		ActorID                   string            `json:"ActorId,omitempty"`
+		ActorDisplayText          string            `json:"ActorDisplayText,omitempty"`
+		ActorImageURL             string            `json:"ActorImageUrl,omitempty"`
 	}
 	Recipient struct {
 		GlobalUserId        string     `json:"GlobalUserId"`
 		RecipientId         string     `json:"RecipientId"`
-		ProviderRecipientId string     `json:"ProviderRecipientId"`
+		ProviderRecipientId string     `json:"ProviderRecipientId,omitempty"`
 		IasGroupId          string     `json:"IasGroupId"`
 		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel"`
 		TenantId            string     `json:"TenantId"`
 		RoleName            string     `json:"RoleName"`
-		Language            string     `json:"Language"`
+		Language            string     `json:"Language,omitempty"`
 	}
 	Property struct {
 		Language     string       `json:"Language"`

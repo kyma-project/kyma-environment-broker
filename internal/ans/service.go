@@ -2,6 +2,7 @@ package ans
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 )
 
@@ -27,10 +28,10 @@ func (s *Service) PostNotification(notification Notification) error {
 		return nil
 	}
 
-	s.client.log.Info("Posting notification to ANS", "notification", notification)
+	s.client.log.Info(fmt.Sprintf("Posting notification", "notification", notification))
 	err := s.client.postNotification(notification)
 	if err != nil {
-		s.client.log.Error("Failed to post notification to ANS", "error", err)
+		s.client.log.Error("Failed to post notification", "error", err)
 		return err
 	}
 

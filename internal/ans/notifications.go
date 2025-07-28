@@ -24,12 +24,12 @@ func (c *RateLimitedAnsClient) postNotification(notification Notification) error
 	request.Header.Add("Accept", "application/json")
 	request.Header.Add("DataServiceVersion", "2.0")
 
-	c.log.Info("Request to ANS: %s, Headers: %v", request.URL.String(), request.Header)
+	c.log.Info(fmt.Sprintf("Request: %s, Headers: %v", request.URL.String(), request.Header))
 
 	response, err := c.httpClient.Do(request)
 
 	if err != nil {
-		return errors.Wrapf(err, "while executing POST request on: %s, %s", request.URL.String(), response.Body)
+		return errors.Wrapf(err, "while executing POST request on: %s", request.URL.String())
 	}
 
 	if response.StatusCode != http.StatusCreated {
