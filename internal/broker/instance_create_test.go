@@ -3015,7 +3015,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, expectedRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, expectedRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -3061,7 +3061,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the region for colocating the control plane: cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, missingRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
 			expectedErr,
@@ -3072,7 +3072,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, missingRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, missingRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -3122,7 +3122,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the region for colocating the control plane: cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, unsupportedRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
 			expectedErr,
@@ -3133,7 +3133,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, unsupportedRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AWSPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "shootAndSeedSameRegion": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "colocateControlPlane": true, "oidc":{ %s }}`, clusterName, unsupportedRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "broker.tester@local.dev")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)

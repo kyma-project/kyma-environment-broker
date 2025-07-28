@@ -43,7 +43,7 @@ var defaultNetworking = imv1.Networking{
 	Nodes:    networking.DefaultNodesCIDR,
 	Pods:     networking.DefaultPodsCIDR,
 	Services: networking.DefaultServicesCIDR,
-	//TODO: remove after KIM is handling this properly
+	// TODO: remove after KIM is handling this properly
 	Type: ptr.String("calico"),
 }
 
@@ -673,7 +673,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
-	operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion = ptr.Bool(true)
+	operation.ProvisioningParameters.Parameters.ColocateControlPlane = ptr.Bool(true)
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
@@ -761,7 +761,6 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 	// given
 	for _, testCase := range []struct {
 		name                      string
-		ingressFilteringFlag      bool
 		planID                    string
 		cloudProvider             pkg.CloudProvider
 		licenseType               string
@@ -770,14 +769,14 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 		expectedEgressResult  bool
 		expectedIngressResult bool
 	}{
-		{"Feature flag off - external", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, false},
-		{"Feature flag off - internal", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
-		{"External- SapConvergedCloud", true, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
-		{"External - AWS", true, broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
-		{"Internal - AWS - no parameter", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
-		{"Internal - AWS - turn on", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
-		{"Internal - Azure - turn on", true, broker.AzurePlanID, pkg.Azure, "NON-CUSTOMER", ptr.Bool(true), true, false},
-		{"Internal - AWS - turn off", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		{"External - not supported plan - turn on", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, false},
+		{"Internal - not supported plan - turn on", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		{"External - not supported plan", broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
+		{"External - AWS", broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
+		{"Internal - AWS - no parameter", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - Azure - turn on", broker.AzurePlanID, pkg.Azure, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		{"Internal - AWS - turn off", broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
@@ -916,7 +915,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 		Nodes:    "192.168.48.0/20",
 		Pods:     "10.104.0.0/24",
 		Services: "10.105.0.0/24",
-		//TODO remove after KIM is handling this properly
+		// TODO remove after KIM is handling this properly
 		Type: ptr.String("calico"),
 	}, runtime.Spec.Shoot.Networking)
 
@@ -1180,8 +1179,8 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 // testing auxiliary functions
 
 func Test_Defaults(t *testing.T) {
-	//given
-	//when
+	// given
+	// when
 
 	nilToDefaultString := DefaultIfParamNotSet("default value", nil)
 	nonDefaultString := DefaultIfParamNotSet("default value", ptr.String("initial value"))
@@ -1189,7 +1188,7 @@ func Test_Defaults(t *testing.T) {
 	nilToDefaultInt := DefaultIfParamNotSet(42, nil)
 	nonDefaultInt := DefaultIfParamNotSet(42, ptr.Integer(7))
 
-	//then
+	// then
 	assert.Equal(t, "initial value", nonDefaultString)
 	assert.Equal(t, "default value", nilToDefaultString)
 	assert.Equal(t, 42, nilToDefaultInt)
@@ -1212,11 +1211,11 @@ func Test_IsIngressFilteringEnabled(t *testing.T) {
 		{"external GCP", true, broker.GCPPlanID, false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			//given
+			// given
 			imConfig := broker.InfrastructureManager{IngressFilteringPlans: []string{"aws", "gcp"}}
 			// when
 			result := steps.IsIngressFilteringEnabled(testCase.planID, imConfig, testCase.externalAccount)
-			//then
+			// then
 			assert.Equal(t, testCase.expectedResult, result)
 		})
 	}
@@ -1238,7 +1237,7 @@ func Test_IsExternalCustomer(t *testing.T) {
 		{"other license", internal.ERSContext{LicenseType: ptr.String("any other")}, false}} {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
-			result := broker.IsExternalCustomer(testCase.ersContext)
+			result := broker.IsExternalLicenseType(testCase.ersContext)
 			// then
 			assert.Equal(t, testCase.expectedResult, result)
 		})

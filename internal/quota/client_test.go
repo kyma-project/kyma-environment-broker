@@ -14,43 +14,51 @@ import (
 )
 
 func TestGetQuota_Success(t *testing.T) {
-	// given
-	response := Response{
-		Plan:  "aws",
-		Quota: 2,
+	tests := []struct {
+		name     string
+		response map[string]any
+		expected int
+	}{
+		{
+			name: "Integer",
+			response: map[string]any{
+				"amount": 2,
+			},
+			expected: 2,
+		},
+		{
+			name: "Float",
+			response: map[string]any{
+				"amount": 2.0,
+			},
+			expected: 2,
+		},
+		{
+			name: "Float for unlimited entitlements",
+			response: map[string]any{
+				"amount": 2.0e+9,
+			},
+			expected: 2000000000,
+		},
 	}
-	client, cleanup := fixClient(t, http.StatusOK, response)
-	defer cleanup()
 
-	// when
-	quota, err := client.GetQuota("test-subaccount", response.Plan)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client, cleanup := fixClient(t, http.StatusOK, tc.response)
+			defer cleanup()
 
-	// then
-	assert.NoError(t, err)
-	assert.Equal(t, response.Quota, quota)
-}
+			quota, err := client.GetQuota("test-subaccount", "aws")
 
-func TestGetQuota_WrongPlan(t *testing.T) {
-	// given
-	response := Response{
-		Plan:  "different-plan",
-		Quota: 100,
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, quota)
+		})
 	}
-	client, cleanup := fixClient(t, http.StatusOK, response)
-	defer cleanup()
-
-	// when
-	quota, err := client.GetQuota("test-subaccount", "expected-plan")
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, quota)
 }
 
 func TestGetQuota_SubaccountNotExits(t *testing.T) {
 	// given
 	APIErr := map[string]any{
-		"error": map[string]string{"message": "Tenant doesn't exist under subaccount [test-subaccount]"},
+		"error": map[string]string{"message": "Subaccount test-subaccount not found"},
 	}
 	client, cleanup := fixClient(t, http.StatusNotFound, APIErr)
 	defer cleanup()
@@ -72,7 +80,7 @@ func TestGetQuota_ProvisioningServiceNotAvailable(t *testing.T) {
 	quota, err := client.GetQuota("test-subaccount", "aws")
 
 	// then
-	assert.EqualError(t, err, "The provisioning service is currently unavailable. Please try again later")
+	assert.EqualError(t, err, "The entitlements service is currently unavailable. Please try again later")
 	assert.Zero(t, quota)
 }
 
@@ -80,8 +88,7 @@ func TestGetQuota_SuccessAfterProvisioningServiceRetry(t *testing.T) {
 	// given
 	callCount := 0
 	response := Response{
-		Plan:  "aws",
-		Quota: 2,
+		Amount: 2,
 	}
 
 	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,11 +119,11 @@ func TestGetQuota_SuccessAfterProvisioningServiceRetry(t *testing.T) {
 	client := NewClient(context.Background(), fixConfig(authServer.URL, serviceServer.URL), slog.Default())
 
 	// when
-	quota, err := client.GetQuota("test-subaccount", response.Plan)
+	quota, err := client.GetQuota("test-subaccount", "aws")
 
 	// then
 	assert.NoError(t, err)
-	assert.Equal(t, response.Quota, quota)
+	assert.Equal(t, 2, quota)
 }
 
 func TestGetQuota_AuthenticationServiceNotAvailable(t *testing.T) {
@@ -147,8 +154,7 @@ func TestGetQuota_SuccessAfterAuthenticationServiceRetry(t *testing.T) {
 	// given
 	callCount := 0
 	response := Response{
-		Plan:  "aws",
-		Quota: 2,
+		Amount: 2,
 	}
 
 	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -179,11 +185,11 @@ func TestGetQuota_SuccessAfterAuthenticationServiceRetry(t *testing.T) {
 	client := NewClient(context.Background(), fixConfig(authServer.URL, serviceServer.URL), slog.Default())
 
 	// when
-	quota, err := client.GetQuota("test-subaccount", response.Plan)
+	quota, err := client.GetQuota("test-subaccount", "aws")
 
 	// then
 	assert.NoError(t, err)
-	assert.Equal(t, response.Quota, quota)
+	assert.Equal(t, 2, quota)
 }
 
 func fixClient(t *testing.T, statusCode int, response any) (*Client, func()) {

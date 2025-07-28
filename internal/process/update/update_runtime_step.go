@@ -199,7 +199,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		}
 	}
 
-	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
+	external := broker.IsExternalLicenseType(operation.ProvisioningParameters.ErsContext)
 	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
 
 	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) && operation.UpdatingParameters.IngressFiltering != nil {

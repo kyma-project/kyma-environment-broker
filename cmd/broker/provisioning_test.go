@@ -89,7 +89,10 @@ func TestProvisioningForTrial(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
+						"machineType": "unsupported-machine-type",
+						"autoscalerMax": 13,
+						"autoscalerMin": 13
 					}
 		}`)
 
@@ -100,6 +103,9 @@ func TestProvisioningForTrial(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	runtimeResource := suite.GetUnstructuredRuntimeResource(opID)
+	suite.AssertRuntimeResourceWorkers(runtimeResource, "m5.xlarge", 1, 1)
 
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)
@@ -173,7 +179,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 }
 
-func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
+func TestProvisioning_ColocateControlPlane(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -194,7 +200,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "us-west-2",
-						"shootAndSeedSameRegion": false
+						"colocateControlPlane": false
 					}
 		}`)
 		opID := suite.DecodeOperationID(resp)
@@ -224,7 +230,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"shootAndSeedSameRegion": true
+						"colocateControlPlane": true
 					}
 		}`)
 		opID := suite.DecodeOperationID(resp)
@@ -238,7 +244,7 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
 	})
 
-	t.Run("should return error when seed does not exist in selected region and shootAndSeedSameRegion is set to true", func(t *testing.T) {
+	t.Run("should return error when seed does not exist in selected region and colocateControlPlane is set to true", func(t *testing.T) {
 		iid := uuid.New().String()
 
 		// when
@@ -254,12 +260,12 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "us-east-1",
-						"shootAndSeedSameRegion": true
+						"colocateControlPlane": true
 					}
 		}`)
 
 		parsedResponse := suite.ReadResponse(resp)
-		assert.Contains(t, string(parsedResponse), "validation of the same region for seed and shoot: seed does not exist in us-east-1 region")
+		assert.Contains(t, string(parsedResponse), "validation of the region for colocating the control plane: cannot colocate the control plane in the us-east-1 region")
 	})
 }
 

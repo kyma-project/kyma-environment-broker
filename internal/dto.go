@@ -138,20 +138,17 @@ func UpdateInstanceERSContext(instance, operation ERSContext) ERSContext {
 	return instance
 }
 
-func (e ERSContext) DisableEnterprisePolicyFilter() *bool {
-	// the provisioner and gardener API expects the feature to be enabled by disablement flag
-	// it feels counterintuitive but there is currently no plan in changing it, therefore
-	// following code is written the way it's written
-	disable := false
+func (e ERSContext) ExternalLicenseType() *bool {
+	external := false
 	if e.LicenseType == nil {
-		return &disable
+		return &external
 	}
 	switch *e.LicenseType {
 	case "CUSTOMER", "PARTNER", "TRIAL":
-		disable = true
-		return &disable
+		external = true
+		return &external
 	}
-	return &disable
+	return &external
 }
 
 func (e ERSContext) ERSUpdate() bool {

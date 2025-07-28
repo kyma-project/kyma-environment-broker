@@ -30,7 +30,7 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
-      restartPolicy: Never
+      restartPolicy: OnFailure
       shareProcessNamespace: true
       {{- if ne .Values.imagePullSecret "" }}
       imagePullSecrets:

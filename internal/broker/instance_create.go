@@ -197,6 +197,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformRegion:   region,
 		PlatformProvider: platformProvider,
 	}
+	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
+	if details.PlanID == TrialPlanID {
+		provisioningParameters.Parameters.MachineType = nil
+		provisioningParameters.Parameters.AutoScalerMin = nil
+		provisioningParameters.Parameters.AutoScalerMax = nil
+	}
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to provide default values for instance %s: %s", instanceID, err)
@@ -210,9 +216,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 	}
 
-	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ShootAndSeedSameRegion=%t, ProvisioningParameters.MachineType=%s",
+	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ColocateControlPlane=%t, ProvisioningParameters.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region),
-		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType)))
+		valueOfBoolPtr(parameters.ColocateControlPlane), valueOfPtr(parameters.MachineType)))
 	logParametersWithMaskedKubeconfig(parameters, logger)
 
 	// check if operation with instance ID already created
@@ -326,17 +332,17 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
-		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID); err != nil {
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
 			return err
 		}
 	}
 
-	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
-	if enforceSameRegionForSeedAndShoot {
+	colocateControlPlane := valueOfBoolPtr(parameters.ColocateControlPlane)
+	if colocateControlPlane {
 		platformRegion, _ := middleware.RegionFromContext(ctx)
 		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)
-		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
-			return fmt.Errorf("validation of the same region for seed and shoot: %w", err)
+		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
+			return fmt.Errorf("validation of the region for colocating the control plane: %w", err)
 		}
 	}
 
@@ -389,7 +395,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
-		if IsExternalCustomer(provisioningParameters.ErsContext) {
+		if IsExternalLicenseType(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
@@ -490,7 +496,7 @@ func validateIngressFiltering(provisioningParameters internal.ProvisioningParame
 			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[provisioningParameters.PlanID]))
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
-		if IsExternalCustomer(provisioningParameters.ErsContext) && *ingressFilteringParameter {
+		if IsExternalLicenseType(provisioningParameters.ErsContext) && *ingressFilteringParameter {
 			log.Info(IngressFilteringNotSupportedForExternalCustomerMsg)
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
@@ -527,8 +533,8 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 	return true
 }
 
-func IsExternalCustomer(ersContext internal.ERSContext) bool {
-	return *ersContext.DisableEnterprisePolicyFilter()
+func IsExternalLicenseType(ersContext internal.ERSContext) bool {
+	return *ersContext.ExternalLicenseType()
 }
 
 func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -805,17 +811,17 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 }
 
-func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region string, supportedRegions []string, logger *slog.Logger) error {
+func (b *ProvisionEndpoint) validateColocationRegion(providerType, region string, supportedRegions []string, logger *slog.Logger) error {
 	providerConfig := &internal.ProviderConfig{}
 	if err := b.providerConfigProvider.Provide(providerType, providerConfig); err != nil {
-		logger.Error(fmt.Sprintf("while loading %s provider config with seed regions", providerType), "error", err)
+		logger.Error(fmt.Sprintf("while loading %s provider config", providerType), "error", err)
 		return fmt.Errorf("unable to load %s provider config", providerType)
 	}
 	supportedSeedRegions := b.filterOutUnsupportedSeedRegions(supportedRegions, providerConfig.SeedRegions)
 	if !slices.Contains(supportedSeedRegions, region) {
 		logger.Warn(fmt.Sprintf("missing seed region %s for provider %s", region, providerType))
-		msg := fmt.Sprintf("Provider %s has seeds in the following regions: %s", providerType, supportedSeedRegions)
-		return fmt.Errorf("seed does not exist in %s region. %s", region, msg)
+		msg := fmt.Sprintf("Provider %s can have control planes in the following regions: %s", providerType, supportedSeedRegions)
+		return fmt.Errorf("cannot colocate the control plane in the %s region. %s", region, msg)
 	}
 
 	return nil
@@ -869,7 +875,7 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 	return nil
 }
 
-func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClient, subAccountID, planID string) error {
+func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClient, subAccountID, planID string, update bool) error {
 	instanceFilter := dbmodel.InstanceFilter{
 		SubAccountIDs: []string{subAccountID},
 		PlanIDs:       []string{planID},
@@ -884,7 +890,7 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 		)
 	}
 
-	if usedQuota > 0 {
+	if usedQuota > 0 || update {
 		assignedQuota, err := quotaClient.GetQuota(subAccountID, PlanNamesMapping[planID])
 		if err != nil {
 			return fmt.Errorf("Failed to get assigned quota for plan %s: %w.", PlanNamesMapping[planID], err)
