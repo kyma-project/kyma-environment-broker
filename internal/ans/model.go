@@ -22,21 +22,21 @@ type (
 		ActorImageURL             string            `json:"ActorImageUrl,omitempty"`
 	}
 	Recipient struct {
-		GlobalUserId        string     `json:"GlobalUserId"`
+		GlobalUserId        string     `json:"GlobalUserId,omitempty"`
 		RecipientId         string     `json:"RecipientId"`
 		ProviderRecipientId string     `json:"ProviderRecipientId,omitempty"`
-		IasGroupId          string     `json:"IasGroupId"`
-		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel"`
-		TenantId            string     `json:"TenantId"`
-		RoleName            string     `json:"RoleName"`
+		IasGroupId          string     `json:"IasGroupId,omitempty"`
+		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel,omitempty"`
+		TenantId            string     `json:"TenantId,omitempty"`
+		RoleName            string     `json:"RoleName,omitempty"`
 		Language            string     `json:"Language,omitempty"`
 	}
 	Property struct {
-		Language     string       `json:"Language"`
+		Language     string       `json:"Language,omitempty"`
 		Key          string       `json:"Key"`
 		Value        string       `json:"Value"`
-		PropertyType PropertyType `json:"Type"`
-		IsSensitive  bool         `json:"IsSensitive"`
+		PropertyType PropertyType `json:"Type,omitempty"`
+		IsSensitive  bool         `json:"IsSensitive,omitempty"`
 	}
 	Attachment struct {
 		Headers Headers `json:"Headers"`
@@ -67,7 +67,6 @@ type (
 )
 
 func NewNotification(typeKey string, recipients []Recipient, options ...func(*Notification)) *Notification {
-
 	notification := &Notification{
 		NotificationTypeKey: typeKey,
 		Recipients:          recipients,
