@@ -5,22 +5,27 @@ import (
 	"log/slog"
 )
 
-type AnsService struct {
+type Service struct {
 	ctx    context.Context
 	cfg    Config
 	client *RateLimitedAnsClient
 }
 
-func NewAnsService(ctx context.Context, cfg Config, logger *slog.Logger) *AnsService {
+func NewAnsService(ctx context.Context, cfg Config, logger *slog.Logger) *Service {
 	notificationClient := NewRateLimitedAnsClient(ctx, cfg, logger.With("component", "ANS-notification-client"))
-	return &AnsService{
+	return &Service{
 		ctx:    ctx,
 		cfg:    cfg,
 		client: notificationClient,
 	}
 }
 
-func (s *AnsService) PostNotification(notification Notification) error {
+func (s *Service) PostNotification(notification Notification) error {
+
+	if !s.cfg.Enabled {
+		s.client.log.Debug("ANS notifications are disabled, skipping posting notification")
+		return nil
+	}
 
 	s.client.log.Debug("Posting notification to ANS", "notification", notification)
 	err := s.client.postNotification(notification)

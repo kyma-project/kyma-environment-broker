@@ -512,25 +512,21 @@ cis:
 ans:
   # If true, enables the ANS integration, which allows the broker to send notifications to the ANS service
   enabled: false
-  # The OAuth2 token endpoint (authorization URL) for ANS, used to obtain access tokens for authenticating requests
-  authURL: "TBD"
-  # The endpoint URL for the ANS event service, used to fetch subaccount events
-  serviceURL: "TBD"
-  # The OAuth2 client ID used for authenticating requests to the ANS API
-  id: "TBD"
-  # The OAuth2 client secret used together with the client ID for authentication with the ANS API
-  secret: "TBD"
-  # The name of the Kubernetes Secret containing the ANS client ID and secret
-  secretName: "cis-creds-v2"
-  # The minimum interval between requests to the ANSAPI in case of errors
-  rateLimitingInterval: "2s"
-  # The endpoint URL for the ANS v2 provisioning service, used to fetch quota assignments
-  requestInterval: "200ms"
-  # The key in the Kubernetes Secret that contains the ANS client ID
-  clientIdKey: id
-  # The key in the Kubernetes Secret that contains the ANS client secret
-  secretKey: secret
-
+  notifications:
+    # The OAuth2 token endpoint (authorization URL) for ANS, used to get access token
+    authURL: "TBD"
+    # The endpoint URL for the ANS notification service, used to send notifications
+    serviceURL: "TBD"
+    # The name of the Kubernetes Secret containing the ANS client ID and client secret
+    secretName: "ans-creds"
+    # Minimum interval between requests to the ANS Notifications API
+    rateLimitingInterval: "2s"
+    # Maximum number of requests per interval to the ANS Notifications API
+    maxRequestsPerInterval: "5"
+    # The key in the Kubernetes Secret that contains the ANS client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the ANS client secret
+    secretKey: secret
 
 # =================================================
 # Deprovision Retrigger Job Settings
