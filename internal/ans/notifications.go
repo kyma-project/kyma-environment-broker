@@ -17,7 +17,7 @@ func (c *RateLimitedAnsClient) buildNotificationRequest(notification Notificatio
 		return nil, errors.Wrap(err, "while marshaling payload request")
 	}
 	//log the body
-	c.log.Debug("Posting notification to ANS", "notification", string(requestBody))
+	c.log.Info("Posting notification to ANS", "notification", string(requestBody))
 
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf(notificationServicePath, c.config.ServiceURL), bytes.NewReader(requestBody))
 	if err != nil {

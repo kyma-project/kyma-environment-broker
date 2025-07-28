@@ -27,13 +27,13 @@ func (s *Service) PostNotification(notification Notification) error {
 		return nil
 	}
 
-	s.client.log.Debug("Posting notification to ANS", "notification", notification)
+	s.client.log.Info("Posting notification to ANS", "notification", notification)
 	err := s.client.postNotification(notification)
 	if err != nil {
 		s.client.log.Error("Failed to post notification to ANS", "error", err)
 		return err
 	}
 
-	s.client.log.Debug("Notification posted successfully")
+	s.client.log.Info("Notification posted successfully")
 	return nil
 }
