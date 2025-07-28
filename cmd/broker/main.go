@@ -95,7 +95,7 @@ type Config struct {
 
 	EDP edp.Config
 
-	AnsConfig ans.Config
+	ANS ans.Config
 
 	KymaDashboardConfig dashboard.Config
 
@@ -236,6 +236,13 @@ func main() {
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
+
+	logAnsConfiguration(log, cfg)
+
+	// create ANS service
+	notificationService := ans.NewAnsService(ctx, cfg.ANS, log)
+	// and send test notification
+	notificationService.PostNotification(*ans.NewNotification("POC_SimpleMailType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
@@ -409,6 +416,14 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
+}
+
+func logAnsConfiguration(logs *slog.Logger, cfg Config) {
+	logs.Info(fmt.Sprintf("ANS Enabled: %t", cfg.ANS.Enabled))
+	logs.Info(fmt.Sprintf("ANS ServiceURL: %s", cfg.ANS.ServiceURL))
+	logs.Info(fmt.Sprintf("ANS AuthURL: %s", cfg.ANS.AuthURL))
+	logs.Info(fmt.Sprintf("ANS RateLimitingInterval: %s", cfg.ANS.RateLimitingInterval))
+	logs.Info(fmt.Sprintf("ANS MaxRequestsPerInterval: %d", cfg.ANS.MaxRequestsPerInterval))
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
