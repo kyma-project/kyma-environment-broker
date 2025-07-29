@@ -259,6 +259,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
+	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
+	if details.PlanID == TrialPlanID {
+		params.MachineType = nil
+		params.AutoScalerMin = nil
+		params.AutoScalerMax = nil
+	}
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -321,7 +327,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
-		if IsExternalCustomer(ersContext) {
+		if IsExternalLicenseType(ersContext) {
 			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
@@ -342,7 +348,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
 		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
 			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
-				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID); err != nil {
+				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
 					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 				}
 			}
@@ -536,7 +542,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 }
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
-	// shootAndSeedSameRegion is never enabled for update
+	// colocateControlPlane is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
 
 	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)

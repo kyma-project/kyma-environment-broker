@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShootAndSeedSameRegion(t *testing.T) {
+func TestColocateControlPlane(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -24,9 +24,9 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
 
-	t.Run("should parse shootAndSeedSameRegion - true", func(t *testing.T) {
+	t.Run("should parse colocateControlPlane: true", func(t *testing.T) {
 		// given
-		rawParameters := json.RawMessage(`{ "shootAndSeedSameRegion": true }`)
+		rawParameters := json.RawMessage(`{ "colocateControlPlane": true }`)
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
@@ -56,12 +56,12 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.True(t, *parameters.ShootAndSeedSameRegion)
+		assert.True(t, *parameters.ColocateControlPlane)
 	})
 
-	t.Run("should parse shootAndSeedSameRegion - false", func(t *testing.T) {
+	t.Run("should parse colocateControlPlane: false", func(t *testing.T) {
 		// given
-		rawParameters := json.RawMessage(`{ "shootAndSeedSameRegion": false }`)
+		rawParameters := json.RawMessage(`{ "colocateControlPlane": false }`)
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
@@ -91,10 +91,10 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.False(t, *parameters.ShootAndSeedSameRegion)
+		assert.False(t, *parameters.ColocateControlPlane)
 	})
 
-	t.Run("should parse shootAndSeedSameRegion - nil", func(t *testing.T) {
+	t.Run("shouldn't parse nil colocateControlPlane", func(t *testing.T) {
 		// given
 		rawParameters := json.RawMessage(`{ }`)
 		details := domain.ProvisionDetails{
@@ -125,7 +125,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Nil(t, parameters.ShootAndSeedSameRegion)
+		assert.Nil(t, parameters.ColocateControlPlane)
 	})
 
 }

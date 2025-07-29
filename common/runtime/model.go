@@ -99,7 +99,7 @@ type ProvisioningParametersDTO struct {
 	OIDC                      *OIDCConnectDTO            `json:"oidc,omitempty"`
 	Networking                *NetworkingDTO             `json:"networking,omitempty"`
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
-	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
+	ColocateControlPlane      *bool                      `json:"colocateControlPlane,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 }

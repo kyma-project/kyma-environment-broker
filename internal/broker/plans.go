@@ -153,7 +153,7 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 		}
 		properties.Administrators = AdministratorsProperty()
 		if flags.shootAndSeedFeatureEnabled {
-			properties.ShootAndSeedSameRegion = ShootAndSeedSameRegionProperty()
+			properties.ColocateControlPlane = ColocateControlPlaneProperty()
 		}
 		if flags.ingressFilteringEnabled {
 			properties.IngressFiltering = IngressFilteringProperty()
