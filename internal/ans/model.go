@@ -24,6 +24,7 @@ type (
 	Recipient struct {
 		GlobalUserId        string     `json:"GlobalUserId,omitempty"`
 		RecipientId         string     `json:"RecipientId"`
+		IasHost             string     `json:"IasHost,omitempty"`
 		ProviderRecipientId string     `json:"ProviderRecipientId,omitempty"`
 		IasGroupId          string     `json:"IasGroupId,omitempty"`
 		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel,omitempty"`
@@ -234,6 +235,11 @@ func NewRecipient(recipientID string, options ...func(*Recipient)) *Recipient {
 
 func (r *Recipient) WithGlobalUserID(globalUserID string) *Recipient {
 	r.GlobalUserId = globalUserID
+	return r
+}
+
+func (r *Recipient) WithIasHost(iasHost string) *Recipient {
+	r.IasHost = iasHost
 	return r
 }
 

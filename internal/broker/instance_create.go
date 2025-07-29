@@ -19,6 +19,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -94,6 +95,7 @@ type ProvisionEndpoint struct {
 	providerSpec           RegionsSupporterProvider
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
+	notificationService    *ans.Service
 }
 
 const (
@@ -120,6 +122,7 @@ func NewProvision(brokerConfig Config,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
+	notificationService *ans.Service,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -287,6 +290,15 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
+
+	// notify BTP Cockpit that provisioning started
+	// TODO extract to separate function wrapper
+	if b.notificationService != nil {
+		err = b.notificationService.PostNotification(*ans.NewNotification("POC_WebOnlyType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}))
+		if err != nil {
+			logger.Error("Failed to post notification to ANS", "error", err)
+		}
+	}
 
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
