@@ -256,10 +256,20 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 		}
 	}
 
+	oidcListDescription := "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration."
+	if update {
+		oidcListDescription += " To use the default configuration values, see the documentation. To switch the OIDC configuration from a single oidc object to an oidc list, rewrite your values."
+	}
+
+	oidcDescription := "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility."
+	if !update {
+		oidcDescription += " The object-based configuration inputs are still writable, but only from the JSON view."
+	}
+
 	OIDCs := &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
+			Description: oidcDescription,
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -274,7 +284,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
+							Description: oidcListDescription,
 							Default: []interface{}{
 								defaultOIDCListEntry,
 							},

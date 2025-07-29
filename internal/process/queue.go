@@ -61,12 +61,10 @@ func (q *Queue) ShutDown() {
 }
 
 func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
-	q.log.Info(fmt.Sprintf("starting %d worker(s), queue length is %d", workersAmount, q.queue.Len()))
 	for i := 0; i < workersAmount; i++ {
 		q.waitGroup.Add(1)
 
 		workerLogger := q.log.With("workerId", i)
-		workerLogger.Info(fmt.Sprintf("starting worker with id %d", i))
 
 		q.createWorker(q.queue, q.executor.Execute, stop, &q.waitGroup, workerLogger, fmt.Sprintf("%s-%d", q.name, i))
 	}
@@ -89,10 +87,8 @@ func (q *Queue) SpeedUp(speedFactor int64) {
 
 func (q *Queue) createWorker(queue workqueue.RateLimitingInterface, process func(id string) (time.Duration, error), stopCh <-chan struct{}, waitGroup *sync.WaitGroup, log *slog.Logger, nameId string) {
 	go func() {
-		log.Info("worker routine - starting")
 		wait.Until(q.worker(queue, process, log, nameId), time.Second, stopCh)
 		waitGroup.Done()
-		log.Info("worker done")
 	}()
 }
 
