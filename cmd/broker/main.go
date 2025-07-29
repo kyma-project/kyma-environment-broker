@@ -242,7 +242,7 @@ func main() {
 	// create ANS service
 	notificationService := ans.NewAnsService(ctx, cfg.ANS, log)
 	// and send test notification
-	err = notificationService.PostNotification(*ans.NewNotification("POC_SimpleMailType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
+	err = notificationService.PostNotification(*ans.NewNotification("POC_MailOnlyType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com")}))
 	if err != nil {
 		log.Error("Failed to post test notification to ANS", "error", err)
 	} else {
