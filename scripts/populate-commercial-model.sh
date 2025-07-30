@@ -5,6 +5,7 @@
 # It has the following arguments:
 #   - Auth URL
 #   - Service URL
+#   - Optional: --dry-run (will not execute DB updates)
 # ./populate-commercial-model.sh auth_url service_url
 
 # standard bash error handling
@@ -15,8 +16,15 @@ set -o pipefail # prevents errors in a pipeline from being masked
 
 AUTH_URL="$1"
 SERVICE_URL="$2"
+DRY_RUN="${3:-}"
 echo "Auth URL: $AUTH_URL"
 echo "Service URL: $SERVICE_URL"
+if [[ "$DRY_RUN" == "--dry-run" ]]; then
+  echo "Dry run enabled: database updates will be skipped"
+  IS_DRY_RUN=true
+else
+  IS_DRY_RUN=false
+fi
 
 CLIENT_ID=$(kubectl get secret cis-creds-accounts -n kcp-system -o jsonpath="{.data.id}" | base64 -d)
 CLIENT_SECRET=$(kubectl get secret cis-creds-accounts -n kcp-system -o jsonpath="{.data.secret}" | base64 -d)
@@ -63,12 +71,14 @@ while IFS=',' read -r INSTANCE_ID GLOBAL_ACCOUNT_ID; do
   if [[ "$COMMERCIAL_MODEL" == "NULL" || -z "$COMMERCIAL_MODEL" ]]; then
     NULL_ACCOUNTS+=("$GLOBAL_ACCOUNT_ID")
   else
-    echo "Updating instance $INSTANCE_ID with commercial model '$COMMERCIAL_MODEL'"
-
-    UPDATE_QUERY="UPDATE instances SET provisioning_parameters = jsonb_set(provisioning_parameters::jsonb, '{ers_context,commercial_model}', to_jsonb('$COMMERCIAL_MODEL'::text)) WHERE instance_id = '$INSTANCE_ID';"
-
-    PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U "$DB_USER" -d "$DB_NAME" -c "$UPDATE_QUERY" > /dev/null 2>&1
-    UPDATED_COUNT=$((UPDATED_COUNT + 1))
+    if [[ "$IS_DRY_RUN" == false ]]; then
+      echo "Updating instance $INSTANCE_ID with commercial model '$COMMERCIAL_MODEL'"
+      UPDATE_QUERY="UPDATE instances SET provisioning_parameters = jsonb_set(provisioning_parameters::jsonb, '{ers_context,commercial_model}', to_jsonb('$COMMERCIAL_MODEL'::text)) WHERE instance_id = '$INSTANCE_ID';"
+      PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U "$DB_USER" -d "$DB_NAME" -c "$UPDATE_QUERY" > /dev/null 2>&1
+      UPDATED_COUNT=$((UPDATED_COUNT + 1))
+    else
+      echo "[Dry Run] Skipping update for instance $INSTANCE_ID with commercial model '$COMMERCIAL_MODEL'"
+    fi
   fi
 done <<< "$QUERY_RESULT"
 
