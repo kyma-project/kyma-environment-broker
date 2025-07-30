@@ -17,7 +17,6 @@ jobs:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
       context: .
-      build-engine: buildx
 
    archiver-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -26,7 +25,6 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=archiver
-         build-engine: buildx
 
    environments-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -35,7 +33,6 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=environmentscleanup
-         build-engine: buildx
 
    deprovision-retrigger-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -44,7 +41,6 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=deprovisionretrigger
-         build-engine: buildx
 
    expirator-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -53,7 +49,6 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=expirator
-         build-engine: buildx
 
    runtime-reconciler-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -62,7 +57,6 @@ jobs:
          dockerfile: Dockerfile.runtimereconciler
          context: .
          build-args: BIN=runtime-reconciler
-         build-engine: buildx
 
    subaccount-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -71,7 +65,6 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=accountcleanup
-         build-engine: buildx
 
    subaccount-sync-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -80,7 +73,6 @@ jobs:
          dockerfile: Dockerfile.subaccountsync
          context: .
          build-args: BIN=subaccount-sync
-         build-engine: buildx
 
    globalaccounts-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -89,7 +81,6 @@ jobs:
          dockerfile: Dockerfile.globalaccounts
          context: .
          build-args: BIN=globalaccounts
-         build-engine: buildx
 
    schema-migrator-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -97,7 +88,6 @@ jobs:
          name: kyma-environment-broker-schema-migrator
          dockerfile: Dockerfile.schemamigrator
          context: .
-         build-engine: buildx
 
    service-binding-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -106,4 +96,3 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=servicebindingcleanup
-         build-engine: buildx
