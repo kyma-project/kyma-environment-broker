@@ -536,6 +536,10 @@ ans:
     rateLimitingInterval: "2s"
     # Maximum number of requests per interval to the ANS Notifications API
     maxRequestsPerInterval: "5"
+    # The OAuth2 client ID used for authenticating requests to the CIS Entitlements API
+    id: "TBD"
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API
+    secret: "TBD"
     # The key in the Kubernetes Secret that contains the ANS client ID
     clientIdKey: id
     # The key in the Kubernetes Secret that contains the ANS client secret
