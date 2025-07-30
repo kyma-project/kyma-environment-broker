@@ -48,7 +48,7 @@ FROM instances
 WHERE instances.provisioning_parameters::json->'ers_context'->'commercial_model' IS NULL;
 ")
 
-echo "Number of instances without a commercial model: $(echo "$QUERY_RESULT" | grep -c '^')"
+echo "Number of instances without a commercial model: $(echo "$QUERY_RESULT" | wc -l | xargs)"
 
 ACCESS_TOKEN=$(curl -s -X POST "$AUTH_URL" \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -82,7 +82,7 @@ while IFS=',' read -r INSTANCE_ID GLOBAL_ACCOUNT_ID; do
   fi
 done <<< "$QUERY_RESULT"
 
-echo -e "\nUpdated $UPDATED_COUNT/$(echo "$QUERY_RESULT" | grep -c '^') instances"
+echo -e "\nUpdated $UPDATED_COUNT/$(echo "$QUERY_RESULT" | wc -l | xargs) instances"
 
 if [[ ${#NULL_ACCOUNTS[@]} -gt 0 ]]; then
   echo -e "\nGlobal Account IDs with null commercial model:"
