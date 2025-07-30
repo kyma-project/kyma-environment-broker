@@ -153,6 +153,7 @@ func NewProvision(brokerConfig Config,
 		providerConfigProvider:  providerConfigProvider,
 		quotaClient:             quotaClient,
 		quotaWhitelist:          quotaWhitelist,
+		notificationService:     notificationService,
 	}
 }
 
@@ -297,6 +298,8 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		err = b.notificationService.PostNotification(*ans.NewNotification("POC_WebOnlyType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}))
 		if err != nil {
 			logger.Error("Failed to post notification to ANS", "error", err)
+		} else {
+			logger.Info("Notification posted to ANS successfully")
 		}
 	}
 
