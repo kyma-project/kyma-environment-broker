@@ -58,9 +58,9 @@ while IFS=',' read -r INSTANCE_ID GLOBAL_ACCOUNT_ID; do
 
   COMMERCIAL_MODEL=$(curl -s --request GET \
     --url "$SERVICE_URL/accounts/v1/globalAccounts/$GLOBAL_ACCOUNT_ID" \
-    --header "Authorization: Bearer $ACCESS_TOKEN" | jq -r '.commercialModel')
+    --header "Authorization: Bearer $ACCESS_TOKEN" | jq -r '.commercialModel' | tr '[:lower:]' '[:upper:]')
 
-  if [[ "$COMMERCIAL_MODEL" == "null" || -z "$COMMERCIAL_MODEL" ]]; then
+  if [[ "$COMMERCIAL_MODEL" == "NULL" || -z "$COMMERCIAL_MODEL" ]]; then
     NULL_ACCOUNTS+=("$GLOBAL_ACCOUNT_ID")
   else
     echo "Updating instance $INSTANCE_ID with commercial model '$COMMERCIAL_MODEL'"
