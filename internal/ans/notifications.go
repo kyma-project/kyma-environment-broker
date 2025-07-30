@@ -14,11 +14,11 @@ const notificationServicePath = "%s/odatav2/Notification.svc/Notifications"
 func (c *RateLimitedAnsClient) postNotification(notification Notification) error {
 	requestBody, err := json.Marshal(notification)
 	if err != nil {
-		errors.Wrap(err, "while marshaling payload request")
+		return errors.Wrap(err, "while marshaling payload request")
 	}
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf(notificationServicePath, c.config.ServiceURL), bytes.NewReader(requestBody))
 	if err != nil {
-		fmt.Errorf("while creating request: %w", err)
+		return fmt.Errorf("while creating request: %w", err)
 	}
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Accept", "application/json")

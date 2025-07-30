@@ -295,7 +295,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	// notify BTP Cockpit that provisioning started
 	// TODO extract to separate function wrapper
 	if b.notificationService != nil {
-		err = b.notificationService.PostNotification(*ans.NewNotification("POC_WebOnlyType", []ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}))
+		err = b.notificationService.PostNotification(*ans.NewNotification("POC_WebOnlyType",
+			[]ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}).
+			WithProperties([]ans.Property{*ans.NewProperty("shoot", operation.ShootName)}))
 		if err != nil {
 			logger.Error("Failed to post notification to ANS", "error", err)
 		} else {
