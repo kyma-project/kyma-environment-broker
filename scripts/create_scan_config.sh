@@ -23,9 +23,8 @@ rc-tag: ${TAG}
 bdba:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:${TAG}
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:${TAG}
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-trial-cleanup-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:${TAG}
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:${TAG}
