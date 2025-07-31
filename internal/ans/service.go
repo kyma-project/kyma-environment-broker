@@ -21,7 +21,6 @@ func NewAnsService(ctx context.Context, cfg Config, logger *slog.Logger) *Servic
 }
 
 func (s *Service) PostNotification(notification Notification) error {
-
 	if !s.cfg.Enabled {
 		s.client.log.Debug("ANS notifications are disabled, skipping posting notification")
 		return nil
