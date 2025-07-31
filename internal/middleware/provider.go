@@ -46,10 +46,14 @@ func platformProvider(region string) pkg.CloudProvider {
 	}
 	digit := platformRegionProviderRE.FindString(region)
 	switch digit {
+	case "0":
+		return pkg.SapConvergedCloud
 	case "1":
 		return pkg.AWS
 	case "2":
 		return pkg.Azure
+	case "3":
+		return pkg.GCP
 	default:
 		return pkg.UnknownProvider
 	}
