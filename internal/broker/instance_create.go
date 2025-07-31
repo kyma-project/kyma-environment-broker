@@ -292,18 +292,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
-	// notify BTP Cockpit that provisioning started
-	// TODO extract to separate function wrapper
-	if b.notificationService != nil {
-		err = b.notificationService.PostNotification(*ans.NewNotification("POC_WebOnlyType",
-			[]ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}).
-			WithProperties([]ans.Property{*ans.NewProperty("shoot", operation.ShootName)}))
-		if err != nil {
-			logger.Error("Failed to post notification to ANS", "error", err)
-		} else {
-			logger.Info("Notification posted to ANS successfully")
-		}
-	}
+	b.notifyBTPCockpit(err, operation, logger)
 
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
@@ -313,6 +302,20 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 			Labels: ResponseLabels(operation, instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *ProvisionEndpoint) notifyBTPCockpit(err error, operation internal.ProvisioningOperation, logger *slog.Logger) {
+	if b.notificationService != nil {
+		err = b.notificationService.PostNotification(
+			*ans.NewNotification("POC_WebOnlyType",
+				[]ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}).
+				WithProperties([]ans.Property{*ans.NewProperty("shoot", operation.ShootName)}))
+		if err != nil {
+			logger.Error("Failed to post notification to ANS", "error", err)
+		} else {
+			logger.Info("Notification posted to ANS successfully")
+		}
+	}
 }
 
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
