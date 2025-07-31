@@ -361,7 +361,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
-		providerSpec, configProvider, planSpec)
+		providerSpec, configProvider, planSpec, nil)
 
 	s.httpServer = httptest.NewServer(s.router)
 }
