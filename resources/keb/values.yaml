@@ -363,13 +363,13 @@ metricsv2:
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context
 multipleContexts: false
 
-plansConfiguration: {}
+plansConfiguration: |-
 
 profiler:
   # Enables memory profiler (true/false)
   memory: false
 
-providersConfiguration: {}
+providersConfiguration: |-
 
 quotaLimitCheck:
   # If true, validates during provisioning that the assigned quota for the subaccount is not exceeded

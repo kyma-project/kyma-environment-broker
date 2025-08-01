@@ -31,9 +31,13 @@ data:
     rule:
 {{ toYaml .Values.hap.rule | indent 4  }}
   providersConfig.yaml: |-
-{{ toYaml .Values.providersConfiguration | indent 4 }}
+{{- with .Values.providersConfiguration }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
   plansConfig.yaml: |-
-{{ toYaml .Values.plansConfiguration | indent 4 }}
+{{- with .Values.plansConfiguration }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
   quotaWhitelistedSubaccountIds.yaml: |-
 {{- with .Values.quotaWhitelistedSubaccountIds }}
 {{ tpl . $ | indent 4 }}
