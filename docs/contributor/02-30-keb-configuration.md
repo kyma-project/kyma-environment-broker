@@ -91,12 +91,12 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings |
 | **APP_PROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the provisioning queue |
 | **APP_PROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in provisioning queue |
-| **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests |
-| **APP_QUOTA_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS v2. |
-| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS v2. |
-| **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Quota Assignments API in case of errors |
-| **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Quota Assignments API request fails |
-| **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The endpoint URL for the CIS v2 provisioning service, used to fetch quota assignments |
+| **APP_QUOTA_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API |
+| **APP_QUOTA_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS Entitlements API. |
+| **APP_QUOTA_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS Entitlements API. |
+| **APP_QUOTA_INTERVAL** | <code>1s</code> | The interval between requests to the Entitlements API in case of errors |
+| **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Entitlements API request fails |
+| **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | <code>/config/quotaWhitelistedSubaccountIds.yaml</code> | Path to the list of subaccount IDs that are allowed to bypass quota restrictions |
 | **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | <code>/config/regionsSupportingMachine.yaml</code> | Path to the list of regions that support machine-type selection |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template |

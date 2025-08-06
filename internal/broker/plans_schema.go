@@ -33,13 +33,13 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                   NameType        `json:"name"`
-	ShootName              *Type           `json:"shootName,omitempty"`
-	ShootDomain            *Type           `json:"shootDomain,omitempty"`
-	Region                 *Type           `json:"region,omitempty"`
-	Networking             *NetworkingType `json:"networking,omitempty"`
-	Modules                *Modules        `json:"modules,omitempty"`
-	ShootAndSeedSameRegion *Type           `json:"shootAndSeedSameRegion,omitempty"`
+	Name                 NameType        `json:"name"`
+	ShootName            *Type           `json:"shootName,omitempty"`
+	ShootDomain          *Type           `json:"shootDomain,omitempty"`
+	Region               *Type           `json:"region,omitempty"`
+	Networking           *NetworkingType `json:"networking,omitempty"`
+	Modules              *Modules        `json:"modules,omitempty"`
+	ColocateControlPlane *Type           `json:"colocateControlPlane,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -231,10 +231,45 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
 
+	var defaultOIDCListEntry map[string]interface{}
+	if update {
+		defaultOIDCListEntry = map[string]interface{}{
+			"clientID":       "",
+			"issuerURL":      "",
+			"groupsClaim":    "",
+			"signingAlgs":    []interface{}{},
+			"usernameClaim":  "",
+			"usernamePrefix": "",
+			"groupsPrefix":   "",
+			"requiredClaims": []interface{}{},
+		}
+	} else {
+		defaultOIDCListEntry = map[string]interface{}{
+			"clientID":       defaultOIDCConfig.ClientID,
+			"issuerURL":      defaultOIDCConfig.IssuerURL,
+			"groupsClaim":    defaultOIDCConfig.GroupsClaim,
+			"signingAlgs":    defaultOIDCConfig.SigningAlgs,
+			"usernameClaim":  defaultOIDCConfig.UsernameClaim,
+			"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+			"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
+			"requiredClaims": []interface{}{},
+		}
+	}
+
+	oidcListDescription := "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration."
+	if update {
+		oidcListDescription += " To use the default configuration values, see the documentation. To switch the OIDC configuration from a single oidc object to an oidc list, rewrite your values."
+	}
+
+	oidcDescription := "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility."
+	if !update {
+		oidcDescription += " The object-based configuration inputs are still writable, but only from the JSON view."
+	}
+
 	OIDCs := &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
+			Description: oidcDescription,
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -249,18 +284,9 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
+							Description: oidcListDescription,
 							Default: []interface{}{
-								map[string]interface{}{
-									"clientID":       defaultOIDCConfig.ClientID,
-									"issuerURL":      defaultOIDCConfig.IssuerURL,
-									"groupsClaim":    defaultOIDCConfig.GroupsClaim,
-									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
-									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
-									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
-									"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
-									"requiredClaims": []interface{}{},
-								},
+								defaultOIDCListEntry,
 							},
 						},
 						Items: AdditionalOIDCListItems{
@@ -348,18 +374,34 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
 			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "The JWKS array encoded in base64. Leave empty to not use it or to remove the previously set value."}
 			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
-			additionalOidc.Properties.List.Default = []interface{}{
-				map[string]interface{}{
-					"clientID":         defaultOIDCConfig.ClientID,
-					"issuerURL":        defaultOIDCConfig.IssuerURL,
-					"groupsClaim":      defaultOIDCConfig.GroupsClaim,
-					"signingAlgs":      defaultOIDCConfig.SigningAlgs,
-					"usernameClaim":    defaultOIDCConfig.UsernameClaim,
-					"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
-					"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
-					"requiredClaims":   []interface{}{},
-					"encodedJwksArray": "",
-				},
+			if update {
+				additionalOidc.Properties.List.Default = []interface{}{
+					map[string]interface{}{
+						"clientID":         "",
+						"issuerURL":        "",
+						"groupsClaim":      "",
+						"signingAlgs":      []interface{}{},
+						"usernameClaim":    "",
+						"usernamePrefix":   "",
+						"groupsPrefix":     "",
+						"requiredClaims":   []interface{}{},
+						"encodedJwksArray": "",
+					},
+				}
+			} else {
+				additionalOidc.Properties.List.Default = []interface{}{
+					map[string]interface{}{
+						"clientID":         defaultOIDCConfig.ClientID,
+						"issuerURL":        defaultOIDCConfig.IssuerURL,
+						"groupsClaim":      defaultOIDCConfig.GroupsClaim,
+						"signingAlgs":      defaultOIDCConfig.SigningAlgs,
+						"usernameClaim":    defaultOIDCConfig.UsernameClaim,
+						"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
+						"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
+						"requiredClaims":   []interface{}{},
+						"encodedJwksArray": "",
+					},
+				}
 			}
 			OIDCs.OneOf[0] = additionalOidc
 		}
@@ -528,12 +570,12 @@ func ShootDomainProperty() *Type {
 	}
 }
 
-func ShootAndSeedSameRegionProperty() *Type {
+func ColocateControlPlaneProperty() *Type {
 	return &Type{
 		Type:        "boolean",
-		Title:       "Enforce same location for Seed and Shoot",
+		Title:       "Colocate control plane and worker nodes in the same region",
 		Default:     false,
-		Description: "If set to true, a Gardener seed is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if no seed is available in the region.",
+		Description: "If set to true, the control plane is placed in the same region as the selected region from the Region field. Check regions supporting the feature on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US#region*>website</a>. The provisioning process fails if the control plane cannot be colocated in the region.",
 	}
 }
 
@@ -642,7 +684,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {

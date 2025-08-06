@@ -25,8 +25,19 @@ This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on t
 
 ## Verify KEB Workflow
 
-This [workflow](/.github/workflows/run-verify.yaml) calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
-Besides the tests, it also runs Go-related checks and Go linter.
+The [`run-verify`](/.github/workflows/run-verify.yaml) workflow calls the reusable [`run-unit-tests-reusable`](/.github/workflows/run-unit-tests-reusable.yaml) workflow with unit tests, executes Go-related checks (such as dependency and formatting checks), runs the Go linter, and verifies that the documentation describing environment variables is up to date.
+
+The documentation check uses the [`scripts/python/generate_env_docs.py`](../../scripts/python/generate_env_docs.py) script to ensure that environment variable tables in the documentation are up to date with the Helm chart and `values.yaml`. The script extracts environment variables from templates, matches them with descriptions and defaults from `values.yaml`, and updates the relevant Markdown files.
+
+**To add a new documentation file to this check:**
+1. Add the template and the corresponding Markdown file to the `SINGLE_JOBS`, `MULTI_JOBS_IN_ONE_TEMPLATE`, or `COMBINED_JOBS_IN_ONE_MD` lists in `generate_env_docs.py`.
+2. Ensure the Markdown file contains a table for environment variables, or a section header where the table should be inserted.
+3. The script automatically updates the documentation table when run.
+
+Run the script with:
+```sh
+python3 scripts/python/generate_env_docs.py
+```
 
 ## Govulncheck Workflow
 

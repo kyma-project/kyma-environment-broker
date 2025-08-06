@@ -23,7 +23,7 @@ spec:
           {{ end }}
         spec:
           serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
-          restartPolicy: Never
+          restartPolicy: OnFailure
           shareProcessNamespace: true
           {{- with .Values.deployment.securityContext }}
           securityContext:
@@ -166,7 +166,7 @@ spec:
             cronjob: subaccount-cleaner-v2.0
         spec:
           serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
-          restartPolicy: Never
+          restartPolicy: OnFailure
           shareProcessNamespace: true
           {{- with .Values.deployment.securityContext }}
           securityContext:

@@ -22,26 +22,23 @@ for bool_tag in ['bool', 'bool#yes', 'bool#no']:
 StrLoader.add_constructor('tag:yaml.org,2002:bool', str_constructor)
 StrLoader.add_constructor('tag:yaml.org,2002:str', str_constructor)
 
-DEPLOYMENT_YAML = "resources/keb/templates/deployment.yaml"
-SUBACC_CLEANUP_YAML = "resources/keb/templates/subaccount-cleanup-job.yaml"
+# --- JOB PATHS AND DOCS ---
+SINGLE_JOBS = [
+    ("resources/keb/templates/deployment.yaml", "docs/contributor/02-30-keb-configuration.md"),
+    ("resources/keb/templates/deprovision-retrigger-job.yaml", "docs/contributor/06-50-deprovision-retrigger-cronjob.md"),
+    ("utils/archiver/kyma-environment-broker-archiver.yaml", "docs/contributor/06-60-archiver-job.md"),
+    ("resources/keb/templates/service-binding-cleanup-job.yaml", "docs/contributor/06-70-service-binding-cleanup-cronjob.md"),
+    ("resources/keb/templates/runtime-reconciler-deployment.yaml", "docs/contributor/07-10-runtime-reconciler.md"),
+    ("resources/keb/templates/subaccount-sync-deployment.yaml", "docs/contributor/07-20-subaccount-sync.md"),
+    ("resources/keb/templates/migrator-job.yaml", "docs/contributor/07-30-schema-migrator.md"),
+]
+MULTI_JOBS_IN_ONE_TEMPLATE = [
+    ("resources/keb/templates/subaccount-cleanup-job.yaml", "docs/contributor/06-30-subaccount-cleanup-cronjob.md", "Subaccount Cleanup CronJob")
+]
+COMBINED_JOBS_IN_ONE_MD = [
+    ("resources/keb/templates/trial-cleanup-job.yaml", "resources/keb/templates/free-cleanup-job.yaml", "docs/contributor/06-40-trial-free-cleanup-cronjobs.md", "Trial Cleanup CronJob", "Free Cleanup CronJob")
+]
 VALUES_YAML = "resources/keb/values.yaml"
-OUTPUT_MD = "docs/contributor/02-30-keb-configuration.md"
-SUBACC_MD = "docs/contributor/06-30-subaccount-cleanup-cronjob.md"
-TRIAL_CLEANUP_YAML = "resources/keb/templates/trial-cleanup-job.yaml"
-FREE_CLEANUP_YAML = "resources/keb/templates/free-cleanup-job.yaml"
-TRIAL_FREE_MD = "docs/contributor/06-40-trial-free-cleanup-cronjobs.md"
-DEPROV_RETRIGGER_YAML = "resources/keb/templates/deprovision-retrigger-job.yaml"
-DEPROV_RETRIGGER_MD = "docs/contributor/06-50-deprovision-retrigger-cronjob.md"
-ARCHIVER_YAML = "utils/archiver/kyma-environment-broker-archiver.yaml"
-ARCHIVER_MD = "docs/contributor/06-60-archiver-job.md"
-SERVICE_BINDING_CLEANUP_YAML = "resources/keb/templates/service-binding-cleanup-job.yaml"
-SERVICE_BINDING_CLEANUP_MD = "docs/contributor/06-70-service-binding-cleanup-cronjob.md"
-RUNTIME_RECONCILER_YAML = "resources/keb/templates/runtime-reconciler-deployment.yaml"
-RUNTIME_RECONCILER_MD = "docs/contributor/07-10-runtime-reconciler.md"
-SUBACCOUNT_SYNC_YAML = "resources/keb/templates/subaccount-sync-deployment.yaml"
-SUBACCOUNT_SYNC_MD = "docs/contributor/07-20-subaccount-sync.md"
-SCHEMA_MIGRATOR_YAML = "resources/keb/templates/migrator-job.yaml"
-SCHEMA_MIGRATOR_MD = "docs/contributor/07-30-schema-migrator.md"
 
 def extract_env_vars_with_paths(deployment_yaml_path):
     """
@@ -354,62 +351,64 @@ def extract_table_markdown(env_docs, existing_table=None):
         buf.write(f"| {env_col} | {val_col} | {desc} |\n")
     return buf.getvalue()
 
-def replace_env_table_in_md(md_path, new_table):
-    # Special handling for TRIAL_FREE_MD: replace from section header to end
-    if md_path == TRIAL_FREE_MD:
-        with open(md_path, 'r') as f:
-            lines = f.readlines()
-        out = []
-        found_section = False
-        for idx, line in enumerate(lines):
-            if line.strip().startswith('### Trial Cleanup CronJob'):
-                out.append(new_table)
-                found_section = True
-                break
-            out.append(line)
-        if not found_section:
-            out.append('\n' + new_table + '\n')
-        with open(md_path, 'w') as f:
-            f.writelines(out)
-        return
-    # Special handling for SUBACC_MD: replace from first v1 header to end
-    if md_path == SUBACC_MD:
-        with open(md_path, 'r') as f:
-            lines = f.readlines()
-        out = []
-        found_section = False
-        for idx, line in enumerate(lines):
-            if line.strip().startswith('### Subaccount Cleanup CronJob v1'):
-                out.append(new_table)
-                found_section = True
-                break
-            out.append(line)
-        if not found_section:
-            out.append('\n' + new_table + '\n')
-        with open(md_path, 'w') as f:
-            f.writelines(out)
-        return
+def replace_env_table_in_md(md_path, new_table, section_header=None, all_section_headers=None):
+    """
+    Replace the environment variable table in the Markdown file.
+    If section_header is provided, remove all content from the first matching section header in all_section_headers up to the next unrelated section header (or EOF), then insert new_table.
+    If not provided, replace the first Markdown table found (remove the old table before inserting the new one).
+    """
     with open(md_path, 'r') as f:
         lines = f.readlines()
     out = []
-    in_table = False
-    table_started = False
-    for line in lines:
-        if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
-            in_table = True
-            table_started = True
+    if section_header and all_section_headers:
+        found_section = False
+        idx = 0
+        # Find the first occurrence of any section header in all_section_headers
+        while idx < len(lines):
+            if any(lines[idx].strip().startswith(h) for h in all_section_headers):
+                found_section = True
+                break
+            out.append(lines[idx])
+            idx += 1
+        if found_section:
+            # Skip all lines until a section header not in all_section_headers or EOF
+            while idx < len(lines):
+                if lines[idx].strip().startswith('### '):
+                    if not any(lines[idx].strip().startswith(h) for h in all_section_headers):
+                        break
+                idx += 1
+            # Insert the new table(s)
             out.append(new_table)
-            continue
-        if in_table:
-            if not line.strip().startswith('|'):
-                in_table = False
-                if line.strip():
-                    out.append(line)
-            continue
-        out.append(line)
-    if not table_started:
-        # If no table found, append at end
-        out.append('\n' + new_table + '\n')
+            # Append the rest of the file
+            out.extend(lines[idx:])
+        else:
+            out.append('\n' + section_header + '\n' + new_table + '\n')
+    else:
+        # Remove the old table before inserting the new one
+        in_table = False
+        table_started = False
+        idx = 0
+        while idx < len(lines):
+            line = lines[idx]
+            if line.strip().startswith('| Environment variable') or line.strip().startswith('| Environment Variable'):
+                # Found the start of the table
+                in_table = True
+                table_started = True
+                out.append(new_table)
+                # Skip all lines that are part of the table
+                idx += 1
+                while idx < len(lines):
+                    if lines[idx].strip().startswith('|') or lines[idx].strip() == '':
+                        idx += 1
+                    else:
+                        break
+                continue
+            if not in_table:
+                out.append(line)
+            idx += 1
+        if not table_started:
+            # If no table found, append at end
+            out.append('\n' + new_table + '\n')
     with open(md_path, 'w') as f:
         f.writelines(out)
 
@@ -418,78 +417,46 @@ def main():
     Main entry point: extract env vars, map to values.yaml, and write Markdown documentation for all jobs.
     """
     values_doc = parse_values_yaml_with_comments(VALUES_YAML)
-    # KEB deployment
-    env_vars = extract_env_vars_with_paths(DEPLOYMENT_YAML)
-    env_docs = map_env_to_values(env_vars, values_doc)
-    existing_table = parse_existing_table(OUTPUT_MD)
-    table = extract_table_markdown(env_docs, existing_table)
-    replace_env_table_in_md(OUTPUT_MD, table)
-    print(f"Markdown documentation table replaced in {OUTPUT_MD}")
-    # Subaccount Cleanup (multi-job)
-    subacc_env_vars_list = extract_env_vars_with_paths_multiple_jobs(SUBACC_CLEANUP_YAML)
-    subacc_tables = []
-    for idx, subacc_env_vars in enumerate(subacc_env_vars_list):
-        subacc_env_docs = map_env_to_values(subacc_env_vars, values_doc)
-        existing_table = parse_existing_table(SUBACC_MD)
-        version = f"v{idx+1}"
-        subacc_tables.append(f"### Subaccount Cleanup CronJob {version}\n\n" + extract_table_markdown(subacc_env_docs, existing_table))
-    subacc_combined = "\n\n".join(subacc_tables) + "\n"
-    replace_env_table_in_md(SUBACC_MD, subacc_combined)
-    print(f"Subaccount Cleanup env documentation updated in {SUBACC_MD}")
-    # Trial Cleanup
-    trial_env_vars = extract_env_vars_with_paths(TRIAL_CLEANUP_YAML)
-    trial_env_docs = map_env_to_values(trial_env_vars, values_doc)
-    existing_table = parse_existing_table(TRIAL_FREE_MD)
-    trial_table = extract_table_markdown(trial_env_docs, existing_table)
-    # Free Cleanup
-    free_env_vars = extract_env_vars_with_paths(FREE_CLEANUP_YAML)
-    free_env_docs = map_env_to_values(free_env_vars, values_doc)
-    free_table = extract_table_markdown(free_env_docs, existing_table)
-    combined = "### Trial Cleanup CronJob\n\n" + trial_table + "\n\n### Free Cleanup CronJob\n\n" + free_table + "\n"
-    replace_env_table_in_md(TRIAL_FREE_MD, combined)
-    print(f"Trial/Free Cleanup env documentation updated in {TRIAL_FREE_MD}")
-    # Deprovision Retrigger
-    deprov_env_vars = extract_env_vars_with_paths(DEPROV_RETRIGGER_YAML)
-    deprov_env_docs = map_env_to_values(deprov_env_vars, values_doc)
-    existing_table = parse_existing_table(DEPROV_RETRIGGER_MD)
-    deprov_table = extract_table_markdown(deprov_env_docs, existing_table)
-    replace_env_table_in_md(DEPROV_RETRIGGER_MD, deprov_table)
-    print(f"Deprovision Retrigger env documentation updated in {DEPROV_RETRIGGER_MD}")
-    # Archiver Job
-    archiver_env_vars = extract_env_vars_with_paths(ARCHIVER_YAML)
-    archiver_env_docs = map_env_to_values(archiver_env_vars, values_doc)
-    existing_table = parse_existing_table(ARCHIVER_MD)
-    archiver_table = extract_table_markdown(archiver_env_docs, existing_table)
-    replace_env_table_in_md(ARCHIVER_MD, archiver_table)
-    print(f"Archiver env documentation updated in {ARCHIVER_MD}")
-    # Service Binding Cleanup Job
-    sbc_env_vars = extract_env_vars_with_paths(SERVICE_BINDING_CLEANUP_YAML)
-    sbc_env_docs = map_env_to_values(sbc_env_vars, values_doc)
-    existing_table = parse_existing_table(SERVICE_BINDING_CLEANUP_MD)
-    sbc_table = extract_table_markdown(sbc_env_docs, existing_table)
-    replace_env_table_in_md(SERVICE_BINDING_CLEANUP_MD, sbc_table)
-    print(f"Service Binding Cleanup env documentation updated in {SERVICE_BINDING_CLEANUP_MD}")
-    # Runtime Reconciler
-    rr_env_vars = extract_env_vars_with_paths(RUNTIME_RECONCILER_YAML)
-    rr_env_docs = map_env_to_values(rr_env_vars, values_doc)
-    existing_table = parse_existing_table(RUNTIME_RECONCILER_MD)
-    rr_table = extract_table_markdown(rr_env_docs, existing_table)
-    replace_env_table_in_md(RUNTIME_RECONCILER_MD, rr_table)
-    print(f"Runtime Reconciler env documentation updated in {RUNTIME_RECONCILER_MD}")
-    # Subaccount Sync
-    sync_env_vars = extract_env_vars_with_paths(SUBACCOUNT_SYNC_YAML)
-    sync_env_docs = map_env_to_values(sync_env_vars, values_doc)
-    existing_table = parse_existing_table(SUBACCOUNT_SYNC_MD)
-    sync_table = extract_table_markdown(sync_env_docs, existing_table)
-    replace_env_table_in_md(SUBACCOUNT_SYNC_MD, sync_table)
-    print(f"Subaccount Sync env documentation updated in {SUBACCOUNT_SYNC_MD}")
-    # Schema Migrator
-    migrator_env_vars = extract_env_vars_with_paths(SCHEMA_MIGRATOR_YAML)
-    migrator_env_docs = map_env_to_values(migrator_env_vars, values_doc)
-    existing_table = parse_existing_table(SCHEMA_MIGRATOR_MD)
-    migrator_table = extract_table_markdown(migrator_env_docs, existing_table)
-    replace_env_table_in_md(SCHEMA_MIGRATOR_MD, migrator_table)
-    print(f"Schema Migrator env documentation updated in {SCHEMA_MIGRATOR_MD}")
+
+    # 1. Single YAMLs in one template file
+    for yaml_path, md_path in SINGLE_JOBS:
+        env_vars = extract_env_vars_with_paths(yaml_path)
+        env_docs = map_env_to_values(env_vars, values_doc)
+        existing_table = parse_existing_table(md_path)
+        table = extract_table_markdown(env_docs, existing_table)
+        replace_env_table_in_md(md_path, table)
+        print(f"Markdown documentation table replaced in {md_path}")
+
+    # 2. Multiple YAMLs in one template file
+    for yaml_path, md_path, section_title in MULTI_JOBS_IN_ONE_TEMPLATE:
+        env_vars_list = extract_env_vars_with_paths_multiple_jobs(yaml_path)
+        tables = []
+        all_section_headers = []
+        for idx, env_vars in enumerate(env_vars_list):
+            env_docs = map_env_to_values(env_vars, values_doc)
+            existing_table = parse_existing_table(md_path)
+            version = f"v{idx+1}"
+            section_header = f"### {section_title} {version}"
+            all_section_headers.append(section_header)
+            tables.append(section_header + "\n\n" + extract_table_markdown(env_docs, existing_table))
+        combined = "\n\n".join(tables) + "\n"
+        replace_env_table_in_md(md_path, combined, section_header=f"### {section_title} v1", all_section_headers=all_section_headers)
+        print(f"{section_title} env documentation updated in {md_path}")
+
+    # 3. Combined jobs in one Markdown file
+    for job in COMBINED_JOBS_IN_ONE_MD:
+        yaml1, yaml2, md_path, title1, title2 = job
+        env_vars1 = extract_env_vars_with_paths(yaml1)
+        env_docs1 = map_env_to_values(env_vars1, values_doc)
+        env_vars2 = extract_env_vars_with_paths(yaml2)
+        env_docs2 = map_env_to_values(env_vars2, values_doc)
+        existing_table = parse_existing_table(md_path)
+        table1 = extract_table_markdown(env_docs1, existing_table)
+        table2 = extract_table_markdown(env_docs2, existing_table)
+        combined = f"### {title1}\n\n" + table1 + f"\n\n### {title2}\n\n" + table2 + "\n"
+        all_section_headers = [f"### {title1}", f"### {title2}"]
+        replace_env_table_in_md(md_path, combined, section_header=f"### {title1}", all_section_headers=all_section_headers)
+        print(f"{title1}/{title2} env documentation updated in {md_path}")
 
 if __name__ == "__main__":
     main()
