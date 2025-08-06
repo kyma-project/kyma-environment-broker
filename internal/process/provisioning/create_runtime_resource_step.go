@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -331,7 +332,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 			},
 		}
 		if s.enableJwks {
-			oidc.JWKS = []byte(oidcConfig.EncodedJwksArray)
+			oidc.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
 		}
 		configs = append(configs, oidc)
 	}
@@ -362,7 +363,7 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
 	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
-		defaultOIDC.JWKS = []byte(inputOIDC.EncodedJwksArray)
+		defaultOIDC.JWKS, _ = base64.StdEncoding.DecodeString(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC
 }
