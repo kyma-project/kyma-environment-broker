@@ -623,8 +623,9 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			EnumDisplayName: regionsDisplay,
 			MinLength:       1,
 		},
-		Networking: NewNetworkingSchema(rejectUnsupportedParameters),
-		Modules:    NewModulesSchema(rejectUnsupportedParameters),
+		Networking:           NewNetworkingSchema(rejectUnsupportedParameters),
+		Modules:              NewModulesSchema(rejectUnsupportedParameters),
+		ColocateControlPlane: ColocateControlPlaneProperty(),
 	}
 
 	if update {

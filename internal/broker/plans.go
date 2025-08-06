@@ -71,17 +71,15 @@ var PlanIDsMapping = map[string]string{
 type ControlFlagsObject struct {
 	includeAdditionalParameters bool
 	useAdditionalOIDCSchema     bool
-	shootAndSeedFeatureEnabled  bool
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
 	enableJwks                  bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, shootAndSeedEnabled, ingressFilteringEnabled, rejectUnsupportedParameters, enableJwks bool) ControlFlagsObject {
+func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, ingressFilteringEnabled, rejectUnsupportedParameters, enableJwks bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		includeAdditionalParameters: includeAdditionalParameters,
 		useAdditionalOIDCSchema:     useAdditionalOIDC,
-		shootAndSeedFeatureEnabled:  shootAndSeedEnabled,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
 		enableJwks:                  enableJwks,
@@ -152,9 +150,6 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters, flags.enableJwks)
 		}
 		properties.Administrators = AdministratorsProperty()
-		if flags.shootAndSeedFeatureEnabled {
-			properties.ColocateControlPlane = ColocateControlPlaneProperty()
-		}
 		if flags.ingressFilteringEnabled {
 			properties.IngressFiltering = IngressFilteringProperty()
 		}

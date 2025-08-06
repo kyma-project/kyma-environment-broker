@@ -255,7 +255,6 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		regionsDisplayNames = s.providerSpec.RegionDisplayNames(pkg.AWS, regions)
 	}
 	flags := s.createFlags(FreemiumPlanName)
-	flags.shootAndSeedFeatureEnabled = false
 
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
@@ -282,7 +281,6 @@ func (s *SchemaService) FreeSchemas(provider pkg.CloudProvider, platformRegion s
 
 func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	flags := s.createFlags(TrialPlanName)
-	flags.shootAndSeedFeatureEnabled = false
 
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
@@ -321,7 +319,6 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 	return NewControlFlagsObject(
 		s.cfg.IncludeAdditionalParamsInSchema,
 		s.cfg.UseAdditionalOIDCSchema,
-		s.cfg.EnableShootAndSeedSameRegion,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
 		s.cfg.EnableJwks,
