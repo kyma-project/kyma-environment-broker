@@ -20,7 +20,6 @@ const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_i
 func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true // disable EDP to have all steps successfully executed
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -89,7 +88,6 @@ func TestReDeprovision(t *testing.T) {
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true // disable EDP to have all steps successfully executed
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -137,7 +135,6 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid1 := uuid.New().String()

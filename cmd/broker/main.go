@@ -22,7 +22,6 @@ import (
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
@@ -91,8 +90,6 @@ type Config struct {
 	LifecycleManagerIntegrationDisabled bool `envconfig:"default=true"`
 	Broker                              broker.Config
 	CatalogFilePath                     string
-
-	EDP edp.Config
 
 	KymaDashboardConfig dashboard.Config
 
@@ -280,8 +277,6 @@ func main() {
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, log)
 
-	edpClient := edp.NewClient(cfg.EDP)
-
 	// application event broker
 	eventBroker := event.NewPubSub(log)
 
@@ -314,10 +309,10 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		edpClient, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))

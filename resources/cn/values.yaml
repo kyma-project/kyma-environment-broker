@@ -36,8 +36,6 @@ dashboardConfig:
     enabled: true
     landscapeURL: https://dashboard.kyma.cloud.sap # **CN**
 
-edp:
-    disabled: true
 
 enableKubeconfigURLLabel: true
 

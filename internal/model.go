@@ -210,7 +210,6 @@ type InstanceDetails struct {
 	ClusterName       string                    `json:"clusterName"`
 	ShootDNSProviders gardener.DNSProvidersData `json:"shoot_dns_providers"`
 	Monitoring        MonitoringData            `json:"monitoring"`
-	EDPCreated        bool                      `json:"edp_created"`
 
 	ClusterConfigurationVersion int64  `json:"cluster_configuration_version"`
 	Kubeconfig                  string `json:"-"`
