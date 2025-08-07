@@ -28,7 +28,6 @@ const (
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
-	edpClient provisioning.EDPClient,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
 	workersProvider *workers.Provider) *process.Queue {
 
@@ -67,12 +66,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
-			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewEDPRegistrationStep(db.Operations(), edpClient, cfg.EDP),
-			disabled:  cfg.EDP.Disabled,
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

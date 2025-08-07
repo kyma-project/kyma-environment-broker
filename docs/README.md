@@ -57,7 +57,6 @@ For technical details of KEB, go to the `contributor` directory:
 
 You can also read about:
 
-* [Event Data Platform Tools](../utils/edp-registrator/README.md)
 * [Install Kyma Environment Broker in the CN Region](../resources/cn/cn.md)
 * [Kyma Runtime End-to-End Provisioning Test](../testing/e2e/provisioning/README.md)
 * [Kyma Environments Cleanup CronJob](../utils/kyma-environments-cleanup-job/README.md)
