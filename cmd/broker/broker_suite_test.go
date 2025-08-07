@@ -205,7 +205,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
-		edpClient, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
+		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
 		workersProvider(cfg.InfrastructureManager, providerSpec))
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
