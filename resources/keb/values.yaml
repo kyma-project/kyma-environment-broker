@@ -54,9 +54,6 @@ global:
     kyma_environments_subaccount_cleanup_job:
       dir:
       version: "1.21.18"
-    kyma_environment_trial_cleanup_job:
-      dir:
-      version: "1.21.18"
     kyma_environment_expirator_job:
       dir:
       version: "1.21.18"

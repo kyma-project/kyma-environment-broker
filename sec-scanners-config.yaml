@@ -4,7 +4,6 @@ rc-tag: 1.21.18
 bdba:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.21.18
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.21.18
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-trial-cleanup-job:1.21.18
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.21.18
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.21.18
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.21.18
