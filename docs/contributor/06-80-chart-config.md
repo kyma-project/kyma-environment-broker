@@ -151,15 +151,15 @@
 | quotaLimitCheck.retries | The number of retry attempts made when the Entitlements API request fails | 5 |
 | quotaWhitelistedSubaccountIds | List of subaccount IDs that have unlimited quota for Kyma runtimes. Only subaccounts listed here can provision beyond their assigned quota limits | `whitelist:` |
 | regionsSupportingMachine | Defines which machine type families are available in which regions (and optionally, zones) Restricts provisioning of listed machine types to the specified regions/zones only If a machine type is not listed, it is considered available in all regions | `` |
-| runtimeConfiguration | Defines the default KymaCR template. | `default: \|-<br><br>  kyma-template: \|-<br><br>    apiVersion: operator.kyma-project.io/v1beta2<br><br>    kind: Kyma<br><br>    metadata:<br><br>      labels:<br><br>        "operator.kyma-project.io/managed-by": "lifecycle-manager"<br><br>      name: tbd<br><br>      namespace: kcp-system<br><br>    spec:<br><br>      channel: fast<br><br>      modules: []<br><br>  additional-components: []` |
+| runtimeConfiguration | Defines the default KymaCR template. | `default: \|-      kyma-template: \|-        apiVersion: operator.kyma-project.io/v1beta2        kind: Kyma        metadata:          labels:            "operator.kyma-project.io/managed-by": "lifecycle-manager"          name: tbd          namespace: kcp-system        spec:          channel: fast          modules: []      additional-components: []` |
 | skrDNSProvidersValues | Contains DNS provider configuration for SKR clusters | `providers: []` |
-| skrOIDCDefaultValues | Contains the default OIDC configuration for SKR clusters | `clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"<br><br>groupsClaim: "groups"<br><br>groupsPrefix: "-"<br><br>issuerURL: "https://kymatest.accounts400.ondemand.com"<br><br>signingAlgs: [ "RS256" ]<br><br>usernameClaim: "sub"<br><br>usernamePrefix: "-"` |
+| skrOIDCDefaultValues | Contains the default OIDC configuration for SKR clusters | `clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"    groupsClaim: "groups"    groupsPrefix: "-"    issuerURL: "https://kymatest.accounts400.ondemand.com"    signingAlgs: [ "RS256" ]    usernameClaim: "sub"    usernamePrefix: "-"` |
 | stepTimeouts.checkRuntimeResourceCreate | Maximum time to wait for a runtime resource to be created before considering the step as failed | `60m` |
 | stepTimeouts.checkRuntimeResourceDeletion | Maximum time to wait for a runtime resource to be deleted before considering the step as failed | `60m` |
 | stepTimeouts.checkRuntimeResourceUpdate | Maximum time to wait for a runtime resource to be updated before considering the step as failed | `180m` |
 | testConfig.kebDeployment.<br>useAnnotations | - | False |
 | testConfig.kebDeployment.<br>weight | - | `2` |
-| trialRegionsMapping | Determines the Kyma region for a trial environment based on the requested platform region | `cf-eu10: europe<br><br>cf-us10: us<br><br>cf-ap21: asia` |
+| trialRegionsMapping | Determines the Kyma region for a trial environment based on the requested platform region | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |
 | osbUpdateProcessingEnabled | If true, the broker processes update requests for service instances | `true` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API | `TBD` |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API | `TBD` |

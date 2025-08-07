@@ -82,7 +82,7 @@ def format_default_value(val):
         val = val.replace('|', '\|')
         val = val.replace('`', '\`')
         val = val.strip('\n')
-        val = val.replace('\n', '<br>')
+        val = val.replace('\n', '  ')
         return f'`{val}`'
     return val
 
