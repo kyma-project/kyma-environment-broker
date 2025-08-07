@@ -168,7 +168,7 @@ def generate_markdown_table(entries):
 
 if __name__ == "__main__":
     yaml_path = os.path.join("resources", "keb", "values.yaml")
-    output_path = os.path.join("docs", "contributor", "06-80-chart-config.md")
+    output_path = os.path.join("docs", "contributor", "02-70-chart-config.md")
     entries = parse_values_yaml_with_comments(yaml_path)
     md_table = generate_markdown_table(entries)
     with open(output_path, 'w') as f:
