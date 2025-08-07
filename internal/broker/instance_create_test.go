@@ -3494,7 +3494,6 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
 		IncludeAdditionalParamsInSchema: true,
-		EnableShootAndSeedSameRegion:    true,
 		UseAdditionalOIDCSchema:         true,
 	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
 		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})

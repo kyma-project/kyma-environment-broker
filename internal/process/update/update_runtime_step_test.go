@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
 	"os"
 	"strings"
@@ -367,7 +368,10 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			},
 			GroupsPrefix: ptr.String("first-gp-custom"),
 		},
-		JWKS: []byte("Y3VzdG9tLWp3a3MtdG9rZW4="),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("Y3VzdG9tLWp3a3MtdG9rZW4=")
+			return b
+		}(),
 	}
 	secondExpectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
@@ -398,7 +402,10 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			},
 			GroupsPrefix: ptr.String("third-gp-custom"),
 		},
-		JWKS: []byte("dGhpcmQtam9icy10b2tlbg=="),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("dGhpcmQtam9icy10b2tlbg==")
+			return b
+		}(),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)

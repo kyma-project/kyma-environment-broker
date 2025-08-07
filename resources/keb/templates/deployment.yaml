@@ -107,8 +107,6 @@ spec:
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
               value: "{{ .Values.broker.enablePlanUpgrades }}"
-            - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_BROKER_FREE_DOCS_URL
               value: "{{ .Values.broker.freeDocsURL }}"
             - name: APP_BROKER_FREE_EXPIRATION_PERIOD

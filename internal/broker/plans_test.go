@@ -156,7 +156,6 @@ func createSchemaService(t *testing.T) *SchemaService {
 
 	schemaService := NewSchemaService(provider, plans, nil, Config{
 		IncludeAdditionalParamsInSchema: true,
-		EnableShootAndSeedSameRegion:    true,
 		UseAdditionalOIDCSchema:         false,
 		RejectUnsupportedParameters:     true,
 		EnablePlanUpgrades:              true,

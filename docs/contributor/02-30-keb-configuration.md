@@ -20,7 +20,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_ENABLE_&#x200b;JWKS** | <code>false</code> | If true, enables the handling of the encoded JWKS array, temporary feature flag |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB |
 | **APP_BROKER_ENABLE_&#x200b;PLAN_UPGRADES** | <code>false</code> | If true, allows users to upgrade their plans (if a plan supports upgrades) |
-| **APP_BROKER_ENABLE_&#x200b;SHOOT_AND_SEED_SAME_&#x200b;REGION** | <code>false</code> | If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds |

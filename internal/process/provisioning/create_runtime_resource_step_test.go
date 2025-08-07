@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"reflect"
 	"strings"
@@ -418,7 +419,10 @@ func TestCreateRuntimeResourceStep_HandleOIDCWithJwks(t *testing.T) {
 			UsernamePrefix: ptr.String("up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("andrcy10b2tlbi1kZWZhdWx0")
+			return b
+		}(),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, false, &workers.Provider{}, true)
@@ -496,7 +500,10 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 			UsernamePrefix: ptr.String("first-up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("andrcy10b2tlbi1kZWZhdWx0")
+			return b
+		}(),
 	}
 	secondExpectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
@@ -519,7 +526,6 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 			UsernamePrefix: ptr.String("third-up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{}, true)

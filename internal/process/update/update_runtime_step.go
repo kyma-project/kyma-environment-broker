@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -126,7 +127,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					},
 				}
 				if s.enableJwks {
-					oidcConfigObj.JWKS = []byte(oidcConfig.EncodedJwksArray)
+					oidcConfigObj.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
 				}
 				oidcConfigs = append(oidcConfigs, oidcConfigObj)
 
@@ -176,7 +177,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				if dto.EncodedJwksArray == "-" {
 					config.JWKS = nil
 				} else if dto.EncodedJwksArray != "" {
-					config.JWKS = []byte(dto.EncodedJwksArray)
+					config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
 				}
 			}
 		}
