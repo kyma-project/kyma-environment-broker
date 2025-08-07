@@ -75,16 +75,15 @@ def extract_block_scalars(lines):
     return block_scalars
 
 def format_default_value(val):
-    if val is None:
+    if val is None or val == 'None':
         return 'None'
-    if isinstance(val, str):
-        # Escape pipes and backticks for Markdown
-        val = val.replace('|', '\|')
-        val = val.replace('`', '\`')
-        val = val.strip('\n')
-        val = val.replace('\n', '  ')
-        return f'`{val}`'
-    return val
+    # Convert all types to string and wrap in backticks, escaping for Markdown
+    val_str = str(val)
+    val_str = val_str.replace('|', '\|')
+    val_str = val_str.replace('`', '\`')
+    val_str = val_str.strip('\n')
+    val_str = val_str.replace('\n', '  ')
+    return f'`{val_str}`'
 
 def parse_values_yaml_with_comments(filepath):
     with open(filepath, 'r') as f:
