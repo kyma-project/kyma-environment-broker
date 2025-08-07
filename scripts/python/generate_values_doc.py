@@ -3,10 +3,12 @@ import os
 import yaml
 import textwrap
 
-def soft_break(text, min_len=20, prefer_char='.'):
+def soft_break(text, min_len=20, prefer_chars=('.', '_')):
     """
-    Insert a <br> after every '.' that appears after each min_len characters.
-    For each segment of min_len, if a '.' is found after that point, break after it and continue.
+    Insert a <br> after every '.' or '_' that appears after each min_len characters.
+    For each segment of min_len, if a '.' or '_' is found after that point, break after it and continue.
+    If no such character is found after min_len, search backward in the last min_len segment for the last '.' or '_'.
+    If still not found, do not break and append the rest as is.
     """
     if not text or len(text) <= min_len:
         return text
@@ -16,12 +18,28 @@ def soft_break(text, min_len=20, prefer_char='.'):
         if len(text) - start <= min_len:
             result += text[start:]
             break
-        idx = text.find(prefer_char, start + min_len)
-        if idx == -1:
-            result += text[start:]
-            break
-        result += text[start:idx+1] + '<br>'
-        start = idx+1
+        # Search forward for next break char after min_len
+        forward_idxs = [text.find(c, start + min_len) for c in prefer_chars]
+        forward_idxs = [i for i in forward_idxs if i != -1]
+        if forward_idxs:
+            idx = min(forward_idxs)
+            result += text[start:idx+1] + '<br>'
+            start = idx+1
+            continue
+        # Search backward in the last min_len segment for the last break char
+        segment = text[start:start+min_len]
+        last_idx = -1
+        for c in prefer_chars:
+            idx = segment.rfind(c)
+            if idx > last_idx:
+                last_idx = idx
+        if last_idx != -1:
+            result += text[start:start+last_idx+1] + '<br>'
+            start = start+last_idx+1
+            continue
+        # No break char found, append the rest and break
+        result += text[start:]
+        break
     return result
 
 def extract_block_scalars(lines):
@@ -161,7 +179,7 @@ def generate_markdown_table(entries):
     table = "| Parameter | Description | Default Value |\n"
     table += "| --- | --- | --- |\n"
     for param, desc, default in entries:
-        param_disp = soft_break(param, 20, prefer_char='.')
+        param_disp = soft_break(param, 20, prefer_chars=('.', '_'))
         default_disp = format_default_value(default)
         table += f"| {param_disp} | {desc if desc else '-'} | {default_disp} |\n"
     return table

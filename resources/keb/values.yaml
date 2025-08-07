@@ -92,23 +92,13 @@ fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 imagePullSecret: ""
 imagePullSecrets: [ ]
-# If true, this Helm chart will create and manage Kubernetes Secret resources for credentials
-# Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them
+# If true, this Helm chart creates and manages Kubernetes Secret resources for credentials.
+# Set to false if you want to manage these Secrets externally or manually, and prevent the chart from creating them.
 manageSecrets: true
 namePrefix: "kcp"
 nameOverride: "kyma-environment-broker"
 resources:
   { }
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-#   cpu: 100m
-#   memory: 128Mi
 
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
@@ -136,7 +126,7 @@ archiving:
   dryRun: true
 
 broker:
-  # Allow update of expired instance
+  # Allows update of expired instance
   allowUpdateExpiredInstanceWithContext: "false"
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp"
@@ -155,7 +145,7 @@ broker:
     minExpirationSeconds: 600
   # Default platform region for requests if not specified
   defaultRequestRegion: "cf-eu10"
-  # If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters
+  # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters
   disableSapConvergedCloud: false
   # If true, enables the handling of the encoded JWKS array, temporary feature flag
   enableJwks: "false"
@@ -164,7 +154,7 @@ broker:
   # If true, allows users to upgrade their plans (if a plan supports upgrades)
   enablePlanUpgrades: "false"
   # URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans
-  freeDocsURL: "https://help.sap.com/docs/"
+  freeDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud"
   # Determines when to show expiration info to users
   freeExpirationPeriod: 720h
   # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
@@ -173,14 +163,14 @@ broker:
   includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
   monitorAdditionalProperties: false
-  # If true, restricts each global account to only one free (freemium) Kyma runtime.
+  # If true, restricts each global account to only one freemium (free) Kyma runtime.
   # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned
   onlyOneFreePerGA: "false"
-  # If true, restricts each global account to only one active trial Kyma runtime at a time
+  # If true, restricts each global account to only one active trial Kyma runtime at a time.
   # When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned
   onlySingleTrialPerGA: "true"
-  # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.)
-  # If the operation exceeds this timeout, it is marked as failed. Example: "7h" for 7 hours
+  # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.).
+  # If the operation exceeds this timeout, it is marked as failed.
   operationTimeout: "7h"
   # Port for the broker HTTP server
   port: "8080"
@@ -274,7 +264,7 @@ edp:
   secretKey: secret
 
 events:
-  # Enables or disables the /events API and event storage for operation events (true/false)
+  # Enables or disables the events API and event storage for operation events (true/false)
   enabled: true
 
 # List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes
@@ -313,7 +303,7 @@ infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters
   # Possible values: empty (default), "node", or "zone"
   controlPlaneFailureTolerance: ""
-  # Sets the default purpose for Gardener shoots (clusters) created by the broker
+  # Sets the default purpose for Gardener shoots (clusters) created by the broker.
   # Possible values: development, evaluation, production, testing
   defaultShootPurpose: "development"
   # Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS
@@ -379,9 +369,9 @@ quotaLimitCheck:
 quotaWhitelistedSubaccountIds: |-
   whitelist:
 
-# Defines which machine type families are available in which regions (and optionally, zones)
-# Restricts provisioning of listed machine types to the specified regions/zones only
-# If a machine type is not listed, it is considered available in all regions
+# Defines which machine type families are available in which regions (and optionally, zones).
+# Restricts provisioning of listed machine types to the specified regions/zones only.
+# If a machine type is not listed, it is considered available in all regions.
 regionsSupportingMachine: |-
 
 # Defines the default KymaCR template.
@@ -400,11 +390,11 @@ runtimeConfiguration: |-
         modules: []
     additional-components: []
 
-# Contains DNS provider configuration for SKR clusters
+# Contains DNS provider configuration for Kyma clusters
 skrDNSProvidersValues: |-
   providers: []
 
-# Contains the default OIDC configuration for SKR clusters
+# Contains the default OIDC configuration for Kyma clusters
 skrOIDCDefaultValues: |-
   clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
   groupsClaim: "groups"
@@ -428,7 +418,7 @@ testConfig:
     useAnnotations: false
     weight: "2"
 
-# Determines the Kyma region for a trial environment based on the requested platform region
+# Determines a Kyma region for a trial environment based on the requested platform region
 trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
@@ -537,7 +527,7 @@ freeCleanup:
   dryRun: true
   # If true, enables the Free Cleanup CronJob
   enabled: true
-  # Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days)
+  # Specifies how long a free instance can exist before being eligible for cleanup
   expirationPeriod: 2160h # 90 days
   # The ID of the free plan to be used for cleanup
   planID: "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
@@ -614,7 +604,7 @@ runtimeReconciler:
   jobEnabled: false
   # Interval (in minutes) between reconciliation job runs
   jobInterval: 1440
-  # Delay before starting reconciliation after job trigger (e.g., "1s")
+  # Delay before starting reconciliation after job trigger
   jobReconciliationDelay: 1s
   # Port on which the reconciler exposes Prometheus metrics
   metricsPort: 8081
