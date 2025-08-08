@@ -8,8 +8,8 @@ deployment:
   replicaCount: 1
   securityContext:
     runAsUser: 2000
-  strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-
+  # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy.
+  strategy: { }
 global:
   database:
     cloudsqlproxy:
@@ -18,26 +18,26 @@ global:
         enabled: false
     embedded:
       enabled: true
-    # Values for GCP managed PostgreSQL database
+    # Values for GCP managed PostgreSQL database.
     managedGCP:
-      # Name of the Kubernetes Secret containing the encryption
+      # Name of the Kubernetes Secret containing the encryption.
       encryptionSecretName: "kcp-storage-client-secret"
-      # Key in the encryption Secret for the encryption key
+      # Key in the encryption Secret for the encryption key.
       encryptionSecretKey: secretKey
-      # Key in the database Secret for the database host
+      # Key in the database Secret for the database host.
       hostSecretKey: "postgresql-serviceName"
       instanceConnectionName: ""
-      # Key in the database Secret for the database name
+      # Key in the database Secret for the database name.
       nameSecretKey: "postgresql-broker-db-name"
-      # Key in the database Secret for the database password
+      # Key in the database Secret for the database password.
       passwordSecretKey: "postgresql-broker-password"
-      # Key in the database Secret for the database port
+      # Key in the database Secret for the database port.
       portSecretKey: "postgresql-servicePort"
-      # Name of the Kubernetes Secret containing DB connection values
+      # Name of the Kubernetes Secret containing DB connection values.
       secretName: "kcp-postgresql"
-      # Key in the database Secret for the SSL mode
+      # Key in the database Secret for the SSL mode.
       sslModeSecretKey: "postgresql-sslMode"
-      # Key in the database Secret for the database user
+      # Key in the database Secret for the database user.
       userNameSecretKey: "postgresql-broker-username"
   images:
     cloudsql_proxy:
@@ -92,23 +92,13 @@ fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 imagePullSecret: ""
 imagePullSecrets: [ ]
-# If true, this Helm chart will create and manage Kubernetes Secret resources for credentials
-# Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them
+# If true, this Helm chart creates and manages Kubernetes Secret resources for credentials.
+# Set to false if you want to manage these Secrets externally or manually, and prevent the chart from creating them.
 manageSecrets: true
 namePrefix: "kcp"
 nameOverride: "kyma-environment-broker"
 resources:
   { }
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-#   cpu: 100m
-#   memory: 128Mi
 
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
@@ -130,170 +120,170 @@ swagger:
 # Kyma Environment Broker (KEB) Deployment Settings
 # =================================================
 archiving:
-  # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process
+  # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
   enabled: false
-  # If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted
+  # If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted.
   dryRun: true
 
 broker:
-  # Allow update of expired instance
+  # Allows update of expired instance.
   allowUpdateExpiredInstanceWithContext: "false"
   binding:
-    # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp"
+    # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp".
     bindablePlans: "aws"
-    # Timeout for creating a binding, for example, 15s, 1m
+    # Timeout for creating a binding, for example, 15s, 1m.
     createBindingTimeout: 15s
-    # Enables or disables the service binding endpoint (true/false)
+    # Enables or disables the service binding endpoint (true/false).
     enabled: false
-    # Default expiration time (in seconds) for a binding if not specified in the request
+    # Default expiration time (in seconds) for a binding if not specified in the request.
     expirationSeconds: 600
-    # Maximum number of non-expired bindings allowed per instance
+    # Maximum number of non-expired bindings allowed per instance.
     maxBindingsCount: 10
-    # Maximum allowed expiration time (in seconds) for a binding
+    # Maximum allowed expiration time (in seconds) for a binding.
     maxExpirationSeconds: 7200
-    # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener
+    # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener.
     minExpirationSeconds: 600
-  # Default platform region for requests if not specified
+  # Default platform region for requests if not specified.
   defaultRequestRegion: "cf-eu10"
-  # If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters
+  # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters.
   disableSapConvergedCloud: false
-  # If true, enables the handling of the encoded JWKS array, temporary feature flag
+  # If true, enables the handling of the encoded JWKS array, temporary feature flag.
   enableJwks: "false"
-  # Comma-separated list of plan names enabled and available for provisioning in KEB
+  # Comma-separated list of plan names enabled and available for provisioning in KEB.
   enablePlans: "azure,gcp,azure_lite,trial,aws"
-  # If true, allows users to upgrade their plans (if a plan supports upgrades)
+  # If true, allows users to upgrade their plans (if a plan supports upgrades).
   enablePlanUpgrades: "false"
   # URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans
-  freeDocsURL: "https://help.sap.com/docs/"
-  # Determines when to show expiration info to users
+  freeDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud"
+  # Determines when to show expiration info to users.
   freeExpirationPeriod: 720h
-  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds
+  # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds.
   gardenerSeedsCache: "gardener-seeds-cache"
-  # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans
+  # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
   includeAdditionalParamsInSchema: "false"
-  # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
+  # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
-  # If true, restricts each global account to only one free (freemium) Kyma runtime.
-  # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned
+  # If true, restricts each global account to only one freemium (free) Kyma runtime.
+  # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned.
   onlyOneFreePerGA: "false"
-  # If true, restricts each global account to only one active trial Kyma runtime at a time
-  # When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned
+  # If true, restricts each global account to only one active trial Kyma runtime at a time.
+  # When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned.
   onlySingleTrialPerGA: "true"
-  # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.)
-  # If the operation exceeds this timeout, it is marked as failed. Example: "7h" for 7 hours
+  # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.).
+  # If the operation exceeds this timeout, it is marked as failed.
   operationTimeout: "7h"
-  # Port for the broker HTTP server
+  # Port for the broker HTTP server.
   port: "8080"
-  # If true, rejects requests that contain parameters that are not defined in schemas
+  # If true, rejects requests that contain parameters that are not defined in schemas.
   rejectUnsupportedParameters: "false"
-  # If true, adds expiration information for free plan Kyma runtimes to API responses and UI labels
+  # If true, adds expiration information for free plan Kyma runtimes to API responses and UI labels.
   showFreeExpirationInfo: "false"
-  # If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels
+  # If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels.
   showTrialExpirationInfo: "false"
-  # Port for the broker status/health endpoint
+  # Port for the broker status/health endpoint.
   statusPort: "8071"
-  # If true, enables subaccount movement (allows changing global account for an instance)
+  # If true, enables subaccount movement (allows changing global account for an instance).
   subaccountMovementEnabled: "false"
-  # Shows trial expiration information for specific subaccounts in the UI and API responses
+  # Shows trial expiration information for specific subaccounts in the UI and API responses.
   subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
-  # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels
+  # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels.
   trialDocsURL: "https://help.sap.com/docs/"
-  # If true, updates runtimeCR labels when moving subaccounts
+  # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
-  # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime
-  useAdditionalOIDCSchema: "false" # temporary feature flag
+  # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime.
+  useAdditionalOIDCSchema: "false" # temporary feature flag.
 
 provisioning:
-  # Maximum time a worker is allowed to process a step before it must return to the provisioning queue
+  # Maximum time a worker is allowed to process a step before it must return to the provisioning queue.
   maxStepProcessingTime: 2m
-  # Number of workers in provisioning queue
+  # Number of workers in provisioning queue.
   workersAmount: 20
 update:
-  # Maximum time a worker is allowed to process a step before it must return to the update queue
+  # Maximum time a worker is allowed to process a step before it must return to the update queue.
   maxStepProcessingTime: 2m
-  # Number of workers in update queue
+  # Number of workers in update queue.
   workersAmount: 20
 deprovisioning:
-  # Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue
+  # Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue.
   maxStepProcessingTime: 2m
-  # Number of workers in deprovisioning queue
+  # Number of workers in deprovisioning queue.
   workersAmount: 20
 
 cleaning:
-  # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database
+  # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database.
   dryRun: true
-  # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database
+  # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database.
   enabled: false
   
 configPaths:
-  # Path to the service catalog configuration file
+  # Path to the service catalog configuration file.
   catalog: "/config/catalog.yaml"
   # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
-  # Only accounts listed here can provision more than the default limit of free environments
+  # Only accounts listed here can provision more than the default limit of free environments.
   freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
-  # Path to the rules for mapping plans and regions to hyperscaler account pools
+  # Path to the rules for mapping plans and regions to hyperscaler account pools.
   hapRule: "/config/hapRule.yaml"
-  # Path to the plans configuration file, which defines available service plans
+  # Path to the plans configuration file, which defines available service plans.
   plansConfig: "/config/plansConfig.yaml"
-  # Path to the providers configuration file, which defines hyperscaler/provider settings
+  # Path to the providers configuration file, which defines hyperscaler/provider settings.
   providersConfig: "/config/providersConfig.yaml"
-  # Path to the list of subaccount IDs that are allowed to bypass quota restrictions
+  # Path to the list of subaccount IDs that are allowed to bypass quota restrictions.
   quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
-  # Path to the list of regions that support machine-type selection
+  # Path to the list of regions that support machine-type selection.
   regionsSupportingMachine: "/config/regionsSupportingMachine.yaml"
-  # Path to the DNS providers values
+  # Path to the DNS providers values.
   skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
-  # Path to the default OIDC values
+  # Path to the default OIDC values.
   skrOIDCDefaultValues: "/config/skrOIDCDefaultValues.yaml"
-  # Path to the region mapping for trial environments
+  # Path to the region mapping for trial environments.
   trialRegionMapping: "/config/trialRegionMapping.yaml"
-  # Path to the Cloud SQL SSL root certificate file
+  # Path to the Cloud SQL SSL root certificate file.
   cloudsqlSSLRootCert: "/secrets/cloudsql-sslrootcert/server-ca.pem"
 
-# If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted
+# If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"
 
 edp:
-  # Base URL for the EDP admin API
+  # Base URL for the EDP admin API.
   adminURL: "TBD"
-  # OAuth2 token endpoint for EDP
+  # OAuth2 token endpoint for EDP.
   authURL: "TBD"
-  # If true, disables EDP integration
+  # If true, disables EDP integration.
   disabled: true
-  # EDP environment, for example, dev, prod
+  # EDP environment, for example, dev, prod.
   environment: "dev"
-  # EDP namespace to use
+  # EDP namespace to use.
   namespace: "kyma-dev"
-  # If true, EDP integration is required
+  # If true, EDP integration is required.
   required: false
-  # OAuth2 client secret for EDP
+  # OAuth2 client secret for EDP.
   secret: "TBD"
-  # Name of the Kubernetes Secret containing EDP credentials
+  # Name of the Kubernetes Secret containing EDP credentials.
   secretName: "edp-creds" 
-  # OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret
+  # OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret.
   secretKey: secret
 
 events:
-  # Enables or disables the /events API and event storage for operation events (true/false)
+  # Enables or disables the events API and event storage for operation events (true/false).
   enabled: true
 
-# List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes
-# Only accounts listed here can provision more than the default limit of free environments
+# List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
+# Only accounts listed here can provision more than the default limit of free environments.
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
 gardener:
-  # Path to the kubeconfig file for accessing the Gardener cluster
+  # Path to the kubeconfig file for accessing the Gardener cluster.
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
-  # Gardener project connected to SA for HAP credentials lookup
+  # Gardener project connected to SA for HAP credentials lookup.
   project: "kyma-dev"
-  # Name of the Kubernetes Secret containing Gardener credentials
+  # Name of the Kubernetes Secret containing Gardener credentials.
   secretName: "gardener-credentials"
-  # Default domain for shoots (clusters) created by Gardener
+  # Default domain for shoots (clusters) created by Gardener.
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
 
 hap:
-  # Rules for mapping plans and regions to hyperscaler account pools
+  # Rules for mapping plans and regions to hyperscaler account pools.
   rule:
     - aws                             # pool: hyperscalerType: aws
     - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws; euAccess: true
@@ -310,78 +300,78 @@ hap:
     # pool: hyperscalerType: azure
 
 infrastructureManager:
-  # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters
-  # Possible values: empty (default), "node", or "zone"
+  # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.
+  # Possible values: empty (default), "node", or "zone".
   controlPlaneFailureTolerance: ""
-  # Sets the default purpose for Gardener shoots (clusters) created by the broker
-  # Possible values: development, evaluation, production, testing
+  # Sets the default purpose for Gardener shoots (clusters) created by the broker.
+  # Possible values: development, evaluation, production, testing.
   defaultShootPurpose: "development"
-  # Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS
+  # Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS.
   defaultTrialProvider: "Azure"
-  # Comma-separated list of plan names for which ingress filtering is available
+  # Comma-separated list of plan names for which ingress filtering is available.
   ingressFilteringPlans: "azure,gcp,aws"
-  # Sets the default Kubernetes version for new clusters provisioned by the broker
+  # Sets the default Kubernetes version for new clusters provisioned by the broker.
   kubernetesVersion: "1.16.9"
-  # Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used
+  # Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImage: ""
-  # Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used
+  # Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImageVersion: ""
-  # If true, enables provisioning of clusters with nodes distributed across multiple availability zones
+  # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
-  # If true, provisions trial, freemium, and azure_lite clusters using smaller machine types
+  # If true, provisions trial, freemium, and azure_lite clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 
 kubeconfig:
-  # Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint
+  # Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint.
   allowOrigins: "*"
 
 kymaDashboardConfig:
-  # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes
+  # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes.
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 lifecycleManager:
-  # When disabled, the broker does not create, update, or delete the KymaCR
+  # When disabled, the broker does not create, update, or delete the KymaCR.
   disabled: "false"
 
 metricsv2:
-  # If true, enables metricsv2 collection and Prometheus exposure
+  # If true, enables metricsv2 collection and Prometheus exposure.
   enabled: false
-  # Duration of retaining finished operation results in memory
+  # Duration of retaining finished operation results in memory.
   operationResultFinishedOperationRetentionPeriod: 3h
-  # Frequency of polling for operation results
+  # Frequency of polling for operation results.
   operationResultPollingInterval: 1m
-  # Duration of retaining operation results
+  # Duration of retaining operation results.
   operationResultRetentionPeriod: 1h
-  # Frequency of polling for operation statistics
+  # Frequency of polling for operation statistics.
   operationStatsPollingInterval: 1m
 
-# If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context
+# If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
 
 plansConfiguration: {}
 
 profiler:
-  # Enables memory profiler (true/false)
+  # Enables memory profiler (true/false).
   memory: false
 
 providersConfiguration: {}
 
 quotaLimitCheck:
-  # If true, validates during provisioning that the assigned quota for the subaccount is not exceeded
+  # If true, validates during provisioning that the assigned quota for the subaccount is not exceeded.
   enabled: false
-  # The interval between requests to the Entitlements API in case of errors
+  # The interval between requests to the Entitlements API in case of errors.
   interval: 1s
-  # The number of retry attempts made when the Entitlements API request fails
+  # The number of retry attempts made when the Entitlements API request fails.
   retries: 5
 
 # List of subaccount IDs that have unlimited quota for Kyma runtimes.
-# Only subaccounts listed here can provision beyond their assigned quota limits
+# Only subaccounts listed here can provision beyond their assigned quota limits.
 quotaWhitelistedSubaccountIds: |-
   whitelist:
 
-# Defines which machine type families are available in which regions (and optionally, zones)
-# Restricts provisioning of listed machine types to the specified regions/zones only
-# If a machine type is not listed, it is considered available in all regions
+# Defines which machine type families are available in which regions (and optionally, zones).
+# Restricts provisioning of listed machine types to the specified regions/zones only.
+# If a machine type is not listed, it is considered available in all regions.
 regionsSupportingMachine: |-
 
 # Defines the default KymaCR template.
@@ -400,11 +390,11 @@ runtimeConfiguration: |-
         modules: []
     additional-components: []
 
-# Contains DNS provider configuration for SKR clusters
+# Contains DNS provider configuration for Kyma clusters.
 skrDNSProvidersValues: |-
   providers: []
 
-# Contains the default OIDC configuration for SKR clusters
+# Contains the default OIDC configuration for Kyma clusters.
 skrOIDCDefaultValues: |-
   clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
   groupsClaim: "groups"
@@ -415,26 +405,26 @@ skrOIDCDefaultValues: |-
   usernamePrefix: "-"
 
 stepTimeouts:
-  # Maximum time to wait for a runtime resource to be created before considering the step as failed
+  # Maximum time to wait for a runtime resource to be created before considering the step as failed.
   checkRuntimeResourceCreate: 60m
-  # Maximum time to wait for a runtime resource to be deleted before considering the step as failed
+  # Maximum time to wait for a runtime resource to be deleted before considering the step as failed.
   checkRuntimeResourceDeletion: 60m
-  # Maximum time to wait for a runtime resource to be updated before considering the step as failed
+  # Maximum time to wait for a runtime resource to be updated before considering the step as failed.
   checkRuntimeResourceUpdate: 180m
 
-# Used in local k3s KEB integration tests
+# Used in local k3s KEB integration tests.
 testConfig:
   kebDeployment:
     useAnnotations: false
     weight: "2"
 
-# Determines the Kyma region for a trial environment based on the requested platform region
+# Determines a Kyma region for a trial environment based on the requested platform region.
 trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
   cf-ap21: asia
 
-# If true, the broker processes update requests for service instances
+# If true, the broker processes update requests for service instances.
 osbUpdateProcessingEnabled: "true"
 # =================================================
 
@@ -445,74 +435,74 @@ osbUpdateProcessingEnabled: "true"
 # =================================================
 cis:
   accounts:
-    # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API
+    # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API.
     authURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS Accounts API
+    # The OAuth2 client ID used for authenticating requests to the CIS Accounts API.
     id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API.
     secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS Accounts client ID and secret
+    # The name of the Kubernetes Secret containing the CIS Accounts client ID and secret.
     secretName: "cis-creds-accounts"
-    # The base URL of the CIS Accounts API endpoint, used for fetching subaccount data
+    # The base URL of the CIS Accounts API endpoint, used for fetching subaccount data.
     serviceURL: "TBD"
-    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID.
     clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret.
     secretKey: secret
   v1:
-    # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests
+    # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests.
     authURL: "TBD"
-    # The endpoint URL for the CIS v1 event service, used to fetch subaccount events
+    # The endpoint URL for the CIS v1 event service, used to fetch subaccount events.
     eventServiceURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS v1 API
+    # The OAuth2 client ID used for authenticating requests to the CIS v1 API.
     id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API.
     secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS v1 client ID and secret
+    # The name of the Kubernetes Secret containing the CIS v1 client ID and secret.
     secretName: "cis-creds-v1"
-    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID.
     clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret.
     secretKey: secret
   v2:
-    # The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests
+    # The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests.
     authURL: "TBD"
-    # The endpoint URL for the CIS v2 event service, used to fetch subaccount events
+    # The endpoint URL for the CIS v2 event service, used to fetch subaccount events.
     eventServiceURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS v2 API
+    # The OAuth2 client ID used for authenticating requests to the CIS v2 API.
     id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS v2 API
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS v2 API.
     secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS v2 client ID and secret
+    # The name of the Kubernetes Secret containing the CIS v2 client ID and secret.
     secretName: "cis-creds-v2"
-    # The number of times a job should be retried in case of failure
+    # The number of times a job should be retried in case of failure.
     jobRetries: 6
-    # The maximum number of request retries to the CIS v2 API in case of errors
+    # The maximum number of request retries to the CIS v2 API in case of errors.
     maxRequestRetries: "3"
-    # The minimum interval between requests to the CIS v2 API in case of errors
+    # The minimum interval between requests to the CIS v2 API in case of errors.
     rateLimitingInterval: "2s"
-    # The interval between requests to the CIS v2 API
+    # The interval between requests to the CIS v2 API.
     requestInterval: "200ms"
-    # The key in the Kubernetes Secret that contains the CIS v2 client ID
+    # The key in the Kubernetes Secret that contains the CIS v2 client ID.
     clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS v2 client secret
+    # The key in the Kubernetes Secret that contains the CIS v2 client secret.
     secretKey: secret
   entitlements:
-    # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API
+    # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API.
     authURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS Entitlements API
+    # The OAuth2 client ID used for authenticating requests to the CIS Entitlements API.
     id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API
+    # The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API.
     secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS Entitlements client ID and secret
+    # The name of the Kubernetes Secret containing the CIS Entitlements client ID and secret.
     secretName: "cis-creds-entitlements"
-    # The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments
+    # The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments.
     serviceURL: "TBD"
-    # The key in the Kubernetes Secret that contains the CIS Entitlements client ID
+    # The key in the Kubernetes Secret that contains the CIS Entitlements client ID.
     clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS Entitlements client secret
+    # The key in the Kubernetes Secret that contains the CIS Entitlements client secret.
     secretKey: secret
-# =================================================
+# =================================================.
 
 
 
@@ -520,9 +510,9 @@ cis:
 # Deprovision Retrigger Job Settings
 # =================================================
 deprovisionRetrigger:
-  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning
+  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
   dryRun: true
-  # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted
+  # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
   schedule: "0 2 * * *"
 # =================================================
@@ -533,18 +523,18 @@ deprovisionRetrigger:
 # Free Cleanup Job Settings
 # =================================================
 freeCleanup:
-  # If true, the job only logs what would be deleted without actually removing any data
+  # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
-  # If true, enables the Free Cleanup CronJob
+  # If true, enables the Free Cleanup CronJob.
   enabled: true
-  # Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days)
-  expirationPeriod: 2160h # 90 days
-  # The ID of the free plan to be used for cleanup
+  # Specifies how long a free instance can exist before being eligible for cleanup.
+  expirationPeriod: 2160h # 90 days.
+  # The ID of the free plan to be used for cleanup.
   planID: "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
   schedule: "0,15,30,45 * * * *"
-  # If true, runs the job in test mode (no real deletions, for testing purposes)
+  # If true, runs the job in test mode (no real deletions, for testing purposes).
   testRun: false
-  # Subaccount ID used for test runs
+  # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
 # =================================================
 
@@ -554,11 +544,11 @@ freeCleanup:
 # Global Accounts Deployment Settings
 # =================================================
 globalaccounts:
-  # If true, runs the global accounts synchronization job in dry-run mode (no changes are made)
+  # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
   dryRun: true
-  # If true, enables the global accounts synchronization job
+  # If true, enables the global accounts synchronization job.
   enabled: false
-  # Name of the global accounts synchronization job or deployment
+  # Name of the global accounts synchronization job or deployment.
   name: "kyma-environment-globalaccounts"
 # =================================================
 
@@ -569,18 +559,18 @@ globalaccounts:
 # =================================================
 migratorJobs:
   argosync:
-    # If true, enables the ArgoCD sync job for schema migration
+    # If true, enables the ArgoCD sync job for schema migration.
     enabled: false
-    # The sync wave value for ArgoCD hooks
+    # The sync wave value for ArgoCD hooks.
     syncwave: "0"
-  # Defines the direction of the schema migration, either "up" or "down"
+  # Defines the direction of the schema migration, either "up" or "down".
   direction: "up"
-  # If true, enables all migrator jobs
+  # If true, enables all migrator jobs.
   enabled: true
   helmhook:
-    # If true, enables the Helm hook job for schema migration
+    # If true, enables the Helm hook job for schema migration.
     enabled: true
-    # The weight value for the Helm hook
+    # The weight value for the Helm hook.
     weight: "1"
 # =================================================
 
@@ -598,25 +588,24 @@ oidc:
   issuer: https://kymatest.accounts400.ondemand.com
   issuers: []
   keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
-# =================================================
-
+# =================================================.
 
 
 # =================================================
 # Runtime Reconciler Deployment Settings
 # =================================================
 runtimeReconciler:
-  # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions)
+  # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: true
-  # Enables or disables the Runtime Reconciler deployment
+  # Enables or disables the Runtime Reconciler deployment.
   enabled: false
-  # If true, enables the periodic reconciliation job
+  # If true, enables the periodic reconciliation job.
   jobEnabled: false
-  # Interval (in minutes) between reconciliation job runs
+  # Interval (in minutes) between reconciliation job runs.
   jobInterval: 1440
-  # Delay before starting reconciliation after job trigger (e.g., "1s")
+  # Delay before starting reconciliation after job trigger.
   jobReconciliationDelay: 1s
-  # Port on which the reconciler exposes Prometheus metrics
+  # Port on which the reconciler exposes Prometheus metrics.
   metricsPort: 8081
 # =================================================
 
@@ -626,13 +615,13 @@ runtimeReconciler:
 # Service Binding Cleanup Job Settings
 # =================================================
 serviceBindingCleanup:
-  # If true, the job only logs what would be deleted without actually removing any bindings
+  # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: true
-  # If true, enables the Service Binding Cleanup CronJob
+  # If true, enables the Service Binding Cleanup CronJob.
   enabled: false
-  # Number of times to retry a failed DELETE request for a binding
+  # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
-  # Timeout for each DELETE request to the broker
+  # Timeout for each DELETE request to the broker.
   requestTimeout: 2s
   schedule: "0 2,14 * * *"
 # =================================================
@@ -647,9 +636,9 @@ subaccountCleanup:
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
-  # Client version
+  # Client version.
   clientV1VersionName: "v1.0"
-  # Client version
+  # Client version.
   clientV2VersionName: "v2.0"
 # =================================================
 
@@ -659,38 +648,38 @@ subaccountCleanup:
 # Subaccount Sync Deployment Settings
 # =================================================
 subaccountSync:
-  # Interval between full account synchronization runs
+  # Interval between full account synchronization runs.
   accountSyncInterval: 24h
-  # If true, fetches subaccountID from the database only when the subaccount is empty
+  # If true, fetches subaccountID from the database only when the subaccount is empty.
   alwaysSubaccountFromDatabase: false
   cisRateLimits:
     accounts:
-      # Maximum number of requests per interval to the CIS Accounts API
+      # Maximum number of requests per interval to the CIS Accounts API.
       maxRequestsPerInterval: 5
-      # Minimum interval between requests to the CIS Accounts API
+      # Minimum interval between requests to the CIS Accounts API.
       rateLimitingInterval: 2s
     events:
-      # Maximum number of requests per interval to the CIS Events API
+      # Maximum number of requests per interval to the CIS Events API.
       maxRequestsPerInterval: 5
-      # Minimum interval between requests to the CIS Events API
+      # Minimum interval between requests to the CIS Events API.
       rateLimitingInterval: 2s
-  # If true, enables the subaccount synchronization job
+  # If true, enables the subaccount synchronization job.
   enabled: true
-  # Time window for collecting events from CIS
+  # Time window for collecting events from CIS.
   eventsWindowInterval: 15m
-  # Size of the time window for collecting events from CIS
+  # Size of the time window for collecting events from CIS.
   eventsWindowSize: 20m
-  # Log level for the subaccount sync job
+  # Log level for the subaccount sync job.
   logLevel: info
-  # Port on which the subaccount sync service exposes Prometheus metrics
+  # Port on which the subaccount sync service exposes Prometheus metrics.
   metricsPort: 8081
-  # Name of the subaccount sync deployment
+  # Name of the subaccount sync deployment.
   name: "subaccount-sync"
-  # Interval between queue processing cycles
+  # Interval between queue processing cycles.
   queueSleepInterval: 30s
-  # Interval between storage synchronization
+  # Interval between storage synchronization.
   storageSyncInterval: 5m
-  # If true, enables updating resources during subaccount sync
+  # If true, enables updating resources during subaccount sync.
   updateResources: false
 # =================================================
 
@@ -700,18 +689,18 @@ subaccountSync:
 # Trial Cleanup Job Settings
 # =================================================
 trialCleanup:
-  # If true, the job only logs what would be deleted without actually removing any data
+  # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
-  # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes
+  # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes.
   enabled: true
-  # Specifies how long a trial instance can exist before being expired
+  # Specifies how long a trial instance can exist before being expired.
   expirationPeriod: 336h
-  # The ID of the trial plan to be used for cleanup
+  # The ID of the trial plan to be used for cleanup.
   planID: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
   schedule: "15 1 * * *"
-  # If true, runs the job in test mode
+  # If true, runs the job in test mode.
   testRun: false
-  # Subaccount ID used for test runs
+  # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
 # =================================================
 
@@ -737,7 +726,7 @@ vmscrapes:
 # VSO Secrets Settings
 # =================================================
 # Please read the documentation at:
-# https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
+# https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets.
 vsoSecrets:
   secrets:
     edp:

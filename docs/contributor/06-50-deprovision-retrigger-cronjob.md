@@ -32,13 +32,13 @@ Use the following environment variables to configure the Job:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
-| **APP_DATABASE_HOST** | None | Specifies the host of the database |
-| **APP_DATABASE_NAME** | None | Specifies the name of the database |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
-| **APP_DATABASE_PORT** | None | Specifies the port for the database |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
-| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
-| **APP_DATABASE_USER** | None | Specifies the username for the database |
-| **APP_DRY_RUN** | <code>true</code> | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database. |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database. |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database. |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database. |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **APP_DATABASE_USER** | None | Specifies the username for the database. |
+| **APP_DRY_RUN** | <code>true</code> | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
