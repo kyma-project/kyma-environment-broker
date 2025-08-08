@@ -25,14 +25,14 @@ Use the following environment variables to configure the application:
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_HOST** | None | Specifies the host of the database |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_NAME** | None | Specifies the name of the database |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_PASSWORD** | None | Specifies the user password for the database |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_PORT** | None | Specifies the port for the database |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_SECRET_KEY** | None | Specifies the Secret key for the database |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_HOST** | None | Specifies the host of the database. |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_NAME** | None | Specifies the name of the database. |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_PASSWORD** | None | Specifies the user password for the database. |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_PORT** | None | Specifies the port for the database. |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SECRET_KEY** | None | Specifies the Secret key for the database. |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | Specifies the username for the database |
+| **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | Specifies the username for the database. |
 | **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>true</code> | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). |
 | **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>false</code> | If true, enables the periodic reconciliation job. |
 | **RUNTIME_RECONCILER_&#x200b;JOB_INTERVAL** | <code>1440</code> | Interval (in minutes) between reconciliation job runs. |
