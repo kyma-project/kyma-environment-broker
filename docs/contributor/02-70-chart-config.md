@@ -20,25 +20,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.21.17` |
+| global.images.kyma_environment_<br>broker.version | - | `1.21.19` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.21.17` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.21.19` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.21.17` |
-| global.images.kyma_environment_<br>trial_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environment_<br>trial_cleanup_job.<br>version | - | `1.21.17` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.21.19` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.21.17` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.21.19` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.21.17` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.21.19` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.21.17` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.21.19` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.21.17` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.21.19` |
 | global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.21.17` |
+| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.21.19` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.21.17` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.21.19` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -74,8 +72,7 @@
 | broker.enableJwks | If true, enables the handling of the encoded JWKS array, temporary feature flag. | `false` |
 | broker.enablePlans | Comma-separated list of plan names enabled and available for provisioning in KEB. | `azure,gcp,azure_lite,trial,aws` |
 | broker.<br>enablePlanUpgrades | If true, allows users to upgrade their plans (if a plan supports upgrades). | `false` |
-| broker.<br>enableShootAndSeedSameRegion | If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning. | `false` |
-| broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans. | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
+| broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |
 | broker.<br>includeAdditionalParamsInSchema | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans. | `false` |
