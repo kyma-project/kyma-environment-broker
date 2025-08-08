@@ -19,6 +19,8 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans/notifications"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -94,6 +96,7 @@ type ProvisionEndpoint struct {
 	providerSpec           RegionsSupporterProvider
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
+	notificationService    *ans.Service
 }
 
 const (
@@ -120,6 +123,7 @@ func NewProvision(brokerConfig Config,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
+	notificationService *ans.Service,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -150,6 +154,7 @@ func NewProvision(brokerConfig Config,
 		providerConfigProvider:  providerConfigProvider,
 		quotaClient:             quotaClient,
 		quotaWhitelist:          quotaWhitelist,
+		notificationService:     notificationService,
 	}
 }
 
@@ -288,6 +293,8 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
+	b.notifyBTPCockpit(err, operation, logger)
+
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
@@ -296,6 +303,35 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 			Labels: ResponseLabels(operation, instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *ProvisionEndpoint) notifyBTPCockpit(err error, operation internal.ProvisioningOperation, logger *slog.Logger) {
+	if b.notificationService != nil {
+		recipient, err := notifications.NewRecipient("jaroslaw.pieszka@sap.com", notifications.WithIasHost("accounts.sap.com"))
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create recipient for notification: %s", err))
+			return
+		}
+		property, err := notifications.NewProperty("shoot", operation.ShootName)
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create property for notification: %s", err))
+			return
+		}
+		notification, err := notifications.NewNotification("POC_WebOnlyType",
+			[]notifications.Recipient{*recipient},
+			notifications.WithProperties([]notifications.Property{*property}))
+
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create notification: %s", err))
+			return
+		}
+		err = b.notificationService.PostNotification(*notification)
+		if err != nil {
+			logger.Error("Failed to post notification to ANS", "error", err)
+		} else {
+			logger.Info("Notification posted to ANS successfully")
+		}
+	}
 }
 
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
