@@ -197,6 +197,7 @@ if __name__ == "__main__":
     output_path = os.path.join("docs", "contributor", "02-70-chart-config.md")
     entries = parse_values_yaml_with_comments(yaml_path)
     md_table = generate_markdown_table(entries)
+    md_table = re.sub(r'`?TBD`?', 'None', md_table)
     with open(output_path, 'w') as f:
         f.write(md_table)
     print(f"Documentation table written to {output_path}")

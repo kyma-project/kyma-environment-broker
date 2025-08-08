@@ -113,13 +113,13 @@
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
 | configPaths.<br>cloudsqlSSLRootCert | Path to the Cloud SQL SSL root certificate file. | `/secrets/cloudsql-sslrootcert/server-ca.pem` |
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
-| edp.adminURL | Base URL for the EDP admin API. | `TBD` |
-| edp.authURL | OAuth2 token endpoint for EDP. | `TBD` |
+| edp.adminURL | Base URL for the EDP admin API. | None |
+| edp.authURL | OAuth2 token endpoint for EDP. | None |
 | edp.disabled | If true, disables EDP integration. | `True` |
 | edp.environment | EDP environment, for example, dev, prod. | `dev` |
 | edp.namespace | EDP namespace to use. | `kyma-dev` |
 | edp.required | If true, EDP integration is required. | `False` |
-| edp.secret | OAuth2 client secret for EDP. | `TBD` |
+| edp.secret | OAuth2 client secret for EDP. | None |
 | edp.secretName | Name of the Kubernetes Secret containing EDP credentials. | `edp-creds` |
 | edp.secretKey | OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret. | `secret` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
@@ -163,24 +163,24 @@
 | testConfig.kebDeployment.<br>weight | - | `2` |
 | trialRegionsMapping | Determines a Kyma region for a trial environment based on the requested platform region. | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |
 | osbUpdateProcessingEnabled | If true, the broker processes update requests for service instances. | `true` |
-| cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | `TBD` |
-| cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | `TBD` |
-| cis.accounts.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API. | `TBD` |
+| cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
+| cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |
+| cis.accounts.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API. | None |
 | cis.accounts.<br>secretName | The name of the Kubernetes Secret containing the CIS Accounts client ID and secret. | `cis-creds-accounts` |
-| cis.accounts.<br>serviceURL | The base URL of the CIS Accounts API endpoint, used for fetching subaccount data. | `TBD` |
+| cis.accounts.<br>serviceURL | The base URL of the CIS Accounts API endpoint, used for fetching subaccount data. | None |
 | cis.accounts.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS v2 client ID. | `id` |
 | cis.accounts.<br>secretKey | The key in the Kubernetes Secret that contains the CIS v2 client secret. | `secret` |
-| cis.v1.authURL | The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests. | `TBD` |
-| cis.v1.<br>eventServiceURL | The endpoint URL for the CIS v1 event service, used to fetch subaccount events. | `TBD` |
-| cis.v1.id | The OAuth2 client ID used for authenticating requests to the CIS v1 API. | `TBD` |
-| cis.v1.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API. | `TBD` |
+| cis.v1.authURL | The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests. | None |
+| cis.v1.<br>eventServiceURL | The endpoint URL for the CIS v1 event service, used to fetch subaccount events. | None |
+| cis.v1.id | The OAuth2 client ID used for authenticating requests to the CIS v1 API. | None |
+| cis.v1.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API. | None |
 | cis.v1.secretName | The name of the Kubernetes Secret containing the CIS v1 client ID and secret. | `cis-creds-v1` |
 | cis.v1.clientIdKey | The key in the Kubernetes Secret that contains the CIS v2 client ID. | `id` |
 | cis.v1.secretKey | The key in the Kubernetes Secret that contains the CIS v2 client secret. | `secret` |
-| cis.v2.authURL | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests. | `TBD` |
-| cis.v2.<br>eventServiceURL | The endpoint URL for the CIS v2 event service, used to fetch subaccount events. | `TBD` |
-| cis.v2.id | The OAuth2 client ID used for authenticating requests to the CIS v2 API. | `TBD` |
-| cis.v2.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS v2 API. | `TBD` |
+| cis.v2.authURL | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests. | None |
+| cis.v2.<br>eventServiceURL | The endpoint URL for the CIS v2 event service, used to fetch subaccount events. | None |
+| cis.v2.id | The OAuth2 client ID used for authenticating requests to the CIS v2 API. | None |
+| cis.v2.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS v2 API. | None |
 | cis.v2.secretName | The name of the Kubernetes Secret containing the CIS v2 client ID and secret. | `cis-creds-v2` |
 | cis.v2.jobRetries | The number of times a job should be retried in case of failure. | `6` |
 | cis.v2.<br>maxRequestRetries | The maximum number of request retries to the CIS v2 API in case of errors. | `3` |
@@ -188,11 +188,11 @@
 | cis.v2.<br>requestInterval | The interval between requests to the CIS v2 API. | `200ms` |
 | cis.v2.clientIdKey | The key in the Kubernetes Secret that contains the CIS v2 client ID. | `id` |
 | cis.v2.secretKey | The key in the Kubernetes Secret that contains the CIS v2 client secret. | `secret` |
-| cis.entitlements.<br>authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API. | `TBD` |
-| cis.entitlements.id | The OAuth2 client ID used for authenticating requests to the CIS Entitlements API. | `TBD` |
-| cis.entitlements.<br>secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API. | `TBD` |
+| cis.entitlements.<br>authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Entitlements API. | None |
+| cis.entitlements.id | The OAuth2 client ID used for authenticating requests to the CIS Entitlements API. | None |
+| cis.entitlements.<br>secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Entitlements API. | None |
 | cis.entitlements.<br>secretName | The name of the Kubernetes Secret containing the CIS Entitlements client ID and secret. | `cis-creds-entitlements` |
-| cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | `TBD` |
+| cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | None |
 | cis.entitlements.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS Entitlements client ID. | `id` |
 | cis.entitlements.<br>secretKey | The key in the Kubernetes Secret that contains the CIS Entitlements client secret. | `secret` |
 | deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `True` |
