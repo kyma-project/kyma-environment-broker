@@ -165,7 +165,15 @@ def parse_values_yaml_with_comments(filepath):
             for k, v in obj.items():
                 walk(v, path + [k], line_hint)
         elif isinstance(obj, list):
-            # skip lists (not leaf config values)
+            # Document lists as well
+            idx = find_line_for_key(path)
+            desc = get_comment_above(idx) if idx is not None else '-'
+            # Convert list to YAML/Markdown-friendly string
+            if len(obj) == 0:
+                list_str = '[]'
+            else:
+                list_str = '\n'.join([f'- {str(item)}' for item in obj])
+            entries.append((full_key, desc, list_str))
             return
         elif isinstance(obj, (int, float, bool)):
             idx = find_line_for_key(path)

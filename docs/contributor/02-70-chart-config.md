@@ -51,6 +51,7 @@
 | fullnameOverride | - | `kcp-kyma-environment-broker` |
 | host | - | `kyma-env-broker` |
 | imagePullSecret | - | `` |
+| imagePullSecrets | - | `[]` |
 | manageSecrets | If true, this Helm chart creates and manages Kubernetes Secret resources for credentials. Set to false if you want to manage these Secrets externally or manually, and prevent the chart from creating them. | `True` |
 | namePrefix | - | `kcp` |
 | nameOverride | - | `kyma-environment-broker` |
@@ -127,6 +128,7 @@
 | gardener.project | Gardener project connected to SA for HAP credentials lookup. | `kyma-dev` |
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |
 | gardener.shootDomain | Default domain for shoots (clusters) created by Gardener. | `kyma-dev.shoot.canary.k8s-hana.ondemand.com` |
+| hap.rule | Rules for mapping plans and regions to hyperscaler account pools. | `- aws  - aws(PR=cf-eu11) -> EU  - azure  - azure(PR=cf-ch20) -> EU  - gcp  - gcp(PR=cf-sa30) -> PR  - trial -> S  - sap-converged-cloud(HR=*) -> S  - azure_lite  - preview  - free` |
 | infrastructureManager.<br>controlPlaneFailureTolerance | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". | `` |
 | infrastructureManager.<br>defaultShootPurpose | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. | `development` |
 | infrastructureManager.<br>defaultTrialProvider | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS. | `Azure` |
@@ -217,6 +219,7 @@
 | oidc.groups.<br>orchestrations | - | `orchestrationsAdmin` |
 | oidc.groups.viewer | - | `runtimeViewer` |
 | oidc.issuer | - | `https://kymatest.accounts400.ondemand.com` |
+| oidc.issuers | - | `[]` |
 | oidc.keysURL | - | `https://kymatest.accounts400.ondemand.com/oauth2/certs` |
 | runtimeReconciler.<br>dryRun | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). | `True` |
 | runtimeReconciler.<br>enabled | Enables or disables the Runtime Reconciler deployment. | `False` |
@@ -265,6 +268,7 @@
 | vmscrapes.<br>scrapeTimeout | - | `10s` |
 | vsoSecrets.secrets.edp.<br>path | - | `edp` |
 | vsoSecrets.secrets.edp.<br>secretName | - | `{{ .Values.edp.secretName }}` |
+| vsoSecrets.secrets.edp.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- template "kyma-env-broker.fullname" . -}}'}` |
 | vsoSecrets.secrets.edp.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
 | vsoSecrets.secrets.edp.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.edp.<br>templating.keys.<br>secret | - | `keb_edp_secret` |
@@ -276,18 +280,21 @@
 | vsoSecrets.secrets.cis-v1.<br>templating.keys.<br>secret | - | `v1_secret` |
 | vsoSecrets.secrets.cis-v2.<br>path | - | `cis` |
 | vsoSecrets.secrets.cis-v2.<br>secretName | - | `{{ .Values.cis.v2.secretName \| required "please specify .Values.cis.v2.secretName"}}` |
+| vsoSecrets.secrets.cis-v2.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- .Values.subaccountSync.name -}}'}` |
 | vsoSecrets.secrets.cis-v2.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
 | vsoSecrets.secrets.cis-v2.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.cis-v2.<br>templating.keys.id | - | `v2_id` |
 | vsoSecrets.secrets.cis-v2.<br>templating.keys.<br>secret | - | `v2_secret` |
 | vsoSecrets.secrets.cis-accounts.<br>path | - | `cis` |
 | vsoSecrets.secrets.cis-accounts.<br>secretName | - | `{{ .Values.cis.accounts.secretName \| required "please specify .Values.cis.accounts.secretName"}}` |
+| vsoSecrets.secrets.cis-accounts.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- .Values.subaccountSync.name -}}'}` |
 | vsoSecrets.secrets.cis-accounts.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
 | vsoSecrets.secrets.cis-accounts.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.cis-accounts.<br>templating.keys.id | - | `account_id` |
 | vsoSecrets.secrets.cis-accounts.<br>templating.keys.<br>secret | - | `account_secret` |
 | vsoSecrets.secrets.cis-entitlements.<br>path | - | `cis` |
 | vsoSecrets.secrets.cis-entitlements.<br>secretName | - | `{{ .Values.cis.entitlements.secretName \| required "please specify .Values.cis.entitlements.secretName"}}` |
+| vsoSecrets.secrets.cis-entitlements.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- template "kyma-env-broker.fullname" . -}}'}` |
 | vsoSecrets.secrets.cis-entitlements.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.keys.id | - | `entitlements_id` |
