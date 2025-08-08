@@ -114,3 +114,17 @@ func TestSchemaPlans(t *testing.T) {
 	assert.True(t, *result[AzurePlanID].PlanUpdatable)
 	assert.False(t, *result[BuildRuntimeAzurePlanID].PlanUpdatable)
 }
+
+func TestFlattenSchema(t *testing.T) {
+	// Given
+	schemaService := createSchemaService(t)
+
+	// When
+	result := schemaService.Plans(PlansConfig{}, "cf-eu31", runtime.Azure)
+
+	createSchema := result[AzurePlanID].Schemas.Instance.Create.Parameters
+	flat, flat2 := schemaService.FlattenSchemaProperties(&createSchema)
+	assert.Equal(t, []string{}, flat)
+	assert.Equal(t, []string{}, flat2)
+
+}
