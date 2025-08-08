@@ -82,3 +82,9 @@ set-runtime-state:
 .PHONY: set-kyma-state
 set-kyma-state:
 	./scripts/set_kyma_state.sh $(KYMA_ID) $(STATE)
+
+.PHONY: generate-env-docs
+generate-env-docs:
+	pip install -r scripts/python/requirements.txt
+	python3 scripts/python/generate_env_docs.py
+	python3 scripts/python/generate_values_doc.py
