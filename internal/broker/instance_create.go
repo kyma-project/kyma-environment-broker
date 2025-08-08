@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/ans"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans/notifications"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -306,10 +307,25 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 func (b *ProvisionEndpoint) notifyBTPCockpit(err error, operation internal.ProvisioningOperation, logger *slog.Logger) {
 	if b.notificationService != nil {
-		err = b.notificationService.PostNotification(
-			*ans.NewNotification("POC_WebOnlyType",
-				[]ans.Recipient{*ans.NewRecipient("jaroslaw.pieszka@sap.com").WithIasHost("accounts.sap.com")}).
-				WithProperties([]ans.Property{*ans.NewProperty("shoot", operation.ShootName)}))
+		recipient, err := notifications.NewRecipient("jaroslaw.pieszka@sap.com", notifications.WithIasHost("accounts.sap.com"))
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create recipient for notification: %s", err))
+			return
+		}
+		property, err := notifications.NewProperty("shoot", operation.ShootName)
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create property for notification: %s", err))
+			return
+		}
+		notification, err := notifications.NewNotification("POC_WebOnlyType",
+			[]notifications.Recipient{*recipient},
+			notifications.WithProperties([]notifications.Property{*property}))
+
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create notification: %s", err))
+			return
+		}
+		err = b.notificationService.PostNotification(*notification)
 		if err != nil {
 			logger.Error("Failed to post notification to ANS", "error", err)
 		} else {
