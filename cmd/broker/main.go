@@ -22,7 +22,6 @@ import (
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
@@ -91,8 +90,6 @@ type Config struct {
 	LifecycleManagerIntegrationDisabled bool `envconfig:"default=true"`
 	Broker                              broker.Config
 	CatalogFilePath                     string
-
-	EDP edp.Config
 
 	KymaDashboardConfig dashboard.Config
 
