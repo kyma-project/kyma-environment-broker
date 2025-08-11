@@ -280,8 +280,6 @@ func main() {
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, log)
 
-	edpClient := edp.NewClient(cfg.EDP)
-
 	// application event broker
 	eventBroker := event.NewPubSub(log)
 
@@ -317,7 +315,7 @@ func main() {
 		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))

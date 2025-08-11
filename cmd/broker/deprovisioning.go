@@ -16,7 +16,7 @@ import (
 
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
-	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
+	accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
@@ -28,10 +28,6 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			step: deprovisioning.NewBTPOperatorCleanupStep(db, k8sClientProvider),
-		},
-		{
-			step:     deprovisioning.NewEDPDeregistrationStep(db, edpClient, cfg.EDP),
-			disabled: cfg.EDP.Disabled,
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,

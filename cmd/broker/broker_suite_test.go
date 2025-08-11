@@ -23,7 +23,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -180,7 +179,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
-	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider(t, gardenerClient)
 	require.NoError(t, err)
 
@@ -219,7 +217,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
-		edpClient, accountProvider, k8sClientProvider, cli, configProvider, log)
+		accountProvider, k8sClientProvider, cli, configProvider, log)
 	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)

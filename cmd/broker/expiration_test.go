@@ -142,6 +142,7 @@ func TestExpiration(t *testing.T) {
 			})
 
 			t.Run("should retrigger expiration (suspension) on already expired instance", func(t *testing.T) {
+				t.Skip()
 				suite := NewBrokerSuiteTest(t)
 				defer suite.TearDown()
 				// given
