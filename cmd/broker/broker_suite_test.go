@@ -106,6 +106,14 @@ type BrokerSuiteTest struct {
 	k8sDeletionObjectTracker Deleter
 }
 
+func (s *BrokerSuiteTest) AddNotCompleted(suspensionOpID string) {
+	op, err := s.db.Operations().GetOperationByID(suspensionOpID)
+	require.NoError(s.t, err)
+	op.ExcutedButNotCompleted = append(op.ExcutedButNotCompleted, "Simulated Step")
+	_, err = s.db.Operations().UpdateOperation(*op)
+	require.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) TearDown() {
 	if r := recover(); r != nil {
 		err := cleanupContainer()
