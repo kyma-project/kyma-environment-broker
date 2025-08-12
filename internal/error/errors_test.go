@@ -2,10 +2,8 @@ package error_test
 
 import (
 	"fmt"
-	"net/http"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +14,6 @@ import (
 func TestLastError(t *testing.T) {
 	t.Run("report correct reason and component", func(t *testing.T) {
 		// given
-		edpErr := edp.NewEDPBadRequestError("id", "Bad request: response")
-		expectEdpMsg := fmt.Sprintf("Bad request: %s", "response")
-
-		edpConfErr := edp.NewEDPConflictError("id", "Resource id already exists")
-		expectEdpConfMsg := "Resource id already exists"
-
 		dbErr := fmt.Errorf("something: %w", dberr.NotFound("Some NotFound apperror, %s", "Some pkg err"))
 		expectDbErr := "something: Some NotFound apperror, Some pkg err"
 
@@ -29,23 +21,10 @@ func TestLastError(t *testing.T) {
 		expectTimeoutMsg := "something: operation has reached the time limit: 2h"
 
 		// when
-		edpLastErr := kebError.ReasonForError(edpErr, "s1")
-		edpConfLastErr := kebError.ReasonForError(edpConfErr, "s2")
 		dbLastErr := kebError.ReasonForError(dbErr, "s3")
 		timeoutLastErr := kebError.ReasonForError(timeoutErr, "s4")
 
 		// then
-		assert.Equal(t, edp.ErrEDPBadRequest, edpLastErr.GetReason())
-		assert.Equal(t, kebError.EDPDependency, edpLastErr.GetComponent())
-		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
-		assert.Equal(t, "s1", edpLastErr.Step)
-
-		assert.Equal(t, edp.ErrEDPConflict, edpConfLastErr.GetReason())
-		assert.Equal(t, kebError.EDPDependency, edpConfLastErr.GetComponent())
-		assert.Equal(t, expectEdpConfMsg, edpConfLastErr.Error())
-		assert.True(t, edp.IsConflictError(edpConfErr))
-		assert.Equal(t, "s2", edpConfLastErr.Step)
-
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.GetReason())
 		assert.Equal(t, kebError.KebDbDependency, dbLastErr.GetComponent())
 		assert.Equal(t, expectDbErr, dbLastErr.Error())
@@ -68,12 +47,8 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		tempErr := fmt.Errorf("something else: %w", kebError.WrapNewTemporaryError(fmt.Errorf("something: %w", err)))
 		expectMsg := fmt.Sprintf("something else: something: Got status %d", 502)
 
-		edpTempErr := kebError.WrapNewTemporaryError(edp.NewEDPOtherError("id", http.StatusRequestTimeout, "EDP server returns failed status %s", "501"))
-		expectEdpMsg := fmt.Sprintf("EDP server returns failed status %s", "501")
-
 		// when
 		lastErr := kebError.ReasonForError(tempErr, "s1")
-		edpLastErr := kebError.ReasonForError(edpTempErr, "s2")
 
 		// then
 		assert.Equal(t, kebError.HttpStatusCode, lastErr.GetReason())
@@ -81,12 +56,6 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 		assert.Equal(t, expectMsg, lastErr.Error())
 		assert.True(t, kebError.IsTemporaryError(tempErr))
 		assert.Equal(t, "s1", lastErr.Step)
-
-		assert.Equal(t, edp.ErrEDPTimeout, edpLastErr.GetReason())
-		assert.Equal(t, kebError.EDPDependency, edpLastErr.GetComponent())
-		assert.Equal(t, expectEdpMsg, edpLastErr.Error())
-		assert.True(t, kebError.IsTemporaryError(edpTempErr))
-		assert.Equal(t, "s2", edpLastErr.Step)
 	})
 
 	t.Run("new temporary error", func(t *testing.T) {

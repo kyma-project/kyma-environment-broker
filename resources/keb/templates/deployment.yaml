@@ -197,23 +197,6 @@ spec:
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
-            - name: APP_EDP_ADMIN_URL
-              value: "{{ .Values.edp.adminURL }}"
-            - name: APP_EDP_AUTH_URL
-              value: "{{ .Values.edp.authURL }}"
-            - name: APP_EDP_DISABLED
-              value: "{{ .Values.edp.disabled }}"
-            - name: APP_EDP_ENVIRONMENT
-              value: "{{ .Values.edp.environment }}"
-            - name: APP_EDP_NAMESPACE
-              value: "{{ .Values.edp.namespace }}"
-            - name: APP_EDP_REQUIRED
-              value: "{{ .Values.edp.required }}"
-            - name: APP_EDP_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.edp.secretName }}"
-                  key: {{ .Values.edp.secretKey }}
             - name: APP_EVENTS_ENABLED
               value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH

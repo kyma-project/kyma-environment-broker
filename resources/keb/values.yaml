@@ -243,26 +243,6 @@ configPaths:
 # If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"
 
-edp:
-  # Base URL for the EDP admin API.
-  adminURL: "TBD"
-  # OAuth2 token endpoint for EDP.
-  authURL: "TBD"
-  # If true, disables EDP integration.
-  disabled: true
-  # EDP environment, for example, dev, prod.
-  environment: "dev"
-  # EDP namespace to use.
-  namespace: "kyma-dev"
-  # If true, EDP integration is required.
-  required: false
-  # OAuth2 client secret for EDP.
-  secret: "TBD"
-  # Name of the Kubernetes Secret containing EDP credentials.
-  secretName: "edp-creds" 
-  # OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret.
-  secretKey: secret
-
 events:
   # Enables or disables the events API and event storage for operation events (true/false).
   enabled: true
@@ -729,21 +709,6 @@ vmscrapes:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets.
 vsoSecrets:
   secrets:
-    edp:
-      path: edp
-      secretName: "{{ .Values.edp.secretName }}"
-      restartTargets:
-        - kind: Deployment
-          name: >-
-            {{- template "kyma-env-broker.fullname" . -}}
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          secret: keb_edp_secret
-        data:
-          secret: {}
     cis-v1:
       path: cis
       secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
