@@ -54,13 +54,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue. |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. |
 | **APP_DOMAIN_NAME** | <code>localhost</code> | - |
-| **APP_EDP_ADMIN_URL** | <code>TBD</code> | Base URL for the EDP admin API. |
-| **APP_EDP_AUTH_URL** | <code>TBD</code> | OAuth2 token endpoint for EDP. |
-| **APP_EDP_DISABLED** | <code>true</code> | If true, disables EDP integration. |
-| **APP_EDP_ENVIRONMENT** | <code>dev</code> | EDP environment, for example, dev, prod. |
-| **APP_EDP_NAMESPACE** | <code>kyma-dev</code> | EDP namespace to use. |
-| **APP_EDP_REQUIRED** | <code>false</code> | If true, EDP integration is required. |
-| **APP_EDP_SECRET** | None | Secret containing EDP credentials. |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the events API and event storage for operation events (true/false). |
 | **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. |
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster. |

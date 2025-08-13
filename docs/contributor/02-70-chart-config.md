@@ -110,15 +110,6 @@
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
 | configPaths.<br>cloudsqlSSLRootCert | Path to the Cloud SQL SSL root certificate file. | `/secrets/cloudsql-sslrootcert/server-ca.pem` |
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
-| edp.adminURL | Base URL for the EDP admin API. | None |
-| edp.authURL | OAuth2 token endpoint for EDP. | None |
-| edp.disabled | If true, disables EDP integration. | `True` |
-| edp.environment | EDP environment, for example, dev, prod. | `dev` |
-| edp.namespace | EDP namespace to use. | `kyma-dev` |
-| edp.required | If true, EDP integration is required. | `False` |
-| edp.secret | OAuth2 client secret for EDP. | None |
-| edp.secretName | Name of the Kubernetes Secret containing EDP credentials. | `edp-creds` |
-| edp.secretKey | OAuth2 client secret key name used to fetch the EDP secret from the Kubernetes Secret. | `secret` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
 | gardener.<br>kubeconfigPath | Path to the kubeconfig file for accessing the Gardener cluster. | `/gardener/kubeconfig/kubeconfig` |
@@ -263,12 +254,6 @@
 | vmscrapes.enabled | - | `True` |
 | vmscrapes.interval | - | `30s` |
 | vmscrapes.<br>scrapeTimeout | - | `10s` |
-| vsoSecrets.secrets.edp.<br>path | - | `edp` |
-| vsoSecrets.secrets.edp.<br>secretName | - | `{{ .Values.edp.secretName }}` |
-| vsoSecrets.secrets.edp.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- template "kyma-env-broker.fullname" . -}}'}` |
-| vsoSecrets.secrets.edp.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
-| vsoSecrets.secrets.edp.<br>templating.enabled | - | `True` |
-| vsoSecrets.secrets.edp.<br>templating.keys.<br>secret | - | `keb_edp_secret` |
 | vsoSecrets.secrets.cis-v1.<br>path | - | `cis` |
 | vsoSecrets.secrets.cis-v1.<br>secretName | - | `{{ .Values.cis.v1.secretName \| required "please specify .Values.cis.v1.secretName"}}` |
 | vsoSecrets.secrets.cis-v1.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
