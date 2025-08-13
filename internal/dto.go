@@ -15,7 +15,7 @@ type ProvisioningParameters struct {
 	ErsContext ERSContext                    `json:"ers_context"`
 	Parameters pkg.ProvisioningParametersDTO `json:"parameters"`
 
-	// PlatformRegion defines the Platform region sent in the request path, terminology:
+	// PlatformRegion defines the Platform region sent in the request path.
 	PlatformRegion string `json:"platform_region"`
 
 	PlatformProvider pkg.CloudProvider `json:"platform_provider"`
