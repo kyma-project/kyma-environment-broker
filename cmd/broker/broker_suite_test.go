@@ -109,7 +109,7 @@ type BrokerSuiteTest struct {
 func (s *BrokerSuiteTest) AddNotCompleted(suspensionOpID string) {
 	op, err := s.db.Operations().GetOperationByID(suspensionOpID)
 	require.NoError(s.t, err)
-	op.ExcutedButNotCompleted = append(op.ExcutedButNotCompleted, "Simulated Step")
+	op.ExcutedButNotCompleted = append(op.ExcutedButNotCompleted, "Simulated not completed step")
 	_, err = s.db.Operations().UpdateOperation(*op)
 	require.NoError(s.t, err)
 }
