@@ -106,7 +106,7 @@ type BrokerSuiteTest struct {
 	k8sDeletionObjectTracker Deleter
 }
 
-func (s *BrokerSuiteTest) AddNotCompleted(suspensionOpID string) {
+func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
 	op, err := s.db.Operations().GetOperationByID(suspensionOpID)
 	require.NoError(s.t, err)
 	op.ExcutedButNotCompleted = append(op.ExcutedButNotCompleted, "Simulated not completed step")
