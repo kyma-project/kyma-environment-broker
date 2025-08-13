@@ -323,7 +323,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 							],
 							"usernameClaim": "sub",
 							"usernamePrefix": "-",
-							"groupsPrefix": "-",
+							"groupsPrefix": "abcd",
 							"requiredClaims": ["claim=value"]
 						}
 					}
@@ -360,7 +360,9 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 					"issuerURL": "https://isssuer.url",
 					"signingAlgs": ["RS256"],
 					"usernameClaim": "sub",
-					"usernamePrefix": "-"
+					"usernamePrefix": "-",
+                    "requiredClaims": ["claim=value"],
+                    "groupsPrefix": "abcd"
 				},
 				"region": "eu-central-1"
 			},
