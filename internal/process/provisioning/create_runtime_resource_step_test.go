@@ -76,6 +76,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 			UsernameClaim:  "uc-custom",
 			UsernamePrefix: "up-custom",
 			RequiredClaims: []string{"claim=value", "claim2=value2=value2", "claim3==value3", "claim4=value4=", "claim5=,value5", "claim6=="},
+			GroupsPrefix:   "SAPSE:",
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -95,7 +96,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 				"claim5": ",value5",
 				"claim6": "=",
 			},
-			GroupsPrefix: ptr.String("-"),
+			GroupsPrefix: ptr.String("SAPSE:"),
 		},
 	}
 	cli := getClientForTests(t)
@@ -142,6 +143,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 				UsernameClaim:  "uc-custom",
 				UsernamePrefix: "up-custom",
 				RequiredClaims: []string{"claim=value"},
+				GroupsPrefix:   "SAPSE:",
 			},
 		},
 	}
@@ -157,7 +159,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 			RequiredClaims: map[string]string{
 				"claim": "value",
 			},
-			GroupsPrefix: ptr.String("-"),
+			GroupsPrefix: ptr.String("SAPSE:"),
 		},
 	}
 	cli := getClientForTests(t)
@@ -1142,7 +1144,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 		possibleZones       []string
 	}{
 		/**
-		zone provider is mocked, always returns: a, b, c
+		  zone provider is mocked, always returns: a, b, c
 		*/
 		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"a", "b", "c"}},
 		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
