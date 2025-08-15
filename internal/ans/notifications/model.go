@@ -26,18 +26,18 @@ type (
 
 	NotificationOption func(notification *Notification) error
 	Recipient          struct {
-		GlobalUserId        *string     `json:"GlobalUserId,omitempty"`
-		RecipientId         string      `json:"RecipientId"`
-		IasHost             *string     `json:"IasHost,omitempty"`
-		ProviderRecipientId *string     `json:"ProviderRecipientId,omitempty"`
-		IasGroupId          *string     `json:"IasGroupId,omitempty"`
-		XsuaaLevel          *XsuaaLevel `json:"XsuaaLevel,omitempty"`
-		TenantId            *string     `json:"TenantId,omitempty"`
-		RoleName            *string     `json:"RoleName,omitempty"`
-		Language            *string     `json:"Language,omitempty"`
+		GlobalUserId        string     `json:"GlobalUserId,omitempty"`
+		RecipientId         string     `json:"RecipientId"`
+		IasHost             string     `json:"IasHost,omitempty"`
+		ProviderRecipientId string     `json:"ProviderRecipientId,omitempty"`
+		IasGroupId          string     `json:"IasGroupId,omitempty"`
+		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel,omitempty"`
+		TenantId            string     `json:"TenantId,omitempty"`
+		RoleName            string     `json:"RoleName,omitempty"`
+		Language            string     `json:"Language,omitempty"`
 	}
 
-	RecipientOption func(recipient *Recipient) error
+	RecipientOption func(recipient *Recipient)
 
 	Property struct {
 		Language     *string       `json:"Language,omitempty"`
@@ -336,74 +336,63 @@ func WithIsSensitive(isSensitive bool) PropertyOption {
 	}
 }
 
-func NewRecipient(recipientID string, options ...RecipientOption) (*Recipient, error) {
+func NewRecipient(recipientID string, options ...RecipientOption) *Recipient {
 	recipient := &Recipient{
 		RecipientId: recipientID,
 	}
 	for _, option := range options {
-		if err := option(recipient); err != nil {
-			return nil, err
-		}
+		option(recipient)
 	}
-	return recipient, nil
+	return recipient
 }
 
 func WithGlobalUserID(globalUserID string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(globalUserID) == 0 {
-			return fmt.Errorf("global user ID must not be empty")
-		}
+	return func(r *Recipient) {
+		//if len(globalUserID) == 0 {
+		//	return fmt.Errorf("global user ID must not be empty")
+		//}
 		r.GlobalUserId = &globalUserID
-		return nil
 	}
 }
 func WithIasHost(iasHost string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(iasHost) == 0 {
-			return fmt.Errorf("IAS host must not be empty")
-		}
+	return func(r *Recipient) {
+		//if len(iasHost) == 0 {
+		//	return fmt.Errorf("IAS host must not be empty")
+		//}
 		r.IasHost = &iasHost
-		return nil
 	}
 }
 
 func WithXsuaaLevel(xsuaaLevel XsuaaLevel) RecipientOption {
-	return func(r *Recipient) error {
-		if err := xsuaaLevel.Validate(); err != nil {
-			return fmt.Errorf("invalid XSUAA level: %w", err)
-		}
+	return func(r *Recipient) {
+		//if err := xsuaaLevel.Validate(); err != nil {
+		//	return fmt.Errorf("invalid XSUAA level: %w", err)
+		//}
 		r.XsuaaLevel = &xsuaaLevel
-		return nil
 	}
 }
 
 func WithTenantID(tenantID string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(tenantID) == 0 {
-			return fmt.Errorf("tenant ID must not be empty")
-		}
+	return func(r *Recipient) {
+		//if len(tenantID) == 0 {
+		//	return fmt.Errorf("tenant ID must not be empty")
+		//}
 		r.TenantId = &tenantID
-		return nil
 	}
 }
 
 func WithRoleName(roleName string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(roleName) == 0 {
-			return fmt.Errorf("role name must not be empty")
-		}
+	return func(r *Recipient) {
+		//if len(roleName) == 0 {
+		//	return fmt.Errorf("role name must not be empty")
+		//}
 		r.RoleName = &roleName
-		return nil
 	}
 }
 
 func WithLanguage(language string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(language) == 0 {
-			return fmt.Errorf("language must not be empty")
-		}
-		r.Language = &language
-		return nil
+	return func(r *Recipient) {
+		r.Language = language
 	}
 }
 
@@ -417,22 +406,34 @@ func WithPropertyLanguage(language string) PropertyOption {
 	}
 }
 
-func WithIasGroupID(iasGroupID string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(iasGroupID) == 0 {
-			return fmt.Errorf("IAS group ID must not be empty")
-		}
-		r.IasGroupId = &iasGroupID
-		return nil
+func WithIasGroupId(iasGroupId string) RecipientOption {
+	return func(r *Recipient) {
+		r.IasGroupId = iasGroupId
 	}
 }
 
-func WithProviderRecipientID(providerRecipientID string) RecipientOption {
-	return func(r *Recipient) error {
-		if len(providerRecipientID) == 0 {
-			return fmt.Errorf("provider recipient ID must not be empty")
-		}
-		r.ProviderRecipientId = &providerRecipientID
-		return nil
+func WithProviderRecipientID(providerRecipientId string) RecipientOption {
+	return func(r *Recipient) {
+		r.ProviderRecipientId = providerRecipientId
 	}
+}
+
+func (r *Recipient) Validate() error {
+	if len(r.RecipientId) == 0 {
+		return fmt.Errorf("recipient ID must not be empty")
+	}
+	if err := r.XsuaaLevel.Validate(); err != nil {
+		return fmt.Errorf("invalid XSUAA level: %w", err)
+	}
+	if len(r.ProviderRecipientId) == 0 {
+		return fmt.Errorf("provider recipient ID must not be empty")
+	}
+	if len(r.IasGroupId) == 0 {
+		return fmt.Errorf("IAS group ID must not be empty")
+	}
+	if len(r.Language) == 0 {
+		return fmt.Errorf("language must not be empty")
+	}
+
+	return nil
 }
