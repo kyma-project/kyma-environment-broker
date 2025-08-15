@@ -53,13 +53,13 @@ func Test_CreateNotificationsWithTwoRecipients(t *testing.T) {
 
 func Test_CreateRecipientWithAllOptions(t *testing.T) {
 	recipient, err := NewRecipient("recipient1",
-		WithGlobalUserID("globalUser1"),
+		WithGlobalUserId("globalUser1"),
 		WithIasGroupId("group1"),
 		WithIasHost("test.sap.com"),
 		WithRoleName("admin"),
 		WithLanguage("EN"),
 		WithProviderRecipientID("recipient1"),
-		WithTenantID("tenant1"),
+		WithTenantId("tenant1"),
 		WithXsuaaLevel(XsuaaLevelSubaccount),
 	)
 	require.NoError(t, err)

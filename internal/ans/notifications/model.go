@@ -24,7 +24,7 @@ type (
 		ActorImageURL             *string           `json:"ActorImageUrl,omitempty"`
 	}
 
-	NotificationOption func(notification *Notification) error
+	NotificationOption func(notification *Notification)
 	Recipient          struct {
 		GlobalUserId        string     `json:"GlobalUserId,omitempty"`
 		RecipientId         string     `json:"RecipientId"`
@@ -40,11 +40,11 @@ type (
 	RecipientOption func(recipient *Recipient)
 
 	Property struct {
-		Language     *string       `json:"Language,omitempty"`
-		Key          string        `json:"Key"`
-		Value        string        `json:"Value"`
-		PropertyType *PropertyType `json:"Type,omitempty"`
-		IsSensitive  *bool         `json:"IsSensitive,omitempty"`
+		Language     string       `json:"Language,omitempty"`
+		Key          string       `json:"Key"`
+		Value        string       `json:"Value"`
+		PropertyType PropertyType `json:"Type,omitempty"`
+		IsSensitive  *bool        `json:"IsSensitive,omitempty"`
 	}
 
 	PropertyOption func(property *Property) error
@@ -142,9 +142,7 @@ func NewNotification(typeKey string, recipients []Recipient, options ...Notifica
 		Recipients:          recipients,
 	}
 	for _, option := range options {
-		if err := option(notification); err != nil {
-			return nil, err
-		}
+		option(notification)
 	}
 	if err := notification.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification:  %w", err)
@@ -153,119 +151,67 @@ func NewNotification(typeKey string, recipients []Recipient, options ...Notifica
 }
 
 func WithID(id string) NotificationOption {
-	return func(n *Notification) error {
-		if len(id) == 0 {
-			return fmt.Errorf("notification ID must not be empty")
-		}
+	return func(n *Notification) {
 		n.ID = id
-		return nil
 	}
 }
 
 func WithOriginID(originID string) NotificationOption {
-	return func(n *Notification) error {
-		if len(originID) == 0 {
-			return fmt.Errorf("origin ID must not be empty")
-		}
+	return func(n *Notification) {
 		n.OriginID = originID
-		return nil
 	}
 }
 
 func WithNotificationTypeID(notificationTypeID string) NotificationOption {
-	return func(n *Notification) error {
-		if len(notificationTypeID) == 0 {
-			return fmt.Errorf("notification type ID must not be empty")
-		}
+	return func(n *Notification) {
 		n.NotificationTypeID = &notificationTypeID
-		return nil
 	}
 }
 
 func WithNotificationTypeVersion(notificationTypeVersion string) NotificationOption {
-	return func(n *Notification) error {
-		if len(notificationTypeVersion) == 0 {
-			return fmt.Errorf("notification type version must not be empty")
-		}
+	return func(n *Notification) {
 		n.NotificationTypeVersion = &notificationTypeVersion
-		return nil
 	}
 }
 
 func WithNotificationTypeTimestamp(notificationTypeTimestamp string) NotificationOption {
-	//TODO default to current time if empty
-	return func(n *Notification) error {
-		if len(notificationTypeTimestamp) == 0 {
-			return fmt.Errorf("notification type timestamp must not be empty")
-		}
+	return func(n *Notification) {
 		n.NotificationTypeTimestamp = &notificationTypeTimestamp
-		return nil
 	}
 }
 
 func WithNotificationTemplateKey(notificationTemplateKey string) NotificationOption {
-	return func(n *Notification) error {
-		if len(notificationTemplateKey) == 0 {
-			return fmt.Errorf("notification template key must not be empty")
-		}
+	return func(n *Notification) {
 		n.NotificationTemplateKey = &notificationTemplateKey
-		return nil
 	}
 }
 
 func WithPriority(priority Priority) NotificationOption {
-	return func(n *Notification) error {
-		if err := priority.Validate(); err != nil {
-			return fmt.Errorf("invalid priority: %w", err)
-		}
+	return func(n *Notification) {
 		n.Priority = &priority
-		return nil
 	}
 }
 func WithProviderID(providerID string) NotificationOption {
-	return func(n *Notification) error {
-		if len(providerID) == 0 {
-			return fmt.Errorf("provider ID must not be empty")
-		}
+	return func(n *Notification) {
 		n.ProviderID = &providerID
-		return nil
 	}
 }
 
 func WithProperties(properties []Property) NotificationOption {
-	return func(n *Notification) error {
-		if len(properties) == 0 {
-			return fmt.Errorf("properties must not be empty")
-		}
-		for _, property := range properties {
-			if property.PropertyType != nil {
-				if err := property.PropertyType.Validate(); err != nil {
-					return fmt.Errorf("invalid property type: %w", err)
-				}
-			}
-		}
+	return func(n *Notification) {
 		n.Properties = properties
-		return nil
 	}
 }
 
 func WithTargetParameters(targetParameters []TargetParameter) NotificationOption {
-	return func(n *Notification) error {
-		if len(targetParameters) == 0 {
-			return fmt.Errorf("target parameters must not be empty")
-		}
+	return func(n *Notification) {
 		n.TargetParameters = targetParameters
-		return nil
 	}
 }
 
 func WithAttachments(attachments []Attachment) NotificationOption {
-	return func(n *Notification) error {
-		if len(attachments) == 0 {
-			return fmt.Errorf("attachments must not be empty")
-		}
+	return func(n *Notification) {
 		n.Attachments = attachments
-		return nil
 	}
 }
 
@@ -324,7 +270,7 @@ func WithType(propertyType PropertyType) PropertyOption {
 		if err := propertyType.Validate(); err != nil {
 			return fmt.Errorf("invalid property type: %w", err)
 		}
-		p.PropertyType = &propertyType
+		p.PropertyType = propertyType
 		return nil
 	}
 }
@@ -346,46 +292,31 @@ func NewRecipient(recipientID string, options ...RecipientOption) *Recipient {
 	return recipient
 }
 
-func WithGlobalUserID(globalUserID string) RecipientOption {
+func WithGlobalUserId(globalUserID string) RecipientOption {
 	return func(r *Recipient) {
-		//if len(globalUserID) == 0 {
-		//	return fmt.Errorf("global user ID must not be empty")
-		//}
 		r.GlobalUserId = globalUserID
 	}
 }
 func WithIasHost(iasHost string) RecipientOption {
 	return func(r *Recipient) {
-		//if len(iasHost) == 0 {
-		//	return fmt.Errorf("IAS host must not be empty")
-		//}
 		r.IasHost = iasHost
 	}
 }
 
 func WithXsuaaLevel(xsuaaLevel XsuaaLevel) RecipientOption {
 	return func(r *Recipient) {
-		//if err := xsuaaLevel.Validate(); err != nil {
-		//	return fmt.Errorf("invalid XSUAA level: %w", err)
-		//}
 		r.XsuaaLevel = xsuaaLevel
 	}
 }
 
-func WithTenantID(tenantID string) RecipientOption {
+func WithTenantId(tenantID string) RecipientOption {
 	return func(r *Recipient) {
-		//if len(tenantID) == 0 {
-		//	return fmt.Errorf("tenant ID must not be empty")
-		//}
 		r.TenantId = tenantID
 	}
 }
 
 func WithRoleName(roleName string) RecipientOption {
 	return func(r *Recipient) {
-		//if len(roleName) == 0 {
-		//	return fmt.Errorf("role name must not be empty")
-		//}
 		r.RoleName = roleName
 	}
 }
@@ -401,7 +332,7 @@ func WithPropertyLanguage(language string) PropertyOption {
 		if len(language) == 0 {
 			return fmt.Errorf("language must not be empty")
 		}
-		r.Language = &language
+		r.Language = language
 		return nil
 	}
 }
@@ -433,6 +364,21 @@ func (r *Recipient) Validate() error {
 	}
 	if len(r.Language) == 0 {
 		return fmt.Errorf("language must not be empty")
+	}
+	if len(r.RoleName) == 0 {
+		return fmt.Errorf("role name must not be empty")
+	}
+	if len(r.TenantId) == 0 {
+		return fmt.Errorf("tenant ID must not be empty")
+	}
+	if err := r.XsuaaLevel.Validate(); err != nil {
+		return fmt.Errorf("invalid XSUAA level: %w", err)
+	}
+	if len(r.IasHost) == 0 {
+		return fmt.Errorf("IAS host must not be empty")
+	}
+	if len(r.GlobalUserId) == 0 {
+		return fmt.Errorf("global user ID must not be empty")
 	}
 
 	return nil
