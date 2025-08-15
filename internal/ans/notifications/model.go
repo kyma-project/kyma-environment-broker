@@ -351,7 +351,7 @@ func WithGlobalUserID(globalUserID string) RecipientOption {
 		//if len(globalUserID) == 0 {
 		//	return fmt.Errorf("global user ID must not be empty")
 		//}
-		r.GlobalUserId = &globalUserID
+		r.GlobalUserId = globalUserID
 	}
 }
 func WithIasHost(iasHost string) RecipientOption {
@@ -359,7 +359,7 @@ func WithIasHost(iasHost string) RecipientOption {
 		//if len(iasHost) == 0 {
 		//	return fmt.Errorf("IAS host must not be empty")
 		//}
-		r.IasHost = &iasHost
+		r.IasHost = iasHost
 	}
 }
 
@@ -368,7 +368,7 @@ func WithXsuaaLevel(xsuaaLevel XsuaaLevel) RecipientOption {
 		//if err := xsuaaLevel.Validate(); err != nil {
 		//	return fmt.Errorf("invalid XSUAA level: %w", err)
 		//}
-		r.XsuaaLevel = &xsuaaLevel
+		r.XsuaaLevel = xsuaaLevel
 	}
 }
 
@@ -377,7 +377,7 @@ func WithTenantID(tenantID string) RecipientOption {
 		//if len(tenantID) == 0 {
 		//	return fmt.Errorf("tenant ID must not be empty")
 		//}
-		r.TenantId = &tenantID
+		r.TenantId = tenantID
 	}
 }
 
@@ -386,7 +386,7 @@ func WithRoleName(roleName string) RecipientOption {
 		//if len(roleName) == 0 {
 		//	return fmt.Errorf("role name must not be empty")
 		//}
-		r.RoleName = &roleName
+		r.RoleName = roleName
 	}
 }
 
