@@ -94,12 +94,12 @@ func Test_CreateRecipientWithInvalidXsuaaLevel(t *testing.T) {
 }
 
 func Test_CreatePropertyWithAllOptions(t *testing.T) {
-	property, err := NewProperty("key1", "value1",
+	property := NewProperty("key1", "value1",
 		WithType(PropertyTypeString),
 		WithIsSensitive(true),
 		WithPropertyLanguage("EN"),
 	)
-	require.NoError(t, err)
+	require.NoError(t, property.Validate())
 	propertyJSON, err := json.Marshal(property)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{
@@ -112,20 +112,20 @@ func Test_CreatePropertyWithAllOptions(t *testing.T) {
 }
 
 func Test_CreatePropertyWithInvalidType(t *testing.T) {
-	_, err := NewProperty("key1", "value1", WithType("invalid"))
-	require.ErrorContains(t, err, "invalid property type: invalid")
+	property := NewProperty("key1", "value1", WithType("invalid"))
+	require.ErrorContains(t, property.Validate(), "invalid property type: invalid")
 }
 
 func Test_CreateNotificationWithProperties(t *testing.T) {
 	recipient := NewRecipient("recipient1", "test.iashost.com")
 	require.NoError(t, recipient.Validate())
-	property, err := NewProperty("key1", "value1",
+	property := NewProperty("key1", "value1",
 		WithType(PropertyTypeString),
 		WithIsSensitive(true),
 		WithPropertyLanguage("EN"),
 	)
-	require.NoError(t, err)
-	attachment := NewAttachment(NewHeaders("application/json", "inline;filename=somefile.ext", "123"), NewContent(NewExternal("path/to/file.json")))
+	require.NoError(t, property.Validate())
+	attachment := NewAttachment("application/json", "inline;filename=somefile.ext", "123", "path/to/file.json")
 	targetParameter := NewTargetParameter("targetKey", "targetValue")
 	notification := NewNotification("testType", []Recipient{*recipient},
 		WithProperties([]Property{*property}),

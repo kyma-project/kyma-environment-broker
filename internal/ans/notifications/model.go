@@ -233,7 +233,7 @@ func NewAttachment(contentType, contentDisposition, contentID, externalPath stri
 	}
 }
 
-func NewProperty(key, value string, options ...PropertyOption) (*Property, error) {
+func NewProperty(key, value string, options ...PropertyOption) *Property {
 	property := &Property{
 		Key:   key,
 		Value: value,
@@ -241,10 +241,7 @@ func NewProperty(key, value string, options ...PropertyOption) (*Property, error
 	for _, option := range options {
 		option(property)
 	}
-	if len(key) == 0 {
-		return nil, fmt.Errorf("property key must not be empty")
-	}
-	return property, nil
+	return property
 }
 
 func (p *Property) Validate() error {
