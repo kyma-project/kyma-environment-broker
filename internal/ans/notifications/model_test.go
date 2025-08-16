@@ -8,61 +8,70 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO use JSONEq instead of string comparison
 // TODO verify timestamp type and default value - see Java client
 
 func Test_CreateMinimalNotification(t *testing.T) {
-	recipient, err := NewRecipient("recipient1")
-	require.NoError(t, err)
-	notification, err := NewNotification("testType", []Recipient{*recipient})
-	require.NoError(t, err)
-	notificationJSON, err := json.Marshal(notification)
-	require.NoError(t, err)
-	assert.Equal(t, "{\"NotificationTypeKey\":\"testType\",\"Recipients\":[{\"RecipientId\":\"recipient1\"}]}", string(notificationJSON))
-}
-
-func Test_CreateNotificationWithEmptyRecipients(t *testing.T) {
-	_, err := NewNotification("testType", []Recipient{})
-	require.ErrorContains(t, err, "invalid notification:  recipients must not be empty")
-}
-
-func Test_CreateNotificationWithInvalidType(t *testing.T) {
-	recipient, err := NewRecipient("recipient1")
-	require.NoError(t, err)
-	_, err = NewNotification("", []Recipient{*recipient})
-	require.ErrorContains(t, err, "notification type key must not be empty")
-}
-
-func Test_CreateNotificationsWithTwoRecipients(t *testing.T) {
-	recipient1, err := NewRecipient("recipient1")
-	require.NoError(t, err)
-	recipient2, err := NewRecipient("recipient2")
-	require.NoError(t, err)
-	notification, err := NewNotification("testType", []Recipient{*recipient1, *recipient2})
-	require.NoError(t, err)
+	recipient := NewRecipient("recipient1", "test.iashost.com")
+	require.NoError(t, recipient.Validate())
+	notification := NewNotification("testType", []Recipient{*recipient})
+	require.NoError(t, notification.Validate())
 	notificationJSON, err := json.Marshal(notification)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{
 		"NotificationTypeKey": "testType",
 		"Recipients": [
-			{"RecipientId": "recipient1"},
-			{"RecipientId": "recipient2"}
+			{"RecipientId": "recipient1", "IasHost": "test.iashost.com"}
 		]
 	}`, string(notificationJSON))
 }
 
+func Test_CreateNotificationWithEmptyRecipients(t *testing.T) {
+	notification := NewNotification("testType", []Recipient{})
+	require.ErrorContains(t, notification.Validate(), "recipients must not be empty")
+}
+
+func Test_CreateNotificationWithInvalidType(t *testing.T) {
+	recipient := NewRecipient("recipient1", "test.iashost.com")
+	require.NoError(t, recipient.Validate())
+	notification := NewNotification("", []Recipient{*recipient})
+	require.ErrorContains(t, notification.Validate(), "notification type key must not be empty")
+}
+
+func Test_CreateNotificationsWithTwoRecipients(t *testing.T) {
+	recipient1 := NewRecipient("recipient1", "test.iashost.com")
+	require.NoError(t, recipient1.Validate())
+	recipient2 := NewRecipient("recipient2", "test.iashost.com")
+	require.NoError(t, recipient2.Validate())
+	notification := NewNotification("testType", []Recipient{*recipient1, *recipient2})
+	require.NoError(t, notification.Validate())
+	notificationJSON, err := json.Marshal(notification)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+  "NotificationTypeKey": "testType",
+  "Recipients": [
+    {
+      "RecipientId": "recipient1",
+      "IasHost": "test.iashost.com"
+    },
+    {
+      "RecipientId": "recipient2",
+      "IasHost": "test.iashost.com"
+    }
+  ]
+}`, string(notificationJSON))
+}
+
 func Test_CreateRecipientWithAllOptions(t *testing.T) {
-	recipient, err := NewRecipient("recipient1",
+	recipient := NewRecipient("recipient1", "test.sap.com",
 		WithGlobalUserId("globalUser1"),
 		WithIasGroupId("group1"),
-		WithIasHost("test.sap.com"),
 		WithRoleName("admin"),
 		WithLanguage("EN"),
 		WithProviderRecipientID("recipient1"),
 		WithTenantId("tenant1"),
 		WithXsuaaLevel(XsuaaLevelSubaccount),
 	)
-	require.NoError(t, err)
+	require.NoError(t, recipient.Validate())
 	recipientJSON, err := json.Marshal(recipient)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{
@@ -79,7 +88,8 @@ func Test_CreateRecipientWithAllOptions(t *testing.T) {
 }
 
 func Test_CreateRecipientWithInvalidXsuaaLevel(t *testing.T) {
-	_, err := NewRecipient("recipient1", WithXsuaaLevel("invalid"))
+	recipient := NewRecipient("recipient1", "", WithXsuaaLevel("invalid"))
+	err := recipient.Validate()
 	require.ErrorContains(t, err, "invalid XSUAA level: invalid")
 }
 
@@ -107,8 +117,8 @@ func Test_CreatePropertyWithInvalidType(t *testing.T) {
 }
 
 func Test_CreateNotificationWithProperties(t *testing.T) {
-	recipient, err := NewRecipient("recipient1")
-	require.NoError(t, err)
+	recipient := NewRecipient("recipient1", "test.iashost.com")
+	require.NoError(t, recipient.Validate())
 	property, err := NewProperty("key1", "value1",
 		WithType(PropertyTypeString),
 		WithIsSensitive(true),
@@ -117,7 +127,7 @@ func Test_CreateNotificationWithProperties(t *testing.T) {
 	require.NoError(t, err)
 	attachment := NewAttachment(NewHeaders("application/json", "inline;filename=somefile.ext", "123"), NewContent(NewExternal("path/to/file.json")))
 	targetParameter := NewTargetParameter("targetKey", "targetValue")
-	notification, err := NewNotification("testType", []Recipient{*recipient},
+	notification := NewNotification("testType", []Recipient{*recipient},
 		WithProperties([]Property{*property}),
 		WithAttachments([]Attachment{attachment}),
 		WithTargetParameters([]TargetParameter{targetParameter}),
@@ -129,8 +139,38 @@ func Test_CreateNotificationWithProperties(t *testing.T) {
 		WithPriority(PriorityHigh),
 		WithProviderID("providerID"),
 	)
-	require.NoError(t, err)
+	require.NoError(t, notification.Validate())
 	notificationJSON, err := json.Marshal(notification)
 	require.NoError(t, err)
-	assert.Equal(t, "{\"id\":\"notificationID\",\"NotificationTypeKey\":\"testType\",\"NotificationTypeId\":\"notificationTypeID\",\"NotificationTypeVersion\":\"1\",\"NotificationTypeTimestamp\":\"2023-10-01T00:00:00Z\",\"NotificationTemplateKey\":\"templateKey\",\"Priority\":\"HIGH\",\"ProviderId\":\"providerID\",\"Recipients\":[{\"RecipientId\":\"recipient1\"}],\"Properties\":[{\"Language\":\"EN\",\"Key\":\"key1\",\"Value\":\"value1\",\"Type\":\"String\",\"IsSensitive\":true}],\"TargetParameters\":[{\"Key\":\"targetKey\",\"Value\":\"targetValue\"}],\"Attachments\":[{\"Headers\":{\"ContentType\":\"application/json\",\"ContentDisposition\":\"inline;filename=somefile.ext\",\"ContentId\":\"123\"},\"Content\":{\"External\":{\"Path\":\"path/to/file.json\"}}}]}", string(notificationJSON))
+	assert.JSONEq(t, `{
+  "id": "notificationID",
+  "NotificationTypeKey": "testType",
+  "NotificationTypeId": "notificationTypeID",
+  "NotificationTypeVersion": "1",
+  "NotificationTypeTimestamp": "2023-10-01T00:00:00Z",
+  "NotificationTemplateKey": "templateKey",
+  "Priority": "HIGH",
+  "ProviderId": "providerID",
+  "Recipients": [
+    {"RecipientId": "recipient1", "IasHost": "test.iashost.com"}
+  ],
+  "Properties": [
+    {"Language": "EN", "Key": "key1", "Value": "value1", "Type": "String", "IsSensitive": true}
+  ],
+  "TargetParameters": [
+    {"Key": "targetKey", "Value": "targetValue"}
+  ],
+  "Attachments": [
+    {
+      "Headers": {
+        "ContentType": "application/json",
+        "ContentDisposition": "inline;filename=somefile.ext",
+        "ContentId": "123"
+      },
+      "Content": {
+        "External": {"Path": "path/to/file.json"}
+      }
+    }
+  ]
+}`, string(notificationJSON))
 }

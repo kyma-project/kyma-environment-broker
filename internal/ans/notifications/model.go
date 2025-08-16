@@ -26,15 +26,15 @@ type (
 
 	NotificationOption func(notification *Notification)
 	Recipient          struct {
-		GlobalUserId        string     `json:"GlobalUserId,omitempty"`
-		RecipientId         string     `json:"RecipientId"`
-		IasHost             string     `json:"IasHost,omitempty"`
-		ProviderRecipientId string     `json:"ProviderRecipientId,omitempty"`
-		IasGroupId          string     `json:"IasGroupId,omitempty"`
-		XsuaaLevel          XsuaaLevel `json:"XsuaaLevel,omitempty"`
-		TenantId            string     `json:"TenantId,omitempty"`
-		RoleName            string     `json:"RoleName,omitempty"`
-		Language            string     `json:"Language,omitempty"`
+		GlobalUserId        string      `json:"GlobalUserId,omitempty"`
+		RecipientId         string      `json:"RecipientId"`
+		IasHost             string      `json:"IasHost"`
+		ProviderRecipientId string      `json:"ProviderRecipientId,omitempty"`
+		IasGroupId          string      `json:"IasGroupId,omitempty"`
+		XsuaaLevel          *XsuaaLevel `json:"XsuaaLevel,omitempty"`
+		TenantId            string      `json:"TenantId,omitempty"`
+		RoleName            string      `json:"RoleName,omitempty"`
+		Language            string      `json:"Language,omitempty"`
 	}
 
 	RecipientOption func(recipient *Recipient)
@@ -129,14 +129,14 @@ func (n *Notification) Validate() error {
 		return fmt.Errorf("recipients must not be empty")
 	}
 	for _, recipient := range n.Recipients {
-		if err := recipient.XsuaaLevel.Validate(); err != nil {
-			return fmt.Errorf("invalid XSUAA level in recipient: %w", err)
+		if err := recipient.Validate(); err != nil {
+			return fmt.Errorf("invalid recipient: %w", err)
 		}
 	}
 	return nil
 }
 
-func NewNotification(typeKey string, recipients []Recipient, options ...NotificationOption) (*Notification, error) {
+func NewNotification(typeKey string, recipients []Recipient, options ...NotificationOption) *Notification {
 	notification := &Notification{
 		NotificationTypeKey: typeKey,
 		Recipients:          recipients,
@@ -144,10 +144,7 @@ func NewNotification(typeKey string, recipients []Recipient, options ...Notifica
 	for _, option := range options {
 		option(notification)
 	}
-	if err := notification.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid notification:  %w", err)
-	}
-	return notification, nil
+	return notification
 }
 
 func WithID(id string) NotificationOption {
@@ -282,9 +279,10 @@ func WithIsSensitive(isSensitive bool) PropertyOption {
 	}
 }
 
-func NewRecipient(recipientID string, options ...RecipientOption) *Recipient {
+func NewRecipient(recipientID string, iasHost string, options ...RecipientOption) *Recipient {
 	recipient := &Recipient{
 		RecipientId: recipientID,
+		IasHost:     iasHost,
 	}
 	for _, option := range options {
 		option(recipient)
@@ -297,15 +295,10 @@ func WithGlobalUserId(globalUserID string) RecipientOption {
 		r.GlobalUserId = globalUserID
 	}
 }
-func WithIasHost(iasHost string) RecipientOption {
-	return func(r *Recipient) {
-		r.IasHost = iasHost
-	}
-}
 
 func WithXsuaaLevel(xsuaaLevel XsuaaLevel) RecipientOption {
 	return func(r *Recipient) {
-		r.XsuaaLevel = xsuaaLevel
+		r.XsuaaLevel = &xsuaaLevel
 	}
 }
 
@@ -353,33 +346,13 @@ func (r *Recipient) Validate() error {
 	if len(r.RecipientId) == 0 {
 		return fmt.Errorf("recipient ID must not be empty")
 	}
-	if err := r.XsuaaLevel.Validate(); err != nil {
-		return fmt.Errorf("invalid XSUAA level: %w", err)
-	}
-	if len(r.ProviderRecipientId) == 0 {
-		return fmt.Errorf("provider recipient ID must not be empty")
-	}
-	if len(r.IasGroupId) == 0 {
-		return fmt.Errorf("IAS group ID must not be empty")
-	}
-	if len(r.Language) == 0 {
-		return fmt.Errorf("language must not be empty")
-	}
-	if len(r.RoleName) == 0 {
-		return fmt.Errorf("role name must not be empty")
-	}
-	if len(r.TenantId) == 0 {
-		return fmt.Errorf("tenant ID must not be empty")
-	}
-	if err := r.XsuaaLevel.Validate(); err != nil {
-		return fmt.Errorf("invalid XSUAA level: %w", err)
+	if r.XsuaaLevel != nil {
+		if err := r.XsuaaLevel.Validate(); err != nil {
+			return fmt.Errorf("invalid XSUAA level: %w", err)
+		}
 	}
 	if len(r.IasHost) == 0 {
 		return fmt.Errorf("IAS host must not be empty")
 	}
-	if len(r.GlobalUserId) == 0 {
-		return fmt.Errorf("global user ID must not be empty")
-	}
-
 	return nil
 }
