@@ -52,21 +52,15 @@ type (
 		Headers Headers `json:"Headers"`
 		Content Content `json:"Content"`
 	}
-
 	Headers struct {
 		ContentType        string `json:"ContentType"`
 		ContentDisposition string `json:"ContentDisposition"`
 		ContentID          string `json:"ContentId"`
 	}
-
-	HeadersOption func(headers *Headers)
-	Content       struct {
+	Content struct {
 		External External `json:"External"`
 	}
-
-	ContentOption  func(content *Content)
-	ExternalOption func(external *External)
-	External       struct {
+	External struct {
 		Path string `json:"Path"`
 	}
 	TargetParameter struct {
