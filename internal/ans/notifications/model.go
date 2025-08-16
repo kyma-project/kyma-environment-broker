@@ -40,14 +40,14 @@ type (
 	RecipientOption func(recipient *Recipient)
 
 	Property struct {
-		Language     string       `json:"Language,omitempty"`
-		Key          string       `json:"Key"`
-		Value        string       `json:"Value"`
-		PropertyType PropertyType `json:"Type,omitempty"`
-		IsSensitive  *bool        `json:"IsSensitive,omitempty"`
+		Language     string        `json:"Language,omitempty"`
+		Key          string        `json:"Key"`
+		Value        string        `json:"Value"`
+		PropertyType *PropertyType `json:"Type,omitempty"`
+		IsSensitive  *bool         `json:"IsSensitive,omitempty"`
 	}
 
-	PropertyOption func(property *Property) error
+	PropertyOption func(property *Property)
 	Attachment     struct {
 		Headers Headers `json:"Headers"`
 		Content Content `json:"Content"`
@@ -74,10 +74,9 @@ type (
 		Key   string `json:"Key"`
 		Value string `json:"Value"`
 	}
-	TargetParameterOption func(targetParameter *TargetParameter) error
-	PropertyType          string
-	Priority              string
-	XsuaaLevel            string
+	PropertyType string
+	Priority     string
+	XsuaaLevel   string
 )
 
 const (
@@ -219,6 +218,13 @@ func NewTargetParameter(key, value string) TargetParameter {
 	}
 }
 
+func (p *TargetParameter) Validate() error {
+	if len(p.Key) == 0 {
+		return fmt.Errorf("target parameter key must not be empty")
+	}
+	return nil
+}
+
 func NewAttachment(headers Headers, content Content) Attachment {
 	return Attachment{
 		Headers: headers,
@@ -252,9 +258,7 @@ func NewProperty(key, value string, options ...PropertyOption) (*Property, error
 		Value: value,
 	}
 	for _, option := range options {
-		if err := option(property); err != nil {
-			return nil, err
-		}
+		option(property)
 	}
 	if len(key) == 0 {
 		return nil, fmt.Errorf("property key must not be empty")
@@ -262,20 +266,27 @@ func NewProperty(key, value string, options ...PropertyOption) (*Property, error
 	return property, nil
 }
 
-func WithType(propertyType PropertyType) PropertyOption {
-	return func(p *Property) error {
-		if err := propertyType.Validate(); err != nil {
+func (p *Property) Validate() error {
+	if len(p.Key) == 0 {
+		return fmt.Errorf("property key must not be empty")
+	}
+	if p.PropertyType != nil {
+		if err := p.PropertyType.Validate(); err != nil {
 			return fmt.Errorf("invalid property type: %w", err)
 		}
-		p.PropertyType = propertyType
-		return nil
+	}
+	return nil
+}
+
+func WithType(propertyType PropertyType) PropertyOption {
+	return func(p *Property) {
+		p.PropertyType = &propertyType
 	}
 }
 
 func WithIsSensitive(isSensitive bool) PropertyOption {
-	return func(p *Property) error {
+	return func(p *Property) {
 		p.IsSensitive = &isSensitive
-		return nil
 	}
 }
 
@@ -321,12 +332,8 @@ func WithLanguage(language string) RecipientOption {
 }
 
 func WithPropertyLanguage(language string) PropertyOption {
-	return func(r *Property) error {
-		if len(language) == 0 {
-			return fmt.Errorf("language must not be empty")
-		}
+	return func(r *Property) {
 		r.Language = language
-		return nil
 	}
 }
 
