@@ -1363,6 +1363,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		// given
 		cfg := fixConfig()
 		cfg.Broker.UseAdditionalOIDCSchema = true
+		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -1394,6 +1395,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 									"usernameClaim": "fakeUsernameClaim",
 									"groupsPrefix": "groups-prefix",
 									"usernamePrefix": "::",
+"encodedJwksArray": "andrcy10b2tlbi1kZWZhdWx0",
 									"requiredClaims": ["claim=value"]
 								}
 							]

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/ans"
+	"github.com/kyma-project/kyma-environment-broker/internal/ans/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -31,12 +33,13 @@ type StagedManager struct {
 
 	mu sync.RWMutex
 
-	speedFactor int64
-	cfg         StagedManagerConfiguration
+	speedFactor         int64
+	cfg                 StagedManagerConfiguration
+	notificationService *ans.Service
 }
 
 type StagedManagerConfiguration struct {
-	// Max time of processing step by a worker without returning to the queue
+	// Max time of processing a step by a worker without returning to the queue
 	MaxStepProcessingTime time.Duration `envconfig:"default=2m"`
 	WorkersAmount         int           `envconfig:"default=20"`
 }
@@ -69,14 +72,15 @@ func (s *stage) AddStep(step Step, cnd StepCondition) {
 	})
 }
 
-func NewStagedManager(storage storage.Operations, pub event.Publisher, operationTimeout time.Duration, cfg StagedManagerConfiguration, logger *slog.Logger) *StagedManager {
+func NewStagedManager(storage storage.Operations, pub event.Publisher, operationTimeout time.Duration, cfg StagedManagerConfiguration, service *ans.Service, logger *slog.Logger) *StagedManager {
 	return &StagedManager{
-		log:              logger,
-		operationStorage: storage,
-		publisher:        pub,
-		operationTimeout: operationTimeout,
-		speedFactor:      1,
-		cfg:              cfg,
+		log:                 logger,
+		operationStorage:    storage,
+		publisher:           pub,
+		operationTimeout:    operationTimeout,
+		speedFactor:         1,
+		cfg:                 cfg,
+		notificationService: service,
 	}
 }
 
@@ -154,6 +158,11 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 				continue
 			}
 			operation.EventInfof("processing step: %v", step.Name())
+			err = m.sendResourceEventForStep(&processedOperation, step.Name(), logStep)
+			if err != nil {
+				logOperation := logStep.With("step", step.Name(), "operationID", processedOperation.ID)
+				logOperation.Error(fmt.Sprintf("Failed to send resource event for step %s: %s", step.Name(), err))
+			}
 
 			processedOperation, when, err = m.runStep(step, processedOperation, logStep)
 			if err != nil {
@@ -310,4 +319,40 @@ func (m *StagedManager) publishDeprovisioningSucceeded(operation *internal.Opera
 			},
 		)
 	}
+}
+
+func (m *StagedManager) sendResourceEventForStep(operation *internal.Operation, stepName string, logger *slog.Logger) error {
+	if m.notificationService != nil {
+		logger.Info("Sending resource event to ANS")
+
+		event, err := events.NewResourceEvent(
+			"KEB:step-event",
+			stepName,
+			fmt.Sprintf("%s:%s", operation.ShootName, operation.Type),
+			events.NewResource("broker",
+				"keb",
+				"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
+				"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
+				events.WithResourceGlobalAccount("8cd57dc2-edb2-45e0-af8b-7d881006e516")),
+			events.SeverityInfo,
+			events.CategoryNotification,
+			events.VisibilityOwnerSubAccount,
+			*events.NewNotificationMapping("POC_WebOnlyType4",
+				*events.NewRecipients(
+					[]events.XsuaaRecipient{*events.NewXsuaaRecipient(events.LevelSubaccount, "2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad", []events.RoleName{"Subaccount admin"})},
+					nil)),
+		)
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create event: %s", err))
+			return fmt.Errorf("cannot create event")
+		}
+		err = m.notificationService.PostEvent(*event)
+		if err != nil {
+			logger.Error("Failed to post event to ANS", "error", err)
+			return fmt.Errorf("failed to post event to ANS: %w", err)
+		} else {
+			logger.Info("Event posted to ANS successfully")
+		}
+	}
+	return nil
 }

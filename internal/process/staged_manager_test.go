@@ -173,7 +173,7 @@ func SetupStagedManager(t *testing.T, op internal.Operation) (*process.StagedMan
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
-	mgr := process.NewStagedManager(memoryStorage.Operations(), eventCollector, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
+	mgr := process.NewStagedManager(memoryStorage.Operations(), eventCollector, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, nil, l)
 	mgr.SpeedUp(100000)
 	mgr.DefineStages([]string{"stage-1", "stage-2"})
 
@@ -342,7 +342,7 @@ func SetupStagedManager2(t *testing.T, op internal.Operation) (*process.StagedMa
 		Level: slog.LevelDebug,
 	}))
 	pubSub := event.NewPubSub(nil)
-	mgr := process.NewStagedManager(memoryStorage.Operations(), pubSub, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
+	mgr := process.NewStagedManager(memoryStorage.Operations(), pubSub, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, nil, l)
 	mgr.SpeedUp(100000)
 	mgr.DefineStages([]string{"stage-1", "stage-2"})
 

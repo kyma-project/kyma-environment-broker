@@ -484,7 +484,50 @@ cis:
     secretKey: secret
 # =================================================.
 
-
+# =================================================
+# ANS Related Settings
+# =================================================
+ans:
+  # If true, enables the ANS integration, which allows the broker to send notifications to the ANS service
+  enabled: false
+  notifications:
+    # The OAuth2 token endpoint (authorization URL) for ANS notifications, used to get access token
+    authURL: "TBD"
+    # The endpoint URL for the ANS notification service, used to send notifications
+    serviceURL: "TBD"
+    # The name of the Kubernetes Secret containing the ANS client ID and client secret
+    secretName: "ans-notifications-creds"
+    # Minimum interval between requests to the ANS notifications API
+    rateLimitingInterval: "2s"
+    # Maximum number of requests per interval to the ANS notifications API
+    maxRequestsPerInterval: "5"
+    # The OAuth2 client ID used for authenticating requests to the ANS notification service
+    id: "TBD"
+    # The OAuth2 client secret authenticating requests to the ANS notification service
+    secret: "TBD"
+    # The key in the Kubernetes Secret that contains the client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the client secret
+    secretKey: secret
+  events:
+    # The OAuth2 token endpoint (authorization URL) for ANS, used to get access token
+    authURL: "TBD"
+    # The endpoint URL for the ANS service, used to send events
+    serviceURL: "TBD"
+    # The name of the Kubernetes Secret containing the ANS client ID and client secret
+    secretName: "ans-creds"
+    # Minimum interval between requests to the ANS events API
+    rateLimitingInterval: "2s"
+    # Maximum number of requests per interval to the ANS events API
+    maxRequestsPerInterval: "5"
+    # The OAuth2 client ID used for authenticating requests to the ANS events service
+    id: "TBD"
+    # The OAuth2 client secret used together with the client ID for authentication
+    secret: "TBD"
+    # The key in the Kubernetes Secret that contains the ANS client ID
+    clientIdKey: id
+    # The key in the Kubernetes Secret that contains the ANS client secret
+    secretKey: secret
 
 # =================================================
 # Deprovision Retrigger Job Settings

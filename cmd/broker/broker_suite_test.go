@@ -202,7 +202,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, nil, log.With("provisioning", "manager"))
 
 	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	require.NoError(t, err)
@@ -217,12 +217,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
+	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, nil, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec), schemaService, plansSpec, configProvider)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, nil, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
 		accountProvider, k8sClientProvider, cli, configProvider, log)
@@ -367,7 +367,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
-		providerSpec, configProvider, planSpec)
+		providerSpec, configProvider, planSpec, nil)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

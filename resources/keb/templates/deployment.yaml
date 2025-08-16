@@ -75,6 +75,44 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
+            - name: APP_ANS_ENABLED
+              value: "{{ .Values.ans.enabled }}"
+            - name: APP_ANS_EVENTS_AUTH_URL
+              value: "{{ .Values.ans.events.authURL }}"
+            - name: APP_ANS_EVENTS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ans.notifications.secretName | required "please specify .Values.ans.events.secretName" | quote }}
+                  key: {{ .Values.ans.notifications.clientIdKey | required "please specify .Values.ans.events.clientIdKey" | quote }}
+            - name: APP_ANS_EVENTS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ans.notifications.secretName | required "please specify .Values.ans.events.secretName" | quote }}
+                  key: {{ .Values.ans.notifications.secretKey | required "please specify .Values.ans.events.secretKey" | quote }}
+            - name: APP_ANS_EVENTS_MAX_REQUESTS_PER_INTERVAL
+              value: {{ .Values.ans.events.maxRequestsPerInterval | quote }}
+            - name: APP_ANS_EVENTS_RATE_LIMITING_INTERVAL
+              value: {{ .Values.ans.events.rateLimitingInterval | quote }}
+            - name: APP_ANS_EVENTS_SERVICE_URL
+              value: "{{ .Values.ans.events.serviceURL }}"
+            - name: APP_ANS_NOTIFICATIONS_AUTH_URL
+              value: "{{ .Values.ans.notifications.authURL }}"
+            - name: APP_ANS_NOTIFICATIONS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ans.notifications.secretName | required "please specify .Values.ans.notifications.secretName" | quote }}
+                  key: {{ .Values.ans.notifications.clientIdKey | required "please specify .Values.ans.notifications.clientIdKey" | quote }}
+            - name: APP_ANS_NOTIFICATIONS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.ans.notifications.secretName | required "please specify .Values.ans.notifications.secretName" | quote }}
+                  key: {{ .Values.ans.notifications.secretKey | required "please specify .Values.ans.notifications.secretKey" | quote }}
+            - name: APP_ANS_NOTIFICATIONS_MAX_REQUESTS_PER_INTERVAL
+              value: {{ .Values.ans.notifications.maxRequestsPerInterval | quote }}
+            - name: APP_ANS_NOTIFICATIONS_RATE_LIMITING_INTERVAL
+              value: {{ .Values.ans.notifications.rateLimitingInterval | quote }}
+            - name: APP_ANS_NOTIFICATIONS_SERVICE_URL
+              value: "{{ .Values.ans.notifications.serviceURL }}"
             - name: APP_ARCHIVING_DRY_RUN
               value: "{{ .Values.archiving.dryRun }}"
             - name: APP_ARCHIVING_ENABLED

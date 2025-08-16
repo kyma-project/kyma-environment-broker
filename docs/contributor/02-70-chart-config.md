@@ -183,6 +183,25 @@
 | cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | None |
 | cis.entitlements.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS Entitlements client ID. | `id` |
 | cis.entitlements.<br>secretKey | The key in the Kubernetes Secret that contains the CIS Entitlements client secret. | `secret` |
+| ans.enabled | If true, enables the ANS integration, which allows the broker to send notifications to the ANS service | `False` |
+| ans.notifications.<br>authURL | The OAuth2 token endpoint (authorization URL) for ANS notifications, used to get access token | None |
+| ans.notifications.<br>serviceURL | The endpoint URL for the ANS notification service, used to send notifications | None |
+| ans.notifications.<br>secretName | The name of the Kubernetes Secret containing the ANS client ID and client secret | `ans-notifications-creds` |
+| ans.notifications.<br>rateLimitingInterval | Minimum interval between requests to the ANS notifications API | `2s` |
+| ans.notifications.<br>maxRequestsPerInterval | Maximum number of requests per interval to the ANS notifications API | `5` |
+| ans.notifications.id | The OAuth2 client ID used for authenticating requests to the ANS notification service | None |
+| ans.notifications.<br>secret | The OAuth2 client secret authenticating requests to the ANS notification service | None |
+| ans.notifications.<br>clientIdKey | The key in the Kubernetes Secret that contains the client ID | `id` |
+| ans.notifications.<br>secretKey | The key in the Kubernetes Secret that contains the client secret | `secret` |
+| ans.events.authURL | The OAuth2 token endpoint (authorization URL) for ANS, used to get access token | None |
+| ans.events.<br>serviceURL | The endpoint URL for the ANS service, used to send events | None |
+| ans.events.<br>secretName | The name of the Kubernetes Secret containing the ANS client ID and client secret | `ans-creds` |
+| ans.events.<br>rateLimitingInterval | Minimum interval between requests to the ANS events API | `2s` |
+| ans.events.<br>maxRequestsPerInterval | Maximum number of requests per interval to the ANS events API | `5` |
+| ans.events.id | The OAuth2 client ID used for authenticating requests to the ANS events service | None |
+| ans.events.secret | The OAuth2 client secret used together with the client ID for authentication | None |
+| ans.events.<br>clientIdKey | The key in the Kubernetes Secret that contains the ANS client ID | `id` |
+| ans.events.secretKey | The key in the Kubernetes Secret that contains the ANS client secret | `secret` |
 | deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `True` |
 | deprovisionRetrigger.<br>enabled | If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted. | `True` |
 | deprovisionRetrigger.<br>schedule | - | `0 2 * * *` |
