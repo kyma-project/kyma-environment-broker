@@ -17,11 +17,11 @@ type (
 		Properties                []Property        `json:"Properties,omitempty"`
 		TargetParameters          []TargetParameter `json:"TargetParameters,omitempty"`
 		Attachments               []Attachment      `json:"Attachments,omitempty"`
-		NavigationTargetObject    *string           `json:"NavigationTargetObject,omitempty"`
-		NavigationTargetAction    *string           `json:"NavigationTargetAction,omitempty"`
-		ActorID                   *string           `json:"ActorId,omitempty"`
-		ActorDisplayText          *string           `json:"ActorDisplayText,omitempty"`
-		ActorImageURL             *string           `json:"ActorImageUrl,omitempty"`
+		NavigationTargetObject    string            `json:"NavigationTargetObject,omitempty"`
+		NavigationTargetAction    string            `json:"NavigationTargetAction,omitempty"`
+		ActorID                   string            `json:"ActorId,omitempty"`
+		ActorDisplayText          string            `json:"ActorDisplayText,omitempty"`
+		ActorImageURL             string            `json:"ActorImageUrl,omitempty"`
 	}
 
 	NotificationOption func(notification *Notification)
@@ -53,20 +53,19 @@ type (
 		Content Content `json:"Content"`
 	}
 
-	AttachmentOption func(attachment *Attachment) error
-	Headers          struct {
+	Headers struct {
 		ContentType        string `json:"ContentType"`
 		ContentDisposition string `json:"ContentDisposition"`
 		ContentID          string `json:"ContentId"`
 	}
 
-	HeadersOption func(headers *Headers) error
+	HeadersOption func(headers *Headers)
 	Content       struct {
 		External External `json:"External"`
 	}
 
-	ContentOption  func(content *Content) error
-	ExternalOption func(external *External) error
+	ContentOption  func(content *Content)
+	ExternalOption func(external *External)
 	External       struct {
 		Path string `json:"Path"`
 	}
@@ -225,30 +224,18 @@ func (p *TargetParameter) Validate() error {
 	return nil
 }
 
-func NewAttachment(headers Headers, content Content) Attachment {
+func NewAttachment(contentType, contentDisposition, contentID, externalPath string) Attachment {
 	return Attachment{
-		Headers: headers,
-		Content: content,
-	}
-}
-
-func NewHeaders(contentType, contentDisposition, contentID string) Headers {
-	return Headers{
-		ContentType:        contentType,
-		ContentDisposition: contentDisposition,
-		ContentID:          contentID,
-	}
-}
-
-func NewContent(external External) Content {
-	return Content{
-		External: external,
-	}
-}
-
-func NewExternal(path string) External {
-	return External{
-		Path: path,
+		Headers: Headers{
+			ContentType:        contentType,
+			ContentDisposition: contentDisposition,
+			ContentID:          contentID,
+		},
+		Content: Content{
+			External: External{
+				Path: externalPath,
+			},
+		},
 	}
 }
 
