@@ -42,8 +42,8 @@ func Test_Validations(t *testing.T) {
 }
 
 func Test_ResourceWithMandatoryFieldsOnly(t *testing.T) {
-	resource, err := NewResource("resource1", "resource", "subaccount", "resourceGroup")
-	require.NoError(t, err)
+	resource := NewResource("resource1", "resource", "subaccount", "resourceGroup")
+	require.NoError(t, resource.Validate())
 	resourceJSON, err := json.Marshal(resource)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{
@@ -186,14 +186,14 @@ func Test_NewResourceEvent(t *testing.T) {
 	require.NoError(t, notificationMapping.Validate())
 	notificationMapping.Navigation = navigation
 
-	resource, err := NewResource("resourceType", "resourceName", "subAccount", "resourceGroup")
-	require.NoError(t, err)
+	resource := NewResource("resourceType", "resourceName", "subAccount", "resourceGroup")
+	require.NoError(t, resource.Validate())
 
 	resourceEvent, err := NewResourceEvent(
 		"eventType",
 		"body",
 		"subject",
-		*resource,
+		resource,
 		SeverityInfo,
 		CategoryNotification,
 		VisibilityOwnerSubAccount,
