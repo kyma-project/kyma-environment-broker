@@ -7,12 +7,12 @@ type (
 		ID                        string            `json:"id,omitempty"`
 		OriginID                  string            `json:"originId,omitempty"`
 		NotificationTypeKey       string            `json:"NotificationTypeKey"`
-		NotificationTypeID        *string           `json:"NotificationTypeId,omitempty"`
-		NotificationTypeVersion   *string           `json:"NotificationTypeVersion,omitempty"`
+		NotificationTypeID        string            `json:"NotificationTypeId,omitempty"`
+		NotificationTypeVersion   string            `json:"NotificationTypeVersion,omitempty"`
 		NotificationTypeTimestamp *string           `json:"NotificationTypeTimestamp,omitempty"`
-		NotificationTemplateKey   *string           `json:"NotificationTemplateKey,omitempty"`
+		NotificationTemplateKey   string            `json:"NotificationTemplateKey,omitempty"`
 		Priority                  *Priority         `json:"Priority,omitempty"`
-		ProviderID                *string           `json:"ProviderId,omitempty"`
+		ProviderID                string            `json:"ProviderId,omitempty"`
 		Recipients                []Recipient       `json:"Recipients"`
 		Properties                []Property        `json:"Properties,omitempty"`
 		TargetParameters          []TargetParameter `json:"TargetParameters,omitempty"`
@@ -153,13 +153,13 @@ func WithOriginID(originID string) NotificationOption {
 
 func WithNotificationTypeID(notificationTypeID string) NotificationOption {
 	return func(n *Notification) {
-		n.NotificationTypeID = &notificationTypeID
+		n.NotificationTypeID = notificationTypeID
 	}
 }
 
 func WithNotificationTypeVersion(notificationTypeVersion string) NotificationOption {
 	return func(n *Notification) {
-		n.NotificationTypeVersion = &notificationTypeVersion
+		n.NotificationTypeVersion = notificationTypeVersion
 	}
 }
 
@@ -171,7 +171,7 @@ func WithNotificationTypeTimestamp(notificationTypeTimestamp string) Notificatio
 
 func WithNotificationTemplateKey(notificationTemplateKey string) NotificationOption {
 	return func(n *Notification) {
-		n.NotificationTemplateKey = &notificationTemplateKey
+		n.NotificationTemplateKey = notificationTemplateKey
 	}
 }
 
@@ -182,7 +182,7 @@ func WithPriority(priority Priority) NotificationOption {
 }
 func WithProviderID(providerID string) NotificationOption {
 	return func(n *Notification) {
-		n.ProviderID = &providerID
+		n.ProviderID = providerID
 	}
 }
 
@@ -231,6 +231,22 @@ func NewAttachment(contentType, contentDisposition, contentID, externalPath stri
 			},
 		},
 	}
+}
+
+func (a *Attachment) Validate() error {
+	if len(a.Headers.ContentType) == 0 {
+		return fmt.Errorf("attachment content type must not be empty")
+	}
+	if len(a.Headers.ContentDisposition) == 0 {
+		return fmt.Errorf("attachment content disposition must not be empty")
+	}
+	if len(a.Headers.ContentID) == 0 {
+		return fmt.Errorf("attachment content ID must not be empty")
+	}
+	if len(a.Content.External.Path) == 0 {
+		return fmt.Errorf("attachment external path must not be empty")
+	}
+	return nil
 }
 
 func NewProperty(key, value string, options ...PropertyOption) *Property {
