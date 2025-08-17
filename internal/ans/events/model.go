@@ -221,9 +221,9 @@ func (r Resource) Validate() error {
 	return nil
 }
 
-func WithEventTimeStamp(eventTimeStamp *int64) ResourceEventOption {
+func WithEventTimeStamp(eventTimeStamp int64) ResourceEventOption {
 	return func(r *ResourceEvent) {
-		r.EventTimeStamp = eventTimeStamp
+		r.EventTimeStamp = &eventTimeStamp
 	}
 }
 

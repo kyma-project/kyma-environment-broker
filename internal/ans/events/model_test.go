@@ -239,3 +239,122 @@ func Test_NewResourceEvent(t *testing.T) {
   }
 }`, string(resourceEventJSON))
 }
+
+func Test_NewResourceWithAllOptions(t *testing.T) {
+	resource := NewResource("resourceType", "resourceName", "subAccount", "resourceGroup",
+		WithInstance("instance1"),
+		WithResourceGlobalAccount("globalAccount"),
+		WithResourceTags(map[string]string{"key1": "value1", "key2": "value2"}),
+	)
+	require.NoError(t, resource.Validate())
+	resourceJSON, err := json.Marshal(resource)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+  "resourceType" : "resourceType",
+  "resourceName" : "resourceName",
+  "resourceInstance" : "instance1",
+  "subAccount" : "subAccount",
+  "globalAccount" : "globalAccount",
+  "resourceGroup" : "resourceGroup",
+  "tags" : {
+    "key1" : "value1",
+    "key2" : "value2"
+  }
+}`, string(resourceJSON))
+}
+
+func Test_NewResourceEventWithAllOptions(t *testing.T) {
+	userRecipient := NewUserRecipient("user1", "test.sap.com")
+	require.NoError(t, userRecipient.Validate())
+	xsuaaRecipient := NewXsuaaRecipient(LevelSubaccount, "recipient1", []RoleName{"role1"})
+	require.NoError(t, xsuaaRecipient.Validate())
+	recipients := NewRecipients([]XsuaaRecipient{*xsuaaRecipient}, []UserRecipient{*userRecipient})
+	require.NoError(t, recipients.Validate())
+
+	navigation := NewNavigation("action", "object", map[string]string{"param1": "value1"})
+	require.NoError(t, navigation.Validate())
+
+	notificationMapping := NewNotificationMapping("typeKey", *recipients, WithNotificationTemplateKey("templateKey"))
+	require.NoError(t, notificationMapping.Validate())
+	notificationMapping.Navigation = navigation
+
+	resource := NewResource("resourceType", "resourceName", "subAccount", "resourceGroup",
+		WithInstance("instance1"),
+		WithResourceGlobalAccount("globalAccount"),
+		WithResourceTags(map[string]string{"key1": "value1", "key2": "value2"}),
+	)
+	require.NoError(t, resource.Validate())
+
+	resourceEvent, err := NewResourceEvent(
+		"eventType",
+		"body",
+		"subject",
+		resource,
+		SeverityInfo,
+		CategoryNotification,
+		VisibilityOwnerSubAccount,
+		*notificationMapping,
+		WithID("eventID"),
+		WithBody("body"),
+		WithSubject("subject"),
+		WithResource(resource),
+		WithSeverity(SeverityInfo),
+		WithCategory(CategoryNotification),
+		WithVisibility(VisibilityOwnerSubAccount),
+		WithEventType("eventType"),
+		WithPriority(1),
+		WithRegion("cf-eu12"),
+		WithRegionType("cf-eu12"),
+		WithEventTimeStamp(1735689600),
+	)
+	require.NoError(t, err)
+	resourceEventJSON, err := json.Marshal(resourceEvent)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{
+  "id" : "eventID",
+  "body" : "body",
+  "subject" : "subject",
+  "eventType" : "eventType",
+  "priority" : 1,
+  "resource" : {
+    "resourceType" : "resourceType",
+    "resourceName" : "resourceName",
+    "resourceInstance" : "instance1",
+    "subAccount" : "subAccount",
+    "globalAccount" : "globalAccount",
+    "resourceGroup" : "resourceGroup",
+    "tags" : {
+      "key1" : "value1",
+      "key2" : "value2"
+    }
+  },
+  "eventTimeStamp" : 1735689600,
+  "region" : "cf-eu12",
+  "regionType" : "cf-eu12",
+  "severity" : "INFO",
+  "category" : "NOTIFICATION",
+  "visibility" : "OWNER_SUBACCOUNT",
+  "notificationMapping" : {
+    "notificationTypeKey" : "typeKey",
+    "notificationTemplateKey" : "templateKey",
+    "recipients" : {
+      "xsuaa" : [ {
+        "level" : "SUBACCOUNT",
+        "tenantId" : "recipient1",
+        "roleNames" : [ "role1" ]
+      } ],
+      "users" : [ {
+        "email" : "user1",
+        "iasHost" : "test.sap.com"
+      } ]
+    },
+    "navigation" : {
+      "action" : "action",
+      "object" : "object",
+      "parameters" : {
+        "param1" : "value1"
+      }
+    }
+  }
+}`, string(resourceEventJSON))
+}
