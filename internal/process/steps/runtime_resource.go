@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -115,7 +116,12 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
 	retryOperation, retry, err := s.operationManager.RetryOperationWithCreatedAt(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
 	if retryOperation.State == domain.Failed {
-		log.Error(fmt.Sprintf("runtime resource status: %v; failing operation and removing Runtime CR", runtime.Status))
+		runtimeStatusJSON, errMarshal := json.MarshalIndent(runtime.Status, "", "  ")
+		if errMarshal != nil {
+			log.Error(fmt.Sprintf("failed to marshal runtime status: %v", errMarshal))
+		} else {
+			log.Error(fmt.Sprintf("runtime resource status (JSON):\n%s\nfailing operation and removing Runtime CR", string(runtimeStatusJSON)))
+		}
 		err = s.k8sClient.Delete(context.Background(), runtime)
 		if err != nil {
 			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
