@@ -258,6 +258,8 @@ github.com/kyma-project/ans-manager v0.0.0-20250818112422-b526e07e3e7b h1:yqdLYm
 github.com/kyma-project/ans-manager v0.0.0-20250818112422-b526e07e3e7b/go.mod h1:Rs9MkuXyvb3wqEo7UNmG8TSsLeasjTiAJTkGhPqS92o=
 github.com/kyma-project/ans-manager v0.0.0-20250818114939-c7471b8efab1 h1:C/FeMekpud1Ym/F65EcFTlQDSNqN6UO3vGMpyXuvdu4=
 github.com/kyma-project/ans-manager v0.0.0-20250818114939-c7471b8efab1/go.mod h1:Rs9MkuXyvb3wqEo7UNmG8TSsLeasjTiAJTkGhPqS92o=
+github.com/kyma-project/ans-manager v0.0.1 h1:2ZJBbMe79fTdGbEWxD8lAN3NLrEyFfxZ0PwUFdTSd8g=
+github.com/kyma-project/ans-manager v0.0.1/go.mod h1:Rs9MkuXyvb3wqEo7UNmG8TSsLeasjTiAJTkGhPqS92o=
 github.com/kyma-project/infrastructure-manager v0.0.0-20250616104114-8db79c8bc6d5 h1:LF2Zgh9SAYIgS0rRZx2PRZROZcsscbrxNLtyeQe6NIo=
 github.com/kyma-project/infrastructure-manager v0.0.0-20250616104114-8db79c8bc6d5/go.mod h1:eKSC5VzfaO9yNJZapCoa24YFzE/Cpa4yv1rYBrgD7yM=
 github.com/labstack/echo/v4 v4.13.4 h1:oTZZW+T3s9gAu5L8vmzihV7/lkXGZuITzTQkTEhcXEA=

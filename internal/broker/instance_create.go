@@ -15,6 +15,9 @@ import (
 	"slices"
 	"strings"
 
+	ans "github.com/kyma-project/ans-manager"
+	"github.com/kyma-project/ans-manager/events"
+	"github.com/kyma-project/ans-manager/notifications"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -291,12 +294,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
-	//err = b.notifyBTPCockpit(operation, logger)
-	//if err != nil {
-	//	logger.Error(fmt.Sprintf("failed to notify BTP cockpit: %s", err))
-	//}
+	err = b.notifyBTPCockpit(operation, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to notify BTP cockpit: %s", err))
+	}
 
-	//err = b.sendResourceEvent(logger)
+	err = b.sendResourceEvent(logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to send resource event: %s", err))
 	}
@@ -311,93 +314,61 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}, nil
 }
 
-//func (b *ProvisionEndpoint) notifyBTPCockpit(operation internal.ProvisioningOperation, logger *slog.Logger) error {
-//	if b.notificationService != nil {
-//		recipient, err := notifications.NewRecipient("jaroslaw.pieszka@sap.com", notifications.WithIasHost("accounts.sap.com"))
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create recipient for notification: %s", err))
-//			return fmt.Errorf("cannot create recipient for notification")
-//		}
-//		property, err := notifications.NewProperty("shoot", operation.ShootName)
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create property for notification: %s", err))
-//			return fmt.Errorf("cannot create property for notification")
-//		}
-//		notification, err := notifications.NewNotification("POC_WebOnlyType",
-//			[]notifications.Recipient{*recipient},
-//			notifications.WithProperties([]notifications.Property{*property}))
-//
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create notification: %s", err))
-//			return fmt.Errorf("cannot create notification")
-//		}
-//		err = b.notificationService.PostNotification(*notification)
-//		if err != nil {
-//			logger.Error("Failed to post notification to ANS", "error", err)
-//			return fmt.Errorf("Failed to post notification to ANS")
-//		} else {
-//			logger.Info("Notification posted to ANS successfully")
-//		}
-//	}
-//	return nil
-//}
+func (b *ProvisionEndpoint) notifyBTPCockpit(operation internal.ProvisioningOperation, logger *slog.Logger) error {
+	if b.notificationService != nil {
 
-//func (b *ProvisionEndpoint) sendResourceEvent(logger *slog.Logger) error {
-//	if b.notificationService != nil {
-//		recipient, err := events.NewXsuaaRecipient(events.LevelSubaccount, "2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad", []events.RoleName{"Subaccount admin"})
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create recipient for event: %s", err))
-//			return fmt.Errorf("cannot create recipient for event")
-//		}
-//		recipients, err := events.NewRecipients([]events.XsuaaRecipient{*recipient}, nil)
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create recipients for event: %s", err))
-//			return fmt.Errorf("cannot create recipients for event")
-//		}
-//
-//		notificationMapping, err := events.NewNotificationMapping("POC_WebOnlyType2", *recipients)
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create recipient for event: %s", err))
-//			return fmt.Errorf("cannot create notification mapping for event")
-//
-//		}
-//		logger.Info("Sending resource event to ANS")
-//		eventTime := time.Now().UnixMilli()
-//		resource, err := events.NewResource("broker",
-//			"keb",
-//			"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
-//			"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
-//			events.WithResourceGlobalAccount("8cd57dc2-edb2-45e0-af8b-7d881006e516"))
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create resource for event: %s", err))
-//			return fmt.Errorf("cannot create resource for event")
-//
-//		}
-//		event, err := events.NewResourceEvent(
-//			"POC-test-KEB-event",
-//			"Test body",
-//			"PoC for KEB",
-//			*resource,
-//			&eventTime,
-//			events.SeverityInfo,
-//			events.CategoryNotification,
-//			events.VisibilityOwnerSubAccount,
-//			*notificationMapping,
-//		)
-//		if err != nil {
-//			logger.Error(fmt.Sprintf("cannot create event: %s", err))
-//			return fmt.Errorf("cannot create event")
-//		}
-//		err = b.notificationService.PostEvent(*event)
-//		if err != nil {
-//			logger.Error("Failed to post event to ANS", "error", err)
-//			return fmt.Errorf("failed to post event to ANS: %w", err)
-//		} else {
-//			logger.Info("Event posted to ANS successfully")
-//		}
-//	}
-//	return nil
-//}
+		notification := notifications.NewNotification("POC_WebOnlyType",
+			[]notifications.Recipient{*notifications.NewRecipient("jaroslaw.pieszka@sap.com", "accounts.sap.com")},
+			notifications.WithProperties([]notifications.Property{*notifications.NewProperty("shoot", operation.ShootName)}))
+
+		err := b.notificationService.PostNotification(*notification)
+
+		if err != nil {
+			logger.Error("Failed to post notification to ANS", "error", err)
+			return fmt.Errorf("failed to post notification to ANS")
+		} else {
+			logger.Info("Notification posted to ANS successfully")
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) sendResourceEvent(logger *slog.Logger) error {
+	if b.notificationService != nil {
+
+		logger.Info("Sending resource event to ANS")
+		event, err := events.NewResourceEvent(
+			"POC-test-KEB-event",
+			"Test body",
+			"PoC for KEB",
+			events.NewResource("broker",
+				"keb",
+				"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
+				"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
+				events.WithResourceGlobalAccount("8cd57dc2-edb2-45e0-af8b-7d881006e516")),
+			events.SeverityInfo,
+			events.CategoryNotification,
+			events.VisibilityOwnerSubAccount,
+			*events.NewNotificationMapping("POC_WebOnlyType2",
+				*events.NewRecipients(
+					[]events.XsuaaRecipient{*events.NewXsuaaRecipient(events.LevelSubaccount,
+						"2fd47ed4-dd54-40b5-99d8-36c4dc3b8cad",
+						[]events.RoleName{"Subaccount admin"})}, nil)),
+		)
+		if err != nil {
+			logger.Error(fmt.Sprintf("cannot create event: %s", err))
+			return fmt.Errorf("cannot create event")
+		}
+		err = b.notificationService.PostEvent(*event)
+		if err != nil {
+			logger.Error("Failed to post event to ANS", "error", err)
+			return fmt.Errorf("failed to post event to ANS: %w", err)
+		} else {
+			logger.Info("Event posted to ANS successfully")
+		}
+	}
+	return nil
+}
 
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
 	parameters.Kubeconfig = "*****"

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	ans "github.com/kyma-project/ans-manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -18,9 +19,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
-	"github.com/kyma-project/ans-manager/ans_manager"
 	"github.com/kyma-project/ans-manager/events"
-	"github.com/kyma-project/ans-manager/notifications"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
