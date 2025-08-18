@@ -238,6 +238,15 @@ jobs:
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Generate environment docs
+        run: make generate-env-docs   
+
       - name: Check if any PR was merged during release
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
