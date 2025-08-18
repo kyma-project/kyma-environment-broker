@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -193,4 +194,12 @@ func (c failingK8sClient) RESTMapper() meta.RESTMapper {
 
 func (c failingK8sClient) SubResource(s string) client.SubResourceClient {
 	panic("not implemented")
+}
+
+func (c failingK8sClient) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return schema.GroupVersionKind{}, fmt.Errorf("not implemented")
+}
+
+func (c failingK8sClient) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return false, fmt.Errorf("not implemented")
 }
