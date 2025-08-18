@@ -19,8 +19,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
-	"github.com/kyma-project/kyma-environment-broker/internal/ans"
-	"github.com/kyma-project/kyma-environment-broker/internal/ans/notifications"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -293,10 +291,10 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
-	err = b.notifyBTPCockpit(operation, logger)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to notify BTP cockpit: %s", err))
-	}
+	//err = b.notifyBTPCockpit(operation, logger)
+	//if err != nil {
+	//	logger.Error(fmt.Sprintf("failed to notify BTP cockpit: %s", err))
+	//}
 
 	//err = b.sendResourceEvent(logger)
 	if err != nil {
@@ -313,36 +311,36 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}, nil
 }
 
-func (b *ProvisionEndpoint) notifyBTPCockpit(operation internal.ProvisioningOperation, logger *slog.Logger) error {
-	if b.notificationService != nil {
-		recipient, err := notifications.NewRecipient("jaroslaw.pieszka@sap.com", notifications.WithIasHost("accounts.sap.com"))
-		if err != nil {
-			logger.Error(fmt.Sprintf("cannot create recipient for notification: %s", err))
-			return fmt.Errorf("cannot create recipient for notification")
-		}
-		property, err := notifications.NewProperty("shoot", operation.ShootName)
-		if err != nil {
-			logger.Error(fmt.Sprintf("cannot create property for notification: %s", err))
-			return fmt.Errorf("cannot create property for notification")
-		}
-		notification, err := notifications.NewNotification("POC_WebOnlyType",
-			[]notifications.Recipient{*recipient},
-			notifications.WithProperties([]notifications.Property{*property}))
-
-		if err != nil {
-			logger.Error(fmt.Sprintf("cannot create notification: %s", err))
-			return fmt.Errorf("cannot create notification")
-		}
-		err = b.notificationService.PostNotification(*notification)
-		if err != nil {
-			logger.Error("Failed to post notification to ANS", "error", err)
-			return fmt.Errorf("Failed to post notification to ANS")
-		} else {
-			logger.Info("Notification posted to ANS successfully")
-		}
-	}
-	return nil
-}
+//func (b *ProvisionEndpoint) notifyBTPCockpit(operation internal.ProvisioningOperation, logger *slog.Logger) error {
+//	if b.notificationService != nil {
+//		recipient, err := notifications.NewRecipient("jaroslaw.pieszka@sap.com", notifications.WithIasHost("accounts.sap.com"))
+//		if err != nil {
+//			logger.Error(fmt.Sprintf("cannot create recipient for notification: %s", err))
+//			return fmt.Errorf("cannot create recipient for notification")
+//		}
+//		property, err := notifications.NewProperty("shoot", operation.ShootName)
+//		if err != nil {
+//			logger.Error(fmt.Sprintf("cannot create property for notification: %s", err))
+//			return fmt.Errorf("cannot create property for notification")
+//		}
+//		notification, err := notifications.NewNotification("POC_WebOnlyType",
+//			[]notifications.Recipient{*recipient},
+//			notifications.WithProperties([]notifications.Property{*property}))
+//
+//		if err != nil {
+//			logger.Error(fmt.Sprintf("cannot create notification: %s", err))
+//			return fmt.Errorf("cannot create notification")
+//		}
+//		err = b.notificationService.PostNotification(*notification)
+//		if err != nil {
+//			logger.Error("Failed to post notification to ANS", "error", err)
+//			return fmt.Errorf("Failed to post notification to ANS")
+//		} else {
+//			logger.Info("Notification posted to ANS successfully")
+//		}
+//	}
+//	return nil
+//}
 
 //func (b *ProvisionEndpoint) sendResourceEvent(logger *slog.Logger) error {
 //	if b.notificationService != nil {
