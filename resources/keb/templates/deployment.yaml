@@ -243,8 +243,6 @@ spec:
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_STATS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
-            - name: APP_MULTIPLE_CONTEXTS
-              value: "{{ .Values.multipleContexts }}"
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY

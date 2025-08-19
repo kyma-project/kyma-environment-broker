@@ -134,7 +134,6 @@
 | metricsv2.<br>operationResultPollingInterval | Frequency of polling for operation results. | `1m` |
 | metricsv2.<br>operationResultRetentionPeriod | Duration of retaining operation results. | `1h` |
 | metricsv2.<br>operationStatsPollingInterval | Frequency of polling for operation statistics. | `1m` |
-| multipleContexts | If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context. | `False` |
 | profiler.memory | Enables memory profiler (true/false). | `False` |
 | quotaLimitCheck.<br>enabled | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. | `False` |
 | quotaLimitCheck.<br>interval | The interval between requests to the Entitlements API in case of errors. | `1s` |

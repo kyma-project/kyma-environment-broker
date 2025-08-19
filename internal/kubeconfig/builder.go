@@ -19,18 +19,16 @@ type Config struct {
 type Builder struct {
 	kubeconfigProvider kubeconfigProvider
 	kcpClient          client.Client
-	multipleContexts   bool
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, multipleContexts bool) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider) *Builder {
 	return &Builder{
 		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
-		multipleContexts:   multipleContexts,
 	}
 }
 
@@ -193,9 +191,6 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 			IssuerURL: *config.IssuerURL,
 			ClientID:  *config.ClientID,
 		})
-		if !b.multipleContexts {
-			return oidcConfigs, nil
-		}
 	}
 	return oidcConfigs, nil
 }

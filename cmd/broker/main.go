@@ -128,8 +128,6 @@ type Config struct {
 
 	HapRuleFilePath string
 
-	MultipleContexts bool `envconfig:"default=false"`
-
 	ProvidersConfigurationFilePath string
 
 	PlansConfigurationFilePath string
@@ -322,7 +320,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.MultipleContexts)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider)
 
 	// create server
 	router := httputil.NewRouter()
@@ -447,8 +445,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient, quotaWhitelistedSubaccountIds),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.MultipleContexts),
-		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.MultipleContexts), publisher),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),
+		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
