@@ -119,6 +119,8 @@ func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operat
 		runtimeStatusJSON, errMarshal := json.MarshalIndent(runtime.Status, "", "  ")
 		if errMarshal != nil {
 			log.Error(fmt.Sprintf("failed to marshal runtime status: %v", errMarshal))
+		} else if string(runtimeStatusJSON) == "{}" || string(runtimeStatusJSON) == "" {
+			log.Error("runtime resource status is empty; failing operation and removing Runtime CR")
 		} else {
 			log.Error(fmt.Sprintf("runtime resource status (JSON):\n%s\nfailing operation and removing Runtime CR", string(runtimeStatusJSON)))
 		}
