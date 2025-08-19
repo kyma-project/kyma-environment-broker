@@ -325,9 +325,6 @@ metricsv2:
   # Frequency of polling for operation statistics.
   operationStatsPollingInterval: 1m
 
-# If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
-multipleContexts: false
-
 plansConfiguration: {}
 
 profiler:
