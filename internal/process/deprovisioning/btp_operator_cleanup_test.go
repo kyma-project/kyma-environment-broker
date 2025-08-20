@@ -420,3 +420,11 @@ func (f *fakeK8sClientWrapper) RESTMapper() meta.RESTMapper {
 func (f *fakeK8sClientWrapper) SubResource(subresource string) client.SubResourceClient {
 	return f.fake.SubResource(subresource)
 }
+
+func (f *fakeK8sClientWrapper) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return f.fake.GroupVersionKindFor(obj)
+}
+
+func (f *fakeK8sClientWrapper) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return f.fake.IsObjectNamespaced(obj)
+}

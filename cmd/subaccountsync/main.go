@@ -112,10 +112,14 @@ func getK8sClient() client.Client {
 }
 
 func createK8sClient(cfg *rest.Config) (client.Client, error) {
-	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
+			mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
 			if err != nil {
 				return false, nil
 			}

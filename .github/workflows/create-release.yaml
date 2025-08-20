@@ -306,6 +306,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$PR_NUMBER" -gt 0 ]; then
+            # Sometimes the commit is not available immediately after merging the PR, so we wait a bit
+            sleep 5
             COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[1].sha')
             echo "Latest commit sha: $COMMIT_SHA"
             echo "Bump sha: ${{ github.sha }}"
