@@ -3235,7 +3235,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3297,7 +3296,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should not remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()

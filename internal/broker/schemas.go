@@ -321,7 +321,6 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.UseAdditionalOIDCSchema,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
-		s.cfg.EnableJwks,
 	)
 }
 

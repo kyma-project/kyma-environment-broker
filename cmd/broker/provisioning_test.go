@@ -1613,7 +1613,6 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should reject non base64 JWKS value", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()

@@ -73,16 +73,14 @@ type ControlFlagsObject struct {
 	useAdditionalOIDCSchema     bool
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
-	enableJwks                  bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, ingressFilteringEnabled, rejectUnsupportedParameters, enableJwks bool) ControlFlagsObject {
+func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		includeAdditionalParameters: includeAdditionalParameters,
 		useAdditionalOIDCSchema:     useAdditionalOIDC,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
-		enableJwks:                  enableJwks,
 	}
 }
 
@@ -145,9 +143,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	flags ControlFlagsObject) *map[string]interface{} {
 	if flags.includeAdditionalParameters {
 		if flags.useAdditionalOIDCSchema {
-			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters, flags.enableJwks)
+			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
 		} else {
-			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters, flags.enableJwks)
+			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters)
 		}
 		properties.Administrators = AdministratorsProperty()
 		if flags.ingressFilteringEnabled {
