@@ -92,16 +92,6 @@ jobs:
       context: .
       tags: ${{ inputs.name }}
 
-  build-archiver-image:
-    needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
-      name: kyma-environment-archiver-job
-      dockerfile: Dockerfile.job
-      context: .
-      build-args: BIN=archiver
-      tags: ${{ inputs.name }}
-
   build-environments-cleanup-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -193,7 +183,7 @@ jobs:
 
   run-keb-chart-integration-tests:
     name: Validate KEB chart 
-    needs: [build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image]
+    needs: [build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image]
     uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     secrets: inherit
     with:
@@ -203,7 +193,7 @@ jobs:
       
   run-performance-tests:
     name: Performance tests
-    needs: [ build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image ]
+    needs: [ build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image ]
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:
