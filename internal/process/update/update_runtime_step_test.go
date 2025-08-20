@@ -151,6 +151,10 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 			UsernameClaim:  ptr.String("sub"),
 			UsernamePrefix: ptr.String("initial-username-prefix"),
 			GroupsPrefix:   ptr.String("-"),
+			RequiredClaims: map[string]string{
+				"claim1": "value1",
+				"claim2": "value2",
+			},
 		},
 	}
 	var gotRuntime imv1.Runtime
