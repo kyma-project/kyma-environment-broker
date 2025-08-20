@@ -96,6 +96,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -169,6 +170,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -250,6 +252,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -298,6 +301,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -373,6 +377,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -452,6 +457,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -501,6 +507,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -553,6 +560,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -621,6 +629,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -687,6 +696,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -733,6 +743,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -774,6 +785,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -812,6 +824,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -859,6 +872,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -911,6 +925,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -971,6 +986,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -1026,6 +1042,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1088,6 +1105,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
@@ -1144,6 +1162,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1246,6 +1265,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		testCases := []struct {
@@ -1334,6 +1354,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1378,6 +1399,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1448,6 +1470,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -1506,6 +1529,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -1562,6 +1586,7 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -1606,6 +1631,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1655,6 +1681,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1707,6 +1734,7 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -1852,6 +1880,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
 			)
 
 			// when
@@ -1917,6 +1946,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
 				nil,
 				nil,
 			)
@@ -2073,6 +2103,7 @@ func TestNetworkingValidation(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
 			)
 
 			// when
@@ -2175,6 +2206,7 @@ func TestRegionValidation(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
 			)
 
 			// when
@@ -2238,6 +2270,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2289,6 +2322,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2337,6 +2371,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -2403,6 +2438,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
 	)
 
 	// when
@@ -2455,6 +2491,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 		nil,
 		nil,
 	)
@@ -2537,6 +2574,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2588,6 +2626,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
 		nil,
 		nil,
 	)
@@ -2725,6 +2764,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2785,6 +2825,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -2857,6 +2898,7 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -2945,6 +2987,7 @@ func TestAdditionalProperties(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -3007,6 +3050,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3056,6 +3100,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -3117,6 +3162,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
@@ -3190,6 +3236,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -3240,6 +3287,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			quotaClient,
+			nil,
 			nil,
 		)
 
@@ -3292,6 +3340,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			quotaClient,
 			nil,
+			nil,
 		)
 
 		// when
@@ -3342,6 +3391,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			quotaClient,
+			nil,
 			nil,
 		)
 
@@ -3394,6 +3444,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			quotaClient,
 			whitelist.Set{subAccountID: struct{}{}},
+			nil,
 		)
 
 		// when

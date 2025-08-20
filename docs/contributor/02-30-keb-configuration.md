@@ -4,6 +4,19 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_ANS_ENABLED** | <code>false</code> | If true, enables the ANS integration, which allows the broker to send notifications to the ANS service |
+| **APP_ANS_EVENTS_AUTH_&#x200b;URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for ANS, used to get access token |
+| **APP_ANS_EVENTS_&#x200b;CLIENT_ID** | None | - |
+| **APP_ANS_EVENTS_&#x200b;CLIENT_SECRET** | None | - |
+| **APP_ANS_EVENTS_MAX_&#x200b;REQUESTS_PER_&#x200b;INTERVAL** | <code>5</code> | Maximum number of requests per interval to the ANS events API |
+| **APP_ANS_EVENTS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | Minimum interval between requests to the ANS events API |
+| **APP_ANS_EVENTS_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the ANS service, used to send events |
+| **APP_ANS_&#x200b;NOTIFICATIONS_AUTH_&#x200b;URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for ANS notifications, used to get access token |
+| **APP_ANS_&#x200b;NOTIFICATIONS_&#x200b;CLIENT_ID** | None | - |
+| **APP_ANS_&#x200b;NOTIFICATIONS_&#x200b;CLIENT_SECRET** | None | - |
+| **APP_ANS_&#x200b;NOTIFICATIONS_MAX_&#x200b;REQUESTS_PER_&#x200b;INTERVAL** | <code>5</code> | Maximum number of requests per interval to the ANS notifications API |
+| **APP_ANS_&#x200b;NOTIFICATIONS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | Minimum interval between requests to the ANS notifications API |
+| **APP_ANS_&#x200b;NOTIFICATIONS_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the ANS notification service, used to send notifications |
 | **APP_ARCHIVING_DRY_&#x200b;RUN** | <code>true</code> | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. |
 | **APP_ARCHIVING_&#x200b;ENABLED** | <code>false</code> | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. |
 | **APP_BROKER_ALLOW_&#x200b;UPDATE_EXPIRED_&#x200b;INSTANCE_WITH_&#x200b;CONTEXT** | <code>false</code> | Allows update of expired instance. |

@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
+	github.com/kyma-project/ans-manager v0.0.1
 	github.com/kyma-project/infrastructure-manager v0.0.0-20250616104114-8db79c8bc6d5
 	github.com/lib/pq v1.10.9
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1

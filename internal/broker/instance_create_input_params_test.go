@@ -49,6 +49,7 @@ func TestColocateControlPlane(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -84,6 +85,7 @@ func TestColocateControlPlane(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
 		)
 
 		// when
@@ -116,6 +118,7 @@ func TestColocateControlPlane(t *testing.T) {
 			nil,
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
 			nil,
 			nil,
 		)
