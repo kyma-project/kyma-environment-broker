@@ -147,7 +147,6 @@ func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 
 func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -232,7 +231,6 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 
 func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -378,7 +376,6 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 
 func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeReturned(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -556,7 +553,6 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()

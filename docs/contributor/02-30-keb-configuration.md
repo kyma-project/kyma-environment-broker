@@ -37,7 +37,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
-| **APP_BROKER_USE_&#x200b;ADDITIONAL_OIDC_&#x200b;SCHEMA** | <code>false</code> | If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime. |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
 | **APP_CLEANING_DRY_RUN** | <code>true</code> | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. |
 | **APP_CLEANING_ENABLED** | <code>false</code> | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. |

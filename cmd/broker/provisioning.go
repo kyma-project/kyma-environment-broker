@@ -78,7 +78,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema, workersProvider),
+			step:      provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

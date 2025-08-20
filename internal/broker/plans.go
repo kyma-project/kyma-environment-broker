@@ -70,15 +70,13 @@ var PlanIDsMapping = map[string]string{
 
 type ControlFlagsObject struct {
 	includeAdditionalParameters bool
-	useAdditionalOIDCSchema     bool
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, useAdditionalOIDC, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
+func NewControlFlagsObject(includeAdditionalParameters, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		includeAdditionalParameters: includeAdditionalParameters,
-		useAdditionalOIDCSchema:     useAdditionalOIDC,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
 	}
@@ -142,11 +140,7 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	required []string,
 	flags ControlFlagsObject) *map[string]interface{} {
 	if flags.includeAdditionalParameters {
-		if flags.useAdditionalOIDCSchema {
-			properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
-		} else {
-			properties.OIDC = NewOIDCSchema(flags.rejectUnsupportedParameters)
-		}
+		properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
 		properties.Administrators = AdministratorsProperty()
 		if flags.ingressFilteringEnabled {
 			properties.IngressFiltering = IngressFilteringProperty()

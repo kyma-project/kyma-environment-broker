@@ -2913,7 +2913,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove previously set required claims", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -2975,7 +2974,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3044,7 +3042,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update empty OIDC list with OIDC object that has no values", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3094,7 +3091,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()

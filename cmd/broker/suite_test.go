@@ -281,7 +281,6 @@ func fixConfig() *Config {
 			WorkerHealthCheckWarnInterval:   10 * time.Minute,
 			GardenerSeedsCacheConfigMapName: "gardener-seeds-cache",
 			EnablePlanUpgrades:              true,
-			UseAdditionalOIDCSchema:         true,
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		MaxPaginationPage:                         100,

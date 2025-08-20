@@ -32,12 +32,11 @@ type UpdateRuntimeStep struct {
 	config                     broker.InfrastructureManager
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
-	useAdditionalOIDCSchema    bool
 	workersProvider            *workers.Provider
 	valuesProvider             broker.ValuesProvider
 }
 
-func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
+func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string,
 	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
@@ -45,7 +44,6 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		config:                     infrastructureManagerConfig,
 		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 		workersProvider:            workersProvider,
 		valuesProvider:             valuesProvider,
 	}
@@ -155,7 +153,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			if dto.GroupsPrefix != "" {
 				config.GroupsPrefix = &dto.GroupsPrefix
 			}
-			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
+			if len(dto.RequiredClaims) > 0 {
 				if len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-" {
 					config.RequiredClaims = map[string]string{}
 				} else {

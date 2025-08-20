@@ -254,9 +254,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
-		if !b.config.UseAdditionalOIDCSchema {
-			ClearOIDCInput(params.OIDC)
-		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan

@@ -141,8 +141,6 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_BROKER_URL
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
-            - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
-              value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
             - name: APP_CLEANING_DRY_RUN
