@@ -128,7 +128,8 @@
         "issuerURL",
         "signingAlgs",
         "usernameClaim",
-        "usernamePrefix"
+        "usernamePrefix",
+        "encodedJwksArray"
       ],
       "additionalProperties": false,
       "description": "OIDC configuration",
@@ -158,6 +159,10 @@
         },
         "usernamePrefix": {
           "description": "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters).",
+          "type": "string"
+        },
+        "encodedJwksArray": {
+          "description": "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'.",
           "type": "string"
         }
       },
