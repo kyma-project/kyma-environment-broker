@@ -347,19 +347,23 @@ jobs:
             exit 1 
           fi
         
+      - name: Create lightweight tag
+        run: |
+          git tag ${{ inputs.name }}
+          git push origin ${{ inputs.name }}
+
       - name: Create draft release
         id: create-draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
-          RELEASE_ID=$(./scripts/create_draft_release.sh ${{ github.event.inputs.name }})
-          echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+          gh release create ${{ inputs.name }} \
+          --draft \
+          --title "${{ inputs.name }}" \
+          --generate-notes \
+          --verify-tag
 
-      - name: Create lightweight tag
-        run: |
-          git tag ${{ github.event.inputs.name }}
-          git push origin ${{ github.event.inputs.name }}
 
       - name: Check if any PR may have been merged before creating the tag and draft release
         env:
@@ -373,9 +377,6 @@ jobs:
             exit 1 
           fi
 
-    outputs:
-      release_id: ${{ steps.create-draft.outputs.release_id }}
-    
   publish-release:
     name: Publish release
     needs: [bumps, create-draft]
@@ -399,8 +400,14 @@ jobs:
         
       - name: Upload packaged KEB chart to release
         env:
-          BOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./scripts/upload_assets.sh ${{ needs.create-draft.outputs.release_id }} $KEB_CHART
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          [[ ! -e ${KEB_CHART} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
+
+          gh release upload ${{ inputs.name }} \
+          --clobber \
+          ${KEB_CHART}
 
       - name: Update KEB chart metadata
         run: |
@@ -417,8 +424,7 @@ jobs:
 
       - name: Publish release
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
-          REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git checkout main
-          ./scripts/publish_release.sh ${{ needs.create-draft.outputs.release_id }}
+          gh release edit ${{ inputs.name }} --draft=false
