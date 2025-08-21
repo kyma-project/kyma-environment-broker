@@ -12,13 +12,5 @@ cmd/broker/catalog-test.json
 
 bin
 
-utils/edp-registrator/env.dev
-utils/edp-registrator/env.prod
-utils/edp-registrator/env.stage
-utils/edp-registrator/edp
-utils/edp-registrator/edp-subaccounts.json
-utils/edp-registrator/operations.csv
-utils/edp-registrator/skr-subaccounts.txt
-
 vendor
 debug

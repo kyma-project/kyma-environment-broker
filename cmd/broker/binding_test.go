@@ -158,8 +158,6 @@ func TestBinding(t *testing.T) {
 func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	// Disable EDP to have all steps successfully executed
-	cfg.EDP.Disabled = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -220,8 +218,6 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 func TestFailedProvisioning(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	// Disable EDP to have all steps successfully executed
-	cfg.EDP.Disabled = true
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
@@ -261,8 +257,6 @@ func TestFailedProvisioning(t *testing.T) {
 func TestProvisioningInProgress(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	// Disable EDP to have all steps successfully executed
-	cfg.EDP.Disabled = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()

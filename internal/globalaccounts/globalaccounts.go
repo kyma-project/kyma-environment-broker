@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	k8scfg "sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -104,10 +105,14 @@ func fatalOnError(err error) {
 
 func getKcpClient() (client.Client, error) {
 	kcpK8sConfig, err := k8scfg.GetConfig()
-	mapper, err := apiutil.NewDiscoveryRESTMapper(kcpK8sConfig)
+	httpClient, err := rest.HTTPClientFor(kcpK8sConfig)
+	if err != nil {
+		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(kcpK8sConfig, httpClient)
 	if err != nil {
 		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-			mapper, err = apiutil.NewDiscoveryRESTMapper(kcpK8sConfig)
+			mapper, err = apiutil.NewDynamicRESTMapper(kcpK8sConfig, httpClient)
 			if err != nil {
 				return false, nil
 			}

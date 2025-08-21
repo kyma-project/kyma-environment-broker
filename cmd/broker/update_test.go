@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"testing"
@@ -3351,7 +3352,8 @@ func TestUpdateOIDC(t *testing.T) {
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
 		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
-		assert.Equal(t, []byte("andrcy10b2tlbi1kZWZhdWx0"), (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
+		jwks, _ := base64.StdEncoding.DecodeString("andrcy10b2tlbi1kZWZhdWx0")
+		assert.Equal(t, jwks, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].JWKS)
 		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
 	})
 }

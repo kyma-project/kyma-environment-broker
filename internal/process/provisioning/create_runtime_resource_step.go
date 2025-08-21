@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -318,6 +319,10 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 
 	for _, oidcConfig := range oidcList {
 		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
+		groupsPrefix := s.oidcDefaultValues.GroupsPrefix
+		if oidcConfig.GroupsPrefix != "" {
+			groupsPrefix = oidcConfig.GroupsPrefix
+		}
 		oidc := imv1.OIDCConfig{
 			OIDCConfig: gardener.OIDCConfig{
 				ClientID:       &oidcConfig.ClientID,
@@ -326,12 +331,12 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				GroupsClaim:    &oidcConfig.GroupsClaim,
 				UsernamePrefix: &oidcConfig.UsernamePrefix,
 				UsernameClaim:  &oidcConfig.UsernameClaim,
-				GroupsPrefix:   ptr.String("-"),
+				GroupsPrefix:   &groupsPrefix,
 				RequiredClaims: requiredClaims,
 			},
 		}
 		if s.enableJwks {
-			oidc.JWKS = []byte(oidcConfig.EncodedJwksArray)
+			oidc.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
 		}
 		configs = append(configs, oidc)
 	}
@@ -345,6 +350,9 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	}
 	if inputOIDC.GroupsClaim != "" {
 		defaultOIDC.GroupsClaim = &inputOIDC.GroupsClaim
+	}
+	if inputOIDC.GroupsPrefix != "" {
+		defaultOIDC.GroupsPrefix = &inputOIDC.GroupsPrefix
 	}
 	if inputOIDC.IssuerURL != "" {
 		defaultOIDC.IssuerURL = &inputOIDC.IssuerURL
@@ -362,7 +370,7 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
 	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
-		defaultOIDC.JWKS = []byte(inputOIDC.EncodedJwksArray)
+		defaultOIDC.JWKS, _ = base64.StdEncoding.DecodeString(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC
 }

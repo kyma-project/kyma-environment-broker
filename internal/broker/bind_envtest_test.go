@@ -45,7 +45,7 @@ const (
 func TestCreateBinding(t *testing.T) {
 	// given
 
-	//// schema
+	// // schema
 	sch := runtime.NewScheme()
 	err := corev1.AddToScheme(sch)
 	assert.NoError(t, err)
@@ -73,7 +73,7 @@ func TestCreateBinding(t *testing.T) {
 		}...).
 		Build()
 
-	//// secret check in assertions
+	// // secret check in assertions
 	err = clientFirst.Create(context.Background(), &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "secret-to-check-first",
@@ -284,10 +284,14 @@ func createKubeconfigFileForRestConfig(restConfig rest.Config) []byte {
 }
 
 func initClient(cfg *rest.Config) (client.Client, error) {
-	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
+	httpClient, err := rest.HTTPClientFor(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
-			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
+			mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
 			if err != nil {
 				return false, nil
 			}

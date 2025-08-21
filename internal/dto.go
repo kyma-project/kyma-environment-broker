@@ -15,9 +15,7 @@ type ProvisioningParameters struct {
 	ErsContext ERSContext                    `json:"ers_context"`
 	Parameters pkg.ProvisioningParametersDTO `json:"parameters"`
 
-	// PlatformRegion defines the Platform region send in the request path, terminology:
-	//  - `Platform` is a place where KEB is registered and which later sends request to KEB.
-	//  - `Region` value is use e.g. for billing integration such as EDP.
+	// PlatformRegion defines the Platform region sent in the request path.
 	PlatformRegion string `json:"platform_region"`
 
 	PlatformProvider pkg.CloudProvider `json:"platform_provider"`

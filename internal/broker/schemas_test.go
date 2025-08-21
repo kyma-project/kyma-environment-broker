@@ -114,3 +114,31 @@ func TestSchemaPlans(t *testing.T) {
 	assert.True(t, *result[AzurePlanID].PlanUpdatable)
 	assert.False(t, *result[BuildRuntimeAzurePlanID].PlanUpdatable)
 }
+
+func TestIsUpgradeable(t *testing.T) {
+	// Given
+	plansSpec, err := configuration.NewPlanSpecifications(strings.NewReader(`
+aws,build-runtime-aws:
+    upgradableToPlans:
+        - build-runtime-aws
+`))
+	require.NoError(t, err)
+
+	assert.True(t, plansSpec.IsUpgradable("aws"))
+	assert.False(t, plansSpec.IsUpgradable("build-runtime-aws"))
+}
+
+func TestIsUpgradeable_EmptyUpgradeList(t *testing.T) {
+	// Given
+	plansSpec, err := configuration.NewPlanSpecifications(strings.NewReader(`
+aws,build-runtime-aws:
+        regions:
+            cf-eu11:
+                - eu-central-1
+            default:
+                - eu-west-1
+`))
+
+	require.NoError(t, err)
+	assert.False(t, plansSpec.IsUpgradable("aws"))
+}

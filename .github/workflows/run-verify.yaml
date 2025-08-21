@@ -62,66 +62,70 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip'
-
-      - name: Install requirements
-        run: pip install -r scripts/python/requirements.txt
-
       - name: Run env docs generator
-        run: python3 scripts/python/generate_env_docs.py
+        run: make generate-env-docs
 
       - name: Check for changes in docs/contributor/02-30-keb-configuration.md
         run: |
           if [[ $(git status --porcelain docs/contributor/02-30-keb-configuration.md) ]]; then
-            echo 'docs/contributor/02-30-keb-configuration.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/02-30-keb-configuration.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/02-30-keb-configuration.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/06-30-subaccount-cleanup-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-30-subaccount-cleanup-cronjob.md) ]]; then
-            echo 'docs/contributor/06-30-subaccount-cleanup-cronjob.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/06-30-subaccount-cleanup-cronjob.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/06-30-subaccount-cleanup-cronjob.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/06-40-trial-free-cleanup-cronjobs.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-40-trial-free-cleanup-cronjobs.md) ]]; then
-            echo 'docs/contributor/06-40-trial-free-cleanup-cronjobs.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/06-40-trial-free-cleanup-cronjobs.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/06-40-trial-free-cleanup-cronjobs.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/06-50-deprovision-retrigger-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-50-deprovision-retrigger-cronjob.md) ]]; then
-            echo 'docs/contributor/06-50-deprovision-retrigger-cronjob.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/06-50-deprovision-retrigger-cronjob.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/06-50-deprovision-retrigger-cronjob.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/06-70-service-binding-cleanup-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-70-service-binding-cleanup-cronjob.md) ]]; then
-            echo 'docs/contributor/06-70-service-binding-cleanup-cronjob.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/06-70-service-binding-cleanup-cronjob.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/06-70-service-binding-cleanup-cronjob.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/07-10-runtime-reconciler.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-10-runtime-reconciler.md) ]]; then
-            echo 'docs/contributor/07-10-runtime-reconciler.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/07-10-runtime-reconciler.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/07-10-runtime-reconciler.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/07-20-subaccount-sync.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-20-subaccount-sync.md) ]]; then
-            echo 'docs/contributor/07-20-subaccount-sync.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/07-20-subaccount-sync.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/07-20-subaccount-sync.md
             exit 1
           fi
       - name: Check for changes in docs/contributor/07-30-schema-migrator.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-30-schema-migrator.md) ]]; then
-            echo 'docs/contributor/07-30-schema-migrator.md is out of date. Please run the generator (scripts/python/generate_env_docs.py) and commit the changes.'
+            echo 'docs/contributor/07-30-schema-migrator.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
             git diff --color=always docs/contributor/07-30-schema-migrator.md
+            exit 1
+          fi
+
+      - name: Check for changes in docs/contributor/02-70-chart-config.md
+        run: |
+          if [[ $(git status --porcelain docs/contributor/02-70-chart-config.md) ]]; then
+            echo 'docs/contributor/02-70-chart-config.md is out of date. Please run the generator (make generate-env-docs) and commit the changes.'
+            git diff --color=always docs/contributor/02-70-chart-config.md
             exit 1
           fi

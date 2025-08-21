@@ -18,14 +18,6 @@ jobs:
       dockerfile: Dockerfile.keb
       context: .
 
-   archiver-image:
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      with: 
-         name: kyma-environment-archiver-job
-         dockerfile: Dockerfile.job
-         context: .
-         build-args: BIN=archiver
-
    environments-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 

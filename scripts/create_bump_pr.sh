@@ -21,7 +21,7 @@ git add sec-scanners-config.yaml
 git add resources/keb/values.yaml
 git add resources/keb/Chart.yaml
 git add utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
-git add utils/archiver/kyma-environment-broker-archiver.yaml
+git add docs/contributor/02-70-chart-config.md
 
 #stash staged changes
 git stash push --staged
@@ -36,7 +36,7 @@ git add sec-scanners-config.yaml
 git add resources/keb/values.yaml
 git add resources/keb/Chart.yaml
 git add utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
-git add utils/archiver/kyma-environment-broker-archiver.yaml
+git add docs/contributor/02-70-chart-config.md
 
 #configure git
 git config --global user.email ${GIT_EMAIL}

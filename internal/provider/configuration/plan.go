@@ -126,5 +126,14 @@ func (p *PlanSpecifications) IsUpgradableBetween(from, to string) bool {
 
 func (p *PlanSpecifications) IsUpgradable(planName string) bool {
 	plan, ok := p.plans[planName]
-	return ok && len(plan.UpgradableToPlans) > 0
+	if !ok {
+		return false
+	}
+	numberOfTargetPlans := 0
+	for _, target := range plan.UpgradableToPlans {
+		if strings.ToLower(target) != strings.ToLower(planName) {
+			numberOfTargetPlans++
+		}
+	}
+	return numberOfTargetPlans > 0
 }

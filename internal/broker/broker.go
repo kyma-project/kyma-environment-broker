@@ -42,7 +42,6 @@ type Config struct {
 	FreeExpirationPeriod                    time.Duration `envconfig:"default=720h"` // 30 days
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
-	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 	DefaultRequestRegion                    string        `envconfig:"default=cf-eu10"`
 	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.

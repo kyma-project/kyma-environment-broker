@@ -173,6 +173,8 @@ func TestExpiration(t *testing.T) {
 				actualInstance := suite.GetInstance(instanceID)
 				assertInstanceIsExpired(t, actualInstance)
 
+				suite.AddNotCompletedStep(suspensionOpID)
+
 				// when
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),

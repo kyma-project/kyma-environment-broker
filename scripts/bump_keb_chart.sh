@@ -33,7 +33,6 @@ done
 
 if [ "$TYPE" == "release" ]; then
     yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:$VERSION\"" -i utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
-    yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:$VERSION\"" -i utils/archiver/kyma-environment-broker-archiver.yaml
     yq e ".version = \"$VERSION\"" -i resources/keb/Chart.yaml
     yq e ".appVersion = \"$VERSION\"" -i resources/keb/Chart.yaml
 fi

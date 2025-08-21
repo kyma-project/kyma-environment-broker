@@ -15,7 +15,6 @@ import (
 
 func TestMetrics(t *testing.T) {
 	cfg := fixConfig()
-	cfg.EDP.Disabled = true
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / 1000 // reduce timeout to speed up the test
 	suite := NewBrokerSuitTestWithMetrics(t, cfg)
 	defer suite.TearDown()

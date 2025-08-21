@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"reflect"
 	"strings"
@@ -75,6 +76,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 			UsernameClaim:  "uc-custom",
 			UsernamePrefix: "up-custom",
 			RequiredClaims: []string{"claim=value", "claim2=value2=value2", "claim3==value3", "claim4=value4=", "claim5=,value5", "claim6=="},
+			GroupsPrefix:   "SAPSE:",
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -94,7 +96,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 				"claim5": ",value5",
 				"claim6": "=",
 			},
-			GroupsPrefix: ptr.String("-"),
+			GroupsPrefix: ptr.String("SAPSE:"),
 		},
 	}
 	cli := getClientForTests(t)
@@ -141,6 +143,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 				UsernameClaim:  "uc-custom",
 				UsernamePrefix: "up-custom",
 				RequiredClaims: []string{"claim=value"},
+				GroupsPrefix:   "SAPSE:",
 			},
 		},
 	}
@@ -156,7 +159,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 			RequiredClaims: map[string]string{
 				"claim": "value",
 			},
-			GroupsPrefix: ptr.String("-"),
+			GroupsPrefix: ptr.String("SAPSE:"),
 		},
 	}
 	cli := getClientForTests(t)
@@ -418,7 +421,10 @@ func TestCreateRuntimeResourceStep_HandleOIDCWithJwks(t *testing.T) {
 			UsernamePrefix: ptr.String("up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("andrcy10b2tlbi1kZWZhdWx0")
+			return b
+		}(),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, false, &workers.Provider{}, true)
@@ -496,7 +502,10 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 			UsernamePrefix: ptr.String("first-up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("andrcy10b2tlbi1kZWZhdWx0"),
+		JWKS: func() []byte {
+			b, _ := base64.StdEncoding.DecodeString("andrcy10b2tlbi1kZWZhdWx0")
+			return b
+		}(),
 	}
 	secondExpectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
@@ -519,7 +528,6 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 			UsernamePrefix: ptr.String("third-up-custom"),
 			GroupsPrefix:   ptr.String("-"),
 		},
-		JWKS: []byte("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true, &workers.Provider{}, true)
@@ -1136,7 +1144,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 		possibleZones       []string
 	}{
 		/**
-		zone provider is mocked, always returns: a, b, c
+		  zone provider is mocked, always returns: a, b, c
 		*/
 		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"a", "b", "c"}},
 		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},

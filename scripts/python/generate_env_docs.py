@@ -26,7 +26,6 @@ StrLoader.add_constructor('tag:yaml.org,2002:str', str_constructor)
 SINGLE_JOBS = [
     ("resources/keb/templates/deployment.yaml", "docs/contributor/02-30-keb-configuration.md"),
     ("resources/keb/templates/deprovision-retrigger-job.yaml", "docs/contributor/06-50-deprovision-retrigger-cronjob.md"),
-    ("utils/archiver/kyma-environment-broker-archiver.yaml", "docs/contributor/06-60-archiver-job.md"),
     ("resources/keb/templates/service-binding-cleanup-job.yaml", "docs/contributor/06-70-service-binding-cleanup-cronjob.md"),
     ("resources/keb/templates/runtime-reconciler-deployment.yaml", "docs/contributor/07-10-runtime-reconciler.md"),
     ("resources/keb/templates/subaccount-sync-deployment.yaml", "docs/contributor/07-20-subaccount-sync.md"),

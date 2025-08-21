@@ -42,19 +42,19 @@ Use the following environment variables to configure the Jobs:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
-| **APP_DATABASE_HOST** | None | Specifies the host of the database |
-| **APP_DATABASE_NAME** | None | Specifies the name of the database |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
-| **APP_DATABASE_PORT** | None | Specifies the port for the database |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
-| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
-| **APP_DATABASE_USER** | None | Specifies the username for the database |
-| **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data |
-| **APP_EXPIRATION_&#x200b;PERIOD** | <code>336h</code> | Specifies how long a trial instance can exist before being expired |
-| **APP_PLAN_ID** | <code>7d55d31d-35ae-4438-bf13-6ffdfa107d9f</code> | The ID of the trial plan to be used for cleanup |
-| **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode |
-| **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database. |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database. |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database. |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database. |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **APP_DATABASE_USER** | None | Specifies the username for the database. |
+| **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data. |
+| **APP_EXPIRATION_&#x200b;PERIOD** | <code>336h</code> | Specifies how long a trial instance can exist before being expired. |
+| **APP_PLAN_ID** | <code>7d55d31d-35ae-4438-bf13-6ffdfa107d9f</code> | The ID of the trial plan to be used for cleanup. |
+| **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode. |
+| **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
 
 
@@ -63,18 +63,18 @@ Use the following environment variables to configure the Jobs:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
-| **APP_DATABASE_HOST** | None | Specifies the host of the database |
-| **APP_DATABASE_NAME** | None | Specifies the name of the database |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database |
-| **APP_DATABASE_PORT** | None | Specifies the port for the database |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database |
-| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file |
-| **APP_DATABASE_USER** | None | Specifies the username for the database |
-| **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data |
-| **APP_EXPIRATION_&#x200b;PERIOD** | <code>2160h</code> | Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days) |
-| **APP_PLAN_ID** | <code>b1a5764e-2ea1-4f95-94c0-2b4538b37b55</code> | The ID of the free plan to be used for cleanup |
-| **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode (no real deletions, for testing purposes) |
-| **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs |
+| **APP_DATABASE_HOST** | None | Specifies the host of the database. |
+| **APP_DATABASE_NAME** | None | Specifies the name of the database. |
+| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
+| **APP_DATABASE_PORT** | None | Specifies the port for the database. |
+| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database. |
+| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **APP_DATABASE_USER** | None | Specifies the username for the database. |
+| **APP_DRY_RUN** | <code>true</code> | If true, the job only logs what would be deleted without actually removing any data. |
+| **APP_EXPIRATION_&#x200b;PERIOD** | <code>2160h</code> | Specifies how long a free instance can exist before being eligible for cleanup. |
+| **APP_PLAN_ID** | <code>b1a5764e-2ea1-4f95-94c0-2b4538b37b55</code> | The ID of the free plan to be used for cleanup. |
+| **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode (no real deletions, for testing purposes). |
+| **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
 
