@@ -405,9 +405,7 @@ jobs:
         run: |
           [[ ! -e ${KEB_CHART} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
 
-          gh release upload ${{ inputs.name }} \
-          --clobber \
-          ${KEB_CHART}
+          gh release upload ${{ inputs.name }} --clobber ${KEB_CHART}
 
       - name: Update KEB chart metadata
         run: |
