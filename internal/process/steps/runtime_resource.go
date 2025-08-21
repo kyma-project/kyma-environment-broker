@@ -115,7 +115,20 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
 	retryOperation, retry, err := s.operationManager.RetryOperationWithCreatedAt(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
 	if retryOperation.State == domain.Failed {
-		log.Error(fmt.Sprintf("runtime resource status: %v; failing operation and removing Runtime CR", runtime.Status))
+		log.Error(fmt.Sprintf("runtime resource state: %s", runtime.Status.State))
+		log.Error(fmt.Sprintf("runtime resource provisioningCompleted: %v", runtime.Status.ProvisioningCompleted))
+		for i, c := range runtime.Status.Conditions {
+			log.Error(fmt.Sprintf(
+				"runtime resource condition #%d: Type=%s, Status=%s, LastTransitionTime=%s, Reason=%s, Message=%s",
+				i+1,
+				c.Type,
+				c.Status,
+				c.LastTransitionTime.Format(time.RFC3339),
+				c.Reason,
+				c.Message,
+			))
+		}
+		log.Error("failing operation and removing Runtime CR")
 		err = s.k8sClient.Delete(context.Background(), runtime)
 		if err != nil {
 			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))

@@ -69,7 +69,7 @@ jobs:
           delay: '1'
           retries: '15'
           polling_interval: '1'
-          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
+          checks_include: 'kyma-environment-broker-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
           verbose: true
 
   run-concurrent-provisioning-test:
