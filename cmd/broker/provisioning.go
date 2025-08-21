@@ -69,6 +69,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewGetAWSZonesStep(db.Operations(), gardenerClient),
+			condition: provisioning.SkipForOwnClusterPlan,
+		},
+		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),
 		},
