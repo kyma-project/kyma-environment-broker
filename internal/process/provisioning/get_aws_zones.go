@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"time"
@@ -92,5 +93,14 @@ func (s *GetAvailableAWSZonesStep) extractAWSCredentials(secret *unstructured.Un
 		return "", "", fmt.Errorf("secret does not contain secretAccessKey")
 	}
 
-	return accessKeyID, secretAccessKey, nil
+	accessKeyIDBytes, err := base64.StdEncoding.DecodeString(accessKeyID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode accessKeyID: %w", err)
+	}
+	secretAccessKeyBytes, err := base64.StdEncoding.DecodeString(secretAccessKey)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode secretAccessKey: %w", err)
+	}
+
+	return string(accessKeyIDBytes), string(secretAccessKeyBytes), nil
 }
