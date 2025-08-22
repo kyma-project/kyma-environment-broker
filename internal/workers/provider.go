@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -44,11 +45,11 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
+
 			customAvailableZones, err := p.regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
 			if err != nil {
 				return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
 			}
-
 			// If custom zones are found, use them instead of the Kyma workload zones.
 			if len(customAvailableZones) > 0 {
 				var formattedZones []string
@@ -57,6 +58,13 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				}
 				workerZones = formattedZones
 			}
+
+			// If custom zones fetched dynamically from AWS are found, use them instead of the Kyma workload zones.
+			if len(additionalWorkerNodePool.AvailableZones) > 0 {
+				slog.Info(fmt.Sprintf("Available AWS zones for %s: %v", additionalWorkerNodePool.MachineType, additionalWorkerNodePool.AvailableZones))
+				workerZones = additionalWorkerNodePool.AvailableZones
+			}
+
 			// limit to 3 zones (if there is more than 3 available)
 			if len(workerZones) > 3 {
 				workerZones = workerZones[:3]

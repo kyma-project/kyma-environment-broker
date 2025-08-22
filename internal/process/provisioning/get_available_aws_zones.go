@@ -67,15 +67,19 @@ func (s *GetAvailableAWSZonesStep) Run(operation internal.Operation, log *slog.L
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
-	for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+	for i := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+		pool := &operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools[i]
 		zones, err := client.AvailableZones(context.Background(), pool.MachineType)
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, "unable to get available zones", err, 10*time.Second, time.Minute, log)
 		}
 		log.Info(fmt.Sprintf("Available zones for %s: %v", pool.MachineType, zones))
+		pool.AvailableZones = zones
 	}
 
-	return operation, 0, nil
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools
+	}, log)
 }
 
 func (s *GetAvailableAWSZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {

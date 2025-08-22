@@ -549,11 +549,12 @@ type ModuleDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	Name          string `json:"name"`
-	MachineType   string `json:"machineType"`
-	HAZones       bool   `json:"haZones"`
-	AutoScalerMin int    `json:"autoScalerMin"`
-	AutoScalerMax int    `json:"autoScalerMax"`
+	Name           string   `json:"name"`
+	MachineType    string   `json:"machineType"`
+	HAZones        bool     `json:"haZones"`
+	AutoScalerMin  int      `json:"autoScalerMin"`
+	AutoScalerMax  int      `json:"autoScalerMax"`
+	AvailableZones []string `json:"-"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
