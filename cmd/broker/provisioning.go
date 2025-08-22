@@ -70,7 +70,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewGetAWSZonesStep(db.Operations(), gardenerClient),
+			step:      provisioning.NewGetAvailableAWSZonesStep(db.Operations(), gardenerClient),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

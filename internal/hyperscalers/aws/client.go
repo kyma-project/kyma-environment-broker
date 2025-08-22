@@ -1,4 +1,4 @@
-package ec2
+package aws
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 type Client struct {
-	ec2Client *ec2.Client
+	awsClient *ec2.Client
 }
 
 func NewClient(ctx context.Context, key, secret, region string) (*Client, error) {
@@ -20,7 +20,7 @@ func NewClient(ctx context.Context, key, secret, region string) (*Client, error)
 	if err != nil {
 		return nil, fmt.Errorf("while creating AWS config: %w", err)
 	}
-	return &Client{ec2Client: ec2.NewFromConfig(cfg)}, nil
+	return &Client{awsClient: ec2.NewFromConfig(cfg)}, nil
 }
 
 func (c *Client) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
@@ -33,7 +33,7 @@ func (c *Client) AvailableZones(ctx context.Context, machineType string) ([]stri
 			},
 		},
 	}
-	resp, err := c.ec2Client.DescribeInstanceTypeOfferings(ctx, params)
+	resp, err := c.awsClient.DescribeInstanceTypeOfferings(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe offerings: %w", err)
 	}

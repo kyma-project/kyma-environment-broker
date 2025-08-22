@@ -9,22 +9,22 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/ec2"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type GetAWSZonesStep struct {
+type GetAvailableAWSZonesStep struct {
 	operationManager *process.OperationManager
 	opStorage        storage.Operations
 	gardenerClient   *gardener.Client
 }
 
-func NewGetAWSZonesStep(os storage.Operations, gardenerClient *gardener.Client) *GetAWSZonesStep {
-	step := &GetAWSZonesStep{
+func NewGetAvailableAWSZonesStep(os storage.Operations, gardenerClient *gardener.Client) *GetAvailableAWSZonesStep {
+	step := &GetAvailableAWSZonesStep{
 		opStorage:      os,
 		gardenerClient: gardenerClient,
 	}
@@ -32,11 +32,11 @@ func NewGetAWSZonesStep(os storage.Operations, gardenerClient *gardener.Client) 
 	return step
 }
 
-func (s *GetAWSZonesStep) Name() string {
-	return "Get_AWS_Zones"
+func (s *GetAvailableAWSZonesStep) Name() string {
+	return "Get_Available_AWS_Zones"
 }
 
-func (s *GetAWSZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+func (s *GetAvailableAWSZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.ProvisioningParameters.PlatformProvider != pkg.AWS {
 		log.Info("PlatformProvider is not AWS, skipping")
 		return operation, 0, nil
@@ -62,9 +62,9 @@ func (s *GetAWSZonesStep) Run(operation internal.Operation, log *slog.Logger) (i
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	client, err := ec2.NewClient(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
+	client, err := aws.NewClient(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, "unable to create EC2 client", err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
 	for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 		zones, err := client.AvailableZones(context.Background(), pool.MachineType)
@@ -77,7 +77,7 @@ func (s *GetAWSZonesStep) Run(operation internal.Operation, log *slog.Logger) (i
 	return operation, 0, nil
 }
 
-func (s *GetAWSZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {
+func (s *GetAvailableAWSZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {
 	data, found, err := unstructured.NestedStringMap(secret.Object, "data")
 	if err != nil || !found {
 		return "", "", fmt.Errorf("unable to extract data from secret: %w", err)
