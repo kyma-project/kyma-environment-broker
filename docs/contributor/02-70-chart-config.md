@@ -158,13 +158,6 @@
 | cis.accounts.<br>serviceURL | The base URL of the CIS Accounts API endpoint, used for fetching subaccount data. | None |
 | cis.accounts.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS v2 client ID. | `id` |
 | cis.accounts.<br>secretKey | The key in the Kubernetes Secret that contains the CIS v2 client secret. | `secret` |
-| cis.v1.authURL | The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests. | None |
-| cis.v1.<br>eventServiceURL | The endpoint URL for the CIS v1 event service, used to fetch subaccount events. | None |
-| cis.v1.id | The OAuth2 client ID used for authenticating requests to the CIS v1 API. | None |
-| cis.v1.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API. | None |
-| cis.v1.secretName | The name of the Kubernetes Secret containing the CIS v1 client ID and secret. | `cis-creds-v1` |
-| cis.v1.clientIdKey | The key in the Kubernetes Secret that contains the CIS v2 client ID. | `id` |
-| cis.v1.secretKey | The key in the Kubernetes Secret that contains the CIS v2 client secret. | `secret` |
 | cis.v2.authURL | The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests. | None |
 | cis.v2.<br>eventServiceURL | The endpoint URL for the CIS v2 event service, used to fetch subaccount events. | None |
 | cis.v2.id | The OAuth2 client ID used for authenticating requests to the CIS v2 API. | None |
@@ -254,12 +247,6 @@
 | vmscrapes.enabled | - | `True` |
 | vmscrapes.interval | - | `30s` |
 | vmscrapes.<br>scrapeTimeout | - | `10s` |
-| vsoSecrets.secrets.cis-v1.<br>path | - | `cis` |
-| vsoSecrets.secrets.cis-v1.<br>secretName | - | `{{ .Values.cis.v1.secretName \| required "please specify .Values.cis.v1.secretName"}}` |
-| vsoSecrets.secrets.cis-v1.<br>labels | - | `{{ template "kyma-env-broker.labels" . }}` |
-| vsoSecrets.secrets.cis-v1.<br>templating.enabled | - | `True` |
-| vsoSecrets.secrets.cis-v1.<br>templating.keys.id | - | `v1_id` |
-| vsoSecrets.secrets.cis-v1.<br>templating.keys.<br>secret | - | `v1_secret` |
 | vsoSecrets.secrets.cis-v2.<br>path | - | `cis` |
 | vsoSecrets.secrets.cis-v2.<br>secretName | - | `{{ .Values.cis.v2.secretName \| required "please specify .Values.cis.v2.secretName"}}` |
 | vsoSecrets.secrets.cis-v2.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': '{{- .Values.subaccountSync.name -}}'}` |

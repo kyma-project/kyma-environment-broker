@@ -429,21 +429,6 @@ cis:
     clientIdKey: id
     # The key in the Kubernetes Secret that contains the CIS v2 client secret.
     secretKey: secret
-  v1:
-    # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests.
-    authURL: "TBD"
-    # The endpoint URL for the CIS v1 event service, used to fetch subaccount events.
-    eventServiceURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS v1 API.
-    id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API.
-    secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS v1 client ID and secret.
-    secretName: "cis-creds-v1"
-    # The key in the Kubernetes Secret that contains the CIS v2 client ID.
-    clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS v2 client secret.
-    secretKey: secret
   v2:
     # The OAuth2 token endpoint (authorization URL) for CIS v2, used to obtain access tokens for authenticating requests.
     authURL: "TBD"
@@ -709,19 +694,6 @@ vmscrapes:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets.
 vsoSecrets:
   secrets:
-    cis-v1:
-      path: cis
-      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          id: v1_id
-          secret: v1_secret
-        data:
-          id: {}
-          secret: {}
     cis-v2:
       path: cis
       secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
