@@ -1,14 +1,12 @@
 package provisioning
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +28,7 @@ func TestFetchAvailableZonesStep_SkipWhenPlatformProviderNotAWS(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, nil))
+	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -55,7 +53,7 @@ func TestFetchAvailableZonesStep_SkipWhenNoAdditionalWorkerNodePools(t *testing.
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, nil))
+	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -88,7 +86,7 @@ func TestFetchAvailableZonesStep_FailWhenNoTargetSecret(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, nil))
+	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -124,7 +122,7 @@ func TestFetchAvailableZonesStep_FailWhenNoRegion(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, nil))
+	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -212,7 +210,7 @@ func TestExtractAWSCredentials(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// given
-			step := NewFetchAvailableZonesStep(storage.NewMemoryStorage().Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, nil))
+			step := NewFetchAvailableZonesStep(storage.NewMemoryStorage().Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 			// when
 			accessKeyID, secretAccessKey, err := step.extractAWSCredentials(tc.unstructured)
@@ -254,7 +252,7 @@ func TestFetchAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), NewFakeClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
+	step := NewFetchAvailableZonesStep(memoryStorage.Operations(), createGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -302,7 +300,7 @@ func TestFetchAvailableZonesStep_HappyPath(t *testing.T) {
 	step := NewFetchAvailableZonesStep(
 		memoryStorage.Operations(),
 		createGardenerClient(),
-		NewFakeClientFactory(map[string][]string{
+		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
 		}, nil),
@@ -320,32 +318,4 @@ func TestFetchAvailableZonesStep_HappyPath(t *testing.T) {
 	require.Len(t, updatedOperation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, 2)
 	assert.ElementsMatch(t, updatedOperation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools[0].AvailableZones, []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, updatedOperation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools[1].AvailableZones, []string{"ap-southeast-2b"})
-}
-
-func NewFakeClientFactory(zones map[string][]string, error error) *FakeClientFactory {
-	fakeClient := &fakeClient{
-		zones: zones,
-		err:   error,
-	}
-	return &FakeClientFactory{client: fakeClient}
-}
-
-type FakeClientFactory struct {
-	client aws.Client
-}
-
-func (f *FakeClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
-	return f.client, nil
-}
-
-type fakeClient struct {
-	zones map[string][]string
-	err   error
-}
-
-func (f *fakeClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
-	if f.err != nil {
-		return nil, f.err
-	}
-	return f.zones[machineType], nil
 }

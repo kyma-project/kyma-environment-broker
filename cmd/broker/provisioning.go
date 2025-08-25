@@ -30,7 +30,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
-	workersProvider *workers.Provider) *process.Queue {
+	workersProvider *workers.Provider, awsClientFactory aws.ClientFactory) *process.Queue {
 
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
@@ -71,7 +71,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewFetchAvailableZonesStep(db.Operations(), gardenerClient, aws.NewFactory()),
+			step:      provisioning.NewFetchAvailableZonesStep(db.Operations(), gardenerClient, awsClientFactory),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

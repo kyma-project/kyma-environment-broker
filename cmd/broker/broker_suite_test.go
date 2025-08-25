@@ -13,8 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -32,6 +30,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -50,6 +49,7 @@ import (
 	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -183,7 +183,17 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	require.NoError(t, err)
 
-	gardenerClient := gardener.NewDynamicFakeClient()
+	awsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "sb-aws",
+			Namespace: "kyma",
+		},
+		Data: map[string][]byte{
+			"accessKeyID":     []byte("dGVzdC1rZXk="),
+			"secretAccessKey": []byte("dGVzdC1zZWNyZXQ="),
+		},
+	}
+	gardenerClient := gardener.NewDynamicFakeClient(awsSecret)
 
 	eventBroker := event.NewPubSub(log)
 
@@ -210,9 +220,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
+	awsClientFactory := fixture.NewFakeAWSClientFactory(map[string][]string{
+		"m6i.16xlarge": {"ap-southeast-2p", "ap-southeast-2q", "ap-southeast-2r"},
+	}, nil)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec))
+		workersProvider(cfg.InfrastructureManager, providerSpec), awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
