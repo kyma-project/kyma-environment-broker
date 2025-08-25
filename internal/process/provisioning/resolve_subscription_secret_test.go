@@ -272,6 +272,7 @@ func createGardenerClient() *gardener.Client {
 		secretBindingName5 = "secret-binding-5"
 		secretBindingName6 = "secret-binding-6"
 		secretBindingName7 = "secret-binding-7"
+		secretName1        = "secret-1"
 	)
 	sb1 := createSecretBinding(secretBindingName1, namespace, awsEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
@@ -302,11 +303,12 @@ func createGardenerClient() *gardener.Client {
 	sb7 := createSecretBinding(secretBindingName7, namespace, "", map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 	})
+	s1 := createSecret(secretName1, namespace)
 	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
 	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
 	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, sb7, s1, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }
@@ -326,6 +328,24 @@ func createSecretBinding(name, namespace, secretName string, labels map[string]s
 	}
 	u.SetLabels(labels)
 	u.SetGroupVersionKind(gardener.SecretBindingGVK)
+
+	return u
+}
+
+func createSecret(name, namespace string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"data": map[string]interface{}{
+				"accessKeyID":     "dGVzdC1rZXk=",
+				"secretAccessKey": "dGVzdC1zZWNyZXQ=",
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.SecretGVK)
 
 	return u
 }

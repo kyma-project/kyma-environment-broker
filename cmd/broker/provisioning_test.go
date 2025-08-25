@@ -2631,3 +2631,54 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 
 	}
 }
+
+func TestDynamicallyFetchedAWSZones(t *testing.T) {
+	// given
+	cfg := fixConfig()
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "m6i.16xlarge",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "m6i.16xlarge",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByInstanceID(iid)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "ap-southeast-2p", "ap-southeast-2q", "ap-southeast-2r")
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "ap-southeast-2p", "ap-southeast-2q", "ap-southeast-2r")
+}
