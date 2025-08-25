@@ -182,6 +182,7 @@ var (
 	SecretResource        = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
 	ShootResource         = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
 	SecretBindingGVK      = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}
+	SecretGVK             = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}
 	ShootGVK              = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
 )
 

@@ -10,6 +10,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -70,7 +71,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewGetAvailableAWSZonesStep(db.Operations(), gardenerClient),
+			step:      provisioning.NewFetchAvailableZonesStep(db.Operations(), gardenerClient, aws.NewFactory()),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

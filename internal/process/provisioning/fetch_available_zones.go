@@ -18,26 +18,28 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type GetAvailableAWSZonesStep struct {
+type FetchAvailableZonesStep struct {
 	operationManager *process.OperationManager
 	opStorage        storage.Operations
 	gardenerClient   *gardener.Client
+	awsClientFactory aws.ClientFactory
 }
 
-func NewGetAvailableAWSZonesStep(os storage.Operations, gardenerClient *gardener.Client) *GetAvailableAWSZonesStep {
-	step := &GetAvailableAWSZonesStep{
-		opStorage:      os,
-		gardenerClient: gardenerClient,
+func NewFetchAvailableZonesStep(os storage.Operations, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *FetchAvailableZonesStep {
+	step := &FetchAvailableZonesStep{
+		opStorage:        os,
+		gardenerClient:   gardenerClient,
+		awsClientFactory: awsClientFactory,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
 
-func (s *GetAvailableAWSZonesStep) Name() string {
-	return "Get_Available_AWS_Zones"
+func (s *FetchAvailableZonesStep) Name() string {
+	return "Fetch_Available_Zones"
 }
 
-func (s *GetAvailableAWSZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+func (s *FetchAvailableZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.ProvisioningParameters.PlatformProvider != pkg.AWS {
 		log.Info("PlatformProvider is not AWS, skipping")
 		return operation, 0, nil
@@ -63,7 +65,7 @@ func (s *GetAvailableAWSZonesStep) Run(operation internal.Operation, log *slog.L
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	client, err := aws.NewClient(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
@@ -82,10 +84,13 @@ func (s *GetAvailableAWSZonesStep) Run(operation internal.Operation, log *slog.L
 	}, log)
 }
 
-func (s *GetAvailableAWSZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {
+func (s *FetchAvailableZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {
 	data, found, err := unstructured.NestedStringMap(secret.Object, "data")
-	if err != nil || !found {
+	if err != nil {
 		return "", "", fmt.Errorf("unable to extract data from secret: %w", err)
+	}
+	if !found {
+		return "", "", fmt.Errorf("secret does not contain data")
 	}
 
 	accessKeyID, ok := data["accessKeyID"]

@@ -11,19 +11,41 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-type Client struct {
-	awsClient *ec2.Client
+type ClientFactory interface {
+	New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error)
 }
 
-func NewClient(ctx context.Context, key, secret, region string) (*Client, error) {
+type Client interface {
+	AvailableZones(ctx context.Context, machineType string) ([]string, error)
+}
+
+type EC2API interface {
+	DescribeInstanceTypeOfferings(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error)
+}
+
+func NewFactory() ClientFactory {
+	return AWSClientFactory{}
+}
+
+type AWSClientFactory struct{}
+
+func (AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
+	return NewClient(ctx, accessKeyID, secretAccessKey, region)
+}
+
+type AWSClient struct {
+	ec2Client EC2API
+}
+
+func NewClient(ctx context.Context, key, secret, region string) (*AWSClient, error) {
 	cfg, err := newAWSConfig(ctx, key, secret, region)
 	if err != nil {
 		return nil, fmt.Errorf("while creating AWS config: %w", err)
 	}
-	return &Client{awsClient: ec2.NewFromConfig(cfg)}, nil
+	return &AWSClient{ec2Client: ec2.NewFromConfig(cfg)}, nil
 }
 
-func (c *Client) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+func (c *AWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
 	params := &ec2.DescribeInstanceTypeOfferingsInput{
 		LocationType: "availability-zone",
 		Filters: []types.Filter{
@@ -33,7 +55,7 @@ func (c *Client) AvailableZones(ctx context.Context, machineType string) ([]stri
 			},
 		},
 	}
-	resp, err := c.awsClient.DescribeInstanceTypeOfferings(ctx, params)
+	resp, err := c.ec2Client.DescribeInstanceTypeOfferings(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe offerings: %w", err)
 	}

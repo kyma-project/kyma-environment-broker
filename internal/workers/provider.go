@@ -2,16 +2,15 @@ package workers
 
 import (
 	"fmt"
-	"log/slog"
 	"strconv"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -59,9 +58,8 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				workerZones = formattedZones
 			}
 
-			// If custom zones fetched dynamically from AWS are found, use them instead of the Kyma workload zones.
+			// If custom zones fetched dynamically are found, use them instead of the Kyma workload zones.
 			if len(additionalWorkerNodePool.AvailableZones) > 0 {
-				slog.Info(fmt.Sprintf("Available AWS zones for %s: %v", additionalWorkerNodePool.MachineType, additionalWorkerNodePool.AvailableZones))
 				workerZones = additionalWorkerNodePool.AvailableZones
 			}
 
