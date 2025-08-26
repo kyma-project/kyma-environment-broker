@@ -32,9 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	msgPlanChange = "Plan change"
-)
+const msgPlanChange = "Plan change"
 
 type ContextUpdateHandler interface {
 	Handle(instance *internal.Instance, newCtx internal.ERSContext) (bool, error)
