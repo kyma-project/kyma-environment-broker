@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const msgPlanChange = "Plan change"
+const planChangeMessage = "Plan change"
 
 type ContextUpdateHandler interface {
 	Handle(instance *internal.Instance, newCtx internal.ERSContext) (bool, error)
@@ -357,7 +357,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			instance.Parameters.PlanID = details.PlanID
 			instance.ServicePlanID = details.PlanID
 			instance.ServicePlanName = PlanNamesMapping[details.PlanID]
-			updateStorage = append(updateStorage, msgPlanChange)
+			updateStorage = append(updateStorage, planChangeMessage)
 		} else {
 			logger.Info(fmt.Sprintf("Plan change not allowed."))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
@@ -419,7 +419,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			return domain.UpdateServiceSpec{}, response
 		}
 
-		if slices.Contains(updateStorage, msgPlanChange) {
+		if slices.Contains(updateStorage, planChangeMessage) {
 			oldPlan := PlanNamesMapping[oldPlanID]
 			newPlan := PlanNamesMapping[details.PlanID]
 			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)
