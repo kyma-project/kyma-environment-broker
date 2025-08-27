@@ -30,9 +30,9 @@ SINGLE_JOBS = [
     ("resources/keb/templates/runtime-reconciler-deployment.yaml", "docs/contributor/07-10-runtime-reconciler.md"),
     ("resources/keb/templates/subaccount-sync-deployment.yaml", "docs/contributor/07-20-subaccount-sync.md"),
     ("resources/keb/templates/migrator-job.yaml", "docs/contributor/07-30-schema-migrator.md"),
+    ("resources/keb/templates/subaccount-cleanup-job.yaml", "docs/contributor/06-30-subaccount-cleanup-cronjob.md"),
 ]
 MULTI_JOBS_IN_ONE_TEMPLATE = [
-    ("resources/keb/templates/subaccount-cleanup-job.yaml", "docs/contributor/06-30-subaccount-cleanup-cronjob.md", "Subaccount Cleanup CronJob")
 ]
 COMBINED_JOBS_IN_ONE_MD = [
     ("resources/keb/templates/trial-cleanup-job.yaml", "resources/keb/templates/free-cleanup-job.yaml", "docs/contributor/06-40-trial-free-cleanup-cronjobs.md", "Trial Cleanup CronJob", "Free Cleanup CronJob")

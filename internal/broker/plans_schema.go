@@ -43,11 +43,10 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig    *Type           `json:"kubeconfig,omitempty"`
-	AutoScalerMin *AutoscalerType `json:"autoScalerMin,omitempty"`
-	AutoScalerMax *AutoscalerType `json:"autoScalerMax,omitempty"`
-	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
-	OIDC                      interface{}                    `json:"oidc,omitempty"`
+	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
+	AutoScalerMin             *AutoscalerType                `json:"autoScalerMin,omitempty"`
+	AutoScalerMax             *AutoscalerType                `json:"autoScalerMax,omitempty"`
+	OIDC                      *OIDCs                         `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
