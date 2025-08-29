@@ -1,0 +1,115 @@
+package provisioning
+
+import (
+	"context"
+	"encoding/base64"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+)
+
+type FetchAvailableZonesStep struct {
+	operationManager *process.OperationManager
+	opStorage        storage.Operations
+	gardenerClient   *gardener.Client
+	awsClientFactory aws.ClientFactory
+}
+
+func NewFetchAvailableZonesStep(os storage.Operations, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *FetchAvailableZonesStep {
+	step := &FetchAvailableZonesStep{
+		opStorage:        os,
+		gardenerClient:   gardenerClient,
+		awsClientFactory: awsClientFactory,
+	}
+	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
+	return step
+}
+
+func (s *FetchAvailableZonesStep) Name() string {
+	return "Fetch_Available_Zones"
+}
+
+func (s *FetchAvailableZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if operation.ProvisioningParameters.PlatformProvider != pkg.AWS {
+		log.Info("PlatformProvider is not AWS, skipping")
+		return operation, 0, nil
+	}
+	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) == 0 {
+		log.Info("No additional worker node pools, skipping")
+		return operation, 0, nil
+	}
+
+	if operation.ProvisioningParameters.Parameters.TargetSecret == nil {
+		return s.operationManager.OperationFailed(operation, "target secret is missing", nil, log)
+	}
+	if operation.ProvisioningParameters.Parameters.Region == nil {
+		return s.operationManager.OperationFailed(operation, "region is missing", nil, log)
+	}
+
+	secret, err := s.gardenerClient.GetSecret(*operation.ProvisioningParameters.Parameters.TargetSecret)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "unable to get secret", err, 10*time.Second, time.Minute, log)
+	}
+	accessKeyID, secretAccessKey, err := s.extractAWSCredentials(secret)
+	if err != nil {
+		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
+	}
+
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
+	}
+	for i := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+		pool := &operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools[i]
+		zones, err := client.AvailableZones(context.Background(), pool.MachineType)
+		if err != nil {
+			return s.operationManager.RetryOperation(operation, "unable to get available zones", err, 10*time.Second, time.Minute, log)
+		}
+		log.Info(fmt.Sprintf("Available zones for %s: %v", pool.MachineType, zones))
+		pool.AvailableZones = zones
+	}
+
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools
+	}, log)
+}
+
+func (s *FetchAvailableZonesStep) extractAWSCredentials(secret *unstructured.Unstructured) (string, string, error) {
+	data, found, err := unstructured.NestedStringMap(secret.Object, "data")
+	if err != nil {
+		return "", "", fmt.Errorf("unable to extract data from secret: %w", err)
+	}
+	if !found {
+		return "", "", fmt.Errorf("secret does not contain data")
+	}
+
+	accessKeyID, ok := data["accessKeyID"]
+	if !ok {
+		return "", "", fmt.Errorf("secret does not contain accessKeyID")
+	}
+	secretAccessKey, ok := data["secretAccessKey"]
+	if !ok {
+		return "", "", fmt.Errorf("secret does not contain secretAccessKey")
+	}
+
+	accessKeyIDBytes, err := base64.StdEncoding.DecodeString(accessKeyID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode accessKeyID: %w", err)
+	}
+	secretAccessKeyBytes, err := base64.StdEncoding.DecodeString(secretAccessKey)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode secretAccessKey: %w", err)
+	}
+
+	return string(accessKeyIDBytes), string(secretAccessKeyBytes), nil
+}

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -44,11 +44,11 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
+
 			customAvailableZones, err := p.regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
 			if err != nil {
 				return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
 			}
-
 			// If custom zones are found, use them instead of the Kyma workload zones.
 			if len(customAvailableZones) > 0 {
 				var formattedZones []string
@@ -57,6 +57,12 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				}
 				workerZones = formattedZones
 			}
+
+			// If custom zones fetched dynamically are found, use them instead of the Kyma workload zones.
+			if len(additionalWorkerNodePool.AvailableZones) > 0 {
+				workerZones = additionalWorkerNodePool.AvailableZones
+			}
+
 			// limit to 3 zones (if there is more than 3 available)
 			if len(workerZones) > 3 {
 				workerZones = workerZones[:3]
