@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -361,4 +362,32 @@ func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceName
 			"channel": "stable",
 		},
 	}})
+}
+
+func NewFakeAWSClientFactory(zones map[string][]string, error error) *FakeAWSClientFactory {
+	fakeClient := &fakeAWSClient{
+		zones: zones,
+		err:   error,
+	}
+	return &FakeAWSClientFactory{client: fakeClient}
+}
+
+type FakeAWSClientFactory struct {
+	client aws.Client
+}
+
+func (f *FakeAWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
+	return f.client, nil
+}
+
+type fakeAWSClient struct {
+	zones map[string][]string
+	err   error
+}
+
+func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.zones[machineType], nil
 }
