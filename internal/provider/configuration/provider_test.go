@@ -83,8 +83,8 @@ func TestProviderSpec_Validation(t *testing.T) {
 
 	// when / then
 
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-central-1"), "region eu-central-1 for provider aws has no zones defined")
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-west-2"), "region eu-west-2 for provider aws has no zones defined")
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-west-1"), "region eu-west-1 for provider aws has no display name defined")
-	assert.NoError(t, providerSpec.Validate(runtime.AWS, "us-east-1"))
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-central-1"), "region eu-central-1 for provider aws has no zones defined")
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-west-2"), "region eu-west-2 for provider aws has no zones defined")
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-west-1"), "region eu-west-1 for provider aws has no display name defined")
+	assert.NoError(t, providerSpec.Validate(runtime.AWS, "aws", "us-east-1"))
 }
