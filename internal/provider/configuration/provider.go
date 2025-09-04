@@ -195,3 +195,11 @@ func (p *ProviderSpec) RegionSupportingMachine(providerType string) (internal.Re
 	}
 	return providerData.SupportingMachines, nil
 }
+
+func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return false
+	}
+	return providerData.ZonesDiscovery
+}
