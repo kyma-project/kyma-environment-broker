@@ -210,9 +210,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
+	awsClientFactory := fixture.NewFakeAWSClientFactory(map[string][]string{}, nil)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec))
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
