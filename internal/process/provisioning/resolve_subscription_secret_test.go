@@ -265,6 +265,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 func createGardenerClient() *gardener.Client {
 	const (
 		namespace          = "test"
+		secretName1        = "secret-1"
 		secretBindingName1 = "secret-binding-1"
 		secretBindingName2 = "secret-binding-2"
 		secretBindingName3 = "secret-binding-3"
@@ -273,6 +274,7 @@ func createGardenerClient() *gardener.Client {
 		secretBindingName6 = "secret-binding-6"
 		secretBindingName7 = "secret-binding-7"
 	)
+	s1 := createSecret(secretName1, namespace)
 	sb1 := createSecretBinding(secretBindingName1, namespace, awsEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.EUAccessLabelKey:        "true",
@@ -306,9 +308,27 @@ func createGardenerClient() *gardener.Client {
 	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
 	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func createSecret(name, namespace string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"data": map[string]interface{}{
+				"accessKeyID":     "dGVzdC1rZXk=",
+				"secretAccessKey": "dGVzdC1zZWNyZXQ=",
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.SecretGVK)
+
+	return u
 }
 
 func createSecretBinding(name, namespace, secretName string, labels map[string]string) *unstructured.Unstructured {

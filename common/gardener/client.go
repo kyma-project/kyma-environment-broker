@@ -41,6 +41,12 @@ func (c *Client) Namespace() string {
 	return c.namespace
 }
 
+func (c *Client) GetSecret(name string) (*unstructured.Unstructured, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	return c.Resource(SecretResource).Namespace(c.namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
 func (c *Client) GetSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
@@ -172,8 +178,10 @@ func (b Shoot) GetSpecRegion() string {
 }
 
 var (
+	SecretResource        = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
 	SecretBindingResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "secretbindings"}
 	ShootResource         = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
+	SecretGVK             = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Secret"}
 	SecretBindingGVK      = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}
 	ShootGVK              = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
 )
