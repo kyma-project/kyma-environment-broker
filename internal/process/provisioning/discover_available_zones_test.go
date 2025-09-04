@@ -114,7 +114,7 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	assert.Equal(t, 10*time.Second, repeat)
 }
 
-func TestDiscoverAvailableZonesStep_HappyPath(t *testing.T) {
+func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -166,7 +166,62 @@ func TestDiscoverAvailableZonesStep_HappyPath(t *testing.T) {
 	// then
 	assert.NoError(t, err)
 	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 3)
 	assert.ElementsMatch(t, operation.DiscoveredZones["m6i.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixInstance()
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixUpdatingOperation(operationID, instanceID).Operation
+	operation.RuntimeID = instance.RuntimeID
+	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
+	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "worker-1",
+			MachineType:   "g6.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+		{
+			Name:          "worker-2",
+			MachineType:   "g4dn.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+	}
+	targetSecret := "secret-1"
+	operation.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
+
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesStep(
+		memoryStorage.Operations(),
+		&configuration.ProviderSpec{},
+		createGardenerClient(),
+		fixture.NewFakeAWSClientFactory(map[string][]string{
+			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
+			"g4dn.xlarge": {"ap-southeast-2b"},
+		}, nil),
+	)
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 2)
 	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
 }

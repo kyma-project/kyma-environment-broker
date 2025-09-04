@@ -66,11 +66,17 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 	}
 
 	operation.DiscoveredZones = make(map[string][]string)
-	if operation.ProvisioningParameters.Parameters.MachineType != nil {
-		operation.DiscoveredZones[*operation.ProvisioningParameters.Parameters.MachineType] = []string{}
-	}
-	for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
-		operation.DiscoveredZones[pool.MachineType] = []string{}
+	if operation.Type == internal.OperationTypeProvision {
+		if operation.ProvisioningParameters.Parameters.MachineType != nil {
+			operation.DiscoveredZones[*operation.ProvisioningParameters.Parameters.MachineType] = []string{}
+		}
+		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+			operation.DiscoveredZones[pool.MachineType] = []string{}
+		}
+	} else if operation.Type == internal.OperationTypeUpdate {
+		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
+			operation.DiscoveredZones[pool.MachineType] = []string{}
+		}
 	}
 
 	for machineType, _ := range operation.DiscoveredZones {
@@ -78,7 +84,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 		}
-		log.Info(fmt.Sprintf("Available zones for %s: %v", machineType, zones))
+		log.Info(fmt.Sprintf("Available zones for machine type %s: %v", machineType, zones))
 		operation.DiscoveredZones[machineType] = zones
 	}
 
