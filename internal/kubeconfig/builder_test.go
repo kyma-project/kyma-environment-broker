@@ -40,7 +40,7 @@ func TestBuilder_BuildFromRuntimeResource_NilAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -68,7 +68,7 @@ func TestBuilder_BuildFromRuntimeResource_EmptyAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -104,7 +104,7 @@ func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -146,7 +146,7 @@ func TestBuilder_BuildFromRuntimeResource_MultipleAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -159,23 +159,6 @@ func TestBuilder_BuildFromRuntimeResource_MultipleAdditionalOIDC(t *testing.T) {
 		//then
 		require.NoError(t, err)
 		require.Equal(t, kubeconfig, newKubeconfigWithMultipleContexts())
-	})
-
-	t.Run("should return kubeconfig with one context when feature flag is disabled", func(t *testing.T) {
-		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), false)
-
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		kubeconfig, err := builder.Build(instance)
-
-		//then
-		require.NoError(t, err)
-		require.Equal(t, kubeconfig, newKubeconfig())
 	})
 }
 
@@ -192,7 +175,7 @@ func TestBuilder_BuildFromAdminKubeconfig_NilAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -220,7 +203,7 @@ func TestBuilder_BuildFromAdminKubeconfig_EmptyAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -256,7 +239,7 @@ func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -298,7 +281,7 @@ func TestBuilder_BuildFromAdminKubeconfig_MultipleAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -311,24 +294,6 @@ func TestBuilder_BuildFromAdminKubeconfig_MultipleAdditionalOIDC(t *testing.T) {
 		//then
 		require.NoError(t, err)
 		require.Equal(t, kubeconfig, newOwnClusterKubeconfigWithMultipleContexts())
-	})
-
-	t.Run("should return kubeconfig with one context when feature flag is disabled", func(t *testing.T) {
-		// given
-
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), false)
-
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		kubeconfig, err := builder.BuildFromAdminKubeconfig(instance, adminKubeconfig())
-
-		//then
-		require.NoError(t, err)
-		require.Equal(t, kubeconfig, newOwnClusterKubeconfig())
 	})
 }
 

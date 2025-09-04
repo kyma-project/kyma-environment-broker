@@ -61,15 +61,12 @@ type Config struct {
 	WorkerHealthCheckInterval     time.Duration `envconfig:"default=10m"`
 	WorkerHealthCheckWarnInterval time.Duration `envconfig:"default=10m"`
 
-	UseAdditionalOIDCSchema bool `envconfig:"default=false"`
-
 	MonitorAdditionalProperties     bool   `envconfig:"default=false"`
 	AdditionalPropertiesPath        string `envconfig:"default=/additional-properties"`
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
 
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
-	EnableJwks                  bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
 }
 

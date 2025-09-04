@@ -101,8 +101,6 @@ spec:
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.broker.disableSapConvergedCloud }}"
-            - name: APP_BROKER_ENABLE_JWKS
-              value: "{{ .Values.broker.enableJwks }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
@@ -143,8 +141,6 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_BROKER_URL
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
-            - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
-              value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
             - name: APP_CLEANING_DRY_RUN
@@ -243,8 +239,6 @@ spec:
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_STATS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
-            - name: APP_MULTIPLE_CONTEXTS
-              value: "{{ .Values.multipleContexts }}"
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY

@@ -1007,10 +1007,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:             []string{"gcp", "azure"},
-				URL:                     brokerURL,
-				OnlySingleTrialPerGA:    true,
-				UseAdditionalOIDCSchema: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -1067,10 +1066,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:             []string{"gcp", "azure"},
-				URL:                     brokerURL,
-				OnlySingleTrialPerGA:    true,
-				UseAdditionalOIDCSchema: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -1225,10 +1223,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:             []string{"gcp", "azure"},
-				URL:                     brokerURL,
-				OnlySingleTrialPerGA:    true,
-				UseAdditionalOIDCSchema: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3494,7 +3491,6 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
 		IncludeAdditionalParamsInSchema: true,
-		UseAdditionalOIDCSchema:         true,
 	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
 		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
 	return schemaService

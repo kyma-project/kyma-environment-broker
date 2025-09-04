@@ -17,7 +17,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified. |
 | **APP_BROKER_DISABLE_&#x200b;SAP_CONVERGED_CLOUD** | <code>false</code> | If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters. |
-| **APP_BROKER_ENABLE_&#x200b;JWKS** | <code>false</code> | If true, enables the handling of the encoded JWKS array, temporary feature flag. |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB. |
 | **APP_BROKER_ENABLE_&#x200b;PLAN_UPGRADES** | <code>false</code> | If true, allows users to upgrade their plans (if a plan supports upgrades). |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
@@ -38,7 +37,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
-| **APP_BROKER_USE_&#x200b;ADDITIONAL_OIDC_&#x200b;SCHEMA** | <code>false</code> | If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime. |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
 | **APP_CLEANING_DRY_RUN** | <code>true</code> | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. |
 | **APP_CLEANING_ENABLED** | <code>false</code> | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. |
@@ -77,7 +75,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation results. |
 | **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;RETENTION_PERIOD** | <code>1h</code> | Duration of retaining operation results. |
 | **APP_METRICSV2_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics. |
-| **APP_MULTIPLE_&#x200b;CONTEXTS** | <code>false</code> | If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context. |
 | **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/plansConfig.yaml</code> | Path to the plans configuration file, which defines available service plans. |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false). |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings. |

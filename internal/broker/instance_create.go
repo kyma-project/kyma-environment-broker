@@ -660,9 +660,6 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
-	if !b.config.UseAdditionalOIDCSchema {
-		ClearOIDCInput(parameters.OIDC)
-	}
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 	return parameters, nil
 }

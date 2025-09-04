@@ -40,26 +40,22 @@ const (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager        *process.OperationManager
-	instanceStorage         storage.Instances
-	k8sClient               client.Client
-	config                  broker.InfrastructureManager
-	oidcDefaultValues       pkg.OIDCConfigDTO
-	useAdditionalOIDCSchema bool
-	workersProvider         *workers.Provider
-	enableJwks              bool
+	operationManager  *process.OperationManager
+	instanceStorage   storage.Instances
+	k8sClient         client.Client
+	config            broker.InfrastructureManager
+	oidcDefaultValues pkg.OIDCConfigDTO
+	workersProvider   *workers.Provider
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider, enableJwks bool) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:         db.Instances(),
-		k8sClient:               k8sClient,
-		config:                  infrastructureManagerConfig,
-		oidcDefaultValues:       oidcDefaultValues,
-		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
-		workersProvider:         workersProvider,
-		enableJwks:              enableJwks,
+		instanceStorage:   db.Instances(),
+		k8sClient:         k8sClient,
+		config:            infrastructureManagerConfig,
+		oidcDefaultValues: oidcDefaultValues,
+		workersProvider:   workersProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -335,9 +331,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 				RequiredClaims: requiredClaims,
 			},
 		}
-		if s.enableJwks {
-			oidc.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
-		}
+		oidc.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
 		configs = append(configs, oidc)
 	}
 
@@ -366,10 +360,10 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC imv1.OIDCConfig,
 	if inputOIDC.UsernamePrefix != "" {
 		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
 	}
-	if s.useAdditionalOIDCSchema && len(inputOIDC.RequiredClaims) > 0 {
+	if len(inputOIDC.RequiredClaims) > 0 {
 		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
 	}
-	if s.enableJwks && inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
+	if inputOIDC.EncodedJwksArray != "" && inputOIDC.EncodedJwksArray != "-" {
 		defaultOIDC.JWKS, _ = base64.StdEncoding.DecodeString(inputOIDC.EncodedJwksArray)
 	}
 	return defaultOIDC

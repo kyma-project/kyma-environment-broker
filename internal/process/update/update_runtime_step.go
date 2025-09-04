@@ -32,24 +32,20 @@ type UpdateRuntimeStep struct {
 	config                     broker.InfrastructureManager
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
-	useAdditionalOIDCSchema    bool
 	workersProvider            *workers.Provider
 	valuesProvider             broker.ValuesProvider
-	enableJwks                 bool
 }
 
-func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, enableJwks bool) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string,
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
 		config:                     infrastructureManagerConfig,
 		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 		workersProvider:            workersProvider,
 		valuesProvider:             valuesProvider,
-		enableJwks:                 enableJwks,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -126,9 +122,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 						GroupsPrefix:   &oidcConfig.GroupsPrefix,
 					},
 				}
-				if s.enableJwks {
-					oidcConfigObj.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
-				}
+				oidcConfigObj.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
 				oidcConfigs = append(oidcConfigs, oidcConfigObj)
 
 			}
@@ -159,7 +153,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			if dto.GroupsPrefix != "" {
 				config.GroupsPrefix = &dto.GroupsPrefix
 			}
-			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
+			if len(dto.RequiredClaims) > 0 {
 				if len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-" {
 					config.RequiredClaims = map[string]string{}
 				} else {
@@ -173,12 +167,10 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					config.RequiredClaims = requiredClaims
 				}
 			}
-			if s.enableJwks {
-				if dto.EncodedJwksArray == "-" {
-					config.JWKS = nil
-				} else if dto.EncodedJwksArray != "" {
-					config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
-				}
+			if dto.EncodedJwksArray == "-" {
+				config.JWKS = nil
+			} else if dto.EncodedJwksArray != "" {
+				config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
 			}
 		}
 	}

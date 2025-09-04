@@ -1537,7 +1537,7 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), nil, imConfigFixture, newSchemaService(t), nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1597,53 +1597,87 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	assert.EqualError(t, err, "In the westeurope, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
 }
 
-func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
-	// given
-	instance := fixture.FixInstance(instanceID)
-	instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
-		{
-			Name:          "name-1",
-			MachineType:   "Standard_NC8as_T4_v3",
-			HAZones:       true,
-			AutoScalerMin: 3,
-			AutoScalerMax: 20,
+func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdditionalMachine(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		InitialMachineType string
+		UpdatedMachineType string
+		ExpectedError      string
+	}{
+		"Standard_NC4as_T4_v3 to Standard_NC8as_T4_v3": {
+			InitialMachineType: "Standard_NC4as_T4_v3",
+			UpdatedMachineType: "Standard_NC8as_T4_v3",
+			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC8as_T4_v3",
 		},
+		"Standard_D2s_v5 to Standard_D4s_v5": {
+			InitialMachineType: "Standard_D2s_v5",
+			UpdatedMachineType: "Standard_D4s_v5",
+			ExpectedError:      "",
+		},
+		"Standard_D2s_v5 to Standard_NC8as_T4_v3": {
+			InitialMachineType: "Standard_D2s_v5",
+			UpdatedMachineType: "Standard_NC8as_T4_v3",
+			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC8as_T4_v3",
+		},
+		"Standard_NC4as_T4_v3 to Standard_D2s_v5": {
+			InitialMachineType: "Standard_NC4as_T4_v3",
+			UpdatedMachineType: "Standard_D2s_v5",
+			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC4as_T4_v3",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+				{
+					Name:          "name-1",
+					MachineType:   tc.InitialMachineType,
+					HAZones:       true,
+					AutoScalerMin: 3,
+					AutoScalerMax: 20,
+				},
+			}
+			instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			op := fixProvisioningOperation("provisioning01")
+			op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
+			err = st.Operations().InsertProvisioningOperation(op)
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+
+			imConfig := broker.InfrastructureManager{
+				UseSmallerMachineTypes: false,
+			}
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil)
+
+			additionalWorkerNodePools := fmt.Sprintf(`[{"name": "name-1", "machineType": "%s", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`, tc.UpdatedMachineType)
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AzurePlanID,
+				RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			if tc.ExpectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.ExpectedError)
+			}
+		})
 	}
-	instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
-	require.NoError(t, err)
-	op := fixProvisioningOperation("provisioning01")
-	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
-	err = st.Operations().InsertProvisioningOperation(op)
-	require.NoError(t, err)
-
-	handler := &handler{}
-	q := &automock.Queue{}
-	q.On("Add", mock.AnythingOfType("string"))
-
-	imConfig := broker.InfrastructureManager{
-		UseSmallerMachineTypes: false,
-	}
-
-	kcBuilder := &kcMock.KcBuilder{}
-	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
-	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil)
-
-	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
-	// when
-	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-		ServiceID:       "",
-		PlanID:          broker.AzurePlanID,
-		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
-		PreviousValues:  domain.PreviousValues{},
-		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-		MaintenanceInfo: nil,
-	}, true)
-
-	// then
-	assert.EqualError(t, err, "Machine type setting is permanent, and you cannot change it for the name-1 additional worker node pool")
 }
 
 func TestUpdateAdditionalProperties(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -580,11 +581,20 @@ func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWork
 	}
 	return nil
 }
-func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+
+func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool, allowedMachines []string) error {
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {
-			if a.MachineType != currentAdditionalWorkerNodePool.MachineType {
-				return fmt.Errorf("Machine type setting is permanent, and you cannot change it for the %s additional worker node pool", a.Name)
+			if a.MachineType == currentAdditionalWorkerNodePool.MachineType {
+				continue
+			}
+
+			// machine type change validation
+			if !slices.Contains(allowedMachines, a.MachineType) {
+				return fmt.Errorf("Machine type change for additional worker node pools is not allowed for machine %s", a.MachineType)
+			}
+			if !slices.Contains(allowedMachines, currentAdditionalWorkerNodePool.MachineType) {
+				return fmt.Errorf("Machine type change for additional worker node pools is not allowed for machine %s", currentAdditionalWorkerNodePool.MachineType)
 			}
 		}
 	}

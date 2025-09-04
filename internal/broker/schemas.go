@@ -318,10 +318,8 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 	return NewControlFlagsObject(
 		s.cfg.IncludeAdditionalParamsInSchema,
-		s.cfg.UseAdditionalOIDCSchema,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
-		s.cfg.EnableJwks,
 	)
 }
 

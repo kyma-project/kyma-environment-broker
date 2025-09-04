@@ -41,29 +41,6 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 Use the following environment variables to configure the application:
 
-### Subaccount Cleanup CronJob v1
-
-| Environment Variable | Current Value | Description |
-|---------------------|------------------------------|---------------------------------------------------------------|
-| **APP_BROKER_URL** | None | - |
-| **APP_CIS_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests. |
-| **APP_CIS_CLIENT_ID** | None | Specifies the client ID for the OAuth2 authentication in CIS. |
-| **APP_CIS_CLIENT_&#x200b;SECRET** | None | Specifies the client secret for the OAuth2 authentication in CIS. |
-| **APP_CIS_EVENT_&#x200b;SERVICE_URL** | <code>TBD</code> | The endpoint URL for the CIS v1 event service, used to fetch subaccount events. |
-| **APP_CLIENT_VERSION** | <code>v1.0</code> | Client version. |
-| **APP_DATABASE_HOST** | None | Specifies the host of the database. |
-| **APP_DATABASE_NAME** | None | Specifies the name of the database. |
-| **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
-| **APP_DATABASE_PORT** | None | Specifies the port for the database. |
-| **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database. |
-| **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
-| **APP_DATABASE_USER** | None | Specifies the username for the database. |
-| **DATABASE_EMBEDDED** | <code>true</code> | - |
-
-
-### Subaccount Cleanup CronJob v2
-
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
@@ -84,4 +61,3 @@ Use the following environment variables to configure the application:
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
 | **APP_DATABASE_USER** | None | Specifies the username for the database. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
-

@@ -32,6 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const planChangeMessage = "Plan change"
+
 type ContextUpdateHandler interface {
 	Handle(instance *internal.Instance, newCtx internal.ERSContext) (bool, error)
 }
@@ -254,9 +256,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
-		if !b.config.UseAdditionalOIDCSchema {
-			ClearOIDCInput(params.OIDC)
-		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
@@ -320,10 +319,10 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if err := additionalWorkerNodePool.ValidateMachineTypesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
+			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(PlanNamesMapping[details.PlanID])); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
@@ -358,7 +357,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			instance.Parameters.PlanID = details.PlanID
 			instance.ServicePlanID = details.PlanID
 			instance.ServicePlanName = PlanNamesMapping[details.PlanID]
-			updateStorage = append(updateStorage, "Plan change")
+			updateStorage = append(updateStorage, planChangeMessage)
 		} else {
 			logger.Info(fmt.Sprintf("Plan change not allowed."))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
@@ -420,7 +419,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			return domain.UpdateServiceSpec{}, response
 		}
 
-		if slices.Contains(updateStorage, "Plan change") {
+		if slices.Contains(updateStorage, planChangeMessage) {
 			oldPlan := PlanNamesMapping[oldPlanID]
 			newPlan := PlanNamesMapping[details.PlanID]
 			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)

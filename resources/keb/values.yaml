@@ -47,31 +47,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.21.27
+      version: 1.21.30
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_expirator_job:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.21.27"
+      version: "1.21.30"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.21.27
+      version: 1.21.30
   ingress:
     domainName: localhost
   istio:
@@ -147,8 +147,6 @@ broker:
   defaultRequestRegion: "cf-eu10"
   # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters.
   disableSapConvergedCloud: false
-  # If true, enables the handling of the encoded JWKS array, temporary feature flag.
-  enableJwks: "false"
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, allows users to upgrade their plans (if a plan supports upgrades).
@@ -190,8 +188,6 @@ broker:
   trialDocsURL: "https://help.sap.com/docs/"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
-  # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime.
-  useAdditionalOIDCSchema: "false" # temporary feature flag.
 
 provisioning:
   # Maximum time a worker is allowed to process a step before it must return to the provisioning queue.
@@ -325,9 +321,6 @@ metricsv2:
   # Frequency of polling for operation statistics.
   operationStatsPollingInterval: 1m
 
-# If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
-multipleContexts: false
-
 plansConfiguration: {}
 
 profiler:
@@ -425,21 +418,6 @@ cis:
     secretName: "cis-creds-accounts"
     # The base URL of the CIS Accounts API endpoint, used for fetching subaccount data.
     serviceURL: "TBD"
-    # The key in the Kubernetes Secret that contains the CIS v2 client ID.
-    clientIdKey: id
-    # The key in the Kubernetes Secret that contains the CIS v2 client secret.
-    secretKey: secret
-  v1:
-    # The OAuth2 token endpoint (authorization URL) for CIS v1, used to obtain access tokens for authenticating requests.
-    authURL: "TBD"
-    # The endpoint URL for the CIS v1 event service, used to fetch subaccount events.
-    eventServiceURL: "TBD"
-    # The OAuth2 client ID used for authenticating requests to the CIS v1 API.
-    id: "TBD"
-    # The OAuth2 client secret used together with the client ID for authentication with the CIS v1 API.
-    secret: "TBD"
-    # The name of the Kubernetes Secret containing the CIS v1 client ID and secret.
-    secretName: "cis-creds-v1"
     # The key in the Kubernetes Secret that contains the CIS v2 client ID.
     clientIdKey: id
     # The key in the Kubernetes Secret that contains the CIS v2 client secret.
@@ -709,19 +687,6 @@ vmscrapes:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets.
 vsoSecrets:
   secrets:
-    cis-v1:
-      path: cis
-      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          id: v1_id
-          secret: v1_secret
-        data:
-          id: {}
-          secret: {}
     cis-v2:
       path: cis
       secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"

@@ -2781,6 +2781,217 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
 		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
 	})
+
+	t.Run("should update machine type in the additional worker node pool", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "us-east-1",
+                            "additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "m5.large",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// update machine type of the additional worker node pool
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "m5.xlarge",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-11", "m5.xlarge", 4, 21, 1)
+
+		// try to update with an additional machine type g6.xlarge
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "g6.xlarge",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should not update additional worker node pool when initial machine type is not a regular one", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "us-east-1",
+                            "additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "g6.xlarge",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// try to update with a regular machine type m5.large
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "m5.large",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should update additional worker node pool when initial machine type is a regular one", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "us-east-1",
+                            "additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "m5.xlarge",
+									"haZones": true,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// try to update with a regular machine type m5.large
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-11",
+									"machineType": "m5.large",
+									"haZones": true,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	})
 }
 
 func TestUpdateOIDC(t *testing.T) {
@@ -2913,7 +3124,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove previously set required claims", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -2975,7 +3185,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3044,7 +3253,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update empty OIDC list with OIDC object that has no values", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3094,7 +3302,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3235,7 +3442,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3297,7 +3503,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should not remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()

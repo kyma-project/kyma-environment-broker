@@ -43,11 +43,10 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig    *Type           `json:"kubeconfig,omitempty"`
-	AutoScalerMin *AutoscalerType `json:"autoScalerMin,omitempty"`
-	AutoScalerMax *AutoscalerType `json:"autoScalerMax,omitempty"`
-	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
-	OIDC                      interface{}                    `json:"oidc,omitempty"`
+	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
+	AutoScalerMin             *AutoscalerType                `json:"autoScalerMin,omitempty"`
+	AutoScalerMax             *AutoscalerType                `json:"autoScalerMax,omitempty"`
+	OIDC                      *OIDCs                         `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
@@ -226,7 +225,7 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters, enableJwks bool) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectUnsupportedParameters bool) *OIDCs {
 	if defaultOIDCConfig == nil {
 		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
 	}
@@ -370,51 +369,49 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 			OIDCs.OneOf[1] = oidcTypeExpanded
 		}
 	}
-	if enableJwks {
-		if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
-			additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "The JWKS array encoded in base64. Leave empty to not use it or to remove the previously set value."}
-			additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
-			if update {
-				additionalOidc.Properties.List.Default = []interface{}{
-					map[string]interface{}{
-						"clientID":         "",
-						"issuerURL":        "",
-						"groupsClaim":      "",
-						"signingAlgs":      []interface{}{},
-						"usernameClaim":    "",
-						"usernamePrefix":   "",
-						"groupsPrefix":     "",
-						"requiredClaims":   []interface{}{},
-						"encodedJwksArray": "",
-					},
-				}
-			} else {
-				additionalOidc.Properties.List.Default = []interface{}{
-					map[string]interface{}{
-						"clientID":         defaultOIDCConfig.ClientID,
-						"issuerURL":        defaultOIDCConfig.IssuerURL,
-						"groupsClaim":      defaultOIDCConfig.GroupsClaim,
-						"signingAlgs":      defaultOIDCConfig.SigningAlgs,
-						"usernameClaim":    defaultOIDCConfig.UsernameClaim,
-						"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
-						"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
-						"requiredClaims":   []interface{}{},
-						"encodedJwksArray": "",
-					},
-				}
+	if additionalOidc, ok := OIDCs.OneOf[0].(AdditionalOIDC); ok {
+		additionalOidc.Properties.List.Items.Properties.EncodedJwksArray = Type{Type: "string", Description: "The JWKS array encoded in base64. Leave empty to not use it or to remove the previously set value."}
+		additionalOidc.Properties.List.Items.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+		if update {
+			additionalOidc.Properties.List.Default = []interface{}{
+				map[string]interface{}{
+					"clientID":         "",
+					"issuerURL":        "",
+					"groupsClaim":      "",
+					"signingAlgs":      []interface{}{},
+					"usernameClaim":    "",
+					"usernamePrefix":   "",
+					"groupsPrefix":     "",
+					"requiredClaims":   []interface{}{},
+					"encodedJwksArray": "",
+				},
 			}
-			OIDCs.OneOf[0] = additionalOidc
+		} else {
+			additionalOidc.Properties.List.Default = []interface{}{
+				map[string]interface{}{
+					"clientID":         defaultOIDCConfig.ClientID,
+					"issuerURL":        defaultOIDCConfig.IssuerURL,
+					"groupsClaim":      defaultOIDCConfig.GroupsClaim,
+					"signingAlgs":      defaultOIDCConfig.SigningAlgs,
+					"usernameClaim":    defaultOIDCConfig.UsernameClaim,
+					"usernamePrefix":   defaultOIDCConfig.UsernamePrefix,
+					"groupsPrefix":     defaultOIDCConfig.GroupsPrefix,
+					"requiredClaims":   []interface{}{},
+					"encodedJwksArray": "",
+				},
+			}
 		}
-		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
-			oidcTypeExpanded.Properties.EncodedJwksArray = Type{Type: "string", ReadOnly: !update, Description: "The JWKS array encoded in base64. To remove the previously set value, enter the value '-' (dash character without additional characters)."}
-			oidcTypeExpanded.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
-			OIDCs.OneOf[1] = oidcTypeExpanded
-		}
+		OIDCs.OneOf[0] = additionalOidc
+	}
+	if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
+		oidcTypeExpanded.Properties.EncodedJwksArray = Type{Type: "string", ReadOnly: !update, Description: "The JWKS array encoded in base64. To remove the previously set value, enter the value '-' (dash character without additional characters)."}
+		oidcTypeExpanded.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims", "encodedJwksArray"}
+		OIDCs.OneOf[1] = oidcTypeExpanded
 	}
 	return OIDCs
 }
 
-func NewOIDCSchema(rejectUnsupportedParameters, enableJwks bool) *OIDCType {
+func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
 	OIDCType := &OIDCType{
 		ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix"},
 		Type:          Type{Type: "object", Description: "OIDC configuration"},
@@ -437,10 +434,8 @@ func NewOIDCSchema(rejectUnsupportedParameters, enableJwks bool) *OIDCType {
 	if rejectUnsupportedParameters {
 		OIDCType.Type.AdditionalProperties = false
 	}
-	if enableJwks {
-		OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
-		OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
-	}
+	OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
+	OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
 	return OIDCType
 }
 

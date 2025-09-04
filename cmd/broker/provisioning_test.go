@@ -1362,7 +1362,6 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -1422,7 +1421,6 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply empty OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.UseAdditionalOIDCSchema = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -1613,7 +1611,6 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should reject non base64 JWKS value", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.EnableJwks = true
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
