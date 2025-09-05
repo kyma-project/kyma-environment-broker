@@ -305,9 +305,6 @@ kymaDashboardConfig:
   # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes.
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
-lifecycleManager:
-  # When disabled, the broker does not create, update, or delete the KymaCR.
-  disabled: "false"
 
 metricsv2:
   # If true, enables metricsv2 collection and Prometheus exposure.

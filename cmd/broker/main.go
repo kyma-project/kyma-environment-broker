@@ -84,12 +84,11 @@ type Config struct {
 	Kubeconfig            kubeconfig.Config
 	StepTimeouts          StepTimeoutsConfig
 
-	SkrOidcDefaultValuesYAMLFilePath    string
-	SkrDnsProvidersValuesYAMLFilePath   string
-	UpdateProcessingEnabled             bool `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled bool `envconfig:"default=true"`
-	Broker                              broker.Config
-	CatalogFilePath                     string
+	SkrOidcDefaultValuesYAMLFilePath  string
+	SkrDnsProvidersValuesYAMLFilePath string
+	UpdateProcessingEnabled           bool `envconfig:"default=false"`
+	Broker                            broker.Config
+	CatalogFilePath                   string
 
 	KymaDashboardConfig dashboard.Config
 

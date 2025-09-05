@@ -87,7 +87,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			disabled:  cfg.LifecycleManagerIntegrationDisabled,
 			stage:     createRuntimeStageName,
 			step:      steps.SyncKubeconfig(db.Operations(), k8sClient),
 			condition: provisioning.DoForOwnClusterPlanOnly,
@@ -98,9 +97,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},
 		{
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			stage:    createKymaResourceStageName,
-			step:     provisioning.NewApplyKymaStep(db.Operations(), k8sClient),
+			stage: createKymaResourceStageName,
+			step:  provisioning.NewApplyKymaStep(db.Operations(), k8sClient),
 		},
 	}
 	for _, step := range provisioningSteps {
