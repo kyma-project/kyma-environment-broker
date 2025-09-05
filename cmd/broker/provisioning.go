@@ -65,7 +65,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
+			step:      provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
