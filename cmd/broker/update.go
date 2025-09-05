@@ -46,7 +46,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "runtime_resource",
-			step:      provisioning.NewDiscoverAvailableZonesStep(db.Operations(), providerSpec, gardenerClient, awsClientFactory),
+			step:      provisioning.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{

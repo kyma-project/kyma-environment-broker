@@ -72,7 +72,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewDiscoverAvailableZonesStep(db.Operations(), providerSpec, gardenerClient, awsClientFactory),
+			step:      provisioning.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
