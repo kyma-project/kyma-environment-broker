@@ -37,7 +37,7 @@ const (
 
 func TestResolveSubscriptionSecretStep(t *testing.T) {
 	// given
-	operationsStorage := storage.NewMemoryStorage().Operations()
+	brokerStorage := storage.NewMemoryStorage()
 	gardenerClient := createGardenerClient()
 	rulesService := createRulesService(t)
 	stepRetryTuple := internal.RetryTuple{
@@ -64,9 +64,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = awsTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -75,6 +78,11 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, awsEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		// Verify the instance was updated with the subscription secret name
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, awsEUAccessClaimedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should resolve secret name for azure hyperscaler and existing tenant", func(t *testing.T) {
@@ -91,9 +99,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = azureTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -117,9 +128,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -143,9 +157,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -169,9 +186,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.TrialPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -195,9 +215,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.SapConvergedCloudPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
 
 		// when
 		_, backoff, err := step.Run(operation, log)
@@ -221,9 +244,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
 
 		// when
 		_, backoff, err := step.Run(operation, log)
@@ -247,9 +273,12 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
-		require.NoError(t, operationsStorage.InsertOperation(operation))
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
+		instance := fixture.FixInstance(instanceID)
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
