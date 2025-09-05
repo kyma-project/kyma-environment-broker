@@ -13,24 +13,27 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 )
 
 type DiscoverAvailableZonesStep struct {
 	operationManager *process.OperationManager
-	opStorage        storage.Operations
+	operationStorage storage.Operations
+	instanceStorage  storage.Instances
 	providerSpec     *configuration.ProviderSpec
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
 }
 
-func NewDiscoverAvailableZonesStep(os storage.Operations, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesStep {
+func NewDiscoverAvailableZonesStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesStep {
 	step := &DiscoverAvailableZonesStep{
-		opStorage:        os,
+		operationStorage: db.Operations(),
+		instanceStorage:  db.Instances(),
 		providerSpec:     providerSpec,
 		gardenerClient:   gardenerClient,
 		awsClientFactory: awsClientFactory,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
 }
 
@@ -44,14 +47,26 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		return operation, 0, nil
 	}
 
-	if operation.ProvisioningParameters.Parameters.TargetSecret == nil {
-		return s.operationManager.OperationFailed(operation, "target secret is missing", nil, log)
-	}
 	if operation.ProvisioningParameters.Parameters.Region == nil {
 		return s.operationManager.OperationFailed(operation, "region is missing", nil, log)
 	}
 
-	secret, err := s.gardenerClient.GetSecret(*operation.ProvisioningParameters.Parameters.TargetSecret)
+	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
+	if err != nil {
+		if dberr.IsNotFound(err) {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("instance %s does not exists", operation.InstanceID), err, log)
+		}
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get instance %s", operation.InstanceID), err, 10*time.Second, time.Minute, log)
+	}
+	subscriptionSecretName := instance.SubscriptionSecretName
+	if subscriptionSecretName == "" {
+		if operation.ProvisioningParameters.Parameters.TargetSecret == nil {
+			return s.operationManager.OperationFailed(operation, "subscription secret name is missing", nil, log)
+		}
+		subscriptionSecretName = *operation.ProvisioningParameters.Parameters.TargetSecret
+	}
+
+	secret, err := s.gardenerClient.GetSecret(subscriptionSecretName)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to get secret", err, 10*time.Second, time.Minute, log)
 	}
