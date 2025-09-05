@@ -79,7 +79,6 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Zero(t, backoff)
 		assert.Equal(t, awsEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
 
-		// Verify the instance was updated with the subscription secret name
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
 		assert.Equal(t, awsEUAccessClaimedSecretName, updatedInstance.SubscriptionSecretName)
@@ -113,6 +112,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, azureEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, azureEUAccessClaimedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should resolve unclaimed secret name for azure hyperscaler", func(t *testing.T) {
@@ -142,6 +145,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, azureUnclaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, azureUnclaimedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should resolve shared secret name for gcp hyperscaler", func(t *testing.T) {
@@ -171,6 +178,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, gcpEUAccessSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, gcpEUAccessSharedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should resolve the least used shared secret name for aws hyperscaler and trial plan", func(t *testing.T) {
@@ -200,6 +211,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
 		assert.Equal(t, awsLeastUsedSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, awsLeastUsedSharedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should return error on missing rule match for given provisioning attributes", func(t *testing.T) {
@@ -229,6 +244,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
 		assert.True(t, strings.Contains(err.Error(), "no matching rule for provisioning attributes"))
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Empty(t, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should return error on missing secret binding for given selector", func(t *testing.T) {
@@ -258,6 +277,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
 		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned secret binding with selector"))
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Empty(t, updatedInstance.SubscriptionSecretName)
 	})
 
 	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
@@ -288,6 +311,10 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Zero(t, backoff)
 		assert.ErrorContains(t, err, "failed to determine secret name")
 		assert.Equal(t, domain.Failed, operation.State)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Empty(t, updatedInstance.SubscriptionSecretName)
 	})
 }
 
