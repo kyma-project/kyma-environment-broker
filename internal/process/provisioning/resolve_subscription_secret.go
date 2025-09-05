@@ -3,9 +3,10 @@ package provisioning
 import (
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -15,36 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
-
-type ParsedRule interface {
-	Hyperscaler() string
-	IsShared() bool
-	IsEUAccess() bool
-	Rule() string
-}
-
-// SecretBinding selector requirements
-const (
-	hyperscalerTypeReqFmt = gardener.HyperscalerTypeLabelKey + "=%s"
-	tenantNameReqFmt      = gardener.TenantNameLabelKey + "=%s"
-
-	dirtyReq    = gardener.DirtyLabelKey + "=true"
-	internalReq = gardener.InternalLabelKey + "=true"
-	sharedReq   = gardener.SharedLabelKey + "=true"
-	euAccessReq = gardener.EUAccessLabelKey + "=true"
-
-	notSharedReq = gardener.SharedLabelKey + `!=true`
-
-	notDirtyReq       = `!` + gardener.DirtyLabelKey
-	notInternalReq    = `!` + gardener.InternalLabelKey
-	notEUAccessReq    = `!` + gardener.EUAccessLabelKey
-	notTenantNamedReq = `!` + gardener.TenantNameLabelKey
-)
-
-type LabelSelectorBuilder struct {
-	strings.Builder
-	base string
-}
 
 type ResolveSubscriptionSecretStep struct {
 	operationManager *process.OperationManager
@@ -101,14 +72,16 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 	}
 
 	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
-	labelSelectorBuilder := s.createLabelSelectorBuilder(parsedRule, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
+	selectorForExistingSubscription := labelSelectorBuilder.BuildForTenantMatching(operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForExistingSubscription))
 	if parsedRule.IsShared() {
-		return s.getSharedSecretName(labelSelectorBuilder.String())
+		return s.getSharedSecretName(selectorForExistingSubscription)
 	}
 
-	secretBinding, err := s.getSecretBinding(labelSelectorBuilder.String())
+	secretBinding, err := s.getSecretBinding(selectorForExistingSubscription)
 	if err != nil && !kebError.IsNotFoundError(err) {
 		return "", err
 	}
@@ -122,14 +95,13 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	labelSelectorBuilder.RevertToBase()
-	labelSelectorBuilder.ForSecretBindingClaim()
+	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
 
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
-	secretBinding, err = s.getSecretBinding(labelSelectorBuilder.String())
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
+	secretBinding, err = s.getSecretBinding(selectorForSBClaim)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", labelSelectorBuilder.String())
+			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
 		}
 		return "", err
 	}
@@ -152,36 +124,12 @@ func (s *ResolveSubscriptionSecretStep) provisioningAttributesFromOperationData(
 	}
 }
 
-func (s *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(attr *rules.ProvisioningAttributes) (ParsedRule, error) {
+func (s *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(attr *rules.ProvisioningAttributes) (subscriptions.ParsedRule, error) {
 	result, found := s.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
 	if !found {
 		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
 	}
 	return result, nil
-}
-
-func (s *ResolveSubscriptionSecretStep) createLabelSelectorBuilder(parsedRule ParsedRule, tenantName string) *LabelSelectorBuilder {
-	b := NewLabelSelectorBuilder()
-	b.With(fmt.Sprintf(hyperscalerTypeReqFmt, parsedRule.Hyperscaler()))
-
-	if parsedRule.IsEUAccess() {
-		b.With(euAccessReq)
-	} else {
-		b.With(notEUAccessReq)
-	}
-
-	if parsedRule.IsShared() {
-		b.With(sharedReq)
-		b.SaveBase()
-		return b
-	}
-
-	b.With(notDirtyReq)
-	b.SaveBase()
-
-	b.With(fmt.Sprintf(tenantNameReqFmt, tenantName))
-
-	return b
 }
 
 func (s *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string) (string, error) {
@@ -226,30 +174,4 @@ func (s *ResolveSubscriptionSecretStep) claimSecretBinding(secretBinding *garden
 	secretBinding.SetLabels(labels)
 
 	return s.gardenerClient.UpdateSecretBinding(secretBinding)
-}
-
-func NewLabelSelectorBuilder() *LabelSelectorBuilder {
-	return &LabelSelectorBuilder{}
-}
-
-func (b *LabelSelectorBuilder) ForSecretBindingClaim() {
-	b.With(notSharedReq)
-	b.With(notTenantNamedReq)
-}
-
-func (b *LabelSelectorBuilder) With(s string) {
-	if b.Len() == 0 {
-		b.WriteString(s)
-		return
-	}
-	b.WriteString("," + s)
-}
-
-func (b *LabelSelectorBuilder) SaveBase() {
-	b.base = b.String()
-}
-
-func (b *LabelSelectorBuilder) RevertToBase() {
-	b.Reset()
-	b.WriteString(b.base)
 }
