@@ -39,10 +39,10 @@ func (s *DiscoverAvailableZonesStep) Name() string {
 }
 
 func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	//if !s.providerSpec.ZonesDiscovery(operation.ProvisioningParameters.PlatformProvider) {
-	//	log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", operation.ProvisioningParameters.PlatformProvider))
-	//	return operation, 0, nil
-	//}
+	if !s.providerSpec.ZonesDiscovery(operation.ProvisioningParameters.PlatformProvider) {
+		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", operation.ProvisioningParameters.PlatformProvider))
+		return operation, 0, nil
+	}
 
 	if operation.ProvisioningParameters.Parameters.TargetSecret == nil {
 		return s.operationManager.OperationFailed(operation, "target secret is missing", nil, log)
