@@ -111,7 +111,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		CommercialModel: instance.Parameters.ErsContext.CommercialModel,
 	}
 
-	toReturn.SubscriptionSecretName = instance.Parameters.Parameters.TargetSecret
+	toReturn.SubscriptionSecretName = &instance.SubscriptionSecretName
 
 	toReturn.Parameters.TargetSecret = nil // TargetSecret is not a parameter sent by a customer
 	toReturn.Parameters.Kubeconfig = ""    // Kubeconfig should not be visible
