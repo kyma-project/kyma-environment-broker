@@ -94,7 +94,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		}
 	}
 
-	for machineType, _ := range operation.DiscoveredZones {
+	for machineType := range operation.DiscoveredZones {
 		zones, err := client.AvailableZones(context.Background(), machineType)
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
