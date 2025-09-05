@@ -47,10 +47,6 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		return operation, 0, nil
 	}
 
-	if operation.ProvisioningParameters.Parameters.Region == nil {
-		return s.operationManager.OperationFailed(operation, "region is missing", nil, log)
-	}
-
 	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
@@ -58,6 +54,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		}
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get instance %s", operation.InstanceID), err, 10*time.Second, time.Minute, log)
 	}
+
 	subscriptionSecretName := instance.SubscriptionSecretName
 	if subscriptionSecretName == "" {
 		if operation.ProvisioningParameters.Parameters.TargetSecret == nil {
@@ -75,7 +72,14 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, *operation.ProvisioningParameters.Parameters.Region)
+	var region string
+	if operation.ProvisioningParameters.Parameters.Region != nil {
+		region = *operation.ProvisioningParameters.Parameters.Region
+	} else {
+		region = instance.InstanceDetails.ProviderValues.Region
+	}
+
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
@@ -84,6 +88,8 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 	if operation.Type == internal.OperationTypeProvision {
 		if operation.ProvisioningParameters.Parameters.MachineType != nil {
 			operation.DiscoveredZones[*operation.ProvisioningParameters.Parameters.MachineType] = []string{}
+		} else {
+			operation.DiscoveredZones[instance.InstanceDetails.ProviderValues.DefaultMachineType] = []string{}
 		}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 			operation.DiscoveredZones[pool.MachineType] = []string{}
