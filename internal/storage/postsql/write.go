@@ -129,6 +129,7 @@ func (ws writeSession) InsertInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Pair("service_name", instance.ServiceName).
 		Pair("service_plan_id", instance.ServicePlanID).
 		Pair("service_plan_name", instance.ServicePlanName).
+		Pair("subscription_secret_name", instance.SubscriptionSecretName).
 		Pair("dashboard_url", instance.DashboardURL).
 		Pair("provisioning_parameters", instance.ProvisioningParameters).
 		Pair("provider_region", instance.ProviderRegion).
@@ -172,6 +173,7 @@ func (ws writeSession) UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Set("service_id", instance.ServiceID).
 		Set("service_plan_id", instance.ServicePlanID).
 		Set("service_plan_name", instance.ServicePlanName).
+		Set("subscription_secret_name", instance.SubscriptionSecretName).
 		Set("dashboard_url", instance.DashboardURL).
 		Set("provisioning_parameters", instance.ProvisioningParameters).
 		Set("provider_region", instance.ProviderRegion).
