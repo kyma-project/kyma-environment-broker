@@ -30,12 +30,10 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewBTPOperatorCleanupStep(db, k8sClientProvider),
 		},
 		{
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
+			step: deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 		{
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient),
+			step: deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient),
 		},
 		{
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db, kcpClient),
