@@ -7,6 +7,7 @@ import (
 	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -146,6 +147,100 @@ func TestDiscoverAvailableZonesStep_SubscriptionSecretNameFromOperation(t *testi
 	assert.ElementsMatch(t, operation.DiscoveredZones["m6i.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func TestDiscoverAvailableZonesStep_RegionFromProviderValues(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixInstance()
+	instance.SubscriptionSecretName = "secret-1"
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.RuntimeID = instance.RuntimeID
+	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
+	operation.ProvisioningParameters.Parameters.Region = nil
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{Region: "eu-west-2"}
+	machineType := "m6i.large"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "worker-1",
+			MachineType:   "g6.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+		{
+			Name:          "worker-2",
+			MachineType:   "g4dn.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+	}
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesStep(
+		memoryStorage,
+		newProviderSpec(t, true),
+		createGardenerClient(),
+		fixture.NewFakeAWSClientFactory(map[string][]string{
+			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
+			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
+			"g4dn.xlarge": {"ap-southeast-2b"},
+		}, nil),
+	)
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 3)
+	assert.ElementsMatch(t, operation.DiscoveredZones["m6i.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func TestDiscoverAvailableZonesStep_MachineTypeFromProviderValues(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixInstance()
+	instance.SubscriptionSecretName = "secret-1"
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.RuntimeID = instance.RuntimeID
+	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
+	operation.ProvisioningParameters.Parameters.MachineType = nil
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{DefaultMachineType: "m5.large"}
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesStep(
+		memoryStorage,
+		newProviderSpec(t, true),
+		createGardenerClient(),
+		fixture.NewFakeAWSClientFactory(map[string][]string{
+			"m5.large": {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
+		}, nil),
+	)
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 1)
+	assert.ElementsMatch(t, operation.DiscoveredZones["m5.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
 }
 
 func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {

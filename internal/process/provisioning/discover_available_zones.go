@@ -76,7 +76,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 	if operation.ProvisioningParameters.Parameters.Region != nil {
 		region = *operation.ProvisioningParameters.Parameters.Region
 	} else {
-		region = instance.InstanceDetails.ProviderValues.Region
+		region = operation.ProviderValues.Region
 	}
 
 	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, region)
@@ -89,7 +89,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		if operation.ProvisioningParameters.Parameters.MachineType != nil {
 			operation.DiscoveredZones[*operation.ProvisioningParameters.Parameters.MachineType] = []string{}
 		} else {
-			operation.DiscoveredZones[instance.InstanceDetails.ProviderValues.DefaultMachineType] = []string{}
+			operation.DiscoveredZones[operation.ProviderValues.DefaultMachineType] = []string{}
 		}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 			operation.DiscoveredZones[pool.MachineType] = []string{}
