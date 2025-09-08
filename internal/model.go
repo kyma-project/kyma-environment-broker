@@ -30,6 +30,7 @@ type Instance struct {
 	ServiceName                 string
 	ServicePlanID               string
 	ServicePlanName             string
+	SubscriptionSecretName      string
 
 	DashboardURL   string
 	Parameters     ProvisioningParameters
