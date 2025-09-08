@@ -26,8 +26,8 @@ func TestDiscoverAvailableZonesStep_ZonesDiscoveryDisabled(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	machineType := "m6i.large"
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
@@ -70,8 +70,8 @@ func TestDiscoverAvailableZonesStep_FailWhenNoSubscriptionSecretName(t *testing.
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{{
 		Name:          "worker-1",
 		MachineType:   "g6.xlarge",
@@ -101,8 +101,8 @@ func TestDiscoverAvailableZonesStep_SubscriptionSecretNameFromOperation(t *testi
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	machineType := "m6i.large"
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
@@ -160,9 +160,8 @@ func TestDiscoverAvailableZonesStep_RegionFromProviderValues(t *testing.T) {
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	operation.ProvisioningParameters.Parameters.Region = nil
-	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{Region: "eu-west-2"}
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{Region: "eu-west-2", ProviderType: "aws"}
 	machineType := "m6i.large"
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
@@ -218,9 +217,8 @@ func TestDiscoverAvailableZonesStep_MachineTypeFromProviderValues(t *testing.T) 
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	operation.ProvisioningParameters.Parameters.MachineType = nil
-	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{DefaultMachineType: "m5.large"}
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{DefaultMachineType: "m5.large", ProviderType: "aws"}
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -253,8 +251,8 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{{
 		Name:          "worker-1",
 		MachineType:   "g6.xlarge",
@@ -285,8 +283,8 @@ func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	machineType := "m6i.large"
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
@@ -341,8 +339,8 @@ func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation := fixture.FixUpdatingOperation(operationID, instanceID).Operation
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	operation.ProvisioningParameters.PlatformProvider = pkg.AWS
 	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
 			Name:          "worker-1",

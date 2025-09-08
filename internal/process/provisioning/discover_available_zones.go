@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
@@ -42,8 +43,8 @@ func (s *DiscoverAvailableZonesStep) Name() string {
 }
 
 func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if !s.providerSpec.ZonesDiscovery(operation.ProvisioningParameters.PlatformProvider) {
-		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", operation.ProvisioningParameters.PlatformProvider))
+	if !s.providerSpec.ZonesDiscovery(runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)) {
+		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)))
 		return operation, 0, nil
 	}
 
