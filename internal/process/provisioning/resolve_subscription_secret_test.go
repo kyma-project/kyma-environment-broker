@@ -67,6 +67,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
@@ -101,6 +102,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
@@ -134,6 +136,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
@@ -167,6 +170,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
@@ -200,6 +204,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
@@ -233,6 +238,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
@@ -266,6 +272,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
@@ -299,6 +306,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
 
 		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		step := NewResolveSubscriptionSecretStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
