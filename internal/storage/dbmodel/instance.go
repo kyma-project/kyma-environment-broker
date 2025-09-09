@@ -49,6 +49,7 @@ type InstanceDTO struct {
 	ServiceName                 string
 	ServicePlanID               string
 	ServicePlanName             string
+	SubscriptionSecretName      string
 
 	DashboardURL           string
 	ProvisioningParameters string

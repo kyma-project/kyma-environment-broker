@@ -21,19 +21,21 @@ type ResolveSubscriptionSecretStep struct {
 	operationManager *process.OperationManager
 	gardenerClient   *gardener.Client
 	opStorage        storage.Operations
+	instanceStorage  storage.Instances
 	rulesService     *rules.RulesService
 	stepRetryTuple   internal.RetryTuple
 	mu               sync.Mutex
 }
 
-func NewResolveSubscriptionSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveSubscriptionSecretStep {
+func NewResolveSubscriptionSecretStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveSubscriptionSecretStep {
 	step := &ResolveSubscriptionSecretStep{
-		opStorage:      os,
-		gardenerClient: gardenerClient,
-		rulesService:   rulesService,
-		stepRetryTuple: stepRetryTuple,
+		opStorage:       brokerStorage.Operations(),
+		instanceStorage: brokerStorage.Instances(),
+		gardenerClient:  gardenerClient,
+		rulesService:    rulesService,
+		stepRetryTuple:  stepRetryTuple,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
+	step.operationManager = process.NewOperationManager(brokerStorage.Operations(), step.Name(), kebError.AccountPoolDependency)
 	return step
 }
 
@@ -56,6 +58,12 @@ func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *s
 		return s.operationManager.OperationFailed(operation, "failed to determine secret name", fmt.Errorf("target secret name is empty"), log)
 	}
 	log.Info(fmt.Sprintf("resolved secret name: %s", targetSecretName))
+
+	err = s.updateInstance(operation.InstanceID, targetSecretName)
+	if err != nil {
+		log.Error(fmt.Sprintf("failed to update instance with subscription secret name: %s", err.Error()))
+		return s.operationManager.RetryOperation(operation, "updating instance", err, s.stepRetryTuple.Interval, s.stepRetryTuple.Timeout, log)
+	}
 
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretName
@@ -174,4 +182,14 @@ func (s *ResolveSubscriptionSecretStep) claimSecretBinding(secretBinding *garden
 	secretBinding.SetLabels(labels)
 
 	return s.gardenerClient.UpdateSecretBinding(secretBinding)
+}
+
+func (step *ResolveSubscriptionSecretStep) updateInstance(id, subscriptionSecretName string) error {
+	instance, err := step.instanceStorage.GetByID(id)
+	if err != nil {
+		return err
+	}
+	instance.SubscriptionSecretName = subscriptionSecretName
+	_, err = step.instanceStorage.Update(*instance)
+	return err
 }

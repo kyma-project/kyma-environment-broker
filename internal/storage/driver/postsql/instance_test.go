@@ -77,6 +77,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, fixInstance.SubscriptionGlobalAccountID, inst.SubscriptionGlobalAccountID)
 		assert.Equal(t, fixInstance.ServiceID, inst.ServiceID)
 		assert.Equal(t, fixInstance.ServicePlanID, inst.ServicePlanID)
+		assert.Equal(t, fixInstance.SubscriptionSecretName, inst.SubscriptionSecretName)
 		assert.Equal(t, fixInstance.DashboardURL, inst.DashboardURL)
 		assert.Equal(t, fixInstance.Parameters, inst.Parameters)
 		assert.Equal(t, fixInstance.Provider, inst.Provider)
