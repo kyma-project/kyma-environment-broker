@@ -73,25 +73,14 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	var region string
-	if operation.ProvisioningParameters.Parameters.Region != nil {
-		region = *operation.ProvisioningParameters.Parameters.Region
-	} else {
-		region = operation.ProviderValues.Region
-	}
-
-	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, region)
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, DefaultIfParamNotSet(operation.ProviderValues.Region, operation.ProvisioningParameters.Parameters.Region))
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
 
 	operation.DiscoveredZones = make(map[string][]string)
 	if operation.Type == internal.OperationTypeProvision {
-		if operation.ProvisioningParameters.Parameters.MachineType != nil {
-			operation.DiscoveredZones[*operation.ProvisioningParameters.Parameters.MachineType] = []string{}
-		} else {
-			operation.DiscoveredZones[operation.ProviderValues.DefaultMachineType] = []string{}
-		}
+		operation.DiscoveredZones[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = []string{}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 			operation.DiscoveredZones[pool.MachineType] = []string{}
 		}
