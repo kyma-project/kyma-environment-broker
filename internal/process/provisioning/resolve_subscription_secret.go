@@ -193,29 +193,3 @@ func (step *ResolveSubscriptionSecretStep) updateInstance(id, subscriptionSecret
 	_, err = step.instanceStorage.Update(*instance)
 	return err
 }
-
-func NewLabelSelectorBuilder() *LabelSelectorBuilder {
-	return &LabelSelectorBuilder{}
-}
-
-func (b *LabelSelectorBuilder) ForSecretBindingClaim() {
-	b.With(notSharedReq)
-	b.With(notTenantNamedReq)
-}
-
-func (b *LabelSelectorBuilder) With(s string) {
-	if b.Len() == 0 {
-		b.WriteString(s)
-		return
-	}
-	b.WriteString("," + s)
-}
-
-func (b *LabelSelectorBuilder) SaveBase() {
-	b.base = b.String()
-}
-
-func (b *LabelSelectorBuilder) RevertToBase() {
-	b.Reset()
-	b.WriteString(b.base)
-}
