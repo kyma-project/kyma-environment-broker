@@ -22,6 +22,7 @@ const (
 	PlanId                      = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
 	TrialPlan                   = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 	PlanName                    = "azure"
+	SubscriptionSecretName      = "azure-subscription"
 	GlobalAccountId             = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
 	SubscriptionGlobalAccountID = ""
 	Region                      = "westeurope"
@@ -145,6 +146,7 @@ func FixInstanceWithProvisioningParameters(id string, params internal.Provisioni
 		ServiceName:                 ServiceName,
 		ServicePlanID:               PlanId,
 		ServicePlanName:             PlanName,
+		SubscriptionSecretName:      SubscriptionSecretName,
 		DashboardURL:                InstanceDashboardURL,
 		Parameters:                  params,
 		ProviderRegion:              Region,
