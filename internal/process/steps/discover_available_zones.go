@@ -1,4 +1,4 @@
-package provisioning
+package steps
 
 import (
 	"context"
@@ -100,4 +100,11 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 	}
 
 	return operation, 0, nil
+}
+
+func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
+	if param == nil {
+		return d
+	}
+	return *param
 }
