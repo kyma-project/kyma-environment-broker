@@ -152,6 +152,9 @@ type Operation struct {
 	KymaTemplate string `json:"KymaTemplate"`
 
 	LastError kebError.LastError `json:"last_error"`
+
+	// DiscoveredZones stores availability zones per machine type, resolved at runtime
+	DiscoveredZones map[string][]string `json:"-"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)

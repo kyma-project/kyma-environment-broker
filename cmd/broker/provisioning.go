@@ -10,9 +10,11 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
@@ -29,7 +31,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
-	workersProvider *workers.Provider) *process.Queue {
+	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, awsClientFactory aws.ClientFactory) *process.Queue {
 
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
@@ -66,6 +68,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
+			condition: provisioning.SkipForOwnClusterPlan,
+		},
+		{
+			stage:     createRuntimeStageName,
+			step:      steps.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

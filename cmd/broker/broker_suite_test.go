@@ -210,15 +210,18 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
+	awsClientFactory := fixture.NewFakeAWSClientFactory(map[string][]string{}, nil)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec))
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec), schemaService, plansSpec, configProvider)
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
+		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 

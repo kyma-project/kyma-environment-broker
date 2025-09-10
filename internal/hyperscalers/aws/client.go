@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type ClientFactory interface {
@@ -66,6 +68,36 @@ func (c *AWSClient) AvailableZones(ctx context.Context, machineType string) ([]s
 		}
 	}
 	return zones, nil
+}
+
+func ExtractCredentials(secret *unstructured.Unstructured) (string, string, error) {
+	data, found, err := unstructured.NestedStringMap(secret.Object, "data")
+	if err != nil {
+		return "", "", fmt.Errorf("unable to extract data from secret: %w", err)
+	}
+	if !found {
+		return "", "", fmt.Errorf("secret does not contain data")
+	}
+
+	accessKeyID, ok := data["accessKeyID"]
+	if !ok {
+		return "", "", fmt.Errorf("secret does not contain accessKeyID")
+	}
+	secretAccessKey, ok := data["secretAccessKey"]
+	if !ok {
+		return "", "", fmt.Errorf("secret does not contain secretAccessKey")
+	}
+
+	accessKeyIDBytes, err := base64.StdEncoding.DecodeString(accessKeyID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode accessKeyID: %w", err)
+	}
+	secretAccessKeyBytes, err := base64.StdEncoding.DecodeString(secretAccessKey)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode secretAccessKey: %w", err)
+	}
+
+	return string(accessKeyIDBytes), string(secretAccessKeyBytes), nil
 }
 
 func newAWSConfig(ctx context.Context, key, secret, region string) (aws.Config, error) {

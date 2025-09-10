@@ -17,22 +17,30 @@ import (
 )
 
 const (
-	ServiceId                   = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	ServiceName                 = "kymaruntime"
-	PlanId                      = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
-	TrialPlan                   = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
-	PlanName                    = "azure"
-	SubscriptionSecretName      = "azure-subscription"
-	GlobalAccountId             = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
-	SubscriptionGlobalAccountID = ""
-	Region                      = "westeurope"
-	ServiceManagerUsername      = "u"
-	ServiceManagerPassword      = "p"
-	ServiceManagerURL           = "https://service-manager.local"
-	InstanceDashboardURL        = "https://dashboard.local"
-	XSUAADataXSAppName          = "XSApp"
-	MonitoringUsername          = "username"
-	MonitoringPassword          = "password"
+	ServiceId                      = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	ServiceName                    = "kymaruntime"
+	PlanId                         = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	TrialPlan                      = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	PlanName                       = "azure"
+	SubscriptionSecretName         = "azure-subscription"
+	GlobalAccountId                = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
+	SubscriptionGlobalAccountID    = ""
+	Region                         = "westeurope"
+	ServiceManagerUsername         = "u"
+	ServiceManagerPassword         = "p"
+	ServiceManagerURL              = "https://service-manager.local"
+	InstanceDashboardURL           = "https://dashboard.local"
+	XSUAADataXSAppName             = "XSApp"
+	MonitoringUsername             = "username"
+	MonitoringPassword             = "password"
+	AWSTenantName                  = "aws-tenant-1"
+	AzureTenantName                = "azure-tenant-2"
+	AWSEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
+	AzureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
+	AzureUnclaimedSecretName       = "azure-unclaimed"
+	GCPEUAccessSharedSecretName    = "gcp-euaccess-shared"
+	AWSMostUsedSharedSecretName    = "aws-most-used-shared"
+	AWSLeastUsedSharedSecretName   = "aws-least-used-shared"
 )
 
 func FixServiceManagerEntryDTO() *internal.ServiceManagerEntryDTO {
@@ -392,4 +400,115 @@ func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) 
 		return nil, f.err
 	}
 	return f.zones[machineType], nil
+}
+
+func CreateGardenerClient() *gardener.Client {
+	const (
+		namespace          = "test"
+		secretName1        = "secret-1"
+		secretBindingName1 = "secret-binding-1"
+		secretBindingName2 = "secret-binding-2"
+		secretBindingName3 = "secret-binding-3"
+		secretBindingName4 = "secret-binding-4"
+		secretBindingName5 = "secret-binding-5"
+		secretBindingName6 = "secret-binding-6"
+		secretBindingName7 = "secret-binding-7"
+	)
+	s1 := createSecret(secretName1, namespace)
+	sb1 := createSecretBinding(secretBindingName1, namespace, AWSEUAccessClaimedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.EUAccessLabelKey:        "true",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb2 := createSecretBinding(secretBindingName2, namespace, AzureEUAccessClaimedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+		gardener.EUAccessLabelKey:        "true",
+		gardener.TenantNameLabelKey:      AzureTenantName,
+	})
+	sb3 := createSecretBinding(secretBindingName3, namespace, AzureUnclaimedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+	})
+	sb4 := createSecretBinding(secretBindingName4, namespace, GCPEUAccessSharedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "gcp",
+		gardener.EUAccessLabelKey:        "true",
+		gardener.SharedLabelKey:          "true",
+	})
+	sb5 := createSecretBinding(secretBindingName5, namespace, AWSMostUsedSharedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.SharedLabelKey:          "true",
+	})
+	sb6 := createSecretBinding(secretBindingName6, namespace, AWSLeastUsedSharedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.SharedLabelKey:          "true",
+	})
+	sb7 := createSecretBinding(secretBindingName7, namespace, "", map[string]string{
+		gardener.HyperscalerTypeLabelKey: "gcp",
+	})
+	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
+	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
+	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
+
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
+
+	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func createSecret(name, namespace string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"data": map[string]interface{}{
+				"accessKeyID":     "dGVzdC1rZXk=",
+				"secretAccessKey": "dGVzdC1zZWNyZXQ=",
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.SecretGVK)
+
+	return u
+}
+
+func createSecretBinding(name, namespace, secretName string, labels map[string]string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"secretRef": map[string]interface{}{
+				"name":      secretName,
+				"namespace": namespace,
+			},
+		},
+	}
+	u.SetLabels(labels)
+	u.SetGroupVersionKind(gardener.SecretBindingGVK)
+
+	return u
+}
+
+func createShoot(name, namespace, secretBindingName string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{
+				"secretBindingName": secretBindingName,
+			},
+			"status": map[string]interface{}{
+				"lastOperation": map[string]interface{}{
+					"state": "Succeeded",
+					"type":  "Reconcile",
+				},
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.ShootGVK)
+
+	return u
 }
