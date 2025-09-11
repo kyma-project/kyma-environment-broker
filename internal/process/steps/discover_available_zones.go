@@ -66,7 +66,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 
 	secret, err := s.gardenerClient.GetSecret(subscriptionSecretName)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, "unable to get secret", err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s", subscriptionSecretName), err, 10*time.Second, time.Minute, log)
 	}
 	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
 	if err != nil {

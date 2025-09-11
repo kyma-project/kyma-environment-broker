@@ -8,24 +8,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -46,16 +44,18 @@ type CreateRuntimeResourceStep struct {
 	config            broker.InfrastructureManager
 	oidcDefaultValues pkg.OIDCConfigDTO
 	workersProvider   *workers.Provider
+	providerSpec      *configuration.ProviderSpec
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   db.Instances(),
 		k8sClient:         k8sClient,
 		config:            infrastructureManagerConfig,
 		oidcDefaultValues: oidcDefaultValues,
 		workersProvider:   workersProvider,
+		providerSpec:      providerSpec,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -85,7 +85,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		return operation, 0, nil
 	} else {
 		var backoff time.Duration
-		err = s.updateRuntimeResourceObject(*operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
+		err = s.updateRuntimeResourceObject(log, *operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}
@@ -122,14 +122,14 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	}
 }
 
-func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
+func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(log *slog.Logger, values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
 
 	runtime.ObjectMeta.Name = runtimeName
 	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
 
 	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, values.Region, cloudProvider)
 
-	providerObj, err := s.createShootProvider(&operation, values)
+	providerObj, err := s.createShootProvider(log, &operation, values)
 	if err != nil {
 		return err
 	}
@@ -184,13 +184,20 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 	return security
 }
 
-func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values internal.ProviderValues) (imv1.Provider, error) {
+func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operation *internal.Operation, values internal.ProviderValues) (imv1.Provider, error) {
 
 	maxSurge := intstr.FromInt32(int32(DefaultIfParamNotSet(values.ZonesCount, operation.ProvisioningParameters.Parameters.MaxSurge)))
 	maxUnavailable := intstr.FromInt32(int32(DefaultIfParamNotSet(0, operation.ProvisioningParameters.Parameters.MaxUnavailable)))
 
 	scalerMax := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
 	scalerMin := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
+
+	zones := values.Zones
+	if s.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)) {
+		zones = operation.DiscoveredZones[DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)]
+		zones = zones[:values.ZonesCount]
+	}
+	log.Info(fmt.Sprintf("Zones for Kyma worker node pool: %v", zones))
 
 	provider := imv1.Provider{
 		Type: values.ProviderType,
@@ -208,7 +215,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 				Minimum:        scalerMin,
 				MaxSurge:       &maxSurge,
 				MaxUnavailable: &maxUnavailable,
-				Zones:          values.Zones,
+				Zones:          zones,
 			},
 		},
 	}
@@ -222,7 +229,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 
 	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
 		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools,
-			values.Zones, operation.ProvisioningParameters.PlanID)
+			values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones)
 		if err != nil {
 			return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
 		}

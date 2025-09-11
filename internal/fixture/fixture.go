@@ -3,15 +3,19 @@ package fixture
 import (
 	"context"
 	"fmt"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -511,4 +515,14 @@ func createShoot(name, namespace, secretBindingName string) *unstructured.Unstru
 	u.SetGroupVersionKind(gardener.ShootGVK)
 
 	return u
+}
+
+func NewProviderSpec(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
+	spec := fmt.Sprintf(`
+aws:
+  zonesDiscovery: %t
+`, zonesDiscovery)
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
+	require.NoError(t, err)
+	return providerSpec
 }

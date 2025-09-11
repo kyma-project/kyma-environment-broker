@@ -27,6 +27,7 @@ import (
 const (
 	workersAmount                 int = 2
 	provisioningRequestPathFormat     = "oauth/cf-eu10/v2/service_instances/%s"
+	providersZonesDiscovery           = "testdata/providers-zones-discovery.yaml"
 )
 
 func TestCatalog(t *testing.T) {
@@ -2627,4 +2628,132 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		})
 
 	}
+}
+
+func TestProvisioning_ZonesDiscovery(t *testing.T) {
+	cfg := fixConfig()
+	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
+
+	t.Run("aws", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+                        "machineType": "m6i.large",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "m5.xlarge",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "c7i.large",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+		assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 3)
+		assert.Subset(t, []string{"zone-d", "zone-e", "zone-f", "zone-g"}, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+
+		require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+		require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "zone-h", "zone-i", "zone-j", "zone-k")
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "zone-l", "zone-m")
+	})
+
+	t.Run("free", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1"
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+		assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1)
+		assert.Subset(t, []string{"zone-h", "zone-i", "zone-j", "zone-k"}, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+	})
+
+	t.Run("trial", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster"
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+		assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1)
+		assert.Subset(t, []string{"zone-h", "zone-i", "zone-j", "zone-k"}, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+	})
 }
