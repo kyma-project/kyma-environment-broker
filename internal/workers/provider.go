@@ -2,37 +2,36 @@ package workers
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type RegionsSupportingMachine interface {
-	AvailableZonesForAdditionalWorkers(machineType, region, providerType string) ([]string, error)
-}
-
 type Provider struct {
-	imConfig broker.InfrastructureManager
-
-	regionsSupportingMachine RegionsSupportingMachine
+	log          *slog.Logger
+	imConfig     broker.InfrastructureManager
+	providerSpec *configuration.ProviderSpec
 }
 
-func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine RegionsSupportingMachine) *Provider {
+func NewProvider(log *slog.Logger, imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
 	return &Provider{
-		imConfig:                 imConfig,
-		regionsSupportingMachine: regionsSupportingMachine,
+		log:          log,
+		imConfig:     imConfig,
+		providerSpec: providerSpec,
 	}
 }
 
 func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string) ([]gardener.Worker, error) {
+	zones []string, planID string, discoveredZones map[string][]string) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -44,19 +43,26 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
-			customAvailableZones, err := p.regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
-			if err != nil {
-				return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
+
+			if p.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)) {
+				// If zones discovery is enabled, use zones resolved at runtime
+				workerZones = discoveredZones[additionalWorkerNodePool.MachineType]
+			} else {
+				customAvailableZones, err := p.providerSpec.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
+				if err != nil {
+					return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
+				}
+
+				// If custom zones are found, use them instead of the Kyma workload zones.
+				if len(customAvailableZones) > 0 {
+					var formattedZones []string
+					for _, zone := range customAvailableZones {
+						formattedZones = append(formattedZones, provider.FullZoneName(values.ProviderType, values.Region, zone))
+					}
+					workerZones = formattedZones
+				}
 			}
 
-			// If custom zones are found, use them instead of the Kyma workload zones.
-			if len(customAvailableZones) > 0 {
-				var formattedZones []string
-				for _, zone := range customAvailableZones {
-					formattedZones = append(formattedZones, provider.FullZoneName(values.ProviderType, values.Region, zone))
-				}
-				workerZones = formattedZones
-			}
 			// limit to 3 zones (if there is more than 3 available)
 			if len(workerZones) > 3 {
 				workerZones = workerZones[:3]
@@ -65,6 +71,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				workerZones = workerZones[:1]
 			}
 		}
+		p.log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
 		worker := gardener.Worker{
