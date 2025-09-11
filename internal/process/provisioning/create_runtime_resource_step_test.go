@@ -1213,7 +1213,8 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersNilHandling(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, runtime.Name, operation.RuntimeID)
 
-	assert.Nil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	assert.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	assert.Empty(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers)
 }
 
 func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) {
