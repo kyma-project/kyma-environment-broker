@@ -1184,19 +1184,81 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 	}
 }
 
+func TestCreateRuntimeResourceStep_AdditionalWorkersNilHandling(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{
+		MultiZoneCluster: true,
+	}
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = nil
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{})
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Name, operation.RuntimeID)
+
+	assert.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	assert.Empty(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers)
+}
+
+func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{
+		MultiZoneCluster: true,
+	}
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{}
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{})
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Name, operation.RuntimeID)
+
+	assert.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	assert.Empty(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers)
+}
+
 // testing auxiliary functions
 
 func Test_Defaults(t *testing.T) {
-	// given
-	// when
-
 	nilToDefaultString := DefaultIfParamNotSet("default value", nil)
 	nonDefaultString := DefaultIfParamNotSet("default value", ptr.String("initial value"))
 
 	nilToDefaultInt := DefaultIfParamNotSet(42, nil)
 	nonDefaultInt := DefaultIfParamNotSet(42, ptr.Integer(7))
 
-	// then
 	assert.Equal(t, "initial value", nonDefaultString)
 	assert.Equal(t, "default value", nilToDefaultString)
 	assert.Equal(t, 42, nilToDefaultInt)
