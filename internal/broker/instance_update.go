@@ -367,6 +367,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			)
 		}
 	}
+	operation.ProviderValues = &providerValues
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
