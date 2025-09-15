@@ -517,7 +517,7 @@ func createShoot(name, namespace, secretBindingName string) *unstructured.Unstru
 	return u
 }
 
-func NewProviderSpec(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
+func NewProviderSpecWithZonesDiscovery(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
 	spec := fmt.Sprintf(`
 aws:
   zonesDiscovery: %t

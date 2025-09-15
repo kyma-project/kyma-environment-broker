@@ -46,7 +46,7 @@ func TestDiscoverAvailableZonesStep_ZonesDiscoveryDisabled(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, false),
+		fixture.NewProviderSpecWithZonesDiscovery(t, false),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
@@ -85,7 +85,7 @@ func TestDiscoverAvailableZonesStep_FailWhenNoSubscriptionSecretName(t *testing.
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpec(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
+	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -132,7 +132,7 @@ func TestDiscoverAvailableZonesStep_SubscriptionSecretNameFromOperation(t *testi
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, true),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
@@ -189,7 +189,7 @@ func TestDiscoverAvailableZonesStep_RegionFromProviderValues(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, true),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
@@ -228,7 +228,7 @@ func TestDiscoverAvailableZonesStep_MachineTypeFromProviderValues(t *testing.T) 
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, true),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"m5.large": {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
@@ -267,7 +267,7 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpec(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
+	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -312,7 +312,7 @@ func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, true),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
@@ -366,7 +366,7 @@ func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
-		fixture.NewProviderSpec(t, true),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},

@@ -188,7 +188,7 @@ aws:
 
 	t.Run("should use discovered zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, fixture.NewProviderSpec(t, true))
+		provider := NewProvider(log, broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true))
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker-1",
