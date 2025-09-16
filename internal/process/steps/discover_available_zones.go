@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -21,15 +22,17 @@ type DiscoverAvailableZonesStep struct {
 	operationManager *process.OperationManager
 	operationStorage storage.Operations
 	instanceStorage  storage.Instances
+	valuesProvider   broker.ValuesProvider
 	providerSpec     *configuration.ProviderSpec
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
 }
 
-func NewDiscoverAvailableZonesStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesStep {
+func NewDiscoverAvailableZonesStep(db storage.BrokerStorage, valuesProvider broker.ValuesProvider, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesStep {
 	step := &DiscoverAvailableZonesStep{
 		operationStorage: db.Operations(),
 		instanceStorage:  db.Instances(),
+		valuesProvider:   valuesProvider,
 		providerSpec:     providerSpec,
 		gardenerClient:   gardenerClient,
 		awsClientFactory: awsClientFactory,
@@ -43,17 +46,32 @@ func (s *DiscoverAvailableZonesStep) Name() string {
 }
 
 func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if !s.providerSpec.ZonesDiscovery(runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)) {
-		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)))
-		return operation, 0, nil
-	}
-
 	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("instance %s does not exists", operation.InstanceID), err, log)
 		}
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get instance %s", operation.InstanceID), err, 10*time.Second, time.Minute, log)
+	}
+
+	if operation.ProviderValues == nil {
+		values, err := s.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
+		if err != nil {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
+		}
+		repeatAfter := time.Duration(0)
+		operation, repeatAfter, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
+			operation.ProviderValues = &values
+		}, log)
+		if repeatAfter != 0 {
+			log.Error("cannot save ProviderValues in operation")
+			return operation, 5 * time.Second, nil
+		}
+	}
+
+	if !s.providerSpec.ZonesDiscovery(runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)) {
+		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)))
+		return operation, 0, nil
 	}
 
 	subscriptionSecretName := instance.SubscriptionSecretName

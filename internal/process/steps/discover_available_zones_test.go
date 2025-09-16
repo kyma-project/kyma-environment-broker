@@ -2,12 +2,16 @@ package steps
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/stretchr/testify/assert"
@@ -46,6 +50,7 @@ func TestDiscoverAvailableZonesStep_ZonesDiscoveryDisabled(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, false),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -85,7 +90,7 @@ func TestDiscoverAvailableZonesStep_FailWhenNoSubscriptionSecretName(t *testing.
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
+	step := NewDiscoverAvailableZonesStep(memoryStorage, nil, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -132,6 +137,7 @@ func TestDiscoverAvailableZonesStep_SubscriptionSecretNameFromOperation(t *testi
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -189,6 +195,7 @@ func TestDiscoverAvailableZonesStep_RegionFromProviderValues(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -228,6 +235,7 @@ func TestDiscoverAvailableZonesStep_MachineTypeFromProviderValues(t *testing.T) 
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -267,7 +275,7 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDiscoverAvailableZonesStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
+	step := NewDiscoverAvailableZonesStep(memoryStorage, nil, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(map[string][]string{}, fmt.Errorf("AWS error")))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -275,6 +283,63 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	// then
 	assert.NoError(t, err)
 	assert.Equal(t, 10*time.Second, repeat)
+}
+
+func TestDiscoverAvailableZonesStep_NilProviderValues(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.PlanID = broker.AWSPlanID
+	instance.SubscriptionSecretName = "secret-1"
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.RuntimeID = instance.RuntimeID
+	machineType := "m6i.large"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "worker-1",
+			MachineType:   "g6.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+		{
+			Name:          "worker-2",
+			MachineType:   "g4dn.xlarge",
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 1,
+		},
+	}
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesStep(
+		memoryStorage,
+		fixValuesProvider(),
+		fixture.NewProviderSpecWithZonesDiscovery(t, true),
+		fixture.CreateGardenerClient(),
+		fixture.NewFakeAWSClientFactory(map[string][]string{
+			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
+			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
+			"g4dn.xlarge": {"ap-southeast-2b"},
+		}, nil),
+	)
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 3)
+	assert.ElementsMatch(t, operation.DiscoveredZones["m6i.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
 }
 
 func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
@@ -312,6 +377,7 @@ func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -366,6 +432,7 @@ func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
 
 	step := NewDiscoverAvailableZonesStep(
 		memoryStorage,
+		nil,
 		fixture.NewProviderSpecWithZonesDiscovery(t, true),
 		fixture.CreateGardenerClient(),
 		fixture.NewFakeAWSClientFactory(map[string][]string{
@@ -383,4 +450,33 @@ func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
 	assert.Len(t, operation.DiscoveredZones, 2)
 	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func fixValuesProvider() broker.ValuesProvider {
+	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(`
+aws:
+  volumeSizeGb: 80
+`))
+	return provider.NewPlanSpecificValuesProvider(
+		broker.InfrastructureManager{
+			MultiZoneCluster:             true,
+			DefaultTrialProvider:         pkg.AWS,
+			UseSmallerMachineTypes:       true,
+			ControlPlaneFailureTolerance: "",
+			DefaultGardenerShootPurpose:  provider.PurposeProduction,
+		}, nil, newZonesProvider(), planSpec)
+}
+
+type fakeZonesProvider struct {
+	zones []string
+}
+
+func (f *fakeZonesProvider) RandomZones(cp pkg.CloudProvider, region string, zonesCount int) []string {
+	return f.zones
+}
+
+func newZonesProvider() provider.ZonesProvider {
+	return &fakeZonesProvider{
+		zones: []string{"a", "b", "c"},
+	}
 }
