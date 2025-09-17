@@ -3,15 +3,19 @@ package fixture
 import (
 	"context"
 	"fmt"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -415,33 +419,33 @@ func CreateGardenerClient() *gardener.Client {
 		secretBindingName7 = "secret-binding-7"
 	)
 	s1 := createSecret(secretName1, namespace)
-	sb1 := createSecretBinding(secretBindingName1, namespace, AWSEUAccessClaimedSecretName, map[string]string{
+	sb1 := createSecretBinding(AWSEUAccessClaimedSecretName, namespace, secretBindingName1, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.TenantNameLabelKey:      AWSTenantName,
 	})
-	sb2 := createSecretBinding(secretBindingName2, namespace, AzureEUAccessClaimedSecretName, map[string]string{
+	sb2 := createSecretBinding(AzureEUAccessClaimedSecretName, namespace, secretBindingName2, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "azure",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.TenantNameLabelKey:      AzureTenantName,
 	})
-	sb3 := createSecretBinding(secretBindingName3, namespace, AzureUnclaimedSecretName, map[string]string{
+	sb3 := createSecretBinding(AzureUnclaimedSecretName, namespace, secretBindingName3, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "azure",
 	})
-	sb4 := createSecretBinding(secretBindingName4, namespace, GCPEUAccessSharedSecretName, map[string]string{
+	sb4 := createSecretBinding(GCPEUAccessSharedSecretName, namespace, secretBindingName4, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb5 := createSecretBinding(secretBindingName5, namespace, AWSMostUsedSharedSecretName, map[string]string{
+	sb5 := createSecretBinding(AWSMostUsedSharedSecretName, namespace, secretBindingName5, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb6 := createSecretBinding(secretBindingName6, namespace, AWSLeastUsedSharedSecretName, map[string]string{
+	sb6 := createSecretBinding(AWSLeastUsedSharedSecretName, namespace, secretBindingName6, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb7 := createSecretBinding(secretBindingName7, namespace, "", map[string]string{
+	sb7 := createSecretBinding("", namespace, secretBindingName7, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 	})
 	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
@@ -511,4 +515,14 @@ func createShoot(name, namespace, secretBindingName string) *unstructured.Unstru
 	u.SetGroupVersionKind(gardener.ShootGVK)
 
 	return u
+}
+
+func NewProviderSpecWithZonesDiscovery(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
+	spec := fmt.Sprintf(`
+aws:
+  zonesDiscovery: %t
+`, zonesDiscovery)
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
+	require.NoError(t, err)
+	return providerSpec
 }

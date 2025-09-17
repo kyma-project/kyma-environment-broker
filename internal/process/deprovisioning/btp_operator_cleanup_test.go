@@ -361,6 +361,10 @@ type fakeK8sClientWrapper struct {
 	cleanupBindings  bool
 }
 
+func (f *fakeK8sClientWrapper) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	panic("implement me")
+}
+
 func (f *fakeK8sClientWrapper) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return f.fake.Get(ctx, key, obj)
 }

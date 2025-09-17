@@ -13,9 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -32,6 +29,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -40,6 +38,7 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -50,7 +49,9 @@ import (
 	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
@@ -183,7 +184,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	require.NoError(t, err)
 
-	gardenerClient := gardener.NewDynamicFakeClient()
+	gardenerClient := gardener.NewDynamicFakeClient(fixSecrets()...)
 
 	eventBroker := event.NewPubSub(log)
 
@@ -210,17 +211,17 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	awsClientFactory := fixture.NewFakeAWSClientFactory(map[string][]string{}, nil)
+	awsClientFactory := fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
+		workersProvider(log, cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(log, cfg.InfrastructureManager, providerSpec),
 		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
@@ -272,8 +273,9 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	}
 }
 
-func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
+func workersProvider(log *slog.Logger, imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
 	return workers.NewProvider(
+		log,
 		imConfig,
 		spec,
 	)
@@ -961,5 +963,38 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv
 	assert.Len(t, worker.Zones, zonesNumber)
 	for _, v := range worker.Zones {
 		assert.Contains(t, zones, v)
+	}
+}
+
+func fixSecrets() []runtime.Object {
+	return []runtime.Object{
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-aws",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"accessKeyID":     []byte("test-key"),
+				"secretAccessKey": []byte("test-secret"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-aws-shared",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"accessKeyID":     []byte("test-key"),
+				"secretAccessKey": []byte("test-secret"),
+			},
+		},
+	}
+}
+
+func fixDiscoveredZones() map[string][]string {
+	return map[string][]string{
+		"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-g"},
+		"m5.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
+		"c7i.large": {"zone-l", "zone-m"},
 	}
 }

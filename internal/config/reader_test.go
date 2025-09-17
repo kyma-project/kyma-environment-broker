@@ -152,6 +152,10 @@ func (m *tempConfigMap) toConfigMap() *coreV1.ConfigMap {
 
 type failingK8sClient struct{}
 
+func (c failingK8sClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return fmt.Errorf("not implemented")
+}
+
 func (c failingK8sClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return fmt.Errorf("not implemented")
 }

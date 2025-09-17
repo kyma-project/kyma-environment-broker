@@ -587,6 +587,60 @@ func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
 	assert.Equal(t, map[string]string(nil), (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
 }
 
+func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, workers.NewProvider(fixLogger(), broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider())
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+	operation.RuntimeResourceName = "runtime-name"
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.DiscoveredZones = map[string][]string{
+		"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
+		"m5.large":  {"zone-i", "zone-j", "zone-k", "zone-l"},
+	}
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-1",
+				MachineType:   "m6i.large",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+			{
+				Name:          "worker-2",
+				MachineType:   "m5.large",
+				HAZones:       false,
+				AutoScalerMin: 1,
+				AutoScalerMax: 1,
+			},
+		},
+	}
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
+	assert.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+
+	assert.Len(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Zones, 3)
+	assert.Subset(t, []string{"zone-d", "zone-e", "zone-f", "zone-h"}, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Zones)
+
+	assert.Len(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[1].Zones, 1)
+	assert.Subset(t, []string{"zone-i", "zone-j", "zone-k", "zone-l"}, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[1].Zones)
+}
+
 // fixtures
 
 func fixRuntimeResource(name string) runtime.Object {

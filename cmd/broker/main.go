@@ -302,7 +302,7 @@ func main() {
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")
-	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
+	workersProvider := workers.NewProvider(log, cfg.InfrastructureManager, providerSpec)
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
