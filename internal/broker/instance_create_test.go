@@ -13,9 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
@@ -25,6 +24,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 const (
@@ -94,6 +95,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -169,6 +173,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -250,6 +257,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -298,6 +308,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -373,6 +386,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -452,6 +468,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -501,6 +520,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -553,6 +575,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -621,6 +646,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -687,6 +715,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -733,6 +764,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -774,6 +808,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -812,6 +849,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -859,6 +899,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -911,6 +954,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -971,6 +1017,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -1025,6 +1074,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1086,6 +1138,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
@@ -1142,6 +1197,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1243,6 +1301,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		testCases := []struct {
@@ -1331,6 +1392,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1375,6 +1439,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1445,6 +1512,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -1503,6 +1573,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -1559,6 +1632,9 @@ func TestProvision_Provision(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -1603,6 +1679,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1652,6 +1731,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1704,6 +1786,9 @@ func TestProvision_Provision(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -1849,6 +1934,9 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
+				nil,
+				nil,
 			)
 
 			// when
@@ -1914,6 +2002,9 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				fixValueProvider(t),
 				false,
 				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
+				nil,
 				nil,
 				nil,
 			)
@@ -2070,6 +2161,9 @@ func TestNetworkingValidation(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
+				nil,
+				nil,
 			)
 
 			// when
@@ -2172,6 +2266,9 @@ func TestRegionValidation(t *testing.T) {
 				config.FakeProviderConfigProvider{},
 				nil,
 				nil,
+				nil,
+				nil,
+				nil,
 			)
 
 			// when
@@ -2235,6 +2332,9 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2286,6 +2386,9 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2334,6 +2437,9 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -2400,6 +2506,9 @@ func TestUnsupportedMachineType(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 	)
 
 	// when
@@ -2452,6 +2561,9 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
 		nil,
 		nil,
 	)
@@ -2534,6 +2646,9 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2572,7 +2687,6 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		imConfigFixture,
-
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2585,6 +2699,9 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		fixValueProvider(t),
 		false,
 		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
 		nil,
 		nil,
 	)
@@ -2722,6 +2839,9 @@ func TestAvailableZonesValidation(t *testing.T) {
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2782,6 +2902,9 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -2854,6 +2977,9 @@ func TestAdditionalProperties(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -2942,6 +3068,9 @@ func TestAdditionalProperties(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -3004,6 +3133,9 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3053,6 +3185,9 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -3114,6 +3249,9 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			fixValueProvider(t),
 			false,
 			config.FakeProviderConfigProvider{},
+			nil,
+			nil,
+			nil,
 			nil,
 			nil,
 		)
@@ -3187,6 +3325,9 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			nil,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -3237,6 +3378,9 @@ func TestQuotaLimitCheck(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			quotaClient,
+			nil,
+			nil,
+			nil,
 			nil,
 		)
 
@@ -3289,6 +3433,9 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			quotaClient,
 			nil,
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -3339,6 +3486,9 @@ func TestQuotaLimitCheck(t *testing.T) {
 			false,
 			config.FakeProviderConfigProvider{},
 			quotaClient,
+			nil,
+			nil,
+			nil,
 			nil,
 		)
 
@@ -3391,6 +3541,9 @@ func TestQuotaLimitCheck(t *testing.T) {
 			config.FakeProviderConfigProvider{},
 			quotaClient,
 			whitelist.Set{subAccountID: struct{}{}},
+			nil,
+			nil,
+			nil,
 		)
 
 		// when
@@ -3405,6 +3558,108 @@ func TestQuotaLimitCheck(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 	})
+}
+
+func TestDiscoveryZones(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	rulesService, err := rules.NewRulesServiceFromSlice([]string{"aws"}, sets.New("aws"), sets.New("aws"))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name          string
+		zones         map[string][]string
+		awsError      error
+		expectedError string
+	}{
+		{
+			name:          "Should fail if AWS returns error for Kyma worker node pool",
+			awsError:      fmt.Errorf("AWS error"),
+			expectedError: "Failed to validate the number of available zones. Please try again later.",
+		},
+		{
+			name: "Should fail if not enough zones for Kyma worker node pool",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b"},
+			},
+			expectedError: "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
+		},
+		{
+			name: "Should fail if machine type in additional worker node pool is not available",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge": {},
+			},
+			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available.",
+		},
+		{
+			name: "Should fail if machine type in high availability additional worker node pool is not available in at least 3 zones",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge": {"eu-west-2a", "eu-west-2b"},
+			},
+			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
+					CheckQuotaLimit:      true,
+				},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
+				memoryStorage,
+				queue,
+				broker.PlansConfig{},
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				newSchemaService(t),
+				fixture.NewProviderSpecWithZonesDiscovery(t, true),
+				fixValueProvider(t),
+				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
+				rulesService,
+				fixture.CreateGardenerClient(),
+				fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError),
+			)
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, "eu-west-2", "m6i.large", additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }
 
 func fixExistOperation() internal.Operation {

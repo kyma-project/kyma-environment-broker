@@ -307,17 +307,19 @@ func main() {
 	log.Info("Plans and providers configuration is valid")
 	workersProvider := workers.NewProvider(log, cfg.InfrastructureManager, providerSpec)
 
+	awsClientFactory := aws.NewFactory()
+
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, aws.NewFactory())
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, aws.NewFactory())
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -330,7 +332,7 @@ func main() {
 
 	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues,
-		providerSpec, configProvider, plansSpec)
+		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, awsClientFactory)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -407,7 +409,8 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO,
-	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications) {
+	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
+	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
@@ -441,11 +444,13 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
-			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds),
+			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
+			rulesService, gardenerClient, awsClientFactory),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient, quotaWhitelistedSubaccountIds),
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient, quotaWhitelistedSubaccountIds,
+			rulesService, gardenerClient, awsClientFactory),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),

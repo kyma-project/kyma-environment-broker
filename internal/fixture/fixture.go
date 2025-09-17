@@ -419,6 +419,7 @@ func CreateGardenerClient() *gardener.Client {
 		secretBindingName7 = "secret-binding-7"
 	)
 	s1 := createSecret(secretName1, namespace)
+	s2 := createSecret(secretBindingName6, namespace)
 	sb1 := createSecretBinding(AWSEUAccessClaimedSecretName, namespace, secretBindingName1, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.EUAccessLabelKey:        "true",
@@ -452,7 +453,7 @@ func CreateGardenerClient() *gardener.Client {
 	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
 	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }
