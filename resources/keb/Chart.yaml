@@ -1,7 +1,7 @@
 apiVersion: v2
-appVersion: "1.21.35"
+appVersion: "1.21.36"
 name: keb
 description:
 description: Kyma Environment Broker Helm chart for Kubernetes
-version: 1.21.35
+version: 1.21.36
 type: application
