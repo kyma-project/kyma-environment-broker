@@ -11,10 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -64,11 +67,14 @@ type UpdateEndpoint struct {
 	useSmallerMachineTypes      bool
 	infrastructureManagerConfig InfrastructureManager
 
-	schemaService  *SchemaService
-	providerSpec   *configuration.ProviderSpec
-	planSpec       *configuration.PlanSpecifications
-	quotaClient    QuotaClient
-	quotaWhitelist whitelist.Set
+	schemaService    *SchemaService
+	providerSpec     *configuration.ProviderSpec
+	planSpec         *configuration.PlanSpecifications
+	quotaClient      QuotaClient
+	quotaWhitelist   whitelist.Set
+	rulesService     *rules.RulesService
+	gardenerClient   *gardener.Client
+	awsClientFactory aws.ClientFactory
 }
 
 func NewUpdate(cfg Config,
@@ -90,6 +96,9 @@ func NewUpdate(cfg Config,
 	schemaService *SchemaService,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
+	rulesService *rules.RulesService,
+	gardenerClient *gardener.Client,
+	awsClientFactory aws.ClientFactory,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -113,6 +122,9 @@ func NewUpdate(cfg Config,
 		planSpec:                                 planSpec,
 		quotaClient:                              quotaClient,
 		quotaWhitelist:                           quotaWhitelist,
+		rulesService:                             rulesService,
+		gardenerClient:                           gardenerClient,
+		awsClientFactory:                         awsClientFactory,
 	}
 }
 
@@ -285,6 +297,28 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
 
+	var awsClient aws.Client
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
+		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+		}
+
+		if params.MachineType != nil {
+			zones, err := awsClient.AvailableZones(ctx, *params.MachineType)
+			if err != nil {
+				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+			}
+
+			if len(zones) < providerValues.ZonesCount {
+				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+			}
+		}
+	}
+
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
@@ -319,7 +353,16 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+			if err := checkAvailableZones(
+				ctx,
+				logger,
+				regionsSupportingMachine,
+				additionalWorkerNodePool,
+				providerValues.Region,
+				details.PlanID,
+				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
+				awsClient,
+			); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(PlanNamesMapping[details.PlanID])); err != nil {
