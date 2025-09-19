@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -118,17 +116,6 @@ func createK8sClient(cfg *rest.Config) (client.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
 	}
-
-	// Apply FIPS-compliant TLS configuration to the HTTP client
-	if transport, ok := httpClient.Transport.(*http.Transport); ok {
-		fipsTLSConfig := httputil.FIPSCompliantTLSConfig()
-		// Preserve existing settings like InsecureSkipVerify
-		if transport.TLSClientConfig != nil {
-			fipsTLSConfig.InsecureSkipVerify = transport.TLSClientConfig.InsecureSkipVerify
-		}
-		transport.TLSClientConfig = fipsTLSConfig
-	}
-
 	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
@@ -151,11 +138,6 @@ func createK8sClient(cfg *rest.Config) (client.Client, error) {
 
 func createDynamicK8sClient() dynamic.Interface {
 	kcpK8sConfig := config.GetConfigOrDie()
-
-	// Create an HTTP client with FIPS-compliant TLS configuration
-	httpClient := httputil.NewFIPSCompliantClient(30*time.Second, false)
-	kcpK8sConfig.Transport = httpClient.Transport
-
 	clusterClient, err := dynamic.NewForConfig(kcpK8sConfig)
 	fatalOnError(err)
 	return clusterClient
