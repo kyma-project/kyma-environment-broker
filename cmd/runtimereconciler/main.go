@@ -12,9 +12,9 @@ import (
 
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/k8sfips"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/vrischmann/envconfig"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -68,7 +68,7 @@ func main() {
 
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, logs)
-	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
+	kcpK8sClient, err := k8sfips.NewFIPSCompliantClient(kcpK8sConfig)
 	fatalOnError(err, logs)
 
 	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun)

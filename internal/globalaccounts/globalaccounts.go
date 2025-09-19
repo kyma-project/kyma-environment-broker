@@ -13,13 +13,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/k8sfips"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"golang.org/x/oauth2/clientcredentials"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	k8scfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -105,28 +103,10 @@ func fatalOnError(err error) {
 
 func getKcpClient() (client.Client, error) {
 	kcpK8sConfig, err := k8scfg.GetConfig()
-	httpClient, err := rest.HTTPClientFor(kcpK8sConfig)
 	if err != nil {
-		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
+		return nil, fmt.Errorf("while getting kubernetes config: %w", err)
 	}
-	mapper, err := apiutil.NewDynamicRESTMapper(kcpK8sConfig, httpClient)
-	if err != nil {
-		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-			mapper, err = apiutil.NewDynamicRESTMapper(kcpK8sConfig, httpClient)
-			if err != nil {
-				return false, nil
-			}
-			return true, nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("while waiting for client mapper: %w", err)
-		}
-	}
-	cli, err := client.New(kcpK8sConfig, client.Options{Mapper: mapper})
-	if err != nil {
-		return nil, fmt.Errorf("while creating a client: %w", err)
-	}
-	return cli, nil
+	return k8sfips.NewFIPSCompliantClient(kcpK8sConfig)
 }
 
 func svcRequest(config Config, svc *http.Client, subaccountId string) (svcResult, error) {

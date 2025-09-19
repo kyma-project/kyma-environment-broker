@@ -14,18 +14,17 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/k8sfips"
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/oauth2/clientcredentials"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	k8scfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
@@ -72,7 +71,7 @@ func (b *AppBuilder) WithGardenerClient() {
 	if err != nil {
 		FatalOnError(fmt.Errorf("while creating Gardener cluster config: %w", err))
 	}
-	cli, err := dynamic.NewForConfig(clusterCfg)
+	cli, err := k8sfips.NewFIPSCompliantDynamicClient(clusterCfg)
 	if err != nil {
 		FatalOnError(fmt.Errorf("while creating Gardener client: %w", err))
 	}
@@ -120,28 +119,7 @@ func (b *AppBuilder) WithK8sClient() {
 }
 
 func createK8sClient(cfg *rest.Config) (client.Client, error) {
-	httpClient, err := rest.HTTPClientFor(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
-	}
-	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
-	if err != nil {
-		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-			mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
-			if err != nil {
-				return false, nil
-			}
-			return true, nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("while waiting for client mapper: %w", err)
-		}
-	}
-	cli, err := client.New(cfg, client.Options{Mapper: mapper})
-	if err != nil {
-		return nil, fmt.Errorf("while creating a client: %w", err)
-	}
-	return cli, nil
+	return k8sfips.NewFIPSCompliantClient(cfg)
 }
 
 func (b *AppBuilder) Cleanup() {
