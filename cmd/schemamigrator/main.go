@@ -120,11 +120,15 @@ func invokeMigration() error {
 
 	_, present := os.LookupEnv("DB_SSL")
 	if present {
-		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, os.Getenv("DB_SSL"))
+		sslMode := os.Getenv("DB_SSL")
+		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, sslMode)
 
-		_, present := os.LookupEnv("DB_SSLROOTCERT")
-		if present {
-			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
+		// Only add SSL cert parameters if SSL is not disabled
+		if sslMode != "disable" {
+			_, present := os.LookupEnv("DB_SSLROOTCERT")
+			if present {
+				dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
+			}
 		}
 	}
 
