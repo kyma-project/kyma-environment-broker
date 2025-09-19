@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	dynamicFake "k8s.io/client-go/dynamic/fake"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -188,6 +189,9 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
+	createSubscriptions(t, gardenerClient)
+	require.NoError(t, err)
+
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
@@ -256,6 +260,62 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	return ts
+}
+
+func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient) {
+
+	for sbName, labels := range map[string]map[string]string{
+		"sb-azure": {
+			"hyperscalerType": "azure",
+		},
+		"sb-aws": {
+			"hyperscalerType": "aws",
+		},
+		"sb-gcp": {
+			"hyperscalerType": "gcp",
+		},
+		"sb-gcp_cf-sa30": {
+			"hyperscalerType": "gcp_cf-sa30",
+		},
+		"sb-aws-shared": {
+			"hyperscalerType": "aws",
+			"shared":          "true",
+		},
+		"sb-azure-shared": {
+			"hyperscalerType": "azure",
+			"shared":          "true",
+		},
+		"sb-aws-eu-access": {
+			"hyperscalerType": "aws",
+			"euAccess":        "true",
+		},
+		"sb-azure-eu-access": {
+			"hyperscalerType": "azure",
+			"euAccess":        "true",
+		},
+		"sb-gcp-ksa": {
+			"hyperscalerType": "gcp-cf-sa30",
+		},
+		"sb-openstack_eu-de-1": {
+			"hyperscalerType": "openstack_eu-de-1",
+			"shared":          "true",
+		},
+		"sb-openstack_eu-de-2": {
+			"hyperscalerType": "openstack_eu-de-2",
+			"shared":          "true",
+		},
+	} {
+
+		sb := gardener.SecretBinding{}
+		sb.SetName(sbName)
+		sb.SetNamespace(gardenerKymaNamespace)
+		sb.SetLabels(labels)
+		sb.SetSecretRefName(sbName)
+
+		_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metav1.CreateOptions{})
+
+		require.NoError(t, err)
+	}
 }
 
 func defaultOIDCValues() pkg.OIDCConfigDTO {
