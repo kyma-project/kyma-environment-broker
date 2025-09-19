@@ -188,9 +188,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
-	accountProvider := fixAccountProvider(t, gardenerClient)
-	require.NoError(t, err)
-
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
@@ -229,7 +226,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
-		accountProvider, k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
+		k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
 	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
