@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"regexp"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/gocraft/dbr"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const (
@@ -60,9 +61,8 @@ func CheckIfDatabaseInitialized(db *dbr.Connection) (bool, error) {
 	err := row.Scan(&tableName)
 
 	if err != nil {
-		psqlErr, converted := err.(*pq.Error)
-
-		if converted && psqlErr.Code == TableNotExistsError {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == TableNotExistsError {
 			return false, nil
 		}
 
