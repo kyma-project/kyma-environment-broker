@@ -11,9 +11,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -122,8 +124,6 @@ func invokeMigration() error {
 	if present {
 		sslMode := os.Getenv("DB_SSL")
 		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, sslMode)
-
-		// Only add SSL cert parameters if SSL is not disabled
 		if sslMode != "disable" {
 			_, present := os.LookupEnv("DB_SSLROOTCERT")
 			if present {
@@ -192,17 +192,68 @@ func invokeMigration() error {
 	}
 
 	slog.Info("# INITIALIZING DRIVER #")
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	
+	// Try standard migration with panic recovery for FIPS issues
+	var driver database.Driver
+	var driverErr error
+	
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				panicMsg := fmt.Sprintf("%v", r)
+				if strings.Contains(panicMsg, "FIPS") || strings.Contains(panicMsg, "hmac") {
+					slog.Info(fmt.Sprintf("# FIPS compliance panic detected: %s #", panicMsg))
+					slog.Info("# Using direct SQL migration approach to avoid FIPS issues #")
+					driverErr = fmt.Errorf("FIPS_FALLBACK_REQUIRED")
+				} else {
+					// Re-panic if it's not a FIPS issue
+					panic(r)
+				}
+			}
+		}()
+		driver, driverErr = createMigrationDriver(db)
+	}()
+	
+	// If we need FIPS fallback, use direct SQL migration
+	if driverErr != nil && driverErr.Error() == "FIPS_FALLBACK_REQUIRED" {
+		return performDirectSQLMigration(db, migrationExecPath, direction)
+	}
 
-	for i := 0; i < connRetries && err != nil; i++ {
-		slog.Error(fmt.Sprintf("Error during driver initialization, %s. Retrying step", err))
-		driver, err = postgres.WithInstance(db, &postgres.Config{})
+	for i := 0; i < connRetries && driverErr != nil; i++ {
+		// Check if error is FIPS-related
+		if strings.Contains(driverErr.Error(), "FIPS") || strings.Contains(driverErr.Error(), "hmac") {
+			slog.Info("# FIPS compliance issue detected, using direct SQL migration approach #")
+			return performDirectSQLMigration(db, migrationExecPath, direction)
+		}
+		
+		slog.Error(fmt.Sprintf("Error during driver initialization, %s. Retrying step", driverErr))
+		
+		// Try again with panic recovery
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					panicMsg := fmt.Sprintf("%v", r)
+					if strings.Contains(panicMsg, "FIPS") || strings.Contains(panicMsg, "hmac") {
+						driverErr = fmt.Errorf("FIPS_FALLBACK_REQUIRED")
+					} else {
+						panic(r)
+					}
+				}
+			}()
+			driver, driverErr = createMigrationDriver(db)
+		}()
+		
+		if driverErr != nil && driverErr.Error() == "FIPS_FALLBACK_REQUIRED" {
+			return performDirectSQLMigration(db, migrationExecPath, direction)
+		}
+		
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	if err != nil {
-		return fmt.Errorf("# COULD NOT CREATE DATABASE CONNECTION: %w", err)
+	if driverErr != nil {
+		return fmt.Errorf("# COULD NOT CREATE DATABASE CONNECTION: %w", driverErr)
 	}
+	
 	slog.Info("# DRIVER INITIALIZED #")
 	slog.Info("# STARTING MIGRATION #")
 
@@ -312,4 +363,192 @@ func (m *migrationScript) copyDir(src, dst string) error {
 func fileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return !os.IsNotExist(err)
+}
+
+// createMigrationDriver attempts to create a postgres migration driver
+func createMigrationDriver(db *sql.DB) (database.Driver, error) {
+	return postgres.WithInstance(db, &postgres.Config{})
+}
+
+// performDirectSQLMigration executes migrations directly using SQL without golang-migrate
+// This is a FIPS-compliant fallback that avoids HMAC issues in the migration library
+func performDirectSQLMigration(db *sql.DB, migrationPath, direction string) error {
+	slog.Info("# STARTING DIRECT SQL MIGRATION (FIPS-COMPLIANT) #")
+	
+	// Create migrations table if it doesn't exist
+	createTableSQL := `
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version bigint NOT NULL,
+			dirty boolean NOT NULL,
+			PRIMARY KEY (version)
+		);`
+	
+	_, err := db.Exec(createTableSQL)
+	if err != nil {
+		return fmt.Errorf("failed to create migrations table: %w", err)
+	}
+	
+	// Get current migration version
+	var currentVersion int64
+	var dirty bool
+	err = db.QueryRow("SELECT version, dirty FROM schema_migrations ORDER BY version DESC LIMIT 1").Scan(&currentVersion, &dirty)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("failed to get current migration version: %w", err)
+	}
+	
+	if dirty {
+		return fmt.Errorf("database is in dirty state, manual intervention required")
+	}
+	
+	// Read migration files
+	files, err := os.ReadDir(migrationPath)
+	if err != nil {
+		return fmt.Errorf("failed to read migration directory: %w", err)
+	}
+	
+	// Execute migrations based on direction
+	if direction == "up" {
+		return executeUpMigrations(db, migrationPath, files, currentVersion)
+	} else {
+		return executeDownMigrations(db, migrationPath, files, currentVersion)
+	}
+}
+
+// executeUpMigrations runs up migrations
+func executeUpMigrations(db *sql.DB, migrationPath string, files []os.DirEntry, currentVersion int64) error {
+	for _, file := range files {
+		if !strings.HasSuffix(file.Name(), ".up.sql") {
+			continue
+		}
+		
+		// Extract version from filename (format: YYYYMMDDHHMMSS_name.up.sql)
+		versionStr := strings.Split(file.Name(), "_")[0]
+		var version int64
+		_, err := fmt.Sscanf(versionStr, "%d", &version)
+		if err != nil {
+			slog.Info(fmt.Sprintf("Skipping file with invalid version format: %s", file.Name()))
+			continue
+		}
+		
+		// Skip if already applied
+		if version <= currentVersion {
+			continue
+		}
+		
+		slog.Info(fmt.Sprintf("Applying migration: %s", file.Name()))
+		
+		// Read SQL file
+		sqlPath := filepath.Join(migrationPath, file.Name())
+		sqlBytes, err := os.ReadFile(sqlPath)
+		if err != nil {
+			return fmt.Errorf("failed to read migration file %s: %w", file.Name(), err)
+		}
+		
+		// Execute migration in a transaction
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
+		
+		// Mark as dirty
+		_, err = tx.Exec("INSERT INTO schema_migrations (version, dirty) VALUES ($1, true) ON CONFLICT (version) DO UPDATE SET dirty = true", version)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to mark migration as dirty: %w", err)
+		}
+		
+		// Execute migration SQL
+		_, err = tx.Exec(string(sqlBytes))
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to execute migration %s: %w", file.Name(), err)
+		}
+		
+		// Mark as clean
+		_, err = tx.Exec("UPDATE schema_migrations SET dirty = false WHERE version = $1", version)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to mark migration as clean: %w", err)
+		}
+		
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit migration transaction: %w", err)
+		}
+		
+		slog.Info(fmt.Sprintf("Successfully applied migration: %s", file.Name()))
+	}
+	
+	slog.Info("# DIRECT SQL MIGRATION UP COMPLETED #")
+	return nil
+}
+
+// executeDownMigrations runs down migrations
+func executeDownMigrations(db *sql.DB, migrationPath string, files []os.DirEntry, currentVersion int64) error {
+	// Find the down migration for the current version
+	for _, file := range files {
+		if !strings.HasSuffix(file.Name(), ".down.sql") {
+			continue
+		}
+		
+		// Extract version from filename
+		versionStr := strings.Split(file.Name(), "_")[0]
+		var version int64
+		_, err := fmt.Sscanf(versionStr, "%d", &version)
+		if err != nil {
+			continue
+		}
+		
+		// Only process the current version's down migration
+		if version != currentVersion {
+			continue
+		}
+		
+		slog.Info(fmt.Sprintf("Applying down migration: %s", file.Name()))
+		
+		// Read SQL file
+		sqlPath := filepath.Join(migrationPath, file.Name())
+		sqlBytes, err := os.ReadFile(sqlPath)
+		if err != nil {
+			return fmt.Errorf("failed to read down migration file %s: %w", file.Name(), err)
+		}
+		
+		// Execute migration in a transaction
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
+		
+		// Mark as dirty
+		_, err = tx.Exec("UPDATE schema_migrations SET dirty = true WHERE version = $1", version)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to mark migration as dirty: %w", err)
+		}
+		
+		// Execute down migration SQL
+		_, err = tx.Exec(string(sqlBytes))
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to execute down migration %s: %w", file.Name(), err)
+		}
+		
+		// Remove migration record
+		_, err = tx.Exec("DELETE FROM schema_migrations WHERE version = $1", version)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to remove migration record: %w", err)
+		}
+		
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit down migration transaction: %w", err)
+		}
+		
+		slog.Info(fmt.Sprintf("Successfully applied down migration: %s", file.Name()))
+		break
+	}
+	
+	slog.Info("# DIRECT SQL MIGRATION DOWN COMPLETED #")
+	return nil
 }

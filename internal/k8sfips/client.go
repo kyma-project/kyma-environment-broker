@@ -36,23 +36,39 @@ func CreateFIPSCompliantTLSConfig() *tls.Config {
 
 // NewFIPSCompliantClient creates a FIPS-compliant Kubernetes client
 func NewFIPSCompliantClient(cfg *rest.Config) (client.Client, error) {
-	// Create FIPS-compliant HTTP client
+	// Create a copy of the config to avoid modifying the original
+	configCopy := rest.CopyConfig(cfg)
+
+	// Create FIPS-compliant TLS config
 	tlsConfig := CreateFIPSCompliantTLSConfig()
-	transport := &http.Transport{
+
+	// Preserve server name if set
+	if configCopy.TLSClientConfig.ServerName != "" {
+		tlsConfig.ServerName = configCopy.TLSClientConfig.ServerName
+	}
+
+	// Preserve insecure setting if set
+	if configCopy.TLSClientConfig.Insecure {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	// Clear ALL TLS config fields to avoid conflicts with custom transport
+	configCopy.TLSClientConfig = rest.TLSClientConfig{}
+
+	// Set our custom transport
+	configCopy.Transport = &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
+
 	httpClient := &http.Client{
-		Transport: transport,
+		Transport: configCopy.Transport,
 		Timeout:   30 * time.Second,
 	}
-	
-	// Override the HTTP client in the config
-	cfg.Transport = transport
-	
-	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
+
+	mapper, err := apiutil.NewDynamicRESTMapper(configCopy, httpClient)
 	if err != nil {
 		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-			mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
+			mapper, err = apiutil.NewDynamicRESTMapper(configCopy, httpClient)
 			if err != nil {
 				return false, nil
 			}
@@ -62,8 +78,8 @@ func NewFIPSCompliantClient(cfg *rest.Config) (client.Client, error) {
 			return nil, fmt.Errorf("while waiting for client mapper: %w", err)
 		}
 	}
-	
-	cli, err := client.New(cfg, client.Options{Mapper: mapper})
+
+	cli, err := client.New(configCopy, client.Options{Mapper: mapper})
 	if err != nil {
 		return nil, fmt.Errorf("while creating a client: %w", err)
 	}
@@ -72,11 +88,29 @@ func NewFIPSCompliantClient(cfg *rest.Config) (client.Client, error) {
 
 // NewFIPSCompliantDynamicClient creates a FIPS-compliant dynamic Kubernetes client
 func NewFIPSCompliantDynamicClient(cfg *rest.Config) (dynamic.Interface, error) {
-	// Configure FIPS-compliant transport
+	// Create a copy of the config to avoid modifying the original
+	configCopy := rest.CopyConfig(cfg)
+
+	// Create FIPS-compliant TLS config
 	tlsConfig := CreateFIPSCompliantTLSConfig()
-	cfg.Transport = &http.Transport{
+
+	// Preserve server name if set
+	if configCopy.TLSClientConfig.ServerName != "" {
+		tlsConfig.ServerName = configCopy.TLSClientConfig.ServerName
+	}
+
+	// Preserve insecure setting if set
+	if configCopy.TLSClientConfig.Insecure {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	// Clear ALL TLS config fields to avoid conflicts with custom transport
+	configCopy.TLSClientConfig = rest.TLSClientConfig{}
+
+	// Set our custom transport
+	configCopy.Transport = &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
-	
-	return dynamic.NewForConfig(cfg)
+
+	return dynamic.NewForConfig(configCopy)
 }
