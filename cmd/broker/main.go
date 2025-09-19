@@ -483,17 +483,6 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)
 	}
-
-	// Apply FIPS-compliant TLS configuration to the HTTP client
-	if transport, ok := httpClient.Transport.(*http.Transport); ok {
-		fipsTLSConfig := httputil.FIPSCompliantTLSConfig()
-		// Preserve existing settings like InsecureSkipVerify
-		if transport.TLSClientConfig != nil {
-			fipsTLSConfig.InsecureSkipVerify = transport.TLSClientConfig.InsecureSkipVerify
-		}
-		transport.TLSClientConfig = fipsTLSConfig
-	}
-
 	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
 		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
