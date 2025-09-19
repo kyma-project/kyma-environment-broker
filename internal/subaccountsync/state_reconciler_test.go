@@ -19,6 +19,7 @@ import (
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (

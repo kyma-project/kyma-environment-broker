@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var cleanupContainer func() error

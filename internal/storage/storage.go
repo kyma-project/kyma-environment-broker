@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/gocraft/dbr"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
 	postgres "github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql"
 	eventstorage "github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type BrokerStorage interface {

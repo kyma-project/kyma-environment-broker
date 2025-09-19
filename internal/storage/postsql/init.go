@@ -80,7 +80,7 @@ func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Dur
 	slog.Info(re.ReplaceAllString(connString, ""))
 
 	for ; retryCount > 0; retryCount-- {
-		connection, err = dbr.Open("postgres", connString, nil)
+		connection, err = dbr.Open("pgx", connString, nil)
 		if err != nil {
 			return nil, fmt.Errorf("invalid connection string: %w", err)
 		}

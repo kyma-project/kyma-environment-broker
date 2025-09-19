@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
 
 	"github.com/stretchr/testify/require"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // go test --tags="cis" -v

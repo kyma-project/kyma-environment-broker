@@ -141,11 +141,11 @@ func invokeMigration() error {
 	)
 
 	slog.Info("# WAITING FOR CONNECTION WITH DATABASE #")
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sql.Open("pgx", connectionString)
 
 	for i := 0; i < connRetries && err != nil; i++ {
 		slog.Error(fmt.Sprintf("Error while connecting to the database, %s. Retrying step", err))
-		db, err = sql.Open("postgres", connectionString)
+		db, err = sql.Open("pgx", connectionString)
 		time.Sleep(100 * time.Millisecond)
 	}
 
