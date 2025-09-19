@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/mocks"
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 

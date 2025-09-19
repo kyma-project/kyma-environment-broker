@@ -1,6 +1,6 @@
 # Build image
 FROM --platform=$BUILDPLATFORM golang:1.25.1-alpine3.22 AS build
-
+ARG GOFIPS140=v1.0.0
 WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
 
 COPY go.mod go.sum ./
@@ -12,9 +12,10 @@ COPY internal internal
 
 ARG TARGETOS TARGETARCH
 ARG BIN
+ARG GOFIPS140
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/main ./cmd/${BIN}/main.go
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GOFIPS140=$GOFIPS140 go build -o /bin/main ./cmd/${BIN}/main.go
 
 # Get latest CA certs
 FROM alpine:3.22.1 AS certs
@@ -22,6 +23,7 @@ RUN apk --update add ca-certificates
 
 # Final image
 FROM scratch
+ENV GODEBUG=fips140=only
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
