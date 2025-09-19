@@ -3,10 +3,10 @@ package postsql_test
 import (
 	"testing"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
