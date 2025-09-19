@@ -17,6 +17,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 )
 
 const kcpNamespace = "kcp-system"
@@ -67,6 +69,10 @@ func (p *SecretProvider) K8sClientForRuntimeID(runtimeID string) (client.Client,
 		return nil, fmt.Errorf("while creating rest config from kubeconfig")
 	}
 
+	// Apply FIPS-compliant TLS configuration
+	httpClient := httputil.NewFIPSCompliantClient(30*time.Second, false)
+	restCfg.Transport = httpClient.Transport
+
 	k8sCli, err := client.New(restCfg, client.Options{
 		Scheme: scheme.Scheme,
 	})
@@ -87,6 +93,10 @@ func (p *SecretProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.
 	if err != nil {
 		return nil, fmt.Errorf("while creating k8s client set - rest config from kubeconfig")
 	}
+
+	// Apply FIPS-compliant TLS configuration
+	httpClient := httputil.NewFIPSCompliantClient(30*time.Second, false)
+	restCfg.Transport = httpClient.Transport
 
 	clientset, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
