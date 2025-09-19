@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-const (
-	connectionURLFormat = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s sslrootcert=%s"
-)
-
 type Config struct {
 	User        string `envconfig:"default=postgres"`
 	Password    string `envconfig:"default=password"`
@@ -26,6 +22,12 @@ type Config struct {
 }
 
 func (cfg *Config) ConnectionURL() string {
-	return fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
-		cfg.Password, cfg.Name, cfg.SSLMode, cfg.SSLRootCert)
+	baseURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode)
+
+	if cfg.SSLMode != "disable" && cfg.SSLRootCert != "" {
+		return fmt.Sprintf("%s sslrootcert=%s", baseURL, cfg.SSLRootCert)
+	}
+
+	return baseURL
 }
