@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gocraft/dbr"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
