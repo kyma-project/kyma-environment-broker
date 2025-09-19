@@ -15,9 +15,10 @@ RUN mkdir /user && \
     echo 'appuser:x:2000:' > /user/group
 
 ARG TARGETOS TARGETARCH
+ARG GOFIPS140
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/kyma-env-broker ./cmd/broker/
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GOFIPS140=$GOFIPS140 go build -o /bin/kyma-env-broker ./cmd/broker/
 
 RUN touch /swagger.yaml
 
@@ -27,6 +28,7 @@ RUN apk --update add ca-certificates
 
 # Final image
 FROM scratch
+ENV GODEBUG=fips140=only
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
