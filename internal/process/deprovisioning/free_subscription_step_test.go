@@ -2,6 +2,8 @@ package deprovisioning
 
 import (
 	"context"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -191,4 +193,17 @@ func newSecretBinding(name, secretName string, labels map[string]interface{}) *u
 	}
 	secretBinding.SetGroupVersionKind(gardener.SecretBindingGVK)
 	return secretBinding
+}
+
+func fixGCPInstance(instanceID string) internal.Instance {
+	instance := fixture.FixInstance(instanceID)
+	instance.Provider = pkg.GCP
+	return instance
+}
+func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {
+	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
+	deprovisioningOperation.ProvisioningParameters.PlanID = planID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = testGlobalAccountID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = testSubAccountID
+	return deprovisioningOperation
 }
