@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	dynamicFake "k8s.io/client-go/dynamic/fake"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -188,7 +190,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
-	accountProvider := fixAccountProvider(t, gardenerClient)
+	createSubscriptions(t, gardenerClient)
 	require.NoError(t, err)
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
@@ -229,7 +231,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
-		accountProvider, k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
+		k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
 	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
@@ -259,6 +261,62 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	return ts
+}
+
+func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient) {
+
+	for sbName, labels := range map[string]map[string]string{
+		"sb-azure": {
+			"hyperscalerType": "azure",
+		},
+		"sb-aws": {
+			"hyperscalerType": "aws",
+		},
+		"sb-gcp": {
+			"hyperscalerType": "gcp",
+		},
+		"sb-gcp_cf-sa30": {
+			"hyperscalerType": "gcp_cf-sa30",
+		},
+		"sb-aws-shared": {
+			"hyperscalerType": "aws",
+			"shared":          "true",
+		},
+		"sb-azure-shared": {
+			"hyperscalerType": "azure",
+			"shared":          "true",
+		},
+		"sb-aws-eu-access": {
+			"hyperscalerType": "aws",
+			"euAccess":        "true",
+		},
+		"sb-azure-eu-access": {
+			"hyperscalerType": "azure",
+			"euAccess":        "true",
+		},
+		"sb-gcp-ksa": {
+			"hyperscalerType": "gcp-cf-sa30",
+		},
+		"sb-openstack_eu-de-1": {
+			"hyperscalerType": "openstack_eu-de-1",
+			"shared":          "true",
+		},
+		"sb-openstack_eu-de-2": {
+			"hyperscalerType": "openstack_eu-de-2",
+			"shared":          "true",
+		},
+	} {
+
+		sb := gardener.SecretBinding{}
+		sb.SetName(sbName)
+		sb.SetNamespace(gardenerKymaNamespace)
+		sb.SetLabels(labels)
+		sb.SetSecretRefName(sbName)
+
+		_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metav1.CreateOptions{})
+
+		require.NoError(t, err)
+	}
 }
 
 func defaultOIDCValues() pkg.OIDCConfigDTO {

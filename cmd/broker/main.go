@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -134,9 +133,6 @@ type Config struct {
 
 	Quota                               quota.Config
 	QuotaWhitelistedSubaccountsFilePath string
-
-	// temporary FF
-	UseHapForDeprovisioning bool `envconfig:"default=false"`
 }
 
 type ProfilerConfig struct {
@@ -270,9 +266,6 @@ func main() {
 	fatalOnError(err, log)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
-	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
-	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
-	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
 	gardenerClient := gardener.NewClient(dynamicGardener, gardenerNamespace)
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
@@ -313,7 +306,7 @@ func main() {
 		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, aws.NewFactory())
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
