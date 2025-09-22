@@ -1007,10 +1007,10 @@ func newAWSClient(
 	}
 	secretBinding := gardener.NewSecretBinding(secretBindings.Items[0])
 
-	log.Info(fmt.Sprintf("getting subscription secret with name %q", secretBinding.GetSecretRefName()))
-	secret, err := gardenerClient.GetSecret(secretBinding.GetSecretRefName())
+	log.Info(fmt.Sprintf("getting subscription secret with name %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()))
+	secret, err := gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s", secretBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
 	}
 
 	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)

@@ -64,9 +64,14 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		subscriptionSecretName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	}
 
-	secret, err := s.gardenerClient.GetSecret(subscriptionSecretName)
+	secretBinding, err := s.gardenerClient.GetSecretBinding(subscriptionSecretName)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s", subscriptionSecretName), err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret binding %s", subscriptionSecretName), err, 10*time.Second, time.Minute, log)
+	}
+
+	secret, err := s.gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()), err, 10*time.Second, time.Minute, log)
 	}
 	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
 	if err != nil {

@@ -355,6 +355,7 @@ func fixAccountProvider(t *testing.T, gc *fake.FakeDynamicClient) hyperscaler.Ac
 		sb.SetNamespace(gardenerKymaNamespace)
 		sb.SetLabels(labels)
 		sb.SetSecretRefName(sbName)
+		sb.SetSecretRefNamespace(gardenerKymaNamespace)
 
 		_, err := gc.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metaV1.CreateOptions{})
 
