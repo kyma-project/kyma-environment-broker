@@ -374,7 +374,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	var awsClient aws.Client
-	if true {
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)) {
 		machineType := values.DefaultMachineType
 		if parameters.MachineType != nil {
 			machineType = *parameters.MachineType
@@ -437,7 +437,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				additionalWorkerNodePool,
 				valueOfPtr(parameters.Region),
 				details.PlanID,
-				true,
+				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
 				awsClient,
 			); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
