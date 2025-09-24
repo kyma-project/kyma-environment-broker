@@ -91,7 +91,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 		}
 
-		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
+		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(log, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
 			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)

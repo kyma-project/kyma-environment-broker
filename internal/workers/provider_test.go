@@ -25,7 +25,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with zones from existing worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, nil)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker-existing": {
 				Name:  "worker-existing",
@@ -42,6 +42,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
 			currentAdditionalWorkers,
 			additionalWorkerNodePools,
@@ -59,7 +60,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with Kyma workload zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -70,6 +71,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{
 				ProviderType: provider2.AWSProviderType,
 				VolumeSizeGb: 115,
@@ -91,7 +93,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with one zone if ha is disabled", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -102,6 +104,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
 			nil,
 			additionalWorkerNodePools,
@@ -126,7 +129,7 @@ aws:
       eu-west-1: [a, b, c]
 `))
 		assert.NoError(t, err)
-		provider := NewProvider(log, broker.InfrastructureManager{}, providerSpec)
+		provider := NewProvider(broker.InfrastructureManager{}, providerSpec)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -137,6 +140,7 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{
 				Region:       "eu-west-1",
 				ProviderType: provider2.AWSProviderType,
@@ -158,7 +162,7 @@ aws:
 
 	t.Run("should skip volume for openstack provider", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -169,6 +173,7 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{
 				ProviderType: "openstack",
 			},
@@ -188,7 +193,7 @@ aws:
 
 	t.Run("should use discovered zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(log, broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true))
+		provider := NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true))
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker-1",
@@ -209,6 +214,7 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
+			log,
 			internal.ProviderValues{
 				ProviderType: "aws",
 			},
