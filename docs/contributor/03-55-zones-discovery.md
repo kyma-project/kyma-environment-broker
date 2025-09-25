@@ -36,4 +36,4 @@ The results are stored in the operation under `operation.DiscoveredZones` as a m
 
 When creating a Runtime resource, the Kyma worker node pool uses zones from the discovery results, limited to the required number.
 During updates, existing worker node pools retain their current zones, while new worker pools use the discovered ones. This ensures consistent behavior and prevents re-randomization of zones for already provisioned pools.
-Final assignments for both Kyma and additional worker node pools are logged.
+Final assignments for both the Kyma worker node pool and additional worker node pools are logged.
