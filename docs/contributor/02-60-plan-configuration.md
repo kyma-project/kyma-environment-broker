@@ -84,7 +84,8 @@ providersConfiguration:
           displayName: "eu-west-2 (Europe, London)"
           zones: ["a", "b", "c"]
 
-    # defines whether Kyma Environment Broker determines availability zones dynamically from the hyperscaler or uses the static zones defined in the provider configuration
+    # defines whether Kyma Environment Broker determines availability zones dynamically from the hyperscaler
+    # or uses the static zones defined in the provider configuration
     zonesDiscovery: false
 ```
 You can find more details in the following documents:
