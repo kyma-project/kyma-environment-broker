@@ -16,7 +16,7 @@ providersConfiguration:
     zonesDiscovery: true
 ```
 
-If both a static configuration and `zonesDiscovery` are provided, a warning is logged to indicate that static zones are ignored.
+If both a static configuration and **zonesDiscovery** are provided, a warning is logged to indicate that static zones are ignored.
 
 ## Validation
 
