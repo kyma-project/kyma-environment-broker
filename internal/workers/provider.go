@@ -28,8 +28,8 @@ func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configurat
 	}
 }
 
-func (p *Provider) CreateAdditionalWorkers(log *slog.Logger, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string, discoveredZones map[string][]string) ([]gardener.Worker, error) {
+func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
+	zones []string, planID string, discoveredZones map[string][]string, log *slog.Logger) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 

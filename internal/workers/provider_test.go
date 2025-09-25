@@ -42,13 +42,13 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
 			currentAdditionalWorkers,
 			additionalWorkerNodePools,
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			log,
 		)
 
 		// then
@@ -71,7 +71,6 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{
 				ProviderType: provider2.AWSProviderType,
 				VolumeSizeGb: 115,
@@ -81,6 +80,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			log,
 		)
 
 		// then
@@ -104,13 +104,13 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
 			nil,
 			additionalWorkerNodePools,
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			log,
 		)
 
 		// then
@@ -140,7 +140,6 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{
 				Region:       "eu-west-1",
 				ProviderType: provider2.AWSProviderType,
@@ -150,6 +149,7 @@ aws:
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			log,
 		)
 
 		// then
@@ -173,7 +173,6 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{
 				ProviderType: "openstack",
 			},
@@ -182,6 +181,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			log,
 		)
 
 		// then
@@ -214,7 +214,6 @@ aws:
 
 		// when
 		workers, err := provider.CreateAdditionalWorkers(
-			log,
 			internal.ProviderValues{
 				ProviderType: "aws",
 			},
@@ -226,6 +225,7 @@ aws:
 				"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 				"m5.large":  {"zone-i", "zone-j"},
 			},
+			log,
 		)
 
 		// then
