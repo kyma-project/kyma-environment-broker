@@ -28,9 +28,9 @@ The subscription secret is used only for validation. Its name is logged to suppo
 
 ## Zones Discovery
 
-If `zonesDiscovery` is enabled, KEB performs the `Discover_Available_Zones` step using hyperscaler credentials from the subscription secret resolved in the `Resolve_Subscription_Secret` step.
+If **zonesDiscovery** is enabled, KEB performs the `Discover_Available_Zones` step using hyperscaler credentials from the subscription secret resolved in the `Resolve_Subscription_Secret` step.
 During provisioning, KEB queries all available zones for each unique machine type across both the Kyma worker node pool and additional worker node pools. During updates, it queries zones only for the additional worker node pools.
-The results are stored in the operation under `operation.DiscoveredZones` as a mapping of machine types to zone lists. All discovered zones are logged.
+The results are stored in the operation under **operation.DiscoveredZones** as a mapping of machine types to zone lists. All discovered zones are logged.
 
 ## Discovered Zones Usage
 
