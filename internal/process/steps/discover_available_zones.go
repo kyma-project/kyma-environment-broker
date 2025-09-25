@@ -78,7 +78,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, DefaultIfParamNotSet(operation.ProviderValues.Region, operation.ProvisioningParameters.Parameters.Region))
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, operation.ProviderValues.Region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
