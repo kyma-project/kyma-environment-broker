@@ -294,6 +294,7 @@ func main() {
 	fatalOnError(err, log)
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
+	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)

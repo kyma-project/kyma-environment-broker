@@ -139,28 +139,14 @@ func (p *ProviderSpec) findProviderDTO(cp runtime.CloudProvider) *providerDTO {
 	return nil
 }
 
-func (p *ProviderSpec) Validate(provider runtime.CloudProvider, planName, region string) error {
+func (p *ProviderSpec) Validate(provider runtime.CloudProvider, region string) error {
 	if dto := p.findRegion(provider, region); dto != nil {
 		providerDTO := p.findProviderDTO(provider)
-		if providerDTO.ZonesDiscovery && provider != runtime.AWS {
-			return fmt.Errorf("zone discovery is not yet supported for the %s provider", provider)
-		}
 		if !providerDTO.ZonesDiscovery && (dto.Zones == nil || len(dto.Zones) == 0) {
 			return fmt.Errorf("region %s for provider %s has no zones defined", region, provider)
 		}
 		if dto.DisplayName == "" {
 			return fmt.Errorf("region %s for provider %s has no display name defined", region, provider)
-		}
-		if providerDTO.ZonesDiscovery {
-			if len(dto.Zones) > 0 {
-				slog.Warn(fmt.Sprintf("Provider %s (plan %s) has zones discovery enabled, but region %s is configured with %d static zones, which will be ignored.", provider, planName, region, len(dto.Zones)))
-			}
-			for machineType, regionZones := range providerDTO.SupportingMachines {
-				zones := regionZones[region]
-				if len(zones) > 0 {
-					slog.Warn(fmt.Sprintf("Provider %s (plan %s) has zones discovery enabled, but machine type %s in region %s is configured with %d static zones, which will be ignored.", provider, planName, machineType, region, len(zones)))
-				}
-			}
 		}
 		return nil
 	}
@@ -194,6 +180,32 @@ func (p *ProviderSpec) RegionSupportingMachine(providerType string) (internal.Re
 		return RegionsSupportingMachine{}, nil
 	}
 	return providerData.SupportingMachines, nil
+}
+
+func (p *ProviderSpec) ValidateZonesDiscovery() error {
+	for provider, providerDTO := range p.data {
+		if providerDTO.ZonesDiscovery {
+			if provider != "aws" {
+				return fmt.Errorf("zone discovery is not yet supported for the %s provider", provider)
+			}
+
+			for region, regionDTO := range providerDTO.Regions {
+				if len(regionDTO.Zones) > 0 {
+					slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but region %s is configured with %d static zones, which will be ignored.", provider, region, len(regionDTO.Zones)))
+				}
+			}
+
+			for machineType, regionZones := range providerDTO.SupportingMachines {
+				for region, zones := range regionZones {
+					if len(zones) > 0 {
+						slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but machine type %s in region %s is configured with %d static zones, which will be ignored.", provider, machineType, region, len(zones)))
+					}
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
