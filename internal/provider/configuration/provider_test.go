@@ -118,6 +118,35 @@ aws:
   regions:
     eu-central-1:
       displayName: "eu-central-1"
+    eu-west-1:
+      displayName: "eu-west-1"
+  regionsSupportingMachine:
+    g6:
+      eu-central-1:
+`))
+		require.NoError(t, err)
+
+		// when / then
+		err = providerSpec.ValidateZonesDiscovery()
+		assert.NoError(t, err)
+
+		logContents := cw.buf.String()
+		assert.Empty(t, logContents)
+	})
+
+	t.Run("should pass when zonesDiscovery enabled and static configuration provided on AWS provider", func(t *testing.T) {
+		// given
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+		slog.SetDefault(logger)
+
+		providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  zonesDiscovery: true
+  regions:
+    eu-central-1:
+      displayName: "eu-central-1"
       zones: ["a", "b"]
     eu-west-1:
       displayName: "eu-west-1"
@@ -131,6 +160,7 @@ aws:
 		// when / then
 		err = providerSpec.ValidateZonesDiscovery()
 		assert.NoError(t, err)
+
 		logContents := cw.buf.String()
 		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-central-1 is configured with 2 static zones, which will be ignored.")
 		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-west-1 is configured with 3 static zones, which will be ignored.")
