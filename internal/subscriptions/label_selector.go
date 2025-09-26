@@ -50,6 +50,7 @@ func NewLabelSelectorFromRuleset(rule ParsedRule) *LabelSelectorBuilder {
 		selector.with(sharedReq)
 		return selector
 	}
+	selector.with(notSharedReq)
 	selector.with(notDirtyReq)
 
 	return selector
