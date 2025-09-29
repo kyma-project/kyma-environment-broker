@@ -1,6 +1,8 @@
 package configuration
 
 import (
+	"bytes"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -83,10 +85,87 @@ func TestProviderSpec_Validation(t *testing.T) {
 
 	// when / then
 
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-central-1"), "region eu-central-1 for provider aws has no zones defined")
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-west-2"), "region eu-west-2 for provider aws has no zones defined")
-	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "aws", "eu-west-1"), "region eu-west-1 for provider aws has no display name defined")
-	assert.NoError(t, providerSpec.Validate(runtime.AWS, "aws", "us-east-1"))
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-central-1"), "region eu-central-1 for provider aws has no zones defined")
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-west-2"), "region eu-west-2 for provider aws has no zones defined")
+	assert.Errorf(t, providerSpec.Validate(runtime.AWS, "eu-west-1"), "region eu-west-1 for provider aws has no display name defined")
+	assert.NoError(t, providerSpec.Validate(runtime.AWS, "us-east-1"))
+}
+
+func TestProviderSpec_ValidateZonesDiscovery(t *testing.T) {
+	t.Run("should fail when zonesDiscovery enabled on nonAWS provider", func(t *testing.T) {
+		// given
+		providerSpec, err := NewProviderSpec(strings.NewReader(`
+gcp:
+  zonesDiscovery: true
+`))
+		require.NoError(t, err)
+
+		// when / then
+		err = providerSpec.ValidateZonesDiscovery()
+		assert.EqualError(t, err, "zone discovery is not yet supported for the gcp provider")
+	})
+
+	t.Run("should pass when zonesDiscovery enabled on AWS provider", func(t *testing.T) {
+		// given
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+		slog.SetDefault(logger)
+
+		providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  zonesDiscovery: true
+  regions:
+    eu-central-1:
+      displayName: "eu-central-1"
+    eu-west-1:
+      displayName: "eu-west-1"
+  regionsSupportingMachine:
+    g6:
+      eu-central-1:
+`))
+		require.NoError(t, err)
+
+		// when / then
+		err = providerSpec.ValidateZonesDiscovery()
+		assert.NoError(t, err)
+
+		logContents := cw.buf.String()
+		assert.Empty(t, logContents)
+	})
+
+	t.Run("should pass when zonesDiscovery enabled and static configuration provided on AWS provider", func(t *testing.T) {
+		// given
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+		slog.SetDefault(logger)
+
+		providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  zonesDiscovery: true
+  regions:
+    eu-central-1:
+      displayName: "eu-central-1"
+      zones: ["a", "b"]
+    eu-west-1:
+      displayName: "eu-west-1"
+      zones: ["a", "b", "c"]
+  regionsSupportingMachine:
+    g6:
+      eu-central-1: ["a", "b", "c", "d"]
+`))
+		require.NoError(t, err)
+
+		// when / then
+		err = providerSpec.ValidateZonesDiscovery()
+		assert.NoError(t, err)
+
+		logContents := cw.buf.String()
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-central-1 is configured with 2 static zones, which will be ignored.")
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-west-1 is configured with 3 static zones, which will be ignored.")
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but machine type g6 in region eu-central-1 is configured with 4 static zones, which will be ignored.")
+	})
 }
 
 func TestProviderSpec_ZonesDiscovery(t *testing.T) {
@@ -185,4 +264,12 @@ func TestProviderSpec_ZonesDiscovery(t *testing.T) {
 			assert.Equal(t, tt.wantResult, got)
 		})
 	}
+}
+
+type captureWriter struct {
+	buf *bytes.Buffer
+}
+
+func (c *captureWriter) Write(p []byte) (n int, err error) {
+	return c.buf.Write(p)
 }

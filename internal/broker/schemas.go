@@ -42,7 +42,7 @@ func (s *SchemaService) Validate() error {
 			continue
 		}
 		for _, region := range regions {
-			err := s.providerSpec.Validate(provider, planName, region)
+			err := s.providerSpec.Validate(provider, region)
 			if err != nil {
 				return err
 			}

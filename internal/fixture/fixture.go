@@ -39,6 +39,7 @@ const (
 	MonitoringPassword             = "password"
 	AWSTenantName                  = "aws-tenant-1"
 	AzureTenantName                = "azure-tenant-2"
+	AWSSecretName                  = "aws-secret"
 	AWSEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
 	AzureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
 	AzureUnclaimedSecretName       = "azure-unclaimed"
@@ -408,51 +409,62 @@ func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) 
 
 func CreateGardenerClient() *gardener.Client {
 	const (
-		namespace          = "test"
-		secretName1        = "secret-1"
-		secretBindingName1 = "secret-binding-1"
-		secretBindingName2 = "secret-binding-2"
-		secretBindingName3 = "secret-binding-3"
-		secretBindingName4 = "secret-binding-4"
-		secretBindingName5 = "secret-binding-5"
-		secretBindingName6 = "secret-binding-6"
-		secretBindingName7 = "secret-binding-7"
+		namespace   = "test"
+		secretName1 = "secret-1"
+		secretName2 = "secret-2"
+		secretName3 = "secret-3"
+		secretName4 = "secret-4"
+		secretName5 = "secret-5"
+		secretName6 = "secret-6"
+		secretName7 = "secret-7"
+		secretName8 = "secret-8"
 	)
 	s1 := createSecret(secretName1, namespace)
-	sb1 := createSecretBinding(AWSEUAccessClaimedSecretName, namespace, secretBindingName1, map[string]string{
+	s2 := createSecret(secretName2, namespace)
+	s3 := createSecret(secretName3, namespace)
+	s4 := createSecret(secretName4, namespace)
+	s5 := createSecret(secretName5, namespace)
+	s6 := createSecret(secretName6, namespace)
+	s7 := createSecret(secretName7, namespace)
+	s8 := createSecret(secretName8, namespace)
+	sb1 := createSecretBinding(AWSEUAccessClaimedSecretName, namespace, secretName1, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.TenantNameLabelKey:      AWSTenantName,
 	})
-	sb2 := createSecretBinding(AzureEUAccessClaimedSecretName, namespace, secretBindingName2, map[string]string{
+	sb2 := createSecretBinding(AzureEUAccessClaimedSecretName, namespace, secretName2, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "azure",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.TenantNameLabelKey:      AzureTenantName,
 	})
-	sb3 := createSecretBinding(AzureUnclaimedSecretName, namespace, secretBindingName3, map[string]string{
+	sb3 := createSecretBinding(AzureUnclaimedSecretName, namespace, secretName3, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "azure",
 	})
-	sb4 := createSecretBinding(GCPEUAccessSharedSecretName, namespace, secretBindingName4, map[string]string{
+	sb4 := createSecretBinding(GCPEUAccessSharedSecretName, namespace, secretName4, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb5 := createSecretBinding(AWSMostUsedSharedSecretName, namespace, secretBindingName5, map[string]string{
+	sb5 := createSecretBinding(AWSMostUsedSharedSecretName, namespace, secretName5, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb6 := createSecretBinding(AWSLeastUsedSharedSecretName, namespace, secretBindingName6, map[string]string{
+	sb6 := createSecretBinding(AWSLeastUsedSharedSecretName, namespace, secretName6, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb7 := createSecretBinding("", namespace, secretBindingName7, map[string]string{
+	sb7 := createSecretBinding("", namespace, secretName7, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 	})
-	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
-	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
-	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
+	sb8 := createSecretBinding(AWSSecretName, namespace, secretName8, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	shoot1 := createShoot("shoot-1", namespace, AWSMostUsedSharedSecretName)
+	shoot2 := createShoot("shoot-2", namespace, AWSMostUsedSharedSecretName)
+	shoot3 := createShoot("shoot-3", namespace, AWSLeastUsedSharedSecretName)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, s4, s5, s6, s7, s8, sb1, sb2, sb3, sb4, sb5, sb6, sb7, sb8, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }

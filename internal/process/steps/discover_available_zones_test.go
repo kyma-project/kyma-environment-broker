@@ -23,7 +23,7 @@ func TestDiscoverAvailableZonesStep_ZonesDiscoveryDisabled(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -125,7 +125,7 @@ func TestDiscoverAvailableZonesStep_SubscriptionSecretNameFromOperation(t *testi
 			AutoScalerMax: 1,
 		},
 	}
-	subscriptionSecretName := "secret-1"
+	subscriptionSecretName := "aws-most-used-shared"
 	operation.ProvisioningParameters.Parameters.TargetSecret = &subscriptionSecretName
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -158,7 +158,7 @@ func TestDiscoverAvailableZonesStep_RegionFromProviderValues(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -215,7 +215,7 @@ func TestDiscoverAvailableZonesStep_MachineTypeFromProviderValues(t *testing.T) 
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -250,7 +250,7 @@ func TestDiscoverAvailableZonesStep_RepeatWhenAWSError(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -282,7 +282,7 @@ func TestDiscoverAvailableZonesStep_ProvisioningHappyPath(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -338,7 +338,7 @@ func TestDiscoverAvailableZonesStep_UpdateHappyPath(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "secret-1"
+	instance.SubscriptionSecretName = "aws-most-used-shared"
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 

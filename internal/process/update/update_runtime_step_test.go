@@ -592,7 +592,7 @@ func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
-	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, workers.NewProvider(fixLogger(), broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider())
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = "runtime-name"
