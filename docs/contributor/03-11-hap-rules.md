@@ -84,9 +84,12 @@ In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following ta
 |-----------------------|----------------|
 | `azure`               | `azure`        |
 | `azure_lite`          | `azure`        |
+| `build-runtime-azure` | `azure`.       |
 | `aws`                 | `aws`          |
+| `build-runtime-aws`.  | `aws`.         |
 | `free`                | `azure`, `aws` |
 | `gcp`                 | `gcp`          |
+| `build-runtime-gcp`   | `gcp`          |
 | `preview`             | `aws`          |
 | `sap-converged-cloud` | `openstack`    |
 | `trial`               | `aws`          |
