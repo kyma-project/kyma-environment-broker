@@ -31,7 +31,7 @@ During provisioning and updates, KEB validates worker node pool configuration by
 - The Kyma worker node pool must support at least three zones.
 - Additional worker pools must support three zones if configured for high availability, or at least one zone otherwise.
 
-To optimize performance, if the same machine type is used in multiple worker node pools, KEB queries the hyperscaler only once per unique machine type and reuses the result across all occurrences. This avoids unnecessary duplicate calls.
+To optimize performance, if the same machine type is used in multiple worker node pools, KEB queries the hyperscaler only once per unique machine type and reuses the result across all occurrences. This solution eliminates unnecessary duplicate calls.
 The subscription secret is used only for validation. Its name is logged to support traceability in case of validation failures.
 
 ## Zones Discovery
