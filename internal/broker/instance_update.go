@@ -297,22 +297,33 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
 
-	var awsClient aws.Client
+	discoveredZones := make(map[string]int)
 	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
-		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		if params.MachineType != nil {
+			discoveredZones[*params.MachineType] = 0
+		}
+
+		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+			discoveredZones[additionalWorkerNodePool.MachineType] = 0
+		}
+
+		awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 		}
 
-		if params.MachineType != nil {
-			zones, err := awsClient.AvailableZones(ctx, *params.MachineType)
+		for machineType := range discoveredZones {
+			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 			}
+			discoveredZones[machineType] = zonesCount
+		}
 
-			if len(zones) < providerValues.ZonesCount {
+		if params.MachineType != nil {
+			if discoveredZones[*params.MachineType] < providerValues.ZonesCount {
 				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 			}
@@ -342,10 +353,22 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 		}
+
 		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 		}
+
+		if IsExternalLicenseType(ersContext) {
+			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+		}
+
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
@@ -354,28 +377,19 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 			if err := checkAvailableZones(
-				ctx,
 				logger,
 				regionsSupportingMachine,
 				additionalWorkerNodePool,
 				providerValues.Region,
 				details.PlanID,
 				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
-				awsClient,
+				discoveredZones,
 			); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(PlanNamesMapping[details.PlanID])); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-		}
-		if IsExternalLicenseType(ersContext) {
-			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-		}
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 

@@ -25,6 +25,7 @@ type ClientFactory interface {
 
 type Client interface {
 	AvailableZones(ctx context.Context, machineType string) ([]string, error)
+	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
 }
 
 type EC2API interface {
@@ -86,6 +87,14 @@ func (c *AWSClient) AvailableZones(ctx context.Context, machineType string) ([]s
 	}
 
 	return zones, nil
+}
+
+func (c *AWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+	zones, err := c.AvailableZones(ctx, machineType)
+	if err != nil {
+		return 0, err
+	}
+	return len(zones), nil
 }
 
 func ExtractCredentials(secret *unstructured.Unstructured) (string, string, error) {

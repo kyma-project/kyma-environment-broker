@@ -109,6 +109,7 @@ const (
 	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
+	HAUnavailableMsg                                   = "In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false."
 )
 
 func NewProvision(brokerConfig Config,
@@ -373,27 +374,35 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		)
 	}
 
-	var awsClient aws.Client
+	discoveredZones := make(map[string]int)
 	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)) {
-		machineType := values.DefaultMachineType
+		kymaMachineType := values.DefaultMachineType
 		if parameters.MachineType != nil {
-			machineType = *parameters.MachineType
+			kymaMachineType = *parameters.MachineType
 		}
 
-		awsClient, err = newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		discoveredZones[kymaMachineType] = 0
+		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
+			discoveredZones[additionalWorkerNodePool.MachineType] = 0
+		}
+
+		awsClient, err := newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
 		if err != nil {
 			l.Error(fmt.Sprintf("unable to create AWS client: %s", err))
 			return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
-		zones, err := awsClient.AvailableZones(ctx, machineType)
-		if err != nil {
-			l.Error(fmt.Sprintf("unable to get available zones: %s", err))
-			return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+		for machineType := range discoveredZones {
+			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			if err != nil {
+				l.Error(fmt.Sprintf("unable to get available zones: %s", err))
+				return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+			}
+			discoveredZones[machineType] = zonesCount
 		}
 
-		if len(zones) < values.ZonesCount {
-			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", values.Region, machineType, values.ZonesCount)
+		if discoveredZones[kymaMachineType] < values.ZonesCount {
+			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", values.Region, kymaMachineType, values.ZonesCount)
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
@@ -416,13 +425,19 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
+
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 
-		regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
-		if err != nil {
+		if IsExternalLicenseType(provisioningParameters.ErsContext) {
+			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			}
+		}
+
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 
@@ -431,25 +446,16 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 			if err := checkAvailableZones(
-				ctx,
 				l,
 				regionsSupportingMachine,
 				additionalWorkerNodePool,
 				valueOfPtr(parameters.Region),
 				details.PlanID,
 				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
-				awsClient,
+				discoveredZones,
 			); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-		}
-		if IsExternalLicenseType(provisioningParameters.ErsContext) {
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
-		}
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
@@ -658,33 +664,28 @@ func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter
 }
 
 func checkAvailableZones(
-	ctx context.Context,
 	log *slog.Logger,
 	regionsSupportingMachine internal.RegionsSupporter,
 	additionalWorkerNodePool pkg.AdditionalWorkerNodePool,
 	region, planID string,
 	zonesDiscovery bool,
-	awsClient aws.Client,
+	discoveredZones map[string]int,
 ) error {
 	if zonesDiscovery {
-		zones, err := awsClient.AvailableZones(ctx, additionalWorkerNodePool.MachineType)
-		if err != nil {
-			log.Error(fmt.Sprintf("while getting available zones: %v", err))
-			return fmt.Errorf(FailedToValidateZonesMsg)
-		}
-		if len(zones) < 1 {
+		if discoveredZones[additionalWorkerNodePool.MachineType] < 1 {
 			return fmt.Errorf("In the %s, the %s machine type is not available.", region, additionalWorkerNodePool.MachineType)
 		}
-		if additionalWorkerNodePool.HAZones && len(zones) < 3 {
-			return fmt.Errorf("In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false.", region, additionalWorkerNodePool.MachineType)
+		if additionalWorkerNodePool.HAZones && discoveredZones[additionalWorkerNodePool.MachineType] < 3 {
+			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
 		}
 	} else {
 		zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
 		if err != nil {
-			return fmt.Errorf("while getting available zones: %w", err)
+			log.Error(fmt.Sprintf("while getting available zones: %v", err))
+			return fmt.Errorf(FailedToValidateZonesMsg)
 		}
 		if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
-			return fmt.Errorf("In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false.", region, additionalWorkerNodePool.MachineType)
+			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
 		}
 	}
 	return nil
@@ -980,6 +981,7 @@ func newAWSClient(
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
 ) (aws.Client, error) {
+	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
 		Plan:              PlanNamesMapping[provisioningParameters.PlanID],
 		PlatformRegion:    provisioningParameters.PlatformRegion,
