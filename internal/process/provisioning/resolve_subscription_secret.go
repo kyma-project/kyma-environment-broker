@@ -57,7 +57,7 @@ func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *s
 	if targetSecretName == "" {
 		return s.operationManager.OperationFailed(operation, "failed to determine secret name", fmt.Errorf("target secret name is empty"), log)
 	}
-	log.Info(fmt.Sprintf("resolved secret name: %s", targetSecretName))
+	log.Info(fmt.Sprintf("resolved secret binding name: %s", targetSecretName))
 
 	err = s.updateInstance(operation.InstanceID, targetSecretName)
 	if err != nil {

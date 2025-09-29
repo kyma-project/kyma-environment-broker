@@ -407,6 +407,14 @@ func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) 
 	return f.zones[machineType], nil
 }
 
+func (f *fakeAWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+	zones, err := f.AvailableZones(ctx, machineType)
+	if err != nil {
+		return 0, err
+	}
+	return len(zones), nil
+}
+
 func CreateGardenerClient() *gardener.Client {
 	const (
 		namespace   = "test"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -100,6 +101,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 		}
+		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 		log.Info(fmt.Sprintf("Available zones for machine type %s: %v", machineType, zones))
 		operation.DiscoveredZones[machineType] = zones
 	}
