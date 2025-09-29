@@ -95,6 +95,7 @@
 | update.workersAmount | Number of workers in update queue. | `20` |
 | deprovisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. | `2m` |
 | deprovisioning.<br>workersAmount | Number of workers in deprovisioning queue. | `20` |
+| catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
 | cleaning.dryRun | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. | `True` |
 | cleaning.enabled | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. | `False` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
@@ -127,7 +128,6 @@
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial, freemium, and azure_lite clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |
-| catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
 | metricsv2.enabled | If true, enables metricsv2 collection and Prometheus exposure. | `False` |
 | metricsv2.<br>operationResultFinishedOperationRetentionPeriod | Duration of retaining finished operation results in memory. | `3h` |
 | metricsv2.<br>operationResultPollingInterval | Frequency of polling for operation results. | `1m` |
