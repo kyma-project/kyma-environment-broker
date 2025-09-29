@@ -16,7 +16,7 @@ providersConfiguration:
     zonesDiscovery: true
 ```
 
-If both a static configuration and **zonesDiscovery** are provided, a warning is logged when KEB is starting to indicate that static zones are ignored.
+If both a static configuration and **zonesDiscovery** are provided, a warning is logged on KEB's start to indicate that static zones are ignored.
 
 Example log entries:
 
