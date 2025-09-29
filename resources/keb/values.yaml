@@ -308,6 +308,10 @@ kymaDashboardConfig:
   # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes.
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
+catalog:
+  # Documentation URL used in the service catalog metadata
+  documentationUrl: "https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment"
+
 
 metricsv2:
   # If true, enables metricsv2 collection and Prometheus exposure.

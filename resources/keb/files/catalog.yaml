@@ -34,7 +34,7 @@ services:
         w0NloiLz48L3N2Zz4="
       longDescription: "Kyma environment is a runtime you can use to build cloud-native Kubernetes-based applications by using microservices and serverless functions."
       providerDisplayName: "SAP"
-      documentationUrl: "https://help.sap.com/viewer/65de2977205c403bbc107264b8eccf4b/Cloud/en-US/468c2f3c3ca24c2c8497ef9f83154c44.html"
+      documentationUrl: "{{ .Values.catalog.documentationUrl }}"
       supportUrl: "https://launchpad.support.sap.com/"
     # map of plans
     plans:
