@@ -162,9 +162,9 @@ aws:
 		assert.NoError(t, err)
 
 		logContents := cw.buf.String()
-		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-central-1 is configured with 2 static zones, which will be ignored.")
-		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-west-1 is configured with 3 static zones, which will be ignored.")
-		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but machine type g6 in region eu-central-1 is configured with 4 static zones, which will be ignored.")
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-central-1 is configured with 2 static zone(s), which will be ignored.")
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but region eu-west-1 is configured with 3 static zone(s), which will be ignored.")
+		assert.Contains(t, logContents, "Provider aws has zones discovery enabled, but machine type g6 in region eu-central-1 is configured with 4 static zone(s), which will be ignored.")
 	})
 }
 

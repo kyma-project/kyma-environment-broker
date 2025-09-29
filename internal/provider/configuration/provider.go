@@ -191,14 +191,14 @@ func (p *ProviderSpec) ValidateZonesDiscovery() error {
 
 			for region, regionDTO := range providerDTO.Regions {
 				if len(regionDTO.Zones) > 0 {
-					slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but region %s is configured with %d static zones, which will be ignored.", provider, region, len(regionDTO.Zones)))
+					slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but region %s is configured with %d static zone(s), which will be ignored.", provider, region, len(regionDTO.Zones)))
 				}
 			}
 
 			for machineType, regionZones := range providerDTO.SupportingMachines {
 				for region, zones := range regionZones {
 					if len(zones) > 0 {
-						slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but machine type %s in region %s is configured with %d static zones, which will be ignored.", provider, machineType, region, len(zones)))
+						slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but machine type %s in region %s is configured with %d static zone(s), which will be ignored.", provider, machineType, region, len(zones)))
 					}
 				}
 			}

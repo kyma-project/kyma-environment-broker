@@ -21,8 +21,8 @@ If both a static configuration and **zonesDiscovery** are provided, a warning is
 Example log entries:
 
 ```json lines
-{"level":"WARN", "msg":"Provider aws has zones discovery enabled, but region us-west-2 is configured with 4 static zones, which will be ignored."} 
-{"level":"WARN", "msg":"Provider aws has zones discovery enabled, but machine type g6 in region ap-south-1 is configured with 1 static zones, which will be ignored."}
+{"level":"WARN", "msg":"Provider aws has zones discovery enabled, but region us-west-2 is configured with 4 static zone(s), which will be ignored."} 
+{"level":"WARN", "msg":"Provider aws has zones discovery enabled, but machine type g6 in region ap-south-1 is configured with 1 static zone(s), which will be ignored."}
 ```
 
 ## Validation
