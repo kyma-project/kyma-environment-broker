@@ -109,10 +109,13 @@ Every rule must contain at least a plan and apply the `hyperscalerType: <HYPERSC
 
 ```
 hap:
-  rule:                               # label selector:
-    - gcp                             # hyperscalerType=gcp, !dirty
-    - aws(PR=cf-eu11) -> EU           # hyperscalerType=aws, euAccess=true, !dirty
-    - gcp(PR=cf-eu30) -> EU,S         # hyperscalerType=gcp, euAccess=true, shared=true
+  rule:                                            # label selector:
+    - gcp                                          # hyperscalerType=gcp, !dirty
+    - build-runtime-gcp                            # hyperscalerType=gcp, !dirty
+    - aws(PR=cf-eu11) -> EU                        # hyperscalerType=aws, euAccess=true, !dirty
+    - build-runtime-aws(PR=cf-eu11) -> EU          # hyperscalerType=aws, euAccess=true, !dirty
+    - gcp(PR=cf-eu30) -> EU,S                      # hyperscalerType=gcp, euAccess=true, shared=true
+    - build-runtime-gcp(PR=cf-eu30) -> EU,S        # hyperscalerType=gcp, euAccess=true, shared=true
 ```
 
 All the examples in the document show the structure of configuration and corresponding label selectors in the comment as the snippet above.
@@ -130,7 +133,8 @@ The following configuration means that if a `gcp` cluster is provisioned in the 
 ```
 hap: 
   rule: 
-    - gcp(PR=cf-sa30) -> PR           # hyperscalerType=gcp_cf-sa30, !dirty
+    - gcp(PR=cf-sa30) -> PR                        # hyperscalerType=gcp_cf-sa30, !dirty
+    - build-runtime-gcp(PR=cf-sa30) -> PR          # hyperscalerType=gcp_cf-sa30, !dirty
 ```
 
 The next configuration means that if a `gcp` cluster is provisioned in the `cf-sa30` platform region, KEB searches for SecretBindings with the `hyperscalerType: gcp` label.
@@ -138,7 +142,8 @@ The next configuration means that if a `gcp` cluster is provisioned in the `cf-s
 ```
 hap: 
   rule: 
-    - gcp(PR=cf-sa30)                 # hyperscalerType=gcp, !dirty
+    - gcp(PR=cf-sa30)                              # hyperscalerType=gcp, !dirty
+    - build-runtime-gcp(PR=cf-sa30) -> PR          # hyperscalerType=gcp_cf-sa30, !dirty
 ```
 
 ### Hyperscaler Region Attribute
@@ -148,7 +153,8 @@ A region where a Kyma runtime is provisioned can be matched with the **HR** attr
 ```
 hap: 
   rule: 
-    - gcp(HR=us-central1) -> HR       # hyperscalerType=gcp_us-central1, !dirty
+    - gcp(HR=us-central1) -> HR                    # hyperscalerType=gcp_us-central1, !dirty
+    - build-runtime-gcp(HR=us-central1) -> HR      # hyperscalerType=gcp_us-central1, !dirty
 ```
 
 ### Shared and EU Access Attributes
@@ -158,8 +164,10 @@ Use these attributes only to add label selector requirements. If the rule entry 
 ```
 hap: 
   rule: 
-    - gcp -> S                        # hyperscalerType=gcp, shared=true 
-    - azure(PR=cf-ch20) -> EU, PR     # hyperscalerType=azure_cf-ch20, euAccess=true, !dirty
+    - gcp -> S                                     # hyperscalerType=gcp, shared=true
+    - build-runtime-gcp -> S                       # hyperscalerType=gcp, shared=true
+    - azure(PR=cf-ch20) -> EU, PR                  # hyperscalerType=azure_cf-ch20, euAccess=true, !dirty
+    - build-runtime-azure(PR=cf-ch20) -> EU, PR    # hyperscalerType=azure_cf-ch20, euAccess=true, !dirty
 ```
 
 ## Uniqueness and Priority
@@ -171,10 +179,12 @@ Output parameters are not taken into account when establishing rule entry unique
 ```
 hap:
   rule: 
-    - gcp 
-    - gcp -> S                      # invalid entry, output attributes do not take part in uniqueness check
-    - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
-    - gcp(HR=europe-west3)          # invalid entry, duplicate of the previous one 
+    - gcp
+    - build-runtime-gcp                            # invalid entry, output attributes do not take part in uniqueness check
+    - gcp -> S                                     # invalid entry, output attributes do not take part in uniqueness check
+    - gcp(HR=europe-west3)                         # valid entry, new HR attribute makes the rule unique
+    - gcp(HR=europe-west3)                         # invalid entry, duplicate of the previous one
+    - build-runtime-gcp(HR=europe-west3)           # invalid entry, conflicts with the gcp(HR=europe-west3)
 ```
 
 Rule configuration must contain only unique entries.
@@ -187,9 +197,12 @@ After sorting, the entry that specifies the most attributes is selected because 
 The following example shows the priority of the listed rules starting from the lowest:
 
 ```
-aws -> S                                      # hyperscalerType=aws, shared=true
-aws(PR=cf-eu11) -> EU, PR                     # hyperscalerType=aws_cf-eu11, euAccess=true, !dirty
-aws(PR=cf-eu11, HR=westeu) -> EU, S, PR, HR   # hyperscalerType=aws_cf-eu11_westeu, shared=true, euAccess=true
+aws -> S                                                    # hyperscalerType=aws, shared=true
+build-runtime-aws -> S                                      # hyperscalerType=aws, shared=true
+aws(PR=cf-eu11) -> EU, PR                                   # hyperscalerType=aws_cf-eu11, euAccess=true, !dirty
+build-runtime-aws(PR=cf-eu11) -> EU, PR                     # hyperscalerType=aws_cf-eu11, euAccess=true, !dirty
+aws(PR=cf-eu11, HR=westeu) -> EU, S, PR, HR                 # hyperscalerType=aws_cf-eu11_westeu, shared=true, euAccess=true
+build-runtime-aws(PR=cf-eu11, HR=westeu) -> EU, S, PR, HR   # hyperscalerType=aws_cf-eu11_westeu, shared=true, euAccess=true
 ```
 
 ## Validation
@@ -214,20 +227,26 @@ The following example shows the initial configuration created to mimic KEB's beh
 See an example of the initial configuration created to mimic KEB's behavior.
 ```
 hap:
- rule:                                  # label selector:
-  - aws                                 # hyperscalerType=aws, !dirty
-  - aws(PR=cf-eu11) -> EU               # hyperscalerType=aws, euAccess=true, !dirty 
-  - azure                               # hyperscalerType=azure, !dirty
-  - azure(PR=cf-ch20) -> EU             # hyperscalerType=azure, euAccess=true, !dirty 
-  - gcp                                 # hyperscalerType=gcp, !dirty
-  - gcp(PR=cf-sa30) -> PR               # hyperscalerType=gcp_cf-sa30, !dirty
-  - trial -> S                          # hyperscalerType=azure, shared=true
-                                        # hyperscalerType=aws, shared=true 
-  - sap-converged-cloud -> HR, S        # hyperscalerType=openstack_<HYPERSCALER_REGION>, shared=true
-  - azure_lite                          # hyperscalerType=azure, !dirty
-  - preview                             # hyperscalerType=aws, !dirty
-  - free                                # hyperscalerType=aws, !dirty
-                                        # hyperscalerType=azure, !dirty
+ rule:                                       # label selector:
+  - aws                                      # hyperscalerType=aws, !dirty
+  - build-runtime-aws                        # hyperscalerType=aws, !dirty
+  - aws(PR=cf-eu11) -> EU                    # hyperscalerType=aws, euAccess=true, !dirty
+  - build-runtime-aws(PR=cf-eu11) -> EU      # hyperscalerType=aws, euAccess=true, !dirty
+  - azure                                    # hyperscalerType=azure, !dirty
+  - build-runtime-azure                      # hyperscalerType=azure, !dirty
+  - azure(PR=cf-ch20) -> EU                  # hyperscalerType=azure, euAccess=true, !dirty
+  - build-runtime-azure(PR=cf-ch20) -> EU    # hyperscalerType=azure, euAccess=true, !dirty
+  - gcp                                      # hyperscalerType=gcp, !dirty
+  - build-runtime-gcp                        # hyperscalerType=gcp, !dirty
+  - gcp(PR=cf-sa30) -> PR                    # hyperscalerType=gcp_cf-sa30, !dirty
+  - build-runtime-gcp(PR=cf-sa30) -> PR      # hyperscalerType=gcp_cf-sa30, !dirty
+  - trial -> S                               # hyperscalerType=azure, shared=true
+                                             # hyperscalerType=aws, shared=true
+  - sap-converged-cloud -> HR, S             # hyperscalerType=openstack_<HYPERSCALER_REGION>, shared=true
+  - azure_lite                               # hyperscalerType=azure, !dirty
+  - preview                                  # hyperscalerType=aws, !dirty
+  - free                                     # hyperscalerType=aws, !dirty
+                                             # hyperscalerType=azure, !dirty
 ```
 
 ## CLI Tool
