@@ -18,7 +18,7 @@ data:
 {{ tpl . $ | indent 4 }}
 {{- end }}
   catalog.yaml: |-
-{{ .Files.Get "files/catalog.yaml" | indent 4 }}
+{{ tpl (.Files.Get "files/catalog.yaml") . | indent 4 }}
   freemiumWhitelistedGlobalAccountIds.yaml: |-
 {{- with .Values.freemiumWhitelistedGlobalAccountIds }}
 {{ tpl . $ | indent 4 }}
