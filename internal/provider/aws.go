@@ -70,9 +70,6 @@ func (p *AWSInputProvider) Provide() internal.ProviderValues {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
 	zones := AWSZones(region, p.ZonesProvider.RandomZones(pkg.AWS, region, zonesCount))
-	if len(zones) < zonesCount {
-		zonesCount = len(zones)
-	}
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
