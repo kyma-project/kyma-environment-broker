@@ -33,7 +33,7 @@ Therefore, your Kyma instances in this particular global account are assigned to
 
 ## IaaS Account Assignments After Subaccount Transfers to Another Global Account
 
-Within SAP Business Technology Platform (BTP), you can transfer solutions from one global account to another. However, the transfer does not affect the assignment of your Kyma instance(s) to IaaS provider accounts.
+Within SAP Business Technology Platform (BTP), you can transfer solutions from one global account to another. However, the transfer does not affect your Kyma instance(s) assignment to IaaS provider accounts.
 The assignment is permanent and cannot be changed. This is also true when you migrate subaccounts with Kyma instances assigned to a specific IaaS provider account from one global account to another. 
 The original account assignments remain unchanged even if the migrated Kyma instances and those existing in the target global account have the same characteristics.
 
