@@ -27,6 +27,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/google/uuid"
+	errors "github.com/hashicorp/go-multierror"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -281,6 +282,22 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
+	}
+
+	if b.config.BlockAzureV3Machines && providerValues.ProviderType == "azure" {
+		logger.Info("Checking if Azure V3 machine is used")
+
+		multiError := &errors.Error{}
+		if err := b.validateAzureV3Machines(params, instance.Parameters); err != nil {
+			errors.Append(multiError, err)
+		}
+		if err := b.validateAzureV3MachinesInAdditionalWorkerNodePools(params, instance.Parameters); err != nil {
+			errors.Append(multiError, err)
+		}
+		if multiError.ErrorOrNil() != nil {
+			logger.Error(fmt.Sprintf("validation of Azure V3 machines failed: %s", multiError.Error()))
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(multiError, http.StatusBadRequest, multiError.Error())
+		}
 	}
 
 	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
@@ -624,4 +641,34 @@ func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersConte
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
 		b.log.Error(fmt.Sprintf("failed to save update request with additonal properties: %v", err))
 	}
+}
+
+func (b *UpdateEndpoint) validateAzureV3Machines(params internal.UpdatingParametersDTO, existing internal.ProvisioningParameters) error {
+	if params.MachineType == nil || *params.MachineType == "" {
+		return nil
+	}
+	if params.MachineType == existing.Parameters.MachineType {
+		return nil
+	}
+	if strings.HasSuffix(*params.MachineType, "v3") {
+		return fmt.Errorf("Update to Azure v3 (%s) machine is not allowed, please use one of v5 machine type", *params.MachineType)
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) validateAzureV3MachinesInAdditionalWorkerNodePools(params internal.UpdatingParametersDTO, existing internal.ProvisioningParameters) error {
+	multierror := &errors.Error{}
+	for _, awnp := range params.AdditionalWorkerNodePools {
+		for _, existingAwnp := range existing.Parameters.AdditionalWorkerNodePools {
+			if awnp.Name == existingAwnp.Name {
+				if awnp.MachineType == existingAwnp.MachineType {
+					break
+				}
+				if strings.HasSuffix(awnp.MachineType, "v3") {
+					multierror = errors.Append(multierror, fmt.Errorf("Update to Azure v3 (%s) machine in additional worker node pool %s is not allowed, please use one of v5 machine types", awnp.MachineType, awnp.Name))
+				}
+			}
+		}
+	}
+	return multierror.ErrorOrNil()
 }

@@ -68,6 +68,9 @@ type Config struct {
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
+
+	// this FF must be removed when Azure V3 machines are no longer supported and all clusters are migrated
+	BlockAzureV3Machines bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

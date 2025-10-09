@@ -2216,6 +2216,48 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 	}
 }
 
+func TestBlockV3Azure_allowNotChangedV3Machine(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.MachineType = ptr.String("Standard_D4s_v5")
+	instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
+	instance.ServicePlanID = broker.AzurePlanID
+	instance.Parameters.PlanID = broker.AzurePlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
+	err = st.Operations().InsertProvisioningOperation(op)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	imConfig := broker.InfrastructureManager{
+		UseSmallerMachineTypes: false,
+	}
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D4s_v5\"}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
 	return provider.NewPlanSpecificValuesProvider(
