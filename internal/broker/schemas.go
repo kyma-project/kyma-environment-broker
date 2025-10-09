@@ -38,6 +38,8 @@ func (s *SchemaService) Validate() error {
 			provider = pkg.Azure
 		case SapConvergedCloudPlanName:
 			provider = pkg.SapConvergedCloud
+		case AlicloudPlanName:
+			provider = pkg.Alicloud
 		default:
 			continue
 		}
@@ -66,6 +68,9 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 	}
 	if createSchema, updateSchema, available := s.SapConvergedCloudSchemas(platformRegion); available {
 		outputPlans[SapConvergedCloudPlanID] = s.defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, createSchema, updateSchema)
+	}
+	if createSchema, updateSchema, available := s.AlicloudSchemas(platformRegion); available {
+		outputPlans[AlicloudPlanID] = s.defaultServicePlan(AlicloudPlanID, AlicloudPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.PreviewSchemas(platformRegion); available {
 		outputPlans[PreviewPlanID] = s.defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, createSchema, updateSchema)
@@ -194,6 +199,10 @@ func (s *SchemaService) PreviewSchemas(platformRegion string) (create, update *m
 
 func (s *SchemaService) SapConvergedCloudSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
 	return s.planSchemas(pkg.SapConvergedCloud, SapConvergedCloudPlanName, platformRegion)
+}
+
+func (s *SchemaService) AlicloudSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
+	return s.planSchemas(pkg.Alicloud, AlicloudPlanName, platformRegion)
 }
 
 func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string, update bool) *map[string]interface{} {

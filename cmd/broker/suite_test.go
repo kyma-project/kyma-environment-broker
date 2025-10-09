@@ -205,6 +205,9 @@ seedRegions:
 			"openstack": `
 seedRegions:
 - eu-de-1`,
+			"alicloud": `
+seedRegions:
+- eu-central-1`,
 		},
 	}
 
@@ -230,6 +233,7 @@ func fixConfig() *Config {
 		"build-runtime-aws",
 		"build-runtime-gcp",
 		"build-runtime-azure",
+		"alicloud",
 	}
 
 	return &Config{
@@ -242,7 +246,7 @@ func fixConfig() *Config {
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
-			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
+			IngressFilteringPlans:        []string{"aws", "azure", "gcp", "alicloud"},
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
@@ -264,7 +268,7 @@ func fixConfig() *Config {
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
-				BindablePlans:        []string{"aws", "azure"},
+				BindablePlans:        []string{"aws", "azure", "alicloud"},
 				ExpirationSeconds:    600,
 				MaxExpirationSeconds: 7200,
 				MinExpirationSeconds: 600,

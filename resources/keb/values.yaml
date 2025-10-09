@@ -151,7 +151,7 @@ broker:
   # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters.
   disableSapConvergedCloud: false
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
-  enablePlans: "azure,gcp,azure_lite,trial,aws"
+  enablePlans: "azure,gcp,azure_lite,trial,aws,alicloud"
   # If true, allows users to upgrade their plans (if a plan supports upgrades).
   enablePlanUpgrades: "false"
   # URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans
@@ -281,6 +281,7 @@ hap:
     - preview                         # pool: hyperscalerType: aws
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
+    - alicloud                       # pool: hyperscalerType: alicloud
 
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.

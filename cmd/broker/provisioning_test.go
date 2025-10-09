@@ -147,6 +147,38 @@ func TestProvisioningForAWS(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 }
 
+func TestProvisioningForAlicloud(t *testing.T) {
+
+	cfg := fixConfig()
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "cn-beijing"
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+}
+
 func TestProvisioning_HappyPathAWS(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
@@ -2577,6 +2609,14 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-2",
+		},
+		"alicloud cn-beijing": {
+			planID:         broker.AlicloudPlanID,
+			region:         "cn-beijing",
+			platformRegion: "cf-eu21",
+
+			expectedProvider:         "alicloud",
+			expectedSubscriptionName: "sb-alicloud",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

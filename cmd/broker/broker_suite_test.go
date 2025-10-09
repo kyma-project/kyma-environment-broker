@@ -306,6 +306,9 @@ func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicCl
 			"hyperscalerType": "openstack_eu-de-2",
 			"shared":          "true",
 		},
+		"sb-alicloud": {
+			"hyperscalerType": "alicloud",
+		},
 	} {
 
 		sb := gardener.SecretBinding{}
@@ -414,6 +417,10 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 				},
 				broker.BuildRuntimeAzurePlanName: {
 					Description: broker.BuildRuntimeAzurePlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.AlicloudPlanID: {
+					Description: broker.AlicloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
 			},

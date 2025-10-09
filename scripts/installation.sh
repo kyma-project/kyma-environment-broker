@@ -44,7 +44,7 @@ fi
 
 # Create custom resource definitions
 kubectl apply -f resources/installation/crd/
-kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
+#kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
 kubectl apply -f https://raw.githubusercontent.com/kyma-project/lifecycle-manager/refs/heads/main/config/crd/bases/operator.kyma-project.io_kymas.yaml
 
 # Create predefined secrets

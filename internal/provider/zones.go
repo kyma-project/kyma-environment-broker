@@ -73,6 +73,8 @@ func FullZoneName(providerType string, region string, zone string) string {
 		return fmt.Sprintf("%s%s", region, zone)
 	case AWSProviderType:
 		return fmt.Sprintf("%s%s", region, zone)
+	case AlicloudProviderType:
+		return fmt.Sprintf("%s-%s", region, zone)
 	}
 	return zone
 }

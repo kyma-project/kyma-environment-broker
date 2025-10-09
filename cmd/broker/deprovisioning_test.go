@@ -85,6 +85,73 @@ func TestReDeprovision(t *testing.T) {
 	suite.WaitForOperationsNotExists(iid)
 }
 
+func TestReDeprovisionAlicloud(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// PROVISION
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "cn-beijing"
+					}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	//then
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	require.NoError(t, err)
+	assert.Equal(t, "cn-beijing", op.Region)
+	assert.Equal(t, "g-account-id", op.GlobalAccountID)
+
+	// FIRST DEPROVISION
+	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		``)
+	deprovisioningID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(deprovisioningID, domain.Failed)
+
+	// SECOND DEPROVISION
+	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		``)
+	deprovisioningID = suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(deprovisioningID, domain.InProgress)
+	assert.Equal(t, deprovisioningID, suite.LastOperation(iid).ID)
+
+	//then
+	deprovisioningOp, err := suite.db.Operations().GetOperationByID(deprovisioningID)
+	require.NoError(t, err)
+	assert.Equal(t, "cn-beijing", deprovisioningOp.Region)
+	assert.Equal(t, "g-account-id", deprovisioningOp.GlobalAccountID)
+
+	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
+	// then
+	suite.WaitForInstanceArchivedCreated(iid)
+	suite.WaitFor(func() bool {
+		resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), ``)
+		defer resp.Body.Close()
+		data := suite.ParseLastOperationResponse(resp)
+		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
+	})
+	suite.WaitForOperationsNotExists(iid)
+}
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// given
 	cfg := fixConfig()
