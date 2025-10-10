@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"log/slog"
 	"strings"
-
-	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -400,9 +399,9 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		DashboardURL:                instance.DashboardURL,
 		ProvisioningParameters:      string(params),
 		ProviderRegion:              instance.ProviderRegion,
-		CreatedAt:                   instance.CreatedAt,
-		UpdatedAt:                   instance.UpdatedAt,
-		DeletedAt:                   instance.DeletedAt,
+		CreatedAt:                   instance.CreatedAt.UTC(),
+		UpdatedAt:                   instance.UpdatedAt.UTC(),
+		DeletedAt:                   instance.DeletedAt.UTC(),
 		ExpiredAt:                   instance.ExpiredAt,
 		Version:                     instance.Version,
 		Provider:                    string(instance.Provider),
