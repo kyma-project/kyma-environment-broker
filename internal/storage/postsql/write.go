@@ -134,6 +134,7 @@ func (ws writeSession) InsertInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Pair("provisioning_parameters", instance.ProvisioningParameters).
 		Pair("provider_region", instance.ProviderRegion).
 		Pair("provider", instance.Provider).
+		Pair("created_at", instance.CreatedAt).
 		Pair("deleted_at", instance.DeletedAt).
 		Pair("expired_at", instance.ExpiredAt).
 		Pair("version", instance.Version).
@@ -267,7 +268,6 @@ func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 		Where(dbr.Eq("version", op.Version)).
 		Set("instance_id", op.InstanceID).
 		Set("version", op.Version+1).
-		Set("created_at", op.CreatedAt).
 		Set("updated_at", op.UpdatedAt).
 		Set("description", op.Description).
 		Set("state", op.State).

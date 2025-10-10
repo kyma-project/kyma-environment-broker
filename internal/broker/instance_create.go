@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -277,6 +278,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 
 	instance := internal.Instance{
+		CreatedAt:       time.Now(),
 		InstanceID:      instanceID,
 		GlobalAccountID: ersContext.GlobalAccountID,
 		SubAccountID:    ersContext.SubAccountID,
