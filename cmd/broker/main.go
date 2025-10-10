@@ -208,6 +208,12 @@ func main() {
 	}))
 	slog.SetDefault(log)
 
+	slog.Info("TimeZone (TZ env): ", os.Getenv("TZ"))
+	slog.Info(fmt.Sprintf("Now: %s", time.Now().String()))
+	slog.Info(fmt.Sprintf("Now in UTC: %s", time.Now().UTC().String()))
+	fmt.Println(time.Now())
+	fmt.Println(time.Now().UTC())
+
 	// create and fill config
 	var cfg Config
 	err = envconfig.InitWithPrefix(&cfg, "APP")

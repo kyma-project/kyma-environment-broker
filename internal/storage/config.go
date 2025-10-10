@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -26,6 +27,12 @@ type Config struct {
 }
 
 func (cfg *Config) ConnectionURL() string {
-	return fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
+	url := fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
 		cfg.Password, cfg.Name, cfg.SSLMode, cfg.SSLRootCert)
+	tz := os.Getenv("POSTGRES_TZ")
+	if tz != "" {
+		url = fmt.Sprintf("%s timezone=%s", url, tz)
+	}
+
+	return url
 }
