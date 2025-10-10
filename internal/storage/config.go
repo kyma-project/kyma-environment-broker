@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -33,6 +34,8 @@ func (cfg *Config) ConnectionURL() string {
 	if tz != "" {
 		url = fmt.Sprintf("%s timezone=%s", url, tz)
 	}
+
+	slog.Info("DB timezone: " + tz)
 
 	return url
 }
