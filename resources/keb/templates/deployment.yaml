@@ -180,6 +180,8 @@ spec:
                   key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: APP_DATABASE_SSLROOTCERT
               value: {{ .Values.configPaths.cloudsqlSSLRootCert }}
+            - name: APP_DATABASE_TIMEZONE
+              value: "{{ .Values.global.database.timezone }}"
             - name: APP_DATABASE_USER
               valueFrom:
                 secretKeyRef:

@@ -68,6 +68,8 @@ spec:
                   key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: RUNTIME_RECONCILER_DATABASE_SSLROOTCERT
               value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
+            - name: RUNTIME_RECONCILER_DATABASE_TIMEZONE
+              value: "{{ .Values.global.database.timezone }}"
             - name: RUNTIME_RECONCILER_DATABASE_USER
               valueFrom:
                 secretKeyRef:
