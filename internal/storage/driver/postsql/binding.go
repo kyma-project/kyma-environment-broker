@@ -133,10 +133,10 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		Kubeconfig:        string(encrypted),
 		ID:                binding.ID,
 		InstanceID:        binding.InstanceID,
-		CreatedAt:         binding.CreatedAt,
+		CreatedAt:         binding.CreatedAt.UTC(),
 		ExpirationSeconds: binding.ExpirationSeconds,
 		CreatedBy:         binding.CreatedBy,
-		ExpiresAt:         binding.ExpiresAt,
+		ExpiresAt:         binding.ExpiresAt.UTC(),
 	}, nil
 }
 

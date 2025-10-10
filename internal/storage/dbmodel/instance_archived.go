@@ -44,12 +44,12 @@ func NewInstanceArchivedDTO(obj internal.InstanceArchived) InstanceArchivedDTO {
 		LastRuntimeID:                 obj.LastRuntimeID,
 		InternalUser:                  obj.InternalUser,
 		ShootName:                     obj.ShootName,
-		ProvisioningStartedAt:         obj.ProvisioningStartedAt,
-		ProvisioningFinishedAt:        obj.ProvisioningFinishedAt,
+		ProvisioningStartedAt:         obj.ProvisioningStartedAt.UTC(),
+		ProvisioningFinishedAt:        obj.ProvisioningFinishedAt.UTC(),
 		ProvisioningState:             obj.ProvisioningState,
-		FirstDeprovisioningStartedAt:  obj.FirstDeprovisioningStartedAt,
-		FirstDeprovisioningFinishedAt: obj.FirstDeprovisioningFinishedAt,
-		LastDeprovisioningFinishedAt:  obj.LastDeprovisioningFinishedAt,
+		FirstDeprovisioningStartedAt:  obj.FirstDeprovisioningStartedAt.UTC(),
+		FirstDeprovisioningFinishedAt: obj.FirstDeprovisioningFinishedAt.UTC(),
+		LastDeprovisioningFinishedAt:  obj.LastDeprovisioningFinishedAt.UTC(),
 	}
 }
 
