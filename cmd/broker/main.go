@@ -209,8 +209,8 @@ func main() {
 	slog.SetDefault(log)
 
 	slog.Info("TimeZone (TZ env): ", os.Getenv("TZ"))
-	slog.Info("Now: ", time.Now().String())
-	slog.Info("Now in UTC: ", time.Now().UTC().String())
+	slog.Info(fmt.Sprintf("Now: %s", time.Now().String()))
+	slog.Info(fmt.Sprintf("Now in UTC: %s", time.Now().UTC().String()))
 	fmt.Println(time.Now())
 	fmt.Println(time.Now().UTC())
 
