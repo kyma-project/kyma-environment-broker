@@ -35,7 +35,6 @@ type Config struct {
 	OnlySingleTrialPerGA                    bool        `envconfig:"default=true"`
 	URL                                     string
 	ShowTrialExpirationInfo                 bool          `envconfig:"default=false"`
-	ShowFreeExpirationInfo                  bool          `envconfig:"default=false"`
 	OnlyOneFreePerGA                        bool          `envconfig:"default=false"`
 	FreeDocsURL                             string        `envconfig:"default="`
 	FreeExpirationPeriod                    time.Duration `envconfig:"default=720h"` // 30 days

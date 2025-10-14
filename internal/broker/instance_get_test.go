@@ -278,8 +278,7 @@ func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                    "https://test-broker.local",
-		ShowFreeExpirationInfo: true,
+		URL: "https://test-broker.local",
 	}
 
 	const (
