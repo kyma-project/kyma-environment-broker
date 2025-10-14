@@ -80,7 +80,6 @@ showTrialExpirationInfo: true
 
 subaccountCleanup:
     enabled: false
-subaccountsIdsToShowTrialExpirationInfo: all
 
 
 trialCleanup:

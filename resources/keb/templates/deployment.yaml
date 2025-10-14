@@ -127,8 +127,6 @@ spec:
               value: "{{ .Values.broker.statusPort }}"
             - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
-            - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
-              value: "{{ .Values.broker.subaccountsIdsToShowTrialExpirationInfo }}"
             - name: APP_BROKER_TRIAL_DOCS_URL
               value: "{{ .Values.broker.trialDocsURL }}"
             - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE

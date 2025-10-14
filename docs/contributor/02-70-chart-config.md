@@ -84,7 +84,6 @@
 | broker.<br>showTrialExpirationInfo | If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels. | `false` |
 | broker.statusPort | Port for the broker status/health endpoint. | `8071` |
 | broker.<br>subaccountMovementEnabled | If true, enables subaccount movement (allows changing global account for an instance). | `false` |
-| broker.<br>subaccountsIdsToShowTrialExpirationInfo | Shows trial expiration information for specific subaccounts in the UI and API responses. | `a45be5d8-eddc-4001-91cf-48cc644d571f` |
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
