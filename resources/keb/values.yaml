@@ -176,8 +176,6 @@ broker:
   port: "8080"
   # If true, rejects requests that contain parameters that are not defined in schemas.
   rejectUnsupportedParameters: "false"
-  # If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels.
-  showTrialExpirationInfo: "false"
   # Port for the broker status/health endpoint.
   statusPort: "8071"
   # If true, enables subaccount movement (allows changing global account for an instance).

@@ -73,8 +73,6 @@ serviceAccount:
 serviceManager:
     overrideMode: "Always"
 
-showTrialExpirationInfo: true
-
 subaccountCleanup:
     enabled: false
 

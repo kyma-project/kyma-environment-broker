@@ -81,7 +81,6 @@
 | broker.<br>operationTimeout | Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.). If the operation exceeds this timeout, it is marked as failed. | `7h` |
 | broker.port | Port for the broker HTTP server. | `8080` |
 | broker.<br>rejectUnsupportedParameters | If true, rejects requests that contain parameters that are not defined in schemas. | `false` |
-| broker.<br>showTrialExpirationInfo | If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels. | `false` |
 | broker.statusPort | Port for the broker status/health endpoint. | `8071` |
 | broker.<br>subaccountMovementEnabled | If true, enables subaccount movement (allows changing global account for an instance). | `false` |
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |

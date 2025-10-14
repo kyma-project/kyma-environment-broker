@@ -27,7 +27,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_&#x200b;OPERATION_TIMEOUT** | <code>7h</code> | Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.). If the operation exceeds this timeout, it is marked as failed. |
 | **APP_BROKER_PORT** | <code>8080</code> | Port for the broker HTTP server. |
 | **APP_BROKER_REJECT_&#x200b;UNSUPPORTED_&#x200b;PARAMETERS** | <code>false</code> | If true, rejects requests that contain parameters that are not defined in schemas. |
-| **APP_BROKER_SHOW_&#x200b;TRIAL_EXPIRATION_&#x200b;INFO** | <code>false</code> | If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels. |
 | **APP_BROKER_STATUS_&#x200b;PORT** | <code>8071</code> | Port for the broker status/health endpoint. |
 | **APP_BROKER_&#x200b;SUBACCOUNT_MOVEMENT_&#x200b;ENABLED** | <code>false</code> | If true, enables subaccount movement (allows changing global account for an instance). |
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
