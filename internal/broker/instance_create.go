@@ -689,12 +689,17 @@ func checkAvailableZones(
 	discoveredZones map[string]int,
 ) error {
 	HAUnavailableMachines := make(map[string][]string)
+	var orderedMachineTypes []string
+
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
 		if zonesDiscovery {
 			if discoveredZones[additionalWorkerNodePool.MachineType] < 1 {
 				return fmt.Errorf("In the %s, the %s machine type is not available.", region, additionalWorkerNodePool.MachineType)
 			}
 			if additionalWorkerNodePool.HAZones && discoveredZones[additionalWorkerNodePool.MachineType] < 3 {
+				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {
+					orderedMachineTypes = append(orderedMachineTypes, additionalWorkerNodePool.MachineType)
+				}
 				HAUnavailableMachines[additionalWorkerNodePool.MachineType] = append(HAUnavailableMachines[additionalWorkerNodePool.MachineType], additionalWorkerNodePool.Name)
 			}
 		} else {
@@ -704,6 +709,9 @@ func checkAvailableZones(
 				return fmt.Errorf(FailedToValidateZonesMsg)
 			}
 			if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
+				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {
+					orderedMachineTypes = append(orderedMachineTypes, additionalWorkerNodePool.MachineType)
+				}
 				HAUnavailableMachines[additionalWorkerNodePool.MachineType] = append(HAUnavailableMachines[additionalWorkerNodePool.MachineType], additionalWorkerNodePool.Name)
 			}
 		}
@@ -715,8 +723,10 @@ func checkAvailableZones(
 
 	message := fmt.Sprintf("In the %s, the machine types: ", region)
 	var machineTypeMessages []string
-	for machineType, pools := range HAUnavailableMachines {
-		machineTypeMessages = append(machineTypeMessages, fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(pools, ", ")))
+	for _, machineType := range orderedMachineTypes {
+		pools := HAUnavailableMachines[machineType]
+		machineTypeMessages = append(machineTypeMessages,
+			fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(pools, ", ")))
 	}
 	message += strings.Join(machineTypeMessages, ", ")
 	message += " are not available in 3 zones. If you want to use this machine types, set HA to false."
