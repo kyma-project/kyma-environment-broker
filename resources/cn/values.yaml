@@ -36,9 +36,6 @@ dashboardConfig:
     enabled: true
     landscapeURL: https://dashboard.kyma.cloud.sap # **CN**
 
-
-enableKubeconfigURLLabel: true
-
 enablePlans: azure,gcp,azure_lite,aws,trial,free,sap-converged-cloud
 
 ias:
