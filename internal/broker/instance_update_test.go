@@ -905,7 +905,7 @@ func TestHAZones(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for name-1 additional worker node pool")
+		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for additional worker node pools: name-1.")
 	})
 
 	t.Run("should fail when attempting to enable HA zones for existing additional worker node pool", func(t *testing.T) {
@@ -947,7 +947,63 @@ func TestHAZones(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for name-1 additional worker node pool")
+		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for additional worker node pools: name-1.")
+	})
+
+	t.Run("should fail when attempting to change HA zones for existing additional worker node pools", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = broker.AWSPlanID
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "name-1",
+				MachineType:   "m6i.large",
+				HAZones:       false,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+			{
+				Name:          "name-2",
+				MachineType:   "m6i.large",
+				HAZones:       false,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+			{
+				Name:          "name-3",
+				MachineType:   "m6i.large",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+		}
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AWSPlanID,
+			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-3", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for additional worker node pools: name-1, name-3.")
 	})
 }
 
@@ -1557,6 +1613,62 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 	}
 }
 
+func TestUpdateAutoScalerConfigurationInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.PlanID = broker.AWSPlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProvisioningParameters.PlanID = broker.AWSPlanID
+	err = st.Operations().InsertProvisioningOperation(provisioning)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+	testCases := []struct {
+		name                      string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "Single auto scaler configuration error",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			expectedError:             "The following additionalWorkerPools have validation issues: AutoScalerMax value 3 should be larger than AutoScalerMin value 20 for name-1 additional worker node pool.",
+		},
+		{
+			name:                      "Multiple auto scaler configuration errors",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}, {"name": "name-2", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 1, "autoScalerMax": 20}]`,
+			expectedError:             "The following additionalWorkerPools have validation issues: AutoScalerMax value 3 should be larger than AutoScalerMin value 20 for name-1 additional worker node pool; AutoScalerMin value 1 should be at least 3 when HA zones are enabled for name-2 additional worker node pool.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AWSPlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
+}
+
 func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
@@ -1596,7 +1708,7 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	}, true)
 
 	// then
-	assert.EqualError(t, err, "In the westeurope, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
+	assert.EqualError(t, err, "In the westeurope, the machine types: g6.xlarge (used in worker node pools: name-1) are not available in 3 zones. If you want to use this machine types, set HA to false.")
 }
 
 func TestMachineTypeUpdateInMultipleAdditionalWorkerNodePools(t *testing.T) {
@@ -2157,22 +2269,25 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 
 	testCases := []struct {
-		name          string
-		zones         map[string][]string
-		awsError      error
-		expectedError string
+		name                      string
+		zones                     map[string][]string
+		awsError                  error
+		additionalWorkerNodePools string
+		expectedError             string
 	}{
 		{
-			name:          "Should fail if AWS returns error for Kyma worker node pool",
-			awsError:      fmt.Errorf("AWS error"),
-			expectedError: "Failed to validate the number of available zones. Please try again later.",
+			name:                      "Should fail if AWS returns error for Kyma worker node pool",
+			awsError:                  fmt.Errorf("AWS error"),
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "Failed to validate the number of available zones. Please try again later.",
 		},
 		{
 			name: "Should fail if not enough zones for Kyma worker node pool",
 			zones: map[string][]string{
 				"m6i.large": {"eu-west-2a", "eu-west-2b"},
 			},
-			expectedError: "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
 		},
 		{
 			name: "Should fail if machine type in additional worker node pool is not available",
@@ -2180,7 +2295,8 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {},
 			},
-			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the g6.xlarge machine type is not available.",
 		},
 		{
 			name: "Should fail if machine type in high availability additional worker node pool is not available in at least 3 zones",
@@ -2188,7 +2304,18 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {"eu-west-2a", "eu-west-2b"},
 			},
-			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the machine types: g6.xlarge (used in worker node pools: name-1) are not available in 3 zones. If you want to use this machine types, set HA to false.",
+		},
+		{
+			name: "Should fail if machine types in high availability additional worker node pools are not available in at least 3 zones",
+			zones: map[string][]string{
+				"m6i.large":   {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge":   {"eu-west-2a", "eu-west-2b"},
+				"g4dn.xlarge": {"eu-west-2a", "eu-west-2b"},
+			},
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-3", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the machine types: g6.xlarge (used in worker node pools: name-1, name-2), g4dn.xlarge (used in worker node pools: name-3) are not available in 3 zones. If you want to use this machine types, set HA to false.",
 		},
 	}
 
@@ -2198,13 +2325,11 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, fixture.NewProviderSpecWithZonesDiscovery(t, true), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil,
 				rulesService, fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError))
 
-			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
-
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 				ServiceID:       "",
 				PlanID:          broker.AWSPlanID,
-				RawParameters:   json.RawMessage(fmt.Sprintf(`{"machineType": "%s", "additionalWorkerNodePools": %s}`, "m6i.large", additionalWorkerNodePools)),
+				RawParameters:   json.RawMessage(fmt.Sprintf(`{"machineType": "%s", "additionalWorkerNodePools": %s}`, "m6i.large", tc.additionalWorkerNodePools)),
 				PreviousValues:  domain.PreviousValues{},
 				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 				MaintenanceInfo: nil,

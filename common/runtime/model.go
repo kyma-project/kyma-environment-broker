@@ -573,15 +573,15 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	return nil
 }
 
-func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) bool {
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {
 			if a.HAZones != currentAdditionalWorkerNodePool.HAZones {
-				return fmt.Errorf("HA zones setting is permanent and cannot be changed for %s additional worker node pool", a.Name)
+				return false
 			}
 		}
 	}
-	return nil
+	return true
 }
 
 func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool, allowedMachines []string) error {

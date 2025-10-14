@@ -369,25 +369,26 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			if err := additionalWorkerNodePool.Validate(); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			if err := checkAvailableZones(
-				logger,
-				regionsSupportingMachine,
-				additionalWorkerNodePool,
-				providerValues.Region,
-				details.PlanID,
-				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
-				discoveredZones,
-			); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
+		if err := checkAutoScalerConfiguration(params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
+
+		if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
+		if err := checkAvailableZones(
+			logger,
+			regionsSupportingMachine,
+			params.AdditionalWorkerNodePools,
+			providerValues.Region,
+			details.PlanID,
+			b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
+			discoveredZones,
+		); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
 		multiError := pkg.MachineTypeMultiError{}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(PlanNamesMapping[details.PlanID])); err != nil {
@@ -624,4 +625,20 @@ func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersConte
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
 		b.log.Error(fmt.Sprintf("failed to save update request with additonal properties: %v", err))
 	}
+}
+
+func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var poolsWithChangedHAZones []string
+	for _, additionalWorkerNodePool := range newAdditionalWorkerNodePools {
+		if !additionalWorkerNodePool.ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools) {
+			poolsWithChangedHAZones = append(poolsWithChangedHAZones, additionalWorkerNodePool.Name)
+		}
+	}
+
+	if len(poolsWithChangedHAZones) == 0 {
+		return nil
+	}
+
+	message := fmt.Sprintf("HA zones setting is permanent and cannot be changed for additional worker node pools: %s.", strings.Join(poolsWithChangedHAZones, ", "))
+	return fmt.Errorf("%s", message)
 }
