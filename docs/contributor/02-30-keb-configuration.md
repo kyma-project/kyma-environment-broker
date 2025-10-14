@@ -6,7 +6,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_ARCHIVING_DRY_&#x200b;RUN** | <code>true</code> | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. |
 | **APP_ARCHIVING_&#x200b;ENABLED** | <code>false</code> | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. |
-| **APP_BROKER_ALLOW_&#x200b;UPDATE_EXPIRED_&#x200b;INSTANCE_WITH_&#x200b;CONTEXT** | <code>false</code> | Allows update of expired instance. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |

@@ -163,7 +163,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	}
 
 	if instance.IsExpired() {
-		if b.config.AllowUpdateExpiredInstanceWithContext && ersContext.GlobalAccountID != "" {
+		if ersContext.GlobalAccountID != "" {
 			return domain.UpdateServiceSpec{}, nil
 		}
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")

@@ -61,7 +61,6 @@
 | swagger.virtualService.<br>enabled | - | `True` |
 | archiving.enabled | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. | `False` |
 | archiving.dryRun | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. | `True` |
-| broker.<br>allowUpdateExpiredInstanceWithContext | Allows update of expired instance. | `false` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |

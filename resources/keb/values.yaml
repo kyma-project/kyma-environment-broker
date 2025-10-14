@@ -132,8 +132,6 @@ archiving:
   dryRun: true
 
 broker:
-  # Allows update of expired instance.
-  allowUpdateExpiredInstanceWithContext: "false"
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp".
     bindablePlans: "aws"

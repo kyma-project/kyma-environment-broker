@@ -1028,7 +1028,7 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st, handler, true, false, true, q, broker.PlansConfig{},
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 	createFakeCRs(t)
 	// when
@@ -1079,7 +1079,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage, handler, true, false, true, queue, broker.PlansConfig{},
+	svc := broker.NewUpdate(broker.Config{}, storage, handler, true, false, true, queue, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
