@@ -3042,12 +3042,20 @@ func TestUpdateOIDC(t *testing.T) {
 							{
 								"clientID": "id-ooo",
 								"signingAlgs": ["RS256"],
-								"issuerURL": "https://issuer.url.com"
+								"issuerURL": "https://issuer.url.com",
+								"groupsClaim": "groups",
+                				"groupsPrefix": "-",
+								"usernameClaim": "sub",
+                				"usernamePrefix": "-"
 							},
 							{
 								"clientID": "id-ooo2",
 								"signingAlgs": ["RS256"],
-								"issuerURL": "https://issuer.url.com"
+								"issuerURL": "https://issuer.url.com",
+								"groupsClaim": "groups",
+                				"groupsPrefix": "-",
+								"usernameClaim": "sub",
+                				"usernamePrefix": "-"
 							}
 						]
 					}
