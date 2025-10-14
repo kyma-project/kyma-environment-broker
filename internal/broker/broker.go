@@ -34,7 +34,6 @@ type Config struct {
 	EnablePlans                             EnablePlans `envconfig:"default=azure"`
 	OnlySingleTrialPerGA                    bool        `envconfig:"default=true"`
 	URL                                     string
-	IncludeAdditionalParamsInSchema         bool          `envconfig:"default=false"`
 	ShowTrialExpirationInfo                 bool          `envconfig:"default=false"`
 	ShowFreeExpirationInfo                  bool          `envconfig:"default=false"`
 	OnlyOneFreePerGA                        bool          `envconfig:"default=false"`
@@ -52,8 +51,6 @@ type Config struct {
 	Host             string        `envconfig:"optional"`
 
 	Binding BindingConfig
-
-	DisableSapConvergedCloud bool `envconfig:"default=false"`
 
 	SubaccountMovementEnabled                bool `envconfig:"default=false"`
 	UpdateCustomResourcesLabelsOnAccountMove bool `envconfig:"default=false"`

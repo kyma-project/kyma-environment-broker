@@ -1598,7 +1598,6 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply default OIDC values when all OIDC object's fields are not present", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.IncludeAdditionalParamsInSchema = false
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 
 		defer suite.TearDown()

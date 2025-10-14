@@ -151,8 +151,6 @@ broker:
     minExpirationSeconds: 600
   # Default platform region for requests if not specified.
   defaultRequestRegion: "cf-eu10"
-  # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters.
-  disableSapConvergedCloud: false
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, allows users to upgrade their plans (if a plan supports upgrades).
@@ -163,8 +161,6 @@ broker:
   freeExpirationPeriod: 720h
   # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds.
   gardenerSeedsCache: "gardener-seeds-cache"
-  # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
-  includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one freemium (free) Kyma runtime.

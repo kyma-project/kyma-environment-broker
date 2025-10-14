@@ -264,7 +264,6 @@ func fixConfig() *Config {
 		Broker: broker.Config{
 			EnablePlans:                           brokerConfigPlans,
 			OperationTimeout:                      2 * time.Minute,
-			IncludeAdditionalParamsInSchema:       true,
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,

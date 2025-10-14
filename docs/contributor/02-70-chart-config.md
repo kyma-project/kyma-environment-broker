@@ -70,13 +70,11 @@
 | broker.binding.<br>maxExpirationSeconds | Maximum allowed expiration time (in seconds) for a binding. | `7200` |
 | broker.binding.<br>minExpirationSeconds | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener. | `600` |
 | broker.<br>defaultRequestRegion | Default platform region for requests if not specified. | `cf-eu10` |
-| broker.<br>disableSapConvergedCloud | If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters. | `False` |
 | broker.enablePlans | Comma-separated list of plan names enabled and available for provisioning in KEB. | `azure,gcp,azure_lite,trial,aws` |
 | broker.<br>enablePlanUpgrades | If true, allows users to upgrade their plans (if a plan supports upgrades). | `false` |
 | broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |
-| broker.<br>includeAdditionalParamsInSchema | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans. | `false` |
 | broker.<br>monitorAdditionalProperties | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. | `False` |
 | broker.<br>onlyOneFreePerGA | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. | `false` |
 | broker.<br>onlySingleTrialPerGA | If true, restricts each global account to only one active trial Kyma runtime at a time. When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned. | `true` |

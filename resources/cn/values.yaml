@@ -44,7 +44,6 @@ enablePlans: azure,gcp,azure_lite,aws,trial,free,sap-converged-cloud
 ias:
     disabled: true
 
-includeAdditionalParamsInSchema: true
 
 # must be configured
 kubeconfig:

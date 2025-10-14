@@ -200,10 +200,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if b.config.MonitorAdditionalProperties {
 		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
 	}
-	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, ConvergedCloudBlockedMsg)
-	}
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:           details.PlanID,
 		ServiceID:        details.ServiceID,
