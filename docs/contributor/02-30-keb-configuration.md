@@ -16,13 +16,11 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_BINDING_&#x200b;MIN_EXPIRATION_&#x200b;SECONDS** | <code>600</code> | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener. |
 | **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified. |
-| **APP_BROKER_DISABLE_&#x200b;SAP_CONVERGED_CLOUD** | <code>false</code> | If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters. |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB. |
 | **APP_BROKER_ENABLE_&#x200b;PLAN_UPGRADES** | <code>false</code> | If true, allows users to upgrade their plans (if a plan supports upgrades). |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users. |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. |
-| **APP_BROKER_INCLUDE_&#x200b;ADDITIONAL_PARAMS_&#x200b;IN_SCHEMA** | <code>false</code> | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans. |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. |
 | **APP_BROKER_ONLY_&#x200b;SINGLE_TRIAL_PER_GA** | <code>true</code> | If true, restricts each global account to only one active trial Kyma runtime at a time. When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned. |
