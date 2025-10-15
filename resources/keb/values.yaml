@@ -129,7 +129,7 @@ archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
   enabled: false
   # If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted.
-  dryRun: true
+  dryRun: false
 
 broker:
   binding:
@@ -205,7 +205,7 @@ catalog:
   
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database.
-  dryRun: true
+  dryRun: false
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database.
   enabled: false
   
@@ -463,7 +463,7 @@ cis:
 # =================================================
 deprovisionRetrigger:
   # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
-  dryRun: true
+  dryRun: false
   # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
   schedule: "0 2 * * *"
@@ -476,7 +476,7 @@ deprovisionRetrigger:
 # =================================================
 freeCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
-  dryRun: true
+  dryRun: false
   # If true, enables the Free Cleanup CronJob.
   enabled: true
   # Specifies how long a free instance can exist before being eligible for cleanup.
@@ -497,7 +497,7 @@ freeCleanup:
 # =================================================
 globalaccounts:
   # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
-  dryRun: true
+  dryRun: false
   # If true, enables the global accounts synchronization job.
   enabled: false
   # Name of the global accounts synchronization job or deployment.
@@ -548,7 +548,7 @@ oidc:
 # =================================================
 runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
-  dryRun: true
+  dryRun: false
   # Enables or disables the Runtime Reconciler deployment.
   enabled: false
   # If true, enables the periodic reconciliation job.
@@ -568,7 +568,7 @@ runtimeReconciler:
 # =================================================
 serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
-  dryRun: true
+  dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
   enabled: false
   # Number of times to retry a failed DELETE request for a binding.
@@ -642,7 +642,7 @@ subaccountSync:
 # =================================================
 trialCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
-  dryRun: true
+  dryRun: false
   # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes.
   enabled: true
   # Specifies how long a trial instance can exist before being expired.
