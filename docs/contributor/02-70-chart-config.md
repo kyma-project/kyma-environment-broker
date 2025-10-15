@@ -60,7 +60,7 @@
 | service.type | - | `ClusterIP` |
 | swagger.virtualService.<br>enabled | - | `True` |
 | archiving.enabled | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. | `False` |
-| archiving.dryRun | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. | `True` |
+| archiving.dryRun | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. | `False` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |
@@ -91,7 +91,7 @@
 | deprovisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. | `2m` |
 | deprovisioning.<br>workersAmount | Number of workers in deprovisioning queue. | `20` |
 | catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
-| cleaning.dryRun | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. | `True` |
+| cleaning.dryRun | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. | `False` |
 | cleaning.enabled | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. | `False` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
@@ -169,17 +169,17 @@
 | cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | None |
 | cis.entitlements.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS Entitlements client ID. | `id` |
 | cis.entitlements.<br>secretKey | The key in the Kubernetes Secret that contains the CIS Entitlements client secret. | `secret` |
-| deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `True` |
+| deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `False` |
 | deprovisionRetrigger.<br>enabled | If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted. | `True` |
 | deprovisionRetrigger.<br>schedule | - | `0 2 * * *` |
-| freeCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `True` |
+| freeCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `False` |
 | freeCleanup.enabled | If true, enables the Free Cleanup CronJob. | `True` |
 | freeCleanup.<br>expirationPeriod | Specifies how long a free instance can exist before being eligible for cleanup. | `2160h` |
 | freeCleanup.planID | The ID of the free plan to be used for cleanup. | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` |
 | freeCleanup.schedule | - | `0,15,30,45 * * * *` |
 | freeCleanup.testRun | If true, runs the job in test mode (no real deletions, for testing purposes). | `False` |
 | freeCleanup.<br>testSubaccountID | Subaccount ID used for test runs. | `prow-keb-trial-suspension` |
-| globalaccounts.<br>dryRun | If true, runs the global accounts synchronization job in dry-run mode (no changes are made). | `True` |
+| globalaccounts.<br>dryRun | If true, runs the global accounts synchronization job in dry-run mode (no changes are made). | `False` |
 | globalaccounts.<br>enabled | If true, enables the global accounts synchronization job. | `False` |
 | globalaccounts.name | Name of the global accounts synchronization job or deployment. | `kyma-environment-globalaccounts` |
 | migratorJobs.argosync.<br>enabled | If true, enables the ArgoCD sync job for schema migration. | `False` |
@@ -195,13 +195,13 @@
 | oidc.issuer | - | `https://kymatest.accounts400.ondemand.com` |
 | oidc.issuers | - | `[]` |
 | oidc.keysURL | - | `https://kymatest.accounts400.ondemand.com/oauth2/certs` |
-| runtimeReconciler.<br>dryRun | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). | `True` |
+| runtimeReconciler.<br>dryRun | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). | `False` |
 | runtimeReconciler.<br>enabled | Enables or disables the Runtime Reconciler deployment. | `False` |
 | runtimeReconciler.<br>jobEnabled | If true, enables the periodic reconciliation job. | `False` |
 | runtimeReconciler.<br>jobInterval | Interval (in minutes) between reconciliation job runs. | `1440` |
 | runtimeReconciler.<br>jobReconciliationDelay | Delay before starting reconciliation after job trigger. | `1s` |
 | runtimeReconciler.<br>metricsPort | Port on which the reconciler exposes Prometheus metrics. | `8081` |
-| serviceBindingCleanup.<br>dryRun | If true, the job only logs what would be deleted without actually removing any bindings. | `True` |
+| serviceBindingCleanup.<br>dryRun | If true, the job only logs what would be deleted without actually removing any bindings. | `False` |
 | serviceBindingCleanup.<br>enabled | If true, enables the Service Binding Cleanup CronJob. | `False` |
 | serviceBindingCleanup.<br>requestRetries | Number of times to retry a failed DELETE request for a binding. | `2` |
 | serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |
@@ -227,7 +227,7 @@
 | subaccountSync.<br>queueSleepInterval | Interval between queue processing cycles. | `30s` |
 | subaccountSync.<br>storageSyncInterval | Interval between storage synchronization. | `5m` |
 | subaccountSync.<br>updateResources | If true, enables updating resources during subaccount sync. | `False` |
-| trialCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `True` |
+| trialCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `False` |
 | trialCleanup.enabled | If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes. | `True` |
 | trialCleanup.<br>expirationPeriod | Specifies how long a trial instance can exist before being expired. | `336h` |
 | trialCleanup.planID | The ID of the trial plan to be used for cleanup. | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` |
