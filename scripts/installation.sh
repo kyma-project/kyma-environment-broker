@@ -44,8 +44,7 @@ fi
 
 # Create custom resource definitions
 kubectl apply -f resources/installation/crd/
-# As long as KIM does not support alicloud we need to manually add alicloud provider in CRD (resources/installation/crd/kim-temp.yaml line 1217)
-#kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
+kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
 kubectl apply -f https://raw.githubusercontent.com/kyma-project/lifecycle-manager/refs/heads/main/config/crd/bases/operator.kyma-project.io_kymas.yaml
 
 # Create predefined secrets

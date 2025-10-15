@@ -17,7 +17,7 @@ func (p FakeProviderConfigProvider) Provide(cfgKeyName string, cfgDestObj any) e
 	case "sapconvergedcloud", "openstack":
 		regions = append(regions, "eu-de-1")
 	case "alicloud":
-		regions = append(regions, "cn-beijing")
+		regions = append(regions, "eu-central-1")
 	}
 	cfg.SeedRegions = regions
 

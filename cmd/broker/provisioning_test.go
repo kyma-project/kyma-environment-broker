@@ -166,7 +166,7 @@ func TestProvisioningForAlicloud(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "cn-beijing"
+						"region": "eu-central-1"
 					}
 		}`)
 
@@ -2610,10 +2610,10 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-2",
 		},
-		"alicloud cn-beijing": {
+		"alicloud eu-central-1": {
 			planID:         broker.AlicloudPlanID,
-			region:         "cn-beijing",
-			platformRegion: "cf-eu21",
+			region:         "eu-central-1",
+			platformRegion: "cf-eu40",
 
 			expectedProvider:         "alicloud",
 			expectedSubscriptionName: "sb-alicloud",

@@ -16,10 +16,10 @@ func TestAlicloudDefaults(t *testing.T) {
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
-			PlatformRegion: "cn-beijing",
+			PlatformRegion: "eu-central-1",
 		},
 		FailureTolerance: "zone",
-		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c", "d"}),
+		ZonesProvider:    FakeZonesProvider([]string{"a", "b", "c"}),
 	}
 
 	// when
@@ -31,13 +31,13 @@ func TestAlicloudDefaults(t *testing.T) {
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
-		Zones:                []string{"cn-beijing-a", "cn-beijing-b", "cn-beijing-c", "cn-beijing-d"},
+		Zones:                []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"},
 		ProviderType:         "alicloud",
-		DefaultMachineType:   "ecs.g6.large",
-		Region:               "cn-beijing",
+		DefaultMachineType:   "ecs.g8i.large",
+		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             "",
-		VolumeSizeGb:         0,
+		DiskType:             DefaultDiskType,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -45,13 +45,13 @@ func TestAlicloudDefaults(t *testing.T) {
 func TestAlicloudTwoZonesRegion(t *testing.T) {
 
 	// given
-	region := "cn-shanghai"
+	region := "eu-central-1"
 	alicloud := AlicloudInputProvider{
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
-			PlatformRegion: "cn-beijing",
+			PlatformRegion: "eu-central-1",
 		},
 		FailureTolerance: "zone",
 		ZonesProvider:    FakeZonesProvider([]string{"a", "b"}),
@@ -66,13 +66,13 @@ func TestAlicloudTwoZonesRegion(t *testing.T) {
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           2,
-		Zones:                []string{"cn-shanghai-a", "cn-shanghai-b"},
+		Zones:                []string{"eu-central-1a", "eu-central-1b"},
 		ProviderType:         "alicloud",
-		DefaultMachineType:   "ecs.g6.large",
-		Region:               "cn-shanghai",
+		DefaultMachineType:   "ecs.g8i.large",
+		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             "",
-		VolumeSizeGb:         0,
+		DiskType:             DefaultDiskType,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -80,13 +80,13 @@ func TestAlicloudTwoZonesRegion(t *testing.T) {
 func TestAlicloudSingleZoneRegion(t *testing.T) {
 
 	// given
-	region := "cn-hangzhou"
+	region := "eu-central-1"
 	alicloud := AlicloudInputProvider{
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
-			PlatformRegion: "cn-beijing",
+			PlatformRegion: "eu-central-1",
 		},
 		FailureTolerance: "zone",
 		ZonesProvider:    FakeZonesProvider([]string{"a"}),
@@ -101,13 +101,13 @@ func TestAlicloudSingleZoneRegion(t *testing.T) {
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           1,
-		Zones:                []string{"cn-hangzhou-a"},
+		Zones:                []string{"eu-central-1a"},
 		ProviderType:         "alicloud",
-		DefaultMachineType:   "ecs.g6.large",
-		Region:               "cn-hangzhou",
+		DefaultMachineType:   "ecs.g8i.large",
+		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             "",
-		VolumeSizeGb:         0,
+		DiskType:             DefaultDiskType,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }

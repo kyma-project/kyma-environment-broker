@@ -94,7 +94,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 
 	// PROVISION
 	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu40/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
@@ -105,7 +105,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "cn-beijing"
+						"region": "eu-central-1"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -118,7 +118,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 	//then
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)
-	assert.Equal(t, "cn-beijing", op.Region)
+	assert.Equal(t, "eu-central-1", op.Region)
 	assert.Equal(t, "g-account-id", op.GlobalAccountID)
 
 	// FIRST DEPROVISION
@@ -138,7 +138,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 	//then
 	deprovisioningOp, err := suite.db.Operations().GetOperationByID(deprovisioningID)
 	require.NoError(t, err)
-	assert.Equal(t, "cn-beijing", deprovisioningOp.Region)
+	assert.Equal(t, "eu-central-1", deprovisioningOp.Region)
 	assert.Equal(t, "g-account-id", deprovisioningOp.GlobalAccountID)
 
 	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)

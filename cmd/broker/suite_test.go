@@ -246,7 +246,7 @@ func fixConfig() *Config {
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
-			IngressFilteringPlans:        []string{"aws", "azure", "gcp", "alicloud"},
+			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
@@ -268,7 +268,7 @@ func fixConfig() *Config {
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
-				BindablePlans:        []string{"aws", "azure", "alicloud"},
+				BindablePlans:        []string{"aws", "azure"},
 				ExpirationSeconds:    600,
 				MaxExpirationSeconds: 7200,
 				MinExpirationSeconds: 600,
