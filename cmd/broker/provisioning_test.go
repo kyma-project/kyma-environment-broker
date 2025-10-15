@@ -155,7 +155,7 @@ func TestProvisioningForAlicloud(t *testing.T) {
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu40/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
