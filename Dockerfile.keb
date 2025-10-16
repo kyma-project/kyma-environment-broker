@@ -1,6 +1,6 @@
 # Build image
-FROM --platform=$BUILDPLATFORM golang:1.25.1-alpine3.22 AS build
-
+FROM --platform=$BUILDPLATFORM golang:1.24.6-alpine3.22 AS build
+ARG GOFIPS140=v1.0.0
 WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
 
 COPY go.mod go.sum ./
@@ -15,9 +15,10 @@ RUN mkdir /user && \
     echo 'appuser:x:2000:' > /user/group
 
 ARG TARGETOS TARGETARCH
+ARG GOFIPS140
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/kyma-env-broker ./cmd/broker/
+    CGO_ENABLED=0 GOFIPS140=$GOFIPS140 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/kyma-env-broker ./cmd/broker/
 
 RUN touch /swagger.yaml
 
@@ -36,5 +37,5 @@ USER appuser:appuser
 
 COPY --chown=appuser /files/swagger /swagger
 COPY --from=build --chown=appuser /swagger.yaml /swagger/swagger.yaml
-
+ENV GODEBUG=fips140=only
 CMD ["/bin/kyma-env-broker"]
