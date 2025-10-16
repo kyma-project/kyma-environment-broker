@@ -36,14 +36,14 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	cli := getK8sClient()
+
 	// create and fill config
 	var cfg subsync.Config
 	err := envconfig.InitWithPrefix(&cfg, AppPrefix)
 	if err != nil {
 		fatalOnError(err)
 	}
-
-	cli := getK8sClient(&cfg)
 
 	logLevel := new(slog.LevelVar)
 	logLevel.Set(cfg.GetLogLevel())
@@ -56,7 +56,6 @@ func main() {
 		cfg.EventsWindowSize, cfg.EventsWindowInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
 	slog.Info(fmt.Sprintf("Configuration: updateResources: %t", cfg.UpdateResources))
 	slog.Info(fmt.Sprintf("Configuration: alwaysSubaccountFromDatabase: %t", cfg.AlwaysSubaccountFromDatabase))
-	slog.Info(fmt.Sprintf("Configuration: k8sInsecureSkipVerify: %t", cfg.K8sInsecureSkipVerify))
 
 	if cfg.EventsWindowSize < cfg.EventsWindowInterval {
 		slog.Warn("Events window size is smaller than events sync interval. This might cause missing events so we set window size to the interval.")
@@ -104,22 +103,15 @@ func main() {
 	syncService.Run()
 }
 
-func getK8sClient(cfg *subsync.Config) client.Client {
+func getK8sClient() client.Client {
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err)
-	cli, err := createK8sClient(k8sCfg, cfg.K8sInsecureSkipVerify)
+	cli, err := createK8sClient(k8sCfg)
 	fatalOnError(err)
 	return cli
 }
 
-func createK8sClient(cfg *rest.Config, insecureSkipVerify bool) (client.Client, error) {
-	// Configure TLS settings if needed
-	if insecureSkipVerify {
-		slog.Info("Configuring Kubernetes client with TLS verification disabled (insecure mode)")
-		cfg.Insecure = true
-		cfg.TLSClientConfig.Insecure = true
-	}
-	
+func createK8sClient(cfg *rest.Config) (client.Client, error) {
 	httpClient, err := rest.HTTPClientFor(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("while creating HTTP client for REST mapper: %w", err)

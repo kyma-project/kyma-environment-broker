@@ -23,7 +23,6 @@ type (
 		LogLevel                          string        `envconfig:"default=info"`
 		RuntimeConfigurationConfigMapName string
 		AlwaysSubaccountFromDatabase      bool `envconfig:"default=false"`
-		K8sInsecureSkipVerify             bool `envconfig:"default=true"`
 	}
 
 	CisEndpointConfig struct {
