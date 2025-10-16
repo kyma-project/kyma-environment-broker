@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -106,9 +108,41 @@ func main() {
 func getK8sClient() client.Client {
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err)
+
+	// Configure TLS for FIPS compliance
+	configureTLSForFIPS(k8sCfg)
+
 	cli, err := createK8sClient(k8sCfg)
 	fatalOnError(err)
 	return cli
+}
+
+func configureTLSForFIPS(cfg *rest.Config) {
+	if cfg.TLSClientConfig.CAData == nil && cfg.TLSClientConfig.CAFile == "" {
+		// Use the default CA certificate bundle if none is specified
+		cfg.TLSClientConfig.CAFile = "/etc/ssl/certs/ca-certificates.crt"
+	}
+
+	// For FIPS compliance, ensure we use secure TLS configuration
+	if cfg.Transport == nil || cfg.WrapTransport == nil {
+		cfg.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+			if transport, ok := rt.(*http.Transport); ok {
+				if transport.TLSClientConfig == nil {
+					transport.TLSClientConfig = &tls.Config{}
+				}
+				// Ensure minimum TLS version for FIPS compliance
+				transport.TLSClientConfig.MinVersion = tls.VersionTLS12
+				// Use only FIPS-approved cipher suites
+				transport.TLSClientConfig.CipherSuites = []uint16{
+					tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+					tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				}
+			}
+			return rt
+		}
+	}
 }
 
 func createK8sClient(cfg *rest.Config) (client.Client, error) {
@@ -138,6 +172,10 @@ func createK8sClient(cfg *rest.Config) (client.Client, error) {
 
 func createDynamicK8sClient() dynamic.Interface {
 	kcpK8sConfig := config.GetConfigOrDie()
+
+	// Configure TLS for FIPS compliance
+	configureTLSForFIPS(kcpK8sConfig)
+
 	clusterClient, err := dynamic.NewForConfig(kcpK8sConfig)
 	fatalOnError(err)
 	return clusterClient
