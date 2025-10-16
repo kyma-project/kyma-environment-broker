@@ -363,7 +363,16 @@ jobs:
           --title "${{ inputs.name }}" \
           --generate-notes \
           --verify-tag
+          
+          if gh api repos/${REPOSITORY}/contents/docs/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
+            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/docs/notable-changes/${{ inputs.name }}"
+            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [docs/notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
+          
+            BODY=$(gh release view ${{ inputs.name }} --json body --jq .body)
+            UPDATED_BODY="${BODY}${NOTABLE_CHANGES}"
 
+            gh release edit ${{ inputs.name }} --notes "${UPDATED_BODY}"
+          fi
 
       - name: Check if any PR may have been merged before creating the tag and draft release
         env:
