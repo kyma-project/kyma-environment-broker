@@ -1,19 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
-	"k8s.io/client-go/dynamic/fake"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -211,6 +205,9 @@ seedRegions:
 			"openstack": `
 seedRegions:
 - eu-de-1`,
+			"alicloud": `
+seedRegions:
+- eu-central-1`,
 		},
 	}
 
@@ -236,6 +233,7 @@ func fixConfig() *Config {
 		"build-runtime-aws",
 		"build-runtime-gcp",
 		"build-runtime-azure",
+		"alicloud",
 	}
 
 	return &Config{
@@ -248,7 +246,7 @@ func fixConfig() *Config {
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
-			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
+			IngressFilteringPlans:        []string{"aws", "azure", "gcp", "alicloud"},
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
@@ -264,13 +262,11 @@ func fixConfig() *Config {
 		},
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                           brokerConfigPlans,
-			OperationTimeout:                      2 * time.Minute,
-			IncludeAdditionalParamsInSchema:       true,
-			AllowUpdateExpiredInstanceWithContext: true,
+			EnablePlans:      brokerConfigPlans,
+			OperationTimeout: 2 * time.Minute,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
-				BindablePlans:        []string{"aws", "azure"},
+				BindablePlans:        []string{"aws", "azure", "alicloud"},
 				ExpirationSeconds:    600,
 				MaxExpirationSeconds: 7200,
 				MinExpirationSeconds: 600,
@@ -304,63 +300,4 @@ func fixConfig() *Config {
 		RuntimeConfigurationConfigMapName:   "keb-runtime-config",
 		QuotaWhitelistedSubaccountsFilePath: "testdata/quota_whitelist.yaml",
 	}
-}
-
-func fixAccountProvider(t *testing.T, gc *fake.FakeDynamicClient) hyperscaler.AccountProvider {
-	for sbName, labels := range map[string]map[string]string{
-		"sb-azure": {
-			"hyperscalerType": "azure",
-		},
-		"sb-aws": {
-			"hyperscalerType": "aws",
-		},
-		"sb-gcp": {
-			"hyperscalerType": "gcp",
-		},
-		"sb-gcp_cf-sa30": {
-			"hyperscalerType": "gcp_cf-sa30",
-		},
-		"sb-aws-shared": {
-			"hyperscalerType": "aws",
-			"shared":          "true",
-		},
-		"sb-azure-shared": {
-			"hyperscalerType": "azure",
-			"shared":          "true",
-		},
-		"sb-aws-eu-access": {
-			"hyperscalerType": "aws",
-			"euAccess":        "true",
-		},
-		"sb-azure-eu-access": {
-			"hyperscalerType": "azure",
-			"euAccess":        "true",
-		},
-		"sb-gcp-ksa": {
-			"hyperscalerType": "gcp-cf-sa30",
-		},
-		"sb-openstack_eu-de-1": {
-			"hyperscalerType": "openstack_eu-de-1",
-			"shared":          "true",
-		},
-		"sb-openstack_eu-de-2": {
-			"hyperscalerType": "openstack_eu-de-2",
-			"shared":          "true",
-		},
-	} {
-
-		sb := gardener.SecretBinding{}
-		sb.SetName(sbName)
-		sb.SetNamespace(gardenerKymaNamespace)
-		sb.SetLabels(labels)
-		sb.SetSecretRefName(sbName)
-
-		_, err := gc.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metaV1.CreateOptions{})
-
-		require.NoError(t, err)
-	}
-
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, gardenerKymaNamespace), hyperscaler.NewSharedGardenerAccountPool(gc, gardenerKymaNamespace))
-
-	return accountProvider
 }

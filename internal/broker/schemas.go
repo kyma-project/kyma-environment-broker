@@ -38,11 +38,13 @@ func (s *SchemaService) Validate() error {
 			provider = pkg.Azure
 		case SapConvergedCloudPlanName:
 			provider = pkg.SapConvergedCloud
+		case AlicloudPlanName:
+			provider = pkg.Alicloud
 		default:
 			continue
 		}
 		for _, region := range regions {
-			err := s.providerSpec.Validate(provider, planName, region)
+			err := s.providerSpec.Validate(provider, region)
 			if err != nil {
 				return err
 			}
@@ -66,6 +68,9 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 	}
 	if createSchema, updateSchema, available := s.SapConvergedCloudSchemas(platformRegion); available {
 		outputPlans[SapConvergedCloudPlanID] = s.defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, createSchema, updateSchema)
+	}
+	if createSchema, updateSchema, available := s.AlicloudSchemas(platformRegion); available {
+		outputPlans[AlicloudPlanID] = s.defaultServicePlan(AlicloudPlanID, AlicloudPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.PreviewSchemas(platformRegion); available {
 		outputPlans[PreviewPlanID] = s.defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, createSchema, updateSchema)
@@ -196,6 +201,10 @@ func (s *SchemaService) SapConvergedCloudSchemas(platformRegion string) (create,
 	return s.planSchemas(pkg.SapConvergedCloud, SapConvergedCloudPlanName, platformRegion)
 }
 
+func (s *SchemaService) AlicloudSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
+	return s.planSchemas(pkg.Alicloud, AlicloudPlanName, platformRegion)
+}
+
 func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string, update bool) *map[string]interface{} {
 	flags := s.createFlags(AzureLitePlanName)
 	machines := s.planSpec.RegularMachines(AzureLitePlanName)
@@ -290,10 +299,6 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
-	if update && !flags.includeAdditionalParameters {
-		return empty()
-	}
-
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredTrialSchemaProperties(), flags)
 }
 
@@ -317,7 +322,6 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 
 func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 	return NewControlFlagsObject(
-		s.cfg.IncludeAdditionalParamsInSchema,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
 	)

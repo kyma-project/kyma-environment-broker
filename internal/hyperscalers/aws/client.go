@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -13,12 +14,18 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const (
+	interval = time.Second
+	retries  = 5
+)
+
 type ClientFactory interface {
 	New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error)
 }
 
 type Client interface {
 	AvailableZones(ctx context.Context, machineType string) ([]string, error)
+	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
 }
 
 type EC2API interface {
@@ -57,17 +64,37 @@ func (c *AWSClient) AvailableZones(ctx context.Context, machineType string) ([]s
 			},
 		},
 	}
-	resp, err := c.ec2Client.DescribeInstanceTypeOfferings(ctx, params)
+
+	var resp *ec2.DescribeInstanceTypeOfferingsOutput
+	var err error
+	for i := 0; i < retries; i++ {
+		resp, err = c.ec2Client.DescribeInstanceTypeOfferings(ctx, params)
+		if err == nil {
+			break
+		}
+		time.Sleep(interval)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe offerings: %w", err)
 	}
+
 	zones := make([]string, 0, len(resp.InstanceTypeOfferings))
 	for _, offering := range resp.InstanceTypeOfferings {
 		if offering.Location != nil {
 			zones = append(zones, *offering.Location)
 		}
 	}
+
 	return zones, nil
+}
+
+func (c *AWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+	zones, err := c.AvailableZones(ctx, machineType)
+	if err != nil {
+		return 0, err
+	}
+	return len(zones), nil
 }
 
 func ExtractCredentials(secret *unstructured.Unstructured) (string, string, error) {

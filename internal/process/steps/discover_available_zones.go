@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -64,16 +65,21 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		subscriptionSecretName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	}
 
-	secret, err := s.gardenerClient.GetSecret(subscriptionSecretName)
+	secretBinding, err := s.gardenerClient.GetSecretBinding(subscriptionSecretName)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s", subscriptionSecretName), err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret binding %s", subscriptionSecretName), err, 10*time.Second, time.Minute, log)
+	}
+
+	secret, err := s.gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()), err, 10*time.Second, time.Minute, log)
 	}
 	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
 	}
 
-	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, DefaultIfParamNotSet(operation.ProviderValues.Region, operation.ProvisioningParameters.Parameters.Region))
+	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, operation.ProviderValues.Region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
@@ -95,6 +101,7 @@ func (s *DiscoverAvailableZonesStep) Run(operation internal.Operation, log *slog
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 		}
+		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 		log.Info(fmt.Sprintf("Available zones for machine type %s: %v", machineType, zones))
 		operation.DiscoveredZones[machineType] = zones
 	}

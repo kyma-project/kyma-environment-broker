@@ -1,6 +1,8 @@
 # Build image
+
 FROM --platform=$BUILDPLATFORM golang:1.24.6-alpine3.22 AS build
 ARG GOFIPS140=v1.0.0
+
 WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
 
 COPY go.mod go.sum ./

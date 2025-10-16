@@ -17,21 +17,19 @@ import (
 )
 
 type Provider struct {
-	log          *slog.Logger
 	imConfig     broker.InfrastructureManager
 	providerSpec *configuration.ProviderSpec
 }
 
-func NewProvider(log *slog.Logger, imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
+func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
 	return &Provider{
-		log:          log,
 		imConfig:     imConfig,
 		providerSpec: providerSpec,
 	}
 }
 
 func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string, discoveredZones map[string][]string) ([]gardener.Worker, error) {
+	zones []string, planID string, discoveredZones map[string][]string, log *slog.Logger) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -71,7 +69,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				workerZones = workerZones[:1]
 			}
 		}
-		p.log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
+		log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
 		worker := gardener.Worker{

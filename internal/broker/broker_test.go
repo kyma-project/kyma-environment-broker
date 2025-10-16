@@ -8,8 +8,8 @@ import (
 
 func TestEnablePlans_Unmarshal(t *testing.T) {
 	// given
-	planList := "gcp,azure,aws,sap-converged-cloud,free"
-	expectedPlanList := []string{"gcp", "azure", "aws", "sap-converged-cloud", "free"}
+	planList := "gcp,azure,aws,sap-converged-cloud,free,alicloud"
+	expectedPlanList := []string{"gcp", "azure", "aws", "sap-converged-cloud", "free", "alicloud"}
 	// when
 	enablePlans := &EnablePlans{}
 	err := enablePlans.Unmarshal(planList)
@@ -26,7 +26,7 @@ func TestEnablePlans_Unmarshal(t *testing.T) {
 
 func TestEnablePlans_Contains(t *testing.T) {
 	// given
-	planList := "gcp,azure,aws,sap-converged-cloud,free"
+	planList := "gcp,azure,aws,sap-converged-cloud,free,alicloud"
 	enablePlans := EnablePlans{}
 	err := enablePlans.Unmarshal(planList)
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestEnablePlans_Contains(t *testing.T) {
 
 func TestEnablePlans_ContainsPlanID(t *testing.T) {
 	// given
-	planList := "gcp,azure,aws,sap-converged-cloud,free"
+	planList := "gcp,azure,aws,sap-converged-cloud,free,alicloud"
 	enablePlans := EnablePlans{}
 	err := enablePlans.Unmarshal(planList)
 	assert.NoError(t, err)

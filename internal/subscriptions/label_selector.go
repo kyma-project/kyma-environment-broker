@@ -50,6 +50,7 @@ func NewLabelSelectorFromRuleset(rule ParsedRule) *LabelSelectorBuilder {
 		selector.with(sharedReq)
 		return selector
 	}
+	selector.with(notSharedReq)
 	selector.with(notDirtyReq)
 
 	return selector
@@ -78,5 +79,5 @@ func (l *LabelSelectorBuilder) BuildAnySubscription() string {
 
 func (l *LabelSelectorBuilder) BuildForSecretBindingClaim() string {
 	base := l.builder.String()
-	return fmt.Sprintf("%s,%s,%s", base, notTenantNamedReq, notSharedReq)
+	return fmt.Sprintf("%s,%s", base, notTenantNamedReq)
 }

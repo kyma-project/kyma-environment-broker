@@ -167,6 +167,52 @@ plansConfiguration:
       - "Standard_D4s_v5"
       - "Standard_D4_v3"
 
+  alicloud:
+    regularMachines:
+      - "ecs.g6.large"
+      - "ecs.g6.xlarge"
+      - "ecs.g6.2xlarge"
+      - "ecs.g6.4xlarge"
+      - "ecs.g6.8xlarge"
+      - "ecs.g6.12xlarge"
+      - "ecs.g6.16xlarge"
+      - "ecs.c6.large"
+      - "ecs.c6.xlarge"
+      - "ecs.c6.2xlarge"
+      - "ecs.c6.4xlarge"
+      - "ecs.c6.8xlarge"
+      - "ecs.c6.16xlarge"
+      - "ecs.r6.large"
+      - "ecs.r6.xlarge"
+      - "ecs.r6.2xlarge"
+      - "ecs.r6.4xlarge"
+      - "ecs.r6.8xlarge"
+      - "ecs.r6.16xlarge"
+    regions:
+      default:
+        - "cn-beijing"
+        - "cn-zhangjiakou"
+        - "cn-huhehaote"
+        - "cn-wulanchabu"
+        - "cn-shanghai"
+        - "cn-hangzhou"
+        - "cn-shenzhen"
+        - "cn-heyuan"
+        - "cn-chengdu"
+        - "cn-hongkong"
+        - "ap-southeast-1"
+        - "ap-southeast-2"
+        - "ap-southeast-3"
+        - "ap-southeast-5"
+        - "ap-northeast-1"
+        - "ap-northeast-2"
+        - "ap-south-1"
+        - "eu-central-1"
+        - "eu-west-1"
+        - "me-east-1"
+        - "us-east-1"
+        - "us-west-1"
+
 providersConfiguration:
   aws:
     machines:
@@ -428,4 +474,72 @@ providersConfiguration:
         zones: [a]
       ap-ae-1:
         displayName: ap-ae-1
+        zones: [a, b]
+  alicloud:
+    regions:
+      cn-beijing:
+        displayName: "cn-beijing (China, Beijing)"
+        zones: ["a", "b", "c"]
+      cn-zhangjiakou:
+        displayName: "cn-zhangjiakou (China, Zhangjiakou)"
+        zones: ["a", "b", "c"]
+      cn-huhehaote:
+        displayName: "cn-huhehaote (China, Hohhot)"
+        zones: ["a", "b", "c"]
+      cn-wulanchabu:
+        displayName: "cn-wulanchabu (China, Wulanchabu)"
+        zones: ["a", "b", "c"]
+      cn-shanghai:
+        displayName: "cn-shanghai (China, Shanghai)"
+        zones: ["a", "b", "c"]
+      cn-hangzhou:
+        displayName: "cn-hangzhou (China, Hangzhou)"
+        zones: ["a", "b", "c"]
+      cn-shenzhen:
+        displayName: "cn-shenzhen (China, Shenzhen)"
+        zones: ["a", "b", "c"]
+      cn-heyuan:
+        displayName: "cn-heyuan (China, Heyuan)"
+        zones: ["a", "b", "c"]
+      cn-chengdu:
+        displayName: "cn-chengdu (China, Chengdu)"
+        zones: ["a", "b", "c"]
+      cn-hongkong:
+        displayName: "cn-hongkong (China, Hongkong)"
+        zones: ["a", "b", "c"]
+      ap-southeast-1:
+        displayName: ap-southeast-1
+        zones: [a, b]
+      ap-southeast-2:
+        displayName: ap-southeast-2
+        zones: [a, b]
+      ap-southeast-3:
+        displayName: ap-southeast-3
+        zones: [a, b]
+      ap-southeast-5:
+        displayName: ap-southeast-5
+        zones: [a, b]
+      ap-northeast-1:
+        displayName: ap-northeast-1
+        zones: [a, b]
+      ap-northeast-2:
+        displayName: ap-northeast-2
+        zones: [a, b]
+      ap-south-1:
+        displayName: ap-south-1
+        zones: [a, b]
+      eu-central-1:
+        displayName: eu-central-1
+        zones: [a, b]
+      eu-west-1:
+        displayName: eu-west-1
+        zones: [a, b]
+      me-east-1:
+        displayName: me-east-1
+        zones: [a, b]
+      us-east-1:
+        displayName: us-east-1
+        zones: [a, b]
+      us-west-1:
+        displayName: us-west-1
         zones: [a, b]

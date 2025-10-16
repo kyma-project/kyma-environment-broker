@@ -73,7 +73,14 @@ func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger)
 
 		op, delay, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.State = domain.InProgress
+
+			// copying provider values from previous operation must not be done if previews operation has nil provider values.
+			pv := op.InstanceDetails.ProviderValues
 			op.InstanceDetails = instance.InstanceDetails
+			if op.InstanceDetails.ProviderValues == nil {
+				op.InstanceDetails.ProviderValues = pv
+			}
+
 			if op.ProvisioningParameters.ErsContext.SMOperatorCredentials == nil && lastOp.ProvisioningParameters.ErsContext.SMOperatorCredentials != nil {
 				op.ProvisioningParameters.ErsContext.SMOperatorCredentials = lastOp.ProvisioningParameters.ErsContext.SMOperatorCredentials
 			}

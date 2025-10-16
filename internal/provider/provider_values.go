@@ -114,6 +114,14 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
+	case broker.AlicloudPlanID:
+		p = &AlicloudInputProvider{
+			Purpose:                s.defaultPurpose,
+			MultiZone:              s.multiZoneCluster,
+			ProvisioningParameters: provisioningParameters,
+			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
+		}
 	case broker.TrialPlanID:
 		var trialProvider pkg.CloudProvider
 		if provisioningParameters.Parameters.Provider == nil {
@@ -170,6 +178,8 @@ func ProviderToCloudProvider(providerType string) pkg.CloudProvider {
 		return pkg.GCP
 	case "openstack":
 		return pkg.SapConvergedCloud
+	case "alicloud":
+		return pkg.Alicloud
 	default:
 		return pkg.UnknownProvider
 	}

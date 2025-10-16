@@ -74,6 +74,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_SECRET_KEY** | None | Specifies the Secret key for the database. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **SUBACCOUNT_SYNC_&#x200b;DATABASE_TIMEZONE** | None | Specifies the "timezone" parameter in the DB connection URL |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_USER** | None | Specifies the username for the database. |
 | **SUBACCOUNT_SYNC_&#x200b;EVENTS_WINDOW_&#x200b;INTERVAL** | <code>15m</code> | Time window for collecting events from CIS. |
 | **SUBACCOUNT_SYNC_&#x200b;EVENTS_WINDOW_SIZE** | <code>20m</code> | Size of the time window for collecting events from CIS. |

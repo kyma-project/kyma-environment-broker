@@ -36,6 +36,8 @@ const (
 	BuildRuntimeGCPPlanName   = "build-runtime-gcp"
 	BuildRuntimeAzurePlanID   = "499244b4-1bef-48c9-be68-495269899f8e"
 	BuildRuntimeAzurePlanName = "build-runtime-azure"
+	AlicloudPlanID            = "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+	AlicloudPlanName          = "alicloud"
 )
 
 var PlanNamesMapping = map[string]string{
@@ -51,6 +53,7 @@ var PlanNamesMapping = map[string]string{
 	BuildRuntimeAWSPlanID:   BuildRuntimeAWSPlanName,
 	BuildRuntimeGCPPlanID:   BuildRuntimeGCPPlanName,
 	BuildRuntimeAzurePlanID: BuildRuntimeAzurePlanName,
+	AlicloudPlanID:          AlicloudPlanName,
 }
 
 var PlanIDsMapping = map[string]string{
@@ -66,17 +69,16 @@ var PlanIDsMapping = map[string]string{
 	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
 	BuildRuntimeGCPPlanName:   BuildRuntimeGCPPlanID,
 	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
+	AlicloudPlanName:          AlicloudPlanID,
 }
 
 type ControlFlagsObject struct {
-	includeAdditionalParameters bool
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
 }
 
-func NewControlFlagsObject(includeAdditionalParameters, ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
-		includeAdditionalParameters: includeAdditionalParameters,
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
 	}
@@ -139,12 +141,10 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	update bool,
 	required []string,
 	flags ControlFlagsObject) *map[string]interface{} {
-	if flags.includeAdditionalParameters {
-		properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
-		properties.Administrators = AdministratorsProperty()
-		if flags.ingressFilteringEnabled {
-			properties.IngressFiltering = IngressFilteringProperty()
-		}
+	properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
+	properties.Administrators = AdministratorsProperty()
+	if flags.ingressFilteringEnabled {
+		properties.IngressFiltering = IngressFilteringProperty()
 	}
 
 	if update {

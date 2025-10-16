@@ -23,9 +23,14 @@ type Config struct {
 	MaxOpenConns    int           `envconfig:"default=8"`
 	MaxIdleConns    int           `envconfig:"default=2"`
 	ConnMaxLifetime time.Duration `envconfig:"default=30m"`
+	Timezone        string        `envconfig:"optional"`
 }
 
 func (cfg *Config) ConnectionURL() string {
-	return fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
+	url := fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
 		cfg.Password, cfg.Name, cfg.SSLMode, cfg.SSLRootCert)
+	if cfg.Timezone != "" {
+		url = fmt.Sprintf("%s timezone=%s", url, cfg.Timezone)
+	}
+	return url
 }

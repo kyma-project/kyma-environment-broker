@@ -155,3 +155,28 @@ azure_lite:
     - "Standard_D4s_v5"
     - "Standard_D4_v3"
   regions: *azure_regions
+
+alicloud:
+  volumeSizeGb: 80
+  regularMachines:
+    - "ecs.g6.large"
+    - "ecs.g6.xlarge"
+    - "ecs.g6.2xlarge"
+    - "ecs.g6.4xlarge"
+    - "ecs.g6.8xlarge"
+    - "ecs.g6.12xlarge"
+    - "ecs.g6.16xlarge"
+    - "ecs.c6.large"
+    - "ecs.c6.xlarge"
+    - "ecs.c6.2xlarge"
+    - "ecs.c6.4xlarge"
+    - "ecs.c6.8xlarge"
+    - "ecs.c6.16xlarge"
+    - "ecs.r6.large"
+    - "ecs.r6.xlarge"
+    - "ecs.r6.2xlarge"
+    - "ecs.r6.4xlarge"
+    - "ecs.r6.8xlarge"
+    - "ecs.r6.16xlarge"
+  regions:
+    default: ["cn-beijing", "cn-zhangjiakou", "cn-huhehaote", "cn-wulanchabu", "cn-shanghai", "cn-hangzhou", "cn-shenzhen", "cn-heyuan", "cn-chengdu", "cn-hongkong", "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-5", "ap-northeast-1", "ap-northeast-2", "ap-south-1", "eu-central-1", "eu-west-1", "me-east-1", "us-east-1", "us-west-1"]

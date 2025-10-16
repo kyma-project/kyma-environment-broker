@@ -28,9 +28,9 @@ func TestSelectNotShared(t *testing.T) {
 	labelsAnySubscription := selector.BuildAnySubscription()
 
 	// then
-	assert.Equal(t, "hyperscalerType=aws,!euAccess,!dirty,tenantName=tenant-a", labels)
-	assert.Equal(t, "hyperscalerType=aws,!euAccess,!dirty,!tenantName,shared!=true", labelsSBClaim)
-	assert.Equal(t, "hyperscalerType=aws,!euAccess,!dirty", labelsAnySubscription)
+	assert.Equal(t, "hyperscalerType=aws,!euAccess,shared!=true,!dirty,tenantName=tenant-a", labels)
+	assert.Equal(t, "hyperscalerType=aws,!euAccess,shared!=true,!dirty,!tenantName", labelsSBClaim)
+	assert.Equal(t, "hyperscalerType=aws,!euAccess,shared!=true,!dirty", labelsAnySubscription)
 }
 
 func TestSelectNotSharedEuAccess(t *testing.T) {
@@ -53,9 +53,9 @@ func TestSelectNotSharedEuAccess(t *testing.T) {
 	labelsAnySubscription := selector.BuildAnySubscription()
 
 	// then
-	assert.Equal(t, "hyperscalerType=aws,euAccess=true,!dirty,tenantName=tenant-a", labels)
-	assert.Equal(t, "hyperscalerType=aws,euAccess=true,!dirty,!tenantName,shared!=true", labelsSBClaim)
-	assert.Equal(t, "hyperscalerType=aws,euAccess=true,!dirty", labelsAnySubscription)
+	assert.Equal(t, "hyperscalerType=aws,euAccess=true,shared!=true,!dirty,tenantName=tenant-a", labels)
+	assert.Equal(t, "hyperscalerType=aws,euAccess=true,shared!=true,!dirty,!tenantName", labelsSBClaim)
+	assert.Equal(t, "hyperscalerType=aws,euAccess=true,shared!=true,!dirty", labelsAnySubscription)
 }
 
 func TestSelectShared(t *testing.T) {

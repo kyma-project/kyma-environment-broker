@@ -41,10 +41,20 @@ func (c *Client) Namespace() string {
 	return c.namespace
 }
 
-func (c *Client) GetSecret(name string) (*unstructured.Unstructured, error) {
+func (c *Client) GetSecret(namespace, name string) (*unstructured.Unstructured, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
-	return c.Resource(SecretResource).Namespace(c.namespace).Get(ctx, name, metav1.GetOptions{})
+	return c.Resource(SecretResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+func (c *Client) GetSecretBinding(name string) (*SecretBinding, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	secretBinding, err := c.Resource(SecretBindingResource).Namespace(c.namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return NewSecretBinding(*secretBinding), err
 }
 
 func (c *Client) GetSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
@@ -135,6 +145,10 @@ func (b *SecretBinding) GetSecretRefNamespace() string {
 
 func (b *SecretBinding) SetSecretRefName(val string) {
 	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "secretRef", "name")
+}
+
+func (b *SecretBinding) SetSecretRefNamespace(val string) {
+	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "secretRef", "namespace")
 }
 
 type Shoot struct {

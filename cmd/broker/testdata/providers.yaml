@@ -233,3 +233,94 @@ sap-converged-cloud:
     ap-ae-1:
       displayName: "ap-ae-1"
       zones: [ "a" ]
+alicloud:
+  machines:
+    ecs.g6.large: "ecs.g6.large (2vCPU, 8GB RAM)"
+    ecs.g6.xlarge: "ecs.g6.xlarge (4vCPU, 16GB RAM)"
+    ecs.g6.2xlarge: "ecs.g6.2xlarge (8vCPU, 32GB RAM)"
+    ecs.g6.4xlarge: "ecs.g6.4xlarge (16vCPU, 64GB RAM)"
+    ecs.g6.8xlarge: "ecs.g6.8xlarge (32vCPU, 128GB RAM)"
+    ecs.g6.12xlarge: "ecs.g6.12xlarge (48vCPU, 192GB RAM)"
+    ecs.g6.16xlarge: "ecs.g6.16xlarge (64vCPU, 256GB RAM)"
+
+    ecs.c6.large: "ecs.c6.large (2vCPU, 4GB RAM)"
+    ecs.c6.xlarge: "ecs.c6.xlarge (4vCPU, 8GB RAM)"
+    ecs.c6.2xlarge: "ecs.c6.2xlarge (8vCPU, 16GB RAM)"
+    ecs.c6.4xlarge: "ecs.c6.4xlarge (16vCPU, 32GB RAM)"
+    ecs.c6.8xlarge: "ecs.c6.8xlarge (32vCPU, 64GB RAM)"
+    ecs.c6.16xlarge: "ecs.c6.16xlarge (64vCPU, 128GB RAM)"
+
+    ecs.r6.large: "ecs.r6.large (2vCPU, 16GB RAM)"
+    ecs.r6.xlarge: "ecs.r6.xlarge (4vCPU, 32GB RAM)"
+    ecs.r6.2xlarge: "ecs.r6.2xlarge (8vCPU, 64GB RAM)"
+    ecs.r6.4xlarge: "ecs.r6.4xlarge (16vCPU, 128GB RAM)"
+    ecs.r6.8xlarge: "ecs.r6.8xlarge (32vCPU, 256GB RAM)"
+    ecs.r6.16xlarge: "ecs.r6.16xlarge (64vCPU, 512GB RAM)"
+
+  regions:
+    cn-beijing:
+      displayName: "cn-beijing (China North, Beijing)"
+      zones: [a, b, c, d]
+    cn-zhangjiakou:
+      displayName: "cn-zhangjiakou (China North, Zhangjiakou)"
+      zones: [a, b, c]
+    cn-huhehaote:
+      displayName: "cn-huhehaote (China North, Hohhot)"
+      zones: [a, b, c]
+    cn-wulanchabu:
+      displayName: "cn-wulanchabu (China North, Ulanqab)"
+      zones: [a, b, c]
+    cn-shanghai:
+      displayName: "cn-shanghai (China East, Shanghai)"
+      zones: [a, b, c]
+    cn-hangzhou:
+      displayName: "cn-hangzhou (China East, Hangzhou)"
+      zones: [a, b, c, d]
+    cn-shenzhen:
+      displayName: "cn-shenzhen (China South, Shenzhen)"
+      zones: [a, b, c]
+    cn-heyuan:
+      displayName: "cn-heyuan (China South, Heyuan)"
+      zones: [a, b, c]
+    cn-chengdu:
+      displayName: "cn-chengdu (China West, Chengdu)"
+      zones: [a, b, c]
+    cn-hongkong:
+      displayName: "cn-hongkong (China Hong Kong)"
+      zones: [a, b, c]
+    ap-southeast-1:
+      displayName: "ap-southeast-1 (Asia Pacific, Singapore)"
+      zones: [a, b, c]
+    ap-southeast-2:
+      displayName: "ap-southeast-2 (Asia Pacific, Sydney)"
+      zones: [a, b, c]
+    ap-southeast-3:
+      displayName: "ap-southeast-3 (Asia Pacific, Jakarta)"
+      zones: [a, b, c]
+    ap-southeast-5:
+      displayName: "ap-southeast-5 (Asia Pacific, Kuala Lumpur)"
+      zones: [a, b, c]
+    ap-northeast-1:
+      displayName: "ap-northeast-1 (Asia Pacific, Tokyo)"
+      zones: [a, b, c]
+    ap-northeast-2:
+      displayName: "ap-northeast-2 (Asia Pacific, Seoul)"
+      zones: [a, b, c]
+    ap-south-1:
+      displayName: "ap-south-1 (Asia Pacific, Mumbai)"
+      zones: [a, b, c]
+    eu-central-1:
+      displayName: "eu-central-1 (Europe, Frankfurt)"
+      zones: [a, b, c]
+    eu-west-1:
+      displayName: "eu-west-1 (Europe, London)"
+      zones: [a, b, c]
+    me-east-1:
+      displayName: "me-east-1 (Middle East, Dubai)"
+      zones: [a, b, c]
+    us-east-1:
+      displayName: "us-east-1 (US East, Virginia)"
+      zones: [a, b, c]
+    us-west-1:
+      displayName: "us-west-1 (US West, Silicon Valley)"
+      zones: [a, b, c]

@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"math/rand"
+	"unicode"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
@@ -73,6 +74,16 @@ func FullZoneName(providerType string, region string, zone string) string {
 		return fmt.Sprintf("%s%s", region, zone)
 	case AWSProviderType:
 		return fmt.Sprintf("%s%s", region, zone)
+	case AlicloudProviderType:
+		if isDigit(rune(region[len(region)-1])) {
+			return fmt.Sprintf("%s%s", region, zone)
+		} else {
+			return fmt.Sprintf("%s-%s", region, zone)
+		}
 	}
 	return zone
+}
+
+func isDigit(r rune) bool {
+	return unicode.IsDigit(r)
 }

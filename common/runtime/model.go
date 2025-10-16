@@ -74,6 +74,7 @@ const (
 	GCP               CloudProvider = "GCP"
 	UnknownProvider   CloudProvider = "unknown"
 	SapConvergedCloud CloudProvider = "SapConvergedCloud"
+	Alicloud          CloudProvider = "Alicloud"
 )
 
 type ProvisioningParametersDTO struct {
@@ -125,6 +126,8 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return GCP
 	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
+	case "alicloud":
+		return Alicloud
 	default:
 		return UnknownProvider
 	}
@@ -589,12 +592,18 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 			}
 
 			// machine type change validation
-			if !slices.Contains(allowedMachines, a.MachineType) {
-				return fmt.Errorf("Machine type change for additional worker node pools is not allowed for machine %s", a.MachineType)
-			}
+			// check if the initial machine type is a compute-instensive
 			if !slices.Contains(allowedMachines, currentAdditionalWorkerNodePool.MachineType) {
-				return fmt.Errorf("Machine type change for additional worker node pools is not allowed for machine %s", currentAdditionalWorkerNodePool.MachineType)
+				return fmt.Errorf("You cannot update the %s machine type in the %s additional worker node pool. "+
+					"You cannot perform updates from compute-intensive machine types", currentAdditionalWorkerNodePool.MachineType, a.Name)
 			}
+
+			// check if the target machine type is a compute-instensive
+			if !slices.Contains(allowedMachines, a.MachineType) {
+				return fmt.Errorf("You cannot update the machine type in the %s additional worker node pool to %s. "+
+					"You cannot perform updates to compute-intensive machine types", a.Name, a.MachineType)
+			}
+
 		}
 	}
 	return nil

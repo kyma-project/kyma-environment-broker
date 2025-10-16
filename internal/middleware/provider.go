@@ -54,6 +54,8 @@ func platformProvider(region string) pkg.CloudProvider {
 		return pkg.Azure
 	case "3":
 		return pkg.GCP
+	case "4":
+		return pkg.Alicloud
 	default:
 		return pkg.UnknownProvider
 	}

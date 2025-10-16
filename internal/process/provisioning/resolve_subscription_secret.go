@@ -57,7 +57,7 @@ func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *s
 	if targetSecretName == "" {
 		return s.operationManager.OperationFailed(operation, "failed to determine secret name", fmt.Errorf("target secret name is empty"), log)
 	}
-	log.Info(fmt.Sprintf("resolved secret name: %s", targetSecretName))
+	log.Info(fmt.Sprintf("resolved secret binding name: %s", targetSecretName))
 
 	err = s.updateInstance(operation.InstanceID, targetSecretName)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 	}
 
 	if secretBinding != nil {
-		return secretBinding.GetSecretRefName(), nil
+		return secretBinding.GetName(), nil
 	}
 
 	log.Info(fmt.Sprintf("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
@@ -120,7 +120,7 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 	}
 
-	return secretBinding.GetSecretRefName(), nil
+	return secretBinding.GetName(), nil
 }
 
 func (s *ResolveSubscriptionSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -146,7 +146,7 @@ func (s *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
 	}
 
-	return secretBinding.GetSecretRefName(), nil
+	return secretBinding.GetName(), nil
 }
 
 func (s *ResolveSubscriptionSecretStep) getSharedSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {

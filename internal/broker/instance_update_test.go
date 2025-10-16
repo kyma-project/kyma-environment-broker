@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
@@ -36,6 +37,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -101,7 +103,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		fakeKcpK8sClient,
-		nil, nil, imConfigFixture, newSchemaService(t), nil, nil)
+		nil, nil, imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -156,7 +158,7 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		nil, fixLogger(),
-		dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil)
+		dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -205,7 +207,7 @@ func TestUpgradePlan(t *testing.T) {
 		EnablePlanUpgrades: true,
 	}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(),
-		dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("should fail when the upgrade is not allowed", func(t *testing.T) {
 		// when
@@ -284,7 +286,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
-		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -376,7 +378,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		nil, fixLogger(), dashboardConfig, kcBuilder,
-		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -425,7 +427,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		nil, fixLogger(), dashboardConfig, kcBuilder,
-		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil)
+		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -456,7 +458,7 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
 		nil, fixLogger(), dashboardConfig, kcBuilder,
-		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil)
+		fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -523,7 +525,7 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil)
+		nil, fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, nil, nil, imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -580,7 +582,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("Should accept update to OIDC object", func(t *testing.T) {
 		// given
@@ -687,7 +689,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("Should reject update to OIDC object", func(t *testing.T) {
 		// given
@@ -845,7 +847,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -890,7 +892,7 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 
 		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -932,7 +934,7 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 
 		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -977,7 +979,7 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -1026,8 +1028,8 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st, handler, true, false, true, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1077,8 +1079,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage, handler, true, false, true, queue, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+	svc := broker.NewUpdate(broker.Config{}, storage, handler, true, false, true, queue, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1163,7 +1165,7 @@ func TestSubaccountMovement(t *testing.T) {
 	queue.On("Add", mock.AnythingOfType("string"))
 
 	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1251,7 +1253,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	queue.On("Add", mock.AnythingOfType("string"))
 
 	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
 		// initial state of instance - moving account was never donex
@@ -1330,7 +1332,7 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1365,7 +1367,7 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	testCases := []struct {
 		name                      string
@@ -1428,7 +1430,7 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 	// when
@@ -1537,7 +1539,7 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1579,7 +1581,7 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	}
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil)
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -1597,6 +1599,82 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	assert.EqualError(t, err, "In the westeurope, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
 }
 
+func TestMachineTypeUpdateInMultipleAdditionalWorkerNodePools(t *testing.T) {
+
+	// the test tries to update 2 of 4 additional worker node pools with different machine types and creates another one
+
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "name-1",
+			MachineType:   "Standard_D2s_v5",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+		{
+			Name:          "name-2",
+			MachineType:   "Standard_NC8as_T4_v3",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+		{
+			Name:          "name-3",
+			MachineType:   "Standard_D2s_v5",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+		{
+			Name:          "name-4",
+			MachineType:   "Standard_NC8as_T4_v3",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+	}
+	instance.Parameters.Parameters.Region = ptr.String("brazilsouth")
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
+	err = st.Operations().InsertProvisioningOperation(op)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	imConfig := broker.InfrastructureManager{
+		UseSmallerMachineTypes: false,
+	}
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
+
+	additionalWorkerNodePools := fmt.Sprintf(`[
+{"name": "name-1", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20},
+{"name": "name-2", "machineType": "Standard_D2s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20},
+{"name": "name-new", "machineType": "Standard_D2s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}
+]`)
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	assert.Equal(t, "The following additionalWorkerPools have validation issues: You cannot update the machine type in the name-1 additional worker node pool to Standard_NC8as_T4_v3. You cannot perform updates to compute-intensive machine types; You cannot update the Standard_NC8as_T4_v3 machine type in the name-2 additional worker node pool. You cannot perform updates from compute-intensive machine types. You can update your virtual machine type only within the general-purpose machine types.", err.Error())
+}
+
 func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdditionalMachine(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		InitialMachineType string
@@ -1606,7 +1684,7 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdd
 		"Standard_NC4as_T4_v3 to Standard_NC8as_T4_v3": {
 			InitialMachineType: "Standard_NC4as_T4_v3",
 			UpdatedMachineType: "Standard_NC8as_T4_v3",
-			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC8as_T4_v3",
+			ExpectedError:      "You cannot update the Standard_NC4as_T4_v3 machine type in the name-1 additional worker node pool. You cannot perform updates from compute-intensive machine types. You can update your virtual machine type only within the general-purpose machine types.",
 		},
 		"Standard_D2s_v5 to Standard_D4s_v5": {
 			InitialMachineType: "Standard_D2s_v5",
@@ -1616,12 +1694,12 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdd
 		"Standard_D2s_v5 to Standard_NC8as_T4_v3": {
 			InitialMachineType: "Standard_D2s_v5",
 			UpdatedMachineType: "Standard_NC8as_T4_v3",
-			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC8as_T4_v3",
+			ExpectedError:      "You cannot update the machine type in the name-1 additional worker node pool to Standard_NC8as_T4_v3. You cannot perform updates to compute-intensive machine types. You can update your virtual machine type only within the general-purpose machine types.",
 		},
 		"Standard_NC4as_T4_v3 to Standard_D2s_v5": {
 			InitialMachineType: "Standard_NC4as_T4_v3",
 			UpdatedMachineType: "Standard_D2s_v5",
-			ExpectedError:      "Machine type change for additional worker node pools is not allowed for machine Standard_NC4as_T4_v3",
+			ExpectedError:      "You cannot update the Standard_NC4as_T4_v3 machine type in the name-1 additional worker node pool. You cannot perform updates from compute-intensive machine types. You can update your virtual machine type only within the general-purpose machine types.",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
@@ -1657,7 +1735,7 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdd
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
 
 			additionalWorkerNodePools := fmt.Sprintf(`[{"name": "name-1", "machineType": "%s", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`, tc.UpdatedMachineType)
 			// when
@@ -1702,7 +1780,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1752,7 +1830,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1816,7 +1894,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil)
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1870,7 +1948,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil)
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1912,7 +1990,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil)
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1954,7 +2032,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil)
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1996,7 +2074,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil)
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, nil, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -2038,7 +2116,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 			CheckQuotaLimit:    true,
 		}, st, &handler{}, true, false, true, q, broker.PlansConfig{},
 			fixValueProvider(t), fixLogger(),
-			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, whitelist.Set{subAccountID: struct{}{}})
+			dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), quotaClient, whitelist.Set{subAccountID: struct{}{}}, nil, nil, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -2052,6 +2130,90 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 	})
+}
+
+func TestZonesDiscoveryDuringUpdate(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	region := "eu-west-2"
+	instance.Parameters.Parameters.Region = &region
+	instance.Provider = pkg.AWS
+	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.PlanID = broker.AWSPlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	provisioning := fixProvisioningOperation("provisioning01")
+	err = st.Operations().InsertProvisioningOperation(provisioning)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	rulesService, err := rules.NewRulesServiceFromSlice([]string{"aws"}, sets.New("aws"), sets.New("aws"))
+	require.NoError(t, err)
+
+	kcBuilder := &kcMock.KcBuilder{}
+
+	testCases := []struct {
+		name          string
+		zones         map[string][]string
+		awsError      error
+		expectedError string
+	}{
+		{
+			name:          "Should fail if AWS returns error for Kyma worker node pool",
+			awsError:      fmt.Errorf("AWS error"),
+			expectedError: "Failed to validate the number of available zones. Please try again later.",
+		},
+		{
+			name: "Should fail if not enough zones for Kyma worker node pool",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b"},
+			},
+			expectedError: "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
+		},
+		{
+			name: "Should fail if machine type in additional worker node pool is not available",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge": {},
+			},
+			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available.",
+		},
+		{
+			name: "Should fail if machine type in high availability additional worker node pool is not available in at least 3 zones",
+			zones: map[string][]string{
+				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge": {"eu-west-2a", "eu-west-2b"},
+			},
+			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, fixture.NewProviderSpecWithZonesDiscovery(t, true), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil,
+				rulesService, fixture.CreateGardenerClient(), fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError))
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AWSPlanID,
+				RawParameters:   json.RawMessage(fmt.Sprintf(`{"machineType": "%s", "additionalWorkerNodePools": %s}`, "m6i.large", additionalWorkerNodePools)),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }
 
 func fixValueProvider(t *testing.T) broker.ValuesProvider {

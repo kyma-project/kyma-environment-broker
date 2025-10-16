@@ -39,6 +39,9 @@ global:
       sslModeSecretKey: "postgresql-sslMode"
       # Key in the database Secret for the database user.
       userNameSecretKey: "postgresql-broker-username"
+
+    # Specifies the "timezone" parameter in the DB connection URL
+    timezone: ""
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
@@ -47,31 +50,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.21.35
+      version: 1.21.47
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_expirator_job:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.21.35"
+      version: "1.21.47"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.21.35
+      version: 1.21.47
   ingress:
     domainName: localhost
   istio:
@@ -100,6 +103,9 @@ nameOverride: "kyma-environment-broker"
 resources:
   { }
 
+# If true, uses HAP for deprovisioning.
+useHAPForDeprovisioning: false
+
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
@@ -123,11 +129,9 @@ archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
   enabled: false
   # If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted.
-  dryRun: true
+  dryRun: false
 
 broker:
-  # Allows update of expired instance.
-  allowUpdateExpiredInstanceWithContext: "false"
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp".
     bindablePlans: "aws"
@@ -145,8 +149,6 @@ broker:
     minExpirationSeconds: 600
   # Default platform region for requests if not specified.
   defaultRequestRegion: "cf-eu10"
-  # If true, disables the SAP Cloud Infrastructure plan in KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters.
-  disableSapConvergedCloud: false
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, allows users to upgrade their plans (if a plan supports upgrades).
@@ -157,8 +159,6 @@ broker:
   freeExpirationPeriod: 720h
   # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds.
   gardenerSeedsCache: "gardener-seeds-cache"
-  # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
-  includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one freemium (free) Kyma runtime.
@@ -174,16 +174,10 @@ broker:
   port: "8080"
   # If true, rejects requests that contain parameters that are not defined in schemas.
   rejectUnsupportedParameters: "false"
-  # If true, adds expiration information for free plan Kyma runtimes to API responses and UI labels.
-  showFreeExpirationInfo: "false"
-  # If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels.
-  showTrialExpirationInfo: "false"
   # Port for the broker status/health endpoint.
   statusPort: "8071"
   # If true, enables subaccount movement (allows changing global account for an instance).
   subaccountMovementEnabled: "false"
-  # Shows trial expiration information for specific subaccounts in the UI and API responses.
-  subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
   # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels.
   trialDocsURL: "https://help.sap.com/docs/"
   # If true, updates runtimeCR labels when moving subaccounts.
@@ -205,9 +199,13 @@ deprovisioning:
   # Number of workers in deprovisioning queue.
   workersAmount: 20
 
+catalog:
+  # Documentation URL used in the service catalog metadata
+  documentationUrl: "https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment"
+  
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database.
-  dryRun: true
+  dryRun: false
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database.
   enabled: false
   
@@ -304,7 +302,6 @@ kubeconfig:
 kymaDashboardConfig:
   # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes.
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
-
 
 metricsv2:
   # If true, enables metricsv2 collection and Prometheus exposure.
@@ -466,7 +463,7 @@ cis:
 # =================================================
 deprovisionRetrigger:
   # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
-  dryRun: true
+  dryRun: false
   # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
   schedule: "0 2 * * *"
@@ -479,7 +476,7 @@ deprovisionRetrigger:
 # =================================================
 freeCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
-  dryRun: true
+  dryRun: false
   # If true, enables the Free Cleanup CronJob.
   enabled: true
   # Specifies how long a free instance can exist before being eligible for cleanup.
@@ -500,7 +497,7 @@ freeCleanup:
 # =================================================
 globalaccounts:
   # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
-  dryRun: true
+  dryRun: false
   # If true, enables the global accounts synchronization job.
   enabled: false
   # Name of the global accounts synchronization job or deployment.
@@ -551,7 +548,7 @@ oidc:
 # =================================================
 runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
-  dryRun: true
+  dryRun: false
   # Enables or disables the Runtime Reconciler deployment.
   enabled: false
   # If true, enables the periodic reconciliation job.
@@ -571,7 +568,7 @@ runtimeReconciler:
 # =================================================
 serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
-  dryRun: true
+  dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
   enabled: false
   # Number of times to retry a failed DELETE request for a binding.
@@ -645,7 +642,7 @@ subaccountSync:
 # =================================================
 trialCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
-  dryRun: true
+  dryRun: false
   # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes.
   enabled: true
   # Specifies how long a trial instance can exist before being expired.

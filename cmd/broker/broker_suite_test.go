@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	dynamicFake "k8s.io/client-go/dynamic/fake"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -24,6 +26,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
@@ -188,7 +191,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
-	accountProvider := fixAccountProvider(t, gardenerClient)
+	createSubscriptions(t, gardenerClient)
 	require.NoError(t, err)
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
@@ -215,13 +218,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(log, cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(log, cfg.InfrastructureManager, providerSpec),
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
 		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
@@ -229,7 +232,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
-		accountProvider, k8sClientProvider, cli, configProvider, log)
+		k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
 	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
@@ -248,7 +251,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec)
+	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec, rulesService, gardenerClientWithNamespace, awsClientFactory)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
@@ -259,6 +262,66 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	return ts
+}
+
+func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient) {
+
+	for sbName, labels := range map[string]map[string]string{
+		"sb-azure": {
+			"hyperscalerType": "azure",
+		},
+		"sb-aws": {
+			"hyperscalerType": "aws",
+		},
+		"sb-gcp": {
+			"hyperscalerType": "gcp",
+		},
+		"sb-gcp_cf-sa30": {
+			"hyperscalerType": "gcp_cf-sa30",
+		},
+		"sb-aws-shared": {
+			"hyperscalerType": "aws",
+			"shared":          "true",
+		},
+		"sb-azure-shared": {
+			"hyperscalerType": "azure",
+			"shared":          "true",
+		},
+		"sb-aws-eu-access": {
+			"hyperscalerType": "aws",
+			"euAccess":        "true",
+		},
+		"sb-azure-eu-access": {
+			"hyperscalerType": "azure",
+			"euAccess":        "true",
+		},
+		"sb-gcp-ksa": {
+			"hyperscalerType": "gcp-cf-sa30",
+		},
+		"sb-openstack_eu-de-1": {
+			"hyperscalerType": "openstack_eu-de-1",
+			"shared":          "true",
+		},
+		"sb-openstack_eu-de-2": {
+			"hyperscalerType": "openstack_eu-de-2",
+			"shared":          "true",
+		},
+		"sb-alicloud": {
+			"hyperscalerType": "alicloud",
+		},
+	} {
+
+		sb := gardener.SecretBinding{}
+		sb.SetName(sbName)
+		sb.SetNamespace(gardenerKymaNamespace)
+		sb.SetLabels(labels)
+		sb.SetSecretRefName(sbName)
+		sb.SetSecretRefNamespace(gardenerKymaNamespace)
+
+		_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metav1.CreateOptions{})
+
+		require.NoError(t, err)
+	}
 }
 
 func defaultOIDCValues() pkg.OIDCConfigDTO {
@@ -273,9 +336,8 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	}
 }
 
-func workersProvider(log *slog.Logger, imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
+func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.ProviderSpec) *workers.Provider {
 	return workers.NewProvider(
-		log,
 		imConfig,
 		spec,
 	)
@@ -323,7 +385,8 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
 	deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger,
-	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications) {
+	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications,
+	rulesService *rules.RulesService, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -356,6 +419,10 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 					Description: broker.BuildRuntimeAzurePlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
+				broker.AlicloudPlanID: {
+					Description: broker.AlicloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
 			},
 		},
 	}
@@ -372,7 +439,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
-		providerSpec, configProvider, planSpec)
+		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

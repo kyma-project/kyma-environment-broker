@@ -18,3 +18,4 @@
   - preview                         # pool: hyperscalerType: aws
   - free                            # pool: hyperscalerType: aws
                                     # pool: hyperscalerType: azure
+  - alicloud                        # pool: hyperscalerType: alicloud

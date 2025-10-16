@@ -16,12 +16,14 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
@@ -29,6 +31,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -58,8 +61,9 @@ type (
 		ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
 	}
 
-	RegionsSupporterProvider interface {
+	ConfigurationProvider interface {
 		RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error)
+		ZonesDiscovery(cp pkg.CloudProvider) bool
 	}
 
 	QuotaClient interface {
@@ -91,9 +95,12 @@ type ProvisionEndpoint struct {
 	useSmallerMachineTypes bool
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
-	providerSpec           RegionsSupporterProvider
+	providerSpec           ConfigurationProvider
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
+	rulesService           *rules.RulesService
+	gardenerClient         *gardener.Client
+	awsClientFactory       aws.ClientFactory
 }
 
 const (
@@ -101,6 +108,8 @@ const (
 	IngressFilteringNotSupportedForPlanMsg             = "ingress filtering is not available for %s plan"
 	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
+	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
+	HAUnavailableMsg                                   = "In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false."
 )
 
 func NewProvision(brokerConfig Config,
@@ -114,12 +123,15 @@ func NewProvision(brokerConfig Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	schemaService *SchemaService,
-	providerSpec RegionsSupporterProvider,
+	providerSpec ConfigurationProvider,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
+	rulesService *rules.RulesService,
+	gardenerClient *gardener.Client,
+	awsClientFactory aws.ClientFactory,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -150,6 +162,9 @@ func NewProvision(brokerConfig Config,
 		providerConfigProvider:  providerConfigProvider,
 		quotaClient:             quotaClient,
 		quotaWhitelist:          quotaWhitelist,
+		rulesService:            rulesService,
+		gardenerClient:          gardenerClient,
+		awsClientFactory:        awsClientFactory,
 	}
 }
 
@@ -184,10 +199,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 	if b.config.MonitorAdditionalProperties {
 		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
-	}
-	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, ConvergedCloudBlockedMsg)
 	}
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:           details.PlanID,
@@ -359,6 +370,39 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		)
 	}
 
+	discoveredZones := make(map[string]int)
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)) {
+		kymaMachineType := values.DefaultMachineType
+		if parameters.MachineType != nil {
+			kymaMachineType = *parameters.MachineType
+		}
+
+		discoveredZones[kymaMachineType] = 0
+		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
+			discoveredZones[additionalWorkerNodePool.MachineType] = 0
+		}
+
+		awsClient, err := newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		if err != nil {
+			l.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+		}
+
+		for machineType := range discoveredZones {
+			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			if err != nil {
+				l.Error(fmt.Sprintf("unable to get available zones: %s", err))
+				return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+			}
+			discoveredZones[machineType] = zonesCount
+		}
+
+		if discoveredZones[kymaMachineType] < values.ZonesCount {
+			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", values.Region, kymaMachineType, values.ZonesCount)
+			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+		}
+	}
+
 	if err := b.validateNetworking(parameters); err != nil {
 		return err
 	}
@@ -377,13 +421,19 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
+
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 
-		regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
-		if err != nil {
+		if IsExternalLicenseType(provisioningParameters.ErsContext) {
+			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			}
+		}
+
+		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 
@@ -391,17 +441,17 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if err := checkAvailableZones(regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
+			if err := checkAvailableZones(
+				l,
+				regionsSupportingMachine,
+				additionalWorkerNodePool,
+				valueOfPtr(parameters.Region),
+				details.PlanID,
+				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
+				discoveredZones,
+			); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-		}
-		if IsExternalLicenseType(provisioningParameters.ErsContext) {
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
-		}
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
@@ -609,13 +659,30 @@ func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkAvailableZones(regionsSupportingMachine internal.RegionsSupporter, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
-	zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
-	if err != nil {
-		return fmt.Errorf("while getting available zones: %w", err)
-	}
-	if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
-		return fmt.Errorf("In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false.", region, additionalWorkerNodePool.MachineType)
+func checkAvailableZones(
+	log *slog.Logger,
+	regionsSupportingMachine internal.RegionsSupporter,
+	additionalWorkerNodePool pkg.AdditionalWorkerNodePool,
+	region, planID string,
+	zonesDiscovery bool,
+	discoveredZones map[string]int,
+) error {
+	if zonesDiscovery {
+		if discoveredZones[additionalWorkerNodePool.MachineType] < 1 {
+			return fmt.Errorf("In the %s, the %s machine type is not available.", region, additionalWorkerNodePool.MachineType)
+		}
+		if additionalWorkerNodePool.HAZones && discoveredZones[additionalWorkerNodePool.MachineType] < 3 {
+			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
+		}
+	} else {
+		zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
+		if err != nil {
+			log.Error(fmt.Sprintf("while getting available zones: %v", err))
+			return fmt.Errorf(FailedToValidateZonesMsg)
+		}
+		if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
+			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
+		}
 	}
 	return nil
 }
@@ -899,4 +966,59 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 	}
 
 	return nil
+}
+
+func newAWSClient(
+	ctx context.Context,
+	log *slog.Logger,
+	rulesService *rules.RulesService,
+	gardenerClient *gardener.Client,
+	awsClientFactory aws.ClientFactory,
+	provisioningParameters internal.ProvisioningParameters,
+	values internal.ProviderValues,
+) (aws.Client, error) {
+	log.Info("Zones discovery enabled, validating zone count using subscription secret")
+	attr := &rules.ProvisioningAttributes{
+		Plan:              PlanNamesMapping[provisioningParameters.PlanID],
+		PlatformRegion:    provisioningParameters.PlatformRegion,
+		HyperscalerRegion: values.Region,
+		Hyperscaler:       values.ProviderType,
+	}
+	log.Info(fmt.Sprintf("matching provisioning attributes %q to filtering rule", attr))
+
+	parsedRule, found := rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
+	if !found {
+		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
+	}
+	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
+
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
+	labelSelector := labelSelectorBuilder.BuildAnySubscription()
+
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	secretBindings, err := gardenerClient.GetSecretBindings(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+	}
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+	}
+	secretBinding := gardener.NewSecretBinding(secretBindings.Items[0])
+
+	log.Info(fmt.Sprintf("getting subscription secret with name %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()))
+	secret, err := gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	}
+
+	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract AWS credentials")
+	}
+	client, err := awsClientFactory.New(ctx, accessKeyID, secretAccessKey, values.Region)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create AWS client")
+	}
+
+	return client, nil
 }
