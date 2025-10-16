@@ -81,11 +81,13 @@ fi
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod(s) to be in READY state..."
 kubectl get pods -n kcp-system -l app.kubernetes.io/name=kyma-environment-broker -o wide
-kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=300s
+kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
 EXIT_CODE=$?
 echo "Current pod status after wait:"
 kubectl get pods -n kcp-system -l app.kubernetes.io/name=kyma-environment-broker -o json | jq '.items[] | {name: .metadata.name, phase: .status.phase, conditions: .status.conditions}'
 if [ $EXIT_CODE -ne 0 ]; then
+  echo "Listing all pods in kcp-system namespace:"
+  kubectl get pods -n kcp-system -o wide
   echo "The kyma-environment-broker pod(s) did not become READY within the timeout."
   echo "Fetching the logs from the pod(s)..."
   POD_NAMES=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[*].metadata.name}')
@@ -93,7 +95,5 @@ if [ $EXIT_CODE -ne 0 ]; then
     echo "Logs for pod: $POD_NAME"
     kubectl logs $POD_NAME -n kcp-system
   done
-  echo "Listing all pods in kcp-system namespace:"
-  kubectl get pods -n kcp-system -o wide
   exit 1
 fi
