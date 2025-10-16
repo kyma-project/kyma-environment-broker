@@ -80,7 +80,7 @@ fi
 
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod to be in READY state..."
-kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
+kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=120s
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo "The kyma-environment-broker pod did not become READY within the timeout."
