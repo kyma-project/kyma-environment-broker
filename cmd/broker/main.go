@@ -133,6 +133,9 @@ type Config struct {
 
 	Quota                               quota.Config
 	QuotaWhitelistedSubaccountsFilePath string
+
+	// todo: remove after all SecretBinding are migrated to CredentialBinding resources
+	HoldHapSteps bool
 }
 
 type ProfilerConfig struct {

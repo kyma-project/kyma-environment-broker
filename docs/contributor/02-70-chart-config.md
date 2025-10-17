@@ -144,6 +144,7 @@
 | testConfig.kebDeployment.<br>weight | - | `2` |
 | trialRegionsMapping | Determines a Kyma region for a trial environment based on the requested platform region. | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |
 | osbUpdateProcessingEnabled | If true, the broker processes update requests for service instances. | `true` |
+| holdHAPSteps | ================================================= If true, the broker holds any operation with subscriptions pool (HAP). It is designed for migration (SecretBinding to CredentialBinding). | `false` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API. | None |
