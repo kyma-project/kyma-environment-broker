@@ -2312,9 +2312,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.SapConvergedCloudPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: false,
+				EnablePlans: []string{broker.SapConvergedCloudPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -2366,9 +2365,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{"gcp", "azure"},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -2404,66 +2402,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-	})
-
-	t.Run("Should fail if converged cloud is disabled and converged plan selected", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-
-		queue := &automock.Queue{}
-		queue.On("Add", mock.AnythingOfType("string"))
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
-
-		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
-				EnablePlans:              []string{"sap-converged-cloud"},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			false,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-		)
-
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		err := fmt.Errorf(broker.ConvergedCloudBlockedMsg)
-		errMsg := broker.ConvergedCloudBlockedMsg
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
-
-		// when
-		_, err = provisionEndpoint.Provision(fixRequestContext(t, "eu-de-1"), instanceID, domain.ProvisionDetails{
-			ServiceID:     serviceID,
-			PlanID:        broker.SapConvergedCloudPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "eu-de-1", oidcParams)),
-			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
-		}, true)
-		t.Logf("%+v\n", *provisionEndpoint)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 }
 
@@ -2803,6 +2741,84 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 	}
 }
 
+func TestAutoScalerConfigurationInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+
+	testCases := []struct {
+		name                      string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "Single auto scaler configuration error",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			expectedError:             "The following additionalWorkerPools have validation issues: AutoScalerMax value 3 should be larger than AutoScalerMin value 20 for name-1 additional worker node pool.",
+		},
+		{
+			name:                      "Multiple auto scaler configuration errors",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}, {"name": "name-2", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 1, "autoScalerMax": 20}]`,
+			expectedError:             "The following additionalWorkerPools have validation issues: AutoScalerMax value 3 should be larger than AutoScalerMin value 20 for name-1 additional worker node pool; AutoScalerMin value 1 should be at least 3 when HA zones are enabled for name-2 additional worker node pool.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+			t.Logf("%+v\n", *provisionEndpoint)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
+}
+
 func TestAvailableZonesValidation(t *testing.T) {
 	// given
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -2856,7 +2872,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 	t.Logf("%+v\n", *provisionEndpoint)
 
 	// then
-	assert.EqualError(t, err, "In the us-east-1, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
+	assert.EqualError(t, err, "In the us-east-1, the machine types: g6.xlarge (used in worker node pools: name-1) are not available in 3 zones. If you want to use this machine types, set HA to false.")
 }
 
 func TestAdditionalProperties(t *testing.T) {
@@ -3113,9 +3129,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: false,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3167,9 +3182,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3231,9 +3245,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3581,22 +3594,25 @@ func TestDiscoveryZones(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name          string
-		zones         map[string][]string
-		awsError      error
-		expectedError string
+		name                      string
+		zones                     map[string][]string
+		awsError                  error
+		additionalWorkerNodePools string
+		expectedError             string
 	}{
 		{
-			name:          "Should fail if AWS returns error for Kyma worker node pool",
-			awsError:      fmt.Errorf("AWS error"),
-			expectedError: "Failed to validate the number of available zones. Please try again later.",
+			name:                      "Should fail if AWS returns error for Kyma worker node pool",
+			awsError:                  fmt.Errorf("AWS error"),
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "Failed to validate the number of available zones. Please try again later.",
 		},
 		{
 			name: "Should fail if not enough zones for Kyma worker node pool",
 			zones: map[string][]string{
 				"m6i.large": {"eu-west-2a", "eu-west-2b"},
 			},
-			expectedError: "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
 		},
 		{
 			name: "Should fail if machine type in additional worker node pool is not available",
@@ -3604,7 +3620,8 @@ func TestDiscoveryZones(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {},
 			},
-			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the g6.xlarge machine type is not available.",
 		},
 		{
 			name: "Should fail if machine type in high availability additional worker node pool is not available in at least 3 zones",
@@ -3612,7 +3629,18 @@ func TestDiscoveryZones(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {"eu-west-2a", "eu-west-2b"},
 			},
-			expectedError: "In the eu-west-2, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the machine types: g6.xlarge (used in worker node pools: name-1) are not available in 3 zones. If you want to use this machine types, set HA to false.",
+		},
+		{
+			name: "Should fail if machine types in high availability additional worker node pools are not available in at least 3 zones",
+			zones: map[string][]string{
+				"m6i.large":   {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
+				"g6.xlarge":   {"eu-west-2a", "eu-west-2b"},
+				"g4dn.xlarge": {"eu-west-2a", "eu-west-2b"},
+			},
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-3", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the eu-west-2, the machine types: g6.xlarge (used in worker node pools: name-1, name-2), g4dn.xlarge (used in worker node pools: name-3) are not available in 3 zones. If you want to use this machine types, set HA to false.",
 		},
 	}
 
@@ -3646,13 +3674,11 @@ func TestDiscoveryZones(t *testing.T) {
 				fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError),
 			)
 
-			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
-
 			// when
 			_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 				ServiceID:     serviceID,
 				PlanID:        broker.AWSPlanID,
-				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, "eu-west-2", "m6i.large", additionalWorkerNodePools)),
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, "eu-west-2", "m6i.large", tc.additionalWorkerNodePools)),
 				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 			}, true)
 
@@ -3744,10 +3770,9 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	plans := newPlanSpec(t)
 	provider := newProviderSpec(t)
 
-	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
-		IncludeAdditionalParamsInSchema: true,
-	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
+	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
+		broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
 	return schemaService
 }
 

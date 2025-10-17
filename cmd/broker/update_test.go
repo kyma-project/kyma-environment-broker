@@ -2998,7 +2998,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC object with OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.IncludeAdditionalParamsInSchema = false
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -3043,12 +3042,20 @@ func TestUpdateOIDC(t *testing.T) {
 							{
 								"clientID": "id-ooo",
 								"signingAlgs": ["RS256"],
-								"issuerURL": "https://issuer.url.com"
+								"issuerURL": "https://issuer.url.com",
+								"groupsClaim": "groups",
+                				"groupsPrefix": "-",
+								"usernameClaim": "sub",
+                				"usernamePrefix": "-"
 							},
 							{
 								"clientID": "id-ooo2",
 								"signingAlgs": ["RS256"],
-								"issuerURL": "https://issuer.url.com"
+								"issuerURL": "https://issuer.url.com",
+								"groupsClaim": "groups",
+                				"groupsPrefix": "-",
+								"usernameClaim": "sub",
+                				"usernamePrefix": "-"
 							}
 						]
 					}
@@ -3385,7 +3392,6 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC object with empty OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.IncludeAdditionalParamsInSchema = false
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 
 		defer suite.TearDown()

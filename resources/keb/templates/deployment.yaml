@@ -79,8 +79,6 @@ spec:
               value: "{{ .Values.archiving.dryRun }}"
             - name: APP_ARCHIVING_ENABLED
               value: "{{ .Values.archiving.enabled }}"
-            - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
-              value: "{{ .Values.broker.allowUpdateExpiredInstanceWithContext }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
               value: "{{ .Values.broker.binding.bindablePlans}}"
             - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
@@ -99,8 +97,6 @@ spec:
               value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
-            - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
-              value: "{{ .Values.broker.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES
@@ -111,8 +107,6 @@ spec:
               value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
               value: "{{ .Values.broker.gardenerSeedsCache }}"
-            - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
-              value: "{{ .Values.broker.includeAdditionalParamsInSchema }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
@@ -125,16 +119,10 @@ spec:
               value: "{{ .Values.broker.port }}"
             - name: APP_BROKER_REJECT_UNSUPPORTED_PARAMETERS
               value: "{{ .Values.broker.rejectUnsupportedParameters }}"
-            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
-              value: "{{ .Values.broker.showFreeExpirationInfo }}"
-            - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
-              value: "{{ .Values.broker.showTrialExpirationInfo }}"
             - name: APP_BROKER_STATUS_PORT
               value: "{{ .Values.broker.statusPort }}"
             - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
-            - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
-              value: "{{ .Values.broker.subaccountsIdsToShowTrialExpirationInfo }}"
             - name: APP_BROKER_TRIAL_DOCS_URL
               value: "{{ .Values.broker.trialDocsURL }}"
             - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE

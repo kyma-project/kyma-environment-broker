@@ -109,7 +109,6 @@ const (
 	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
-	HAUnavailableMsg                                   = "In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false."
 )
 
 func NewProvision(brokerConfig Config,
@@ -199,10 +198,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 	if b.config.MonitorAdditionalProperties {
 		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
-	}
-	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, ConvergedCloudBlockedMsg)
 	}
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:           details.PlanID,
@@ -441,21 +436,20 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 
-		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
-			if err := additionalWorkerNodePool.Validate(); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
-			if err := checkAvailableZones(
-				l,
-				regionsSupportingMachine,
-				additionalWorkerNodePool,
-				valueOfPtr(parameters.Region),
-				details.PlanID,
-				b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
-				discoveredZones,
-			); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
+		if err := checkAutoScalerConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		}
+
+		if err := checkAvailableZones(
+			l,
+			regionsSupportingMachine,
+			parameters.AdditionalWorkerNodePools,
+			valueOfPtr(parameters.Region),
+			details.PlanID,
+			b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
+			discoveredZones,
+		); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
@@ -663,32 +657,77 @@ func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
+func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.Validate(); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+
+	if len(errors) == 0 {
+		return nil
+	}
+
+	message := "The following additionalWorkerPools have validation issues: "
+	message = message + strings.Join(errors, "; ")
+	message = message + "."
+
+	return fmt.Errorf("%s", message)
+}
+
 func checkAvailableZones(
 	log *slog.Logger,
 	regionsSupportingMachine internal.RegionsSupporter,
-	additionalWorkerNodePool pkg.AdditionalWorkerNodePool,
+	additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
 	region, planID string,
 	zonesDiscovery bool,
 	discoveredZones map[string]int,
 ) error {
-	if zonesDiscovery {
-		if discoveredZones[additionalWorkerNodePool.MachineType] < 1 {
-			return fmt.Errorf("In the %s, the %s machine type is not available.", region, additionalWorkerNodePool.MachineType)
-		}
-		if additionalWorkerNodePool.HAZones && discoveredZones[additionalWorkerNodePool.MachineType] < 3 {
-			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
-		}
-	} else {
-		zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
-		if err != nil {
-			log.Error(fmt.Sprintf("while getting available zones: %v", err))
-			return fmt.Errorf(FailedToValidateZonesMsg)
-		}
-		if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
-			return fmt.Errorf(HAUnavailableMsg, region, additionalWorkerNodePool.MachineType)
+	HAUnavailableMachines := make(map[string][]string)
+	var orderedMachineTypes []string
+
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if zonesDiscovery {
+			if discoveredZones[additionalWorkerNodePool.MachineType] < 1 {
+				return fmt.Errorf("In the %s, the %s machine type is not available.", region, additionalWorkerNodePool.MachineType)
+			}
+			if additionalWorkerNodePool.HAZones && discoveredZones[additionalWorkerNodePool.MachineType] < 3 {
+				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {
+					orderedMachineTypes = append(orderedMachineTypes, additionalWorkerNodePool.MachineType)
+				}
+				HAUnavailableMachines[additionalWorkerNodePool.MachineType] = append(HAUnavailableMachines[additionalWorkerNodePool.MachineType], additionalWorkerNodePool.Name)
+			}
+		} else {
+			zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
+			if err != nil {
+				log.Error(fmt.Sprintf("while getting available zones: %v", err))
+				return fmt.Errorf(FailedToValidateZonesMsg)
+			}
+			if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
+				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {
+					orderedMachineTypes = append(orderedMachineTypes, additionalWorkerNodePool.MachineType)
+				}
+				HAUnavailableMachines[additionalWorkerNodePool.MachineType] = append(HAUnavailableMachines[additionalWorkerNodePool.MachineType], additionalWorkerNodePool.Name)
+			}
 		}
 	}
-	return nil
+
+	if len(HAUnavailableMachines) == 0 {
+		return nil
+	}
+
+	message := fmt.Sprintf("In the %s, the machine types: ", region)
+	var machineTypeMessages []string
+	for _, machineType := range orderedMachineTypes {
+		pools := HAUnavailableMachines[machineType]
+		machineTypeMessages = append(machineTypeMessages,
+			fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(pools, ", ")))
+	}
+	message += strings.Join(machineTypeMessages, ", ")
+	message += " are not available in 3 zones. If you want to use this machine types, set HA to false."
+
+	return fmt.Errorf("%s", message)
 }
 
 // Rudimentary kubeconfig validation

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 )
-
-const allSubaccountsIDs = "all"
 
 type GetInstanceEndpoint struct {
 	config            Config
@@ -84,14 +81,11 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		},
 	}
 
-	if b.config.ShowTrialExpirationInfo &&
-		instance.ServicePlanID == TrialPlanID &&
-		(b.config.SubaccountsIdsToShowTrialExpirationInfo == allSubaccountsIDs ||
-			strings.Contains(b.config.SubaccountsIdsToShowTrialExpirationInfo, instance.SubAccountID)) {
+	if instance.ServicePlanID == TrialPlanID {
 		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
 	}
 
-	if b.config.ShowFreeExpirationInfo && instance.ServicePlanID == FreemiumPlanID {
+	if instance.ServicePlanID == FreemiumPlanID {
 		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
 	}
 

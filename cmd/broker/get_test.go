@@ -295,7 +295,6 @@ func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testi
 
 func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeIgnored(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.IncludeAdditionalParamsInSchema = false
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
