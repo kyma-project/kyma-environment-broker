@@ -36,7 +36,7 @@ func TestAlicloudDefaults(t *testing.T) {
 		DefaultMachineType:   "ecs.g8i.large",
 		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             DefaultDiskType,
+		DiskType:             DefaultAlicloudDiskType,
 		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
@@ -71,7 +71,7 @@ func TestAlicloudTwoZonesRegion(t *testing.T) {
 		DefaultMachineType:   "ecs.g8i.large",
 		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             DefaultDiskType,
+		DiskType:             DefaultAlicloudDiskType,
 		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
@@ -106,7 +106,7 @@ func TestAlicloudSingleZoneRegion(t *testing.T) {
 		DefaultMachineType:   "ecs.g8i.large",
 		Region:               "eu-central-1",
 		Purpose:              "production",
-		DiskType:             DefaultDiskType,
+		DiskType:             DefaultAlicloudDiskType,
 		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)

@@ -9,7 +9,7 @@ const (
 	DefaultAlicloudRegion         = "eu-central-1"
 	DefaultAlicloudMachineType    = "ecs.g8i.large"
 	DefaultAlicloudMultiZoneCount = 3
-	DefaultDiskType               = "cloud_essd"
+	DefaultAlicloudDiskType       = "cloud_essd"
 )
 
 type (
@@ -49,7 +49,7 @@ func (p *AlicloudInputProvider) Provide() internal.ProviderValues {
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
-		DiskType:             DefaultDiskType,
+		DiskType:             DefaultAlicloudDiskType,
 		FailureTolerance:     &p.FailureTolerance,
 	}
 }
