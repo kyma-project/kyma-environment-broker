@@ -195,6 +195,9 @@ spec:
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_HAP_RULE_FILE_PATH
               value: {{ .Values.configPaths.hapRule }}
+
+            - name: APP_HOLD_HAP_STEPS
+              value: "{{ .Values.holdHAPSteps }}"
             - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE

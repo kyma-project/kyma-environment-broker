@@ -66,8 +66,9 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  provisioning.NewOverrideKymaModules(db.Operations()),
 		},
 		{
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
+			stage: createRuntimeStageName,
+			step: steps.NewHolderStep(cfg.HoldHapSteps,
+				provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval})),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

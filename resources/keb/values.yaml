@@ -395,7 +395,8 @@ trialRegionsMapping: |-
 osbUpdateProcessingEnabled: "true"
 # =================================================
 
-
+# If true, the broker holds any operation with subscriptions pool (HAP). It is designed for migration (SecretBinding to CredentialBinding).
+holdHAPSteps: "false"
 
 # =================================================
 # CIS Related Settings
