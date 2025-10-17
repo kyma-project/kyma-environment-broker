@@ -154,9 +154,8 @@ func createSchemaService(t *testing.T) *SchemaService {
 	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
 	schemaService := NewSchemaService(provider, plans, nil, Config{
-		IncludeAdditionalParamsInSchema: true,
-		RejectUnsupportedParameters:     true,
-		EnablePlanUpgrades:              true,
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
 	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName})
 	require.NoError(t, err)
 	return schemaService

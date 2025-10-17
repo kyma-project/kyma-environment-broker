@@ -2312,9 +2312,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.SapConvergedCloudPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: false,
+				EnablePlans: []string{broker.SapConvergedCloudPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -2366,9 +2365,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{"gcp", "azure"},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -2404,66 +2402,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-	})
-
-	t.Run("Should fail if converged cloud is disabled and converged plan selected", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-
-		queue := &automock.Queue{}
-		queue.On("Add", mock.AnythingOfType("string"))
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
-
-		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
-				EnablePlans:              []string{"sap-converged-cloud"},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			false,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-		)
-
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		err := fmt.Errorf(broker.ConvergedCloudBlockedMsg)
-		errMsg := broker.ConvergedCloudBlockedMsg
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
-
-		// when
-		_, err = provisionEndpoint.Provision(fixRequestContext(t, "eu-de-1"), instanceID, domain.ProvisionDetails{
-			ServiceID:     serviceID,
-			PlanID:        broker.SapConvergedCloudPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "eu-de-1", oidcParams)),
-			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
-		}, true)
-		t.Logf("%+v\n", *provisionEndpoint)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 }
 
@@ -3113,9 +3051,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: false,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3167,9 +3104,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3231,9 +3167,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{broker.AWSPlanName},
-				URL:                      brokerURL,
-				DisableSapConvergedCloud: true,
+				EnablePlans: []string{broker.AWSPlanName},
+				URL:         brokerURL,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			imConfigFixture,
@@ -3744,10 +3679,9 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	plans := newPlanSpec(t)
 	provider := newProviderSpec(t)
 
-	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{
-		IncludeAdditionalParamsInSchema: true,
-	}, broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-		broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
+	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
+		broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
 	return schemaService
 }
 

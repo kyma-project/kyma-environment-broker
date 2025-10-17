@@ -36,15 +36,11 @@ dashboardConfig:
     enabled: true
     landscapeURL: https://dashboard.kyma.cloud.sap # **CN**
 
-
-enableKubeconfigURLLabel: true
-
 enablePlans: azure,gcp,azure_lite,aws,trial,free,sap-converged-cloud
 
 ias:
     disabled: true
 
-includeAdditionalParamsInSchema: true
 
 # must be configured
 kubeconfig:
@@ -77,11 +73,8 @@ serviceAccount:
 serviceManager:
     overrideMode: "Always"
 
-showTrialExpirationInfo: true
-
 subaccountCleanup:
     enabled: false
-subaccountsIdsToShowTrialExpirationInfo: all
 
 
 trialCleanup:
@@ -105,7 +98,6 @@ onlyOneFreePerGA: true
 freemiumWhitelistedGlobalAccountIds: |-
     whitelist:
       - d9994f8f-7e46-42a8-b2c1-1bfff8d2fe05
-showFreeExpirationInfo: true
 freeDocsURL:
     https://help.sap.com/docs/btp/sap-business-technology-platform/available-plans-in-kyma-environment
 

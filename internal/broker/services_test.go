@@ -66,8 +66,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "aws", "free"},
-			IncludeAdditionalParamsInSchema: true,
+			EnablePlans: []string{"gcp", "azure", "aws", "free"},
 		}
 		servicesConfig := map[string]broker.Service{
 			broker.KymaServiceName: {
@@ -103,8 +102,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "aws", "free"},
-			IncludeAdditionalParamsInSchema: true,
+			EnablePlans: []string{"gcp", "azure", "aws", "free"},
 		}
 		servicesConfig := map[string]broker.Service{
 			broker.KymaServiceName: {
@@ -139,8 +137,7 @@ func TestServices_Services(t *testing.T) {
 			supportURL = "example.com/support"
 		)
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
-			IncludeAdditionalParamsInSchema: true,
+			EnablePlans: []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			Binding: broker.BindingConfig{
 				Enabled:       true,
 				BindablePlans: []string{"aws", "gcp"},

@@ -299,10 +299,6 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
-	if update && !flags.includeAdditionalParameters {
-		return empty()
-	}
-
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredTrialSchemaProperties(), flags)
 }
 
@@ -326,7 +322,6 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 
 func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 	return NewControlFlagsObject(
-		s.cfg.IncludeAdditionalParamsInSchema,
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.RejectUnsupportedParameters,
 	)

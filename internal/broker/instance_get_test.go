@@ -108,9 +108,7 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                                     "https://test-broker.local",
-		ShowTrialExpirationInfo:                 true,
-		SubaccountsIdsToShowTrialExpirationInfo: "test-saID",
+		URL: "https://test-broker.local",
 	}
 
 	const (
@@ -144,9 +142,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                                     "https://test-broker.local",
-		ShowTrialExpirationInfo:                 true,
-		SubaccountsIdsToShowTrialExpirationInfo: "test-saID",
+		URL: "https://test-broker.local",
 	}
 
 	const (
@@ -158,7 +154,6 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	instance := fixture.FixInstance(instanceID)
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
-	instance.SubAccountID = cfg.SubaccountsIdsToShowTrialExpirationInfo
 	instance.ServicePlanID = broker.TrialPlanID
 	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
@@ -188,9 +183,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                                     "https://test-broker.local",
-		ShowTrialExpirationInfo:                 true,
-		SubaccountsIdsToShowTrialExpirationInfo: "all",
+		URL: "https://test-broker.local",
 	}
 
 	const (
@@ -229,57 +222,11 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	assert.Contains(t, response.Metadata.Labels, "Trial account documentation")
 }
 
-func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
-	// given
-	st := storage.NewMemoryStorage()
-	cfg := broker.Config{
-		URL:                                     "https://test-broker.local",
-		ShowTrialExpirationInfo:                 true,
-		SubaccountsIdsToShowTrialExpirationInfo: "subaccount-id1,subaccount-id2",
-	}
-
-	const (
-		instanceID  = "cluster-test"
-		operationID = "operationID"
-	)
-	op := fixture.FixProvisioningOperation(operationID, instanceID)
-
-	instance := fixture.FixInstance(instanceID)
-	instance.SubAccountID = "subaccount-id3"
-	instance.ServicePlanID = broker.TrialPlanID
-	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
-	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
-	instance.ExpiredAt = &expireTime
-	kcBuilder := &kcMock.KcBuilder{}
-	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
-
-	err := st.Operations().InsertOperation(op)
-	require.NoError(t, err)
-
-	err = st.Instances().Insert(instance)
-	require.NoError(t, err)
-
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
-
-	// when
-	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
-
-	// then
-	require.NoError(t, err)
-	assert.True(t, instance.IsExpired())
-	assert.Equal(t, instance.ServiceID, response.ServiceID)
-	assert.Contains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.Contains(t, response.Metadata.Labels, "APIServerURL")
-	assert.NotContains(t, response.Metadata.Labels, "Trial expiration details")
-	assert.NotContains(t, response.Metadata.Labels, "Trial documentation")
-}
-
 func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                    "https://test-broker.local",
-		ShowFreeExpirationInfo: true,
+		URL: "https://test-broker.local",
 	}
 
 	const (

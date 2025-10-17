@@ -262,10 +262,8 @@ func fixConfig() *Config {
 		},
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                           brokerConfigPlans,
-			OperationTimeout:                      2 * time.Minute,
-			IncludeAdditionalParamsInSchema:       true,
-			AllowUpdateExpiredInstanceWithContext: true,
+			EnablePlans:      brokerConfigPlans,
+			OperationTimeout: 2 * time.Minute,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
 				BindablePlans:        []string{"aws", "azure", "alicloud"},
