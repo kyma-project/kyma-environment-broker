@@ -364,7 +364,14 @@ jobs:
           --generate-notes \
           --verify-tag
           
+      - name: Add notable changes to release draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
+        run: |
           if gh api repos/${REPOSITORY}/contents/docs/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
+            echo "Notable changes found."          
+          
             NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/docs/notable-changes/${{ inputs.name }}"
             NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [docs/notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
           
@@ -372,6 +379,8 @@ jobs:
             UPDATED_BODY="${BODY}${NOTABLE_CHANGES}"
 
             gh release edit ${{ inputs.name }} --notes "${UPDATED_BODY}"
+          else
+            echo "No notable changes found for this release."
           fi
 
       - name: Check if any PR may have been merged before creating the tag and draft release
