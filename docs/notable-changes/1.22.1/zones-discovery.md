@@ -1,7 +1,7 @@
 # Updating Kyma Environment Broker: Zones Discovery
 
 > [!NOTE]
-> This is an optional change. To enable Zones Discovery for AWS, update the Kyma Environment Broker (KEB) configuration.
+> This is a recommended change. To enable Zones Discovery for AWS, update the Kyma Environment Broker (KEB) configuration.
 
 ## Prerequisites
 
@@ -16,61 +16,58 @@ With the [Zones Discovery](../../contributor/03-55-zones-discovery.md) feature, 
 1. Open the KEB configuration file.
 2. Locate the AWS provider configuration under `providersConfiguration.aws`.
 3. Replace the old static configuration with the new simplified format. See the following examples:
-
-- Static zones configuration
-```yaml
-providersConfiguration:
-  aws:
-    regionsSupportingMachine:
-      g6:
-        us-west-2:
-        eu-central-1: [a, b]
-        ap-south-1: [b]
-        us-east-1: [a, b, c, d]
-      g4dn:
-        eu-central-1:
-        eu-west-2:
-        us-east-1:
-        ap-south-1:
-        us-west-2: [a, b, c]
-    regions:
-      eu-central-1:
-        displayName: eu-central-1 (Europe, Frankfurt)
-        zones: [a, b, c]
-      us-east-1:
-        displayName: us-east-1 (US East, N. Virginia)
-        zones: [a, b, c, d, f]
-      eu-west-1:
-        displayName: eu-west-1 (Europe, Ireland)
-        zones: [a]
-```
-
-- Zone Discovery configuration
-```yaml
-providersConfiguration:
-  aws:
-    regionsSupportingMachine:
-      g6:
-        us-west-2:
-        eu-central-1:
-        ap-south-1:
-        us-east-1:
-      g4dn:
-        eu-central-1:
-        eu-west-2:
-        us-east-1:
-        ap-south-1:
-        us-west-2:
-    regions:
-      eu-central-1:
-        displayName: eu-central-1 (Europe, Frankfurt)
-      us-east-1:
-        displayName: us-east-1 (US East, N. Virginia)
-      eu-west-1:
-        displayName: eu-west-1 (Europe, Ireland)
-    zonesDiscovery: true
-```
-
+   - Static zones configuration
+    ```yaml
+    providersConfiguration:
+      aws:
+        regionsSupportingMachine:
+          g6:
+            us-west-2:
+            eu-central-1: [a, b]
+            ap-south-1: [b]
+            us-east-1: [a, b, c, d]
+          g4dn:
+            eu-central-1:
+            eu-west-2:
+            us-east-1:
+            ap-south-1:
+            us-west-2: [a, b, c]
+        regions:
+          eu-central-1:
+            displayName: eu-central-1 (Europe, Frankfurt)
+            zones: [a, b, c]
+          us-east-1:
+            displayName: us-east-1 (US East, N. Virginia)
+            zones: [a, b, c, d, f]
+          eu-west-1:
+            displayName: eu-west-1 (Europe, Ireland)
+            zones: [a]
+    ```
+   - Zones Discovery configuration
+    ```yaml
+    providersConfiguration:
+      aws:
+        regionsSupportingMachine:
+          g6:
+            us-west-2:
+            eu-central-1:
+            ap-south-1:
+            us-east-1:
+          g4dn:
+            eu-central-1:
+            eu-west-2:
+            us-east-1:
+            ap-south-1:
+            us-west-2:
+        regions:
+          eu-central-1:
+            displayName: eu-central-1 (Europe, Frankfurt)
+          us-east-1:
+            displayName: us-east-1 (US East, N. Virginia)
+          eu-west-1:
+            displayName: eu-west-1 (Europe, Ireland)
+        zonesDiscovery: true
+    ```
 4. Save and apply the updated configuration.
 
 ## Post-Update Steps
