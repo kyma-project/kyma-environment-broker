@@ -9,13 +9,13 @@
 
 ## What's Changed
 
-In this optional section, describe significant changes since the last minor or major release. For example:
+<!--In this optional section, describe significant changes since the last minor or major release. For example:
 
 - Operation changes
 - New functionalities
 - Deprecated functionalities
 - Configuration changes
-- Updating pitfalls
+- Updating pitfalls-->
 
 ## Procedure
 
