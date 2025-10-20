@@ -17,7 +17,7 @@ With the [Zones Discovery](../../contributor/03-55-zones-discovery.md) feature, 
 2. Locate the AWS provider configuration under `providersConfiguration.aws`.
 3. Replace the old static configuration with the new simplified format. See the following examples:
 
-Example: Old Configuration (static zones)
+- Static zones configuration
 ```yaml
 providersConfiguration:
   aws:
