@@ -1,7 +1,7 @@
 # Updating Kyma Environment Broker – Zones Discovery
 
 > [!NOTE]
-> This is an optional change. Operators can enable Zones Discovery for AWS by updating the Kyma Environment Broker (KEB) configuration.
+> This is an optional change. To enable Zones Discovery for AWS, update the Kyma Environment Broker (KEB) configuration.
 
 ## Prerequisites
 
