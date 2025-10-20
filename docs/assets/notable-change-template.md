@@ -19,7 +19,7 @@
 
 ## Procedure
 
-Describe the update steps in a logical sequence.
+<!--Describe the update steps in a logical sequence.-->
 
 ## Post-Update Steps
 
