@@ -45,7 +45,7 @@ providersConfiguration:
         zones: [a]
 ```
 
-Example: New Configuration (Zone Discovery)
+- Zone Discovery configuration
 ```yaml
 providersConfiguration:
   aws:
