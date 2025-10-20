@@ -11,7 +11,7 @@ When introducing a KEB change that requires operator action, perform the followi
    For example: [notable-changes/1.22.1](../notable-changes/1.22.1).
 2. Document the change using the [Notable Change Template](../assets/notable-change-template.md).
     Clearly describe the impact, required actions, and any relevant details.
-3. Include supporting files, such as migration scripts or configuration examples, within the same directory.
+3. Within the same directory, include supporting files, such as migration scripts or configuration examples.
 
 ## Integration with Release Notes
 
