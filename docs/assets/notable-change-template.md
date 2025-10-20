@@ -23,4 +23,4 @@
 
 ## Post-Update Steps
 
-Describe any post-update steps that you might need. If monitors need to be recreated after an update, add this information to the update structure of your service/component.
+<!--Describe any post-update steps that you might need. If monitors need to be recreated after an update, add this information to the update structure of your service/component.-->
