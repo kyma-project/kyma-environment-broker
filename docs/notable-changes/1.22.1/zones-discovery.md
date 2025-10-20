@@ -5,7 +5,7 @@
 
 ## Prerequisites
 
-- The Kyma Environment Broker (KEB) is configured to use the AWS provider.
+- KEB is configured to use the AWS provider.
 
 ## What's Changed
 
