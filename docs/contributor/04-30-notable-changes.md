@@ -1,6 +1,6 @@
 # Notable Changes
 
-Notable changes refer to updates in the Kyma Environment Broker (KEB) that require operator action. These changes can be classified into two categories:
+Notable changes refer to Kyma Environment Broker (KEB) updates requiring operator action. These changes can be classified into the following categories:
 - Mandatory — Operator action is required for proper functionality.
 - Optional — Operator action is recommended but not strictly required.
 
