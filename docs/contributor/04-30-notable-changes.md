@@ -6,7 +6,7 @@ Notable changes refer to Kyma Environment Broker (KEB) updates requiring operato
 
 ## Creating a Notable Change
 
-When introducing a KEB change that requires operator action:
+When introducing a KEB change that requires operator action, perform the following steps:
 1. Create a directory for the change under [notable-changes](../notable-changes), using the KEB release version as the directory name.
    - Example: [notable-changes/1.22.1](../notable-changes/1.22.1)
 2. Document the change using the [Notable Change Template](../assets/notable-change-template.md).
