@@ -9,7 +9,7 @@
 
 ## What's Changed
 
-The [Zones Discovery](../../contributor/03-55-zones-discovery.md) feature allows KEB to dynamically retrieve available zones from the hyperscaler (currently only AWS) instead of relying on statically configured zones in the `providersConfiguration`.
+With the [Zones Discovery](../../contributor/03-55-zones-discovery.md) feature, KEB can dynamically retrieve available zones from the hyperscaler (currently only AWS) instead of relying on statically configured zones in the `providersConfiguration`.
 
 ## Procedure
 
