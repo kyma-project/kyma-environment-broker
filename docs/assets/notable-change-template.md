@@ -1,6 +1,6 @@
 # Updating Kyma Environment Broker
 
-> [!NOTE]
+> [!NOTE] <!-- In case of a mandatory update that will cause unwanted/severe impact if not performed, use !WARNING instead of !NOTE.-->
 > Describe whether the notable change is mandatory or optional.
 
 ## Prerequisites
