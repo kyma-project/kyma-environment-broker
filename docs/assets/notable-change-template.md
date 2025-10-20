@@ -5,7 +5,7 @@
 
 ## Prerequisites
 
-Describe the generic prerequisites common for all the components of the Kyma Control Plane.
+<!--Describe the generic prerequisites common for all the Kyma Control Plane (KCP) components.-->
 
 ## What's Changed
 
