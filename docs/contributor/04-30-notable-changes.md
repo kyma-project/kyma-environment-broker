@@ -21,24 +21,22 @@ When introducing a KEB change that requires operator action, perform the followi
 1. Create a directory for the change under [notable-changes](../../notable-changes), using the KEB release version as the directory name. For example: [notable-changes/1.22.1](../../notable-changes/1.22.1).
 2. Document the change using the [Notable Change Template](../assets/notable-change-template.md). Clearly describe the impact, required actions, and any relevant details.
 3. Fill in the JSON metadata block at the top of the page.
-    
-    Fields:
-    - `requirement`: **MANDATORY** or **RECOMMENDED**
-    - `type`: **EXTERNAL** or **INTERNAL**
-    - `category`: **CONFIGURATION**, **FEATURE**, or **MIGRATION**
-    - `additionalFiles`: number of supporting files, such as migration scripts 
-    
-    For example:
-      ```json
-      {
-        "metadata":{
-          "requirement": "RECOMMENDED",
-          "type": "INTERNAL",
-          "category": "CONFIGURATION",
-          "additionalFiles": 0
+    - Fields:
+        - `requirement`: **MANDATORY** or **RECOMMENDED**
+        - `type`: **EXTERNAL** or **INTERNAL**
+        - `category`: **CONFIGURATION**, **FEATURE**, or **MIGRATION**
+        - `additionalFiles`: number of supporting files, such as migration scripts 
+    - Example:
+        ```json
+        {
+          "metadata":{
+            "requirement": "RECOMMENDED",
+            "type": "INTERNAL",
+            "category": "CONFIGURATION",
+            "additionalFiles": 0
+          }
         }
-      }
-      ```
+        ```
 4. Within the same directory, include supporting files, such as migration scripts or configuration examples.
 
 ## Integration with Release Notes
