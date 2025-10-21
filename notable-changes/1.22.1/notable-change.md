@@ -1,6 +1,6 @@
 <!--
 {
-  "metadata":{
+  "metadata": {
     "requirement": "RECOMMENDED",
     "type": "INTERNAL",
     "category": "CONFIGURATION",

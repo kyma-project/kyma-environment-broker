@@ -1,6 +1,6 @@
 <!--
 {
-  "metadata":{
+  "metadata": {
     "requirement": "MANDATORY | RECOMMENDED",
     "type": "EXTERNAL | INTERNAL",
     "category": "CONFIGURATION | FEATURE | MIGRATION",

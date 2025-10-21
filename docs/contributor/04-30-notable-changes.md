@@ -29,7 +29,7 @@ When introducing a KEB change that requires operator action, perform the followi
     - Example:
         ```json
         {
-          "metadata":{
+          "metadata": {
             "requirement": "RECOMMENDED",
             "type": "INTERNAL",
             "category": "CONFIGURATION",
