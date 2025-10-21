@@ -369,11 +369,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
-          if gh api repos/${REPOSITORY}/contents/docs/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
+          if gh api repos/${REPOSITORY}/contents/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
             echo "Notable changes found."          
           
-            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/docs/notable-changes/${{ inputs.name }}"
-            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [docs/notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
+            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/notable-changes/${{ inputs.name }}"
+            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
           
             BODY=$(gh release view ${{ inputs.name }} --json body --jq .body)
             UPDATED_BODY="${BODY}${NOTABLE_CHANGES}"

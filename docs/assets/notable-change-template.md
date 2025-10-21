@@ -1,3 +1,14 @@
+<!--
+{
+  "metadata":{
+    "requirement": "MANDATORY | RECOMMENDED",
+    "type": "EXTERNAL | INTERNAL",
+    "category": "CONFIGURATION | FEATURE | MIGRATION",
+    "additionalFiles": 0
+  }
+}
+-->
+
 # Updating Kyma Environment Broker
 
 > [!NOTE] <!-- In case of a mandatory update that will cause unwanted/severe impact if not performed, use !WARNING instead of !NOTE.-->
