@@ -21,6 +21,9 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	cfg *Config, db storage.BrokerStorage,
 	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger) *process.Queue {
 
+	gardenerSubscriptionResource, err := cfg.GardenerSubscriptionResource()
+	panicOnError(err)
+
 	deprovisioningSteps := []struct {
 		disabled bool
 		step     process.Step
@@ -45,7 +48,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				deprovisioning.NewFreeSubscriptionStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace)),
+				deprovisioning.NewFreeSubscriptionStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace, gardenerSubscriptionResource)),
 		},
 		{
 			disabled: !cfg.ArchivingEnabled,

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -191,7 +192,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	eventBroker := event.NewPubSub(log)
 
-	createSubscriptions(t, gardenerClient)
+	createSubscriptions(t, gardenerClient, cfg.SubscriptionGardenerResource)
 	require.NoError(t, err)
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
@@ -264,7 +265,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	return ts
 }
 
-func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient) {
+func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
+	resource := gardener.SecretBindingResource
+	if strings.ToLower(bindingResource) == "credentialsbinding" {
+		resource = gardener.CredentialsBindingResource
+	}
 
 	for sbName, labels := range map[string]map[string]string{
 		"sb-azure": {
@@ -311,16 +316,29 @@ func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicCl
 		},
 	} {
 
-		sb := gardener.SecretBinding{}
-		sb.SetName(sbName)
-		sb.SetNamespace(gardenerKymaNamespace)
-		sb.SetLabels(labels)
-		sb.SetSecretRefName(sbName)
-		sb.SetSecretRefNamespace(gardenerKymaNamespace)
+		var unstructuredObj *unstructured.Unstructured
+		if resource == gardener.SecretBindingResource {
+			sb := &gardener.SecretBinding{}
+			sb.SetName(sbName)
+			sb.SetNamespace(gardenerKymaNamespace)
+			sb.SetLabels(labels)
+			sb.SetSecretRefName(sbName)
+			sb.SetSecretRefNamespace(gardenerKymaNamespace)
+			unstructuredObj = &sb.Unstructured
+			_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
+			require.NoError(t, err)
+		} else {
+			cb := &gardener.CredentialsBinding{}
+			cb.SetName(sbName)
+			cb.SetNamespace(gardenerKymaNamespace)
+			cb.SetLabels(labels)
+			cb.SetSecretRefName(sbName)
+			cb.SetSecretRefNamespace(gardenerKymaNamespace)
+			unstructuredObj = &cb.Unstructured
+			_, err := gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
+			require.NoError(t, err)
+		}
 
-		_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metav1.CreateOptions{})
-
-		require.NoError(t, err)
 	}
 }
 
