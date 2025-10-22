@@ -27,7 +27,7 @@ When introducing a KEB change that requires operator action, perform the followi
         - `category`: **CONFIGURATION**, **FEATURE**, or **MIGRATION**
         - `additionalFiles`: number of supporting files, such as migration scripts 
     - Example:
-      ```json
+      ```
       {
         "metadata": {
           "requirement": "RECOMMENDED",
