@@ -37,6 +37,7 @@ When introducing a KEB change that requires operator action, perform the followi
           }
         }
         ```
+
 4. Within the same directory, include supporting files, such as migration scripts or configuration examples.
 
 ## Integration with Release Notes
