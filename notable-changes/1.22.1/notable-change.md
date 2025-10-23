@@ -86,7 +86,8 @@ With the [Zones Discovery](https://github.com/kyma-project/kyma-environment-brok
     {"level":"WARN", "msg":"Provider aws has zones discovery enabled, but machine type g6 in region ap-south-1 is configured with 1 static zone(s), which will be ignored."}
     ```
 
-2. Verify successful provisioning by checking that new runtimes are assigned zones dynamically. Example log entries:
+2. Verify successful provisioning by checking that new runtimes are assigned zones dynamically. See example log entries:
+
     ```json lines
     {"level":"INFO", "msg":"Available zones for machine type m6i.large: [eu-central-1c eu-central-1b eu-central-1a]"}
     {"level":"INFO", "msg":"Zones for Kyma worker node pool: [eu-central-1c eu-central-1b eu-central-1a]"}
