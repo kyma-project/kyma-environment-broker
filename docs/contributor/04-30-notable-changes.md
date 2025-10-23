@@ -2,18 +2,21 @@
 
 Notable changes refer to Kyma Environment Broker (KEB) updates requiring operator action. These changes can be classified along the following dimensions:
 
-By requirement:
-- Mandatory — Operator action is required for proper functionality.
-- Recommended — Operator action is recommended but not strictly required.
+- Requirement:
 
-By type:
-- External — Customer-facing change that affects user experience.
-- Internal — Operator-facing change that impacts internal processes.
+  - Mandatory — Operator action is required for proper functionality.
+  - Recommended — Operator action is recommended but not strictly required.
 
-By category:
-- Configuration — Updates that require configuration adjustments.
-- Feature — Introduction of a new feature, operators must update the ERS registry accordingly.
-- Migration — Changes that involve data, infrastructure, or version migrations.
+- Type:
+
+  - External — Customer-facing change that affects user experience.
+  - Internal — Operator-facing change that impacts internal processes.
+  
+- Category:
+
+  - Configuration — Updates that require configuration adjustments.
+  - Feature — Operators must update the ERS registry accordingly after the introduction of a new feature.
+  - Migration — Changes that involve data, infrastructure, or version migrations.
 
 ## Creating a Notable Change
 
