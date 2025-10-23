@@ -18,7 +18,9 @@ With the [Zones Discovery](https://github.com/kyma-project/kyma-environment-brok
 1. Open the KEB configuration file.
 2. Locate the AWS provider configuration under `providersConfiguration.aws`.
 3. Replace the old static configuration with the new simplified format. See the following examples:
+
     - Static zones configuration
+    
         ```yaml
         providersConfiguration:
           aws:
@@ -45,7 +47,9 @@ With the [Zones Discovery](https://github.com/kyma-project/kyma-environment-brok
                 displayName: eu-west-1 (Europe, Ireland)
                 zones: [a]
         ```
+
     - Zones Discovery configuration
+    
         ```yaml
         providersConfiguration:
           aws:
@@ -70,6 +74,7 @@ With the [Zones Discovery](https://github.com/kyma-project/kyma-environment-brok
                 displayName: eu-west-1 (Europe, Ireland)
             zonesDiscovery: true
         ```
+
 4. Save and apply the updated configuration.
 
 ## Post-Update Steps
