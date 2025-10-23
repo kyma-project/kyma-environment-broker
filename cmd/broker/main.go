@@ -138,7 +138,7 @@ type Config struct {
 	// todo: remove after all SecretBinding are migrated to CredentialBinding resources
 	HoldHapSteps bool
 
-	MachinesAvailability bool
+	MachinesAvailabilityEndpoint bool
 }
 
 type ProfilerConfig struct {
@@ -374,7 +374,7 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
-	if cfg.MachinesAvailability {
+	if cfg.MachinesAvailabilityEndpoint {
 		machinesAvailability := machinesavailability.NewHandler(providerSpec, rulesService, gardenerClient, awsClientFactory, log)
 		machinesAvailability.AttachRoutes(router)
 	}
