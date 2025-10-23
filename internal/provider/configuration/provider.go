@@ -228,7 +228,6 @@ func (p *ProviderSpec) MachineTypes(cp runtime.CloudProvider) []string {
 		machineTypes = append(machineTypes, machineType)
 	}
 
-	sort.Strings(machineTypes)
 	return machineTypes
 }
 

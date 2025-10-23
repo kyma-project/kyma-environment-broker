@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -86,9 +87,22 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 		}
 
 		machineTypes := h.providerSpec.MachineTypes(provider)
+		machineFamilies := make(map[string]string)
 		for _, machineType := range machineTypes {
+			var family string
+			if provider == runtime.AWS {
+				parts := strings.SplitN(machineType, ".", 2)
+				family = parts[0]
+			} else {
+				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("%s not supported", provider))
+				return
+			}
+			machineFamilies[family] = machineType
+		}
+
+		for machineFamily, machineType := range machineFamilies {
 			machineTypeEntry := MachineType{
-				Type:    machineType,
+				Type:    machineFamily,
 				Regions: []Region{},
 			}
 
@@ -119,6 +133,10 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 
 			providerEntry.MachineTypes = append(providerEntry.MachineTypes, machineTypeEntry)
 		}
+
+		sort.Slice(providerEntry.MachineTypes, func(i, j int) bool {
+			return providerEntry.MachineTypes[i].Type < providerEntry.MachineTypes[j].Type
+		})
 
 		providersData.Providers = append(providersData.Providers, providerEntry)
 	}

@@ -298,7 +298,7 @@ aws:
 	// when / then
 
 	machineTypes := providerSpec.MachineTypes(runtime.AWS)
-	assert.Equal(t, []string{"g4dn.xlarge", "g6.xlarge", "m6i.large"}, machineTypes)
+	assert.ElementsMatch(t, []string{"m6i.large", "g6.xlarge", "g4dn.xlarge"}, machineTypes)
 }
 
 type captureWriter struct {
