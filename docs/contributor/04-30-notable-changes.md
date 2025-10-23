@@ -46,7 +46,7 @@ When introducing a KEB change that requires operator action, perform the followi
        ```
 
     2. Clearly describe the impact, required actions, and any relevant details.
-4. Within the same directory, include supporting files, such as migration scripts or configuration examples.
+3. Within the same directory, include supporting files, such as migration scripts or configuration examples.
 
 ## Integration with Release Notes
 
