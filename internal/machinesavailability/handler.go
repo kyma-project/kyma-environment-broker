@@ -22,8 +22,8 @@ type ProvidersData struct {
 }
 
 type Provider struct {
-	Name         string        `json:"name"`
-	MachineTypes []MachineType `json:"machine_types"`
+	Name         runtime.CloudProvider `json:"name"`
+	MachineTypes []MachineType         `json:"machine_types"`
 }
 
 type MachineType struct {
@@ -70,7 +70,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 
 	for _, provider := range supportedProviders {
 		providerEntry := Provider{
-			Name:         string(provider),
+			Name:         provider,
 			MachineTypes: []MachineType{},
 		}
 
