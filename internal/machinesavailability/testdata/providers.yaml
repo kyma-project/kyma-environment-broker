@@ -1,0 +1,14 @@
+aws:
+  regionsSupportingMachine:
+    "g6":
+      "eu-central-1":
+  machines:
+    "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
+    "c7i.large": "c7i.large (2vCPU, 4GB RAM)"
+    "g6.xlarge": "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+  regions:
+    eu-central-1:
+      displayName: "eu-central-1 (Europe, Frankfurt)"
+    eu-west-2:
+      displayName: "eu-west-2 (Europe, London)"
+  zonesDiscovery: true

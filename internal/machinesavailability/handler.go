@@ -1,0 +1,165 @@
+package machinesavailability
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
+)
+
+type ProvidersData struct {
+	Providers []Provider `json:"providers"`
+}
+
+type Provider struct {
+	Name         string        `json:"name"`
+	MachineTypes []MachineType `json:"machine_types"`
+}
+
+type MachineType struct {
+	Type    string   `json:"type"`
+	Regions []Region `json:"regions"`
+}
+
+type Region struct {
+	Region           string `json:"region"`
+	HighAvailability bool   `json:"high_availability"`
+}
+
+type Handler struct {
+	providerSpec   *configuration.ProviderSpec
+	rulesService   *rules.RulesService
+	gardenerClient *gardener.Client
+	clientFactory  aws.ClientFactory
+	logger         *slog.Logger
+}
+
+func NewHandler(
+	providerSpec *configuration.ProviderSpec,
+	rulesService *rules.RulesService,
+	gardenerClient *gardener.Client,
+	clientFactory aws.ClientFactory,
+	logger *slog.Logger,
+) *Handler {
+	return &Handler{
+		providerSpec:   providerSpec,
+		rulesService:   rulesService,
+		gardenerClient: gardenerClient,
+		clientFactory:  clientFactory,
+		logger:         logger.With("service", "MachinesAvailabilityHandler"),
+	}
+}
+
+func (h *Handler) AttachRoutes(router *httputil.Router) {
+	router.HandleFunc("/oauth/machines_availability", h.getMachinesAvailability)
+}
+
+func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Request) {
+	supportedProviders := []runtime.CloudProvider{runtime.AWS}
+	var providersData ProvidersData
+
+	for _, provider := range supportedProviders {
+		providerEntry := Provider{
+			Name:         string(provider),
+			MachineTypes: []MachineType{},
+		}
+
+		regionSupportingMachine, err := h.providerSpec.RegionSupportingMachine(string(provider))
+		if err != nil {
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		accessKeyID, secretAccessKey, err := h.clientCredentials(strings.ToLower(string(provider)))
+		if err != nil {
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		machineTypes := h.providerSpec.MachineTypes(provider)
+		for _, machineType := range machineTypes {
+			machineTypeEntry := MachineType{
+				Type:    machineType,
+				Regions: []Region{},
+			}
+
+			regions := regionSupportingMachine.SupportedRegions(machineType)
+			if len(regions) == 0 {
+				regions = h.providerSpec.Regions(provider)
+			}
+
+			for _, region := range regions {
+				client, err := h.clientFactory.New(context.Background(), accessKeyID, secretAccessKey, region)
+				if err != nil {
+					httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+					return
+				}
+
+				count, err := client.AvailableZonesCount(context.Background(), machineType)
+				if err != nil {
+					httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+					return
+				}
+
+				highAvailability := count >= 3
+				machineTypeEntry.Regions = append(machineTypeEntry.Regions, Region{
+					Region:           region,
+					HighAvailability: highAvailability,
+				})
+			}
+
+			providerEntry.MachineTypes = append(providerEntry.MachineTypes, machineTypeEntry)
+		}
+
+		providersData.Providers = append(providersData.Providers, providerEntry)
+	}
+
+	httputil.WriteResponse(w, http.StatusOK, providersData)
+}
+
+func (h *Handler) clientCredentials(provider string) (string, string, error) {
+	attr := &rules.ProvisioningAttributes{
+		Plan:        provider,
+		Hyperscaler: provider,
+	}
+
+	parsedRule, found := h.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
+	if !found {
+		return "", "", fmt.Errorf("no matching rule for provisioning attributes %q", attr)
+	}
+	h.logger.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
+
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
+	labelSelector := labelSelectorBuilder.BuildAnySubscription()
+
+	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	secretBindings, err := h.gardenerClient.GetSecretBindings(labelSelector)
+	if err != nil {
+		return "", "", fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+	}
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return "", "", fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+	}
+	secretBinding := gardener.NewSecretBinding(secretBindings.Items[0])
+
+	h.logger.Info(fmt.Sprintf("getting subscription secret with name %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()))
+	secret, err := h.gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	if err != nil {
+		return "", "", fmt.Errorf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	}
+
+	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to extract AWS credentials")
+	}
+	return accessKeyID, secretAccessKey, nil
+}
