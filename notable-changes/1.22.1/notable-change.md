@@ -79,11 +79,13 @@ With the [Zones Discovery](https://github.com/kyma-project/kyma-environment-brok
 
 ## Post-Update Steps
 
-1. Monitor the KEB logs for any warnings about static zone configuration being ignored. Example log entries:
+1. Monitor the KEB logs for any warnings about static zone configuration being ignored. See example log entries:
+
     ```json lines
     {"level":"WARN", "msg":"Provider aws has zones discovery enabled, but region us-west-2 is configured with 4 static zone(s), which will be ignored."}
     {"level":"WARN", "msg":"Provider aws has zones discovery enabled, but machine type g6 in region ap-south-1 is configured with 1 static zone(s), which will be ignored."}
     ```
+
 2. Verify successful provisioning by checking that new runtimes are assigned zones dynamically. Example log entries:
     ```json lines
     {"level":"INFO", "msg":"Available zones for machine type m6i.large: [eu-central-1c eu-central-1b eu-central-1a]"}
