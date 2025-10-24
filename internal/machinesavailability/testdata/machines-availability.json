@@ -17,6 +17,19 @@
           ]
         },
         {
+          "name":"g4dn",
+          "regions":[
+            {
+              "name":"eu-central-1",
+              "high_availability":false
+            },
+            {
+              "name":"eu-west-2",
+              "high_availability":false
+            }
+          ]
+        },
+        {
           "name":"g6",
           "regions":[
             {

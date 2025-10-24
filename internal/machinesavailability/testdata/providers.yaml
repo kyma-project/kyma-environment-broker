@@ -9,6 +9,8 @@ aws:
     "c7i.xlarge": "c7i.xlarge (4vCPU, 8GB RAM)"
     "g6.xlarge": "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*"
     "g6.2xlarge": "g6.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
+    "g4dn.xlarge": "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+    "g4dn.2xlarge": "g4dn.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
   regions:
     eu-central-1:
       displayName: "eu-central-1 (Europe, Frankfurt)"

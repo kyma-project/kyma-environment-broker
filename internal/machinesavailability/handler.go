@@ -17,6 +17,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 )
 
+const (
+	machinesAvailabilityPath  = "/oauth/machines_availability"
+	highAvailabilityThreshold = 3
+)
+
 type ProvidersData struct {
 	Providers []Provider `json:"providers"`
 }
@@ -61,7 +66,7 @@ func NewHandler(
 }
 
 func (h *Handler) AttachRoutes(router *httputil.Router) {
-	router.HandleFunc("/oauth/machines_availability", h.getMachinesAvailability)
+	router.HandleFunc(machinesAvailabilityPath, h.getMachinesAvailability)
 }
 
 func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Request) {
@@ -91,6 +96,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 		for _, machineType := range machineTypes {
 			var family string
 			if provider == runtime.AWS {
+				// For AWS, machine types follow the pattern "<family>.<size>".
 				parts := strings.SplitN(machineType, ".", 2)
 				family = parts[0]
 			} else {
@@ -124,7 +130,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 					return
 				}
 
-				highAvailability := count >= 3
+				highAvailability := count >= highAvailabilityThreshold
 				machineTypeEntry.Regions = append(machineTypeEntry.Regions, Region{
 					Name:             region,
 					HighAvailability: highAvailability,
@@ -145,29 +151,15 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *Handler) clientCredentials(provider string) (string, string, error) {
-	attr := &rules.ProvisioningAttributes{
-		Plan:        provider,
-		Hyperscaler: provider,
-	}
-
-	parsedRule, found := h.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
-	if !found {
-		return "", "", fmt.Errorf("no matching rule for provisioning attributes %q", attr)
-	}
-	h.logger.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
-
-	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
-	labelSelector := labelSelectorBuilder.BuildAnySubscription()
-
-	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
-	secretBindings, err := h.gardenerClient.GetSecretBindings(labelSelector)
+	matchedRule, err := h.matchRule(provider)
 	if err != nil {
-		return "", "", fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+		return "", "", err
 	}
-	if secretBindings == nil || len(secretBindings.Items) == 0 {
-		return "", "", fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+
+	secretBinding, err := h.getSecretBindingForRule(matchedRule)
+	if err != nil {
+		return "", "", err
 	}
-	secretBinding := gardener.NewSecretBinding(secretBindings.Items[0])
 
 	h.logger.Info(fmt.Sprintf("getting subscription secret with name %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName()))
 	secret, err := h.gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
@@ -180,4 +172,35 @@ func (h *Handler) clientCredentials(provider string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to extract AWS credentials")
 	}
 	return accessKeyID, secretAccessKey, nil
+}
+
+func (h *Handler) matchRule(provider string) (rules.Result, error) {
+	attr := &rules.ProvisioningAttributes{
+		Plan:        provider,
+		Hyperscaler: provider,
+	}
+
+	matchedRule, found := h.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
+	if !found {
+		return rules.Result{}, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
+	}
+
+	h.logger.Info(fmt.Sprintf("matched rule: %q", matchedRule.Rule()))
+	return matchedRule, nil
+}
+
+func (h *Handler) getSecretBindingForRule(matchedRule rules.Result) (*gardener.SecretBinding, error) {
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(matchedRule)
+	labelSelector := labelSelectorBuilder.BuildAnySubscription()
+
+	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	secretBindings, err := h.gardenerClient.GetSecretBindings(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+	}
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return nil, fmt.Errorf("no secret bindings found for selector %q", labelSelector)
+	}
+
+	return gardener.NewSecretBinding(secretBindings.Items[0]), nil
 }
