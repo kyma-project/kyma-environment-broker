@@ -27,12 +27,12 @@ type Provider struct {
 }
 
 type MachineType struct {
-	Type    string   `json:"type"`
+	Name    string   `json:"name"`
 	Regions []Region `json:"regions"`
 }
 
 type Region struct {
-	Region           string `json:"region"`
+	Name             string `json:"name"`
 	HighAvailability bool   `json:"high_availability"`
 }
 
@@ -102,7 +102,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 
 		for machineFamily, machineType := range machineFamilies {
 			machineTypeEntry := MachineType{
-				Type:    machineFamily,
+				Name:    machineFamily,
 				Regions: []Region{},
 			}
 
@@ -126,7 +126,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 
 				highAvailability := count >= 3
 				machineTypeEntry.Regions = append(machineTypeEntry.Regions, Region{
-					Region:           region,
+					Name:             region,
 					HighAvailability: highAvailability,
 				})
 			}
@@ -135,7 +135,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 		}
 
 		sort.Slice(providerEntry.MachineTypes, func(i, j int) bool {
-			return providerEntry.MachineTypes[i].Type < providerEntry.MachineTypes[j].Type
+			return providerEntry.MachineTypes[i].Name < providerEntry.MachineTypes[j].Name
 		})
 
 		providersData.Providers = append(providersData.Providers, providerEntry)

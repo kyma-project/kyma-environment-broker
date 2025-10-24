@@ -4,36 +4,36 @@
       "name":"AWS",
       "machine_types":[
         {
-          "type":"c7i",
+          "name":"c7i",
           "regions":[
             {
-              "region":"eu-central-1",
+              "name":"eu-central-1",
               "high_availability":false
             },
             {
-              "region":"eu-west-2",
+              "name":"eu-west-2",
               "high_availability":false
             }
           ]
         },
         {
-          "type":"g6",
+          "name":"g6",
           "regions":[
             {
-              "region":"eu-central-1",
+              "name":"eu-central-1",
               "high_availability":true
             }
           ]
         },
         {
-          "type":"m6i",
+          "name":"m6i",
           "regions":[
             {
-              "region":"eu-central-1",
+              "name":"eu-central-1",
               "high_availability":true
             },
             {
-              "region":"eu-west-2",
+              "name":"eu-west-2",
               "high_availability":true
             }
           ]
