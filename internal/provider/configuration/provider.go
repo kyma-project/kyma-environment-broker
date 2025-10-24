@@ -6,11 +6,12 @@ import (
 	"log/slog"
 	"math/rand"
 	"os"
+	"sort"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 
-	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"gopkg.in/yaml.v2"
 )
 
@@ -214,4 +215,33 @@ func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.ZonesDiscovery
+}
+
+func (p *ProviderSpec) MachineTypes(cp runtime.CloudProvider) []string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return []string{}
+	}
+
+	machineTypes := make([]string, 0, len(providerData.MachineDisplayNames))
+	for machineType := range providerData.MachineDisplayNames {
+		machineTypes = append(machineTypes, machineType)
+	}
+
+	return machineTypes
+}
+
+func (p *ProviderSpec) Regions(cp runtime.CloudProvider) []string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return []string{}
+	}
+
+	regions := make([]string, 0, len(providerData.Regions))
+	for region := range providerData.Regions {
+		regions = append(regions, region)
+	}
+
+	sort.Strings(regions)
+	return regions
 }

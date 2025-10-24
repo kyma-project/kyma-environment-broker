@@ -219,6 +219,8 @@ spec:
               value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_KYMA_DASHBOARD_CONFIG_LANDSCAPE_URL
               value: "{{ .Values.kymaDashboardConfig.landscapeURL }}"
+            - name: APP_MACHINES_AVAILABILITY_ENDPOINT
+              value: "{{ .Values.machinesAvailabilityEndpoint }}"
             - name: APP_METRICSV2_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
             - name: APP_METRICSV2_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD

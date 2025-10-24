@@ -29,6 +29,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -136,6 +137,8 @@ type Config struct {
 
 	// todo: remove after all SecretBinding are migrated to CredentialBinding resources
 	HoldHapSteps bool
+
+	MachinesAvailabilityEndpoint bool
 }
 
 type ProfilerConfig struct {
@@ -370,6 +373,11 @@ func main() {
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
+
+	if cfg.MachinesAvailabilityEndpoint {
+		machinesAvailability := machinesavailability.NewHandler(providerSpec, rulesService, gardenerClient, awsClientFactory, log)
+		machinesAvailability.AttachRoutes(router)
+	}
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)

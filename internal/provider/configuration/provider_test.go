@@ -266,6 +266,41 @@ func TestProviderSpec_ZonesDiscovery(t *testing.T) {
 	}
 }
 
+func TestProviderSpec_Regions(t *testing.T) {
+	// given
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+    regions:
+      eu-central-1:
+        displayName: "eu-central-1 (Europe, Frankfurt)"
+      eu-west-2:
+        displayName: "eu-west-2 (Europe, London)"
+`))
+	require.NoError(t, err)
+
+	// when / then
+
+	regions := providerSpec.Regions(runtime.AWS)
+	assert.Equal(t, []string{"eu-central-1", "eu-west-2"}, regions)
+}
+
+func TestProviderSpec_MachineTypes(t *testing.T) {
+	// given
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  machines:
+    "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
+    "g6.xlarge": "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+    "g4dn.xlarge": "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+`))
+	require.NoError(t, err)
+
+	// when / then
+
+	machineTypes := providerSpec.MachineTypes(runtime.AWS)
+	assert.ElementsMatch(t, []string{"m6i.large", "g6.xlarge", "g4dn.xlarge"}, machineTypes)
+}
+
 type captureWriter struct {
 	buf *bytes.Buffer
 }
