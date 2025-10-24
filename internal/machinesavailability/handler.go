@@ -94,7 +94,7 @@ func (h *Handler) getMachinesAvailability(w http.ResponseWriter, req *http.Reque
 				parts := strings.SplitN(machineType, ".", 2)
 				family = parts[0]
 			} else {
-				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("%s not supported", provider))
+				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("%s provider not supported", provider))
 				return
 			}
 			machineFamilies[family] = machineType
