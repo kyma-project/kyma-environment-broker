@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	machinesAvailabilityPath  = "/oauth/machines_availability"
+	machinesAvailabilityPath  = "/oauth/v2/machines_availability"
 	highAvailabilityThreshold = 3
 )
 

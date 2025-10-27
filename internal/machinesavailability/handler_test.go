@@ -43,7 +43,7 @@ func TestMachinesAvailabilityHandler(t *testing.T) {
 	router := httputil.NewRouter()
 	handler.AttachRoutes(router)
 
-	req := httptest.NewRequest(http.MethodGet, "/oauth/machines_availability", nil)
+	req := httptest.NewRequest(http.MethodGet, "/oauth/v2/machines_availability", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	require.Equal(t, http.StatusOK, resp.Code)
