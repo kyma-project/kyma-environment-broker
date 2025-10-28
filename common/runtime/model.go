@@ -84,6 +84,7 @@ type ProvisioningParametersDTO struct {
 	TargetSecret          *string  `json:"targetSecret,omitempty"`
 	MachineType           *string  `json:"machineType,omitempty"`
 	Region                *string  `json:"region,omitempty"`
+	Purpose               *string  `json:"purpose,omitempty"`
 	Zones                 []string `json:"zones,omitempty"`
 	RuntimeAdministrators []string `json:"administrators,omitempty"`
 	// Provider - used in Trial plan to determine which cloud provider to use during provisioning
