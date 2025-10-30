@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,6 +10,9 @@ import (
 	"runtime/pprof"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
