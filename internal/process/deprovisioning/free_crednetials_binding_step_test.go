@@ -2,8 +2,9 @@ package deprovisioning
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
