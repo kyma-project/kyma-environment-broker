@@ -1,6 +1,6 @@
 # Machines Availability Endpoint
 
-The Machines Availability endpoint provides information about which machine-type families (e.g., `m6i`, `c7i`, or `g6`) can be provisioned in specific regions, 
+The Machines Availability endpoint provides information about which machine-type families (for example, `m6i`, `c7i`, or `g6`) can be provisioned in specific regions, 
 and whether those machine types support high availability (HA) in each region.
 
 High availability is determined by checking how many availability zones in a given region support the specified machine type. 
