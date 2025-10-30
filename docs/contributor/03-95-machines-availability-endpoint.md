@@ -29,7 +29,7 @@ No request body is required.
 The response contains a list of providers. For each provider, it lists the following data:
 - **machine_types** - machine-type families (for example, `m6i`, `c7i`, or `g6`)
 - **regions** - supported regions for that machine type
-- `high_availability` - whether enough availability zones exist in the region to maintain HA.
+- **high_availability** - whether enough availability zones exist in the region to maintain HA
 
 ### Response Body
 
