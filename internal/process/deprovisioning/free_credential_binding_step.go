@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type FreeSubscriptionStep struct {
+type FreeCredentialsBidningStep struct {
 	operationManager *process.OperationManager
 	instanceStorage  storage.Instances
 	operationStorage storage.Operations
@@ -24,12 +24,12 @@ type FreeSubscriptionStep struct {
 	gardenerNS     string
 }
 
-const freeSubscriptionStepName = "Free_Subscription_Step"
+const freeCredentialsBindingStepName = "Free_Credentials_Binding_Step"
 
-var _ process.Step = &FreeSubscriptionStep{}
+var _ process.Step = &FreeCredentialsBidningStep{}
 
-func NewFreeSubscriptionStep(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string) *FreeSubscriptionStep {
-	return &FreeSubscriptionStep{
+func NewFreeCredentialsBindingStep(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string) *FreeCredentialsBidningStep {
+	return &FreeCredentialsBidningStep{
 		operationManager: process.NewOperationManager(os, freeSubscriptionStepName, kebErr.KEBDependency),
 		instanceStorage:  is,
 		operationStorage: os,
@@ -38,47 +38,47 @@ func NewFreeSubscriptionStep(os storage.Operations, is storage.Instances, garden
 	}
 }
 
-func (s *FreeSubscriptionStep) Name() string {
-	return freeSubscriptionStepName
+func (s *FreeCredentialsBidningStep) Name() string {
+	return freeCredentialsBindingStepName
 }
 
-func (s *FreeSubscriptionStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
+func (s *FreeCredentialsBidningStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	// The flow is:
-	// - find the secret binding
+	// - find the credentials binding
 	// - check if the subscription is shared or not - if yes - do nothing
 	// - check if the subscription is internal or not - if yes - do nothing
 	// - check if the subscription is dirty or not - if yes - do nothing
 	// - if not used by other instances, free the subscription
 
-	secretBindingName, err := s.findSecretBindingName(operation, logger)
+	credentialsBindingName, err := s.findCredentialsBindingName(operation, logger)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Failed to find the subscription secret name: %s", err.Error()))
 		return s.operationManager.RetryOperation(operation, "finding the subscription secret name", err, 10*time.Second, time.Minute, logger)
 	}
-	if secretBindingName == "" {
+	if credentialsBindingName == "" {
 		logger.Info("Subscription not assigned, nothing to release")
 		return operation, 0, nil
 	}
-	secretBinding, err := s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerNS).Get(context.Background(), secretBindingName, metav1.GetOptions{})
+	credentialsBinding, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(s.gardenerNS).Get(context.Background(), credentialsBindingName, metav1.GetOptions{})
 	if err != nil {
-		msg := fmt.Sprintf("getting secret binding %s in namespace %s", secretBindingName, s.gardenerNS)
+		msg := fmt.Sprintf("getting secret binding %s in namespace %s", credentialsBindingName, s.gardenerNS)
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, logger)
 	}
 
 	// check if shared
-	if secretBinding.GetLabels()["shared"] == "true" {
+	if credentialsBinding.GetLabels()["shared"] == "true" {
 		logger.Info("Subscription is shared, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if internal
-	if secretBinding.GetLabels()["internal"] == "true" {
+	if credentialsBinding.GetLabels()["internal"] == "true" {
 		logger.Info("Subscription is internal, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if dirty
-	if secretBinding.GetLabels()["dirty"] == "true" {
+	if credentialsBinding.GetLabels()["dirty"] == "true" {
 		logger.Info("Subscription is already marked as dirty, nothing to free")
 		return operation, 0, nil
 	}
@@ -91,31 +91,31 @@ func (s *FreeSubscriptionStep) Run(operation internal.Operation, logger *slog.Lo
 
 	for _, shoot := range shootlist.Items {
 		sh := gardener.Shoot{Unstructured: shoot}
-		if sh.GetSpecSecretBindingName() == secretBindingName {
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
 			logger.Info(fmt.Sprintf("Subscription is still used by shoot %s, nothing to free", sh.GetName()))
 			return operation, 0, nil
 		}
 	}
 
 	logger.Info("Subscription is not used by any shoot, marking as dirty")
-	labels := secretBinding.GetLabels()
+	labels := credentialsBinding.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	labels["dirty"] = "true"
-	secretBinding.SetLabels(labels)
+	credentialsBinding.SetLabels(labels)
 
-	_, err = s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerNS).Update(context.Background(), secretBinding, metav1.UpdateOptions{})
+	_, err = s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(s.gardenerNS).Update(context.Background(), credentialsBinding, metav1.UpdateOptions{})
 	if err != nil {
-		msg := fmt.Sprintf("marking secret binding %s as dirty failed: %s", secretBinding.GetName(), err.Error())
+		msg := fmt.Sprintf("marking secret binding %s as dirty failed: %s", credentialsBinding.GetName(), err.Error())
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, logger)
 	}
-	logger.Info(fmt.Sprintf("Subscription released, secret binding name: %s", secretBinding.GetName()))
+	logger.Info(fmt.Sprintf("Subscription released, credentialsBindingName binding name: %s", credentialsBinding.GetName()))
 
 	return operation, 0, nil
 }
 
-func (s *FreeSubscriptionStep) findSecretBindingName(operation internal.Operation, logger *slog.Logger) (string, error) {
+func (s *FreeCredentialsBidningStep) findCredentialsBindingName(operation internal.Operation, logger *slog.Logger) (string, error) {
 	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
 		return "", err

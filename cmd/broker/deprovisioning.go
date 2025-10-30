@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -21,8 +22,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	cfg *Config, db storage.BrokerStorage,
 	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger) *process.Queue {
 
-	gardenerSubscriptionResource, err := cfg.GardenerSubscriptionResource()
-	panicOnError(err)
+	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -47,8 +47,14 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
+			disabled: useCredentialsBinding,
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				deprovisioning.NewFreeSubscriptionStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace, gardenerSubscriptionResource)),
+				deprovisioning.NewFreeSubscriptionStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace)),
+		},
+		{
+			disabled: !useCredentialsBinding,
+			step: steps.NewHolderStep(cfg.HoldHapSteps,
+				deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace)),
 		},
 		{
 			disabled: !cfg.ArchivingEnabled,
