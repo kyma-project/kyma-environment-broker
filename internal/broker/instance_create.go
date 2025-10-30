@@ -27,7 +27,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -477,8 +476,6 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		l.Info("EU Access restricted instance creation")
 	}
 
-	parameters.LicenceType = b.determineLicenceType(details.PlanID)
-
 	if IsOwnClusterPlan(details.PlanID) {
 		decodedKubeconfig, err := base64.StdEncoding.DecodeString(parameters.Kubeconfig)
 		if err != nil {
@@ -770,7 +767,6 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
-	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 	return parameters, nil
 }
 
@@ -797,14 +793,6 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
-}
-
-func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
-	if planId == AzureLitePlanID || IsTrialPlan(planId) {
-		return ptr.String(internal.LicenceTypeLite)
-	}
-
-	return nil
 }
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {

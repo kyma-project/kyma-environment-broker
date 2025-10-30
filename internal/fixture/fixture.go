@@ -96,7 +96,6 @@ func FixProvisioningParameters(id string) internal.ProvisioningParameters {
 		MachineType:      ptr.String("Standard_D8_v3"),
 		Region:           ptr.String(Region),
 		Purpose:          ptr.String("Purpose"),
-		LicenceType:      ptr.String("LicenceType"),
 		Zones:            []string{"1"},
 		IngressFiltering: ptr.Bool(true),
 		AutoScalerParameters: pkg.AutoScalerParameters{
