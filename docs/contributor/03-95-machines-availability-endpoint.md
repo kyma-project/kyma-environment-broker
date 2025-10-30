@@ -26,7 +26,7 @@ No request body is required.
 
 ## Response Structure
 
-The response contains a list of providers. For each provider, it lists:
+The response contains a list of providers. For each provider, it lists the following data:
 - `machine_types` - machine-type families (e.g., `m6i`, `c7i`, or `g6`),
 - `regions` - supported regions for that machine type,
 - `high_availability` - whether enough availability zones exist in the region to maintain HA.
