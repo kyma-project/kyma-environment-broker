@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func TestMachinesAvailabilityHandler(t *testing.T) {
+func TestMachinesAvailabilityCBHandler(t *testing.T) {
 	providerSpec, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
 
