@@ -28,7 +28,7 @@ There is also an experimental plan:
 > [!WARNING]
 > The experimental plan may fail to work or be removed.
 
-There is also a plan that is disabled by deafault:
+The `alicloud` plan is disabled by default and is not intended for use.
 
 | Plan name | Plan ID                                | Description                                    |
 |-----------|----------------------------------------|------------------------------------------------|
