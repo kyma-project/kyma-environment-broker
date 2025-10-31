@@ -33,6 +33,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"

@@ -15,6 +15,8 @@ RUN mkdir /user && \
     echo 'appuser:x:2000:' > /user/group
 
 ARG TARGETOS TARGETARCH
+ARG GOFIPS140
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
     CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/kyma-env-broker ./cmd/broker/
