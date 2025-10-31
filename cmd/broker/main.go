@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/fips140"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -234,6 +235,10 @@ func main() {
 
 	logConfiguration(log, cfg)
 
+	//FIPS mode check - to be removed
+	if fips140.Enabled() {
+		log.Info("FIPS mode is enabled")
+	}
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, log)
