@@ -145,6 +145,7 @@
 | trialRegionsMapping | Determines a Kyma region for a trial environment based on the requested platform region. | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |
 | osbUpdateProcessingEnabled | If true, the broker processes update requests for service instances. | `true` |
 | holdHAPSteps | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). | `false` |
+| subscriptionGardenerResource | Name of the Gardener resource, which the broker uses to look up for hyperscaler subscription. Allowed values: SecretBinding or CredentialsBinding. | `SecretBinding` |
 | machinesAvailabilityEndpoint | If true, the broker exposes the API endpoint that returns the availability of machine types. | `False` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |

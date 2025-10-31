@@ -30,4 +30,6 @@ func extendScheme() {
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "ShootList"}, &unstructured.UnstructuredList{})
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}, &unstructured.Unstructured{})
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBindingList"}, &unstructured.UnstructuredList{})
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "security.gardener.cloud", Version: "v1alpha1", Kind: "CredentialsBinding"}, &unstructured.Unstructured{})
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "security.gardener.cloud", Version: "v1alpha1", Kind: "CredentialsBindingList"}, &unstructured.UnstructuredList{})
 }

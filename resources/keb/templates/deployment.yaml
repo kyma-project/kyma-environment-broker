@@ -277,6 +277,8 @@ spec:
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
+            - name: APP_SUBSCRIPTION_GARDENER_RESOURCE
+              value: "{{ .Values.subscriptionGardenerResource }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: {{ .Values.configPaths.trialRegionMapping }}
             - name: APP_UPDATE_MAX_STEP_PROCESSING_TIME

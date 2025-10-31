@@ -210,6 +210,48 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1", "kyma-project.io/provider": "AWS"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
+
+	r := suite.CallAPI("GET", "oauth/v2/machines_availability", "")
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+}
+
+func TestProvisioning_CredentialsBindings(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.SubscriptionGardenerResource = "CredentialsBinding"
+	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1", "kyma-project.io/provider": "AWS"})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
+
+	r := suite.CallAPI("GET", "oauth/v2/machines_availability", "")
+	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestProvisioning_ColocateControlPlane(t *testing.T) {
