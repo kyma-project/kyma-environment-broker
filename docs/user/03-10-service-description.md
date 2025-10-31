@@ -25,11 +25,11 @@ There is also an experimental plan:
 |-----------|----------------------------------------|-------------------------------------------------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-There is also a plan that is available only for internal purposes and is not available for production:
+There is also a plan that is disabled by deafault:
 
-| Plan name | Plan ID                                | Description                                                          |
-|-----------|----------------------------------------|----------------------------------------------------------------------|
-| `alicloud`| `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster - disabled by default. |
+| Plan name | Plan ID                                | Description                                    |
+|-----------|----------------------------------------|------------------------------------------------|
+| `alicloud`| `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster. |
 
 > [!WARNING]
 > The experimental plan may fail to work or be removed.
