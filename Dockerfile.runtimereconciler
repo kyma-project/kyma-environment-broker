@@ -13,10 +13,11 @@ COPY internal internal
 ARG TARGETOS TARGETARCH
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/runtime-reconciler cmd/runtimereconciler/main.go
+    CGO_ENABLED=0 GODEBUG=fips140=on GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/runtime-reconciler cmd/runtimereconciler/main.go
 
 # Final image
 FROM scratch
+ENV GODEBUG=fips140=on,tlsmlkem=0
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=build /bin/runtime-reconciler /bin/runtime-reconciler
