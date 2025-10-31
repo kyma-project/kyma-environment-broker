@@ -1,0 +1,12 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: gcp
+  name: gcp
+  namespace: garden-kyma-dev
+provider:
+  type: gcp
+credentialsRef:
+  name: gcp-secret
+  namespace: garden-kyma-dev
