@@ -27,13 +27,13 @@ There is also an experimental plan:
 
 There is also a plan that is available only for internal purposes and is not available for production:
 
-| Plan name | Plan ID                                | Description                                                    |
-|-----------|----------------------------------------|----------------------------------------------------------------|
-| `alicloud`| `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster - internal only. |
+| Plan name | Plan ID                                | Description                                                          |
+|-----------|----------------------------------------|----------------------------------------------------------------------|
+| `alicloud`| `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster - disabled by default. |
 
 > [!WARNING]
 > The experimental plan may fail to work or be removed.
-> Internal plan is not intended to be used.
+> Alicloud plan is not intended to be used.
 
 ## Provisioning Parameters
 
