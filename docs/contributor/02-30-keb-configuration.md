@@ -52,7 +52,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster. |
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup. |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener. |
-| **APP_SUBSCRIPTION_&#x200b;GARDENER_RESOURCE** | <code>SecretBinding</code> | Name of the Gardener resource, which the broker uses to look up for hyperscaler subscription. Allowed values: SecretBinding or CredentialsBinding. |
 | **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |
 | **APP_HOLD_HAP_STEPS** | <code>false</code> | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". |
@@ -91,6 +90,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_DELETION** | <code>60m</code> | Maximum time to wait for a runtime resource to be deleted before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_UPDATE** | <code>180m</code> | Maximum time to wait for a runtime resource to be updated before considering the step as failed. |
+| **APP_SUBSCRIPTION_&#x200b;GARDENER_RESOURCE** | <code>SecretBinding</code> | Name of the Gardener resource, which the broker uses to look up for hyperscaler subscription. Allowed values: SecretBinding or CredentialsBinding. |
 | **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | <code>/config/trialRegionMapping.yaml</code> | Path to the region mapping for trial environments. |
 | **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue. |
 | **APP_UPDATE_&#x200b;PROCESSING_ENABLED** | <code>true</code> | If true, the broker processes update requests for service instances. |
