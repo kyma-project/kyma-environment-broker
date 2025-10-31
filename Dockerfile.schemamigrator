@@ -12,10 +12,11 @@ COPY internal/schemamigrator internal/schemamigrator
 ARG TARGETOS TARGETARCH
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /build/schema-migrator cmd/schemamigrator/main.go
+    CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /build/schema-migrator cmd/schemamigrator/main.go
 
 # Final image
 FROM scratch
+ENV GODEBUG=fips140=on,tlsmlkem=0
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 WORKDIR /migrate
