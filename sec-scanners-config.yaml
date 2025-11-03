@@ -1,16 +1,16 @@
 module-name: kyma-environment-broker
 kind: kcp
-rc-tag: 1.22.4
+rc-tag: 1.22.5
 bdba:
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.22.4
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.22.4
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.22.5
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.22.5
 mend:
   language: golang-mod
   exclude:
