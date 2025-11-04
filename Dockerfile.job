@@ -14,7 +14,7 @@ ARG TARGETOS TARGETARCH
 ARG BIN
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/main ./cmd/${BIN}/main.go
+    CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/main ./cmd/${BIN}/main.go
 
 # Get latest CA certs
 FROM alpine:3.22.2 AS certs
@@ -22,6 +22,7 @@ RUN apk --update add ca-certificates
 
 # Final image
 FROM scratch
+ENV GODEBUG=fips140=on,tlsmlkem=0
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
