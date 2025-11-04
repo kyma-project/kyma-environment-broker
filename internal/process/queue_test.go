@@ -100,6 +100,53 @@ func TestWorkerLogging(t *testing.T) {
 
 }
 
+func TestQueueMutexProtection(t *testing.T) {
+	t.Run("concurrent map access should not cause race condition and panic", func(t *testing.T) {
+		const numGoroutines = 50
+		const numOperations = 100
+		var wg sync.WaitGroup
+
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {}}, logger, "mutex-test", 10*time.Millisecond, 10*time.Millisecond)
+
+		testConcurrentAccess := func(goroutineID int) {
+			defer wg.Done()
+
+			for i := 0; i < numOperations; i++ {
+				workerID := fmt.Sprintf("worker-%d", goroutineID)
+				key := fmt.Sprintf("key-%d-%d", goroutineID, i)
+
+				// 1. updateWorkerTime writes to the maps
+				queue.updateWorkerTime(key, workerID, logger)
+
+				// 2. logWorkersSummary reads from the maps
+				if i%10 == 0 {
+					queue.logWorkersSummary()
+				}
+
+				// 3. removeTimeIfInWarnMargin reads then deletes from maps
+				queue.removeTimeIfInWarnMargin(key, workerID, logger)
+			}
+		}
+
+		wg.Add(numGoroutines)
+		for i := 0; i < numGoroutines; i++ {
+			go testConcurrentAccess(i)
+		}
+		wg.Wait()
+
+		// Verify that all worker data has been properly cleaned up
+		queue.workerMutex.RLock()
+		executionTimesCount := len(queue.workerExecutionTimes)
+		lastKeysCount := len(queue.workerLastKeys)
+		queue.workerMutex.RUnlock()
+		require.Equal(t, 0, executionTimesCount, "All worker execution times should be cleaned up")
+		require.Equal(t, 0, lastKeysCount, "All worker last keys should be cleaned up")
+	})
+}
+
 type captureWriter struct {
 	buf *bytes.Buffer
 }

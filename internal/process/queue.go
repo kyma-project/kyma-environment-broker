@@ -23,6 +23,7 @@ type Queue struct {
 	name                    string
 	workerExecutionTimes    map[string]time.Time
 	workerLastKeys          map[string]string
+	workerMutex             sync.RWMutex
 	warnAfterTime           time.Duration
 	healthCheckIntervalTime time.Duration
 
@@ -138,31 +139,38 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 }
 
 func (q *Queue) updateWorkerTime(key string, workerNameId string, log *slog.Logger) {
+	q.workerMutex.Lock()
 	q.workerExecutionTimes[workerNameId] = time.Now()
 	q.workerLastKeys[workerNameId] = key
+	q.workerMutex.Unlock()
+
 	log.Info(fmt.Sprintf("updating worker time, processing item %s, queue length is %d", key, q.queue.Len()))
 }
 
 func (q *Queue) removeTimeIfInWarnMargin(key string, workerNameId string, log *slog.Logger) {
-
+	q.workerMutex.Lock()
 	processingStart, ok := q.workerExecutionTimes[workerNameId]
-
 	if !ok {
+		q.workerMutex.Unlock()
 		log.Warn(fmt.Sprintf("worker %s has no start time", workerNameId))
 		return
 	}
+
+	delete(q.workerExecutionTimes, workerNameId)
+	delete(q.workerLastKeys, workerNameId)
+	q.workerMutex.Unlock()
 
 	processingTime := time.Since(processingStart)
 
 	if processingTime > q.warnAfterTime {
 		log.Info(fmt.Sprintf("worker %s exceeded allowed limit of %s since last execution while processing %s", workerNameId, q.warnAfterTime, key))
 	}
-
-	delete(q.workerExecutionTimes, workerNameId)
-	delete(q.workerLastKeys, workerNameId)
 }
 
 func (q *Queue) logWorkersSummary() {
+	q.workerMutex.RLock()
+	defer q.workerMutex.RUnlock()
+
 	healthCheckLog := q.log.With("summary", q.name)
 
 	for name, lastTime := range q.workerExecutionTimes {
