@@ -4,8 +4,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
-| **APP_ARCHIVING_DRY_&#x200b;RUN** | <code>false</code> | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. |
-| **APP_ARCHIVING_&#x200b;ENABLED** | <code>false</code> | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |
@@ -32,8 +30,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
-| **APP_CLEANING_DRY_RUN** | <code>false</code> | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. |
-| **APP_CLEANING_ENABLED** | <code>false</code> | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
