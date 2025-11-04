@@ -36,7 +36,7 @@ func TestWorkerLogging(t *testing.T) {
 		queue := NewQueue(&StdExecutor{logger: func(msg string) {
 			t.Log(msg)
 			waitForProcessing.Done()
-		}}, logger, "test", 10*time.Millisecond, 10*time.Millisecond)
+		}}, logger, "test")
 
 		waitForProcessing.Add(2)
 		queue.AddAfter("processId2", 0)
@@ -78,7 +78,7 @@ func TestWorkerLogging(t *testing.T) {
 		queue := NewQueue(&StdExecutor{logger: func(msg string) {
 			t.Log(msg)
 			waitForProcessing.Done()
-		}}, logger, "test", 10*time.Millisecond, 10*time.Millisecond)
+		}}, logger, "test")
 
 		waitForProcessing.Add(2)
 		queue.AddAfter("processId2", 0)

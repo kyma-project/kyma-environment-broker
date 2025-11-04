@@ -51,9 +51,6 @@ type Config struct {
 	SubaccountMovementEnabled                bool `envconfig:"default=false"`
 	UpdateCustomResourcesLabelsOnAccountMove bool `envconfig:"default=false"`
 
-	WorkerHealthCheckInterval     time.Duration `envconfig:"default=10m"`
-	WorkerHealthCheckWarnInterval time.Duration `envconfig:"default=10m"`
-
 	MonitorAdditionalProperties     bool   `envconfig:"default=false"`
 	AdditionalPropertiesPath        string `envconfig:"default=/additional-properties"`
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
