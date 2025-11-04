@@ -19,7 +19,7 @@ cleaning:
   dryRun:
 ```
 
-Archiving and cleaning processes are now always active. `enabled` and `dryRun` settings are ignored and should be removed.
+The archiving and cleaning processes are now always active. The `enabled` and `dryRun` settings are ignored and should be removed.
 
 ## Procedure
 
