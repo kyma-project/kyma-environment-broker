@@ -24,7 +24,7 @@ The archiving and cleaning processes are now always active. The `enabled` and `d
 ## Procedure
 
 1. Open the KEB configuration file.
-2. Remove the following sections entirely if present:
+2. If the following sections are present in your configuration, remove them.
 
     ```yaml
     archiving:
