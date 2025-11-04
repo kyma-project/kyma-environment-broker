@@ -59,8 +59,6 @@
 | service.port | - | `80` |
 | service.type | - | `ClusterIP` |
 | swagger.virtualService.<br>enabled | - | `True` |
-| archiving.enabled | If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process. | `False` |
-| archiving.dryRun | If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted. | `False` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |
@@ -91,8 +89,6 @@
 | deprovisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. | `2m` |
 | deprovisioning.<br>workersAmount | Number of workers in deprovisioning queue. | `20` |
 | catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
-| cleaning.dryRun | If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database. | `False` |
-| cleaning.enabled | If true, enables the cleaning process, which removes all data about deprovisioned instances from the database. | `False` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
 | configPaths.hapRule | Path to the rules for mapping plans and regions to hyperscaler account pools. | `/config/hapRule.yaml` |
