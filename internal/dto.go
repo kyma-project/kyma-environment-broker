@@ -7,8 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
-const LicenceTypeLite = "TestDevelopmentAndDemo"
-
 type ProvisioningParameters struct {
 	PlanID     string                        `json:"plan_id"`
 	ServiceID  string                        `json:"service_id"`
@@ -37,8 +35,6 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 	}
 
 	p.Parameters.TargetSecret = nil
-	p.Parameters.LicenceType = nil
-	input.Parameters.LicenceType = nil
 
 	if !reflect.DeepEqual(p.Parameters, input.Parameters) {
 		return false

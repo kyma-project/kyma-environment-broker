@@ -80,15 +80,11 @@ const (
 type ProvisioningParametersDTO struct {
 	AutoScalerParameters `json:",inline"`
 
-	Name         string  `json:"name"`
-	TargetSecret *string `json:"targetSecret,omitempty"`
-	MachineType  *string `json:"machineType,omitempty"`
-	Region       *string `json:"region,omitempty"`
-	Purpose      *string `json:"purpose,omitempty"`
-	// LicenceType - based on this parameter, some options can be enabled/disabled when preparing the input
-	// for the provisioner e.g. use default overrides for SKR instead overrides from resource
-	// with "provisioning-runtime-override" label when LicenceType is "TestDevelopmentAndDemo"
-	LicenceType           *string  `json:"licence_type,omitempty"`
+	Name                  string   `json:"name"`
+	TargetSecret          *string  `json:"targetSecret,omitempty"`
+	MachineType           *string  `json:"machineType,omitempty"`
+	Region                *string  `json:"region,omitempty"`
+	Purpose               *string  `json:"purpose,omitempty"`
 	Zones                 []string `json:"zones,omitempty"`
 	RuntimeAdministrators []string `json:"administrators,omitempty"`
 	// Provider - used in Trial plan to determine which cloud provider to use during provisioning
