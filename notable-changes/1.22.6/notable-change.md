@@ -4,7 +4,7 @@
 
 > [!NOTE] 
 > This is a recommended change. The `archiving` and `cleaning` feature flags are now removed because both processes are always active. 
-> Without updating the configuration, obsolete settings will have no effect and may cause confusion.
+> Without updating the configuration, the obsolete settings have no effect, but may cause confusion.
 
 ## What's Changed
 
