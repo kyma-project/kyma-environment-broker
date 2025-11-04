@@ -48,15 +48,13 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 				deprovisioning.NewFreeSubscriptionStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace)),
 		},
 		{
-			disabled: !cfg.ArchivingEnabled,
-			step:     deprovisioning.NewArchivingStep(db, cfg.ArchivingDryRun),
+			step: deprovisioning.NewArchivingStep(db),
 		},
 		{
 			step: deprovisioning.NewRemoveInstanceStep(db),
 		},
 		{
-			disabled: !cfg.CleaningEnabled,
-			step:     deprovisioning.NewCleanStep(db, cfg.CleaningDryRun),
+			step: deprovisioning.NewCleanStep(db),
 		},
 	}
 	var stages []string

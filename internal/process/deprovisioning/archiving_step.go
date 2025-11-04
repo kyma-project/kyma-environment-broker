@@ -19,15 +19,13 @@ type ArchivingStep struct {
 	operations        storage.Operations
 	instances         storage.Instances
 	instancesArchived storage.InstancesArchived
-	dryRun            bool
 }
 
-func NewArchivingStep(db storage.BrokerStorage, dryRun bool) *ArchivingStep {
+func NewArchivingStep(db storage.BrokerStorage) *ArchivingStep {
 	return &ArchivingStep{
 		operations:        db.Operations(),
 		instances:         db.Instances(),
 		instancesArchived: db.InstancesArchived(),
-		dryRun:            dryRun,
 	}
 }
 
@@ -85,12 +83,6 @@ func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (
 			logger.Error(fmt.Sprintf("Unable to create instance archived: %s", err.Error()))
 			return operation, 0, nil
 		}
-	}
-
-	if s.dryRun {
-		logger.Info("DryRun enabled, skipping insert of archived instance")
-		logger.Info(fmt.Sprintf("Archived instance: %+v", archived))
-		return operation, 0, nil
 	}
 
 	err = s.instancesArchived.Insert(archived)

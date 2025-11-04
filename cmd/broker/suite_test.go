@@ -282,8 +282,6 @@ func fixConfig() *Config {
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
-		ArchivingEnabled:                          true,
-		CleaningEnabled:                           true,
 		UpdateRuntimeResourceDelay:                time.Millisecond,
 		MetricsV2: metricsv2.Config{
 			Enabled:                                         true,

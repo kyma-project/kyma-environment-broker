@@ -11,13 +11,11 @@ import (
 
 type CleanStep struct {
 	operations storage.Operations
-	dryRun     bool
 }
 
-func NewCleanStep(db storage.BrokerStorage, dryRun bool) *CleanStep {
+func NewCleanStep(db storage.BrokerStorage) *CleanStep {
 	return &CleanStep{
 		operations: db.Operations(),
-		dryRun:     dryRun,
 	}
 }
 
@@ -41,18 +39,13 @@ func (s *CleanStep) Run(operation internal.Operation, log *slog.Logger) (interna
 	}
 	for _, op := range operations {
 		log.Info(fmt.Sprintf("Removing operation %s", op.ID))
-		if s.dryRun {
-			log.Info("dry run mode, skipping")
-			continue
-		}
 		err := s.operations.DeleteByID(op.ID)
 		if err != nil {
 			log.Error(fmt.Sprintf("unable to delete operation %s: %s", op.ID, err.Error()))
 			return operation, dbRetryBackoff, nil
 		}
 	}
-	if !s.dryRun {
-		log.Info(fmt.Sprintf("All runtime states and operations for the instance %s has been completely deleted!", operation.InstanceID))
-	}
+	log.Info(fmt.Sprintf("All runtime states and operations for the instance %s has been completely deleted!", operation.InstanceID))
+
 	return operation, 0, nil
 }

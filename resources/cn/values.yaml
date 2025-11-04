@@ -15,13 +15,6 @@ global:
       cloudsqlproxy:
         enabled: false
 
-archiving:
-    enabled: true
-    dryRun: false
-cleaning:
-    enabled: true
-    dryRun: false
-
 avs:
   disabled: true
 

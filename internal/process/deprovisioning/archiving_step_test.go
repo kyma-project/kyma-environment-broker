@@ -15,7 +15,7 @@ func TestName(t *testing.T) {
 
 func TestArchiveRun(t *testing.T) {
 	db := storage.NewMemoryStorage()
-	step := NewArchivingStep(db, false)
+	step := NewArchivingStep(db)
 
 	provisioningOperation := fixture.FixProvisioningOperation("op-prov", "inst-id")
 	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation("op-depr", "inst-id")

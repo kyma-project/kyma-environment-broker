@@ -75,10 +75,6 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
-            - name: APP_ARCHIVING_DRY_RUN
-              value: "{{ .Values.archiving.dryRun }}"
-            - name: APP_ARCHIVING_ENABLED
-              value: "{{ .Values.archiving.enabled }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
               value: "{{ .Values.broker.binding.bindablePlans}}"
             - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
@@ -131,10 +127,6 @@ spec:
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
-            - name: APP_CLEANING_DRY_RUN
-              value: "{{ .Values.cleaning.dryRun }}"
-            - name: APP_CLEANING_ENABLED
-              value: "{{ .Values.cleaning.enabled }}"
             - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:

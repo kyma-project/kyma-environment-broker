@@ -19,7 +19,7 @@ func TestCleanStep_Run(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, err)
 
-	step := NewCleanStep(db, false)
+	step := NewCleanStep(db)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())
@@ -44,7 +44,7 @@ func TestCleanStep_Run_TemporaryOperation(t *testing.T) {
 	err = db.Operations().InsertOperation(deprovisioning)
 	assert.NoError(t, err)
 
-	step := NewCleanStep(db, false)
+	step := NewCleanStep(db)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())
@@ -70,7 +70,7 @@ func TestCleanStep_Run_ExcutedButNotCompleted(t *testing.T) {
 	err = db.Operations().InsertOperation(deprovisioning)
 	assert.NoError(t, err)
 
-	step := NewCleanStep(db, false)
+	step := NewCleanStep(db)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())

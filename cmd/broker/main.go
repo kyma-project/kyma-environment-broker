@@ -113,13 +113,9 @@ type Config struct {
 
 	MetricsV2 metricsv2.Config
 
-	Provisioning     process.StagedManagerConfiguration
-	Deprovisioning   process.StagedManagerConfiguration
-	Update           process.StagedManagerConfiguration
-	ArchivingEnabled bool `envconfig:"default=false"`
-	ArchivingDryRun  bool `envconfig:"default=true"`
-	CleaningEnabled  bool `envconfig:"default=false"`
-	CleaningDryRun   bool `envconfig:"default=true"`
+	Provisioning   process.StagedManagerConfiguration
+	Deprovisioning process.StagedManagerConfiguration
+	Update         process.StagedManagerConfiguration
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
@@ -402,8 +398,6 @@ func main() {
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
 	logs.Info(fmt.Sprintf("EnablePlans: %s", cfg.Broker.EnablePlans))
-	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchivingEnabled, cfg.ArchivingDryRun))
-	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
 	logs.Info(fmt.Sprintf("StepTimeouts: CheckRuntimeResourceCreate=%s, CheckRuntimeResourceUpdate=%s, CheckRuntimeResourceDeletion=%s", cfg.StepTimeouts.CheckRuntimeResourceCreate, cfg.StepTimeouts.CheckRuntimeResourceUpdate, cfg.StepTimeouts.CheckRuntimeResourceDeletion))
