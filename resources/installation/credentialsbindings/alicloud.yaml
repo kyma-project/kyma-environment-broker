@@ -1,0 +1,12 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: alicloud
+  name: alicloud
+  namespace: garden-kyma-dev
+provider:
+  type: alicloud
+credentialsRef:
+  name: alicloud-secret
+  namespace: garden-kyma-dev

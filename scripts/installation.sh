@@ -53,6 +53,9 @@ kubectl apply -f resources/installation/secrets/
 # Create predefined secret bindings
 kubectl apply -f resources/installation/secretbindings/
 
+# Create predefined credentials bindings
+kubectl apply -f resources/installation/credentialsbindings/
+
 # Create resource templates
 kubectl apply -f resources/installation/templates/
 

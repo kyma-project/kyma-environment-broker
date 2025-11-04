@@ -100,6 +100,7 @@ type ProvisionEndpoint struct {
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
+	useCredentialsBindings bool
 }
 
 const (
@@ -307,6 +308,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}, nil
 }
 
+// UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
+// when all KCP instances are migrated to use credentials bindings
+func (b *ProvisionEndpoint) UseCredentialsBindings() {
+	b.useCredentialsBindings = true
+}
+
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
 	parameters.Kubeconfig = "*****"
 	logger.Info(fmt.Sprintf("Runtime parameters: %+v", parameters))
@@ -380,7 +387,13 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		// todo: simplify it, remove "if" when all KCP insdtances are migrated to use credentials bindings
+		var awsClient aws.Client
+		if b.useCredentialsBindings {
+			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		} else {
+			awsClient, err = newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		}
 		if err != nil {
 			l.Error(fmt.Sprintf("unable to create AWS client: %s", err))
 			return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
@@ -1040,6 +1053,61 @@ func newAWSClient(
 	secret, err := gardenerClient.GetSecret(secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get secret %s/%s", secretBinding.GetSecretRefNamespace(), secretBinding.GetSecretRefName())
+	}
+
+	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract AWS credentials")
+	}
+	client, err := awsClientFactory.New(ctx, accessKeyID, secretAccessKey, values.Region)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create AWS client")
+	}
+
+	return client, nil
+}
+
+func newAWSClientUsingCredentialsBinding(
+	ctx context.Context,
+	log *slog.Logger,
+	rulesService *rules.RulesService,
+	gardenerClient *gardener.Client,
+	awsClientFactory aws.ClientFactory,
+	provisioningParameters internal.ProvisioningParameters,
+	values internal.ProviderValues,
+) (aws.Client, error) {
+	log.Info("Zones discovery enabled, validating zone count using subscription secret")
+	attr := &rules.ProvisioningAttributes{
+		Plan:              PlanNamesMapping[provisioningParameters.PlanID],
+		PlatformRegion:    provisioningParameters.PlatformRegion,
+		HyperscalerRegion: values.Region,
+		Hyperscaler:       values.ProviderType,
+	}
+	log.Info(fmt.Sprintf("matching provisioning attributes %q to filtering rule", attr))
+
+	parsedRule, found := rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
+	if !found {
+		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
+	}
+	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
+
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
+	labelSelector := labelSelectorBuilder.BuildAnySubscription()
+
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
+	}
+	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
+		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
+	}
+	credentialsBinding := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
+
+	log.Info(fmt.Sprintf("getting subscription credentials with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
+	secret, err := gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	}
 
 	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)

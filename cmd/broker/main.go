@@ -12,6 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -30,7 +33,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -129,6 +131,9 @@ type Config struct {
 
 	PlansConfigurationFilePath string
 
+	// allows to configure which k8s resource in the Gardener must be used for HAP and discovery zones feature
+	SubscriptionGardenerResource string `envconfig:"default=SecretBinding"`
+
 	Quota                               quota.Config
 	QuotaWhitelistedSubaccountsFilePath string
 
@@ -189,6 +194,23 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
+	}
+}
+
+func (c *Config) Validate() error {
+	_, err := c.GardenerSubscriptionResource()
+	return err
+}
+
+func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, error) {
+	resourceName := strings.ToLower(c.SubscriptionGardenerResource)
+	switch resourceName {
+	case "secretbinding":
+		return gardener.SecretBindingResource, nil
+	case "credentialsbinding":
+		return gardener.CredentialsBindingResource, nil
+	default:
+		return schema.GroupVersionResource{}, fmt.Errorf("invalid SubscriptionGardenerResource: %s. Supported values are SecretBinding and CredentialsBinding", c.SubscriptionGardenerResource)
 	}
 }
 
@@ -378,11 +400,6 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
-	if cfg.MachinesAvailabilityEndpoint {
-		machinesAvailability := machinesavailability.NewHandler(providerSpec, rulesService, gardenerClient, awsClientFactory, log)
-		machinesAvailability.AttachRoutes(router)
-	}
-
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
 	})
@@ -411,6 +428,9 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
+
+	r, _ := cfg.GardenerSubscriptionResource()
+	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
@@ -418,6 +438,16 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO,
 	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
 	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
+
+	if cfg.MachinesAvailabilityEndpoint {
+		if r, _ := cfg.GardenerSubscriptionResource(); r == gardener.SecretBindingResource {
+			machinesAvailability := machinesavailability.NewHandler(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
+			machinesAvailability.AttachRoutes(router)
+		} else {
+			machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
+			machinesAvailability.AttachRoutes(router)
+		}
+	}
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
@@ -464,6 +494,10 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
+	}
+
+	if r, _ := cfg.GardenerSubscriptionResource(); r == gardener.CredentialsBindingResource {
+		kymaEnvBroker.ProvisionEndpoint.UseCredentialsBindings()
 	}
 
 	prefixes := []string{"/{region}", ""}
