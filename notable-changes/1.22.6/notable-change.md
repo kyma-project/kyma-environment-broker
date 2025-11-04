@@ -9,6 +9,7 @@
 ## What's Changed
 
 The following configuration flags have been permanently removed from KEB:
+
 ```yaml
 archiving:
   enabled:
@@ -17,12 +18,14 @@ cleaning:
   enabled:
   dryRun:
 ```
+
 Archiving and cleaning processes are now always active. `enabled` and `dryRun` settings are ignored and should be removed.
 
 ## Procedure
 
 1. Open the KEB configuration file.
 2. Remove the following sections entirely if present:
+
     ```yaml
     archiving:
       enabled:
@@ -31,4 +34,5 @@ Archiving and cleaning processes are now always active. `enabled` and `dryRun` s
       enabled:
       dryRun:
     ```
+   
 3. Save and apply the updated configuration.
