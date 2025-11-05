@@ -79,6 +79,13 @@ jobs:
           NAME: ${{ inputs.name }}
         run: python3 scripts/python/release_label_validator.py
 
+      - name: Validate notable changes
+        run: |
+          if [ -d "notable-changes/$1" ]; then
+            echo "Notable changes for release $1 already exist"
+            exit 1
+          fi
+
   run-unit-tests:
     name: Unit tests, go mod tidy
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
@@ -227,6 +234,9 @@ jobs:
       - name: Bump KEB chart
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
+
+      - name: Create notable changes folder
+        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
 
       - name: Setup python
         uses: actions/setup-python@v4
