@@ -36,7 +36,7 @@ func (s *operations) InsertProvisioningOperation(operation internal.Provisioning
 	if err != nil {
 		return fmt.Errorf("while inserting provisioning operation (id: %s): %w", operation.ID, err)
 	}
-
+	slog.Info(dto.CreatedAt.Format(time.RFC3339Nano))
 	return s.insert(dto)
 }
 
