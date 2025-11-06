@@ -248,7 +248,7 @@ func main() {
 	log.Info("Starting Kyma Environment Broker")
 
 	localTime := time.Now()
-	log.Info(fmt.Sprintf("Local time:", localTime))
+	log.Info(fmt.Sprintln("Local time:", localTime))
 
 	// See what time zone is being used
 	log.Info(fmt.Sprintln("Time zone:", localTime.Location()))
