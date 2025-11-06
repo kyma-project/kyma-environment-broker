@@ -246,12 +246,13 @@ func main() {
 	logger := lager.NewLogger("kyma-env-broker")
 
 	log.Info("Starting Kyma Environment Broker")
+	log.Info("Print local time and time zone information")
 
 	localTime := time.Now()
-	log.Info(fmt.Sprintln("Local time:", localTime))
+	log.Info(localTime.String())
 
 	// See what time zone is being used
-	log.Info(fmt.Sprintln("Time zone:", localTime.Location()))
+	log.Info(localTime.Location().String())
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
