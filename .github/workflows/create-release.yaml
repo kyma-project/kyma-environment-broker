@@ -227,6 +227,9 @@ jobs:
           fetch-depth: 0
       - run: git pull
 
+      - name: Create notable changes folder
+        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
+
       - name: Update sec-scanners-config.yaml
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
@@ -234,9 +237,6 @@ jobs:
       - name: Bump KEB chart
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
-
-      - name: Create notable changes folder
-        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
 
       - name: Setup python
         uses: actions/setup-python@v4
