@@ -11,17 +11,16 @@ set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
 SOURCE_DIR="notable-changes-to-release/"
+TARGET_DIR="notable-changes/$1/"
 
+# check if there is anything to move
 if [ -z "$( ls -A ${SOURCE_DIR} )" ]; then
    echo "No notable changes to move"
    exit 0
 fi
 
-if [ -d "notable-changes/$1" ]; then
-   echo "Notable changes for version $1 already exist"
-   exit 1
-fi
+# create target directory
+mkdir -p ${TARGET_DIR}
 
-mkdir -p notable-changes/$1
-
-mv notable-changes-to-release/* notable-changes/$1/
+# move current notable changes to the target (versioned directory)
+mv ${SOURCE_DIR}* ${TARGET_DIR}

@@ -81,8 +81,8 @@ jobs:
 
       - name: Validate notable changes
         run: |
-          if [ -d "notable-changes/$1" ]; then
-            echo "Notable changes for release $1 already exist"
+          if [ -d "notable-changes/${{ inputs.name }}" ]; then
+            echo "Notable changes for release ${{ inputs.name }} already exist"
             exit 1
           fi
 
