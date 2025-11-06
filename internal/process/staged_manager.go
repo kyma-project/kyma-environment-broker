@@ -126,6 +126,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		operation.LastError = timeoutErr
 		defer m.publishEventOnFail(operation, err)
 		logOperation.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))
+		logOperation.Info(fmt.Sprintf("%s %s %s", operation.CreatedAt.Format(time.RFC3339), m.operationTimeout.String(), time.Since(operation.CreatedAt).String()))
 		operation.State = domain.Failed
 		_, err = m.operationStorage.UpdateOperation(*operation)
 		if err != nil {
