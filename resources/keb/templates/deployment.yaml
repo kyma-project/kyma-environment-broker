@@ -161,7 +161,7 @@ spec:
             - name: APP_DATABASE_SSLROOTCERT
               value: {{ .Values.configPaths.cloudsqlSSLRootCert }}
             - name: APP_DATABASE_TIMEZONE
-              value: "8"
+              value: "Asia/Tokyo"
             - name: APP_DATABASE_USER
               valueFrom:
                 secretKeyRef:
