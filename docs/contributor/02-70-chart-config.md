@@ -49,7 +49,7 @@
 | global.secrets.vso.<br>refreshAfter | - | `30s` |
 | fullnameOverride | - | `kcp-kyma-environment-broker` |
 | host | - | `kyma-env-broker` |
-| imagePullSecret | - | `` |
+| imagePullSecret | Specifies the name of the Kubernetes Secret to use for pulling container images from private registries. | `` |
 | manageSecrets | If true, this Helm chart creates and manages Kubernetes Secret resources for credentials. Set to false if you want to manage these Secrets externally or manually, and prevent the chart from creating them. | `True` |
 | namePrefix | - | `kcp` |
 | nameOverride | - | `kyma-environment-broker` |
