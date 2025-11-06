@@ -247,6 +247,12 @@ func main() {
 
 	log.Info("Starting Kyma Environment Broker")
 
+	localTime := time.Now()
+	log.Info(fmt.Sprintf("Local time:", localTime))
+
+	// See what time zone is being used
+	log.Info(fmt.Sprintln("Time zone:", localTime.Location()))
+
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
