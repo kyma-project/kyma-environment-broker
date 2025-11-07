@@ -38,6 +38,11 @@ git add resources/keb/Chart.yaml
 git add utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
 git add docs/contributor/02-70-chart-config.md
 
+if [ -d "notable-changes/${TAG}" ]; then
+   echo "Adding notable changes to the PR"
+   git add notable-changes/${TAG}/*
+fi
+
 #configure git
 git config --global user.email ${GIT_EMAIL}
 git config --global user.name ${GIT_NAME}
