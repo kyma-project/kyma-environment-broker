@@ -974,6 +974,130 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	dualStackEnabled := true
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
+		NodesCidr:    "192.168.48.0/20",
+		PodsCidr:     ptr.String("10.104.0.0/24"),
+		ServicesCidr: ptr.String("10.105.0.0/24"),
+		DualStack:    &dualStackEnabled,
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+
+	// Verify DualStack is set correctly
+	assert.NotNil(t, runtime.Spec.Shoot.Networking.DualStack)
+	assert.True(t, *runtime.Spec.Shoot.Networking.DualStack)
+
+	// Verify other networking properties
+	expectedNetworking := imv1.Networking{
+		Nodes:     "192.168.48.0/20",
+		Pods:      "10.104.0.0/24",
+		Services:  "10.105.0.0/24",
+		DualStack: &dualStackEnabled,
+		Type:      ptr.String("calico"),
+	}
+	assertNetworking(t, expectedNetworking, runtime.Spec.Shoot.Networking)
+}
+
+func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	dualStackDisabled := false
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
+		NodesCidr: "192.168.48.0/20",
+		DualStack: &dualStackDisabled,
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+
+	// Verify DualStack is set to false
+	assert.NotNil(t, runtime.Spec.Shoot.Networking.DualStack)
+	assert.False(t, *runtime.Spec.Shoot.Networking.DualStack)
+}
+
+func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
+		NodesCidr: "192.168.48.0/20",
+		// DualStack is not set (nil)
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+
+	// Verify DualStack is nil when not provided
+	assert.Nil(t, runtime.Spec.Shoot.Networking.DualStack)
+}
+
 func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()

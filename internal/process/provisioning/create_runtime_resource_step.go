@@ -250,9 +250,10 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 	}
 
 	return imv1.Networking{
-		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
-		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
-		Nodes:    nodes,
+		Pods:      DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
+		Services:  DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
+		Nodes:     nodes,
+		DualStack: networkingParams.DualStack,
 		// TODO remove when KIM is ready with setting this value
 		Type: ptr.String("calico"),
 	}

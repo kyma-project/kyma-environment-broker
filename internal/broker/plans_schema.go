@@ -54,9 +54,10 @@ type UpdateProperties struct {
 }
 
 type NetworkingProperties struct {
-	Nodes    Type `json:"nodes"`
-	Services Type `json:"services"`
-	Pods     Type `json:"pods"`
+	Nodes     Type `json:"nodes"`
+	Services  Type `json:"services"`
+	Pods      Type `json:"pods"`
+	DualStack Type `json:"dualStack"`
 }
 
 type NetworkingType struct {
@@ -642,6 +643,7 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool) *NetworkingType {
 				Default: networking.DefaultPodsCIDR},
 			Nodes: Type{Type: "string", Title: "CIDR range for Nodes", Description: fmt.Sprintf("CIDR range for Nodes, must not overlap with the following CIDRs: %s", seedCIDRs),
 				Default: networking.DefaultNodesCIDR},
+			DualStack: Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"},
 		},
 		Required: []string{"nodes"},
 	}
