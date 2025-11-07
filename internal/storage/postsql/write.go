@@ -267,7 +267,7 @@ func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 		Where(dbr.Eq("version", op.Version)).
 		Set("instance_id", op.InstanceID).
 		Set("version", op.Version+1).
-		Set("created_at", op.CreatedAt).
+		//Set("created_at", op.CreatedAt).
 		Set("updated_at", op.UpdatedAt).
 		Set("description", op.Description).
 		Set("state", op.State).
