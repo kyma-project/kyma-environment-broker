@@ -1035,6 +1035,8 @@ func (s *operations) getByTypeAndInstanceID(id string, opType internal.Operation
 func (s *operations) update(operation dbmodel.OperationDTO) error {
 	session := s.Factory.NewWriteSession()
 
+	slog.Info("updating operation and trying to set createdAt:", "createdAt", operation.CreatedAt.Format(time.RFC3339Nano))
+
 	var lastErr error
 	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.UpdateOperation(operation)
