@@ -55,10 +55,10 @@ type UpdateProperties struct {
 }
 
 type NetworkingProperties struct {
-	Nodes     Type `json:"nodes"`
-	Services  Type `json:"services"`
-	Pods      Type `json:"pods"`
-	DualStack Type `json:"dualStack,omitempty"`
+	Nodes     Type  `json:"nodes"`
+	Services  Type  `json:"services"`
+	Pods      Type  `json:"pods"`
+	DualStack *Type `json:"dualStack,omitempty"`
 }
 
 type NetworkingType struct {
@@ -645,7 +645,7 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configu
 	}
 
 	if providerSpec != nil && providerSpec.IsDualStackSupported(cloudProvider) {
-		networkingProperties.DualStack = Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"}
+		networkingProperties.DualStack = &Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"}
 	}
 
 	networkingType := &NetworkingType{
