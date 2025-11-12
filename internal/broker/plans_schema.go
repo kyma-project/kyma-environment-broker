@@ -7,6 +7,7 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 )
 
 const (
@@ -586,7 +587,7 @@ func IngressFilteringProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -619,7 +620,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			EnumDisplayName: regionsDisplay,
 			MinLength:       1,
 		},
-		Networking:           NewNetworkingSchema(rejectUnsupportedParameters),
+		Networking:           NewNetworkingSchema(rejectUnsupportedParameters, providerSpec, cloudProvider),
 		Modules:              NewModulesSchema(rejectUnsupportedParameters),
 		ColocateControlPlane: ColocateControlPlaneProperty(),
 	}
@@ -632,20 +633,25 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 	return properties
 }
 
-func NewNetworkingSchema(rejectUnsupportedParameters bool) *NetworkingType {
+func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider) *NetworkingType {
 	seedCIDRs := strings.Join(networking.GardenerSeedCIDRs, ", ")
+	networkingProperties := NetworkingProperties{
+		Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
+			Default: networking.DefaultServicesCIDR},
+		Pods: Type{Type: "string", Title: "CIDR range for Pods", Description: fmt.Sprintf("CIDR range for Pods, must not overlap with the following CIDRs: %s", seedCIDRs),
+			Default: networking.DefaultPodsCIDR},
+		Nodes: Type{Type: "string", Title: "CIDR range for Nodes", Description: fmt.Sprintf("CIDR range for Nodes, must not overlap with the following CIDRs: %s", seedCIDRs),
+			Default: networking.DefaultNodesCIDR},
+	}
+
+	if providerSpec != nil && providerSpec.IsDualStackSupported(cloudProvider) {
+		networkingProperties.DualStack = Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"}
+	}
+
 	networkingType := &NetworkingType{
-		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another."},
-		Properties: NetworkingProperties{
-			Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
-				Default: networking.DefaultServicesCIDR},
-			Pods: Type{Type: "string", Title: "CIDR range for Pods", Description: fmt.Sprintf("CIDR range for Pods, must not overlap with the following CIDRs: %s", seedCIDRs),
-				Default: networking.DefaultPodsCIDR},
-			Nodes: Type{Type: "string", Title: "CIDR range for Nodes", Description: fmt.Sprintf("CIDR range for Nodes, must not overlap with the following CIDRs: %s", seedCIDRs),
-				Default: networking.DefaultNodesCIDR},
-			DualStack: Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"},
-		},
-		Required: []string{"nodes"},
+		Type:       Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another."},
+		Properties: networkingProperties,
+		Required:   []string{"nodes"},
 	}
 	if rejectUnsupportedParameters {
 		networkingType.Type.AdditionalProperties = false

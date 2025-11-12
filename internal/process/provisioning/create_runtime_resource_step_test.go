@@ -1008,12 +1008,9 @@ func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
 		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-
-	// Verify DualStack is set correctly
 	assert.NotNil(t, runtime.Spec.Shoot.Networking.DualStack)
 	assert.True(t, *runtime.Spec.Shoot.Networking.DualStack)
 
-	// Verify other networking properties
 	expectedNetworking := imv1.Networking{
 		Nodes:     "192.168.48.0/20",
 		Pods:      "10.104.0.0/24",
@@ -1072,7 +1069,6 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
 	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
 		NodesCidr: "192.168.48.0/20",
-		// DualStack is not set (nil)
 	}
 
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -1093,9 +1089,51 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-
-	// Verify DualStack is nil when not provided
 	assert.Nil(t, runtime.Spec.Shoot.Networking.DualStack)
+}
+
+func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west1", "platform-region", inputConfig, pkg.GCP)
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
+		NodesCidr:    "192.168.48.0/20",
+		PodsCidr:     ptr.String("10.104.0.0/24"),
+		ServicesCidr: ptr.String("10.105.0.0/24"),
+		DualStack:    ptr.Bool(true),
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack())
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Nil(t, runtime.Spec.Shoot.Networking.DualStack)
+
+	expectedNetworking := imv1.Networking{
+		Nodes:     "192.168.48.0/20",
+		Pods:      "10.104.0.0/24",
+		Services:  "10.105.0.0/24",
+		DualStack: nil,
+		Type:      ptr.String("calico"),
+	}
+	assertNetworking(t, expectedNetworking, runtime.Spec.Shoot.Networking)
 }
 
 func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
@@ -1686,4 +1724,30 @@ modules: []
 	values, _ := valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 	operation.ProviderValues = &values
 	return operation
+}
+
+func newTestProviderSpecWithDualStack() *configuration.ProviderSpec {
+	// Create a test provider specification with dual stack support for AWS and Azure, no support for others
+	providerConfigYAML := `
+aws:
+  dualStackSupported: true
+  regions:
+    eu-west-2:
+      displayName: "Europe (London)"
+      zones: ["a", "b", "c"]
+azure:
+  dualStackSupported: true
+  regions:
+    westeurope:
+      displayName: "West Europe"
+      zones: ["1", "2", "3"]
+gcp:
+  dualStackSupported: false
+  regions:
+    europe-west1:
+      displayName: "Europe West 1"
+      zones: ["a", "b", "c"]
+`
+	providerSpec, _ := configuration.NewProviderSpec(strings.NewReader(providerConfigYAML))
+	return providerSpec
 }
