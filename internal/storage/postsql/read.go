@@ -3,6 +3,7 @@ package postsql
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -456,6 +457,7 @@ func (r readSession) getOperation(condition dbr.Builder) (dbmodel.OperationDTO, 
 		}
 		return dbmodel.OperationDTO{}, dberr.Internal("Failed to get operation: %s", err)
 	}
+	slog.Info("Fetched operation", "createdAt", operation.CreatedAt.Format(time.RFC3339Nano))
 	return operation, nil
 }
 
