@@ -58,7 +58,7 @@ type NetworkingProperties struct {
 	Nodes     Type `json:"nodes"`
 	Services  Type `json:"services"`
 	Pods      Type `json:"pods"`
-	DualStack Type `json:"dualStack"`
+	DualStack Type `json:"dualStack,omitempty"`
 }
 
 type NetworkingType struct {
