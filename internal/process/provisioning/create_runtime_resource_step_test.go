@@ -1054,7 +1054,6 @@ func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
 	}, &runtime)
 	assert.NoError(t, err)
 
-	// Verify DualStack is set to false
 	assert.NotNil(t, runtime.Spec.Shoot.Networking.DualStack)
 	assert.False(t, *runtime.Spec.Shoot.Networking.DualStack)
 }
