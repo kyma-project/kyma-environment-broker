@@ -1846,10 +1846,10 @@ components:
     ServiceInstanceProvisionLabels:
       type: object
       properties:
-        Name:
+        Cluster Name:
           type: string
           example: instance123
-        KubeconfigURL:
+        Kubeconfig URL:
           type: string
           format: url
           example: https://kubeconfigs.kyma.com/kubeconfig/instance123

@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	kubeconfigURLKey       = "KubeconfigURL"
-	apiServerURLKey        = "APIServerURL"
+	kubeconfigURLKey       = "Kubeconfig URL"
+	apiServerURLKey        = "API Server URL"
+	clusterNameKey         = "Cluster Name"
 	notExpiredInfoFormat   = "Your cluster expires %s."
 	trialExpiryDetailsKey  = "Trial account expiration details"
 	trialDocsKey           = "Trial account documentation"
@@ -24,7 +25,7 @@ const (
 	freeDocsKey           = "Available plans documentation"
 	freeExpiredInfoFormat = "Your cluster has expired. It is not operational, and the link to Kyma dashboard is no longer valid." +
 		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
-	apiServerURLErrorFormat = "while getting APIServerURL: %s"
+	apiServerURLErrorFormat = "while getting API Server URL: %s"
 )
 
 func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
@@ -32,7 +33,7 @@ func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instanc
 	brokerURL = strings.TrimLeft(brokerURL, "http://")
 
 	responseLabels := make(map[string]any, 0)
-	responseLabels["Name"] = op.ProvisioningParameters.Parameters.Name
+	responseLabels[clusterNameKey] = op.ProvisioningParameters.Parameters.Name
 	if !IsOwnClusterPlan(instance.ServicePlanID) && instance.RuntimeID != "" {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
 		apiServerUrl, err := kubeconfigBuilder.GetServerURL(instance.RuntimeID)

@@ -173,8 +173,8 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
-	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.NotContains(t, response.Metadata.Labels, "Kubeconfig URL")
+	assert.NotContains(t, response.Metadata.Labels, "API Server URL")
 	assert.Contains(t, response.Metadata.Labels, "Trial account expiration details")
 	assert.Contains(t, response.Metadata.Labels, "Trial account documentation")
 }
@@ -216,8 +216,8 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	require.NoError(t, err)
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
-	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.NotContains(t, response.Metadata.Labels, "Kubeconfig URL")
+	assert.NotContains(t, response.Metadata.Labels, "API Server URL")
 	assert.Contains(t, response.Metadata.Labels, "Trial account expiration details")
 	assert.Contains(t, response.Metadata.Labels, "Trial account documentation")
 }
@@ -258,8 +258,8 @@ func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
-	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.NotContains(t, response.Metadata.Labels, "Kubeconfig URL")
+	assert.NotContains(t, response.Metadata.Labels, "API Server URL")
 	assert.Contains(t, response.Metadata.Labels, "Free plan expiration details")
 	assert.Contains(t, response.Metadata.Labels, "Available plans documentation")
 }

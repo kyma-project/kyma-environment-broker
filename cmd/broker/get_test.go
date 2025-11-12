@@ -54,9 +54,9 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfig(t *testing.
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -120,9 +120,9 @@ func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -191,9 +191,9 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -265,9 +265,9 @@ func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testi
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -338,9 +338,9 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -418,9 +418,9 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -515,9 +515,9 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -620,9 +620,9 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-				"Name": "testing-cluster",
-				"APIServerURL": "https://api.server.url.dummy",
-				"KubeconfigURL": "https:///kubeconfig/%s"
+				"Cluster Name": "testing-cluster",
+				"API Server URL": "https://api.server.url.dummy",
+				"Kubeconfig URL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {

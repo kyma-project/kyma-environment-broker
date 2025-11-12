@@ -1054,7 +1054,7 @@ func TestProvisioning_OwnCluster(t *testing.T) {
   },
   "metadata": {
     "labels": {
-      "Name": "testing-cluster"
+      "Cluster Name": "testing-cluster"
     }
   }
 }`, string(r))

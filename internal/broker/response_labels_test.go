@@ -33,9 +33,9 @@ func TestResponseLabels(t *testing.T) {
 
 		// then
 		require.Len(t, labels, 3)
-		require.Equal(t, "test", labels["Name"])
-		require.Equal(t, "https://example.com/kubeconfig/inst1234", labels["KubeconfigURL"])
-		require.Equal(t, "https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", labels["APIServerURL"])
+		require.Equal(t, "test", labels["Cluster Name"])
+		require.Equal(t, "https://example.com/kubeconfig/inst1234", labels["Kubeconfig URL"])
+		require.Equal(t, "https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", labels["API Server URL"])
 	})
 
 	t.Run("disable kubeconfig URL label", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestResponseLabels(t *testing.T) {
 
 		// then
 		require.Len(t, labels, 1)
-		require.Equal(t, "test", labels["Name"])
+		require.Equal(t, "test", labels["Cluster Name"])
 	})
 
 	t.Run("should return labels with expire info for not expired instance", func(t *testing.T) {
@@ -69,9 +69,9 @@ func TestResponseLabels(t *testing.T) {
 		// then
 		require.Len(t, labels, 4)
 		assert.Contains(t, labels, trialExpiryDetailsKey)
-		require.Equal(t, "cluster-test", labels["Name"])
-		require.Equal(t, "https://example.com/kubeconfig/instanceID", labels["KubeconfigURL"])
-		require.Equal(t, serverURL, labels["APIServerURL"])
+		require.Equal(t, "cluster-test", labels["Cluster Name"])
+		require.Equal(t, "https://example.com/kubeconfig/instanceID", labels["Kubeconfig URL"])
+		require.Equal(t, serverURL, labels["API Server URL"])
 	})
 
 	t.Run("should return labels with expire info for instance soon to be expired", func(t *testing.T) {
@@ -94,9 +94,9 @@ func TestResponseLabels(t *testing.T) {
 		assert.Contains(t, labels, trialExpiryDetailsKey)
 		assert.Contains(t, labels, kubeconfigURLKey)
 		assert.Contains(t, labels, apiServerURLKey)
-		require.Equal(t, "cluster-test", labels["Name"])
+		require.Equal(t, "cluster-test", labels["Cluster Name"])
 		assert.Equal(t, expectedMsg, labels[trialExpiryDetailsKey])
-		assert.Equal(t, serverURL, labels["APIServerURL"])
+		assert.Equal(t, serverURL, labels["API Server URL"])
 	})
 
 	t.Run("should return labels with expire info for expired instance", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestResponseLabels(t *testing.T) {
 		assert.Contains(t, labels, trialDocsKey)
 		assert.NotContains(t, labels, kubeconfigURLKey)
 		assert.NotContains(t, labels, apiServerURLKey)
-		require.Equal(t, "cluster-test", labels["Name"])
+		require.Equal(t, "cluster-test", labels["Cluster Name"])
 	})
 
 	t.Run("should return labels for own cluster", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestResponseLabels(t *testing.T) {
 		require.Len(t, labels, 2)
 		assert.NotContains(t, labels, kubeconfigURLKey)
 		assert.NotContains(t, labels, apiServerURLKey)
-		require.Equal(t, "cluster-test", labels["Name"])
+		require.Equal(t, "cluster-test", labels["Cluster Name"])
 	})
 
 	t.Run("should not return API server URL label", func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestResponseLabels(t *testing.T) {
 		// then
 		require.Len(t, labels, 2)
 		assert.NotContains(t, labels, apiServerURLKey)
-		require.Equal(t, "cluster-test", labels["Name"])
-		require.Equal(t, fmt.Sprintf("https://example.com/kubeconfig/%s", instance.InstanceID), labels["KubeconfigURL"])
+		require.Equal(t, "cluster-test", labels["Cluster Name"])
+		require.Equal(t, fmt.Sprintf("https://example.com/kubeconfig/%s", instance.InstanceID), labels["Kubeconfig URL"])
 	})
 }
