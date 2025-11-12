@@ -783,6 +783,8 @@ func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDT
 		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing operation data %v: %w", op, err)
 	}
 
+	slog.Info(fmt.Sprintf("operation.createdAt %s", op.CreatedAt.Format(time.RFC3339Nano)))
+
 	ret, err := s.operationToDB(*op)
 	if err != nil {
 		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
