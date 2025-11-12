@@ -125,14 +125,6 @@ func (s *SchemaService) defaultServicePlan(id, name string, plans PlansConfig, c
 	return servicePlan
 }
 
-func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, flags ControlFlagsObject, planName string, cloudProvider pkg.CloudProvider) (create, update *map[string]interface{}) {
-	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false, flags.rejectUnsupportedParameters, s.providerSpec, cloudProvider)
-	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true, flags.rejectUnsupportedParameters, s.providerSpec, cloudProvider)
-
-	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
-		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags)
-}
-
 func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegion string) (create, update *map[string]interface{}, available bool) {
 	regions := s.planSpec.Regions(planName, platformRegion)
 	if len(regions) == 0 {
