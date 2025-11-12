@@ -993,7 +993,54 @@ func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack())
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.NotNil(t, runtime.Spec.Shoot.Networking.DualStack)
+	assert.True(t, *runtime.Spec.Shoot.Networking.DualStack)
+
+	expectedNetworking := imv1.Networking{
+		Nodes:     "192.168.48.0/20",
+		Pods:      "10.104.0.0/24",
+		Services:  "10.105.0.0/24",
+		DualStack: &dualStackEnabled,
+		Type:      ptr.String("calico"),
+	}
+	assertNetworking(t, expectedNetworking, runtime.Spec.Shoot.Networking)
+}
+
+func TestCreateRuntimeResourceStep_DualStackGCP(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+
+	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west1", "platform-region", inputConfig, pkg.GCP)
+	dualStackEnabled := true
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
+		NodesCidr:    "192.168.48.0/20",
+		PodsCidr:     ptr.String("10.104.0.0/24"),
+		ServicesCidr: ptr.String("10.105.0.0/24"),
+		DualStack:    &dualStackEnabled,
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack())
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1038,7 +1085,7 @@ func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack())
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1074,7 +1121,7 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack())
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1098,7 +1145,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 
 	err := imv1.AddToScheme(scheme.Scheme)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west1", "platform-region", inputConfig, pkg.GCP)
+	instance, operation := fixInstanceAndOperation(broker.AlicloudPlanID, "eu-central-1", "platform-region", inputConfig, pkg.Alicloud)
 	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
 		NodesCidr:    "192.168.48.0/20",
 		PodsCidr:     ptr.String("10.104.0.0/24"),
@@ -1727,7 +1774,7 @@ modules: []
 }
 
 func newTestProviderSpecWithDualStack() *configuration.ProviderSpec {
-	// Create a test provider specification with dual stack support for AWS and Azure, no support for others
+	// Create a test provider specification with dual stack support for AWS and GCP, no support for others
 	providerConfigYAML := `
 aws:
   dualStackSupported: true
@@ -1735,18 +1782,32 @@ aws:
     eu-west-2:
       displayName: "Europe (London)"
       zones: ["a", "b", "c"]
+  machines:
+    "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
 azure:
   dualStackSupported: true
   regions:
     westeurope:
       displayName: "West Europe"
       zones: ["1", "2", "3"]
+  machines:
+    "Standard_D2s_v5": "Standard_D2s_v5 (2vCPU, 8GB RAM)"
 gcp:
-  dualStackSupported: false
+  dualStackSupported: true
   regions:
     europe-west1:
       displayName: "Europe West 1"
       zones: ["a", "b", "c"]
+  machines:
+    "n2-standard-2": "n2-standard-2 (2vCPU, 8GB RAM)"
+alicloud:
+  dualStackSupported: false
+  regions:
+    eu-central-1:
+      displayName: "eu-central-1 (Europe, Frankfurt)"
+      zones: ["a", "b", "c"]
+  machines:
+    "ecs.g8i.large": "ecs.g8i.large (2vCPU, 8GB RAM)"
 `
 	providerSpec, _ := configuration.NewProviderSpec(strings.NewReader(providerConfigYAML))
 	return providerSpec
