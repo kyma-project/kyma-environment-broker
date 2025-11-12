@@ -176,7 +176,7 @@ plansConfiguration:
 
 providersConfiguration:
   aws:
-    dualStackSupported: true
+    dualStackSupported: false
     machines:
       "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
       "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
@@ -329,7 +329,7 @@ providersConfiguration:
         displayName: switzerlandnorth (Switzerland, Zurich)
         zones: ['1', '2', '3']
   gcp:
-    dualStackSupported: true
+    dualStackSupported: false
     machines:
       "n2-standard-2": "n2-standard-2 (2vCPU, 8GB RAM)"
       "n2-standard-4": "n2-standard-4 (4vCPU, 16GB RAM)"
