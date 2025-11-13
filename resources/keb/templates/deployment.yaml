@@ -198,7 +198,7 @@ spec:
             - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE
               value: {{ .Values.infrastructureManager.machineImage }}
             - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE_VERSION
-              value: {{ .Values.infrastructureManager.machineImageVersion }}
+              value: "{{ .Values.infrastructureManager.machineImageVersion }}"
             - name: APP_INFRASTRUCTURE_MANAGER_MULTI_ZONE_CLUSTER
               value: "{{ .Values.infrastructureManager.multiZoneCluster }}"
             - name: APP_INFRASTRUCTURE_MANAGER_USE_SMALLER_MACHINE_TYPES
