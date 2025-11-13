@@ -2358,6 +2358,10 @@ func TestUpdateClusterName(t *testing.T) {
 			parameters:    `{"name": ""}`,
 			expectedError: fmt.Errorf("while validating update parameters: at '/name': minLength: got 0, want 1"),
 		},
+		"Long name": {
+			parameters:    fmt.Sprintf(`{"name": "%s"}`, strings.Repeat("A", 257)),
+			expectedError: fmt.Errorf("while validating update parameters: at '/name': maxLength: got 257, want 256"),
+		},
 		"Valid name": {
 			parameters:    `{"name": "cluster-testing"}`,
 			expectedError: nil,
