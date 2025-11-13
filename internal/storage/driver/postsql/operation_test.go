@@ -2,6 +2,7 @@ package postsql_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -71,7 +72,14 @@ func TestOperation(t *testing.T) {
 		tzones := brokerStorage.TimeZones()
 		tz, err := tzones.GetTimeZone()
 		require.NoError(t, err)
-		t.Log(tz)
+		require.NotEmpty(t, tz)
+
+		// trim surrounding quotes if present
+		locName := strings.Trim(tz, "'\"")
+		loc, err := time.LoadLocation(locName)
+		require.NoError(t, err)
+		_, offsetSeconds := time.Now().In(loc).Zone()
+		offset := time.Duration(offsetSeconds) * time.Second
 
 		// when
 		err = svc.InsertOperation(givenOperation)
@@ -79,6 +87,7 @@ func TestOperation(t *testing.T) {
 
 		op, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), offset)
 
 		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
 		op, err = svc.UpdateOperation(*op)
@@ -86,14 +95,123 @@ func TestOperation(t *testing.T) {
 
 		op, err = svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
-		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 2*offset)
 
 		op, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
-		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 3*offset)
+
+		assert.Equal(t, givenOperation.ID, op.ID)
+	})
+
+	t.Run("Provisioning in UTC", func(t *testing.T) {
+		cfg.Timezone = "UTC"
+		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
+		givenOperation.State = domain.InProgress
+		givenOperation.CreatedAt = time.Now()
+		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
+		givenOperation.Version = 1
+		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
+
+		svc := brokerStorage.Operations()
+
+		timeZones := brokerStorage.TimeZones()
+		tz, err := timeZones.GetTimeZone()
+		require.NoError(t, err)
+		require.NotEmpty(t, tz)
+
+		// when
+		err = svc.InsertOperation(givenOperation)
+		require.NoError(t, err)
+
+		op, err := svc.GetOperationByID("operation-id")
+		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
+		require.NoError(t, err)
+
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
+
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
+		require.NoError(t, err)
+
+		assert.Equal(t, givenOperation.ID, op.ID)
+	})
+
+	t.Run("Provisioning in Los Angeles", func(t *testing.T) {
+		cfg.Timezone = "'America/Los_Angeles'"
+		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
+		givenOperation.State = domain.InProgress
+		givenOperation.CreatedAt = time.Now()
+		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
+		givenOperation.Version = 1
+		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
+
+		svc := brokerStorage.Operations()
+
+		timeZones := brokerStorage.TimeZones()
+		tz, err := timeZones.GetTimeZone()
+		require.NoError(t, err)
+		require.NotEmpty(t, tz)
+		// trim surrounding quotes if present
+		locName := strings.Trim(tz, "'\"")
+		loc, err := time.LoadLocation(locName)
+		require.NoError(t, err)
+		_, offsetSeconds := time.Now().In(loc).Zone()
+		offset := time.Duration(offsetSeconds) * time.Second
+
+		// when
+		err = svc.InsertOperation(givenOperation)
+		require.NoError(t, err)
+
+		op, err := svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		assert.Equal(t, givenOperation.ID, op.ID)
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), offset)
+
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 2*offset)
+
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 3*offset)
 
 		assert.Equal(t, givenOperation.ID, op.ID)
 	})
