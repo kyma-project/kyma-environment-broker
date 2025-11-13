@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -21,15 +22,21 @@ const (
 func TestResponseLabels(t *testing.T) {
 	t.Run("return all labels", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "test"
-
-		instance := internal.Instance{InstanceID: "inst1234", DashboardURL: "https://console.dashbord.test", RuntimeID: runtimeID}
+		instance := internal.Instance{
+			InstanceID:   "inst1234",
+			DashboardURL: "https://console.dashbord.test",
+			RuntimeID:    runtimeID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: "test",
+				},
+			},
+		}
 		kcBuilder := &automock.KcBuilder{}
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return(serverURL, nil)
 
 		// when
-		labels := ResponseLabels(operation, instance, "https://example.com", kcBuilder)
+		labels := ResponseLabels(instance, "https://example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 3)
@@ -40,13 +47,17 @@ func TestResponseLabels(t *testing.T) {
 
 	t.Run("disable kubeconfig URL label", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "test"
-		instance := internal.Instance{}
+		instance := internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: "test",
+				},
+			},
+		}
 		kcBuilder := &automock.KcBuilder{}
 
 		// when
-		labels := ResponseLabels(operation, instance, "https://console.example.com", kcBuilder)
+		labels := ResponseLabels(instance, "https://console.example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 1)
@@ -55,16 +66,13 @@ func TestResponseLabels(t *testing.T) {
 
 	t.Run("should return labels with expire info for not expired instance", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "cluster-test"
-
 		instance := fixture.FixInstance("instanceID")
 		kcBuilder := &automock.KcBuilder{}
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return(serverURL, nil)
 		defer kcBuilder.AssertExpectations(t)
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 4)
@@ -76,9 +84,6 @@ func TestResponseLabels(t *testing.T) {
 
 	t.Run("should return labels with expire info for instance soon to be expired", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "cluster-test"
-
 		instance := fixture.FixInstance("instanceID")
 		instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 		kcBuilder := &automock.KcBuilder{}
@@ -87,7 +92,7 @@ func TestResponseLabels(t *testing.T) {
 		expectedMsg := fmt.Sprintf(notExpiredInfoFormat, "today")
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 4)
@@ -101,9 +106,6 @@ func TestResponseLabels(t *testing.T) {
 
 	t.Run("should return labels with expire info for expired instance", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "cluster-test"
-
 		instance := fixture.FixInstance("instanceID")
 		instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 		expiryDate := time.Date(2022, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -112,7 +114,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return(serverURL, nil)
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 3)
@@ -125,15 +127,12 @@ func TestResponseLabels(t *testing.T) {
 
 	t.Run("should return labels for own cluster", func(t *testing.T) {
 		// given
-		operation := internal.ProvisioningOperation{}
-		operation.ProvisioningParameters.Parameters.Name = "cluster-test"
-
 		instance := fixture.FixInstance("instanceID")
 		instance.ServicePlanID = OwnClusterPlanID
 		kcBuilder := &automock.KcBuilder{}
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 2)
@@ -145,14 +144,12 @@ func TestResponseLabels(t *testing.T) {
 	t.Run("should not return API server URL label", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance("instance-no-apiserverurl")
-		operation := fixture.FixProvisioningOperation("provisioning-op-no-apiserverurl", instance.InstanceID)
-		wrapper := internal.ProvisioningOperation{Operation: operation}
 
 		kcBuilder := &automock.KcBuilder{}
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return("", kubeconfig.NewNotFoundError("missing secret"))
 
 		// when
-		labels := ResponseLabels(wrapper, instance, "https://example.com", kcBuilder)
+		labels := ResponseLabels(instance, "https://example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 2)
