@@ -3590,6 +3590,99 @@ func TestDiscoveryZones(t *testing.T) {
 	}
 }
 
+func TestClusterName(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		parameters    string
+		expectedError error
+	}{
+		"Missing name": {
+			parameters:    `{"region": "eu-central-1"}`,
+			expectedError: fmt.Errorf("while validating input parameters: at '': missing property 'name'"),
+		},
+		"Null name": {
+			parameters:    `{"name": null, "region": "eu-central-1"}`,
+			expectedError: fmt.Errorf("while validating input parameters: at '/name': got null, want string"),
+		},
+		"Empty name": {
+			parameters:    `{"name": "", "region": "eu-central-1"}`,
+			expectedError: fmt.Errorf("while validating input parameters: at '/name': minLength: got 0, want 1"),
+		},
+		"Long name": {
+			parameters:    fmt.Sprintf(`{"name": "%s", "region": "eu-central-1"}`, strings.Repeat("A", 257)),
+			expectedError: fmt.Errorf("while validating input parameters: at '/name': maxLength: got 257, want 256"),
+		},
+		"Valid name": {
+			parameters:    `{"name": "cluster-testing", "region": "eu-central-1"}`,
+			expectedError: nil,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
+				},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
+				memoryStorage,
+				queue,
+				broker.PlansConfig{},
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
+				false,
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+			)
+
+			// when
+			_, err := provisionEndpoint.Provision(
+				fixRequestContext(t, "cf-eu10"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        broker.AWSPlanID,
+					RawParameters: json.RawMessage(tc.parameters),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+				},
+				true,
+			)
+
+			// then
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion

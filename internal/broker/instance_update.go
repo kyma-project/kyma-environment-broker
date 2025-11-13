@@ -470,6 +470,11 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
 	}
 
+	if params.Name != nil && *params.Name != "" {
+		instance.Parameters.Parameters.Name = *params.Name
+		updateStorage = append(updateStorage, "Cluster Name")
+	}
+
 	if len(updateStorage) > 0 {
 		if err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 			instance, err = b.instanceStorage.Update(*instance)

@@ -264,7 +264,9 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 	flags := s.createFlags(FreemiumPlanName)
 
 	properties := ProvisioningProperties{
-		Name: NameProperty(),
+		UpdateProperties: UpdateProperties{
+			Name: NameProperty(update),
+		},
 		Region: &Type{
 			Type:            "string",
 			Enum:            ToInterfaceSlice(regions),
@@ -290,7 +292,9 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	flags := s.createFlags(TrialPlanName)
 
 	properties := ProvisioningProperties{
-		Name: NameProperty(),
+		UpdateProperties: UpdateProperties{
+			Name: NameProperty(update),
+		},
 	}
 
 	if !update {
@@ -302,10 +306,10 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 
 func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 	properties := ProvisioningProperties{
-		Name:        NameProperty(),
 		ShootName:   ShootNameProperty(),
 		ShootDomain: ShootDomainProperty(),
 		UpdateProperties: UpdateProperties{
+			Name:       NameProperty(update),
 			Kubeconfig: KubeconfigProperty(),
 		},
 	}

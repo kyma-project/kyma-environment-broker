@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "_controlsOrder": [
+    "name",
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
@@ -168,6 +169,13 @@
         "Standard_D48_v3",
         "Standard_D64_v3"
       ],
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9-]*$",
+      "title": "Cluster Name",
       "type": "string"
     },
     "oidc": {
