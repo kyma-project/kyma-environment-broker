@@ -65,6 +65,9 @@ Each provider has its own configuration which defines provider details, for exam
 ```yaml
 providersConfiguration:
   aws:
+    # enables dual-stack networking support (IPv4 and IPv6)
+    dualStackSupported: true
+    
     # machine display names
     machines:
       "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
