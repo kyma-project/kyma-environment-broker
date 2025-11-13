@@ -41,7 +41,7 @@ global:
       userNameSecretKey: "postgresql-broker-username"
 
     # Specifies the "timezone" parameter in the DB connection URL
-    timezone: "CCT" # China Coast Time
+    timezone: ""
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy

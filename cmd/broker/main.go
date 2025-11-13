@@ -246,13 +246,6 @@ func main() {
 	logger := lager.NewLogger("kyma-env-broker")
 
 	log.Info("Starting Kyma Environment Broker")
-	log.Info("Print local time and time zone information")
-
-	localTime := time.Now()
-	log.Info(localTime.String())
-
-	// See what time zone is being used
-	log.Info(localTime.Location().String())
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
@@ -291,6 +284,12 @@ func main() {
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
 	}
+
+	// get storage time zone
+	timeZone, err := db.TimeZones().GetTimeZone()
+	fatalOnError(err, log)
+	log.Info(fmt.Sprintf("KEB local time: %  time zone: %s", time.Now().String(), time.Now().Location().String()))
+	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
