@@ -2249,7 +2249,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 			"context":{},
 			"parameters":{
-			    "name":"$instance",
+			    "name":"instance",
 			    "administrators":["xyz@sap.com", "xyz@gmail.com", "xyz@abc.com"]
 			}
 		}`)

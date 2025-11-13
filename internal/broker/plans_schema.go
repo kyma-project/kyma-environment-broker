@@ -33,7 +33,6 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                 NameType        `json:"name"`
 	ShootName            *Type           `json:"shootName,omitempty"`
 	ShootDomain          *Type           `json:"shootDomain,omitempty"`
 	Region               *Type           `json:"region,omitempty"`
@@ -43,6 +42,7 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
+	Name                      NameType                       `json:"name"`
 	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
 	AutoScalerMin             *AutoscalerType                `json:"autoScalerMin,omitempty"`
 	AutoScalerMax             *AutoscalerType                `json:"autoScalerMax,omitempty"`
@@ -589,6 +589,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
+			Name: NameProperty(),
 			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
 				Minimum:     pkg.HAAutoscalerMinimumValue,
@@ -611,7 +612,6 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			},
 			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, rejectUnsupportedParameters),
 		},
-		Name: NameProperty(),
 		Region: &Type{
 			Type:            "string",
 			Enum:            ToInterfaceSlice(regions),
