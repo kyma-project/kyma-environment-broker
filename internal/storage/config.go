@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	connectionURLFormat = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s sslrootcert=%s"
+	connectionURLFormat = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s"
 )
 
 type Config struct {
@@ -28,9 +28,12 @@ type Config struct {
 
 func (cfg *Config) ConnectionURL() string {
 	url := fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
-		cfg.Password, cfg.Name, cfg.SSLMode, cfg.SSLRootCert)
+		cfg.Password, cfg.Name, cfg.SSLMode)
+	if cfg.SSLMode != "disable" {
+		url += fmt.Sprintf(" sslrootcert=%s", cfg.SSLRootCert)
+	}
 	if cfg.Timezone != "" {
-		url = fmt.Sprintf("%s timezone=%s", url, cfg.Timezone)
+		url += fmt.Sprintf(" timezone=%s", cfg.Timezone)
 	}
 	return url
 }

@@ -783,14 +783,14 @@ func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDT
 		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing operation data %v: %w", op, err)
 	}
 
-	slog.Info(fmt.Sprintf("operation.createdAt %s", op.CreatedAt.Format(time.RFC3339Nano)))
+	//slog.Info(fmt.Sprintf("operation.createdAt %s", op.CreatedAt.Format(time.RFC3339Nano)))
 
 	ret, err := s.operationToDB(*op)
 	if err != nil {
 		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
 	}
 
-	slog.Info(fmt.Sprintf("operationToDTO.createdAt %s", ret.CreatedAt.Format(time.RFC3339Nano)))
+	//slog.Info(fmt.Sprintf("operationToDTO.createdAt %s", ret.CreatedAt.Format(time.RFC3339Nano)))
 	ret.Data = string(serialized)
 	return ret, nil
 }
@@ -1037,7 +1037,7 @@ func (s *operations) getByTypeAndInstanceID(id string, opType internal.Operation
 func (s *operations) update(operation dbmodel.OperationDTO) error {
 	session := s.Factory.NewWriteSession()
 
-	slog.Info("updating operation and trying to set createdAt:", "createdAt", operation.CreatedAt.Format(time.RFC3339Nano))
+	//slog.Info("updating operation and trying to set createdAt:", "createdAt", operation.CreatedAt.Format(time.RFC3339Nano))
 
 	var lastErr error
 	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {

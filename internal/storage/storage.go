@@ -24,6 +24,7 @@ type BrokerStorage interface {
 	InstancesArchived() InstancesArchived
 	Bindings() Bindings
 	Actions() Actions
+	TimeZones() TimeZones
 }
 
 const (
@@ -54,6 +55,7 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (Bro
 		instancesArchived: postgres.NewInstanceArchived(fact),
 		bindings:          postgres.NewBinding(fact, cipher),
 		actions:           postgres.NewAction(fact),
+		timezones:         postgres.NewTimeZones(fact),
 	}, connection, nil
 }
 
@@ -127,6 +129,7 @@ type storage struct {
 	instancesArchived InstancesArchived
 	bindings          Bindings
 	actions           Actions
+	timezones         TimeZones
 }
 
 func (s storage) Instances() Instances {
@@ -164,3 +167,5 @@ func (s storage) Bindings() Bindings {
 func (s storage) Actions() Actions {
 	return s.actions
 }
+
+func (s storage) TimeZones() TimeZones { return s.timezones }

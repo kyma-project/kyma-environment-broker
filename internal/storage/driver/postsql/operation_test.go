@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,8 @@ import (
 )
 
 func TestOperation(t *testing.T) {
+
+	cfg := brokerStorageDatabaseTestConfig()
 
 	t.Run("should delete operation by ID", func(t *testing.T) {
 		// given
@@ -42,6 +45,57 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(ops))
 		assert.Equal(t, "op-to-keep", ops[0].ID)
+	})
+
+	t.Run("Provisioning in Shanghai", func(t *testing.T) {
+		cfg.Timezone = "'Asia/Shanghai'"
+		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
+		givenOperation.State = domain.InProgress
+		givenOperation.CreatedAt = time.Now()
+		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
+		givenOperation.Version = 1
+		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
+
+		svc := brokerStorage.Operations()
+
+		tzones := brokerStorage.TimeZones()
+		tz, err := tzones.GetTimeZone()
+		require.NoError(t, err)
+		t.Log(tz)
+
+		// when
+		err = svc.InsertOperation(givenOperation)
+		require.NoError(t, err)
+
+		op, err := svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+
+		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+
+		op, err = svc.UpdateOperation(*op)
+		require.NoError(t, err)
+
+		op, err = svc.GetOperationByID("operation-id")
+		require.NoError(t, err)
+		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+
+		assert.Equal(t, givenOperation.ID, op.ID)
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
