@@ -1729,19 +1729,19 @@ func newTestProviderSpecWithDualStack() *configuration.ProviderSpec {
 	// Create a test provider specification with dual stack support for AWS and Azure, no support for others
 	providerConfigYAML := `
 aws:
-  dualStackSupported: true
+  dualStack: true
   regions:
     eu-west-2:
       displayName: "Europe (London)"
       zones: ["a", "b", "c"]
 azure:
-  dualStackSupported: true
+  dualStack: true
   regions:
     westeurope:
       displayName: "West Europe"
       zones: ["1", "2", "3"]
 gcp:
-  dualStackSupported: false
+  dualStack: false
   regions:
     europe-west1:
       displayName: "Europe West 1"

@@ -1,5 +1,5 @@
 aws:
-  dualStackSupported: true
+  dualStack: true
   regionsSupportingMachine:
     "c7i":
       "us-east-1": ["w", "x", "y", "z"]

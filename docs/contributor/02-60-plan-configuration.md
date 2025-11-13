@@ -66,7 +66,7 @@ Each provider has its own configuration which defines provider details, for exam
 providersConfiguration:
   aws:
     # enables dual-stack networking support (IPv4 and IPv6)
-    dualStackSupported: true
+    dualStack: true
     
     # machine display names
     machines:
