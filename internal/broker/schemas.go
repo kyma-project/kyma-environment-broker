@@ -267,7 +267,7 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
-			Name: NameProperty(),
+			Name: NameProperty(update),
 		},
 		Region: &Type{
 			Type:            "string",
@@ -295,7 +295,7 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
-			Name: NameProperty(),
+			Name: NameProperty(update),
 		},
 	}
 
@@ -311,7 +311,7 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 		ShootName:   ShootNameProperty(),
 		ShootDomain: ShootDomainProperty(),
 		UpdateProperties: UpdateProperties{
-			Name:       NameProperty(),
+			Name:       NameProperty(update),
 			Kubeconfig: KubeconfigProperty(),
 		},
 	}

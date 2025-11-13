@@ -130,7 +130,7 @@ type AutoscalerType struct {
 
 type NameType struct {
 	Type
-	BTPdefaultTemplate BTPdefaultTemplate `json:"_BTPdefaultTemplate,omitempty"`
+	BTPdefaultTemplate *BTPdefaultTemplate `json:"_BTPdefaultTemplate,omitempty"`
 }
 
 type BTPdefaultTemplate struct {
@@ -525,8 +525,8 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 	return modules
 }
 
-func NameProperty() NameType {
-	return NameType{
+func NameProperty(update bool) NameType {
+	nameType := NameType{
 		Type: Type{
 			Type:  "string",
 			Title: "Cluster Name",
@@ -534,10 +534,15 @@ func NameProperty() NameType {
 			Pattern:   "^[a-zA-Z0-9-]*$",
 			MinLength: 1,
 		},
-		BTPdefaultTemplate: BTPdefaultTemplate{
-			Elements: []string{"saSubdomain"},
-		},
 	}
+
+	if !update {
+		nameType.BTPdefaultTemplate = &BTPdefaultTemplate{
+			Elements: []string{"saSubdomain"},
+		}
+	}
+
+	return nameType
 }
 
 func KubeconfigProperty() *Type {
@@ -589,7 +594,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
-			Name: NameProperty(),
+			Name: NameProperty(update),
 			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
 				Minimum:     pkg.HAAutoscalerMinimumValue,

@@ -172,11 +172,6 @@
       "type": "string"
     },
     "name": {
-      "_BTPdefaultTemplate": {
-        "elements": [
-          "saSubdomain"
-        ]
-      },
       "minLength": 1,
       "pattern": "^[a-zA-Z0-9-]*$",
       "title": "Cluster Name",
