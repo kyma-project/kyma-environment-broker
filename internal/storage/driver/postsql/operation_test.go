@@ -131,11 +131,14 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, tz)
 
+		t.Log(tz)
 		// when
 		err = svc.InsertOperation(givenOperation)
 		require.NoError(t, err)
 
 		op, err := svc.GetOperationByID("operation-id")
+		t.Log(givenOperation.CreatedAt.UTC().Format(time.RFC3339))
+		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
 		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
 		require.NoError(t, err)
 
