@@ -60,7 +60,7 @@ func TestOperation(t *testing.T) {
 
 		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		givenOperation.State = domain.InProgress
-		givenOperation.CreatedAt = time.Now()
+		givenOperation.CreatedAt = time.Now().Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
 		givenOperation.Version = 1
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
@@ -174,7 +174,7 @@ func TestOperation(t *testing.T) {
 
 		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		givenOperation.State = domain.InProgress
-		givenOperation.CreatedAt = time.Now()
+		givenOperation.CreatedAt = time.Now().Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
 		givenOperation.Version = 1
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
