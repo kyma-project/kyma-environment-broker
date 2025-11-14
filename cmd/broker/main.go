@@ -141,6 +141,8 @@ type Config struct {
 	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
+
+	ClusterNameInKubeconfig bool
 }
 
 type ProfilerConfig struct {
@@ -351,7 +353,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.ClusterNameInKubeconfig)
 
 	// create server
 	router := httputil.NewRouter()
