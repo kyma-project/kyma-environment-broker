@@ -97,6 +97,7 @@ You can find more details in the following documents:
  * [Regions Supporting Machine Types](03-50-regions-supporting-machine.md)
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-80-plan-updates.md)
+ * [Dual-Stack Configuration](03-85-dual-stack-configuration.md)
 
 ## Bindings
 

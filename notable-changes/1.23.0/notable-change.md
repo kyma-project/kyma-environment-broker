@@ -35,15 +35,10 @@ A new dual-stack networking feature has been added to KEB, allowing Kyma runtime
               # ... existing machine configurations
             regions:
               # ... existing region configurations
-          azure:
-            # Dual-stack not currently supported for this provider
-            machines:
-              # ... existing machine configurations
-            regions:
-              # ... existing region configurations
         ```
 
 4. Save and apply the updated configuration.
+5. Refresh broker details in one BTP region using the XRS APIs in the ERS registry.
 
 ## Impact on Provisioning
 
@@ -70,7 +65,9 @@ Example provisioning request using the new dual-stack networking feature:
 ## Post-Update Steps
 
 1. Verify that the dual-stack option appears in the service catalog for plans using providers with `dualStack: true`
-2. Test provisioning with dual-stack networking enabled to ensure the new feature works correctly
-3. Check that dual-stack configuration is properly applied to the runtime resources
+2. Verify that the dual-stack option appears in SAP BTP cockpit
+3. Test provisioning with dual-stack networking enabled to ensure the new feature works correctly
+4. Check that dual-stack configuration is properly applied to the runtime resources
 
-For more information about using the dual-stack networking feature, see [Custom Networking Configuration](../../docs/user/04-30-custom-networking-configuration.md).
+For more information about configuring dual-stack networking in Kyma Environment Broker, see [Dual-Stack Configuration](../../docs/contributor/03-85-dual-stack-configuration.md).
+For information about using dual-stack networking when provisioning Kyma instances, see [Custom Networking Configuration](../../docs/user/04-30-custom-networking-configuration.md).
