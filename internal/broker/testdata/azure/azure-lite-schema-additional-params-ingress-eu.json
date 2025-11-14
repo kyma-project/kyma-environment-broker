@@ -200,7 +200,7 @@
           "saSubdomain"
         ]
       },
-      "maxLength": 256,
+      "maxLength": 64,
       "minLength": 1,
       "pattern": "^[a-zA-Z0-9-]*$",
       "title": "Cluster Name",
