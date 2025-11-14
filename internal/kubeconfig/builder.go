@@ -17,18 +17,20 @@ type Config struct {
 }
 
 type Builder struct {
-	kubeconfigProvider kubeconfigProvider
-	kcpClient          client.Client
+	kubeconfigProvider      kubeconfigProvider
+	kcpClient               client.Client
+	clusterNameInKubeconfig bool
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, clusterNameInKubeconfig bool) *Builder {
 	return &Builder{
-		kcpClient:          kcpClient,
-		kubeconfigProvider: provider,
+		kcpClient:               kcpClient,
+		kubeconfigProvider:      provider,
+		clusterNameInKubeconfig: clusterNameInKubeconfig,
 	}
 }
 
@@ -86,13 +88,18 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		return "", fmt.Errorf("during unmarshal invocation: %w", err)
 	}
 
-	OIDCConfigs, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID, kubeCfg.CurrentContext)
+	contextName := kubeCfg.CurrentContext
+	if b.clusterNameInKubeconfig {
+		contextName = instance.Parameters.Parameters.Name
+	}
+
+	OIDCConfigs, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID, contextName)
 	if err != nil {
 		return "", fmt.Errorf("while fetching oidc data: %w", err)
 	}
 
 	return b.parseTemplate(kubeconfigData{
-		ContextName: kubeCfg.CurrentContext,
+		ContextName: contextName,
 		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
 		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
 		OIDCConfigs: OIDCConfigs,
