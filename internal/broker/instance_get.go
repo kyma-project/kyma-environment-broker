@@ -77,16 +77,16 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		DashboardURL: instance.DashboardURL,
 		Parameters:   parameters,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*op, *instance, b.config.URL, b.kcBuilder),
+			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}
 
 	if instance.ServicePlanID == TrialPlanID {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*instance, b.config.URL, b.config.TrialDocsURL, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
 	}
 
 	if instance.ServicePlanID == FreemiumPlanID {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*instance, b.config.URL, b.config.FreeDocsURL, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
 	}
 
 	return spec, nil

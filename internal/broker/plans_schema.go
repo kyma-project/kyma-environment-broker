@@ -33,7 +33,6 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                 NameType        `json:"name"`
 	ShootName            *Type           `json:"shootName,omitempty"`
 	ShootDomain          *Type           `json:"shootDomain,omitempty"`
 	Region               *Type           `json:"region,omitempty"`
@@ -43,6 +42,7 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
+	Name                      NameType                       `json:"name"`
 	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
 	AutoScalerMin             *AutoscalerType                `json:"autoScalerMin,omitempty"`
 	AutoScalerMax             *AutoscalerType                `json:"autoScalerMax,omitempty"`
@@ -130,7 +130,7 @@ type AutoscalerType struct {
 
 type NameType struct {
 	Type
-	BTPdefaultTemplate BTPdefaultTemplate `json:"_BTPdefaultTemplate,omitempty"`
+	BTPdefaultTemplate *BTPdefaultTemplate `json:"_BTPdefaultTemplate,omitempty"`
 }
 
 type BTPdefaultTemplate struct {
@@ -525,19 +525,25 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 	return modules
 }
 
-func NameProperty() NameType {
-	return NameType{
+func NameProperty(update bool) NameType {
+	nameType := NameType{
 		Type: Type{
 			Type:  "string",
 			Title: "Cluster Name",
 			// Allows for all alphanumeric characters and '-'
 			Pattern:   "^[a-zA-Z0-9-]*$",
 			MinLength: 1,
-		},
-		BTPdefaultTemplate: BTPdefaultTemplate{
-			Elements: []string{"saSubdomain"},
+			MaxLength: 256,
 		},
 	}
+
+	if !update {
+		nameType.BTPdefaultTemplate = &BTPdefaultTemplate{
+			Elements: []string{"saSubdomain"},
+		}
+	}
+
+	return nameType
 }
 
 func KubeconfigProperty() *Type {
@@ -589,6 +595,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
+			Name: NameProperty(update),
 			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
 				Minimum:     pkg.HAAutoscalerMinimumValue,
@@ -611,7 +618,6 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			},
 			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, rejectUnsupportedParameters),
 		},
-		Name: NameProperty(),
 		Region: &Type{
 			Type:            "string",
 			Enum:            ToInterfaceSlice(regions),

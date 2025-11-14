@@ -2249,7 +2249,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 			"context":{},
 			"parameters":{
-			    "name":"$instance",
+			    "name":"instance",
 			    "administrators":["xyz@sap.com", "xyz@gmail.com", "xyz@abc.com"]
 			}
 		}`)
@@ -3722,4 +3722,68 @@ func TestUpdate_ZonesDiscovery(t *testing.T) {
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "zone-d", "zone-e", "zone-f", "zone-g")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 3, "zone-h", "zone-i", "zone-j", "zone-k")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "zone-l", "zone-m")
+}
+
+func TestUpdateClusterName(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "testing-cluster", gotInstance.Parameters.Parameters.Name)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "updated-name"
+			}
+   }`)
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	gotInstance = suite.GetInstance(iid)
+	assert.Equal(t, "updated-name", gotInstance.Parameters.Parameters.Name)
 }

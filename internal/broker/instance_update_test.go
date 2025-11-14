@@ -2341,6 +2341,72 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 	}
 }
 
+func TestUpdateClusterName(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		parameters    string
+		expectedError error
+	}{
+		"Missing name": {
+			parameters:    "",
+			expectedError: nil,
+		},
+		"Null name": {
+			parameters:    `{"name": null}`,
+			expectedError: fmt.Errorf("while validating update parameters: at '/name': got null, want string"),
+		},
+		"Empty name": {
+			parameters:    `{"name": ""}`,
+			expectedError: fmt.Errorf("while validating update parameters: at '/name': minLength: got 0, want 1"),
+		},
+		"Long name": {
+			parameters:    fmt.Sprintf(`{"name": "%s"}`, strings.Repeat("A", 257)),
+			expectedError: fmt.Errorf("while validating update parameters: at '/name': maxLength: got 257, want 256"),
+		},
+		"Valid name": {
+			parameters:    `{"name": "cluster-testing"}`,
+			expectedError: nil,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = broker.AWSPlanID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AWSPlanID,
+				RawParameters:   json.RawMessage(tc.parameters),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
 	return provider.NewPlanSpecificValuesProvider(

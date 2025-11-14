@@ -46,6 +46,7 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 type UpdatingParametersDTO struct {
 	pkg.AutoScalerParameters `json:",inline"`
 
+	Name                      *string                        `json:"name,omitempty"`
 	OIDC                      *pkg.OIDCConnectDTO            `json:"oidc,omitempty"`
 	RuntimeAdministrators     []string                       `json:"administrators,omitempty"`
 	MachineType               *string                        `json:"machineType,omitempty"`
