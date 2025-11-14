@@ -139,6 +139,9 @@ func TestOperation(t *testing.T) {
 		op, err := svc.GetOperationByID("operation-id")
 		t.Log(givenOperation.CreatedAt.UTC().Format(time.RFC3339))
 		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
+		t.Log(op.CreatedAt.Equal(givenOperation.CreatedAt))
+		//log the difference
+		t.Log(givenOperation.CreatedAt.Sub(op.CreatedAt))
 		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
 		require.NoError(t, err)
 
