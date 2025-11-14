@@ -12,6 +12,8 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker/testutil"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -168,7 +170,7 @@ func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg
 	require.NoError(t, err)
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 
-	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans)
+	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans, testutil.NewFakeConfigProvider(), "test-config-map")
 	require.NoError(t, err)
 	return service
 }
@@ -218,4 +220,19 @@ func configSource(t *testing.T, filename string) io.Reader {
 	plans, err := os.Open(filename)
 	require.NoError(t, err)
 	return plans
+}
+
+func TestFakeProvider_ChannelExtraction(t *testing.T) {
+	t.Run("should extract channel from fake provider configuration", func(t *testing.T) {
+		// given
+		provider := testutil.NewFakeConfigProvider()
+		configMapProvider := config.NewConfigMapConfigProvider(provider, "test-config-map", config.RuntimeConfigurationRequiredFields)
+
+		// when
+		channel, err := broker.GetChannelFromConfig(configMapProvider)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, "regular", channel, "Expected channel to be 'regular' from fake provider")
+	})
 }

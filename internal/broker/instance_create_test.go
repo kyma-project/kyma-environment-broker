@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker/testutil"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
@@ -3767,7 +3768,7 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
 		broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName})
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, testutil.NewFakeConfigProvider(), "test-config-map")
 	return schemaService
 }
 

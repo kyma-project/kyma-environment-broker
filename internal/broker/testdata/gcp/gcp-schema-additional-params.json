@@ -149,16 +149,30 @@
       "type": "string"
     },
     "modules": {
-      "_controlsOrder": [
-        "default",
-        "list"
-      ],
       "description": "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
       "oneOf": [
         {
+          "_controlsOrder": [
+            "channel",
+            "default"
+          ],
           "additionalProperties": false,
           "description": "Default modules",
           "properties": {
+            "channel": {
+              "_enumDisplayName": {
+                "fast": "Fast - latest version",
+                "regular": "Regular - default version"
+              },
+              "default": "regular",
+              "description": "Specifies the default release channel for modules. This applies when 'Use Default' is selected.",
+              "enum": [
+                "regular",
+                "fast"
+              ],
+              "title": "Default Module Channel",
+              "type": "string"
+            },
             "default": {
               "default": true,
               "description": "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
@@ -171,9 +185,27 @@
           "type": "object"
         },
         {
+          "_controlsOrder": [
+            "channel",
+            "list"
+          ],
           "additionalProperties": false,
           "description": "Define custom module list",
           "properties": {
+            "channel": {
+              "_enumDisplayName": {
+                "fast": "Fast - latest version",
+                "regular": "Regular - default version"
+              },
+              "default": "regular",
+              "description": "Specifies the default release channel for any custom modules that do not specify their own channel.",
+              "enum": [
+                "regular",
+                "fast"
+              ],
+              "title": "Default Module Channel",
+              "type": "string"
+            },
             "list": {
               "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
               "items": {
@@ -182,6 +214,7 @@
                   "channel",
                   "customResourcePolicy"
                 ],
+                "additionalProperties": false,
                 "properties": {
                   "channel": {
                     "_enumDisplayName": {
@@ -190,7 +223,7 @@
                       "regular": "Regular - default version"
                     },
                     "default": "",
-                    "description": "Select your preferred release channel or leave this field empty.",
+                    "description": "Select your preferred release channel or leave this field empty. Overrides the Default Module Channel.",
                     "enum": [
                       "",
                       "regular",

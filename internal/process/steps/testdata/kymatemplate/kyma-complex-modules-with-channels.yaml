@@ -1,0 +1,21 @@
+apiVersion: operator.kyma-project.io/v1beta2
+kind: Kyma
+metadata:
+  name: my-kyma
+  namespace: kyma-system
+spec:
+  sync:
+    strategy: secret
+  channel: regular
+  modules:
+    - name: keda
+      channel: fast
+      customResourcePolicy: CreateAndDelete
+    - name: btp-operator
+      channel: regular
+      customResourcePolicy: Ignore
+    - name: serverless
+      customResourcePolicy: CreateAndDelete
+    - name: eventing
+      channel: fast
+      customResourcePolicy: CreateAndDelete

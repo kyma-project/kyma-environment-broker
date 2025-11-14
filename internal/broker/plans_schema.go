@@ -1,12 +1,19 @@
 package broker
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 const (
@@ -146,20 +153,24 @@ type Modules struct {
 
 type ModulesDefault struct {
 	Type
-	Properties ModulesDefaultProperties `json:"properties,omitempty"`
+	ControlsOrder []string                 `json:"_controlsOrder,omitempty"`
+	Properties    ModulesDefaultProperties `json:"properties,omitempty"`
 }
 
 type ModulesDefaultProperties struct {
+	Channel Type `json:"channel,omitempty"`
 	Default Type `json:"default,omitempty"`
 }
 
 type ModulesCustom struct {
 	Type
-	Properties ModulesCustomProperties `json:"properties,omitempty"`
+	ControlsOrder []string                `json:"_controlsOrder,omitempty"`
+	Properties    ModulesCustomProperties `json:"properties,omitempty"`
 }
 
 type ModulesCustomProperties struct {
-	List ModulesCustomList `json:"list,omitempty"`
+	Channel Type              `json:"channel,omitempty"`
+	List    ModulesCustomList `json:"list,omitempty"`
 }
 
 type ModulesCustomList struct {
@@ -439,13 +450,17 @@ func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
 	return OIDCType
 }
 
-func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
+func NewModulesSchema(rejectUnsupportedParameters bool, configProvider config.Provider, runtimeConfigMapName string) *Modules {
+	defaultChannel, err := GetChannelFromConfig(config.NewConfigMapConfigProvider(configProvider, runtimeConfigMapName, config.RuntimeConfigurationRequiredFields))
+	if err != nil {
+		defaultChannel = "regular"
+	}
+
 	modules := &Modules{
 		Type: Type{
 			Type:        "object",
 			Description: "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
 		},
-		ControlsOrder: []string{"default", "list"},
 		OneOf: []any{
 			ModulesDefault{
 				Type: Type{
@@ -454,8 +469,20 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 					Description:          "Default modules",
 					AdditionalProperties: false,
 				},
+				ControlsOrder: []string{"channel", "default"},
 				Properties: ModulesDefaultProperties{
-					Type{
+					Channel: Type{
+						Type:        "string",
+						Title:       "Default Module Channel",
+						Description: "Specifies the default release channel for modules. This applies when 'Use Default' is selected.",
+						Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+						EnumDisplayName: map[string]string{
+							"regular": "Regular - default version",
+							"fast":    "Fast - latest version",
+						},
+						Default: defaultChannel,
+					},
+					Default: Type{
 						Type:        "boolean",
 						Title:       "Use Default",
 						Description: "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
@@ -471,28 +498,42 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 					Description:          "Define custom module list",
 					AdditionalProperties: false,
 				},
+				ControlsOrder: []string{"channel", "list"},
 				Properties: ModulesCustomProperties{
-					ModulesCustomList{
+					Channel: Type{
+						Type:        "string",
+						Title:       "Default Module Channel",
+						Description: "Specifies the default release channel for any custom modules that do not specify their own channel.",
+						Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+						EnumDisplayName: map[string]string{
+							"regular": "Regular - default version",
+							"fast":    "Fast - latest version",
+						},
+						Default: defaultChannel,
+					},
+					List: ModulesCustomList{
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled."},
+							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+						},
 						Items: ModulesCustomListItems{
-							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
 							Type: Type{
-								Type: "object",
+								Type:                 "object",
+								AdditionalProperties: false,
 							},
+							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
 							Properties: ModulesCustomListItemsProperties{
 								Name: Type{
 									Type:        "string",
 									Title:       "Name",
-									MinLength:   1,
 									Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once.",
+									MinLength:   1,
 								},
 								Channel: Type{
 									Type:        "string",
+									Description: "Select your preferred release channel or leave this field empty. Overrides the Default Module Channel.",
 									Default:     "",
-									Description: "Select your preferred release channel or leave this field empty.",
 									Enum:        ToInterfaceSlice([]string{"", "regular", "fast"}),
 									EnumDisplayName: map[string]string{
 										"":        "",
@@ -513,15 +554,19 @@ func NewModulesSchema(rejectUnsupportedParameters bool) *Modules {
 								},
 							},
 						},
-					}},
-			}},
+					},
+				},
+			},
+		},
 	}
+
 	if rejectUnsupportedParameters {
 		if modulesCustom, ok := modules.OneOf[1].(ModulesCustom); ok {
 			modulesCustom.Properties.List.Items.AdditionalProperties = false
 			modules.OneOf[1] = modulesCustom
 		}
 	}
+
 	return modules
 }
 
@@ -591,7 +636,7 @@ func IngressFilteringProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool, configProvider config.Provider, runtimeConfigMapName string) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -625,7 +670,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			MinLength:       1,
 		},
 		Networking:           NewNetworkingSchema(rejectUnsupportedParameters),
-		Modules:              NewModulesSchema(rejectUnsupportedParameters),
+		Modules:              NewModulesSchema(rejectUnsupportedParameters, configProvider, runtimeConfigMapName),
 		ColocateControlPlane: ColocateControlPlaneProperty(),
 	}
 
@@ -762,4 +807,61 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 		additionalWorkerNodePoolsType.Items.Type.AdditionalProperties = false
 	}
 	return additionalWorkerNodePoolsType
+}
+
+// GetChannelFromConfig reads the channel from the default Kyma template configuration
+func GetChannelFromConfig(configProvider config.ConfigMapConfigProvider) (string, error) {
+	cfg := make(map[string]interface{})
+	err := configProvider.Provide("default", &cfg)
+	if err != nil {
+		return "", fmt.Errorf("unable to provide default configuration: %w", err)
+	}
+
+	kymaTemplateRaw, exists := cfg["kyma-template"]
+	if !exists {
+		return "", fmt.Errorf("kyma-template not found in default configuration")
+	}
+
+	kymaTemplate, ok := kymaTemplateRaw.(string)
+	if !ok {
+		return "", fmt.Errorf("kyma-template is not a string in default configuration")
+	}
+
+	if kymaTemplate == "" {
+		return "", fmt.Errorf("kyma-template is empty in default configuration")
+	}
+
+	obj, err := decodeKymaTemplate(kymaTemplate)
+	if err != nil {
+		return "", fmt.Errorf("unable to decode kyma template: %w", err)
+	}
+
+	channel, found, err := unstructured.NestedString(obj.Object, "spec", "channel")
+	if err != nil {
+		return "", fmt.Errorf("failed to read channel from kyma template: %w", err)
+	}
+
+	if !found {
+		return "", fmt.Errorf("channel not found in kyma template")
+	}
+
+	return channel, nil
+}
+
+func decodeKymaTemplate(kymaTemplate string) (*unstructured.Unstructured, error) {
+	tmpl := []byte(kymaTemplate)
+
+	decoder := k8syamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
+	var rawObj runtime.RawExtension
+	if err := decoder.Decode(&rawObj); err != nil {
+		return nil, err
+	}
+	obj, _, err := k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
+	return unstructuredObj, err
 }

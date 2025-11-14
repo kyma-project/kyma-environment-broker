@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type InitKymaTemplate struct {
@@ -50,8 +51,48 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger
 		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
 	}
 	logger.Info(fmt.Sprintf("Decoded kyma template: %v", obj))
+
+	updatedTemplate, err := s.applyChannelToTemplate(operation, obj, logger)
+	if err != nil {
+		return s.operationManager.OperationFailed(operation, "unable to apply channel to template", err, logger)
+	}
+
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
-		op.KymaTemplate = cfg.KymaTemplate
+		op.KymaTemplate = updatedTemplate
 	}, logger)
+}
+
+func (s *InitKymaTemplate) applyChannelToTemplate(operation internal.Operation, obj *unstructured.Unstructured, logger *slog.Logger) (string, error) {
+	modulesParams := operation.ProvisioningParameters.Parameters.Modules
+	if modulesParams == nil || modulesParams.Channel == nil || *modulesParams.Channel == "" {
+		return EncodeKymaTemplate(obj)
+	}
+
+	userChannel := *modulesParams.Channel
+
+	if userChannel != "regular" && userChannel != "fast" {
+		return "", fmt.Errorf("invalid channel '%s': only 'regular' and 'fast' are allowed", userChannel)
+	}
+
+	currentChannel, found, err := unstructured.NestedString(obj.Object, "spec", "channel")
+	if err != nil {
+		return "", fmt.Errorf("failed to read current template channel: %w", err)
+	}
+
+	if found && currentChannel == userChannel {
+		logger.Info(fmt.Sprintf("template channel '%s' matches user channel, no change needed", currentChannel))
+	} else {
+		err = unstructured.SetNestedField(obj.Object, userChannel, "spec", "channel")
+		if err != nil {
+			return "", fmt.Errorf("failed to set channel in template: %w", err)
+		}
+		if found {
+			logger.Info(fmt.Sprintf("applied user channel '%s' to template (was '%s')", userChannel, currentChannel))
+		} else {
+			logger.Info(fmt.Sprintf("applied user channel '%s' to template (no previous channel)", userChannel))
+		}
+	}
+
+	return EncodeKymaTemplate(obj)
 }

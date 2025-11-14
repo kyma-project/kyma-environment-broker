@@ -7,6 +7,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker/testutil"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -156,7 +157,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 	schemaService := NewSchemaService(provider, plans, nil, Config{
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
-	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName})
+	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName}, testutil.NewFakeConfigProvider(), "test-config-map")
 	require.NoError(t, err)
 	return schemaService
 }
