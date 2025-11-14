@@ -251,9 +251,6 @@ func main() {
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
-	// hard-wire DB timezone to UTC - we need KEB timezone to be equal to DB timezone
-	cfg.Database.Timezone = "UTC"
-
 	logConfiguration(log, cfg)
 
 	//FIPS mode check - to be removed

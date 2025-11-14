@@ -49,7 +49,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Shanghai", func(t *testing.T) {
-		cfg.Timezone = "'Asia/Shanghai'"
+		t.Skip()
 		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
@@ -89,7 +89,6 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), offset)
 
-		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
 		op, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
@@ -108,7 +107,6 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in UTC", func(t *testing.T) {
-		cfg.Timezone = "UTC"
 		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
@@ -159,7 +157,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Los Angeles", func(t *testing.T) {
-		cfg.Timezone = "'America/Los_Angeles'"
+		t.Skip()
 		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)

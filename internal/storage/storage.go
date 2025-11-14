@@ -32,10 +32,14 @@ const (
 )
 
 func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (BrokerStorage, *dbr.Connection, error) {
-	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d timezone=%s",
-		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns, cfg.Timezone))
+	return NewFromConfigAndConnectionURL(cfg, evcfg, cipher, cfg.ConnectionURL())
+}
 
-	connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), connectionRetries)
+func NewFromConfigAndConnectionURL(cfg Config, evcfg events.Config, cipher postgres.Cipher, connectionURL string) (BrokerStorage, *dbr.Connection, error) {
+	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d",
+		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns))
+
+	connection, err := postsql.InitializeDatabase(connectionURL, connectionRetries)
 	if err != nil {
 		return nil, nil, err
 	}

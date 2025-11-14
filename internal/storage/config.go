@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	connectionURLFormat = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s"
+	connectionURLFormat = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=UTC"
 )
 
 type Config struct {
@@ -23,7 +23,6 @@ type Config struct {
 	MaxOpenConns    int           `envconfig:"default=8"`
 	MaxIdleConns    int           `envconfig:"default=2"`
 	ConnMaxLifetime time.Duration `envconfig:"default=30m"`
-	Timezone        string        `envconfig:"optional"`
 }
 
 func (cfg *Config) ConnectionURL() string {
@@ -31,9 +30,6 @@ func (cfg *Config) ConnectionURL() string {
 		cfg.Password, cfg.Name, cfg.SSLMode)
 	if cfg.SSLMode != "disable" {
 		url += fmt.Sprintf(" sslrootcert=%s", cfg.SSLRootCert)
-	}
-	if cfg.Timezone != "" {
-		url += fmt.Sprintf(" timezone=%s", cfg.Timezone)
 	}
 	return url
 }
