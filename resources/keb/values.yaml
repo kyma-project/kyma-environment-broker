@@ -390,7 +390,7 @@ subscriptionGardenerResource: SecretBinding
 
 # If true, the broker exposes the API endpoint that returns the availability of machine types.
 machinesAvailabilityEndpoint: false
- 
+
 # If true, the cluster name will be used as the context name when generating the kubeconfig.
 clusterNameInKubeconfig: false
 
