@@ -48,7 +48,7 @@ type OIDCConfig struct {
 	ClientID  string
 }
 
-func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token string) (string, error) {
+func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token string, clusterName string) (string, error) {
 	adminKubeconfig, err := b.kubeconfigProvider.KubeconfigForRuntimeID(runtimeID)
 	if err != nil {
 		return "", err
@@ -59,8 +59,13 @@ func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token str
 		return "", err
 	}
 
+	contextName := kubeCfg.CurrentContext
+	if b.clusterNameInKubeconfig {
+		contextName = clusterName
+	}
+
 	return b.parseTemplate(kubeconfigData{
-		ContextName: kubeCfg.CurrentContext,
+		ContextName: contextName,
 		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
 		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
 		Token:       token,
