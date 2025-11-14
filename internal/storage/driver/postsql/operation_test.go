@@ -69,8 +69,8 @@ func TestOperation(t *testing.T) {
 
 		svc := brokerStorage.Operations()
 
-		tzones := brokerStorage.TimeZones()
-		tz, err := tzones.GetTimeZone()
+		timeZones := brokerStorage.TimeZones()
+		tz, err := timeZones.GetTimeZone()
 		require.NoError(t, err)
 		require.NotEmpty(t, tz)
 
