@@ -29,6 +29,7 @@ type providerDTO struct {
 	MachineDisplayNames map[string]string        `yaml:"machines"`
 	SupportingMachines  RegionsSupportingMachine `yaml:"regionsSupportingMachine,omitempty"`
 	ZonesDiscovery      bool                     `yaml:"zonesDiscovery"`
+	DualStack           bool                     `yaml:"dualStack,omitempty"`
 }
 
 type dto map[runtime.CloudProvider]providerDTO
@@ -244,4 +245,12 @@ func (p *ProviderSpec) Regions(cp runtime.CloudProvider) []string {
 
 	sort.Strings(regions)
 	return regions
+}
+
+func (p *ProviderSpec) IsDualStackSupported(cp runtime.CloudProvider) bool {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return false
+	}
+	return providerData.DualStack
 }

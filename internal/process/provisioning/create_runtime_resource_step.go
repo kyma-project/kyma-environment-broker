@@ -249,10 +249,21 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		nodes = networkingParams.NodesCidr
 	}
 
+	var dualStack *bool
+	if networkingParams.DualStack != nil {
+		cloudProvider := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
+		if !s.providerSpec.IsDualStackSupported(cloudProvider) {
+			dualStack = nil
+		} else {
+			dualStack = networkingParams.DualStack
+		}
+	}
+
 	return imv1.Networking{
-		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
-		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
-		Nodes:    nodes,
+		Pods:      DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
+		Services:  DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
+		Nodes:     nodes,
+		DualStack: dualStack,
 		// TODO remove when KIM is ready with setting this value
 		Type: ptr.String("calico"),
 	}

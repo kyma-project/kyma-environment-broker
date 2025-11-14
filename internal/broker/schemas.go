@@ -125,14 +125,6 @@ func (s *SchemaService) defaultServicePlan(id, name string, plans PlansConfig, c
 	return servicePlan
 }
 
-func (s *SchemaService) createUpdateSchemas(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, flags ControlFlagsObject) (create, update *map[string]interface{}) {
-	createProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, false, flags.rejectUnsupportedParameters)
-	updateProperties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, regions, true, flags.rejectUnsupportedParameters)
-
-	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
-		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags)
-}
-
 func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegion string) (create, update *map[string]interface{}, available bool) {
 	regions := s.planSpec.Regions(planName, platformRegion)
 	if len(regions) == 0 {
@@ -154,6 +146,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regions,
 		false,
 		flags.rejectUnsupportedParameters,
+		s.providerSpec,
+		cp,
 	)
 	updateProperties := NewProvisioningProperties(
 		s.providerSpec.MachineDisplayNames(cp, machines),
@@ -164,6 +158,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		regions,
 		true,
 		flags.rejectUnsupportedParameters,
+		s.providerSpec,
+		cp,
 	)
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -219,6 +215,8 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		regions,
 		update,
 		flags.rejectUnsupportedParameters,
+		s.providerSpec,
+		pkg.Azure,
 	)
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -277,7 +275,7 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if !update {
-		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters)
+		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters, s.providerSpec, provider)
 		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 
