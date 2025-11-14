@@ -49,8 +49,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Shanghai", func(t *testing.T) {
-		t.Skip()
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTestUsingConnectionURL(cfg,
+			fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'Asia/Shanghai'"))
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -129,19 +129,14 @@ func TestOperation(t *testing.T) {
 		timeZones := brokerStorage.TimeZones()
 		tz, err := timeZones.GetTimeZone()
 		require.NoError(t, err)
-		require.NotEmpty(t, tz)
+		require.Equal(t, "UTC", tz)
 
-		t.Log(tz)
 		// when
 		err = svc.InsertOperation(givenOperation)
 		require.NoError(t, err)
 
 		op, err := svc.GetOperationByID("operation-id")
-		t.Log(givenOperation.CreatedAt.UTC().Format(time.RFC3339))
-		t.Log(op.CreatedAt.UTC().Format(time.RFC3339))
-		t.Log(op.CreatedAt.Equal(givenOperation.CreatedAt))
 		//log the difference
-		t.Log(givenOperation.CreatedAt.Sub(op.CreatedAt))
 		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
 		require.NoError(t, err)
 
@@ -163,8 +158,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Los Angeles", func(t *testing.T) {
-		t.Skip()
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTestUsingConnectionURL(cfg,
+			fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'America/Los_Angeles'"))
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
