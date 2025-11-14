@@ -1,0 +1,17 @@
+name: Validate Notable Changes
+
+on:
+  pull_request:
+    paths:
+      - 'notable-changes-to-release/**'
+
+jobs:
+  validate-notable-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate notable changes md file
+        run: "./scripts/notable_changes_validate.sh"

@@ -1,0 +1,49 @@
+name: Notable changes protection
+
+on:
+  pull_request:
+    paths:
+      - "notable-changes/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-module-catalog-permissions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR labels
+        id: pr-labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' | tr '\n' ' ')
+          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+      - name: Check bot user and override label
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_LABELS: ${{ steps.pr-labels.outputs.labels }}
+        run: |
+          if [[ "$PR_AUTHOR" == "kyma-gopher-bot" ]]; then
+            echo "PR is from kyma-gopher-bot, modification of notable-changes folder are allowed"
+            exit 0
+          fi
+          
+          if [[ "$PR_LABELS" == *"notable-changes-override"* ]]; then
+            echo "Override label 'notable-changes-override' is present, modification of notable-changes are allowed"
+            exit 0
+          fi
+          
+          echo "Changes to notable-changes/ folder is restricted."
+          echo "Only kyma-gopher-bot can modify this folder."
+          echo ""
+          echo "If you really need to override this restriction add the 'notable-changes-override' label to this PR"
+          exit 1

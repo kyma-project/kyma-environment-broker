@@ -79,14 +79,21 @@ jobs:
           NAME: ${{ inputs.name }}
         run: python3 scripts/python/release_label_validator.py
 
+      - name: Validate notable changes
+        run: |
+          if [ -d "notable-changes/${{ inputs.name }}" ]; then
+            echo "Notable changes for release ${{ inputs.name }} already exist. Please remove the folder and run the release pipeline again."
+            exit 1
+          fi
+
   run-unit-tests:
     name: Unit tests, go mod tidy
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
-  
+
   build-keb-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
       context: .
@@ -95,7 +102,7 @@ jobs:
   build-environments-cleanup-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environments-cleanup-job
       dockerfile: Dockerfile.job
       context: .
@@ -105,7 +112,7 @@ jobs:
   build-deprovision-retrigger-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environment-deprovision-retrigger-job
       dockerfile: Dockerfile.job
       context: .
@@ -115,7 +122,7 @@ jobs:
   build-expirator-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environment-expirator-job
       dockerfile: Dockerfile.job
       context: .
@@ -125,7 +132,7 @@ jobs:
   build-runtime-reconciler-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environment-runtime-reconciler
       dockerfile: Dockerfile.runtimereconciler
       context: .
@@ -135,7 +142,7 @@ jobs:
   build-subaccount-cleanup-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environment-subaccount-cleanup-job
       dockerfile: Dockerfile.job
       context: .
@@ -145,7 +152,7 @@ jobs:
   build-subaccount-sync-image:
     needs: [validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
+    with:
       name: kyma-environment-subaccount-sync
       dockerfile: Dockerfile.subaccountsync
       context: .
@@ -155,7 +162,7 @@ jobs:
   build-globalaccounts-image:
       needs: [validate-release]
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      with: 
+      with:
          name: kyma-environment-globalaccounts
          dockerfile: Dockerfile.globalaccounts
          context: .
@@ -182,7 +189,7 @@ jobs:
       tags: ${{ inputs.name }}
 
   run-keb-chart-integration-tests:
-    name: Validate KEB chart 
+    name: Validate KEB chart
     needs: [build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image]
     uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     secrets: inherit
@@ -220,6 +227,9 @@ jobs:
           fetch-depth: 0
       - run: git pull
 
+      - name: Create notable changes folder
+        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
+
       - name: Update sec-scanners-config.yaml
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
@@ -235,7 +245,7 @@ jobs:
           cache: 'pip'
 
       - name: Generate environment docs
-        run: make generate-env-docs   
+        run: make generate-env-docs
 
       - name: Check if any PR was merged during release
         env:

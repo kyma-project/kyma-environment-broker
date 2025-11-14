@@ -533,7 +533,7 @@ func NameProperty(update bool) NameType {
 			// Allows for all alphanumeric characters and '-'
 			Pattern:   "^[a-zA-Z0-9-]*$",
 			MinLength: 1,
-			MaxLength: 256,
+			MaxLength: 64,
 		},
 	}
 
