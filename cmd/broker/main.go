@@ -285,6 +285,12 @@ func main() {
 		prometheus.MustRegister(dbStatsCollector)
 	}
 
+	// get storage time zone
+	timeZone, err := db.TimeZones().GetTimeZone()
+	fatalOnError(err, log)
+	log.Info(fmt.Sprintf("KEB local time: %s time zone: %s", time.Now().String(), time.Now().Location().String()))
+	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
+
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
