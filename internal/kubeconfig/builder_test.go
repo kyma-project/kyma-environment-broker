@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"testing"
 
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/kyma-project/kyma-environment-broker/internal"
-
-	"github.com/stretchr/testify/require"
 )
 
 const (
 	globalAccountID = "d9d501c2-bdcb-49f2-8e86-1c4e05b90f5e"
 	runtimeID       = "f7d634ae-4ce2-4916-be64-b6fb493155df"
+	clusterName     = "cluster-name"
 
 	issuerURL  = "https://example.com"
 	issuer2URL = "https://example2.com"
@@ -40,11 +40,16 @@ func TestBuilder_BuildFromRuntimeResource_NilAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -68,11 +73,16 @@ func TestBuilder_BuildFromRuntimeResource_EmptyAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -104,11 +114,16 @@ func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -146,11 +161,16 @@ func TestBuilder_BuildFromRuntimeResource_MultipleAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -175,11 +195,16 @@ func TestBuilder_BuildFromAdminKubeconfig_NilAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -203,11 +228,16 @@ func TestBuilder_BuildFromAdminKubeconfig_EmptyAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -239,11 +269,16 @@ func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -281,11 +316,16 @@ func TestBuilder_BuildFromAdminKubeconfig_MultipleAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
 			GlobalAccountID: globalAccountID,
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Name: clusterName,
+				},
+			},
 		}
 
 		// when
@@ -326,16 +366,16 @@ func newKubeconfigWithNoUsers() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--ac0d8d9
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--ac0d8d9
+    cluster: cluster-name
 `
 }
 
@@ -344,19 +384,19 @@ func newKubeconfig() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--ac0d8d9
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9
+    cluster: cluster-name
+    user: cluster-name
 users:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -386,23 +426,23 @@ func newKubeconfigWithMultipleContexts() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--ac0d8d9
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9
-- name: shoot--kyma-dev--ac0d8d9-2
+    cluster: cluster-name
+    user: cluster-name
+- name: cluster-name-2
   context:
-    cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9-2
+    cluster: cluster-name
+    user: cluster-name-2
 users:
-- name: shoot--kyma-dev--ac0d8d9
+- name: cluster-name
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -423,7 +463,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--ac0d8d9-2
+- name: cluster-name-2
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -453,16 +493,16 @@ func newOwnClusterKubeconfigWithNoUsers() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--admin
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--admin
+    cluster: cluster-name
 `
 }
 
@@ -471,19 +511,19 @@ func newOwnClusterKubeconfig() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--admin
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin
+    cluster: cluster-name
+    user: cluster-name
 users:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -513,23 +553,23 @@ func newOwnClusterKubeconfigWithMultipleContexts() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--admin
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin
-- name: shoot--kyma-dev--admin-2
+    cluster: cluster-name
+    user: cluster-name
+- name: cluster-name-2
   context:
-    cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin-2
+    cluster: cluster-name
+    user: cluster-name-2
 users:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -550,7 +590,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--admin-2
+- name: cluster-name-2
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -580,19 +620,19 @@ func adminKubeconfig() string {
 ---
 apiVersion: v1
 kind: Config
-current-context: shoot--kyma-dev--admin
+current-context: cluster-name
 clusters:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   cluster:
     certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
     server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
 contexts:
-- name: shoot--kyma-dev--admin
+- name: cluster-name
   context:
-    cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin-token
+    cluster: cluster-name
+    user: cluster-name-token
 users:
-- name: shoot--kyma-dev--admin-token
+- name: cluster-name-token
   user:
     token: DKPAe2Lt06a8dlUlE81kaWdSSDVSSf38x5PIj6cwQkqHMrw4UldsUr1guD6Thayw
 

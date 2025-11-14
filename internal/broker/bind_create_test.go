@@ -93,7 +93,7 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &dummyProvider{}, &dummyProvider{}, publisher)
+	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &dummyProvider{}, &dummyProvider{}, publisher, true)
 
 	// test relies on checking if got nil on kubeconfig dummyProvider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
@@ -343,7 +343,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher, true)
 	params := BindingParams{
 		ExpirationSeconds: 601,
 	}
@@ -394,7 +394,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher, true)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -446,7 +446,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher, true)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -500,7 +500,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher, true)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -551,7 +551,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher, true)
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)
@@ -577,5 +577,5 @@ func prepareBindingEndpoint(t *testing.T, cfg BindingConfig) (*BindEndpoint, sto
 	err = db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	return NewBind(cfg, db, log, k8sClientProvider, k8sClientProvider, event.NewPubSub(log)), db
+	return NewBind(cfg, db, log, k8sClientProvider, k8sClientProvider, event.NewPubSub(log), true), db
 }
