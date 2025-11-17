@@ -103,7 +103,7 @@ func invokeMigration() error {
 	for _, env := range envs {
 		_, present := os.LookupEnv(env)
 		if !present {
-			fmt.Errorf("ERROR: %s is not set", env)
+			return fmt.Errorf("ERROR: %s is not set", env)
 		}
 	}
 
