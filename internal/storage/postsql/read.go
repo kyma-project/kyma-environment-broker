@@ -22,6 +22,23 @@ type readSession struct {
 	session *dbr.Session
 }
 
+func (r readSession) GetTimeZone() (string, dberr.Error) {
+	var timeZone string
+
+	err := r.session.
+		Select("current_setting('TIMEZONE')").
+		LoadOne(&timeZone)
+
+	if err != nil {
+		if errors.Is(err, dbr.ErrNotFound) {
+			return "", nil
+		}
+		return "", dberr.Internal("Failed to get time zone: %s", err)
+	}
+
+	return timeZone, nil
+}
+
 func (r readSession) GetBinding(instanceID string, bindingID string) (dbmodel.BindingDTO, dberr.Error) {
 	var binding dbmodel.BindingDTO
 

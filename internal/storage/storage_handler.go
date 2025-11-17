@@ -21,14 +21,19 @@ const (
 )
 
 func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
-	storage, connection, err := NewFromConfig(config, events.Config{}, NewEncrypter(config.SecretKey))
+	connectionURL := config.ConnectionURL()
+	return GetStorageForTestUsingConnectionURL(config, connectionURL)
+}
+
+func GetStorageForTestUsingConnectionURL(config Config, connectionURL string) (func() error, BrokerStorage, error) {
+	storageForTests, connection, err := NewFromConfigAndConnectionURL(config, events.Config{}, NewEncrypter(config.SecretKey), connectionURL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while creating storage: %w", err)
 	}
 	if connection == nil {
 		return nil, nil, fmt.Errorf("connection is nil")
 	}
-	if storage == nil {
+	if storageForTests == nil {
 		return nil, nil, fmt.Errorf("storage is nil")
 	}
 
@@ -55,7 +60,7 @@ func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 		return
 	}
 
-	return cleanup, storage, nil
+	return cleanup, storageForTests, nil
 }
 
 func runMigrations(connection *dbr.Connection, order migrationOrder) error {
