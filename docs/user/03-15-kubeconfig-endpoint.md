@@ -16,7 +16,7 @@ No request body is required.
 The endpoint returns a standard Kubernetes kubeconfig file.
 - [**Cluster Name**](04-05-cluster-name.md) is used as the cluster name, context name, and, when OIDC authentication is configured, the user name.
 - If no OIDC configuration is present, the `users` section is omitted entirely.
-- When multiple OIDC configurations are provided, user entries are generated using an incremental naming convention:
+- When multiple OIDC configurations are provided, user entries are generated using the following incremental naming convention:
   - The first user is named **CLUSTER_NAME**
   - The second user is named **CLUSTER_NAME-2**
   - The third user is named **CLUSTER_NAME-3**
