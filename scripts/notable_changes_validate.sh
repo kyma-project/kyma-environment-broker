@@ -6,7 +6,7 @@
 files=$(find notable-changes-to-release -type f -not -name 'README.md')
 if [ -n "$files" ]; then
     # Check if notable-changes.md exists
-    if [ ! -f notable-changes-to-release/notable-changes.md ]; then
+    if [ ! -f notable-changes-to-release/notable-change.md ]; then
         echo "Validation failed: notable-changes-to-release/notable-changes.md is missing."
         exit 1
     fi
