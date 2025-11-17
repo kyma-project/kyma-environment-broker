@@ -3608,8 +3608,8 @@ func TestClusterName(t *testing.T) {
 			expectedError: fmt.Errorf("while validating input parameters: at '/name': minLength: got 0, want 1"),
 		},
 		"Long name": {
-			parameters:    fmt.Sprintf(`{"name": "%s", "region": "eu-central-1"}`, strings.Repeat("A", 257)),
-			expectedError: fmt.Errorf("while validating input parameters: at '/name': maxLength: got 257, want 256"),
+			parameters:    fmt.Sprintf(`{"name": "%s", "region": "eu-central-1"}`, strings.Repeat("A", 65)),
+			expectedError: fmt.Errorf("while validating input parameters: at '/name': maxLength: got 65, want 64"),
 		},
 		"Valid name": {
 			parameters:    `{"name": "cluster-testing", "region": "eu-central-1"}`,

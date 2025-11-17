@@ -213,7 +213,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 		DashboardURL:  dashboardURL,
 		OperationData: "",
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
+			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
@@ -253,7 +253,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			DashboardURL:  instance.DashboardURL,
 			OperationData: "",
 			Metadata: domain.InstanceMetadata{
-				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
+				Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 			},
 		}, nil
 	}
@@ -512,7 +512,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		DashboardURL:  instance.DashboardURL,
 		OperationData: operation.ID,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
+			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
