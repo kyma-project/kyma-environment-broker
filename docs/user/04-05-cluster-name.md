@@ -1,6 +1,6 @@
 # Cluster Name
 
-Kyma Environment Broker (KEB) allows you to set a cluster name during SAP BTP, Kyma runtime provisioning and update operations. 
+Kyma Environment Broker (KEB) enables you to set a cluster name during SAP BTP, Kyma runtime provisioning and update operations. 
 To do so, specify the **name** parameter in the provisioning or update request.
 During provisioning, the name parameter is mandatory and must consist of 1–64 characters, using only letters, digits, or hyphens.
 During update operations, the name parameter is optional, but if it is provided, it must follow the same character and length requirements.
