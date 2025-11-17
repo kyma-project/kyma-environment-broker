@@ -243,7 +243,7 @@ func buildConnectionString() (string, error) {
 	}
 
 	// hard-wire time zone as UTC to avoid issues with different time zones
-	dbName += "%s&timezone=UTC"
+	dbName += "&timezone=UTC"
 
 	hostPort := net.JoinHostPort(
 		os.Getenv("DB_HOST"),
