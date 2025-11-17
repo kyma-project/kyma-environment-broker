@@ -6,7 +6,7 @@ During provisioning, the **name** parameter is mandatory and must consist of 1â€
 During update operations, the **name** parameter is optional. However, if provided, it must follow the same character and length requirements.
 The cluster name is used as the context name when generating kubeconfig files for [Kyma Bindings](05-60-kyma-bindings.md) and the [Kubeconfig Endpoint](03-15-kubeconfig-endpoint.md).
 
-See the example:
+See the example of the provisioning request:
 
 ```bash
    export VERSION=1.15.0

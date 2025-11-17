@@ -6,9 +6,12 @@ Kyma Environment Broker (KEB) provides an endpoint that enables you to retrieve 
 
 ## HTTP Request
 
+To retrieve the kubeconfig file, send the following request:
+
 ```
 GET /kubeconfig/{instance_id}
 ```
+
 No request body is required.
 
 ## Response Structure
@@ -23,6 +26,8 @@ The endpoint returns a standard Kubernetes kubeconfig file.
   - The pattern continues accordingly for subsequent users.
 
 ### Response Body
+
+You get a response similar to the following example:
 
 ```yaml
 ---
