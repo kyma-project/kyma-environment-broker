@@ -122,6 +122,8 @@ func invokeMigration() error {
 		return err
 	}
 
+	slog.Debug("connectionString:", connectionString)
+
 	slog.Info("# WAITING FOR CONNECTION WITH DATABASE #")
 	db, err := sql.Open("postgres", connectionString)
 
