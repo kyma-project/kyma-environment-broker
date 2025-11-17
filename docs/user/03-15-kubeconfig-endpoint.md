@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Kyma Environment Broker (KEB) provides an endpoint that lets you retrieve the kubeconfig file for accessing an SAP BTP, Kyma runtime.
+Kyma Environment Broker (KEB) provides an endpoint that enables you to retrieve the kubeconfig file for accessing an SAP BTP Kyma runtime instance.
 
 ## HTTP Request
 
