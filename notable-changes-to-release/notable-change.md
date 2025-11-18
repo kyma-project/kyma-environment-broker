@@ -17,9 +17,7 @@ A new dual-stack networking feature has been added to KEB, allowing Kyma runtime
 
 1. Open the KEB configuration file.
 2. Locate the provider configuration under `providersConfiguration`.
-3. Add the dual-stack configuration for supported providers. See the following example:
-
-    - Updated provider configuration with dual-stack support:
+3. Add the dual-stack configuration for supported providers. See the following example of an updated provider configuration with dual-stack support:
     
         ```yaml
         providersConfiguration:
