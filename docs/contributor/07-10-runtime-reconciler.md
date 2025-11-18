@@ -32,7 +32,6 @@ Use the following environment variables to configure the application:
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SECRET_KEY** | None | Specifies the Secret key for the database. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_TIMEZONE** | None | Specifies the "timezone" parameter in the DB connection URL |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | Specifies the username for the database. |
 | **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>false</code> | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). |
 | **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>false</code> | If true, enables the periodic reconciliation job. |

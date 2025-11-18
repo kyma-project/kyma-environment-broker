@@ -16,7 +16,6 @@
 | global.database.managedGCP.<br>secretName | Name of the Kubernetes Secret containing DB connection values. | `kcp-postgresql` |
 | global.database.managedGCP.<br>sslModeSecretKey | Key in the database Secret for the SSL mode. | `postgresql-sslMode` |
 | global.database.managedGCP.<br>userNameSecretKey | Key in the database Secret for the database user. | `postgresql-broker-username` |
-| global.database.<br>timezone | Specifies the "timezone" parameter in the DB connection URL | `` |
 | global.images.cloudsql_<br>proxy.repository | - | `eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy` |
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
