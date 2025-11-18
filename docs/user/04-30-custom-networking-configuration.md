@@ -3,7 +3,7 @@
 With the **networking** section in the provisioning parameters, you can customize the following networking aspects of your Kyma runtime:
 
 - Custom IP ranges for worker nodes, Pods, and services
-- **Dual-stack networking** to enable both IPv4 and IPv6 protocols
+- Dual-stack networking to enable both IPv4 and IPv6 protocols
 
 > [!NOTE]
 > All networking configurations are immutable and cannot be changed after provisioning.
