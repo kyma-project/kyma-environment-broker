@@ -14,7 +14,7 @@ You can specify custom CIDR ranges for different network components. If you don'
 
 ### Worker Node IP Range
 
-To create a Kyma runtime with a custom IP range for worker nodes, specify the `nodes` parameter:
+To create a Kyma runtime with a custom IP range for worker nodes, specify the `nodes` parameter.
 
 ```bash
    export VERSION=1.15.0
