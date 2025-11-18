@@ -64,7 +64,7 @@ Enable dual-stack networking to allow your Kyma runtime to support both IPv4 and
 
 ### Dual-Stack Configuration
 
-To enable dual-stack networking, you must include the `dualStack` parameter along with the mandatory `nodes` parameter:
+To enable dual-stack networking, you must include the **dualStack** parameter along with the mandatory **nodes** parameter.
 
 ```bash
    export VERSION=1.15.0
