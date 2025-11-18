@@ -10,7 +10,7 @@ With the **networking** section in the provisioning parameters, you can customiz
 
 ## Custom IP Ranges
 
-You can specify custom CIDR ranges for different network components. If you don't provide the **networking** object in the provisioning request, default ranges will be used.
+You can specify custom CIDR ranges for different network components. If you don't provide the **networking** object in the provisioning request, the default ranges are used.
 
 ### Worker Node IP Range
 
