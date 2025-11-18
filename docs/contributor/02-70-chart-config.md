@@ -142,6 +142,7 @@
 | holdHAPSteps | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). | `false` |
 | subscriptionGardenerResource | Name of the Gardener resource, which the broker uses to look up for hyperscaler assignment. Allowed values: SecretBinding or CredentialsBinding. | `SecretBinding` |
 | machinesAvailabilityEndpoint | If true, the broker exposes the API endpoint that returns the availability of machine types. | `False` |
+| clusterNameInKubeconfig | If true, the cluster name is used as the context name when generating the kubeconfig. | `False` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API. | None |
