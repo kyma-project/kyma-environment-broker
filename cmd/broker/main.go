@@ -141,6 +141,8 @@ type Config struct {
 	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
+
+	ClusterNameInKubeconfig bool
 }
 
 type ProfilerConfig struct {
@@ -285,6 +287,12 @@ func main() {
 		prometheus.MustRegister(dbStatsCollector)
 	}
 
+	// get storage time zone
+	timeZone, err := db.TimeZones().GetTimeZone()
+	fatalOnError(err, log)
+	log.Info(fmt.Sprintf("KEB local time: %s time zone: %s", time.Now().String(), time.Now().Location().String()))
+	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
+
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
@@ -351,7 +359,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.ClusterNameInKubeconfig)
 
 	// create server
 	router := httputil.NewRouter()
@@ -490,8 +498,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			rulesService, gardenerClient, awsClientFactory),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),
-		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider), publisher),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.ClusterNameInKubeconfig),
+		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.ClusterNameInKubeconfig), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}

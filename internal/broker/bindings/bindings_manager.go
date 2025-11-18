@@ -44,10 +44,10 @@ type ServiceAccountBindingsManager struct {
 	kubeconfigBuilder *kubeconfig.Builder
 }
 
-func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider) *ServiceAccountBindingsManager {
+func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, clusterNameInKubeconfig bool) *ServiceAccountBindingsManager {
 	return &ServiceAccountBindingsManager{
 		clientProvider:    clientProvider,
-		kubeconfigBuilder: kubeconfig.NewBuilder(nil, kubeconfigProvider),
+		kubeconfigBuilder: kubeconfig.NewBuilder(nil, kubeconfigProvider, clusterNameInKubeconfig),
 	}
 }
 
@@ -135,7 +135,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 	}
 
 	expiresAt := tkn.Status.ExpirationTimestamp.Time
-	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token)
+	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token, instance.Parameters.Parameters.Name)
 
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("while creating a kubeconfig: %v", err)

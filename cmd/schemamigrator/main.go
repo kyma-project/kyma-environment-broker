@@ -94,6 +94,7 @@ func main() {
 }
 
 func invokeMigration() error {
+
 	envs := []string{
 		"DB_USER", "DB_HOST", "DB_NAME", "DB_PORT",
 		"DB_PASSWORD", "DIRECTION",
@@ -116,29 +117,10 @@ func invokeMigration() error {
 		return errors.New("ERROR: DIRECTION variable accepts only two values: up or down")
 	}
 
-	dbName := os.Getenv("DB_NAME")
-
-	_, present := os.LookupEnv("DB_SSL")
-	if present {
-		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, os.Getenv("DB_SSL"))
-
-		_, present := os.LookupEnv("DB_SSLROOTCERT")
-		if present {
-			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
-		}
+	connectionString, err := buildConnectionString()
+	if err != nil {
+		return err
 	}
-
-	hostPort := net.JoinHostPort(
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"))
-
-	connectionString := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		hostPort,
-		dbName,
-	)
 
 	slog.Info("# WAITING FOR CONNECTION WITH DATABASE #")
 	db, err := sql.Open("postgres", connectionString)
@@ -242,6 +224,37 @@ func invokeMigration() error {
 
 	slog.Info(fmt.Sprintf("# CURRENT ACTIVE MIGRATION VERSION: %d #", currentMigrationVer))
 	return nil
+}
+
+func buildConnectionString() (string, error) {
+
+	dbName := os.Getenv("DB_NAME")
+
+	_, present := os.LookupEnv("DB_SSL")
+	if present {
+		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, os.Getenv("DB_SSL"))
+
+		_, present := os.LookupEnv("DB_SSLROOTCERT")
+		if present {
+			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
+		}
+	}
+
+	// hard-wire time zone as UTC to avoid issues with different time zones
+	dbName += "&timezone=UTC"
+
+	hostPort := net.JoinHostPort(
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"))
+
+	connectionString := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		hostPort,
+		dbName,
+	)
+	return connectionString, nil
 }
 
 type Logger struct{}
