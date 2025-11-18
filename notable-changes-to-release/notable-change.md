@@ -7,7 +7,7 @@
 
 ## Prerequisites
 
-- KEB is configured to use a supported cloud provider (AWS or GCP).
+- KEB is configured to use a supported cloud provider (Amazon Web Services or Google Cloud).
 
 ## What's Changed
 
