@@ -122,3 +122,7 @@ type Actions interface {
 	InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) error
 	ListActionsByInstanceID(instanceID string) ([]runtime.Action, error)
 }
+
+type TimeZones interface {
+	GetTimeZone() (string, error)
+}
