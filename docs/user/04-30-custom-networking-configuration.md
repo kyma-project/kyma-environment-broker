@@ -41,7 +41,7 @@ To create a Kyma runtime with a custom IP range for worker nodes, specify the `n
 
 ### Complete Custom Networking
 
-You can also specify custom ranges for pods and services alongside worker nodes:
+You can also specify custom ranges for Pods and services alongside worker nodes.
 
 ```bash
    \"networking\": {
