@@ -45,7 +45,7 @@ With this new feature, dual-stack networking capabilities are determined by the 
 - For providers with dual-stack enabled: When `dualStack: true` is set, the **dualStack** parameter becomes available in the provisioning request's networking section.
 - For providers with dual-stack disabled: The **dualStack** parameter is not available in the networking section.
 
-Example provisioning request using the new dual-stack networking feature:
+See an example provisioning request using the new dual-stack networking feature.
 
 ```json
 {
