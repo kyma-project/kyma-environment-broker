@@ -45,7 +45,7 @@ A new dual-stack networking feature has been added to KEB, allowing Kyma runtime
 With this new feature, dual-stack networking capabilities are determined by the cloud provider configuration:
 
 - For providers with dual-stack enabled: When `dualStack: true` is set, the **dualStack** parameter becomes available in the provisioning request's networking section.
-- **Dual-stack disabled providers**: The `dualStack` parameter is not available in the networking section.
+- For providers with dual-stack disabled: The **dualStack** parameter is not available in the networking section.
 
 Example provisioning request using the new dual-stack networking feature:
 
