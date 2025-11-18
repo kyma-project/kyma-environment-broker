@@ -64,7 +64,7 @@ Example provisioning request using the new dual-stack networking feature:
 
 ## Post-Update Steps
 
-1. Verify that the dual-stack option appears in the SAP BTP cockpit for supported plans.
+Verify that the dual-stack option appears in the SAP BTP cockpit for supported plans.
 
 For more information about configuring dual-stack networking in Kyma Environment Broker, see [Dual-Stack Configuration](../../docs/contributor/03-85-dual-stack-configuration.md).
 For information about using dual-stack networking when provisioning Kyma instances, see [Custom Networking Configuration](../../docs/user/04-30-custom-networking-configuration.md).
