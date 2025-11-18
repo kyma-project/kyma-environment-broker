@@ -1,9 +1,9 @@
-<!--{"metadata":{"requirement":"RECOMMENDED","type":"INTERNAL","category":"CONFIGURATION","additionalFiles":0}}-->
+<!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"FEATURE","additionalFiles":0}}-->
 
 # Updating Kyma Environment Broker: Dual-Stack Networking Support
 
-> [!NOTE]
-> This is a recommended change. To enable the new dual-stack networking feature, update the Kyma Environment Broker (KEB) provider configuration.
+> [!WARNING]
+> This is a mandatory change. You must update the Kyma Environment Broker (KEB) provider configuration to enable the new dual-stack networking feature.
 
 ## Prerequisites
 
@@ -38,14 +38,14 @@ A new dual-stack networking feature has been added to KEB, allowing Kyma runtime
         ```
 
 4. Save and apply the updated configuration.
-5. Refresh broker details in one BTP region using the XRS APIs in the ERS registry.
+5. Refresh broker details using the XRS APIs in the ERS registry.
 
 ## Impact on Provisioning
 
 With this new feature, dual-stack networking capabilities are determined by the cloud provider configuration:
 
-- **Dual-stack enabled providers**: When `dualStack: true` is set, the `dualStack` parameter becomes available in the provisioning request's networking section
-- **Dual-stack disabled providers**: The `dualStack` parameter is not available in the service schema
+- **Dual-stack enabled providers**: When `dualStack: true` is set, the `dualStack` parameter becomes available in the provisioning request's networking section.
+- **Dual-stack disabled providers**: The `dualStack` parameter is not available in the networking section.
 
 Example provisioning request using the new dual-stack networking feature:
 
@@ -55,8 +55,8 @@ Example provisioning request using the new dual-stack networking feature:
     "name": "my-cluster",
     "region": "eu-central-1",
     "networking": {
-      "nodes": "10.250.0.0/20",
-      "dualStack": true
+      "dualStack": true,
+      "nodes": "10.250.0.0/20"
     }
   }
 }
@@ -64,10 +64,7 @@ Example provisioning request using the new dual-stack networking feature:
 
 ## Post-Update Steps
 
-1. Verify that the dual-stack option appears in the service catalog for plans using providers with `dualStack: true`
-2. Verify that the dual-stack option appears in SAP BTP cockpit
-3. Test provisioning with dual-stack networking enabled to ensure the new feature works correctly
-4. Check that dual-stack configuration is properly applied to the runtime resources
+1. Verify that the dual-stack option appears in SAP BTP cockpit for supported plans.
 
 For more information about configuring dual-stack networking in Kyma Environment Broker, see [Dual-Stack Configuration](../../docs/contributor/03-85-dual-stack-configuration.md).
 For information about using dual-stack networking when provisioning Kyma instances, see [Custom Networking Configuration](../../docs/user/04-30-custom-networking-configuration.md).
