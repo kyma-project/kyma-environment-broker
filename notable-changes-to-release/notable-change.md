@@ -11,7 +11,7 @@
 
 ## What's Changed
 
-A new dual-stack networking feature has been added to KEB, allowing Kyma runtimes to support both IPv4 and IPv6 protocols simultaneously. This feature is currently supported for AWS and GCP providers and is configured at the provider level to become available in the SAP BTP cockpit when enabled.
+A new dual-stack networking feature has been added to KEB, allowing Kyma runtimes to support both IPv4 and IPv6 protocols simultaneously. This feature is supported for Amazon Web Services and Google Cloud providers. It is configured at the provider level to become available in the SAP BTP cockpit.
 
 ## Procedure
 
