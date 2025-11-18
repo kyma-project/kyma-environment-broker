@@ -36,7 +36,7 @@ A new dual-stack networking feature has been added to KEB, allowing Kyma runtime
         ```
 
 4. Save and apply the updated configuration.
-5. Refresh broker details using the XRS APIs in the ERS registry.
+5. Refresh broker details using the xRS APIs in Environment Registry Service (ERS).
 
 ## Impact on Provisioning
 
