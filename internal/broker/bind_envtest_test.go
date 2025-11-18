@@ -105,8 +105,8 @@ func TestCreateBinding(t *testing.T) {
 		Level: slog.LevelDebug,
 	}))
 	publisher := event.NewPubSub(log)
-	svc := NewBind(bindingCfg, db, log, skrK8sClientProvider, skrK8sClientProvider, publisher)
-	unbindSvc := NewUnbind(log, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider), publisher)
+	svc := NewBind(bindingCfg, db, log, skrK8sClientProvider, skrK8sClientProvider, publisher, true)
+	unbindSvc := NewUnbind(log, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider, true), publisher)
 
 	t.Run("should create a new service binding without error", func(t *testing.T) {
 		// When
@@ -186,7 +186,7 @@ func assertTokenDuration(t *testing.T, creds interface{}, expectedDuration time.
 
 	var tokenDuration time.Duration
 	for _, user := range kubeconfigObj.Users {
-		if user.Name == "context" {
+		if user.Name == "cluster-test" {
 			token, _, err := new(jwt.Parser).ParseUnverified(user.User.Token, jwt.MapClaims{})
 			require.NoError(t, err)
 

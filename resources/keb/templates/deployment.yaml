@@ -123,6 +123,8 @@ spec:
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
+            - name: APP_CLUSTER_NAME_IN_KUBECONFIG
+              value: "{{ .Values.clusterNameInKubeconfig }}"
             - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
