@@ -4,7 +4,7 @@ The dual-stack networking configuration allows users to provision Kyma instances
 
 ## Provider Configuration
 
-To enable dual-stack networking option for a provider, add the `dualStack` property to the provider configuration in the `providersConfiguration` section of the `values.yaml` file:
+To enable dual-stack networking option for a provider, add the **dualStack** property to the provider configuration in the `providersConfiguration` section of the `values.yaml` file.
 
 ```yaml
 providersConfiguration:
