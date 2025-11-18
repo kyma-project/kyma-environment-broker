@@ -108,8 +108,6 @@ spec:
                   key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT
               value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
-            - name: SUBACCOUNT_SYNC_DATABASE_TIMEZONE
-              value: "{{ .Values.global.database.timezone }}"
             - name: SUBACCOUNT_SYNC_DATABASE_USER
               valueFrom:
                 secretKeyRef:

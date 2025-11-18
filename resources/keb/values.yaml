@@ -40,8 +40,6 @@ global:
       # Key in the database Secret for the database user.
       userNameSecretKey: "postgresql-broker-username"
 
-    # Specifies the "timezone" parameter in the DB connection URL
-    timezone: ""
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
