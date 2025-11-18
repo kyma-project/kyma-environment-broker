@@ -92,7 +92,7 @@ To enable dual-stack networking, you must include the **dualStack** parameter al
 
 ### Combined Configuration
 
-You can combine dual-stack networking with custom IP ranges:
+You can combine dual-stack networking with custom IP ranges.
 
 ```bash
    \"networking\": {
