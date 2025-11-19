@@ -1097,7 +1097,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 
 	err := imv1.AddToScheme(scheme.Scheme)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west1", "platform-region", inputConfig, pkg.GCP)
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
 		NodesCidr:    "192.168.48.0/20",
 		PodsCidr:     ptr.String("10.104.0.0/24"),
@@ -1726,7 +1726,7 @@ modules: []
 }
 
 func newTestProviderSpecWithDualStack() *configuration.ProviderSpec {
-	// Create a test provider specification with dual stack support for AWS and Azure, no support for others
+	// Create a test provider specification with dual-stack support for AWS and GCP, no support for Azure
 	providerConfigYAML := `
 aws:
   dualStack: true
@@ -1735,13 +1735,13 @@ aws:
       displayName: "Europe (London)"
       zones: ["a", "b", "c"]
 azure:
-  dualStack: true
+  dualStack: false
   regions:
     westeurope:
       displayName: "West Europe"
       zones: ["1", "2", "3"]
 gcp:
-  dualStack: false
+  dualStack: true
   regions:
     europe-west1:
       displayName: "Europe West 1"
