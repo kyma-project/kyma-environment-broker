@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Final image
 FROM scratch
-ENV GODEBUG=fips140=only,tlsmlkem=0
+ENV GODEBUG=fips140=on,tlsmlkem=0
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=build /bin/runtime-reconciler /bin/runtime-reconciler
