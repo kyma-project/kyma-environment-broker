@@ -651,7 +651,7 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configu
 	}
 
 	if providerSpec != nil && providerSpec.IsDualStackSupported(cloudProvider) {
-		description := "Enable dual-stack networking (IPv4 and IPv6). The Kyma Istio module does not support the dual stack mode."
+		description := "Enable dual-stack networking (IPv4 and IPv6). The Kyma Istio module does not support dual-stack mode."
 		if dualStackDocsURL != "" {
 			description += fmt.Sprintf(" For more information, see <a href=%s>documentation</a>.", dualStackDocsURL)
 		}
