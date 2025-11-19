@@ -60,7 +60,7 @@ You can also specify custom ranges for Pods and services alongside worker nodes.
 Enable dual-stack networking to allow your Kyma runtime to support both IPv4 and IPv6 protocols simultaneously.
 
 > [!IMPORTANT]
-> Dual-stack networking is only available for supported cloud providers.
+> Dual-stack networking is only available for supported cloud providers (Amazon Web Services and Google Cloud).
 
 ### Dual-Stack Configuration
 
