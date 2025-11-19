@@ -75,8 +75,6 @@ spec:
                   key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
             - name: GLOBALACCOUNTS_DATABASE_SSLROOTCERT
               value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
-            - name: GLOBALACCOUNTS_DATABASE_TIMEZONE
-              value: "{{ .Values.global.database.timezone }}"
             - name: GLOBALACCOUNTS_DATABASE_USER
               valueFrom:
                 secretKeyRef:
