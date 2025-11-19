@@ -53,7 +53,7 @@ You can also specify custom ranges for Pods and services alongside worker nodes.
 
 > [!IMPORTANT]
 > - The provided IP range must not overlap with ranges of potential seed clusters (see [GardenerSeedCIDRs definition](https://github.com/kyma-project/kyma-environment-broker/blob/main/internal/networking/cidr.go)).
-> - The suffix must not be greater than 23 because the IP range is divided between the zones and Nodes. Additionally, two ranges are reserved for `pods` and `services`, which, too, must not overlap with the IP range for Nodes.
+> - The suffix must not be greater than 23 because the IP range is divided between the zones and nodes. Additionally, two ranges are reserved for `pods` and `services`, which, too, must not overlap with the IP range for nodes.
 
 ## Dual-Stack Networking
 
