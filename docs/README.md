@@ -58,7 +58,6 @@ For technical details of KEB, go to the `contributor` directory:
 
 You can also read about:
 
-* [Install Kyma Environment Broker in the CN Region](../resources/cn/cn.md)
 * [Kyma Runtime End-to-End Provisioning Test](../testing/e2e/provisioning/README.md)
 * [Kyma Environments Cleanup CronJob](../utils/kyma-environments-cleanup-job/README.md)
 * [Migrations](../internal/migrations/README.md)
