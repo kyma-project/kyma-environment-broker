@@ -148,6 +148,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		flags.rejectUnsupportedParameters,
 		s.providerSpec,
 		cp,
+		s.cfg.DualStackDocsURL,
 	)
 	updateProperties := NewProvisioningProperties(
 		s.providerSpec.MachineDisplayNames(cp, machines),
@@ -160,6 +161,7 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		flags.rejectUnsupportedParameters,
 		s.providerSpec,
 		cp,
+		s.cfg.DualStackDocsURL,
 	)
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -217,6 +219,7 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		flags.rejectUnsupportedParameters,
 		s.providerSpec,
 		pkg.Azure,
+		s.cfg.DualStackDocsURL,
 	)
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -275,7 +278,7 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if !update {
-		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters, s.providerSpec, provider)
+		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters, s.providerSpec, provider, s.cfg.DualStackDocsURL)
 		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
 	}
 

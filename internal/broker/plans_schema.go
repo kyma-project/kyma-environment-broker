@@ -593,7 +593,7 @@ func IngressFilteringProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider, dualStackDocsURL string) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -626,7 +626,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 			EnumDisplayName: regionsDisplay,
 			MinLength:       1,
 		},
-		Networking:           NewNetworkingSchema(rejectUnsupportedParameters, providerSpec, cloudProvider),
+		Networking:           NewNetworkingSchema(rejectUnsupportedParameters, providerSpec, cloudProvider, dualStackDocsURL),
 		Modules:              NewModulesSchema(rejectUnsupportedParameters),
 		ColocateControlPlane: ColocateControlPlaneProperty(),
 	}
@@ -639,7 +639,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 	return properties
 }
 
-func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider) *NetworkingType {
+func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider, dualStackDocsURL string) *NetworkingType {
 	seedCIDRs := strings.Join(networking.GardenerSeedCIDRs, ", ")
 	networkingProperties := NetworkingProperties{
 		Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
@@ -651,7 +651,11 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configu
 	}
 
 	if providerSpec != nil && providerSpec.IsDualStackSupported(cloudProvider) {
-		networkingProperties.DualStack = &Type{Type: "boolean", Title: "Enable dual-stack", Description: "Enable dual-stack networking (IPv4 and IPv6)"}
+		description := "Enable dual-stack networking (IPv4 and IPv6). The Kyma Istio module does not support the dual stack mode."
+		if dualStackDocsURL != "" {
+			description += fmt.Sprintf(" For more information, see <a href=%s>documentation</a>.", dualStackDocsURL)
+		}
+		networkingProperties.DualStack = &Type{Type: "boolean", Title: "Enable dual-stack (missing IPv6 protection in Kyma Istio module)", Description: description}
 	}
 
 	networkingType := &NetworkingType{
