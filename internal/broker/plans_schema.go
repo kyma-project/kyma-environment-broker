@@ -655,7 +655,7 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configu
 		if dualStackDocsURL != "" {
 			description += fmt.Sprintf(" For more information, see <a href=%s>documentation</a>.", dualStackDocsURL)
 		}
-		networkingProperties.DualStack = &Type{Type: "boolean", Title: "Enable dual-stack (missing IPv6 protection in Kyma Istio module)", Description: description}
+		networkingProperties.DualStack = &Type{Type: "boolean", Title: "Enable dual stack (Istio module doesn't support dual stack)", Description: description}
 	}
 
 	networkingType := &NetworkingType{
