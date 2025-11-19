@@ -275,7 +275,7 @@
       "description": "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another.",
       "properties": {
         "dualStack": {
-            "description": "Enable dual-stack networking (IPv4 and IPv6). The Kyma Istio module does not support the dual stack mode. For more information, see <a href=https://placeholder.com>documentation</a>.",
+            "description": "Enable dual-stack networking (IPv4 and IPv6). The Kyma Istio module does not support dual-stack mode. For more information, see <a href=https://placeholder.com>documentation</a>.",
             "title": "Enable dual stack (Istio module doesn't support dual stack)",
             "type": "boolean"
         },
