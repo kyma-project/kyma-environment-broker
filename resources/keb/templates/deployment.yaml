@@ -89,6 +89,8 @@ spec:
               value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
+            - name: APP_BROKER_DUAL_STACK_DOCS_URL
+              value: "{{ .Values.broker.dualStackDocsURL }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES

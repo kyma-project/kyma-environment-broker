@@ -1,4 +1,5 @@
 aws:
+  dualStack: true
   regionsSupportingMachine:
     "m8g":
       "ap-northeast-1":

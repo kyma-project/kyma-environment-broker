@@ -38,6 +38,7 @@ type Config struct {
 	FreeDocsURL          string        `envconfig:"default="`
 	FreeExpirationPeriod time.Duration `envconfig:"default=720h"` // 30 days
 	TrialDocsURL         string        `envconfig:"default="`
+	DualStackDocsURL     string        `envconfig:"default="`
 	DefaultRequestRegion string        `envconfig:"default=cf-eu10"`
 	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.
 	// It is used for provisioning and deprovisioning operations.

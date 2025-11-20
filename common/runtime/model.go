@@ -340,6 +340,7 @@ type NetworkingDTO struct {
 	NodesCidr    string  `json:"nodes,omitempty"`
 	PodsCidr     *string `json:"pods,omitempty"`
 	ServicesCidr *string `json:"services,omitempty"`
+	DualStack    *bool   `json:"dualStack,omitempty"`
 }
 
 type BindingDTO struct {

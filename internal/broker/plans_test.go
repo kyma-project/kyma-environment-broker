@@ -156,6 +156,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 	schemaService := NewSchemaService(provider, plans, nil, Config{
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
 	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName})
 	require.NoError(t, err)
 	return schemaService

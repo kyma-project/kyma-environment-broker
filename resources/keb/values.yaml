@@ -48,31 +48,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.23.2
+      version: 1.24.0
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_expirator_job:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.23.2"
+      version: "1.24.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.23.2
+      version: 1.24.0
   ingress:
     domainName: localhost
   istio:
@@ -172,6 +172,8 @@ broker:
   subaccountMovementEnabled: "false"
   # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels.
   trialDocsURL: "https://help.sap.com/docs/"
+  # URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema.
+  dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
 
