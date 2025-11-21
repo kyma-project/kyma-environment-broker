@@ -9,13 +9,13 @@ Your subaccount has entitlements for Kyma runtime configured. See [Configure Ent
 
 ## Context
 
-To set up the Kyma environment in your subaccount, you must create an instance of it. You can create it from your subaccount **Overview** section by choosing **Enable Kyma** and following the wizard steps to configure the provisioning parameters.
+To set up Kyma environment in your subaccount, you must create an instance of it. You can create it from your subaccount **Overview** section by choosing **Enable Kyma** and following the wizard steps to configure the provisioning parameters.
 You can also create a Kyma environment instance from Service Marketplace in the same way as any other SAP BTP service or application.
 
-If you prefer to work in a terminal or want to automate operations using scripts, there's an alternative to the SAP BTP cockpit. You can create the Kyma environment with the SAP BTP command line interface (btp CLI). See [Enable SAP BTP, Kyma Runtime Using the Command Line](https://developers.sap.com/tutorials/btp-cli-setup-kyma-cluster.html?locale=en-US).
+If you prefer to work in a terminal or want to automate operations using scripts, you can create the Kyma environment with the SAP BTP command line interface (btp CLI). See [Enable SAP BTP, Kyma Runtime Using the Command Line](https://developers.sap.com/tutorials/btp-cli-setup-kyma-cluster.html?locale=en-US).
 
 > [!NOTE]
-> To indicate that your SAP BTP, Kyma runtime is used for production, select **Used for production** in your subaccount details. This setting allows Kyma runtime operators to prioritize incidents and support cases affecting production subaccounts over subaccounts used for non-production purposes. See [Change Subaccount Details](https://help.sap.com/docs/btp/sap-business-technology-platform/change-subaccount-details?locale=en-US&version=Cloud).
+> To indicate that your SAP BTP, Kyma runtime is used for production, select **Used for production** in your subaccount details. With this setting Kyma runtime operators prioritize incidents and support cases affecting production subaccounts over subaccounts used for non-production purposes. See [Change Subaccount Details](https://help.sap.com/docs/btp/sap-business-technology-platform/change-subaccount-details?locale=en-US&version=Cloud).
 
 ## Procedure
 
