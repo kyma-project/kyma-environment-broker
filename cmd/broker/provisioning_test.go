@@ -3,12 +3,17 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/stretchr/testify/require"
@@ -340,7 +345,46 @@ func TestProvisioning_ColocateControlPlane(t *testing.T) {
 		}`)
 
 		parsedResponse := suite.ReadResponse(resp)
-		assert.Contains(t, string(parsedResponse), "validation of the region for colocating the control plane: cannot colocate the control plane in the us-east-1 region")
+		assert.Contains(t, string(parsedResponse), "cannot colocate the control plane in the us-east-1 region")
+	})
+
+	t.Run("should return http 500 if the config map does not contain the provider", func(t *testing.T) {
+		obj := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "gardener-seeds-cache",
+				Namespace: "kcp-system",
+			},
+		}
+
+		err := suite.GetKcpClient().Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+		require.NoError(t, err)
+		delete(obj.Data, "aws")
+		err = suite.GetKcpClient().Update(context.Background(), obj)
+		require.NoError(t, err)
+
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"colocateControlPlane": true
+					}
+		}`)
+
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		assert.JSONEq(t, "{\"description\":\"internal error\"}", string(parsedResponse))
 	})
 }
 

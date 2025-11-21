@@ -265,6 +265,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	return ts
 }
 
+func (s *BrokerSuiteTest) GetKcpClient() client.Client {
+	return s.k8sKcp
+}
+
 func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
 	resource := gardener.SecretBindingResource
 	if strings.ToLower(bindingResource) == "credentialsbinding" {

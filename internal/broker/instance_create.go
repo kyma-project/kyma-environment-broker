@@ -15,6 +15,8 @@ import (
 	"slices"
 	"strings"
 
+	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -222,6 +224,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	// validation of incoming input
 	err = b.validate(ctx, details, provisioningParameters, logger)
 	if err != nil {
+		if error2.IsTemporaryError(err) {
+			return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("internal error"), http.StatusInternalServerError, err.Error())
+		}
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 	}
@@ -358,7 +363,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		platformRegion, _ := middleware.RegionFromContext(ctx)
 		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)
 		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
-			return fmt.Errorf("validation of the region for colocating the control plane: %w", err)
+			return err
 		}
 	}
 
@@ -922,8 +927,8 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 func (b *ProvisionEndpoint) validateColocationRegion(providerType, region string, supportedRegions []string, logger *slog.Logger) error {
 	providerConfig := &internal.ProviderConfig{}
 	if err := b.providerConfigProvider.Provide(providerType, providerConfig); err != nil {
-		logger.Error(fmt.Sprintf("while loading %s provider config", providerType), "error", err)
-		return fmt.Errorf("unable to load %s provider config", providerType)
+		logger.Error(fmt.Sprintf("Colocation control plane validation error: while loading %s provider config: %s", providerType, err.Error()))
+		return err
 	}
 	supportedSeedRegions := b.filterOutUnsupportedSeedRegions(supportedRegions, providerConfig.SeedRegions)
 	if !slices.Contains(supportedSeedRegions, region) {
