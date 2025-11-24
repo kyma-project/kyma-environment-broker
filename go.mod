@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.40.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.1
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.272.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.274.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v28.5.2+incompatible
