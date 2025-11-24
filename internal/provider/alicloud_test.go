@@ -241,3 +241,96 @@ func containsAllZones(actual, expected []string) bool {
 	}
 	return true
 }
+
+func TestAlicloudInputProvider_DifferentRegionFormats(t *testing.T) {
+	tests := []struct {
+		name           string
+		region         string
+		configZones    []string
+		expectedFormat string // regex pattern
+		description    string
+	}{
+		{
+			name:           "numeric suffix region uses direct concatenation",
+			region:         "eu-central-1",
+			configZones:    []string{"a", "b", "c"},
+			expectedFormat: `^eu-central-1[a-c]$`,
+			description:    "Regions ending in digit: eu-central-1 + a = eu-central-1a",
+		},
+		{
+			name:           "alpha suffix region uses hyphen separator",
+			region:         "cn-beijing",
+			configZones:    []string{"a", "b", "c"},
+			expectedFormat: `^cn-beijing-[a-c]$`,
+			description:    "Regions ending in letter: cn-beijing + - + a = cn-beijing-a",
+		},
+		{
+			name:           "shanghai region uses hyphen",
+			region:         "cn-shanghai",
+			configZones:    []string{"a", "b", "c", "d"},
+			expectedFormat: `^cn-shanghai-[a-d]$`,
+			description:    "cn-shanghai + - + a = cn-shanghai-a",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// given
+			zonesProvider := FakeZonesProvider(tt.configZones)
+
+			provider := &AlicloudInputProvider{
+				MultiZone:     true,
+				Purpose:       PurposeProduction,
+				ZonesProvider: zonesProvider,
+				ProvisioningParameters: internal.ProvisioningParameters{
+					Parameters: pkg.ProvisioningParametersDTO{
+						Region: ptr.String(tt.region),
+					},
+				},
+				FailureTolerance: "zone",
+			}
+
+			// when - call multiple times to ensure no corruption
+			var results []internal.ProviderValues
+			for i := 0; i < 3; i++ {
+				result := provider.Provide()
+				results = append(results, result)
+			}
+
+			// then - all iterations should produce correctly formatted zones
+			for iteration, result := range results {
+				t.Logf("Iteration %d - %s: zones = %v", iteration+1, tt.description, result.Zones)
+
+				for i, zone := range result.Zones {
+					// Should match expected format
+					matched := matchesPattern(zone, tt.expectedFormat)
+					if !matched {
+						t.Errorf("Iteration %d: Zone[%d]=%s should match pattern %s (%s)",
+							iteration+1, i, zone, tt.expectedFormat, tt.description)
+					}
+
+					// Should not contain duplicated region names
+					regionCount := strings.Count(zone, tt.region)
+					if regionCount != 1 {
+						t.Errorf("Iteration %d: Zone[%d]=%s contains region '%s' %d times, expected 1",
+							iteration+1, i, zone, tt.region, regionCount)
+					}
+				}
+			}
+		})
+	}
+}
+
+func matchesPattern(s, pattern string) bool {
+	// Simple pattern matching for the test cases
+	if pattern == `^eu-central-1[a-c]$` {
+		return len(s) == len("eu-central-1a") && strings.HasPrefix(s, "eu-central-1") && s[len(s)-1] >= 'a' && s[len(s)-1] <= 'c'
+	}
+	if pattern == `^cn-beijing-[a-c]$` {
+		return len(s) == len("cn-beijing-a") && strings.HasPrefix(s, "cn-beijing-") && s[len(s)-1] >= 'a' && s[len(s)-1] <= 'c'
+	}
+	if pattern == `^cn-shanghai-[a-d]$` {
+		return len(s) == len("cn-shanghai-a") && strings.HasPrefix(s, "cn-shanghai-") && s[len(s)-1] >= 'a' && s[len(s)-1] <= 'd'
+	}
+	return false
+}
