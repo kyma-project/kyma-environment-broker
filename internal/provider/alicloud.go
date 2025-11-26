@@ -36,14 +36,16 @@ func (p *AlicloudInputProvider) Provide() internal.ProviderValues {
 	if len(zones) < zonesCount {
 		zonesCount = len(zones)
 	}
+	formattedZones := make([]string, len(zones))
 	for i, zone := range zones {
-		zones[i] = FullZoneName("alicloud", region, zone)
+		formattedZones[i] = FullZoneName("alicloud", region, zone)
 	}
+
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           zonesCount,
-		Zones:                zones,
+		Zones:                formattedZones,
 		ProviderType:         "alicloud",
 		DefaultMachineType:   DefaultAlicloudMachineType,
 		Region:               region,

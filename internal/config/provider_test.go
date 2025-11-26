@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -88,7 +87,7 @@ func TestConfigProvider(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "configmap keb-config does not exist in kcp-system namespace", errors.Unwrap(err).Error())
+		assert.Contains(t, err.Error(), "configmap keb-config does not exist in kcp-system namespace")
 		assert.Equal(t, internal.ConfigForPlan{}, *cfg)
 	})
 }

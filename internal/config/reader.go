@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"strings"
 
+	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,11 +37,11 @@ func (r *ConfigMapReader) Read(objectName, configKey string) (string, error) {
 
 	cfgMap, err := r.getConfigMap(objectName)
 	if err != nil {
-		return "", fmt.Errorf("while getting configmap: %w", err)
+		return "", error2.NewTemporaryError("while getting configmap: %s", err.Error())
 	}
 	cfgString, err := r.getConfigStringOrDefaults(cfgMap.Data, configKey)
 	if err != nil {
-		return "", fmt.Errorf("while getting configuration string: %w", err)
+		return "", error2.NewTemporaryError("while getting configuration string: %s", err.Error())
 	}
 
 	// a workaround for the issue with the ArgoCD, see https://github.com/argoproj/argo-cd/pull/4729/files
@@ -63,7 +65,7 @@ func (r *ConfigMapReader) getConfigStringOrDefaults(configMapData map[string]str
 		r.logger.Info(fmt.Sprintf("configuration key %s does not exist. Using default values", configKey))
 		cfgString, exists = configMapData[defaultConfigKey]
 		if !exists {
-			return "", fmt.Errorf("default configuration does not exist")
+			return "", fmt.Errorf("both configuration key '%s' and default configuration does not exist. The ConfigMap is not properly configured.", configKey)
 		}
 	}
 	return cfgString, nil
