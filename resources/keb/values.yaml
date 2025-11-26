@@ -89,6 +89,12 @@ global:
       namespace: kyma
       refreshAfter: 30s
 
+  caBundle:
+    enabled: false
+    name: custom-ca-certificates
+    mountPath: /etc/ssl/certs
+    file: ca-certificates.crt
+
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 # Specifies the name of the Kubernetes Secret to use for pulling container images from private registries.
