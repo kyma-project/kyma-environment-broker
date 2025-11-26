@@ -89,6 +89,7 @@ global:
       namespace: kyma
       refreshAfter: 30s
 
+  # Specifies a custom CA bundle which replaces the CA bundle delivered in the container image
   caBundle:
     enabled: false
     name: custom-ca-certificates
