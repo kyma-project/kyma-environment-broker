@@ -70,14 +70,14 @@ type Credentials struct {
 }
 
 func NewBind(cfg BindingConfig, db storage.BrokerStorage, log *slog.Logger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider,
-	publisher event.Publisher, clusterNameInKubeconfig bool) *BindEndpoint {
+	publisher event.Publisher) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
 		instancesStorage:             db.Instances(),
 		bindingsStorage:              db.Bindings(),
 		publisher:                    publisher,
 		operationsStorage:            db.Operations(),
 		log:                          log.With("service", "BindEndpoint"),
-		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, clusterNameInKubeconfig),
+		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
 }
 

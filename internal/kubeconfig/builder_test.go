@@ -40,7 +40,7 @@ func TestBuilder_BuildFromRuntimeResource_NilAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -73,7 +73,7 @@ func TestBuilder_BuildFromRuntimeResource_EmptyAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -114,7 +114,7 @@ func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -161,7 +161,7 @@ func TestBuilder_BuildFromRuntimeResource_MultipleAdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -195,7 +195,7 @@ func TestBuilder_BuildFromAdminKubeconfig_NilAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -228,7 +228,7 @@ func TestBuilder_BuildFromAdminKubeconfig_EmptyAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -269,7 +269,7 @@ func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -316,7 +316,7 @@ func TestBuilder_BuildFromAdminKubeconfig_MultipleAdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
