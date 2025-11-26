@@ -30,7 +30,7 @@ func TestNewEncrypter(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, j, enc)
 
-		enc, err = e.Decrypt(enc)
+		enc, err = e.decryptCFB(enc)
 		require.NoError(t, err)
 		assert.Equal(t, j, enc)
 
@@ -48,7 +48,7 @@ func TestNewEncrypter(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, dto, enc)
 
-		enc, err = e.Decrypt(enc)
+		enc, err = e.decryptCFB(enc)
 		require.NoError(t, err)
 		assert.Equal(t, dto, enc)
 	})

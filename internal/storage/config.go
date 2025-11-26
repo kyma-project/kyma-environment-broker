@@ -23,6 +23,13 @@ type Config struct {
 	MaxOpenConns    int           `envconfig:"default=8"`
 	MaxIdleConns    int           `envconfig:"default=2"`
 	ConnMaxLifetime time.Duration `envconfig:"default=30m"`
+
+	Fips FipsConfig
+}
+
+type FipsConfig struct {
+	WriteGcm   bool `envconfig:"default=false"`
+	RewriteCfb bool `envconfig:"default=false"`
 }
 
 func (cfg *Config) ConnectionURL() string {

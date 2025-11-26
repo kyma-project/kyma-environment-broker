@@ -48,18 +48,18 @@ func NewFromConfigAndConnectionURL(cfg Config, evcfg events.Config, cipher postg
 	connection.SetMaxIdleConns(cfg.MaxIdleConns)
 	connection.SetMaxOpenConns(cfg.MaxOpenConns)
 
-	fact := postsql.NewFactory(connection)
+	factory := postsql.NewFactory(connection)
 
-	operation := postgres.NewOperation(fact, cipher)
+	operation := postgres.NewOperation(factory, cipher)
 	return storage{
-		instance:          postgres.NewInstance(fact, operation, cipher),
+		instance:          postgres.NewInstance(factory, operation, cipher),
 		operation:         operation,
-		events:            events.New(evcfg, eventstorage.New(fact)),
-		subaccountStates:  postgres.NewSubaccountStates(fact),
-		instancesArchived: postgres.NewInstanceArchived(fact),
-		bindings:          postgres.NewBinding(fact, cipher),
-		actions:           postgres.NewAction(fact),
-		timezones:         postgres.NewTimeZones(fact),
+		events:            events.New(evcfg, eventstorage.New(factory)),
+		subaccountStates:  postgres.NewSubaccountStates(factory),
+		instancesArchived: postgres.NewInstanceArchived(factory),
+		bindings:          postgres.NewBinding(factory, cipher),
+		actions:           postgres.NewAction(factory),
+		timezones:         postgres.NewTimeZones(factory),
 	}, connection, nil
 }
 

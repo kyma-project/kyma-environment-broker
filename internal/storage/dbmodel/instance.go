@@ -62,6 +62,8 @@ type InstanceDTO struct {
 	ExpiredAt *time.Time
 
 	Version int
+
+	EncryptionMode string
 }
 
 type InstanceWithOperationDTO struct {

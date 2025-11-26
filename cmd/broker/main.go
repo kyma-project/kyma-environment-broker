@@ -272,8 +272,10 @@ func main() {
 		fatalOnError(err, log)
 	}
 
-	// create storage
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
+	cipher.SetWriteGCMMode(cfg.Database.Fips.WriteGcm) // if set in config, use GCM mode for new write operations
+
+	// create storage
 	var db storage.BrokerStorage
 	if cfg.DbInMemory {
 		db = storage.NewMemoryStorage()

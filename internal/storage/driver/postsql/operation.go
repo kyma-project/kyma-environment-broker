@@ -646,7 +646,7 @@ func (s *operations) DeleteByID(operationID string) error {
 }
 
 func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO, error) {
-	err := s.cipher.EncryptSMCreds(&op.ProvisioningParameters)
+	err := s.cipher.EncryptSMCredentials(&op.ProvisioningParameters)
 	if err != nil {
 		return dbmodel.OperationDTO{}, fmt.Errorf("while encrypting basic auth: %w", err)
 	}
@@ -682,12 +682,12 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
-	err := s.cipher.DecryptSMCreds(&provisioningParameters)
+	err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfig(&provisioningParameters)
+	err = s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
