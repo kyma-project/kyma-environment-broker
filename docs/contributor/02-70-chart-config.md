@@ -46,7 +46,7 @@
 | global.secrets.vso.<br>mount | - | `kcp-dev` |
 | global.secrets.vso.<br>namespace | - | `kyma` |
 | global.secrets.vso.<br>refreshAfter | - | `30s` |
-| global.caBundle.<br>enabled | Specifies a custom CA bundle which replaces the CA bundle delivered in the container image | `False` |
+| global.caBundle.<br>enabled | - | `False` |
 | global.caBundle.name | - | `custom-ca-certificates` |
 | global.caBundle.<br>mountPath | - | `/etc/ssl/certs` |
 | global.caBundle.file | - | `ca-certificates.crt` |
