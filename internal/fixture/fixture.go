@@ -351,7 +351,7 @@ metadata:
 spec:
   sync:
     strategy: secret
-  channel: stable
+  channel: fast
   modules: []
 `
 
@@ -373,7 +373,7 @@ func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceName
 			"namespace": kymaResourceNamespace,
 		},
 		"spec": map[string]interface{}{
-			"channel": "stable",
+			"channel": "fast",
 		},
 	}})
 }

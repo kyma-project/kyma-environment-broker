@@ -102,7 +102,7 @@ metadata:
 spec:
   sync:
     strategy: secret
-  channel: stable
+  channel: fast
   modules: []
   additional-components:
   - name: "additional-component1"
@@ -125,7 +125,7 @@ metadata:
   name: my-kyma1
   namespace: kyma-system
 spec:
-  channel: stable
+  channel: fast
   modules:
   - name: istio`,
 	}

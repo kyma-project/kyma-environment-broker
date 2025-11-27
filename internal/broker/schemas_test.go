@@ -35,7 +35,8 @@ aws:
             zones: ["a", "b", "c"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &MockChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 
 	// When
 	err = svc.Validate()
@@ -64,7 +65,8 @@ aws:
             zones: ["a", "b"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &MockChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When
@@ -94,7 +96,8 @@ gcp:
             zones: ["a", "b"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &MockChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When
