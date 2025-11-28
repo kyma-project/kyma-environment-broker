@@ -2,6 +2,6 @@ ALTER TABLE instances
     DROP COLUMN encryption_mode;
 ALTER TABLE operations
     DROP COLUMN encryption_mode;
-ALTER TABLE secret_bindings
+ALTER TABLE bindings
     DROP COLUMN encryption_mode;
 
