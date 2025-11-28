@@ -389,6 +389,9 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 	if err != nil {
 		return dbmodel.InstanceDTO{}, fmt.Errorf("while marshaling parameters: %w", err)
 	}
+
+	encryptionMode := s.cipher.GetEncryptionMode()
+
 	return dbmodel.InstanceDTO{
 		InstanceID:                  instance.InstanceID,
 		RuntimeID:                   instance.RuntimeID,
@@ -409,6 +412,7 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		ExpiredAt:                   instance.ExpiredAt,
 		Version:                     instance.Version,
 		Provider:                    string(instance.Provider),
+		EncryptionMode:              encryptionMode,
 	}, nil
 }
 

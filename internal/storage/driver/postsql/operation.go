@@ -659,6 +659,8 @@ func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO,
 		return dbmodel.OperationDTO{}, fmt.Errorf("while marshal provisioning parameters: %w", err)
 	}
 
+	encryptionMode := s.cipher.GetEncryptionMode()
+
 	return dbmodel.OperationDTO{
 		ID:                     op.ID,
 		Type:                   op.Type,
@@ -671,6 +673,7 @@ func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO,
 		InstanceID:             op.InstanceID,
 		ProvisioningParameters: storage.StringToSQLNullString(string(pp)),
 		FinishedStages:         storage.StringToSQLNullString(strings.Join(op.FinishedStages, ",")),
+		EncryptionMode:         encryptionMode,
 	}, nil
 }
 

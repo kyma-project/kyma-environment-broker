@@ -130,6 +130,7 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 	}
 
 	encryptionMode := s.cipher.GetEncryptionMode()
+
 	return dbmodel.BindingDTO{
 		Kubeconfig:        string(encrypted),
 		ID:                binding.ID,
