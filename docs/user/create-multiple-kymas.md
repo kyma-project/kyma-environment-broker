@@ -20,7 +20,7 @@ If you prefer to work in a terminal or want to automate operations using scripts
 ## Procedure
 
 1. In the SAP BTP cockpit, navigate to your subaccount **Overview**.
-2. In the Kyma Environment section, choose **Enable Kyma** when creating your first Kyma instance. When provisioning the second and subsequent Kyma clusters, choose **Create**.
+2. In the **Kyma Environment** section, choose **Enable Kyma** when creating your first Kyma instance. When provisioning the second and subsequent Kyma clusters, choose **Create**.
 3. In the **Basic Info** view of the wizard window, perform the following actions:
    
     - Choose one of the plans assigned to your account.
@@ -32,7 +32,7 @@ If you prefer to work in a terminal or want to automate operations using scripts
    For more information on the configurable parameters, see [Provisioning and Updating Parameters in the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US&version=Cloud).
 6. To review your configuration, choose **Next**.
 7. To confirm changes, choose **Create**.
-8. Wait until the instance is created. The instance creation may take several minutes. In the Kyma Environment section of your subaccount **Overview**, you can monitor the instance creation status and view the operation details.
+8. Wait until the instance is created. The instance creation may take several minutes. In the **Kyma Environment** section of your subaccount **Overview**, you can monitor the instance creation status and view the operation details.
    > [!NOTE]
    > If the Kyma instances quota assigned to your subaccount has been used up, you get a message informing you about it. To increase the quota, go to **Entitlements** and make the necessary changes or contact your administrator.
 
@@ -45,7 +45,7 @@ In the process of provisioning a Kyma cluster, an instance of SAP Service Manage
 > [!NOTE]
 > If the creation of an SAP Service Manager instance doesn't succeed, Kyma provisioning cannot begin, and you get an error message.
 
-In the Kyma Environment section of your subaccount Overview, you can see all the Kyma instances created in your subaccount. If there is more than one, choose an instance from the dropdown list to view the following details:
+In the **Kyma Environment** section of your subaccount Overview, you can see all the Kyma instances created in your subaccount. If there is more than one, choose an instance from the dropdown list to view the following details:
 
 - Kyma instance ID
 - Kyma instance name
