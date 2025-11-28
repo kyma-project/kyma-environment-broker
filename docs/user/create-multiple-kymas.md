@@ -15,7 +15,7 @@ You can also create a Kyma environment instance from Service Marketplace in the 
 If you prefer to work in a terminal or want to automate operations using scripts, you can create the Kyma environment with the SAP BTP command line interface (btp CLI). See [Enable SAP BTP, Kyma Runtime Using the Command Line](https://developers.sap.com/tutorials/btp-cli-setup-kyma-cluster.html?locale=en-US).
 
 > [!NOTE]
-> To indicate that your SAP BTP, Kyma runtime is used for production, select **Used for production** in your subaccount details. With this setting Kyma runtime operators prioritize incidents and support cases affecting production subaccounts over subaccounts used for non-production purposes. See [Change Subaccount Details](https://help.sap.com/docs/btp/sap-business-technology-platform/change-subaccount-details?locale=en-US&version=Cloud).
+> To indicate that your SAP BTP, Kyma runtime is used for production, select **Used for production** in your subaccount details. With this setting, Kyma runtime operators prioritize incidents and support cases affecting production subaccounts over subaccounts used for non-production purposes. See [Change Subaccount Details](https://help.sap.com/docs/btp/sap-business-technology-platform/change-subaccount-details?locale=en-US&version=Cloud).
 
 ## Procedure
 
@@ -45,7 +45,7 @@ In the process of provisioning a Kyma cluster, an instance of SAP Service Manage
 > [!NOTE]
 > If the creation of an SAP Service Manager instance doesn't succeed, Kyma provisioning cannot begin, and you get an error message.
 
-In the Kyma Environment section of your subaccount Overview, you can see all the Kyma instances created in your subaccount. If there are more than one, choose an instance from the dropdown list to view the following details:
+In the Kyma Environment section of your subaccount Overview, you can see all the Kyma instances created in your subaccount. If there is more than one, choose an instance from the dropdown list to view the following details:
 
 - Kyma instance ID
 - Kyma instance name
