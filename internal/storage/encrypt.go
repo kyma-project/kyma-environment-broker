@@ -123,7 +123,7 @@ func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	encoded := gcm.Seal(nil, make([]byte, gcm.NonceSize()), data, nil)
-	return encoded, nil
+	return []byte(base64.StdEncoding.EncodeToString(encoded)), nil
 }
 
 // Decryption
@@ -152,6 +152,7 @@ func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
 }
 
 func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(string(ciphertext))
 	aes, err := aes.NewCipher(e.key)
 	if err != nil {
 		return nil, err

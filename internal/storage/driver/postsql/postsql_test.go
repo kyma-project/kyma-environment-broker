@@ -64,6 +64,10 @@ func GetStorageForDatabaseTests() (func() error, storage.BrokerStorage, error) {
 	return storage.GetStorageForTest(brokerStorageDatabaseTestConfig())
 }
 
+func GetStorageForDatabaseTestsWithEncrypter(encrypter *storage.Encrypter) (func() error, storage.BrokerStorage, error) {
+	return storage.GetStorageForTestWithMutableEncrypter(brokerStorageDatabaseTestConfig(), encrypter)
+}
+
 func fatalOnError(err error) {
 	if err != nil {
 		slog.Error(err.Error())

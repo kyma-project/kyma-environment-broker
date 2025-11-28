@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -274,3 +275,54 @@ func TestBindingMetrics_NoBindings(t *testing.T) {
 	// in case of no bindings, the metric should be 0
 	assert.Equal(t, got.MinutesSinceEarliestExpiration, 0.0)
 }
+
+func TestBinding_ModeCFB(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	testBindingId := "test"
+	fixedBinding := fixture.FixBinding(testBindingId)
+
+	err = brokerStorage.Bindings().Insert(&fixedBinding)
+	assert.NoError(t, err)
+
+	// when
+	testInstanceID := "instance-" + testBindingId
+	retrievedBinding, err := brokerStorage.Bindings().Get(testInstanceID, testBindingId)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBinding)
+	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
+}
+
+func TestBinding_ModeGCM(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	encrypter.SetWriteGCMMode(true)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	testBindingId := "test"
+	fixedBinding := fixture.FixBinding(testBindingId)
+
+	err = brokerStorage.Bindings().Insert(&fixedBinding)
+	assert.NoError(t, err)
+
+	// when
+	testInstanceID := "instance-" + testBindingId
+	retrievedBinding, err := brokerStorage.Bindings().Get(testInstanceID, testBindingId)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBinding)
+	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
+}
+
+// TODO set up storage with current mode, store binding, change mode, store binding, verify both decrypt fine
