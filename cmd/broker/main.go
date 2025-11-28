@@ -273,6 +273,10 @@ func main() {
 	}
 
 	// create storage
+	if cfg.Database.SecretKey == "" {
+		log.Info("No database secret key provided")
+		cfg.Database.SecretKey = "f307dabe29de4433b601df9c1efdff52"
+	}
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	var db storage.BrokerStorage
 	if cfg.DbInMemory {
