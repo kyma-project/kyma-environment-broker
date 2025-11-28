@@ -143,7 +143,7 @@ func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
 	return decryptedData, nil
 }
 
-func (e *Encrypter) DecryptGCM(ciphertext []byte) ([]byte, error) {
+func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 	aes, err := aes.NewCipher(e.key)
 	if err != nil {
 		return nil, err
@@ -155,9 +155,12 @@ func (e *Encrypter) DecryptGCM(ciphertext []byte) ([]byte, error) {
 	}
 
 	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 
-	plaintext, err := gcm.Open(nil, []byte(nonce), []byte(ciphertext), nil)
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +173,7 @@ func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte
 	case encryptionModeCFB:
 		return e.decryptCFB(data)
 	case encryptionModeGCM:
-		return e.DecryptGCM(data)
+		return e.decryptGCM(data)
 	default:
 		return e.decryptCFB(data)
 	}
@@ -211,7 +214,7 @@ func (e *Encrypter) decryptSMCredentialsCFB(provisioningParameters *internal.Pro
 
 	creds := provisioningParameters.ErsContext.SMOperatorCredentials
 	if creds.ClientID != "" {
-		clientID, err = e.DecryptGCM([]byte(creds.ClientID))
+		clientID, err = e.decryptGCM([]byte(creds.ClientID))
 		if err != nil {
 			return fmt.Errorf("while decrypting ClientID: %w", err)
 		}
@@ -241,13 +244,13 @@ func (e *Encrypter) decryptSMCredentialsGCM(provisioningParameters *internal.Pro
 
 	creds := provisioningParameters.ErsContext.SMOperatorCredentials
 	if creds.ClientID != "" {
-		clientID, err = e.DecryptGCM([]byte(creds.ClientID))
+		clientID, err = e.decryptGCM([]byte(creds.ClientID))
 		if err != nil {
 			return fmt.Errorf("while decrypting ClientID: %w", err)
 		}
 	}
 	if creds.ClientSecret != "" {
-		clientSecret, err = e.DecryptGCM([]byte(creds.ClientSecret))
+		clientSecret, err = e.decryptGCM([]byte(creds.ClientSecret))
 		if err != nil {
 			return fmt.Errorf("while decrypting ClientSecret: %w", err)
 		}
@@ -280,7 +283,7 @@ func (e *Encrypter) decryptKubeconfigGCM(provisioningParameters *internal.Provis
 		return nil
 	}
 
-	decryptedKubeconfig, err := e.DecryptGCM([]byte(provisioningParameters.Parameters.Kubeconfig))
+	decryptedKubeconfig, err := e.decryptGCM([]byte(provisioningParameters.Parameters.Kubeconfig))
 	if err != nil {
 		return fmt.Errorf("while decrypting kubeconfig: %w", err)
 	}

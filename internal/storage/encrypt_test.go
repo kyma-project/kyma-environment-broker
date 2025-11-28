@@ -9,13 +9,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func TestNewEncrypter(t *testing.T) {
+func TestNewEncrypterInCFBOnlyMode(t *testing.T) {
 
 	type testDto struct {
 		Data string `json:"data"`
 	}
 
-	t.Run("success json", func(t *testing.T) {
+	t.Run("encrypt json", func(t *testing.T) {
 		secretKey := rand.String(32)
 
 		e := NewEncrypter(secretKey)
@@ -26,37 +26,43 @@ func TestNewEncrypter(t *testing.T) {
 		j, err := json.Marshal(&dto)
 		require.NoError(t, err)
 
-		enc, err := e.Encrypt(j)
+		cipherText, err := e.Encrypt(j)
 		require.NoError(t, err)
-		assert.NotEqual(t, j, enc)
+		assert.NotEqual(t, j, cipherText)
 
-		enc, err = e.decryptCFB(enc)
+		cipherText, err = e.decryptCFB(cipherText)
 		require.NoError(t, err)
-		assert.Equal(t, j, enc)
+		assert.Equal(t, j, cipherText)
 
-		err = json.Unmarshal(enc, &dto)
+		_, err = e.decryptGCM(cipherText)
+		require.Error(t, err)
+
+		err = json.Unmarshal(cipherText, &dto)
 		require.NoError(t, err)
 	})
 
-	t.Run("success string", func(t *testing.T) {
+	t.Run("encrypt string", func(t *testing.T) {
 		secretKey := rand.String(32)
 
 		e := NewEncrypter(secretKey)
 		dto := []byte("test")
 
-		enc, err := e.Encrypt(dto)
+		cipherText, err := e.Encrypt(dto)
 		require.NoError(t, err)
-		assert.NotEqual(t, dto, enc)
+		assert.NotEqual(t, dto, cipherText)
 
-		enc, err = e.decryptCFB(enc)
+		cipherText, err = e.decryptCFB(cipherText)
 		require.NoError(t, err)
-		assert.Equal(t, dto, enc)
+		assert.Equal(t, dto, cipherText)
+
+		_, err = e.decryptGCM(cipherText)
+		require.Error(t, err)
 	})
 
-	t.Run("wrong key", func(t *testing.T) {
+	t.Run("invalid key", func(t *testing.T) {
 		secretKey := ""
 
-		e := NewEncrypter(secretKey)
+		cipherText := NewEncrypter(secretKey)
 
 		dto := testDto{
 			Data: secretKey,
@@ -65,7 +71,7 @@ func TestNewEncrypter(t *testing.T) {
 		j, err := json.Marshal(&dto)
 		require.NoError(t, err)
 
-		_, err = e.Encrypt(j)
+		_, err = cipherText.Encrypt(j)
 		require.Error(t, err)
 	})
 
