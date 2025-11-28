@@ -33,6 +33,14 @@ func (e *Encrypter) GetWriteGCMMode() bool {
 	return e.encodeGCM
 }
 
+func (e *Encrypter) GetEncryptionMode() string {
+	if e.GetWriteGCMMode() {
+		return encryptionModeGCM
+	} else {
+		return encryptionModeCFB
+	}
+}
+
 func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 	if e.GetWriteGCMMode() {
 		return e.encryptGCM(data)

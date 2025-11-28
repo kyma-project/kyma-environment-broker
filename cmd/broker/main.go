@@ -272,6 +272,7 @@ func main() {
 		fatalOnError(err, log)
 	}
 
+	// TODO reconsider - all jobs should run with the same configuration or all jobs which persist instances, bindings or operations using encryption
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	cipher.SetWriteGCMMode(cfg.Database.Fips.WriteGcm) // if set in config, use GCM mode for new write operations
 

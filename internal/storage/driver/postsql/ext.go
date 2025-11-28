@@ -15,4 +15,5 @@ type Cipher interface {
 	DecryptKubeconfigUsingMode(pp *internal.ProvisioningParameters, encryptionMode string) error
 
 	GetWriteGCMMode() bool
+	GetEncryptionMode() string
 }
