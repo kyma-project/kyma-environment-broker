@@ -6,9 +6,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,7 +62,7 @@ aws:
        eu-central-1:
             displayName: "eu-central-1"
             zones: ["a", "b"]
-`))  
+`))
 	require.NoError(t, err)
 	channelResolver := &fixture.FakeChannelResolver{}
 	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
@@ -95,7 +93,7 @@ gcp:
        eu-central-1:
             displayName: "eu-central-1"
             zones: ["a", "b"]
-`))  
+`))
 	require.NoError(t, err)
 	channelResolver := &fixture.FakeChannelResolver{}
 	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
