@@ -214,7 +214,7 @@ func (e *Encrypter) decryptSMCredentialsCFB(provisioningParameters *internal.Pro
 
 	creds := provisioningParameters.ErsContext.SMOperatorCredentials
 	if creds.ClientID != "" {
-		clientID, err = e.decryptGCM([]byte(creds.ClientID))
+		clientID, err = e.decryptCFB([]byte(creds.ClientID))
 		if err != nil {
 			return fmt.Errorf("while decrypting ClientID: %w", err)
 		}
