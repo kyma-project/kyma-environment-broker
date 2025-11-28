@@ -3765,7 +3765,7 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	plans := newPlanSpec(t)
 	provider := newProviderSpec(t)
 
-	channelResolver := &broker.MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
 		broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
 			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)

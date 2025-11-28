@@ -334,7 +334,8 @@ func main() {
 	fatalOnError(err, log)
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
 
-	channelResolver, err := kebConfig.NewChannelResolver(ctx, kcpK8sClient, log, cfg.RuntimeConfigurationConfigMapName)
+	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
 	fatalOnError(err, log)
 
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)

@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
@@ -154,7 +155,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
 
-	channelResolver := &MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 
 	schemaService := NewSchemaService(provider, plans, nil, Config{
 		RejectUnsupportedParameters: true,

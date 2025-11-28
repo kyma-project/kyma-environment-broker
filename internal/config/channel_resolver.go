@@ -1,18 +1,11 @@
 package config
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"gopkg.in/yaml.v2"
-	coreV1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	defaultChannelFallback = "regular"
 )
 
 type ChannelResolver interface {
@@ -21,19 +14,17 @@ type ChannelResolver interface {
 }
 
 type channelResolver struct {
-	ctx               context.Context
-	k8sClient         client.Client
+	configProvider    ConfigMapConfigProvider
 	logger            *slog.Logger
-	configMapName     string
+	planNames         []string
 	planChannelsCache map[string]string
 }
 
-func NewChannelResolver(ctx context.Context, k8sClient client.Client, logger *slog.Logger, configMapName string) (ChannelResolver, error) {
+func NewChannelResolver(configProvider ConfigMapConfigProvider, planNames []string, logger *slog.Logger) (ChannelResolver, error) {
 	resolver := &channelResolver{
-		ctx:           ctx,
-		k8sClient:     k8sClient,
-		logger:        logger.With("component", "ChannelResolver"),
-		configMapName: configMapName,
+		configProvider: configProvider,
+		planNames:      planNames,
+		logger:         logger.With("component", "ChannelResolver"),
 	}
 
 	if err := resolver.loadChannels(); err != nil {
@@ -53,8 +44,7 @@ func (r *channelResolver) GetChannelForPlan(planName string) (string, error) {
 		return defaultChannel, nil
 	}
 
-	r.logger.Warn(fmt.Sprintf("No channel configured for plan %s and no default found, using fallback: %s", planName, defaultChannelFallback))
-	return defaultChannelFallback, nil
+	return "", fmt.Errorf("no channel configured for plan %s and no default found", planName)
 }
 
 func (r *channelResolver) GetAllPlanChannels() (map[string]string, error) {
@@ -67,59 +57,55 @@ func (r *channelResolver) GetAllPlanChannels() (map[string]string, error) {
 }
 
 func (r *channelResolver) loadChannels() error {
-	r.logger.Info(fmt.Sprintf("Loading channels from ConfigMap: %s", r.configMapName))
-
-	cfgMap, err := r.getConfigMap()
-	if err != nil {
-		return fmt.Errorf("while getting ConfigMap: %w", err)
-	}
+	r.logger.Info("Loading channels from runtime configuration")
 
 	r.planChannelsCache = make(map[string]string)
 
-	for planName, configYAML := range cfgMap.Data {
-		channel, err := r.extractChannelFromConfig(configYAML)
-		if err != nil {
-			r.logger.Warn(fmt.Sprintf("Failed to extract channel for plan %s: %v", planName, err))
+	defaultChannel, err := r.loadChannelForPlan("default")
+	if err != nil {
+		return fmt.Errorf("failed to load default channel (required): %w", err)
+	}
+	r.planChannelsCache["default"] = defaultChannel
+	r.logger.Info(fmt.Sprintf("Loaded default channel: %s", defaultChannel))
+
+	for _, planName := range r.planNames {
+		if planName == "default" {
 			continue
 		}
-		if channel != "" {
-			r.planChannelsCache[planName] = channel
-			r.logger.Info(fmt.Sprintf("Loaded channel for plan %s: %s", planName, channel))
-		}
-	}
 
-	if len(r.planChannelsCache) == 0 {
-		return fmt.Errorf("no channels found in ConfigMap %s", r.configMapName)
+		channel, err := r.loadChannelForPlan(planName)
+		if err != nil {
+			r.logger.Info(fmt.Sprintf("Plan %s will use default channel: %s", planName, defaultChannel))
+			continue
+		}
+		r.planChannelsCache[planName] = channel
+		r.logger.Info(fmt.Sprintf("Loaded channel for plan %s: %s", planName, channel))
 	}
 
 	return nil
 }
 
-func (r *channelResolver) getConfigMap() (*coreV1.ConfigMap, error) {
-	cfgMap := &coreV1.ConfigMap{}
-	err := r.k8sClient.Get(r.ctx, client.ObjectKey{Namespace: namespace, Name: r.configMapName}, cfgMap)
+func (r *channelResolver) loadChannelForPlan(planName string) (string, error) {
+	cfg := &internal.ConfigForPlan{}
+	err := r.configProvider.Provide(planName, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("ConfigMap %s does not exist in %s namespace: %w", r.configMapName, namespace, err)
+		return "", fmt.Errorf("while getting config for plan %s: %w", planName, err)
 	}
-	return cfgMap, nil
+
+	return r.extractChannelFromKymaTemplate(cfg.KymaTemplate)
 }
 
-func (r *channelResolver) extractChannelFromConfig(configYAML string) (string, error) {
-	var config internal.ConfigForPlan
-	if err := yaml.Unmarshal([]byte(configYAML), &config); err != nil {
-		return "", fmt.Errorf("while unmarshaling config: %w", err)
-	}
-
-	if config.KymaTemplate == "" {
+func (r *channelResolver) extractChannelFromKymaTemplate(kymaTemplate string) (string, error) {
+	if kymaTemplate == "" {
 		return "", fmt.Errorf("kyma-template is empty")
 	}
 
-	var kymaTemplate map[string]interface{}
-	if err := yaml.Unmarshal([]byte(config.KymaTemplate), &kymaTemplate); err != nil {
+	var template map[string]interface{}
+	if err := yaml.Unmarshal([]byte(kymaTemplate), &template); err != nil {
 		return "", fmt.Errorf("while unmarshaling kyma-template: %w", err)
 	}
 
-	if spec, ok := kymaTemplate["spec"].(map[interface{}]interface{}); ok {
+	if spec, ok := template["spec"].(map[interface{}]interface{}); ok {
 		if channel, ok := spec["channel"].(string); ok {
 			return channel, nil
 		}

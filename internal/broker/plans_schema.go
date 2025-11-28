@@ -627,13 +627,7 @@ func IngressFilteringProperty() *Type {
 // Note that the order of properties will be the same in the form on the website
 func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, rejectUnsupportedParameters bool, providerSpec *configuration.ProviderSpec, cloudProvider pkg.CloudProvider, dualStackDocsURL string, planName string, channelResolver config.ChannelResolver) ProvisioningProperties {
 
-	// Get the default channel for this plan
-	defaultChannel := "regular" // fallback
-	if channelResolver != nil {
-		if channel, err := channelResolver.GetChannelForPlan(planName); err == nil {
-			defaultChannel = channel
-		}
-	}
+	defaultChannel, _ := channelResolver.GetChannelForPlan(planName)
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{

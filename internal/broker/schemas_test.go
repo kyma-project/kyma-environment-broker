@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
@@ -35,7 +36,7 @@ aws:
             zones: ["a", "b", "c"]
 `))
 	require.NoError(t, err)
-	channelResolver := &MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 
 	// When
@@ -63,9 +64,9 @@ aws:
        eu-central-1:
             displayName: "eu-central-1"
             zones: ["a", "b"]
-`))
+`))  
 	require.NoError(t, err)
-	channelResolver := &MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 
@@ -94,9 +95,9 @@ gcp:
        eu-central-1:
             displayName: "eu-central-1"
             zones: ["a", "b"]
-`))
+`))  
 	require.NoError(t, err)
-	channelResolver := &MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 

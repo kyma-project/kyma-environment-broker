@@ -246,3 +246,11 @@ func removeString(slice []string, str string) []string {
 	}
 	return result
 }
+
+func AllPlanNames() []string {
+	planNames := make([]string, 0, len(PlanNamesMapping))
+	for _, planName := range PlanNamesMapping {
+		planNames = append(planNames, planName)
+	}
+	return planNames
+}

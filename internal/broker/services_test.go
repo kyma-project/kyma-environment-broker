@@ -12,6 +12,7 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -167,7 +168,7 @@ func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg
 	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
-	channelResolver := &broker.MockChannelResolver{}
+	channelResolver := &fixture.FakeChannelResolver{}
 
 	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans, channelResolver)
 	require.NoError(t, err)
