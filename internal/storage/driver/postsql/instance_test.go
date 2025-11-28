@@ -1406,11 +1406,11 @@ func fixInstance(testData instanceData) *internal.Instance {
 	instance.Parameters.ErsContext.SubAccountID = suid
 	instance.Parameters.ErsContext.GlobalAccountID = gaid
 	serviceManagerOperatorCredentials := internal.ServiceManagerOperatorCredentials{
-		ClientID:     "client-id",
-		ClientSecret: "client-secret",
+		ClientID:     fmt.Sprintf("client-id-%s", testData.val),
+		ClientSecret: fmt.Sprintf("client-secret-%s", testData.val),
 	}
 	instance.Parameters.ErsContext.SMOperatorCredentials = &serviceManagerOperatorCredentials
-	instance.Parameters.Parameters.Kubeconfig = "kubeconfig"
+	instance.Parameters.Parameters.Kubeconfig = fmt.Sprintf("kubeconfig-%s", testData.val)
 
 	instance.InstanceDetails = internal.InstanceDetails{}
 	if testData.expired {
