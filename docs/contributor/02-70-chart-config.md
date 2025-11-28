@@ -20,23 +20,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.24.2` |
+| global.images.kyma_environment_<br>broker.version | - | `1.24.3` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.24.2` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.24.3` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.24.2` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.24.3` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.24.2` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.24.3` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.24.2` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.24.3` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.24.2` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.24.3` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.24.2` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.24.3` |
 | global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.24.2` |
+| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.24.3` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.24.2` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.24.3` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -46,6 +46,10 @@
 | global.secrets.vso.<br>mount | - | `kcp-dev` |
 | global.secrets.vso.<br>namespace | - | `kyma` |
 | global.secrets.vso.<br>refreshAfter | - | `30s` |
+| global.caBundle.<br>enabled | - | `False` |
+| global.caBundle.name | - | `custom-ca-certificates` |
+| global.caBundle.<br>mountPath | - | `/etc/ssl/certs` |
+| global.caBundle.file | - | `ca-certificates.crt` |
 | fullnameOverride | - | `kcp-kyma-environment-broker` |
 | host | - | `kyma-env-broker` |
 | imagePullSecret | Specifies the name of the Kubernetes Secret to use for pulling container images from private registries. | `` |
@@ -142,7 +146,6 @@
 | holdHAPSteps | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). | `false` |
 | subscriptionGardenerResource | Name of the Gardener resource, which the broker uses to look up for hyperscaler assignment. Allowed values: SecretBinding or CredentialsBinding. | `SecretBinding` |
 | machinesAvailabilityEndpoint | If true, the broker exposes the API endpoint that returns the availability of machine types. | `False` |
-| clusterNameInKubeconfig | If true, the cluster name is used as the context name when generating the kubeconfig. | `False` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.secret | The OAuth2 client secret used together with the client ID for authentication with the CIS Accounts API. | None |

@@ -48,31 +48,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.24.2
+      version: 1.24.3
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_expirator_job:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.24.2"
+      version: "1.24.3"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.24.2
+      version: 1.24.3
   ingress:
     domainName: localhost
   istio:
@@ -88,6 +88,13 @@ global:
       mount: kcp-dev
       namespace: kyma
       refreshAfter: 30s
+
+  # Specifies a custom CA bundle which replaces the CA bundle delivered in the container image
+  caBundle:
+    enabled: false
+    name: custom-ca-certificates
+    mountPath: /etc/ssl/certs
+    file: ca-certificates.crt
 
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
@@ -393,9 +400,6 @@ subscriptionGardenerResource: SecretBinding
 
 # If true, the broker exposes the API endpoint that returns the availability of machine types.
 machinesAvailabilityEndpoint: false
-
-# If true, the cluster name is used as the context name when generating the kubeconfig.
-clusterNameInKubeconfig: false
 
 # =================================================
 # CIS Related Settings

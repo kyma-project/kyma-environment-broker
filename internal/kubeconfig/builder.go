@@ -17,20 +17,18 @@ type Config struct {
 }
 
 type Builder struct {
-	kubeconfigProvider      kubeconfigProvider
-	kcpClient               client.Client
-	clusterNameInKubeconfig bool
+	kubeconfigProvider kubeconfigProvider
+	kcpClient          client.Client
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, clusterNameInKubeconfig bool) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider) *Builder {
 	return &Builder{
-		kcpClient:               kcpClient,
-		kubeconfigProvider:      provider,
-		clusterNameInKubeconfig: clusterNameInKubeconfig,
+		kcpClient:          kcpClient,
+		kubeconfigProvider: provider,
 	}
 }
 
@@ -59,13 +57,8 @@ func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token str
 		return "", err
 	}
 
-	contextName := kubeCfg.CurrentContext
-	if b.clusterNameInKubeconfig {
-		contextName = clusterName
-	}
-
 	return b.parseTemplate(kubeconfigData{
-		ContextName: contextName,
+		ContextName: clusterName,
 		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
 		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
 		Token:       token,
@@ -93,18 +86,13 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		return "", fmt.Errorf("during unmarshal invocation: %w", err)
 	}
 
-	contextName := kubeCfg.CurrentContext
-	if b.clusterNameInKubeconfig {
-		contextName = instance.Parameters.Parameters.Name
-	}
-
-	OIDCConfigs, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID, contextName)
+	OIDCConfigs, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID, instance.Parameters.Parameters.Name)
 	if err != nil {
 		return "", fmt.Errorf("while fetching oidc data: %w", err)
 	}
 
 	return b.parseTemplate(kubeconfigData{
-		ContextName: contextName,
+		ContextName: instance.Parameters.Parameters.Name,
 		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
 		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
 		OIDCConfigs: OIDCConfigs,

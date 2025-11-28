@@ -101,12 +101,19 @@ spec:
                   value: "{{ .Values.global.database.embedded.enabled }}"
               command:
                 - "/bin/main"
+              {{- if or (and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)) .Values.global.caBundle.enabled }}
               volumeMounts:
               {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
               - name: cloudsql-sslrootcert
                 mountPath: /secrets/cloudsql-sslrootcert
                 readOnly: true
               {{- end}}
+              {{- if .Values.global.caBundle.enabled }}
+              - name: {{ .Values.global.caBundle.name }}
+                mountPath: {{ .Values.global.caBundle.mountPath }}
+                readOnly: true
+              {{- end }}
+              {{- end }}
             {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
             - name: cloudsql-proxy
               image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
@@ -132,6 +139,7 @@ spec:
               {{- end }}
             {{- end}}
 
+          {{- if or (and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)) (and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)) .Values.global.caBundle.enabled }}
           volumes:
           {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
             - name: cloudsql-instance-credentials
@@ -147,4 +155,13 @@ spec:
                   path: server-ca.pem
                 optional: true
           {{- end}}
+          {{- if .Values.global.caBundle.enabled }}
+            - name: {{ .Values.global.caBundle.name }}
+              projected:
+                sources:
+                  - clusterTrustBundle:
+                      name: {{ .Values.global.caBundle.name }}
+                      path: {{ .Values.global.caBundle.file }}
+          {{- end }}
+          {{- end }}
 {{ end }}
