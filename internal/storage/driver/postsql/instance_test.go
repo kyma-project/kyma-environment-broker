@@ -1248,6 +1248,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 }
 
+// TODO add update operation and test change of encryption mode
 func TestInstance_ModeCFB(t *testing.T) {
 	// given
 	encrypter := storage.NewEncrypter("################################")

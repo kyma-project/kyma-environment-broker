@@ -567,13 +567,87 @@ func TestOperation(t *testing.T) {
 	})
 }
 
+// TODO add update operation and test change of encryption mode
+func TestOperation_ModeCFB(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################")
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+	operation.ProvisioningParameters.Parameters.Kubeconfig = "kube-config-data"
+
+	// when
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
+	require.NoError(t, err)
+
+	// then
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	// assert kubeconfig
+	assert.Equal(t, operation.ProvisioningParameters.Parameters.Kubeconfig, retrievedOperation.ProvisioningParameters.Parameters.Kubeconfig)
+
+}
+
+func TestOperation_ModeGCM(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################")
+	encrypter.SetWriteGCMMode(true)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+	operation.ProvisioningParameters.Parameters.Kubeconfig = "kube-config-data"
+
+	// when
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
+	require.NoError(t, err)
+
+	// then
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	// assert kubeconfig
+	assert.Equal(t, operation.ProvisioningParameters.Parameters.Kubeconfig, retrievedOperation.ProvisioningParameters.Parameters.Kubeconfig)
+
+}
+
+// TODO add test for changing encryption mode
+
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
 	assert.Equal(t, fixture.GlobalAccountId, operation.RuntimeOperation.GlobalAccountID)
 	assert.Equal(t, fixture.Region, operation.RuntimeOperation.Region)
 }
 
 func assertDeprovisioningOperation(t *testing.T, expected, got internal.DeprovisioningOperation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
 	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 
