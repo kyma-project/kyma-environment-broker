@@ -20,13 +20,25 @@ const (
 	Down
 )
 
+// TODO use Options pattern to configure test storage (e.g. with encrypter, connection url, etc.)
 func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 	connectionURL := config.ConnectionURL()
-	return GetStorageForTestUsingConnectionURL(config, connectionURL)
+	encrypter := NewEncrypter(config.SecretKey)
+	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
+}
+
+func GetStorageForTestWithMutableEncrypter(config Config, encrypter *Encrypter) (func() error, BrokerStorage, error) {
+	connectionURL := config.ConnectionURL()
+	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
 }
 
 func GetStorageForTestUsingConnectionURL(config Config, connectionURL string) (func() error, BrokerStorage, error) {
-	storageForTests, connection, err := NewFromConfigAndConnectionURL(config, events.Config{}, NewEncrypter(config.SecretKey), connectionURL)
+	encrypter := NewEncrypter(config.SecretKey)
+	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
+}
+
+func GetTestStorageUsingEncrypterAndConnectionURL(config Config, encrypter *Encrypter, connectionURL string) (func() error, BrokerStorage, error) {
+	storageForTests, connection, err := NewFromConfigAndConnectionURL(config, events.Config{}, encrypter, connectionURL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while creating storage: %w", err)
 	}
