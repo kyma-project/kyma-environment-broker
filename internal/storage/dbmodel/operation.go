@@ -31,6 +31,8 @@ type OperationDTO struct {
 	ProvisioningParameters sql.NullString
 
 	Type internal.OperationType
+
+	EncryptionMode string
 }
 
 type OperationStatEntry struct {

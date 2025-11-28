@@ -125,6 +125,10 @@ spec:
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
+            - name: APP_DATABASE_FIPS_GCM_WRITE
+              value: "{{ .Values.global.fips.writeGCM }}"
+            - name: APP_DATABASE_FIPS_REWRITE_CFB
+              value: "{{ .Values.global.fips.rewriteCFB }}"
             - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
@@ -320,11 +324,6 @@ spec:
               mountPath: /secrets/cloudsql-sslrootcert
               readOnly: true
           {{- end }}
-          {{- if .Values.global.caBundle.enabled }}
-            - name: {{ .Values.global.caBundle.name }}
-              mountPath: {{ .Values.global.caBundle.mountPath }}
-              readOnly: true
-          {{- end }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
         - name: cloudsql-proxy
           image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
@@ -382,12 +381,4 @@ spec:
       - name: keb-additional-properties
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
-      {{- end }}
-      {{- if .Values.global.caBundle.enabled }}
-      - name: {{ .Values.global.caBundle.name }}
-        projected:
-          sources:
-          - clusterTrustBundle:
-              name: {{ .Values.global.caBundle.name }}
-              path: {{ .Values.global.caBundle.file }}
       {{- end }}

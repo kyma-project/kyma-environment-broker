@@ -272,8 +272,11 @@ func main() {
 		fatalOnError(err, log)
 	}
 
-	// create storage
+	// TODO reconsider - all jobs should run with the same configuration or all jobs which persist instances, bindings or operations using encryption
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
+	cipher.SetWriteGCMMode(cfg.Database.Fips.WriteGcm) // if set in config, use GCM mode for new write operations
+
+	// create storage
 	var db storage.BrokerStorage
 	if cfg.DbInMemory {
 		db = storage.NewMemoryStorage()

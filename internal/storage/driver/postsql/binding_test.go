@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -273,4 +274,93 @@ func TestBindingMetrics_NoBindings(t *testing.T) {
 
 	// in case of no bindings, the metric should be 0
 	assert.Equal(t, got.MinutesSinceEarliestExpiration, 0.0)
+}
+
+func TestBinding_ModeCFB(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	testBindingId := "test"
+	fixedBinding := fixture.FixBinding(testBindingId)
+
+	err = brokerStorage.Bindings().Insert(&fixedBinding)
+	assert.NoError(t, err)
+
+	// when
+	testInstanceID := "instance-" + testBindingId
+	retrievedBinding, err := brokerStorage.Bindings().Get(testInstanceID, testBindingId)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBinding)
+	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
+}
+
+func TestBinding_ModeGCM(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	encrypter.SetWriteGCMMode(true)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	testBindingId := "test"
+	fixedBinding := fixture.FixBinding(testBindingId)
+
+	err = brokerStorage.Bindings().Insert(&fixedBinding)
+	assert.NoError(t, err)
+
+	// when
+	testInstanceID := "instance-" + testBindingId
+	retrievedBinding, err := brokerStorage.Bindings().Get(testInstanceID, testBindingId)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBinding)
+	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
+}
+
+func TestBinding_BothModes(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instanceID := "test-instance-id"
+	testBindingIdCFB := "binding-cfb"
+	fixedBindingCFB := fixture.FixBindingWithInstanceID(testBindingIdCFB, instanceID)
+
+	testBindingIdGCM := "binding-gcm"
+	fixedBindingGCM := fixture.FixBindingWithInstanceID(testBindingIdGCM, instanceID)
+
+	err = brokerStorage.Bindings().Insert(&fixedBindingCFB)
+	assert.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	err = brokerStorage.Bindings().Insert(&fixedBindingGCM)
+	assert.NoError(t, err)
+
+	// when
+	retrievedBindingCFB, err := brokerStorage.Bindings().Get(instanceID, testBindingIdCFB)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingCFB)
+	assert.Equal(t, fixedBindingCFB.Kubeconfig, retrievedBindingCFB.Kubeconfig)
+
+	//when
+	retrievedBindingGCM, err := brokerStorage.Bindings().Get(instanceID, testBindingIdGCM)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingGCM)
+	assert.Equal(t, fixedBindingGCM.Kubeconfig, retrievedBindingGCM.Kubeconfig)
+
 }

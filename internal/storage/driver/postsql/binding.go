@@ -129,6 +129,8 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		return dbmodel.BindingDTO{}, fmt.Errorf("while encrypting kubeconfig: %w", err)
 	}
 
+	encryptionMode := s.cipher.GetEncryptionMode()
+
 	return dbmodel.BindingDTO{
 		Kubeconfig:        string(encrypted),
 		ID:                binding.ID,
@@ -137,11 +139,12 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		ExpirationSeconds: binding.ExpirationSeconds,
 		CreatedBy:         binding.CreatedBy,
 		ExpiresAt:         binding.ExpiresAt,
+		EncryptionMode:    encryptionMode,
 	}, nil
 }
 
 func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
-	decrypted, err := s.cipher.Decrypt([]byte(dto.Kubeconfig))
+	decrypted, err := s.cipher.DecryptUsingMode([]byte(dto.Kubeconfig), dto.EncryptionMode)
 	if err != nil {
 		return internal.Binding{}, fmt.Errorf("while decrypting kubeconfig: %w", err)
 	}

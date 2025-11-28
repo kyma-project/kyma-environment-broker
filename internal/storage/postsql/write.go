@@ -55,6 +55,7 @@ func (ws writeSession) InsertBinding(binding dbmodel.BindingDTO) dberr.Error {
 		Pair("kubeconfig", binding.Kubeconfig).
 		Pair("expiration_seconds", binding.ExpirationSeconds).
 		Pair("created_by", binding.CreatedBy).
+		Pair("encryption_mode", binding.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -137,6 +138,7 @@ func (ws writeSession) InsertInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Pair("deleted_at", instance.DeletedAt).
 		Pair("expired_at", instance.ExpiredAt).
 		Pair("version", instance.Version).
+		Pair("encryption_mode", instance.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -212,6 +214,7 @@ func (ws writeSession) InsertOperation(op dbmodel.OperationDTO) dberr.Error {
 		Pair("data", op.Data).
 		Pair("provisioning_parameters", op.ProvisioningParameters.String).
 		Pair("finished_stages", op.FinishedStages).
+		Pair("encryption_mode", op.EncryptionMode).
 		Exec()
 
 	if err != nil {

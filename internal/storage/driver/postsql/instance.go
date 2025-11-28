@@ -232,12 +232,14 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 	if err != nil {
 		return internal.Instance{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
-	err = s.cipher.DecryptSMCreds(&params)
+
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.EncryptionMode)
 	if err != nil {
 		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfig(&params)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.EncryptionMode)
+
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
@@ -271,12 +273,13 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 	if err != nil {
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
-	err = s.cipher.DecryptSMCreds(&params)
+
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.InstanceDTO.EncryptionMode)
 	if err != nil {
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfig(&params)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.InstanceDTO.EncryptionMode)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
@@ -374,7 +377,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 }
 
 func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDTO, error) {
-	err := s.cipher.EncryptSMCreds(&instance.Parameters)
+	err := s.cipher.EncryptSMCredentials(&instance.Parameters)
 	if err != nil {
 		return dbmodel.InstanceDTO{}, fmt.Errorf("while encrypting parameters: %w", err)
 	}
@@ -386,6 +389,9 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 	if err != nil {
 		return dbmodel.InstanceDTO{}, fmt.Errorf("while marshaling parameters: %w", err)
 	}
+
+	encryptionMode := s.cipher.GetEncryptionMode()
+
 	return dbmodel.InstanceDTO{
 		InstanceID:                  instance.InstanceID,
 		RuntimeID:                   instance.RuntimeID,
@@ -406,6 +412,7 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		ExpiredAt:                   instance.ExpiredAt,
 		Version:                     instance.Version,
 		Provider:                    string(instance.Provider),
+		EncryptionMode:              encryptionMode,
 	}, nil
 }
 
