@@ -41,7 +41,7 @@ metadata:
 spec:
     sync:
         strategy: secret
-    channel: stable
+    channel: fast
     modules: []
 `
 	cfgDestObj = cfg

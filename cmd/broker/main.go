@@ -333,7 +333,12 @@ func main() {
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
-	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans)
+
+	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	fatalOnError(err, log)
+
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")

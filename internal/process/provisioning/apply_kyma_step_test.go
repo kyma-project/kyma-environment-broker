@@ -261,7 +261,7 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 			"namespace": "kyma-system",
 		},
 		"spec": map[string]interface{}{
-			"channel": "stable",
+			"channel": "fast",
 		},
 	}})
 	require.NoError(t, err)
@@ -310,7 +310,7 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 			"namespace": "kyma-system",
 		},
 		"spec": map[string]interface{}{
-			"channel": "stable",
+			"channel": "fast",
 		},
 	}})
 	require.NoError(t, err)
@@ -379,7 +379,7 @@ metadata:
 spec:
     sync:
         strategy: secret
-    channel: stable
+    channel: fast
     modules: []
 `
 	var cli client.Client

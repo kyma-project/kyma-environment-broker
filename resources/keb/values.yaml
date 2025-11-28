@@ -349,7 +349,10 @@ runtimeConfiguration: |-
         namespace: kcp-system
       spec:
         channel: fast
-        modules: []
+        modules:
+          - name: api-gateway
+          - name: istio
+          - name: btp-operator
     additional-components: []
 
 # Contains DNS provider configuration for Kyma clusters.

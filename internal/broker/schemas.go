@@ -2,6 +2,7 @@ package broker
 
 import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
@@ -13,16 +14,18 @@ type SchemaService struct {
 
 	ingressFilteringPlans EnablePlans
 
-	cfg Config
+	cfg             Config
+	channelResolver config.ChannelResolver
 }
 
-func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans) *SchemaService {
+func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans, channelResolver config.ChannelResolver) *SchemaService {
 	return &SchemaService{
 		planSpec:              planSpec,
 		providerSpec:          providerSpec,
 		defaultOIDCConfig:     defaultOIDCConfig,
 		cfg:                   cfg,
 		ingressFilteringPlans: ingressFilteringPlans,
+		channelResolver:       channelResolver,
 	}
 }
 
@@ -149,6 +152,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		s.providerSpec,
 		cp,
 		s.cfg.DualStackDocsURL,
+		planName,
+		s.channelResolver,
 	)
 	updateProperties := NewProvisioningProperties(
 		s.providerSpec.MachineDisplayNames(cp, machines),
@@ -162,6 +167,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		s.providerSpec,
 		cp,
 		s.cfg.DualStackDocsURL,
+		planName,
+		s.channelResolver,
 	)
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -220,6 +227,8 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		s.providerSpec,
 		pkg.Azure,
 		s.cfg.DualStackDocsURL,
+		AzureLitePlanName,
+		s.channelResolver,
 	)
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -278,8 +287,12 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if !update {
+		defaultChannel := "regular"
+		if s.channelResolver != nil {
+			defaultChannel, _ = s.channelResolver.GetChannelForPlan(FreemiumPlanName)
+		}
 		properties.Networking = NewNetworkingSchema(flags.rejectUnsupportedParameters, s.providerSpec, provider, s.cfg.DualStackDocsURL)
-		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters, defaultChannel)
 	}
 
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredSchemaProperties(), flags)
@@ -301,7 +314,11 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	}
 
 	if !update {
-		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters)
+		defaultChannel := "regular"
+		if s.channelResolver != nil {
+			defaultChannel, _ = s.channelResolver.GetChannelForPlan(TrialPlanName)
+		}
+		properties.Modules = NewModulesSchema(flags.rejectUnsupportedParameters, defaultChannel)
 	}
 
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredTrialSchemaProperties(), flags)
@@ -320,7 +337,11 @@ func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
 	if update {
 		return createSchemaWith(properties.UpdateProperties, []string{}, s.cfg.RejectUnsupportedParameters)
 	} else {
-		properties.Modules = NewModulesSchema(s.cfg.RejectUnsupportedParameters)
+		defaultChannel := "regular"
+		if s.channelResolver != nil {
+			defaultChannel, _ = s.channelResolver.GetChannelForPlan(OwnClusterPlanName)
+		}
+		properties.Modules = NewModulesSchema(s.cfg.RejectUnsupportedParameters, defaultChannel)
 		return createSchemaWith(properties, requiredOwnClusterSchemaProperties(), s.cfg.RejectUnsupportedParameters)
 	}
 }

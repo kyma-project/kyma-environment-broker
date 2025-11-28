@@ -18,7 +18,7 @@ data:
       spec:
         sync:
             strategy: secret
-        channel: stable
+        channel: fast
         modules: []
     additional-components:
       - name: "additional-component1"
@@ -39,7 +39,7 @@ data:
       spec:
         sync:
             strategy: secret
-        channel: stable
+        channel: fast
         modules: []
     additional-components:
       - name: "additional-component1"
@@ -61,7 +61,7 @@ data:
       spec:
         sync:
             strategy: secret
-        channel: stable
+        channel: fast
         modules: []
     additional-components:
       - name: "additional-component1"
@@ -85,7 +85,7 @@ data:
       spec:
         sync:
             strategy: secret
-        channel: stable
+        channel: fast
         modules: []
     additional-components:
       # no components
