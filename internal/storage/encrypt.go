@@ -33,11 +33,11 @@ func (e *Encrypter) GetWriteGCMMode() bool {
 	return e.encodeGCM
 }
 
-func (e *Encrypter) Encrypt(obj []byte) ([]byte, error) {
+func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 	if e.GetWriteGCMMode() {
-		return e.encryptGCM(obj)
+		return e.encryptGCM(data)
 	} else {
-		return e.encryptCFB(obj)
+		return e.encryptCFB(data)
 	}
 }
 
@@ -88,12 +88,12 @@ func (e *Encrypter) EncryptKubeconfig(provisioningParameters *internal.Provision
 	return nil
 }
 
-func (e *Encrypter) encryptCFB(obj []byte) ([]byte, error) {
+func (e *Encrypter) encryptCFB(data []byte) ([]byte, error) {
 	block, err := aes.NewCipher(e.key)
 	if err != nil {
 		return nil, err
 	}
-	b := base64.StdEncoding.EncodeToString(obj)
+	b := base64.StdEncoding.EncodeToString(data)
 	bytes := make([]byte, aes.BlockSize+len(b))
 	iv := bytes[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
@@ -105,15 +105,23 @@ func (e *Encrypter) encryptCFB(obj []byte) ([]byte, error) {
 	return []byte(base64.StdEncoding.EncodeToString(bytes)), nil
 }
 
-func (e *Encrypter) encryptGCM(obj []byte) ([]byte, error) {
-	panic("not implemented")
-	return nil, nil
+func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
+	aes, err := aes.NewCipher(e.key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCMWithRandomNonce(aes)
+	if err != nil {
+		return nil, err
+	}
+	encoded := gcm.Seal(nil, make([]byte, gcm.NonceSize()), data, nil)
+	return encoded, nil
 }
 
 // Decryption
 
-func (e *Encrypter) decryptCFB(obj []byte) ([]byte, error) {
-	obj, err := base64.StdEncoding.DecodeString(string(obj))
+func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
 		return nil, fmt.Errorf("while decoding input object: %w", err)
 	}
@@ -121,33 +129,50 @@ func (e *Encrypter) decryptCFB(obj []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(obj) < aes.BlockSize {
+	if len(data) < aes.BlockSize {
 		return nil, fmt.Errorf("cipher text is too short")
 	}
-	iv := obj[:aes.BlockSize]
-	obj = obj[aes.BlockSize:]
+	iv := data[:aes.BlockSize]
+	data = data[aes.BlockSize:]
 	cfb := cipher.NewCFBDecrypter(block, iv)
-	cfb.XORKeyStream(obj, obj)
-	data, err := base64.StdEncoding.DecodeString(string(obj))
+	cfb.XORKeyStream(data, data)
+	decryptedData, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
 		return nil, fmt.Errorf("while decoding internal object: %w", err)
 	}
-	return data, nil
+	return decryptedData, nil
 }
 
-func (e *Encrypter) DecryptGCM(obj []byte) ([]byte, error) {
-	panic("not implemented")
-	return nil, nil
+func (e *Encrypter) DecryptGCM(ciphertext []byte) ([]byte, error) {
+	aes, err := aes.NewCipher(e.key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(aes)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+
+	plaintext, err := gcm.Open(nil, []byte(nonce), []byte(ciphertext), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
 }
 
-func (e *Encrypter) DecryptUsingMode(text []byte, encryptionMode string) ([]byte, error) {
+func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte, error) {
 	switch encryptionMode {
 	case encryptionModeCFB:
-		return e.decryptCFB(text)
+		return e.decryptCFB(data)
 	case encryptionModeGCM:
-		return e.DecryptGCM(text)
+		return e.DecryptGCM(data)
 	default:
-		return e.decryptCFB(text)
+		return e.decryptCFB(data)
 	}
 }
 
