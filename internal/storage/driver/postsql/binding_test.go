@@ -325,4 +325,42 @@ func TestBinding_ModeGCM(t *testing.T) {
 	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
 }
 
-// TODO set up storage with current mode, store binding, change mode, store binding, verify both decrypt fine
+func TestBinding_BothModes(t *testing.T) {
+	encrypter := storage.NewEncrypter("################################")
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instanceID := "test-instance-id"
+	testBindingIdCFB := "binding-cfb"
+	fixedBindingCFB := fixture.FixBindingWithInstanceID(testBindingIdCFB, instanceID)
+
+	testBindingIdGCM := "binding-gcm"
+	fixedBindingGCM := fixture.FixBindingWithInstanceID(testBindingIdGCM, instanceID)
+
+	err = brokerStorage.Bindings().Insert(&fixedBindingCFB)
+	assert.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	err = brokerStorage.Bindings().Insert(&fixedBindingGCM)
+	assert.NoError(t, err)
+
+	// when
+	retrievedBindingCFB, err := brokerStorage.Bindings().Get(instanceID, testBindingIdCFB)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingCFB)
+	assert.Equal(t, fixedBindingCFB.Kubeconfig, retrievedBindingCFB.Kubeconfig)
+
+	//when
+	retrievedBindingGCM, err := brokerStorage.Bindings().Get(instanceID, testBindingIdGCM)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingGCM)
+	assert.Equal(t, fixedBindingGCM.Kubeconfig, retrievedBindingGCM.Kubeconfig)
+
+}
