@@ -22,6 +22,11 @@ type instances struct {
 	subaccountStatesStorage *SubaccountStates
 }
 
+func (s *instances) GetEncryptionModeStats() (map[string]int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewInstance(operations *operations, subaccountStates *SubaccountStates) *instances {
 	return &instances{
 		instances:               make(map[string]internal.Instance, 0),

@@ -14,6 +14,11 @@ type Binding struct {
 	data map[string]internal.Binding
 }
 
+func (s *Binding) GetEncryptionModeStats() (map[string]int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewBinding() *Binding {
 	return &Binding{
 		data: make(map[string]internal.Binding),

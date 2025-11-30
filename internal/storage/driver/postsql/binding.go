@@ -14,6 +14,11 @@ type Binding struct {
 	cipher Cipher
 }
 
+func (s *Binding) GetEncryptionModeStats() (map[string]int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewBinding(sess postsql.Factory, cipher Cipher) *Binding {
 	return &Binding{
 		Factory: sess,

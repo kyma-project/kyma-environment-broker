@@ -22,6 +22,11 @@ type operations struct {
 	updateOperations         map[string]internal.UpdatingOperation
 }
 
+func (s *operations) GetEncryptionModeStats() (map[string]int, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewOperation creates in-memory storage for OSB operations.
 func NewOperation() *operations {
 	return &operations{

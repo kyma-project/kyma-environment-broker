@@ -49,6 +49,8 @@ func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 	}
 }
 
+//TODO deduplicate using function type parameter
+
 // Encryption
 
 func (e *Encrypter) EncryptSMCredentials(provisioningParameters *internal.ProvisioningParameters) error {
