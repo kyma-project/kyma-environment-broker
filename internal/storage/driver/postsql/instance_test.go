@@ -1263,7 +1263,8 @@ func TestInstance_ModeCFB(t *testing.T) {
 	instanceID := "instance-cfb"
 	instanceCFB := fixInstance(instanceData{val: instanceID})
 
-	brokerStorage.Instances().Insert(*instanceCFB)
+	err = brokerStorage.Instances().Insert(*instanceCFB)
+	require.NoError(t, err)
 
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 
@@ -1290,7 +1291,8 @@ func TestInstance_ModeGCM(t *testing.T) {
 	instanceID := "instance-gcm"
 	instanceGCM := fixInstance(instanceData{val: instanceID})
 
-	brokerStorage.Instances().Insert(*instanceGCM)
+	err = brokerStorage.Instances().Insert(*instanceGCM)
+	require.NoError(t, err)
 
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 
@@ -1317,11 +1319,14 @@ func TestInstance_BothModes(t *testing.T) {
 	instanceIdGCM := "instance-gcm"
 	instanceGCM := fixInstance(instanceData{val: instanceIdGCM})
 
-	brokerStorage.Instances().Insert(*instanceCFB)
+	err = brokerStorage.Instances().Insert(*instanceCFB)
+	require.NoError(t, err)
 
 	encrypter.SetWriteGCMMode(true)
 
-	brokerStorage.Instances().Insert(*instanceGCM)
+	err = brokerStorage.Instances().Insert(*instanceGCM)
+	require.NoError(t, err)
+
 	// then
 
 	retrievedInstanceCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
