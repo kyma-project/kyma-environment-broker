@@ -23,37 +23,23 @@ type readSession struct {
 }
 
 func (r readSession) GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error) {
-	var rows []dbmodel.EncryptionModeStatsDTO
-	var stmt *dbr.SelectStmt
-	stmt = r.session.
-		Select("encryption_mode", "count(*) as total").
-		From(InstancesTableName).
-		GroupBy("encryption_mode")
-
-	_, err := stmt.Load(&rows)
-
-	return rows, err
+	return r.GetEncryptionModeStats(InstancesTableName)
 }
 
 func (r readSession) GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error) {
-	var rows []dbmodel.EncryptionModeStatsDTO
-	var stmt *dbr.SelectStmt
-	stmt = r.session.
-		Select("encryption_mode", "count(*) as total").
-		From(OperationTableName).
-		GroupBy("encryption_mode")
-
-	_, err := stmt.Load(&rows)
-
-	return rows, err
+	return r.GetEncryptionModeStats(OperationTableName)
 }
 
 func (r readSession) GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error) {
+	return r.GetEncryptionModeStats(BindingsTableName)
+}
+
+func (r readSession) GetEncryptionModeStats(tableName string) ([]dbmodel.EncryptionModeStatsDTO, error) {
 	var rows []dbmodel.EncryptionModeStatsDTO
 	var stmt *dbr.SelectStmt
 	stmt = r.session.
 		Select("encryption_mode", "count(*) as total").
-		From(BindingsTableName).
+		From(tableName).
 		GroupBy("encryption_mode")
 
 	_, err := stmt.Load(&rows)
