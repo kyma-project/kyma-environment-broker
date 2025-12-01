@@ -273,9 +273,10 @@ func main() {
 	}
 
 	// TODO reconsider - all jobs should run with the same configuration or all jobs which persist instances, bindings or operations using encryption
-	// TODO log information about encryption mode used
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	cipher.SetWriteGCMMode(cfg.Database.Fips.WriteGcm) // if set in config, use GCM mode for new write operations
+
+	logDatabaseFipsFlags(cfg.Database, log)
 
 	// create storage
 	var db storage.BrokerStorage
@@ -295,6 +296,8 @@ func main() {
 	log.Info(fmt.Sprintf("KEB local time: %s time zone: %s", time.Now().String(), time.Now().Location().String()))
 	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
 
+	// log statistics about encryption mode
+	logEncryptionModeStatistics(db, log)
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
@@ -420,6 +423,34 @@ func main() {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
 	})
 	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
+}
+
+func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
+	stats := db.EncryptionModeStats()
+	// rewrite table into map
+	instanceStats, err := stats.GetEncryptionModeStatsForInstances()
+	fatalOnError(err, log)
+	instanceCount := make(map[string]int)
+	for _, stat := range instanceStats {
+		instanceCount[stat.EncryptionMode] = stat.Total
+	}
+	operationStats, err := stats.GetEncryptionModeStatsForOperations()
+	fatalOnError(err, log)
+	operationCount := make(map[string]int)
+	for _, stat := range operationStats {
+		operationCount[stat.EncryptionMode] = stat.Total
+	}
+	bindingStats, err := stats.GetEncryptionModeStatsForBindings()
+	fatalOnError(err, log)
+	bindingCount := make(map[string]int)
+	for _, stat := range bindingStats {
+		bindingCount[stat.EncryptionMode] = stat.Total
+	}
+	log.Info(fmt.Sprintf("Encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceCount, operationCount, bindingCount))
+}
+
+func logDatabaseFipsFlags(database storage.Config, log *slog.Logger) {
+	log.Info(fmt.Sprintf("Database FIPS WriteGcm mode: %v", database.Fips.WriteGcm))
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {

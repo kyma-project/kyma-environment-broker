@@ -418,6 +418,6 @@ func TestBinding_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 2}}, statsForUpdatedBindings)
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{main{EncryptionMode: storage.EncryptionModeGCM, Total: 2}}, statsForUpdatedBindings)
 
 }
