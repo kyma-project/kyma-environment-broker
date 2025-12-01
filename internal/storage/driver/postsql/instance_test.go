@@ -3,6 +3,7 @@ package postsql_test
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 	"sort"
 	"testing"
 	"time"
@@ -1265,12 +1266,13 @@ func TestInstance_ModeCFB(t *testing.T) {
 	err = brokerStorage.Instances().Insert(*instanceCFB)
 	require.NoError(t, err)
 
-	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	statsForInstances, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}
-	assert.ElementsMatch(t, expectedStats, instanceStats)
+	// then
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1}, statsForInstances))
 
+	// when
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 
 	// then
@@ -1299,12 +1301,13 @@ func TestInstance_ModeGCM(t *testing.T) {
 	err = brokerStorage.Instances().Insert(*instanceGCM)
 	require.NoError(t, err)
 
-	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	// then
+	statsForInstances, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}
-	assert.ElementsMatch(t, expectedStats, instanceStats)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 1}, statsForInstances))
 
+	// when
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 
 	// then
@@ -1339,10 +1342,10 @@ func TestInstance_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	statsForInstances, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, instanceStats)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1, storage.EncryptionModeGCM: 1}, statsForInstances))
 
 	retrievedInstanceCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
 	require.NoError(t, err)
@@ -1375,7 +1378,7 @@ func TestInstance_BothModes(t *testing.T) {
 	updatedStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-GCM", Total: 2}}, updatedStats)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 2}, updatedStats))
 
 	// check if we are able to read both instances
 	retrievedUpdatedCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
