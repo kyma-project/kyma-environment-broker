@@ -1,6 +1,7 @@
 package appinfo_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -14,10 +15,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
+
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
@@ -96,7 +99,7 @@ func TestRuntimeInfoHandlerSuccess(t *testing.T) {
 				memStorage = newInMemoryStorage(t, tc.instances, tc.provisionOp, tc.deprovisionOp)
 			)
 
-			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer)
+			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer, event.NewPubSub(slog.Default()))
 
 			// when
 			handler.ServeHTTP(respSpy, fixReq)
@@ -127,7 +130,7 @@ func TestRuntimeInfoHandlerFailures(t *testing.T) {
 	storageMock := &automock.InstanceFinder{}
 	defer storageMock.AssertExpectations(t)
 	storageMock.On("FindAllJoinedWithOperations", mock.Anything).Return(nil, fmt.Errorf("ups.. internal info"))
-	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer)
+	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer, event.NewPubSub(slog.Default()))
 
 	// when
 	handler.ServeHTTP(respSpy, fixReq)
@@ -223,7 +226,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -333,7 +336,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -472,7 +475,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -495,6 +498,44 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		assert.Equal(t, deprovisioningOpDesc, out[0].Status.Deprovisioning.Description)
 
 	})
+}
+
+func TestRuntimesInfoHandlerMetrics(t *testing.T) {
+	// given
+	operations := memory.NewOperation()
+	subaccountStates := memory.NewSubaccountStates()
+	instances := memory.NewInstance(operations, subaccountStates)
+
+	req, err := http.NewRequest("GET", "/info/runtimes", nil)
+	require.NoError(t, err)
+
+	responseWriter := httputil.NewResponseWriter(fixLogger(), true)
+
+	pubSub := event.NewPubSub(slog.Default())
+	called := make(chan struct{}, 1)
+	pubSub.Subscribe(appinfo.RuntimesInfoRequest{}, func(ctx context.Context, ev interface{}) error {
+		close(called)
+		return nil
+	})
+
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, pubSub)
+
+	rr := httptest.NewRecorder()
+	router := httputil.NewRouter()
+	router.Handle("/info/runtimes", runtimesInfoHandler)
+
+	// when
+	runtimesInfoHandler.ServeHTTP(rr, req)
+
+	// then
+	require.Equal(t, http.StatusOK, rr.Code)
+
+	select {
+	case <-called:
+		// ok
+	case <-time.After(2 * time.Second):
+		t.Fatal("metrics event was not published")
+	}
 }
 
 func assertJSONWithGoldenFile(t *testing.T, gotRawJSON []byte) {

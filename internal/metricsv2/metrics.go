@@ -6,12 +6,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -72,6 +73,9 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	bindCrestedCollector := NewBindingCreationCollector()
 	prometheus.MustRegister(bindCrestedCollector)
 
+	runtimesInfoRequestsCollector := NewRuntimesInfoRequestsCollector()
+	prometheus.MustRegister(runtimesInfoRequestsCollector)
+
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
@@ -82,6 +86,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
 	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
+
+	sub.Subscribe(appinfo.RuntimesInfoRequest{}, runtimesInfoRequestsCollector.OnRequest)
 
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 

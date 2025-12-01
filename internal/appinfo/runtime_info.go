@@ -1,12 +1,14 @@
 package appinfo
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -29,25 +31,31 @@ type (
 	}
 )
 
+type RuntimesInfoRequest struct{}
+
 type RuntimeInfoHandler struct {
 	instanceFinder          InstanceFinder
 	lastOperationFinder     LastOperationFinder
 	respWriter              ResponseWriter
 	plansConfig             broker.PlansConfig
 	defaultSubaccountRegion string
+	publisher               event.Publisher
 }
 
-func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter) *RuntimeInfoHandler {
+func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, publisher event.Publisher) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
 		instanceFinder:          instanceFinder,
 		lastOperationFinder:     lastOpFinder,
 		respWriter:              respWriter,
 		plansConfig:             plansConfig,
 		defaultSubaccountRegion: region,
+		publisher:               publisher,
 	}
 }
 
 func (h *RuntimeInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.publisher.Publish(context.Background(), RuntimesInfoRequest{})
+
 	allInstances, err := h.instanceFinder.FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
 	if err != nil {
 		h.respWriter.InternalServerError(w, r, err, "while fetching all instances")
