@@ -52,5 +52,5 @@ jobs:
           MS_TEAMS_SCOPE: ${{ secrets.MS_TEAMS_SCOPE }}
           MS_TEAMS_WEBHOOK_URL: ${{ secrets.MS_TEAMS_WEBHOOK_URL }}
         run: |
-          MESSAGE="❌ <strong>Logs uploading to release failed failed. <a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
+          MESSAGE="❌ <strong>Logs uploading to release failed. <a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
           ./scripts/notify_teams.sh "$MESSAGE"
