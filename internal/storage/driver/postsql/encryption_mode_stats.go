@@ -12,8 +12,8 @@ type EncryptionModeStats struct {
 	postsql.Factory
 }
 
-func NewEncryptionModeStats(sess postsql.Factory) *TimeZones {
-	return &TimeZones{
+func NewEncryptionModeStats(sess postsql.Factory) *EncryptionModeStats {
+	return &EncryptionModeStats{
 		Factory: sess,
 	}
 }
