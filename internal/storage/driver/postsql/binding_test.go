@@ -2,13 +2,13 @@ package postsql_test
 
 import (
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -298,7 +298,7 @@ func TestBinding_ModeCFB(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForBindings)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1}, statsForBindings))
 
 	// when
 	testInstanceID := "instance-" + testBindingId
@@ -331,7 +331,7 @@ func TestBinding_ModeGCM(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, statsForBindings)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 1}, statsForBindings))
 
 	// when
 	testInstanceID := "instance-" + testBindingId
@@ -367,7 +367,7 @@ func TestBinding_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForUpdatedBindings)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1}, statsForUpdatedBindings))
 
 	encrypter.SetWriteGCMMode(true)
 
@@ -378,7 +378,7 @@ func TestBinding_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, statsForUpdatedBindings)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1, storage.EncryptionModeGCM: 1}, statsForUpdatedBindings))
 
 	// when
 	retrievedBindingCFB, err := brokerStorage.Bindings().Get(instanceID, testBindingIdCFB)
@@ -418,5 +418,5 @@ func TestBinding_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 2}}, statsForUpdatedBindings)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 2}, statsForUpdatedBindings))
 }
