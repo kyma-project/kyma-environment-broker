@@ -1357,8 +1357,10 @@ func TestInstance_BothModes(t *testing.T) {
 	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID, retrievedInstanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, instanceGCM.Parameters.Parameters.Kubeconfig, retrievedInstanceGCM.Parameters.Parameters.Kubeconfig)
 
+	// should read CFB and write GCM
 	updatedInstanceCFB, err := brokerStorage.Instances().Update(*retrievedInstanceCFB)
 	require.NoError(t, err)
+	// should read GCM and write GCM
 	updatedInstanceGCM, err := brokerStorage.Instances().Update(*retrievedInstanceGCM)
 	require.NoError(t, err)
 
@@ -1374,6 +1376,20 @@ func TestInstance_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-GCM", Total: 2}}, updatedStats)
+
+	// check if we are able to read both instances
+	retrievedUpdatedCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
+	require.NoError(t, err)
+	retrievedUpdatedGCM, err := brokerStorage.Instances().GetByID(instanceIdGCM)
+	require.NoError(t, err)
+
+	assert.Equal(t, instanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedUpdatedCFB.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, instanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientID, retrievedUpdatedCFB.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, instanceCFB.Parameters.Parameters.Kubeconfig, retrievedUpdatedCFB.Parameters.Parameters.Kubeconfig)
+
+	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedUpdatedGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID, retrievedUpdatedGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, instanceGCM.Parameters.Parameters.Kubeconfig, retrievedUpdatedGCM.Parameters.Parameters.Kubeconfig)
 
 }
 
