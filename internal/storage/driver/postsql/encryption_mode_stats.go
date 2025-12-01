@@ -3,7 +3,7 @@ package postsql
 import (
 	"context"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -18,22 +18,62 @@ func NewEncryptionModeStats(sess postsql.Factory) *TimeZones {
 	}
 }
 
-func (stats *EncryptionModeStats) GetEncryptionModeStatsForInstances() (map[string]int, error) {
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error) {
 	sess := stats.Factory.NewReadSession()
 	var (
-		timeZone string
-		lastErr  dberr.Error
+		rows    []dbmodel.EncryptionModeStatsDTO
+		lastErr error
 	)
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		timeZone, lastErr = sess.GetTimeZone()
+		rows, lastErr = sess.GetEncryptionModeStatsForInstances()
 		if lastErr != nil {
 			return false, nil
 		}
 		return true, nil
 	})
 	if err != nil {
-		return "", lastErr
+		return rows, lastErr
 	}
 
-	return timeZone, nil
+	return rows, nil
+}
+
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error) {
+	sess := stats.Factory.NewReadSession()
+	var (
+		rows    []dbmodel.EncryptionModeStatsDTO
+		lastErr error
+	)
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		rows, lastErr = sess.GetEncryptionModeStatsForOperations()
+		if lastErr != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return rows, lastErr
+	}
+
+	return rows, nil
+}
+
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error) {
+	sess := stats.Factory.NewReadSession()
+	var (
+		rows    []dbmodel.EncryptionModeStatsDTO
+		lastErr error
+	)
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		rows, lastErr = sess.GetEncryptionModeStatsForBindings()
+		if lastErr != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return rows, lastErr
+	}
+
+	return rows, nil
 }
