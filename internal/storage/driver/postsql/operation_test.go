@@ -674,6 +674,13 @@ func TestOperation_BothModes(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
+	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForOperations)
+
+	// when
 	encrypter.SetWriteGCMMode(true)
 
 	operationGCM := fixture.FixProvisioningOperation("op-id-gcm", "inst-id-gcm")
@@ -689,6 +696,14 @@ func TestOperation_BothModes(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operationGCM)
 	require.NoError(t, err)
 
+	// when
+	statsForOperations, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t,
+		[]dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}},
+		statsForOperations)
 	// when
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
 	require.NoError(t, err)
@@ -707,6 +722,35 @@ func TestOperation_BothModes(t *testing.T) {
 	// assert kubeconfig
 	assert.Equal(t, operationGCM.ProvisioningParameters.Parameters.Kubeconfig, retrievedOperationGCM.ProvisioningParameters.Parameters.Kubeconfig)
 
+	// then we update both operations and verify we can still read the secrets
+	retrievedOperation.Description = "updated description"
+	_, err = brokerStorage.Operations().UpdateOperation(*retrievedOperation)
+	require.NoError(t, err)
+
+	updatedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
+	require.NoError(t, err)
+	assert.Equal(t, "updated description", updatedOperation.Description)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, updatedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, updatedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+
+	retrievedOperationGCM.Description = "updated description gcm"
+	_, err = brokerStorage.Operations().UpdateOperation(*retrievedOperationGCM)
+	require.NoError(t, err)
+	updatedOperationGCM, err := brokerStorage.Operations().GetOperationByID("op-id-gcm")
+	require.NoError(t, err)
+	assert.Equal(t, "updated description gcm", updatedOperationGCM.Description)
+	assert.Equal(t, operationGCM.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, updatedOperationGCM.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, operationGCM.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, updatedOperationGCM.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, operationGCM.ProvisioningParameters.Parameters.Kubeconfig, updatedOperationGCM.ProvisioningParameters.Parameters.Kubeconfig)
+
+	// check stats again
+	statsForOperations, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t,
+		[]dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 2}},
+		statsForOperations)
 }
 
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
