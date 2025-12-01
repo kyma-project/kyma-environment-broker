@@ -10,7 +10,6 @@ import (
 
 type ChannelResolver interface {
 	GetChannelForPlan(planName string) (string, error)
-	GetAllPlanChannels() (map[string]string, error)
 }
 
 type channelResolver struct {
@@ -45,15 +44,6 @@ func (r *channelResolver) GetChannelForPlan(planName string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no channel configured for plan %s and no default found", planName)
-}
-
-func (r *channelResolver) GetAllPlanChannels() (map[string]string, error) {
-	if r.planChannelsCache == nil {
-		if err := r.loadChannels(); err != nil {
-			return nil, err
-		}
-	}
-	return r.planChannelsCache, nil
 }
 
 func (r *channelResolver) loadChannels() error {

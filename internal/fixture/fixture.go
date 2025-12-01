@@ -632,21 +632,3 @@ type FakeChannelResolver struct{}
 func (f *FakeChannelResolver) GetChannelForPlan(planID string) (string, error) {
 	return "fast", nil
 }
-
-func (f *FakeChannelResolver) GetAllPlanChannels() (map[string]string, error) {
-	return map[string]string{
-		"gcp":                 "fast",
-		"aws":                 "fast",
-		"azure":               "fast",
-		"azure_lite":          "fast",
-		"trial":               "fast",
-		"sap-converged-cloud": "fast",
-		"free":                "fast",
-		"own_cluster":         "fast",
-		"preview":             "fast",
-		"build-runtime-aws":   "fast",
-		"build-runtime-gcp":   "fast",
-		"build-runtime-azure": "fast",
-		"alicloud":            "fast",
-	}, nil
-}
