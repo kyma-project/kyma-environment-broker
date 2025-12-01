@@ -74,6 +74,7 @@ func (ws writeSession) UpdateBinding(binding dbmodel.BindingDTO) dberr.Error {
 	_, err := ws.update(BindingsTableName).
 		Set("kubeconfig", binding.Kubeconfig).
 		Set("expires_at", binding.ExpiresAt).
+		Set("encryption_mode", binding.EncryptionMode).
 		Where(dbr.Eq("id", binding.ID)).
 		Where(dbr.Eq("instance_id", binding.InstanceID)).
 		Exec()
@@ -184,6 +185,7 @@ func (ws writeSession) UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Set("deleted_at", instance.DeletedAt).
 		Set("version", instance.Version+1).
 		Set("expired_at", instance.ExpiredAt).
+		Set("encryption_mode", instance.EncryptionMode).
 		Exec()
 	if err != nil {
 		return dberr.Internal("Failed to update record to Instance table: %s", err)
@@ -279,6 +281,7 @@ func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 		Set("data", op.Data).
 		Set("provisioning_parameters", op.ProvisioningParameters.String).
 		Set("finished_stages", op.FinishedStages).
+		Set("encryption_mode", op.EncryptionMode).
 		Exec()
 
 	if err != nil {

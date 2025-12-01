@@ -1248,7 +1248,6 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 }
 
-// TODO add update operation and test change of encryption mode
 func TestInstance_ModeCFB(t *testing.T) {
 	// given
 	encrypter := storage.NewEncrypter("################################")
@@ -1343,8 +1342,7 @@ func TestInstance_BothModes(t *testing.T) {
 	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-CFB", Total: 1}, {EncryptionMode: "AES-GCM", Total: 1}}
-	assert.ElementsMatch(t, expectedStats, instanceStats)
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-CFB", Total: 1}, {EncryptionMode: "AES-GCM", Total: 1}}, instanceStats)
 
 	retrievedInstanceCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
 	require.NoError(t, err)
@@ -1358,6 +1356,25 @@ func TestInstance_BothModes(t *testing.T) {
 	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedInstanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
 	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID, retrievedInstanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, instanceGCM.Parameters.Parameters.Kubeconfig, retrievedInstanceGCM.Parameters.Parameters.Kubeconfig)
+
+	updatedInstanceCFB, err := brokerStorage.Instances().Update(*retrievedInstanceCFB)
+	require.NoError(t, err)
+	updatedInstanceGCM, err := brokerStorage.Instances().Update(*retrievedInstanceGCM)
+	require.NoError(t, err)
+
+	assert.Equal(t, instanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, updatedInstanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, instanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientID, updatedInstanceCFB.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, instanceCFB.Parameters.Parameters.Kubeconfig, updatedInstanceCFB.Parameters.Parameters.Kubeconfig)
+
+	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, updatedInstanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, instanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID, updatedInstanceGCM.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, instanceGCM.Parameters.Parameters.Kubeconfig, updatedInstanceGCM.Parameters.Parameters.Kubeconfig)
+
+	updatedStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-GCM", Total: 2}}, updatedStats)
+
 }
 
 func assertInstanceByIgnoreTime(t *testing.T, want, got internal.Instance) {
