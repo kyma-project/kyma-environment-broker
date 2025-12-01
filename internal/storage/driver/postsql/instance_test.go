@@ -1268,7 +1268,7 @@ func TestInstance_ModeCFB(t *testing.T) {
 	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-CFB", Total: 1}}
+	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}
 	assert.ElementsMatch(t, expectedStats, instanceStats)
 
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
@@ -1302,7 +1302,7 @@ func TestInstance_ModeGCM(t *testing.T) {
 	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-GCM", Total: 1}}
+	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}
 	assert.ElementsMatch(t, expectedStats, instanceStats)
 
 	retrievedInstance, err := brokerStorage.Instances().GetByID(instanceID)
@@ -1342,7 +1342,7 @@ func TestInstance_BothModes(t *testing.T) {
 	instanceStats, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: "AES-CFB", Total: 1}, {EncryptionMode: "AES-GCM", Total: 1}}, instanceStats)
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, instanceStats)
 
 	retrievedInstanceCFB, err := brokerStorage.Instances().GetByID(instanceIdCFB)
 	require.NoError(t, err)

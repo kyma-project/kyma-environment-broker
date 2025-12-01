@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	encryptionModeCFB = "AES-CFB"
-	encryptionModeGCM = "AES-GCM"
+	EncryptionModeCFB = "AES-CFB"
+	EncryptionModeGCM = "AES-GCM"
 )
 
 func NewEncrypter(secretKey string) *Encrypter {
@@ -35,9 +35,9 @@ func (e *Encrypter) GetWriteGCMMode() bool {
 
 func (e *Encrypter) GetEncryptionMode() string {
 	if e.GetWriteGCMMode() {
-		return encryptionModeGCM
+		return EncryptionModeGCM
 	} else {
-		return encryptionModeCFB
+		return EncryptionModeCFB
 	}
 }
 
@@ -181,9 +181,9 @@ func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 
 func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte, error) {
 	switch encryptionMode {
-	case encryptionModeCFB:
+	case EncryptionModeCFB:
 		return e.decryptCFB(data)
-	case encryptionModeGCM:
+	case EncryptionModeGCM:
 		return e.decryptGCM(data)
 	default:
 		return e.decryptCFB(data)
@@ -193,9 +193,9 @@ func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte
 func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
 	var err error
 	switch encryptionMode {
-	case encryptionModeCFB:
+	case EncryptionModeCFB:
 		err = e.decryptSMCredentialsCFB(provisioningParameters)
-	case encryptionModeGCM:
+	case EncryptionModeGCM:
 		err = e.decryptSMCredentialsGCM(provisioningParameters)
 	default:
 		err = e.decryptSMCredentialsCFB(provisioningParameters)
@@ -206,9 +206,9 @@ func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *intern
 func (e *Encrypter) DecryptKubeconfigUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
 	var err error
 	switch encryptionMode {
-	case encryptionModeCFB:
+	case EncryptionModeCFB:
 		err = e.decryptKubeconfigCFB(provisioningParameters)
-	case encryptionModeGCM:
+	case EncryptionModeGCM:
 		err = e.decryptKubeconfigGCM(provisioningParameters)
 	default:
 		err = e.decryptKubeconfigCFB(provisioningParameters)

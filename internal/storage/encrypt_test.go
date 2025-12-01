@@ -137,7 +137,7 @@ func TestDecryptUsingCFBMode(t *testing.T) {
 	encrypted, err := e.encryptCFB(data)
 	require.NoError(t, err)
 
-	decrypted, err := e.DecryptUsingMode(encrypted, encryptionModeCFB)
+	decrypted, err := e.DecryptUsingMode(encrypted, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, data, decrypted)
 }
@@ -150,7 +150,7 @@ func TestDecryptUsingGCMMode(t *testing.T) {
 	encrypted, err := e.encryptGCM(data)
 	require.NoError(t, err)
 
-	decrypted, err := e.DecryptUsingMode(encrypted, encryptionModeGCM)
+	decrypted, err := e.DecryptUsingMode(encrypted, EncryptionModeGCM)
 	require.NoError(t, err)
 	assert.Equal(t, data, decrypted)
 }
@@ -190,7 +190,7 @@ func TestDecryptSMCredentialsUsingCFBMode(t *testing.T) {
 	assert.NotEqual(t, "test-client-id", encryptedClientID)
 	assert.NotEqual(t, "test-client-secret", encryptedClientSecret)
 
-	err = e.DecryptSMCredentialsUsingMode(params, encryptionModeCFB)
+	err = e.DecryptSMCredentialsUsingMode(params, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, "test-client-id", params.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "test-client-secret", params.ErsContext.SMOperatorCredentials.ClientSecret)
@@ -220,7 +220,7 @@ func TestDecryptSMCredentialsUsingGCMMode(t *testing.T) {
 	assert.NotEqual(t, "gcm-client-id", encryptedClientID)
 	assert.NotEqual(t, "gcm-client-secret", encryptedClientSecret)
 
-	err = e.DecryptSMCredentialsUsingMode(params, encryptionModeGCM)
+	err = e.DecryptSMCredentialsUsingMode(params, EncryptionModeGCM)
 	require.NoError(t, err)
 	assert.Equal(t, "gcm-client-id", params.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "gcm-client-secret", params.ErsContext.SMOperatorCredentials.ClientSecret)
@@ -236,7 +236,7 @@ func TestDecryptSMCredentialsUsingModeWithNilCredentials(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptSMCredentialsUsingMode(params, encryptionModeCFB)
+	err := e.DecryptSMCredentialsUsingMode(params, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Nil(t, params.ErsContext.SMOperatorCredentials)
 }
@@ -254,7 +254,7 @@ func TestDecryptSMCredentialsUsingModeWithEmptyCredentials(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptSMCredentialsUsingMode(params, encryptionModeCFB)
+	err := e.DecryptSMCredentialsUsingMode(params, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, "", params.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "", params.ErsContext.SMOperatorCredentials.ClientSecret)
@@ -276,7 +276,7 @@ func TestDecryptKubeconfigUsingCFBMode(t *testing.T) {
 	encryptedKubeconfig := params.Parameters.Kubeconfig
 	assert.NotEqual(t, "kubeconfig-cfb-content", encryptedKubeconfig)
 
-	err = e.DecryptKubeconfigUsingMode(params, encryptionModeCFB)
+	err = e.DecryptKubeconfigUsingMode(params, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, "kubeconfig-cfb-content", params.Parameters.Kubeconfig)
 }
@@ -299,7 +299,7 @@ func TestDecryptKubeconfigUsingGCMMode(t *testing.T) {
 	encryptedKubeconfig := params.Parameters.Kubeconfig
 	assert.NotEqual(t, "kubeconfig-gcm-content", encryptedKubeconfig)
 
-	err = e.DecryptKubeconfigUsingMode(params, encryptionModeGCM)
+	err = e.DecryptKubeconfigUsingMode(params, EncryptionModeGCM)
 	require.NoError(t, err)
 	assert.Equal(t, "kubeconfig-gcm-content", params.Parameters.Kubeconfig)
 }
@@ -314,7 +314,7 @@ func TestDecryptKubeconfigUsingModeWithEmptyKubeconfig(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptKubeconfigUsingMode(params, encryptionModeCFB)
+	err := e.DecryptKubeconfigUsingMode(params, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, "", params.Parameters.Kubeconfig)
 }
@@ -374,11 +374,11 @@ func TestEncryptAndDecryptWithDifferentModes(t *testing.T) {
 
 	assert.NotEqual(t, cfbEncrypted, gcmEncrypted)
 
-	cfbDecrypted, err := e.DecryptUsingMode(cfbEncrypted, encryptionModeCFB)
+	cfbDecrypted, err := e.DecryptUsingMode(cfbEncrypted, EncryptionModeCFB)
 	require.NoError(t, err)
 	assert.Equal(t, data, cfbDecrypted)
 
-	gcmDecrypted, err := e.DecryptUsingMode(gcmEncrypted, encryptionModeGCM)
+	gcmDecrypted, err := e.DecryptUsingMode(gcmEncrypted, EncryptionModeGCM)
 	require.NoError(t, err)
 	assert.Equal(t, data, gcmDecrypted)
 }
