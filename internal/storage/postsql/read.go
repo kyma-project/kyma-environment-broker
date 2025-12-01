@@ -23,18 +23,18 @@ type readSession struct {
 }
 
 func (r readSession) GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error) {
-	return r.GetEncryptionModeStats(InstancesTableName)
+	return r.getEncryptionModeStats(InstancesTableName)
 }
 
 func (r readSession) GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error) {
-	return r.GetEncryptionModeStats(OperationTableName)
+	return r.getEncryptionModeStats(OperationTableName)
 }
 
 func (r readSession) GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error) {
-	return r.GetEncryptionModeStats(BindingsTableName)
+	return r.getEncryptionModeStats(BindingsTableName)
 }
 
-func (r readSession) GetEncryptionModeStats(tableName string) ([]dbmodel.EncryptionModeStatsDTO, error) {
+func (r readSession) getEncryptionModeStats(tableName string) ([]dbmodel.EncryptionModeStatsDTO, error) {
 	var rows []dbmodel.EncryptionModeStatsDTO
 	var stmt *dbr.SelectStmt
 	stmt = r.session.
