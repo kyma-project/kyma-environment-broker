@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -285,11 +286,19 @@ func TestBinding_ModeCFB(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
+	// given
 	testBindingId := "test"
 	fixedBinding := fixture.FixBinding(testBindingId)
 
+	// when
 	err = brokerStorage.Bindings().Insert(&fixedBinding)
 	assert.NoError(t, err)
+
+	statsForBindings, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForBindings)
 
 	// when
 	testInstanceID := "instance-" + testBindingId
@@ -310,11 +319,19 @@ func TestBinding_ModeGCM(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
+	// given
 	testBindingId := "test"
 	fixedBinding := fixture.FixBinding(testBindingId)
 
+	// when
 	err = brokerStorage.Bindings().Insert(&fixedBinding)
 	assert.NoError(t, err)
+
+	statsForBindings, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, statsForBindings)
 
 	// when
 	testInstanceID := "instance-" + testBindingId
