@@ -430,23 +430,11 @@ func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
 	// rewrite table into map
 	instanceStats, err := stats.GetEncryptionModeStatsForInstances()
 	fatalOnError(err, log)
-	instanceCount := make(map[string]int)
-	for _, stat := range instanceStats {
-		instanceCount[stat.EncryptionMode] = stat.Total
-	}
 	operationStats, err := stats.GetEncryptionModeStatsForOperations()
 	fatalOnError(err, log)
-	operationCount := make(map[string]int)
-	for _, stat := range operationStats {
-		operationCount[stat.EncryptionMode] = stat.Total
-	}
 	bindingStats, err := stats.GetEncryptionModeStatsForBindings()
 	fatalOnError(err, log)
-	bindingCount := make(map[string]int)
-	for _, stat := range bindingStats {
-		bindingCount[stat.EncryptionMode] = stat.Total
-	}
-	log.Info(fmt.Sprintf("Encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceCount, operationCount, bindingCount))
+	log.Info(fmt.Sprintf("Encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceStats, operationStats, bindingStats))
 }
 
 func logDatabaseFipsFlags(database storage.Config, log *slog.Logger) {

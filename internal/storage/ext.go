@@ -124,9 +124,9 @@ type Actions interface {
 }
 
 type EncryptionModeStats interface {
-	GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error)
-	GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error)
-	GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error)
+	GetEncryptionModeStatsForInstances() (map[string]int, error)
+	GetEncryptionModeStatsForOperations() (map[string]int, error)
+	GetEncryptionModeStatsForBindings() (map[string]int, error)
 }
 
 type TimeZones interface {

@@ -3,7 +3,6 @@ package postsql
 import (
 	"context"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -18,10 +17,10 @@ func NewEncryptionModeStats(sess postsql.Factory) *EncryptionModeStats {
 	}
 }
 
-func (stats *EncryptionModeStats) GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error) {
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForInstances() (map[string]int, error) {
 	sess := stats.Factory.NewReadSession()
 	var (
-		rows    []dbmodel.EncryptionModeStatsDTO
+		rows    map[string]int
 		lastErr error
 	)
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -38,10 +37,10 @@ func (stats *EncryptionModeStats) GetEncryptionModeStatsForInstances() ([]dbmode
 	return rows, nil
 }
 
-func (stats *EncryptionModeStats) GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error) {
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForOperations() (map[string]int, error) {
 	sess := stats.Factory.NewReadSession()
 	var (
-		rows    []dbmodel.EncryptionModeStatsDTO
+		rows    map[string]int
 		lastErr error
 	)
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -58,10 +57,10 @@ func (stats *EncryptionModeStats) GetEncryptionModeStatsForOperations() ([]dbmod
 	return rows, nil
 }
 
-func (stats *EncryptionModeStats) GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error) {
+func (stats *EncryptionModeStats) GetEncryptionModeStatsForBindings() (map[string]int, error) {
 	sess := stats.Factory.NewReadSession()
 	var (
-		rows    []dbmodel.EncryptionModeStatsDTO
+		rows    map[string]int
 		lastErr error
 	)
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {

@@ -2,6 +2,7 @@ package postsql_test
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -598,14 +599,11 @@ func TestOperation_ModeCFB(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}
-	assert.ElementsMatch(t, expectedStats, statsForOperations)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1}, statsForOperations))
 
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	// assert kubeconfig
 	assert.Equal(t, operation.ProvisioningParameters.Parameters.Kubeconfig, retrievedOperation.ProvisioningParameters.Parameters.Kubeconfig)
-
 }
 
 func TestOperation_ModeGCM(t *testing.T) {
@@ -636,8 +634,7 @@ func TestOperation_ModeGCM(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}
-	assert.ElementsMatch(t, expectedStats, statsForOperations)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 1}, statsForOperations))
 
 	// when
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
@@ -678,7 +675,7 @@ func TestOperation_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForOperations)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1}, statsForOperations))
 
 	// when
 	encrypter.SetWriteGCMMode(true)
@@ -701,9 +698,8 @@ func TestOperation_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t,
-		[]dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}},
-		statsForOperations)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1, storage.EncryptionModeGCM: 1}, statsForOperations))
+
 	// when
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
 	require.NoError(t, err)
@@ -748,9 +744,7 @@ func TestOperation_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	assert.ElementsMatch(t,
-		[]dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 2}},
-		statsForOperations)
+	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 2}, statsForOperations))
 }
 
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {

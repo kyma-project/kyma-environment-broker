@@ -63,9 +63,9 @@ type ReadSession interface {
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
 	ListActions(instanceID string) ([]runtime.Action, error)
 	GetTimeZone() (string, dberr.Error)
-	GetEncryptionModeStatsForInstances() ([]dbmodel.EncryptionModeStatsDTO, error)
-	GetEncryptionModeStatsForOperations() ([]dbmodel.EncryptionModeStatsDTO, error)
-	GetEncryptionModeStatsForBindings() ([]dbmodel.EncryptionModeStatsDTO, error)
+	GetEncryptionModeStatsForInstances() (map[string]int, error)
+	GetEncryptionModeStatsForOperations() (map[string]int, error)
+	GetEncryptionModeStatsForBindings() (map[string]int, error)
 }
 
 //go:generate mockery --name=WriteSession
