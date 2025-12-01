@@ -24,11 +24,6 @@ type Instance struct {
 	cipher     Cipher
 }
 
-func (s *Instance) GetEncryptionModeStats() (map[string]int, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	sess := s.Factory.NewReadSession()
 	var (
