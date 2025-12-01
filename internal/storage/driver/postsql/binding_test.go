@@ -351,6 +351,8 @@ func TestBinding_BothModes(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
+	// given
+
 	instanceID := "test-instance-id"
 	testBindingIdCFB := "binding-cfb"
 	fixedBindingCFB := fixture.FixBindingWithInstanceID(testBindingIdCFB, instanceID)
@@ -361,10 +363,22 @@ func TestBinding_BothModes(t *testing.T) {
 	err = brokerStorage.Bindings().Insert(&fixedBindingCFB)
 	assert.NoError(t, err)
 
+	statsForUpdatedBindings, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}, statsForUpdatedBindings)
+
 	encrypter.SetWriteGCMMode(true)
 
 	err = brokerStorage.Bindings().Insert(&fixedBindingGCM)
 	assert.NoError(t, err)
+
+	statsForUpdatedBindings, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}, {EncryptionMode: storage.EncryptionModeGCM, Total: 1}}, statsForUpdatedBindings)
 
 	// when
 	retrievedBindingCFB, err := brokerStorage.Bindings().Get(instanceID, testBindingIdCFB)
@@ -379,5 +393,31 @@ func TestBinding_BothModes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, retrievedBindingGCM)
 	assert.Equal(t, fixedBindingGCM.Kubeconfig, retrievedBindingGCM.Kubeconfig)
+
+	// update bindings - the side efect is that they will be re-encrypted in the current mode
+	err = brokerStorage.Bindings().Update(retrievedBindingCFB)
+	assert.NoError(t, err)
+
+	err = brokerStorage.Bindings().Update(retrievedBindingGCM)
+	assert.NoError(t, err)
+
+	retrievedUpdatedBindingCFB, err := brokerStorage.Bindings().Get(instanceID, testBindingIdCFB)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingCFB)
+	assert.Equal(t, fixedBindingCFB.Kubeconfig, retrievedUpdatedBindingCFB.Kubeconfig)
+
+	//when
+	retrievedUpdatedBindingGCM, err := brokerStorage.Bindings().Get(instanceID, testBindingIdGCM)
+	// then
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedBindingGCM)
+	assert.Equal(t, fixedBindingGCM.Kubeconfig, retrievedUpdatedBindingGCM.Kubeconfig)
+
+	statsForUpdatedBindings, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+
+	// then
+	assert.ElementsMatch(t, []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 2}}, statsForUpdatedBindings)
 
 }
