@@ -594,7 +594,13 @@ func TestOperation_ModeCFB(t *testing.T) {
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
 	require.NoError(t, err)
 
+	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	require.NoError(t, err)
+
 	// then
+	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeCFB, Total: 1}}
+	assert.ElementsMatch(t, expectedStats, statsForOperations)
+
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, retrievedOperation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
 	// assert kubeconfig
@@ -625,6 +631,13 @@ func TestOperation_ModeGCM(t *testing.T) {
 	// when
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
+
+	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	require.NoError(t, err)
+
+	// then
+	expectedStats := []dbmodel.EncryptionModeStatsDTO{{EncryptionMode: storage.EncryptionModeGCM, Total: 1}}
+	assert.ElementsMatch(t, expectedStats, statsForOperations)
 
 	// when
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
