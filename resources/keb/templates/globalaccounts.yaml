@@ -41,7 +41,10 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
-                  key: {{ .Values.cis.accounts.secretKey | required "please specify .Values.cis.accounts.secretKey" | quote }} 
+                  key: {{ .Values.cis.accounts.secretKey | required "please specify .Values.cis.accounts.secretKey" | quote }}
+            - name: GLOBALACCOUNTS_DATABASE_FIPS_GCM_WRITE
+              value: "{{ .Values.global.fips.writeGCM }}"
+
             - name: GLOBALACCOUNTS_DATABASE_HOST
               valueFrom:
                 secretKeyRef:

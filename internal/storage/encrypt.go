@@ -16,8 +16,8 @@ const (
 	EncryptionModeGCM = "AES-GCM"
 )
 
-func NewEncrypter(secretKey string) *Encrypter {
-	return &Encrypter{key: []byte(secretKey)}
+func NewEncrypter(secretKey string, encodeGCM bool) *Encrypter {
+	return &Encrypter{key: []byte(secretKey), encodeGCM: encodeGCM}
 }
 
 type Encrypter struct {
@@ -50,7 +50,6 @@ func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 }
 
 // Encryption
-
 func (e *Encrypter) EncryptSMCredentials(provisioningParameters *internal.ProvisioningParameters) error {
 	if provisioningParameters.ErsContext.SMOperatorCredentials == nil {
 		return nil

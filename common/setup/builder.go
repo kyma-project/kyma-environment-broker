@@ -96,7 +96,8 @@ func (b *AppBuilder) WithBrokerClient() {
 
 func (b *AppBuilder) WithStorage() {
 	// Init Storage
-	cipher := storage.NewEncrypter(b.cfg.Database.SecretKey)
+	// this job does not write to database, so we do not need to set mode for encryption
+	cipher := storage.NewEncrypter(b.cfg.Database.SecretKey, false)
 	var err error
 	b.db, b.conn, err = storage.NewFromConfig(b.cfg.Database, events.Config{}, cipher)
 	if err != nil {

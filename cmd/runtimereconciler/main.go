@@ -57,7 +57,7 @@ func main() {
 
 	logs.Info(fmt.Sprintf("runtime-reconciler running as dry run? %t", cfg.DryRun))
 
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
 
 	db, _, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher)
 	fatalOnError(err, logs)

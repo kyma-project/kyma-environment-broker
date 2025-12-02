@@ -55,7 +55,7 @@ func main() {
 	brokerClient := broker.NewClient(ctx, cfg.Broker)
 
 	// create storage connection
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
 	svc := newDeprovisionRetriggerService(cfg, brokerClient, db.Instances())

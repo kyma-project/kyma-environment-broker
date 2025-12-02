@@ -72,7 +72,7 @@ func main() {
 	kymaGVR := getResourceKindProvider(kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields))
 
 	// create DB connection
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
 	db, dbConn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 
 	// create and register metrics
