@@ -5,6 +5,3 @@ ALTER TABLE operations
 ALTER TABLE bindings
     DROP COLUMN encryption_mode;
 
-DROP INDEX operations_by_encryption_mode;
-DROP INDEX instances_by_encryption_mode;
-DROP INDEX bindings_by_encryption_mode;
