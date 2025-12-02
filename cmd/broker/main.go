@@ -427,7 +427,6 @@ func main() {
 
 func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
 	stats := db.EncryptionModeStats()
-	// rewrite table into map
 	instanceStats, err := stats.GetEncryptionModeStatsForInstances()
 	fatalOnError(err, log)
 	operationStats, err := stats.GetEncryptionModeStatsForOperations()

@@ -49,8 +49,6 @@ func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 	}
 }
 
-//TODO deduplicate using function type parameter
-
 // Encryption
 
 func (e *Encrypter) EncryptSMCredentials(provisioningParameters *internal.ProvisioningParameters) error {
@@ -129,6 +127,7 @@ func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 }
 
 // Decryption
+type DecryptFunc func(data []byte) ([]byte, error)
 
 func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(string(data))
@@ -194,107 +193,64 @@ func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *intern
 	var err error
 	switch encryptionMode {
 	case EncryptionModeCFB:
-		err = e.decryptSMCredentialsCFB(provisioningParameters)
+		err = e.decryptSMCredentials(provisioningParameters, e.decryptCFB)
 	case EncryptionModeGCM:
-		err = e.decryptSMCredentialsGCM(provisioningParameters)
+		err = e.decryptSMCredentials(provisioningParameters, e.decryptGCM)
 	default:
-		err = e.decryptSMCredentialsCFB(provisioningParameters)
+		err = e.decryptSMCredentials(provisioningParameters, e.decryptCFB)
 	}
 	return err
+}
+
+func (e *Encrypter) decryptSMCredentials(provisioningParameters *internal.ProvisioningParameters, decryptFunc DecryptFunc) error {
+	if provisioningParameters.ErsContext.SMOperatorCredentials == nil {
+		return nil
+	}
+	var err error
+	var clientID, clientSecret []byte
+
+	creds := provisioningParameters.ErsContext.SMOperatorCredentials
+	if creds.ClientID != "" {
+		clientID, err = decryptFunc([]byte(creds.ClientID))
+		if err != nil {
+			return fmt.Errorf("while decrypting ClientID: %w", err)
+		}
+	}
+	if creds.ClientSecret != "" {
+		clientSecret, err = decryptFunc([]byte(creds.ClientSecret))
+		if err != nil {
+			return fmt.Errorf("while decrypting ClientSecret: %w", err)
+		}
+	}
+
+	if len(clientID) != 0 {
+		provisioningParameters.ErsContext.SMOperatorCredentials.ClientID = string(clientID)
+	}
+	if len(clientSecret) != 0 {
+		provisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = string(clientSecret)
+	}
+	return nil
 }
 
 func (e *Encrypter) DecryptKubeconfigUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
 	var err error
 	switch encryptionMode {
 	case EncryptionModeCFB:
-		err = e.decryptKubeconfigCFB(provisioningParameters)
+		err = e.decryptKubeconfig(provisioningParameters, e.decryptCFB)
 	case EncryptionModeGCM:
-		err = e.decryptKubeconfigGCM(provisioningParameters)
+		err = e.decryptKubeconfig(provisioningParameters, e.decryptGCM)
 	default:
-		err = e.decryptKubeconfigCFB(provisioningParameters)
+		err = e.decryptKubeconfig(provisioningParameters, e.decryptCFB)
 	}
 	return err
 }
 
-func (e *Encrypter) decryptSMCredentialsCFB(provisioningParameters *internal.ProvisioningParameters) error {
-	if provisioningParameters.ErsContext.SMOperatorCredentials == nil {
-		return nil
-	}
-	var err error
-	var clientID, clientSecret []byte
-
-	creds := provisioningParameters.ErsContext.SMOperatorCredentials
-	if creds.ClientID != "" {
-		clientID, err = e.decryptCFB([]byte(creds.ClientID))
-		if err != nil {
-			return fmt.Errorf("while decrypting ClientID: %w", err)
-		}
-	}
-	if creds.ClientSecret != "" {
-		clientSecret, err = e.decryptCFB([]byte(creds.ClientSecret))
-		if err != nil {
-			return fmt.Errorf("while decrypting ClientSecret: %w", err)
-		}
-	}
-
-	if len(clientID) != 0 {
-		provisioningParameters.ErsContext.SMOperatorCredentials.ClientID = string(clientID)
-	}
-	if len(clientSecret) != 0 {
-		provisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = string(clientSecret)
-	}
-	return nil
-}
-
-func (e *Encrypter) decryptSMCredentialsGCM(provisioningParameters *internal.ProvisioningParameters) error {
-	if provisioningParameters.ErsContext.SMOperatorCredentials == nil {
-		return nil
-	}
-	var err error
-	var clientID, clientSecret []byte
-
-	creds := provisioningParameters.ErsContext.SMOperatorCredentials
-	if creds.ClientID != "" {
-		clientID, err = e.decryptGCM([]byte(creds.ClientID))
-		if err != nil {
-			return fmt.Errorf("while decrypting ClientID: %w", err)
-		}
-	}
-	if creds.ClientSecret != "" {
-		clientSecret, err = e.decryptGCM([]byte(creds.ClientSecret))
-		if err != nil {
-			return fmt.Errorf("while decrypting ClientSecret: %w", err)
-		}
-	}
-
-	if len(clientID) != 0 {
-		provisioningParameters.ErsContext.SMOperatorCredentials.ClientID = string(clientID)
-	}
-	if len(clientSecret) != 0 {
-		provisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = string(clientSecret)
-	}
-	return nil
-}
-
-func (e *Encrypter) decryptKubeconfigCFB(provisioningParameters *internal.ProvisioningParameters) error {
+func (e *Encrypter) decryptKubeconfig(provisioningParameters *internal.ProvisioningParameters, decryptFunc DecryptFunc) error {
 	if len(provisioningParameters.Parameters.Kubeconfig) == 0 {
 		return nil
 	}
 
-	decryptedKubeconfig, err := e.decryptCFB([]byte(provisioningParameters.Parameters.Kubeconfig))
-	if err != nil {
-		return fmt.Errorf("while decrypting kubeconfig: %w", err)
-	}
-	provisioningParameters.Parameters.Kubeconfig = string(decryptedKubeconfig)
-	return nil
-}
-
-func (e *Encrypter) decryptKubeconfigGCM(provisioningParameters *internal.ProvisioningParameters) error {
-	if len(provisioningParameters.Parameters.Kubeconfig) == 0 {
-		return nil
-	}
-
-	decryptedKubeconfig, err := e.decryptGCM([]byte(provisioningParameters.Parameters.Kubeconfig))
+	decryptedKubeconfig, err := decryptFunc([]byte(provisioningParameters.Parameters.Kubeconfig))
 	if err != nil {
 		return fmt.Errorf("while decrypting kubeconfig: %w", err)
 	}
