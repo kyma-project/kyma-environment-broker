@@ -278,7 +278,7 @@ func TestBindingMetrics_NoBindings(t *testing.T) {
 }
 
 func TestBinding_ModeCFB(t *testing.T) {
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -310,7 +310,7 @@ func TestBinding_ModeCFB(t *testing.T) {
 }
 
 func TestBinding_ModeGCM(t *testing.T) {
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	encrypter.SetWriteGCMMode(true)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
@@ -343,7 +343,7 @@ func TestBinding_ModeGCM(t *testing.T) {
 }
 
 func TestBinding_BothModes(t *testing.T) {
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {

@@ -1251,7 +1251,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 func TestInstance_ModeCFB(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1284,7 +1284,7 @@ func TestInstance_ModeCFB(t *testing.T) {
 
 func TestInstance_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", true)
 	encrypter.SetWriteGCMMode(true)
 
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
@@ -1319,7 +1319,7 @@ func TestInstance_ModeGCM(t *testing.T) {
 
 func TestInstance_BothModes(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {

@@ -570,7 +570,7 @@ func TestOperation(t *testing.T) {
 
 func TestOperation_ModeCFB(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -608,7 +608,7 @@ func TestOperation_ModeCFB(t *testing.T) {
 
 func TestOperation_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", true)
 	encrypter.SetWriteGCMMode(true)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
@@ -650,7 +650,7 @@ func TestOperation_ModeGCM(t *testing.T) {
 
 func TestOperation_BothModes(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
