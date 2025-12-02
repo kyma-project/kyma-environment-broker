@@ -17,7 +17,7 @@ type testDto struct {
 
 func TestNewEncrypterInCFBOnlyMode(t *testing.T) {
 	secretKey := rand.String(32)
-	encrypter := NewEncrypter(secretKey)
+	encrypter := NewEncrypter(secretKey, false)
 
 	t.Run("encrypt json", func(t *testing.T) {
 		dto := testDto{
@@ -61,8 +61,7 @@ func TestNewEncrypterInCFBOnlyMode(t *testing.T) {
 func TestNewEncrypterInGCMWriteMode(t *testing.T) {
 	secretKey := rand.String(32)
 
-	e := NewEncrypter(secretKey)
-	e.SetWriteGCMMode(true)
+	e := NewEncrypter(secretKey, true)
 
 	t.Run("encrypt json", func(t *testing.T) {
 
@@ -108,7 +107,7 @@ func TestNewEncrypterInGCMWriteMode(t *testing.T) {
 func TestInvalidKey(t *testing.T) {
 	secretKey := "1"
 
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 	dto := testDto{
 		Data: secretKey,
 	}
@@ -131,7 +130,7 @@ func TestInvalidKey(t *testing.T) {
 
 func TestDecryptUsingCFBMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	data := []byte("test data for CFB decryption")
 	encrypted, err := e.encryptCFB(data)
@@ -144,7 +143,7 @@ func TestDecryptUsingCFBMode(t *testing.T) {
 
 func TestDecryptUsingGCMMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, true)
 
 	data := []byte("test data for GCM decryption")
 	encrypted, err := e.encryptGCM(data)
@@ -157,7 +156,7 @@ func TestDecryptUsingGCMMode(t *testing.T) {
 
 func TestDecryptUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	data := []byte("test data with unknown mode")
 	encrypted, err := e.encryptCFB(data)
@@ -170,7 +169,7 @@ func TestDecryptUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 
 func TestDecryptSMCredentialsUsingCFBMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		ErsContext: internal.ERSContext{
@@ -199,7 +198,7 @@ func TestDecryptSMCredentialsUsingCFBMode(t *testing.T) {
 
 func TestDecryptSMCredentialsUsingGCMMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, true)
 	e.SetWriteGCMMode(true)
 
 	params := &internal.ProvisioningParameters{
@@ -228,7 +227,7 @@ func TestDecryptSMCredentialsUsingGCMMode(t *testing.T) {
 
 func TestDecryptSMCredentialsUsingModeWithNilCredentials(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		ErsContext: internal.ERSContext{
@@ -243,7 +242,7 @@ func TestDecryptSMCredentialsUsingModeWithNilCredentials(t *testing.T) {
 
 func TestDecryptSMCredentialsUsingModeWithEmptyCredentials(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		ErsContext: internal.ERSContext{
@@ -262,7 +261,7 @@ func TestDecryptSMCredentialsUsingModeWithEmptyCredentials(t *testing.T) {
 
 func TestDecryptKubeconfigUsingCFBMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		Parameters: runtime.ProvisioningParametersDTO{
@@ -283,8 +282,7 @@ func TestDecryptKubeconfigUsingCFBMode(t *testing.T) {
 
 func TestDecryptKubeconfigUsingGCMMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
-	e.SetWriteGCMMode(true)
+	e := NewEncrypter(secretKey, true)
 
 	params := &internal.ProvisioningParameters{
 
@@ -306,7 +304,7 @@ func TestDecryptKubeconfigUsingGCMMode(t *testing.T) {
 
 func TestDecryptKubeconfigUsingModeWithEmptyKubeconfig(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		Parameters: runtime.ProvisioningParametersDTO{
@@ -321,7 +319,7 @@ func TestDecryptKubeconfigUsingModeWithEmptyKubeconfig(t *testing.T) {
 
 func TestDecryptSMCredentialsUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		ErsContext: internal.ERSContext{
@@ -343,7 +341,7 @@ func TestDecryptSMCredentialsUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 
 func TestDecryptKubeconfigUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	params := &internal.ProvisioningParameters{
 		Parameters: runtime.ProvisioningParametersDTO{
@@ -361,7 +359,7 @@ func TestDecryptKubeconfigUsingModeWithDefaultFallbackToCFB(t *testing.T) {
 
 func TestEncryptAndDecryptWithDifferentModes(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey)
+	e := NewEncrypter(secretKey, false)
 
 	data := []byte("mixed mode test data")
 
