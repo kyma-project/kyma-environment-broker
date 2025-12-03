@@ -16,7 +16,7 @@ You can set your preferred **Default Release Channel**.
 
 ## Procedure
 
-1. Refresh broker details using the XRS APIs in the ERS registry.
+Refresh broker details using the xRS APIs in ERS.
 
 ## Post-Update Steps
 
