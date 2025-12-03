@@ -20,4 +20,4 @@ Refresh broker details using the xRS APIs in ERS.
 
 ## Post-Update Steps
 
-1. Confirm that in SAP BTP cockpit new field under Modules section is visible.
+Verify that in the SAP BTP cockpit, the **Default Release Channel** field is visible in the configuration window under the **Modules** section.
