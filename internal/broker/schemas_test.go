@@ -5,9 +5,8 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +34,8 @@ aws:
             zones: ["a", "b", "c"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &fixture.FakeChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 
 	// When
 	err = svc.Validate()
@@ -64,7 +64,8 @@ aws:
             zones: ["a", "b"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &fixture.FakeChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When
@@ -94,7 +95,8 @@ gcp:
             zones: ["a", "b"]
 `))
 	require.NoError(t, err)
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"})
+	channelResolver := &fixture.FakeChannelResolver{}
+	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When

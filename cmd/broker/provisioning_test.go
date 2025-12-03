@@ -11,6 +11,8 @@ import (
 	"os"
 	"testing"
 
+	"gopkg.in/yaml.v2"
+	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -3005,5 +3007,341 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 		require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
 		assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1)
 		assert.Subset(t, []string{"zone-h", "zone-i", "zone-j", "zone-k"}, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+	})
+}
+
+func TestProvisioning_ChannelSelection(t *testing.T) {
+	t.Run("verify default channel from runtime configuration", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		instanceID := uuid.New().String()
+
+		// when - create instance without channel parameter
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+				"name": "default-channel-test",
+				"region": "eu-central-1"
+			}
+		}`)
+
+		operationID := suite.DecodeOperationID(response)
+		suite.processKIMProvisioningByOperationID(operationID)
+		suite.WaitForOperationState(operationID, domain.Succeeded)
+
+		// then - verify ConfigMap default was applied
+		operation, err := suite.db.Operations().GetOperationByID(operationID)
+		require.NoError(t, err)
+
+		var template map[string]interface{}
+		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
+		require.NoError(t, err)
+
+		specData := template["spec"].(map[interface{}]interface{})
+		channelValue := specData["channel"].(string)
+		assert.Equal(t, "fast", channelValue, "ConfigMap default channel should be applied")
+	})
+
+	t.Run("user specified regular channel overrides default", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		instanceID := uuid.New().String()
+
+		// when - create instance with explicit regular channel
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+			"name": "regular-channel-test",
+			"region": "eu-central-1",
+			"modules": {
+				"default": true,
+				"channel": "regular"
+			}
+		}
+		}`)
+
+		operationID := suite.DecodeOperationID(response)
+		suite.processKIMProvisioningByOperationID(operationID)
+		suite.WaitForOperationState(operationID, domain.Succeeded)
+
+		// then - verify user choice was honored
+		operation, err := suite.db.Operations().GetOperationByID(operationID)
+		require.NoError(t, err)
+
+		var template map[string]interface{}
+		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
+		require.NoError(t, err)
+
+		specData := template["spec"].(map[interface{}]interface{})
+		channelValue := specData["channel"].(string)
+		assert.Equal(t, "regular", channelValue, "User-specified channel should override default")
+	})
+
+	t.Run("user specified fast channel is accepted", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		instanceID := uuid.New().String()
+
+		// when - create instance with explicit fast channel
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+			"name": "fast-channel-test",
+			"region": "eu-central-1",
+			"modules": {
+				"default": true,
+				"channel": "fast"
+			}
+		}
+		}`)
+
+		operationID := suite.DecodeOperationID(response)
+		suite.processKIMProvisioningByOperationID(operationID)
+		suite.WaitForOperationState(operationID, domain.Succeeded)
+
+		// then - verify fast channel was set
+		operation, err := suite.db.Operations().GetOperationByID(operationID)
+		require.NoError(t, err)
+
+		var template map[string]interface{}
+		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
+		require.NoError(t, err)
+
+		specData := template["spec"].(map[interface{}]interface{})
+		channelValue := specData["channel"].(string)
+		assert.Equal(t, "fast", channelValue, "Fast channel should be set")
+	})
+
+	t.Run("unsupported channel value is rejected", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		instanceID := uuid.New().String()
+
+		// when - attempt to create with invalid channel
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+			"name": "invalid-channel-test",
+			"region": "eu-central-1",
+			"modules": {
+				"default": true,
+				"channel": "experimental"
+			}
+		}
+		}`)
+
+		// then - verify request was rejected with schema validation error
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		body := suite.ReadResponse(response)
+		var errorResponse map[string]interface{}
+		err := json.Unmarshal(body, &errorResponse)
+		require.NoError(t, err)
+		description, ok := errorResponse["description"].(string)
+		require.True(t, ok, "description field should be a string")
+		assert.Contains(t, description, "value must be one of 'regular', 'fast'")
+	})
+
+	t.Run("AWS plan uses plan-specific configuration when both default and AWS configs exist", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// The suite already has keb-runtime-config ConfigMap with "default" entry having "fast" channel
+		// Now add AWS-specific configuration with "regular" channel
+
+		configMapRef := &coreV1.ConfigMap{}
+		fetchErr := suite.k8sKcp.Get(context.Background(),
+			client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
+			configMapRef)
+		require.NoError(t, fetchErr)
+
+		// Verify default exists with "fast"
+		require.Contains(t, configMapRef.Data, "default", "ConfigMap should have default config")
+		require.Contains(t, configMapRef.Data["default"], "channel: fast", "Default should have fast channel")
+
+		// Add AWS-specific configuration with "regular" channel
+		configMapRef.Data["aws"] = `
+kyma-template: |-
+  apiVersion: operator.kyma-project.io/v1beta2
+  kind: Kyma
+  metadata:
+      name: my-kyma
+      namespace: kyma-system
+  spec:
+      sync:
+          strategy: secret
+      channel: regular
+      modules:
+          - name: btp-operator
+            customResourcePolicy: CreateAndDelete
+`
+		updateErr := suite.k8sKcp.Update(context.Background(), configMapRef)
+		require.NoError(t, updateErr)
+
+		// Cleanup: Remove AWS config after test
+		defer func() {
+			configMapCleanup := &coreV1.ConfigMap{}
+			if err := suite.k8sKcp.Get(context.Background(),
+				client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
+				configMapCleanup); err == nil {
+				delete(configMapCleanup.Data, "aws")
+				_ = suite.k8sKcp.Update(context.Background(), configMapCleanup)
+			}
+		}()
+
+		instanceID := uuid.New().String()
+
+		// when - provision AWS plan without specifying channel parameter
+		// This should use AWS-specific config which has "regular" channel
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+				"name": "aws-specific-config-test",
+				"region": "eu-central-1"
+			}
+		}`)
+
+		operationID := suite.DecodeOperationID(response)
+		suite.processKIMProvisioningByOperationID(operationID)
+		suite.WaitForOperationState(operationID, domain.Succeeded)
+
+		// then - verify AWS-specific "regular" was used instead of default "fast"
+		operation, err := suite.db.Operations().GetOperationByID(operationID)
+		require.NoError(t, err)
+
+		var template map[string]interface{}
+		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
+		require.NoError(t, err)
+
+		specData := template["spec"].(map[interface{}]interface{})
+		channelValue := specData["channel"].(string)
+		assert.Equal(t, "regular", channelValue, "AWS plan-specific default 'regular' should override global default 'fast'")
+
+		// Also verify that the modules from AWS config are present
+		modules := specData["modules"].([]interface{})
+		assert.NotEmpty(t, modules, "Modules should be present from AWS config")
+	})
+
+	t.Run("user channel overrides plan-specific default", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// Setup: AWS plan configured with regular as default
+		configMapRef := &coreV1.ConfigMap{}
+		fetchErr := suite.k8sKcp.Get(context.Background(),
+			client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
+			configMapRef)
+		require.NoError(t, fetchErr)
+
+		configMapRef.Data["aws"] = `
+kyma-template: |-
+  apiVersion: operator.kyma-project.io/v1beta2
+  kind: Kyma
+  metadata:
+      name: my-kyma
+      namespace: kyma-system
+  spec:
+      sync:
+          strategy: secret
+      channel: regular
+      modules:
+          - name: btp-operator
+            customResourcePolicy: CreateAndDelete
+`
+		updateErr := suite.k8sKcp.Update(context.Background(), configMapRef)
+		require.NoError(t, updateErr)
+
+		// Cleanup: Remove AWS config after test
+		defer func() {
+			configMapCleanup := &coreV1.ConfigMap{}
+			if err := suite.k8sKcp.Get(context.Background(),
+				client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
+				configMapCleanup); err == nil {
+				delete(configMapCleanup.Data, "aws")
+				_ = suite.k8sKcp.Update(context.Background(), configMapCleanup)
+			}
+		}()
+
+		instanceID := uuid.New().String()
+
+		// when - user explicitly requests fast channel
+		response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", instanceID),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "test-global-account",
+				"subaccount_id": "test-subaccount",
+				"user_id": "test.user@example.com"
+			},
+			"parameters": {
+			"name": "user-override-test",
+			"region": "eu-central-1",
+			"modules": {
+				"default": true,
+				"channel": "fast"
+			}
+		}
+		}`)
+
+		operationID := suite.DecodeOperationID(response)
+		suite.processKIMProvisioningByOperationID(operationID)
+		suite.WaitForOperationState(operationID, domain.Succeeded)
+
+		// then - verify user preference took precedence
+		operation, err := suite.db.Operations().GetOperationByID(operationID)
+		require.NoError(t, err)
+
+		var template map[string]interface{}
+		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
+		require.NoError(t, err)
+
+		specData := template["spec"].(map[interface{}]interface{})
+		channelValue := specData["channel"].(string)
+		assert.Equal(t, "fast", channelValue, "User selection should override plan default")
 	})
 }

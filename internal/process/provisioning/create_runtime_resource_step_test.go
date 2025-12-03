@@ -1712,7 +1712,7 @@ namespace: kyma-system
 spec:
 sync:
 strategy: secret
-channel: stable
+channel: fast
 modules: []
 `
 	operation.ProvisioningParameters.PlatformProvider = platformProvider

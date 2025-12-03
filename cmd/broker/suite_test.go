@@ -177,7 +177,7 @@ kyma-template: |-
   spec:
       sync:
           strategy: secret
-      channel: stable
+      channel: fast
       modules:
           - name: btp-operator
             customResourcePolicy: CreateAndDelete

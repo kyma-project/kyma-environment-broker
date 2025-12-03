@@ -66,6 +66,7 @@ These are the provisioning parameters that you can configure:
 | **oidc.usernamePrefix**                          | string | Provides an OIDC username prefix for a Kyma runtime.                                                             |    No    | None            |
 | **administrators**                               | string | Provides administrators for a Kyma runtime.                                                                      |    No    | None            |
 | **networking.nodes**                             | string | The Node network's CIDR.                                                                                         |    No    | `10.250.0.0/16` |
+| **modules.channel**                              | string | Enables the user to define their preferred release channel                                                            |    No    | Taken from the runtimeConfiguration setting, where the Kyma resource spec channel is specified per plan            |
 | **modules.default**                              | bool   | Defines whether to use a default list of modules                                                                 |    No    | None            |
 | **modules.list**                                 | array  | Defines a custom list of modules                                                                                 |    No    | None            |
 

@@ -52,31 +52,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.24.4
+      version: 1.25.0
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_expirator_job:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.24.4"
+      version: "1.25.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.24.4
+      version: 1.25.0
   ingress:
     domainName: localhost
   istio:
@@ -353,7 +353,10 @@ runtimeConfiguration: |-
         namespace: kcp-system
       spec:
         channel: fast
-        modules: []
+        modules:
+          - name: api-gateway
+          - name: istio
+          - name: btp-operator
     additional-components: []
 
 # Contains DNS provider configuration for Kyma clusters.

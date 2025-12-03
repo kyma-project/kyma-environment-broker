@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.24.4` |
+| global.images.kyma_environment_<br>broker.version | - | `1.25.0` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.24.4` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.0` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.24.4` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.0` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.24.4` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.0` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.24.4` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.0` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.24.4` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.0` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.24.4` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.0` |
 | global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.24.4` |
+| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.0` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.24.4` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.0` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -135,7 +135,7 @@
 | quotaLimitCheck.<br>retries | The number of retry attempts made when the Entitlements API request fails. | `5` |
 | quotaWhitelistedSubaccountIds | List of subaccount IDs that have unlimited quota for Kyma runtimes. Only subaccounts listed here can provision beyond their assigned quota limits. | `whitelist:` |
 | regionsSupportingMachine | Defines which machine type families are available in which regions (and optionally, zones). Restricts provisioning of listed machine types to the specified regions/zones only. If a machine type is not listed, it is considered available in all regions. | `` |
-| runtimeConfiguration | Defines the default KymaCR template. | `default: \|-      kyma-template: \|-        apiVersion: operator.kyma-project.io/v1beta2        kind: Kyma        metadata:          labels:            "operator.kyma-project.io/managed-by": "lifecycle-manager"          name: tbd          namespace: kcp-system        spec:          channel: fast          modules: []      additional-components: []` |
+| runtimeConfiguration | Defines the default KymaCR template. | `default: \|-      kyma-template: \|-        apiVersion: operator.kyma-project.io/v1beta2        kind: Kyma        metadata:          labels:            "operator.kyma-project.io/managed-by": "lifecycle-manager"          name: tbd          namespace: kcp-system        spec:          channel: fast          modules:            - name: api-gateway            - name: istio            - name: btp-operator      additional-components: []` |
 | skrDNSProvidersValues | Contains DNS provider configuration for Kyma clusters. | `providers: []` |
 | skrOIDCDefaultValues | Contains the default OIDC configuration for Kyma clusters. | `clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"    groupsClaim: "groups"    groupsPrefix: "-"    issuerURL: "https://kymatest.accounts400.ondemand.com"    signingAlgs: [ "RS256" ]    usernameClaim: "sub"    usernamePrefix: "-"` |
 | stepTimeouts.<br>checkRuntimeResourceCreate | Maximum time to wait for a runtime resource to be created before considering the step as failed. | `60m` |

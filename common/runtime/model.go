@@ -534,12 +534,13 @@ type OIDCConnectDTO struct {
 	List []OIDCConfigDTO `json:"list,omitzero" yaml:"list,omitzero"`
 }
 
+type Channel *string
+
 type ModulesDTO struct {
+	Channel Channel     `json:"channel,omitempty" yaml:"channel,omitempty"`
 	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
 	List    []ModuleDTO `json:"list" yaml:"list"`
 }
-
-type Channel *string
 
 type CustomResourcePolicy *string
 
