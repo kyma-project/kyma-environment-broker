@@ -31,7 +31,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
-| **APP_DATABASE_FIPS_&#x200b;GCM_WRITE** | <code>false</code> | Write using AES-GCM encryption. |
+| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>false</code> | Write using AES-GCM encryption. |
 | **APP_DATABASE_FIPS_&#x200b;REWRITE_CFB** | <code>false</code> | Rewrite old data using AES-GCM encryption. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
