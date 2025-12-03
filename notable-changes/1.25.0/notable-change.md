@@ -8,7 +8,7 @@
 
 ## Prerequisites
 
-- Access to the ERS registry.
+- Access to Environment Registry Service (ERS).
 
 ## What's Changed
 
