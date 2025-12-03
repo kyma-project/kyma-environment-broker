@@ -12,7 +12,7 @@
 
 ## What's Changed
 
-- It is possible to set preffered **Default Release Channel**.
+You can set your preferred **Default Release Channel**.
 
 ## Procedure
 
