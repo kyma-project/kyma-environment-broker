@@ -3,7 +3,7 @@
 # Updating Kyma Environment Broker
 
 > [!WARNING]
-> This update is mandatory. Without performing it, you will not be able to use the feature in SAP BTP cockpit.
+> This update is mandatory. Without performing it, you will not be able to use the feature in the SAP BTP cockpit.
 
 
 ## Prerequisites
