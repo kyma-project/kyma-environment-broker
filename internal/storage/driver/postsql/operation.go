@@ -1058,7 +1058,7 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	return lastErr
 }
 
-func (s *operations) UpdateEncryptedData(operation dbmodel.OperationDTO) error {
+func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
 	session := s.Factory.NewWriteSession()
 
 	var lastErr error

@@ -1342,7 +1342,7 @@ func TestInstance_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	statsForInstances, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	statsForInstances, err := brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForInstances()
 	require.NoError(t, err)
 
 	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeCFB: 1, storage.EncryptionModeGCM: 1}, statsForInstances))

@@ -595,7 +595,7 @@ func TestOperation_ModeCFB(t *testing.T) {
 	retrievedOperation, err := brokerStorage.Operations().GetOperationByID("op-id")
 	require.NoError(t, err)
 
-	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	statsForOperations, err := brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForOperations()
 	require.NoError(t, err)
 
 	// then
@@ -630,7 +630,7 @@ func TestOperation_ModeGCM(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	statsForOperations, err := brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForOperations()
 	require.NoError(t, err)
 
 	// then
@@ -671,7 +671,7 @@ func TestOperation_BothModes(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	statsForOperations, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	statsForOperations, err := brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForOperations()
 	require.NoError(t, err)
 
 	// then
@@ -694,7 +694,7 @@ func TestOperation_BothModes(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	statsForOperations, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	statsForOperations, err = brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForOperations()
 	require.NoError(t, err)
 
 	// then
@@ -740,7 +740,7 @@ func TestOperation_BothModes(t *testing.T) {
 	assert.Equal(t, operationGCM.ProvisioningParameters.Parameters.Kubeconfig, updatedOperationGCM.ProvisioningParameters.Parameters.Kubeconfig)
 
 	// check stats again
-	statsForOperations, err = brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForOperations()
+	statsForOperations, err = brokerStorage.EncryptionModeUtils().GetEncryptionModeStatsForOperations()
 	require.NoError(t, err)
 
 	// then

@@ -376,7 +376,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 	return &instance, nil
 }
 
-func (s *Instance) UpdateEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+func (s *Instance) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
 	sess := s.Factory.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {

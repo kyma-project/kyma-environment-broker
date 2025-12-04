@@ -75,7 +75,7 @@ func (s *Binding) Update(binding *internal.Binding) error {
 	return nil
 }
 
-func (s *Binding) UpdateEncryptedData(binding *internal.Binding) error {
+func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
 	dto, err := s.toBindingDTO(binding)
 	if err != nil {
 		return err
