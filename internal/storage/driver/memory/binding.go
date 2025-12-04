@@ -14,6 +14,11 @@ type Binding struct {
 	data map[string]internal.Binding
 }
 
+func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	return nil
+}
+
 func NewBinding() *Binding {
 	return &Binding{
 		data: make(map[string]internal.Binding),

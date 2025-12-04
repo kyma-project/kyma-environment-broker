@@ -22,6 +22,11 @@ type instances struct {
 	subaccountStatesStorage *SubaccountStates
 }
 
+func (s *instances) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	return &instance, nil
+}
+
 func NewInstance(operations *operations, subaccountStates *SubaccountStates) *instances {
 	return &instances{
 		instances:               make(map[string]internal.Instance, 0),

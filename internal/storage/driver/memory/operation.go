@@ -22,6 +22,11 @@ type operations struct {
 	updateOperations         map[string]internal.UpdatingOperation
 }
 
+func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	return nil
+}
+
 // NewOperation creates in-memory storage for OSB operations.
 func NewOperation() *operations {
 	return &operations{
