@@ -18,27 +18,12 @@ func (stats *EncryptionModeStats) ListOperationsEncryptedUsingCFB(batchSize int)
 	panic("implement me")
 }
 
-func (stats *EncryptionModeStats) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (stats *EncryptionModeStats) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (stats *EncryptionModeStats) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (stats *EncryptionModeStats) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (stats *EncryptionModeStats) UpdateBindingEncryptedData(binding *internal.Binding) error {
 	//TODO implement me
 	panic("implement me")
 }

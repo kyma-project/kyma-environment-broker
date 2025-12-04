@@ -128,11 +128,8 @@ type EncryptionModeStats interface {
 	GetEncryptionModeStatsForOperations() (map[string]int, error)
 	GetEncryptionModeStatsForBindings() (map[string]int, error)
 	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error)
-	UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error
 	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
-	UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error)
 	ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error)
-	UpdateBindingEncryptedData(binding *internal.Binding) error
 }
 
 type TimeZones interface {
