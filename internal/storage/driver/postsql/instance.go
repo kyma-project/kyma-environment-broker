@@ -24,6 +24,11 @@ type Instance struct {
 	cipher     Cipher
 }
 
+func (s *Instance) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	sess := s.Factory.NewReadSession()
 	var (

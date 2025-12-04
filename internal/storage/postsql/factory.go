@@ -63,6 +63,7 @@ type ReadSession interface {
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
 	ListActions(instanceID string) ([]runtime.Action, error)
 	GetTimeZone() (string, dberr.Error)
+	ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error)
 	GetEncryptionModeStatsForInstances() (map[string]int, error)
 	GetEncryptionModeStatsForOperations() (map[string]int, error)
 	GetEncryptionModeStatsForBindings() (map[string]int, error)

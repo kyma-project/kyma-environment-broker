@@ -32,6 +32,7 @@ type Instances interface {
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 
 	UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error)
+	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error)
 }
 
 type InstancesArchived interface {
@@ -68,6 +69,7 @@ type Operations interface {
 	GetAllOperations() ([]internal.Operation, error)
 
 	UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error
+	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
 }
 
 type Provisioning interface {
@@ -122,6 +124,7 @@ type Bindings interface {
 	GetStatistics() (internal.BindingStats, error)
 
 	UpdateBindingEncryptedData(binding *internal.Binding) error
+	ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error)
 }
 
 type Actions interface {
@@ -133,9 +136,6 @@ type EncryptionModeStats interface {
 	GetEncryptionModeStatsForInstances() (map[string]int, error)
 	GetEncryptionModeStatsForOperations() (map[string]int, error)
 	GetEncryptionModeStatsForBindings() (map[string]int, error)
-	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error)
-	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
-	ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error)
 }
 
 type TimeZones interface {

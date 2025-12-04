@@ -22,9 +22,9 @@ type operations struct {
 	updateOperations         map[string]internal.UpdatingOperation
 }
 
-func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
-	//TODO implement me - for now this is just the stub to satisfy the interface
-	return nil
+func (s *operations) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // NewOperation creates in-memory storage for OSB operations.
@@ -34,6 +34,16 @@ func NewOperation() *operations {
 		upgradeClusterOperations: make(map[string]internal.UpgradeClusterOperation, 0),
 		updateOperations:         make(map[string]internal.UpdatingOperation, 0),
 	}
+}
+
+func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	return nil
+}
+
+func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *operations) DeleteByID(operationID string) error {

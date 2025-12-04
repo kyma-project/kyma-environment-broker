@@ -74,6 +74,22 @@ func (s *Binding) Update(binding *internal.Binding) error {
 
 	return nil
 }
+func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
+	dtos, err := s.Factory.NewReadSession().ListBindingsEncryptedUsingCFB(batchSize)
+	if err != nil {
+		return []internal.Binding{}, err
+	}
+	var bindings []internal.Binding
+	for _, dto := range dtos {
+		binding, err := s.toBinding(dto)
+		if err != nil {
+			return []internal.Binding{}, err
+		}
+
+		bindings = append(bindings, binding)
+	}
+	return bindings, err
+}
 
 func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
 	dto, err := s.toBindingDTO(binding)

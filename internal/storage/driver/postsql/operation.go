@@ -23,6 +23,11 @@ type operations struct {
 	cipher Cipher
 }
 
+func (s *operations) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
 	return &operations{
 		Factory: sess,
