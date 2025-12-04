@@ -3,12 +3,44 @@ package postsql
 import (
 	"context"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type EncryptionModeStats struct {
 	postsql.Factory
+}
+
+func (stats *EncryptionModeStats) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (stats *EncryptionModeStats) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (stats *EncryptionModeStats) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (stats *EncryptionModeStats) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (stats *EncryptionModeStats) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (stats *EncryptionModeStats) UpdateBindingEncryptedData(binding *internal.Binding) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewEncryptionModeStats(sess postsql.Factory) *EncryptionModeStats {

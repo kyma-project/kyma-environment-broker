@@ -429,7 +429,7 @@ func main() {
 }
 
 func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
-	stats := db.EncryptionModeUtils()
+	stats := db.EncryptionModeStats()
 	instanceStats, err := stats.GetEncryptionModeStatsForInstances()
 	fatalOnError(err, log)
 	operationStats, err := stats.GetEncryptionModeStatsForOperations()
