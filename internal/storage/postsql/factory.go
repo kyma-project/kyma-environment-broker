@@ -67,6 +67,7 @@ type ReadSession interface {
 	GetEncryptionModeStatsForInstances() (map[string]int, error)
 	GetEncryptionModeStatsForOperations() (map[string]int, error)
 	GetEncryptionModeStatsForBindings() (map[string]int, error)
+	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error)
 }
 
 //go:generate mockery --name=WriteSession

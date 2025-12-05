@@ -25,8 +25,11 @@ type Instance struct {
 }
 
 func (s *Instance) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
-	//TODO implement me
-	panic("implement me")
+	ids, err := s.Factory.NewReadSession().ListOperationsEncryptedUsingCFB(batchSize)
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
 }
 
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {

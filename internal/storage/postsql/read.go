@@ -22,6 +22,11 @@ type readSession struct {
 	session *dbr.Session
 }
 
+func (r readSession) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r readSession) ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error) {
 	var bindings []dbmodel.BindingDTO
 	stmt := r.session.Select("*").From(BindingsTableName).Where(dbr.Eq("encryption_mode", "AES-CFB")).Limit(uint64(batchSize))
