@@ -15,13 +15,13 @@ type Binding struct {
 }
 
 func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
-	//TODO implement me
+	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
 
 func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
-	return nil
+	panic("implement me")
 }
 
 func NewBinding() *Binding {

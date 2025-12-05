@@ -22,11 +22,6 @@ type operations struct {
 	updateOperations         map[string]internal.UpdatingOperation
 }
 
-func (s *operations) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewOperation creates in-memory storage for OSB operations.
 func NewOperation() *operations {
 	return &operations{
@@ -38,11 +33,11 @@ func NewOperation() *operations {
 
 func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
-	return nil
+	panic("implement me")
 }
 
 func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
-	//TODO implement me
+	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
 

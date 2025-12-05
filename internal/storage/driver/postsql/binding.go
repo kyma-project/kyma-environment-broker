@@ -101,7 +101,7 @@ func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
 	err = sess.UpdateEncryptedDataInBinding(dto)
 
 	if err != nil {
-		return fmt.Errorf("while updating binding with ID %s: %w", binding.ID, err)
+		return fmt.Errorf("while updating binding encrypted data with ID %s: %w", binding.ID, err)
 	}
 
 	return nil
