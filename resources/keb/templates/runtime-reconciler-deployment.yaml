@@ -36,7 +36,7 @@ spec:
             protocol: TCP
           env:
             - name: RUNTIME_RECONCILER_DATABASE_FIPS_WRITE_GCM
-              value: "{{ .Values.global.fips.writeGCM }}"            -
+              value: "{{ .Values.global.fips.writeGCM }}"
             - name: RUNTIME_RECONCILER_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
