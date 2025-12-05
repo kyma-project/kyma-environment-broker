@@ -558,7 +558,7 @@ runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: false
   # Enables or disables the Runtime Reconciler deployment.
-  enabled: false
+  enabled: true
   # If true, enables the periodic reconciliation job.
   jobEnabled: false
   # Interval (in minutes) between reconciliation job runs.
@@ -578,7 +578,7 @@ serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
-  enabled: false
+  enabled: true
   # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
   # Timeout for each DELETE request to the broker.
