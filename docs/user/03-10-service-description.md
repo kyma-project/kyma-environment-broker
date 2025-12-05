@@ -74,7 +74,7 @@ These are the provisioning parameters that you can configure:
 
 These are the provisioning parameters for Azure that you can configure:
 
-<div tabs name="azure-plans" group="azure-plans">
+<div>
   <details>
   <summary label="azure-plan">
   Azure
@@ -122,7 +122,7 @@ These are the provisioning parameters for Azure that you can configure:
  </div>
 
 These are the provisioning parameters for AWS that you can configure:
-<div tabs name="aws-plans" group="aws-plans">
+<div>
   <details>
   <summary label="aws-plan">
   AWS
@@ -149,7 +149,7 @@ These are the provisioning parameters for AWS that you can configure:
 
 These are the provisioning parameters for GCP that you can configure:
 
-<div tabs name="gcp-plans" group="gcp-plans">
+<div>
   <details>
   <summary label="gcp-plan">
   GCP
@@ -176,7 +176,7 @@ These are the provisioning parameters for GCP that you can configure:
 
 These are the provisioning parameters for SapConvergedCloud that you can configure:
 
-<div tabs name="sap-converged-cloud-plans" group="sap-converged-cloud-plans">
+<div>
   <details>
   <summary label="sap-converged-cloud-plan">
   SapConvergedCloud
@@ -212,7 +212,7 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 
 These are the provisioning parameters for the Trial plan that you can configure:
 
-<div tabs name="trial-plan" group="trial-plan">
+<div>
   <details>
   <summary label="trial-plan">
   Trial plan
@@ -243,7 +243,7 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:
 
-<div tabs name="own_cluster-plan" group="own_cluster-plan">
+<div>
   <details>
   <summary label="own_cluster-plan">
   Own cluster plan
@@ -266,7 +266,7 @@ The preview plan is designed for testing major changes in KEB's architecture.
 
 These are the provisioning parameters for the `preview` plan that you configure:
 
-<div tabs name="preview_cluster-plan" group="preview_cluster-plan">
+<div>
   <details>
   <summary label="preview_cluster-plan">
   Preview cluster plan
