@@ -22,12 +22,27 @@ type instances struct {
 	subaccountStatesStorage *SubaccountStates
 }
 
+func (s *instances) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewInstance(operations *operations, subaccountStates *SubaccountStates) *instances {
 	return &instances{
 		instances:               make(map[string]internal.Instance, 0),
 		operationsStorage:       operations,
 		subaccountStatesStorage: subaccountStates,
 	}
+}
+
+func (s *instances) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	return &instance, nil
+}
+
+func (s *instances) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *instances) GetDistinctSubAccounts() ([]string, error) {

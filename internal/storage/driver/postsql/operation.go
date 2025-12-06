@@ -23,6 +23,11 @@ type operations struct {
 	cipher Cipher
 }
 
+func (s *operations) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
 	return &operations{
 		Factory: sess,
@@ -1040,6 +1045,30 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	var lastErr error
 	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.UpdateOperation(operation)
+		if lastErr != nil && dberr.IsNotFound(lastErr) {
+			_, lastErr = s.Factory.NewReadSession().GetOperationByID(operation.ID)
+			if dberr.IsNotFound(lastErr) {
+				return false, lastErr
+			}
+			if lastErr != nil {
+				return false, nil
+			}
+
+			// the operation exists but the version is different
+			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
+			return false, lastErr
+		}
+		return true, nil
+	})
+	return lastErr
+}
+
+func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+	session := s.Factory.NewWriteSession()
+
+	var lastErr error
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		lastErr = session.UpdateEncryptedDataInOperation(operation)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.Factory.NewReadSession().GetOperationByID(operation.ID)
 			if dberr.IsNotFound(lastErr) {

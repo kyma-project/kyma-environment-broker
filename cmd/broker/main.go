@@ -441,6 +441,10 @@ func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
 
 func logDatabaseFipsFlags(database storage.Config, log *slog.Logger) {
 	log.Info(fmt.Sprintf("Database FIPS WriteGcm mode: %v", database.Fips.WriteGcm))
+	log.Info(fmt.Sprintf("Database FIPS RewriteCfb mode: %v", database.Fips.RewriteCfb))
+	if database.Fips.RewriteCfb {
+		log.Info(fmt.Sprintf("Database FIPS RewriteCfb Batch Size: %d", database.Fips.RewriteBatchSize))
+	}
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {

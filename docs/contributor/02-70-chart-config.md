@@ -18,6 +18,7 @@
 | global.database.managedGCP.<br>userNameSecretKey | Key in the database Secret for the database user. | `postgresql-broker-username` |
 | global.fips.writeGCM | Write using AES-GCM encryption. | `False` |
 | global.fips.<br>rewriteCFB | Rewrite old data using AES-GCM encryption. | `False` |
+| global.fips.<br>rewriteBatchSize | Number of records to process in one batch during rewrite. | `100` |
 | global.images.cloudsql_<br>proxy.repository | - | `eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy` |
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |

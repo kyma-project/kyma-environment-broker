@@ -63,6 +63,7 @@ type ReadSession interface {
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
 	ListActions(instanceID string) ([]runtime.Action, error)
 	GetTimeZone() (string, dberr.Error)
+	ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error)
 	GetEncryptionModeStatsForInstances() (map[string]int, error)
 	GetEncryptionModeStatsForOperations() (map[string]int, error)
 	GetEncryptionModeStatsForBindings() (map[string]int, error)
@@ -72,9 +73,11 @@ type ReadSession interface {
 type WriteSession interface {
 	InsertInstance(instance dbmodel.InstanceDTO) dberr.Error
 	UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error
+	UpdateEncryptedDataInInstance(instance dbmodel.InstanceDTO) dberr.Error
 	DeleteInstance(instanceID string) dberr.Error
 	InsertOperation(dto dbmodel.OperationDTO) dberr.Error
 	UpdateOperation(dto dbmodel.OperationDTO) dberr.Error
+	UpdateEncryptedDataInOperation(dto dbmodel.OperationDTO) dberr.Error
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string) dberr.Error
 	DeleteEvents(until time.Time) dberr.Error
 	UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error
@@ -83,6 +86,7 @@ type WriteSession interface {
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
 	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
+	UpdateEncryptedDataInBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 	InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) dberr.Error

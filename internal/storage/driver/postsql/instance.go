@@ -24,6 +24,11 @@ type Instance struct {
 	cipher     Cipher
 }
 
+func (s *Instance) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	sess := s.Factory.NewReadSession()
 	var (
@@ -350,6 +355,41 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 	var lastErr dberr.Error
 	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = sess.UpdateInstance(dto)
+
+		switch {
+		case dberr.IsNotFound(lastErr):
+			_, lastErr = s.Factory.NewReadSession().GetInstanceByID(instance.InstanceID)
+			if dberr.IsNotFound(lastErr) {
+				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
+			}
+			if lastErr != nil {
+				return false, nil
+			}
+
+			// the operation exists but the version is different
+			lastErr = dberr.Conflict("instance update conflict, instance ID: %s", instance.InstanceID)
+			return false, lastErr
+		case lastErr != nil:
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, lastErr
+	}
+	instance.Version = instance.Version + 1
+	return &instance, nil
+}
+
+func (s *Instance) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+	sess := s.Factory.NewWriteSession()
+	dto, err := s.toInstanceDTO(instance)
+	if err != nil {
+		return nil, err
+	}
+	var lastErr dberr.Error
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		lastErr = sess.UpdateEncryptedDataInInstance(dto)
 
 		switch {
 		case dberr.IsNotFound(lastErr):
