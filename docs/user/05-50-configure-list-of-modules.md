@@ -7,7 +7,7 @@ To do that, use the following two fields:
 * **default** (bool) - defines whether to use the default list of modules
 * **list** (array) - defines a custom list of modules
 
-> [!NOTE]
+> ### Note:
 > The default modules are enabled in your cluster even if you do not include the **modules** object in your JSON schema.
 
 API for module configuration is built on the **oneOf** feature from the JSON schema. If the **modules** object is passed to API, it must have only one valid option. Thus, to pass JSON API Validator, you must set only one field. See examples below.
