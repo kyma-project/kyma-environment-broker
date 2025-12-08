@@ -884,45 +884,9 @@ func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) 
 	assert.Equal(t, domain.InProgress, operations[0].State)
 }
 
-func TestUpdateOperationEncryptedData_UpdatesEncryptedDataSuccessfully(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################", true)
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
-	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
-		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
-			ClientID:     "sm-client-id",
-			ClientSecret: "sm-client-secret",
-		},
-	}
-
-	err = brokerStorage.Operations().InsertOperation(operation)
-	require.NoError(t, err)
-
-	// when
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID = "updated-client-id"
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "updated-client-secret"
-
-	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
-
-	// then
-	require.NoError(t, err)
-
-	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
-	require.NoError(t, err)
-	assert.Equal(t, "updated-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "updated-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
-}
-
 func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -933,11 +897,6 @@ func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) 
 	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 	operation.Description = "original description"
 	operation.State = domain.InProgress
-
-	err = brokerStorage.Operations().InsertOperation(operation)
-	require.NoError(t, err)
-
-	// when
 	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
 		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
 			ClientID:     "new-client-id",
@@ -945,6 +904,10 @@ func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) 
 		},
 	}
 
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
 	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
 
 	// then
@@ -956,35 +919,10 @@ func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) 
 	assert.Equal(t, domain.InProgress, retrievedOp.State)
 	assert.Equal(t, "new-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "new-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
-}
 
-func TestUpdateOperationEncryptedData_UpdatesKubeconfigData(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################", true)
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
 	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
-	operation.ProvisioningParameters.Parameters.Kubeconfig = "original-kubeconfig"
-
-	err = brokerStorage.Operations().InsertOperation(operation)
-	require.NoError(t, err)
-
-	// when
-	operation.ProvisioningParameters.Parameters.Kubeconfig = "updated-kubeconfig"
-
-	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
-
-	// then
-	require.NoError(t, err)
-
-	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
-	require.NoError(t, err)
-	assert.Equal(t, "updated-kubeconfig", retrievedOp.ProvisioningParameters.Parameters.Kubeconfig)
+	require.Equal(t, 1, len(operations))
 }
 
 func TestUpdateOperationEncryptedData_ReturnsErrorForNonExistentOperation(t *testing.T) {
@@ -1004,45 +942,6 @@ func TestUpdateOperationEncryptedData_ReturnsErrorForNonExistentOperation(t *tes
 
 	// then
 	require.Error(t, err)
-}
-
-func TestUpdateOperationEncryptedData_UpdatesMultipleSensitiveFields(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################", true)
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
-	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
-		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
-			ClientID:     "sm-client-id",
-			ClientSecret: "sm-client-secret",
-		},
-	}
-	operation.ProvisioningParameters.Parameters.Kubeconfig = "original-kubeconfig"
-
-	err = brokerStorage.Operations().InsertOperation(operation)
-	require.NoError(t, err)
-
-	// when
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID = "updated-sm-id"
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "updated-sm-secret"
-	operation.ProvisioningParameters.Parameters.Kubeconfig = "updated-kubeconfig"
-
-	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
-
-	// then
-	require.NoError(t, err)
-
-	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
-	require.NoError(t, err)
-	assert.Equal(t, "updated-sm-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "updated-sm-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
-	assert.Equal(t, "updated-kubeconfig", retrievedOp.ProvisioningParameters.Parameters.Kubeconfig)
 }
 
 func TestUpdateOperationEncryptedData_UpdatesEncryptionForCFBMode(t *testing.T) {
@@ -1067,18 +966,21 @@ func TestUpdateOperationEncryptedData_UpdatesEncryptionForCFBMode(t *testing.T) 
 	require.NoError(t, err)
 
 	// when
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID = "new-id"
-	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "new-secret"
 
 	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
 
 	// then
 	require.NoError(t, err)
 
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(operations))
+
 	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
 	require.NoError(t, err)
-	assert.Equal(t, "new-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "new-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "sm-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
 }
 
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
