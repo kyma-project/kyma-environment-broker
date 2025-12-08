@@ -74,6 +74,7 @@ func (s *Binding) Update(binding *internal.Binding) error {
 
 	return nil
 }
+
 func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
 	dtos, err := s.Factory.NewReadSession().ListBindingsEncryptedUsingCFB(batchSize)
 	if err != nil {

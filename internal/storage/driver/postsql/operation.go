@@ -23,9 +23,29 @@ type operations struct {
 	cipher Cipher
 }
 
-func (s *operations) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error) {
+	session := s.Factory.NewReadSession()
+
+	var (
+		err            error
+		operationsDTOs = make([]dbmodel.OperationDTO, 0)
+	)
+
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		var sessionError error
+		operationsDTOs, sessionError = session.ListOperationsEncryptedUsingCFB(batchSize)
+		if sessionError != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.toOperations(operationsDTOs)
+
+	return result, err
 }
 
 func NewOperation(sess postsql.Factory, cipher Cipher) *operations {

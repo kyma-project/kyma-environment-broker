@@ -25,11 +25,30 @@ type Instance struct {
 }
 
 func (s *Instance) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
-	ids, err := s.Factory.NewReadSession().ListInstancesEncryptedUsingCFB(batchSize)
+	var instances []dbmodel.InstanceDTO
+	var err error
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		var sessionError error
+		instances, sessionError = s.Factory.NewReadSession().ListInstancesEncryptedUsingCFB(batchSize)
+		if sessionError != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return ids, nil
+
+	var result []internal.Instance
+	for _, dto := range instances {
+		instance, err := s.toInstance(dto)
+		if err != nil {
+			return []internal.Instance{}, err
+		}
+		result = append(result, instance)
+	}
+
+	return result, nil
 }
 
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
