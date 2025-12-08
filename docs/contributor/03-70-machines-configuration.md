@@ -19,7 +19,7 @@ plansConfiguration:
 
 The above configuration means that the `Standard_D2s_v5` and `Standard_D4s_v5` machine types are available for the **machineType** parameter. The additional worker node pool can use the following machine types: `Standard_D2s_v5`, `Standard_D4s_v5`, `Standard_D8s_v5`, `Standard_D16s_v5`.
 
->[!NOTE]
+> ### Note:
 > The free and trial plans do not support the **machineType** parameter. The machine type is hardcoded for these plans.
 
 ## Display Names
