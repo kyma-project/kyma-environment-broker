@@ -24,8 +24,8 @@ type Instance struct {
 	cipher     Cipher
 }
 
-func (s *Instance) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
-	ids, err := s.Factory.NewReadSession().ListOperationsEncryptedUsingCFB(batchSize)
+func (s *Instance) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	ids, err := s.Factory.NewReadSession().ListInstancesEncryptedUsingCFB(batchSize)
 	if err != nil {
 		return nil, err
 	}
