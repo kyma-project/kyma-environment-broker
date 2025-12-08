@@ -775,6 +775,7 @@ func TestListOperationsEncryptedUsingCFB_ReturnsOperationsSuccessfully(t *testin
 	// when
 	err = brokerStorage.Operations().InsertOperation(operation1)
 	require.NoError(t, err)
+	encrypter.SetWriteGCMMode(false)
 	err = brokerStorage.Operations().InsertOperation(operation2)
 	require.NoError(t, err)
 
@@ -783,13 +784,10 @@ func TestListOperationsEncryptedUsingCFB_ReturnsOperationsSuccessfully(t *testin
 
 	// then
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(operations))
-	assert.Equal(t, "op-id-1", operations[0].ID)
-	assert.Equal(t, "op-id-2", operations[1].ID)
-	assert.Equal(t, "sm-client-id-1", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "sm-client-secret-1", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
-	assert.Equal(t, "sm-client-id-2", operations[1].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "sm-client-secret-2", operations[1].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, 1, len(operations))
+	assert.Equal(t, "op-id-2", operations[0].ID)
+	assert.Equal(t, "sm-client-id-2", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret-2", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
 }
 
 func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *testing.T) {
