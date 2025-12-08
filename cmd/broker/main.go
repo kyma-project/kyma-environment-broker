@@ -272,9 +272,15 @@ func main() {
 		fatalOnError(err, log)
 	}
 
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
-
 	logDatabaseFipsFlags(cfg.Database, log)
+
+	if cfg.Database.Fips.RewriteCfb && !cfg.Database.Fips.WriteGcm {
+		log.Info("Database FIPS RewriteCfb is enabled while WriteGcm is disabled. There is no sense to run rewrite in this configuration.")
+		cfg.Database.Fips.RewriteCfb = false
+		log.Info("Database FIPS RewriteCfb has been disabled.")
+	}
+
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
 
 	// create storage
 	var db storage.BrokerStorage

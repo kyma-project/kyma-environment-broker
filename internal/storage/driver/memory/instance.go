@@ -30,7 +30,7 @@ func NewInstance(operations *operations, subaccountStates *SubaccountStates) *in
 	}
 }
 
-func (s *instances) UpdateInstanceEncryptedData(instance internal.Instance) error {
+func (s *instances) ReEncryptInstance(instance internal.Instance) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }

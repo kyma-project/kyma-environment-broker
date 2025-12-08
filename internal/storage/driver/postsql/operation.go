@@ -1083,7 +1083,7 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	return lastErr
 }
 
-func (s *operations) UpdateOperationEncryptedData(op internal.Operation) error {
+func (s *operations) ReEncryptOperation(op internal.Operation) error {
 	dto, err := s.operationToDTO(&op)
 
 	if err != nil {

@@ -92,7 +92,7 @@ func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Bindi
 	return bindings, err
 }
 
-func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
+func (s *Binding) ReEncryptBinding(binding *internal.Binding) error {
 	dto, err := s.toBindingDTO(binding)
 	if err != nil {
 		return err

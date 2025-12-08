@@ -31,7 +31,7 @@ type Instances interface {
 
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 
-	UpdateInstanceEncryptedData(instance internal.Instance) error
+	ReEncryptInstance(instance internal.Instance) error
 	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
 }
 
@@ -68,7 +68,7 @@ type Operations interface {
 	DeleteByID(operationID string) error
 	GetAllOperations() ([]internal.Operation, error)
 
-	UpdateOperationEncryptedData(operation internal.Operation) error
+	ReEncryptOperation(operation internal.Operation) error
 	ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error)
 }
 
@@ -123,7 +123,7 @@ type Bindings interface {
 	ListExpired() ([]internal.Binding, error)
 	GetStatistics() (internal.BindingStats, error)
 
-	UpdateBindingEncryptedData(binding *internal.Binding) error
+	ReEncryptBinding(binding *internal.Binding) error
 	ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error)
 }
 

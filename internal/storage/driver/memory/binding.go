@@ -19,7 +19,7 @@ func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Bindi
 	panic("implement me")
 }
 
-func (s *Binding) UpdateBindingEncryptedData(binding *internal.Binding) error {
+func (s *Binding) ReEncryptBinding(binding *internal.Binding) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }

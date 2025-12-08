@@ -31,7 +31,7 @@ func NewOperation() *operations {
 	}
 }
 
-func (s *operations) UpdateOperationEncryptedData(operation internal.Operation) error {
+func (s *operations) ReEncryptOperation(operation internal.Operation) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
