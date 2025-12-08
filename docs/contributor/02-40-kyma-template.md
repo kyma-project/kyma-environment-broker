@@ -10,7 +10,7 @@ The appropriate ConfigMap is selected by filtering the resources using labels. K
 keb-config: "true"
 ```
 
-> [!NOTE]
+> ### Note:
 > Each ConfigMap that defines the configuration must have this label assigned.
 
 The actual configuration is stored in ConfigMap's `data` object. Add the `default` key under the `data` object:
@@ -36,7 +36,7 @@ data:
 
 You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for Kyma CR during the provisioning operation.
 
-> [!NOTE]
+> ### Note:
 > The `kyma-template` configuration is required.
 
 See an example of a ConfigMap with the default configuration for Kyma and specific configurations for `plan1`, `plan2`, and `trial`:
