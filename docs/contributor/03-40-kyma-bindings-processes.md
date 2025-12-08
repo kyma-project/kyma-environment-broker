@@ -67,7 +67,7 @@ Any bindings of non-existing instances are treated as orphaned and are removed. 
 In case of errors during the resource removal, the binding database record should not be removed, which is why the resource removal happens before the binding database record removal.
 Finally, the last step is to remove the binding record from the database.
 
-> ### Caution
+> ### Caution:
 > Do not remove the ServiceAccount because the removal invalidates all tokens generated for that account and thus revokes access to the cluster for all clients using the kubeconfig from the binding.
 
 ## Cleanup Job
