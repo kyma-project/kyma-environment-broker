@@ -57,7 +57,7 @@ For the `sap-converged-cloud` plan, each region is treated as a separate hypersc
 
 ## EU Access
 
-The [EU access](03-20-eu-access.md) regions need a separate credentials pool. The Secret contains the additional label **euAccess** set to `true`. This is an example of a Secret that stores EU access hyperscaler credentials:
+The [EU access](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-20-eu-access.md) regions need a separate credentials pool. The Secret contains the additional label **euAccess** set to `true`. This is an example of a Secret that stores EU access hyperscaler credentials:
 
 ```yaml
 apiVersion: v1
