@@ -810,7 +810,7 @@ func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *tes
 
 func TestListOperationsEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
