@@ -1908,6 +1908,7 @@ func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
 		},
 	}
 
+	instance.UpdatedAt = instance.UpdatedAt.UTC().Truncate(time.Second)
 	originalUpdatedAt := instance.UpdatedAt
 
 	// when
