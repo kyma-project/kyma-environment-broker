@@ -31,8 +31,8 @@ type Instances interface {
 
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 
-	UpdateInstanceEncryptedData(operation internal.Instance) error
-	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
+	UpdateInstanceEncryptedData(instance dbmodel.InstanceDTO) error
+	ListInstancesEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error)
 }
 
 type InstancesArchived interface {

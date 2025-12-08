@@ -22,16 +22,25 @@ type readSession struct {
 	session *dbr.Session
 }
 
-func (r readSession) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error) {
-	//TODO implement me
-	panic("implement me")
+func (r readSession) ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error) {
+	var bindingDTOS []dbmodel.BindingDTO
+	stmt := r.session.Select("*").From(BindingsTableName).Where(dbr.Eq("encryption_mode", "AES-CFB")).Limit(uint64(batchSize))
+	_, err := stmt.Load(&bindingDTOS)
+	return bindingDTOS, err
 }
 
-func (r readSession) ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error) {
-	var bindings []dbmodel.BindingDTO
-	stmt := r.session.Select("*").From(BindingsTableName).Where(dbr.Eq("encryption_mode", "AES-CFB")).Limit(uint64(batchSize))
-	_, err := stmt.Load(&bindings)
-	return bindings, err
+func (r readSession) ListInstancesEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error) {
+	var instanceDTOS []dbmodel.InstanceDTO
+	stmt := r.session.Select("*").From(InstancesTableName).Where(dbr.Eq("encryption_mode", "AES-CFB")).Limit(uint64(batchSize))
+	_, err := stmt.Load(&instanceDTOS)
+	return instanceDTOS, err
+}
+
+func (r readSession) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+	var operationDTOS []dbmodel.OperationDTO
+	stmt := r.session.Select("*").From(OperationTableName).Where(dbr.Eq("encryption_mode", "AES-CFB")).Limit(uint64(batchSize))
+	_, err := stmt.Load(&operationDTOS)
+	return operationDTOS, err
 }
 
 func (r readSession) GetEncryptionModeStatsForInstances() (map[string]int, error) {
