@@ -10,7 +10,8 @@ Check the operation status for the provisioning and deprovisioning operations.
    export OPERATION_ID={OBTAINED_OPERATION_ID}
    ```
 
-   > **NOTE:** Ensure that the **BROKER_URL** and **INSTANCE_ID** environment variables are exported as well before you proceed.
+   > ### Note:
+   > Ensure that the **BROKER_URL** and **INSTANCE_ID** environment variables are exported as well before you proceed.
 
 2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning or deprovisioning succeeded.
 
