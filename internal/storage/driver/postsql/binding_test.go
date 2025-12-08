@@ -624,3 +624,198 @@ func TestListBindingsEncryptedUsingCFB_HandlesMultipleBindingsPerInstance(t *tes
 		assert.Equal(t, instanceID, b.InstanceID)
 	}
 }
+
+func TestReEncryptBinding_PreservesBindingMetadata(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	binding := fixture.FixBinding("binding-1")
+	binding.CreatedBy = "test-user"
+	binding.ExpirationSeconds = 3600
+
+	// when
+	err = brokerStorage.Bindings().Insert(&binding)
+	require.NoError(t, err)
+
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+
+	// then
+	require.NoError(t, err)
+
+	retrievedBinding, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "binding-1", retrievedBinding.ID)
+	assert.Equal(t, "test-user", retrievedBinding.CreatedBy)
+	assert.Equal(t, int64(3600), retrievedBinding.ExpirationSeconds)
+}
+
+func TestReEncryptBinding_ReEncryptsFromCFBToGCM(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	binding := fixture.FixBinding("binding-1")
+	binding.Kubeconfig = "kubeconfig-data"
+
+	// when
+	err = brokerStorage.Bindings().Insert(&binding)
+	require.NoError(t, err)
+
+	// Verify it was inserted with CFB mode
+	statsBeforeReencrypt, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+	assert.Equal(t, 1, statsBeforeReencrypt[storage.EncryptionModeCFB])
+
+	// Switch to GCM mode
+	encrypter.SetWriteGCMMode(true)
+
+	// Re-encrypt the binding
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+
+	// then
+	require.NoError(t, err)
+
+	// Verify it was re-encrypted with GCM mode
+	statsAfterReencrypt, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+	assert.Equal(t, 0, statsAfterReencrypt[storage.EncryptionModeCFB])
+	assert.Equal(t, 1, statsAfterReencrypt[storage.EncryptionModeGCM])
+
+	// Verify data is still accessible
+	retrievedBinding, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "kubeconfig-data", retrievedBinding.Kubeconfig)
+}
+
+func TestReEncryptBinding_PreservesEncryptedDataAfterReencryption(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	binding := fixture.FixBinding("binding-1")
+	binding.Kubeconfig = "test-kubeconfig-data"
+
+	// when
+	err = brokerStorage.Bindings().Insert(&binding)
+	require.NoError(t, err)
+
+	// Re-encrypt
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+
+	// then
+	require.NoError(t, err)
+
+	retrievedBinding, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "test-kubeconfig-data", retrievedBinding.Kubeconfig)
+}
+
+func TestReEncryptBinding_ReturnsErrorForNonExistentBinding(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	nonExistentBinding := fixture.FixBinding("non-existent-binding")
+
+	// when
+	err = brokerStorage.Bindings().ReEncryptBinding(&nonExistentBinding)
+
+	// then
+	require.Error(t, err)
+}
+
+func TestReEncryptBinding_HandlesMultipleReencryptions(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	binding := fixture.FixBinding("binding-1")
+	binding.Kubeconfig = "kubeconfig-data"
+
+	// when
+	err = brokerStorage.Bindings().Insert(&binding)
+	require.NoError(t, err)
+
+	// Re-encrypt first time with CFB
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+	require.NoError(t, err)
+
+	// Verify data is accessible after first re-encryption
+	retrieved1, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "kubeconfig-data", retrieved1.Kubeconfig)
+
+	// Switch to GCM and re-encrypt again
+	encrypter.SetWriteGCMMode(true)
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+	require.NoError(t, err)
+
+	// Verify data is still accessible after switching encryption mode
+	retrieved2, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "kubeconfig-data", retrieved2.Kubeconfig)
+}
+
+func TestReEncryptBinding_ReEncryptsFromCFBToGCMWithStats(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	binding := fixture.FixBinding("binding-1")
+	binding.Kubeconfig = "kubeconfig-data"
+
+	// when
+	err = brokerStorage.Bindings().Insert(&binding)
+	require.NoError(t, err)
+
+	// Switch to GCM mode
+	encrypter.SetWriteGCMMode(true)
+
+	// Re-encrypt the binding
+	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
+
+	// then
+	require.NoError(t, err)
+
+	// Verify encryption stats changed
+	statsAfterReencrypt, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForBindings()
+	require.NoError(t, err)
+	assert.Equal(t, 1, statsAfterReencrypt[storage.EncryptionModeGCM])
+	assert.Equal(t, 0, statsAfterReencrypt[storage.EncryptionModeCFB])
+
+	// Verify CFB bindings list is now empty
+	bindings, err := brokerStorage.Bindings().ListBindingsEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(bindings))
+}
