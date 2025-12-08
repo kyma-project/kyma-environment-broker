@@ -747,49 +747,6 @@ func TestOperation_BothModes(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 2}, statsForOperations))
 }
 
-func TestListOperationsEncryptedUsingCFB_ReturnsOperationsSuccessfully(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################", true)
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	operation1 := fixture.FixProvisioningOperation("op-id-1", "inst-id-1")
-	operation1.ProvisioningParameters.ErsContext = internal.ERSContext{
-		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
-			ClientID:     "sm-client-id-1",
-			ClientSecret: "sm-client-secret-1",
-		},
-	}
-	operation2 := fixture.FixProvisioningOperation("op-id-2", "inst-id-2")
-	operation2.ProvisioningParameters.ErsContext = internal.ERSContext{
-		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
-			ClientID:     "sm-client-id-2",
-			ClientSecret: "sm-client-secret-2",
-		},
-	}
-
-	// when
-	err = brokerStorage.Operations().InsertOperation(operation1)
-	require.NoError(t, err)
-	encrypter.SetWriteGCMMode(false)
-	err = brokerStorage.Operations().InsertOperation(operation2)
-	require.NoError(t, err)
-
-	// when
-	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, 1, len(operations))
-	assert.Equal(t, "op-id-2", operations[0].ID)
-	assert.Equal(t, "sm-client-id-2", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "sm-client-secret-2", operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
-}
-
 func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *testing.T) {
 	// given
 	encrypter := storage.NewEncrypter("################################", true)
@@ -899,7 +856,7 @@ func TestListOperationsEncryptedUsingCFB_ReturnsCFBEncryptedOperationsOnly(t *te
 
 func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
