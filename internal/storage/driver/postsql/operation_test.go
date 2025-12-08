@@ -968,11 +968,11 @@ func TestReEncryptedOperation_UpdatesEncryptionForCFBMode(t *testing.T) {
 		},
 	}
 
-	err = brokerStorage.Operations().InsertOperation(operation)
-	require.NoError(t, err)
-
 	operation.UpdatedAt = operation.UpdatedAt.UTC().Truncate(time.Second)
 	originalUpdatedAt := operation.UpdatedAt
+
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 
 	encrypter.SetWriteGCMMode(true)
 
