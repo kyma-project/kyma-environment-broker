@@ -23,7 +23,7 @@ By default, the CronJob is set to run every day at 3:00 am:
 kyma-environment-broker.trialCleanup.schedule: "0,15,30,45 * * * *"
 ```
 
-> [!NOTE]
+> ### Note:
 > If you need to test the Job, you can run it in the `dry-run` mode.
 > In this mode, the Job only logs the information about the candidate instances, that is, instances meeting the configured criteria. The instances are not affected.
 
