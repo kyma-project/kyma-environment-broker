@@ -907,6 +907,8 @@ func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) 
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
+	encrypter.SetWriteGCMMode(true)
+
 	// when
 	err = brokerStorage.Operations().UpdateOperationEncryptedData(operation)
 
@@ -922,7 +924,7 @@ func TestUpdateOperationEncryptedData_PreservesNonEncryptedFields(t *testing.T) 
 
 	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(operations))
+	require.Equal(t, 0, len(operations))
 }
 
 func TestUpdateOperationEncryptedData_ReturnsErrorForNonExistentOperation(t *testing.T) {
