@@ -164,8 +164,8 @@ func FixInstanceWithProvisioningParameters(id string, params internal.Provisioni
 		ProviderRegion:              Region,
 		Provider:                    pkg.Azure,
 		InstanceDetails:             FixInstanceDetails(id),
-		CreatedAt:                   time.Now(),
-		UpdatedAt:                   time.Now().Add(time.Minute * 5),
+		CreatedAt:                   time.Now().UTC(),
+		UpdatedAt:                   time.Now().Add(time.Minute * 5).UTC(),
 		Version:                     0,
 	}
 }
@@ -184,8 +184,8 @@ func FixOperationWithProvisioningParameters(id, instanceId string, opType intern
 		ID:                     id,
 		Type:                   opType,
 		Version:                0,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now().Add(time.Hour * 48),
+		CreatedAt:              time.Now().UTC(),
+		UpdatedAt:              time.Now().Add(time.Hour * 48).UTC(),
 		InstanceID:             instanceId,
 		ProvisionerOperationID: "",
 		State:                  domain.Succeeded,

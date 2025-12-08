@@ -884,7 +884,7 @@ func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) 
 	assert.Equal(t, domain.InProgress, operations[0].State)
 }
 
-func TestReEncrypteOperation_PreservesNonEncryptedFields(t *testing.T) {
+func TestReEncryptOperation_PreservesNonEncryptedFields(t *testing.T) {
 	// given
 	encrypter := storage.NewEncrypter("################################", false)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
@@ -907,6 +907,8 @@ func TestReEncrypteOperation_PreservesNonEncryptedFields(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
+	originalUpdatedAt := operation.UpdatedAt
+
 	encrypter.SetWriteGCMMode(true)
 
 	// when
@@ -921,6 +923,7 @@ func TestReEncrypteOperation_PreservesNonEncryptedFields(t *testing.T) {
 	assert.Equal(t, domain.InProgress, retrievedOp.State)
 	assert.Equal(t, "new-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "new-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrievedOp.UpdatedAt, "UpdatedAt field should not change after re-encryption")
 
 	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
 	require.NoError(t, err)
@@ -967,6 +970,8 @@ func TestReEncryptedOperation_UpdatesEncryptionForCFBMode(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
+	originalUpdatedAt := operation.UpdatedAt
+
 	encrypter.SetWriteGCMMode(true)
 
 	// when
@@ -985,6 +990,7 @@ func TestReEncryptedOperation_UpdatesEncryptionForCFBMode(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "sm-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "sm-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrievedOp.UpdatedAt, "UpdatedAt field should not change after re-encryption")
 }
 
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {

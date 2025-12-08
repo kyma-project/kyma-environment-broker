@@ -1908,6 +1908,8 @@ func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
 		},
 	}
 
+	originalUpdatedAt := instance.UpdatedAt
+
 	// when
 	err = brokerStorage.Instances().Insert(instance)
 	require.NoError(t, err)
@@ -1921,6 +1923,7 @@ func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "sm-client-id", retrieved1.Parameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "sm-client-secret", retrieved1.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrieved1.UpdatedAt)
 
 	// Switch to GCM and re-encrypt again
 	encrypter.SetWriteGCMMode(true)
@@ -1932,6 +1935,7 @@ func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "sm-client-id", retrieved2.Parameters.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "sm-client-secret", retrieved2.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrieved2.UpdatedAt)
 }
 
 func fixProvisionOperation(instanceId string) internal.Operation {

@@ -298,6 +298,7 @@ func (ws writeSession) UpdateEncryptedDataInInstance(instance dbmodel.InstanceDT
 		Where(dbr.Eq("version", instance.Version)).
 		Set("provisioning_parameters", instance.ProvisioningParameters).
 		Set("encryption_mode", instance.EncryptionMode).
+		Set("updated_at", instance.UpdatedAt). // since in the DB there is default now(), we need to explicitly set it to preserve the timestamp
 		Exec()
 
 	if err != nil {
