@@ -31,8 +31,8 @@ type Instances interface {
 
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 
-	UpdateInstanceEncryptedData(instance dbmodel.InstanceDTO) error
-	ListInstancesEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error)
+	UpdateInstanceEncryptedData(instance internal.Instance) error
+	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
 }
 
 type InstancesArchived interface {
@@ -68,8 +68,8 @@ type Operations interface {
 	DeleteByID(operationID string) error
 	GetAllOperations() ([]internal.Operation, error)
 
-	UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error
-	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error)
+	UpdateOperationEncryptedData(operation internal.Operation) error
+	ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error)
 }
 
 type Provisioning interface {
