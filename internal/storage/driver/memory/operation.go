@@ -31,12 +31,12 @@ func NewOperation() *operations {
 	}
 }
 
-func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+func (s *operations) UpdateOperationEncryptedData(operation internal.Operation) error {
 	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
 
-func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
+func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error) {
 	//TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }

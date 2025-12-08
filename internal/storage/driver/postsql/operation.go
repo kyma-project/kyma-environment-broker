@@ -1083,14 +1083,19 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	return lastErr
 }
 
-func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO) error {
+func (s *operations) UpdateOperationEncryptedData(op internal.Operation) error {
+	dto, err := s.operationToDTO(&op)
+
+	if err != nil {
+		return fmt.Errorf("while converting Operation to DTO: %w", err)
+	}
 	session := s.Factory.NewWriteSession()
 
 	var lastErr error
 	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		lastErr = session.UpdateEncryptedDataInOperation(operation)
+		lastErr = session.UpdateEncryptedDataInOperation(dto)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
-			_, lastErr = s.Factory.NewReadSession().GetOperationByID(operation.ID)
+			_, lastErr = s.Factory.NewReadSession().GetOperationByID(dto.ID)
 			if dberr.IsNotFound(lastErr) {
 				return false, lastErr
 			}
@@ -1099,11 +1104,15 @@ func (s *operations) UpdateOperationEncryptedData(operation dbmodel.OperationDTO
 			}
 
 			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
+			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", dto.ID)
 			return false, lastErr
 		}
 		return true, nil
 	})
+	return lastErr
+
+	op.Version = op.Version + 1
+
 	return lastErr
 }
 

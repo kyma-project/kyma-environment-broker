@@ -403,11 +403,11 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 	return &instance, nil
 }
 
-func (s *Instance) UpdateInstanceEncryptedData(instance internal.Instance) (*internal.Instance, error) {
+func (s *Instance) UpdateInstanceEncryptedData(instance internal.Instance) error {
 	sess := s.Factory.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	var lastErr dberr.Error
 	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -432,10 +432,10 @@ func (s *Instance) UpdateInstanceEncryptedData(instance internal.Instance) (*int
 		return true, nil
 	})
 	if err != nil {
-		return nil, lastErr
+		return lastErr
 	}
 	instance.Version = instance.Version + 1
-	return &instance, nil
+	return nil
 }
 
 func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDTO, error) {

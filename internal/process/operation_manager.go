@@ -97,6 +97,7 @@ func (om *OperationManager) OperationCanceled(operation internal.Operation, desc
 func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
+	log.Debug(fmt.Sprintf("Retry Operation map size is: %d", len(om.retryTimestamps)))
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		remainingTime := om.getRemainingTime(operation.ID, maxTime)
