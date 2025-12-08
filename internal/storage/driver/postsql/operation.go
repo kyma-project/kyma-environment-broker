@@ -1110,10 +1110,6 @@ func (s *operations) UpdateOperationEncryptedData(op internal.Operation) error {
 		return true, nil
 	})
 	return lastErr
-
-	op.Version = op.Version + 1
-
-	return lastErr
 }
 
 func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operationType internal.OperationType) ([]dbmodel.OperationDTO, error) {
