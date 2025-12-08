@@ -1,6 +1,6 @@
 # Hyperscaler Account Pool
 
-> [!NOTE]
+> ### Note:
 > The feature referred to as Hyperscaler Account Pool (HAP) manages entities that are identified as `SubscriptionSecrets` in code. 
 > You may encounter this terminology in code references such as `ResolveSubscriptionSecretStep` and `SubscriptionSecretName`.
 
