@@ -98,7 +98,7 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
 	// log length of the map
-	log.Debug(fmt.Sprintf("Current retry timestamps for step %s map length", om.step), slog.Int("length", len(om.retryTimestamps)))
+	log.Info(fmt.Sprintf("Current retry timestamps for step %s map length", om.step), slog.Int("length", len(om.retryTimestamps)))
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		remainingTime := om.getRemainingTime(operation.ID, maxTime)
@@ -120,7 +120,7 @@ func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Opera
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
 	// log length of the map
-	log.Debug(fmt.Sprintf("Current retry timestamps for step %s map length", om.step), slog.Int("length", len(om.retryTimestamps)))
+	log.Info(fmt.Sprintf("Current retry timestamps for step %s map length", om.step), slog.Int("length", len(om.retryTimestamps)))
 
 	om.storeCreatedAtIfMissing(operation.ID, operation.CreatedAt)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
@@ -147,6 +147,9 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 	}
 
 	log.Info(fmt.Sprintf("retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
+
+	// log length of the map
+	log.Info(fmt.Sprintf("Current retry timestamps for step %s map length", om.step), slog.Int("length", len(om.retryTimestamps)))
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		return operation, retryInterval, nil
