@@ -442,9 +442,9 @@ func main() {
 
 func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfig, stats EncryptionModeStatistics, log *slog.Logger) {
 	s := gocron.NewScheduler(time.UTC)
-	var runInstancesJob = stats.instances[storage.EncryptionModeCFB] > 0
-	var runOperationsJob = stats.operations[storage.EncryptionModeCFB] > 0
-	var runBindingsJob = stats.bindings[storage.EncryptionModeCFB] > 0
+	runInstancesJob := stats.instances[storage.EncryptionModeCFB] > 0
+	runOperationsJob := stats.operations[storage.EncryptionModeCFB] > 0
+	runBindingsJob := stats.bindings[storage.EncryptionModeCFB] > 0
 
 	if runInstancesJob {
 		log.Info("Scheduling instance rewrite job")
