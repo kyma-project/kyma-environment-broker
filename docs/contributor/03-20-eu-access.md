@@ -12,7 +12,7 @@ SAP BTP, Kyma runtime supports the following EU Access BTP subaccount regions:
 
 When the **PlatformRegion** is an EU access BTP subaccount region, the following happens:
 - Kyma Environment Broker (KEB) provides the **euAccess** parameter to Kyma Infrastructure Manager (KIM)
-- KEB service catalog restricts the available **region** parameter to the following values:
+- KEB service catalog restricts the available **region** parameter to the following supported cluster regions:
 
   | BTP Subaccount Region |   Cluster Region   |
   |:---------------------:|:------------------:|
