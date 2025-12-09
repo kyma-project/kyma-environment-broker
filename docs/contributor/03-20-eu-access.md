@@ -21,7 +21,7 @@ When the **PlatformRegion** is an EU access BTP subaccount region, the following
   |       `cf-eu01`       |     `eu-de-2`      |
   |       `cf-eu02`       |     `eu-de-1`      |
 
-Kyma Control Plane manages:
+See examples of Kyma Control Plane-managed EU access configurations.
 
 - The `cf-eu11` Kyma runtimes using a dedicated AWS hyperscaler account pool with EU Access enabled:
   ```yaml
