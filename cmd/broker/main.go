@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -301,7 +302,12 @@ func main() {
 	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
 
 	// log statistics about encryption mode
-	logEncryptionModeStatistics(db, log)
+	encryptionModeStats := getEncryptionModeStatistics(db, log)
+
+	if cfg.Database.Fips.RewriteCfb {
+		go runRewriteEncryptedDataJobs(db, cfg.Database.Fips, encryptionModeStats, log)
+	}
+
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
@@ -434,15 +440,145 @@ func main() {
 	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
 }
 
-func logEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) {
-	stats := db.EncryptionModeStats()
-	instanceStats, err := stats.GetEncryptionModeStatsForInstances()
+func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfig, stats EncryptionModeStatistics, log *slog.Logger) {
+	s := gocron.NewScheduler(time.UTC)
+	var runInstancesJob = stats.instances[storage.EncryptionModeCFB] > 0
+	var runOperationsJob = stats.operations[storage.EncryptionModeCFB] > 0
+	var runBindingsJob = stats.bindings[storage.EncryptionModeCFB] > 0
+
+	if runInstancesJob {
+		log.Info("Scheduling instance rewrite job")
+		_, err := s.Every(cfg.BatchInterval).Do(func() {
+			if runInstancesJob {
+				flag, err := rewriteInstances(db, cfg.RewriteBatchSize, log)
+				if err != nil {
+					log.Error(fmt.Sprintf("while rewriting instances encrypted data: %s", err))
+				}
+				runInstancesJob = flag
+			}
+		})
+		if err != nil {
+			log.Error(fmt.Sprintf("while scheduling instance rewrite job: %s", err))
+		}
+	}
+
+	if runOperationsJob {
+		log.Info("Scheduling operations rewrite job")
+		_, err := s.Every(cfg.BatchInterval).Do(func() {
+			if runOperationsJob {
+				flag, err := rewriteOperations(db, cfg.RewriteBatchSize, log)
+				if err != nil {
+					log.Error(fmt.Sprintf("while rewriting operations encrypted data: %s", err))
+				}
+				runOperationsJob = flag
+			}
+		})
+		if err != nil {
+			log.Error(fmt.Sprintf("while scheduling operations rewrite job: %s", err))
+		}
+	}
+
+	if runBindingsJob {
+		log.Info("Scheduling bindings rewrite job")
+		_, err := s.Every(cfg.BatchInterval).Do(func() {
+			if runBindingsJob {
+				flag, err := rewriteBindings(db, cfg.RewriteBatchSize, log)
+				if err != nil {
+					log.Error(fmt.Sprintf("while rewriting bindings encrypted data: %s", err))
+				}
+				runBindingsJob = flag
+			}
+		})
+		if err != nil {
+			log.Error(fmt.Sprintf("while scheduling bindings rewrite job: %s", err))
+		}
+	}
+
+	s.StartBlocking() // blocks the current goroutine - we do not reach the end of the function
+
+}
+
+func rewriteInstances(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
+	logs.Info("Starting rewriteInstances job")
+	batch, err := db.Instances().ListInstancesEncryptedUsingCFB(batchSize)
+	if err != nil {
+		logs.Error(fmt.Sprintf("while listing instances to rewrite: %s", err))
+		return true, err
+	}
+	for _, instance := range batch {
+		logs.Info(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
+		err := db.Instances().ReEncryptInstance(instance)
+		if err != nil {
+			logs.Error(fmt.Sprintf("while rewriting instance %s: %s", instance.InstanceID, err))
+			return true, err
+		}
+	}
+	return len(batch) != 0, nil
+}
+
+func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
+	logs.Info("Starting rewriteOperations job")
+	batch, err := db.Operations().ListOperationsEncryptedUsingCFB(batchSize)
+	if err != nil {
+		logs.Error(fmt.Sprintf("while listing operations to rewrite: %s", err))
+		return true, err
+	}
+	for _, operation := range batch {
+		logs.Info(fmt.Sprintf("Rewriting operations %s encrypted data from CFB to GCM", operation.ID))
+		err := db.Operations().ReEncryptOperation(operation)
+		if err != nil {
+			logs.Error(fmt.Sprintf("while rewriting operation %s: %s", operation.ID, err))
+			return true, err
+		}
+	}
+	return len(batch) != 0, nil
+}
+
+func rewriteBindings(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
+	logs.Info("Starting rewriteBindings job")
+	batch, err := db.Bindings().ListBindingsEncryptedUsingCFB(batchSize)
+	if err != nil {
+		logs.Error(fmt.Sprintf("while listing bindings to rewrite: %s", err))
+		return true, err
+	}
+	for _, binding := range batch {
+		logs.Info(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
+		err := db.Bindings().ReEncryptBinding(&binding)
+		if err != nil {
+			logs.Error(fmt.Sprintf("while rewriting binding %s: %s", binding.ID, err))
+			return true, err
+		}
+	}
+	return len(batch) != 0, nil
+}
+
+type EncryptionModeStatistics struct {
+	instances  map[string]int
+	operations map[string]int
+	bindings   map[string]int
+}
+
+func getEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) EncryptionModeStatistics {
+	dbStats := db.EncryptionModeStats()
+	stats := EncryptionModeStatistics{instances: make(map[string]int), operations: make(map[string]int), bindings: make(map[string]int)}
+	instanceStats, err := dbStats.GetEncryptionModeStatsForInstances()
 	fatalOnError(err, log)
-	operationStats, err := stats.GetEncryptionModeStatsForOperations()
+	stats.instances[storage.EncryptionModeCFB] = instanceStats[storage.EncryptionModeCFB] + instanceStats[strings.ToLower(storage.EncryptionModeCFB)]
+	stats.instances[storage.EncryptionModeGCM] = instanceStats[storage.EncryptionModeGCM]
+	operationStats, err := dbStats.GetEncryptionModeStatsForOperations()
 	fatalOnError(err, log)
-	bindingStats, err := stats.GetEncryptionModeStatsForBindings()
+	stats.operations[storage.EncryptionModeCFB] = operationStats[storage.EncryptionModeCFB] + operationStats[strings.ToLower(storage.EncryptionModeCFB)]
+	stats.operations[storage.EncryptionModeGCM] = operationStats[storage.EncryptionModeGCM]
+	bindingStats, err := dbStats.GetEncryptionModeStatsForBindings()
 	fatalOnError(err, log)
-	log.Info(fmt.Sprintf("Encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceStats, operationStats, bindingStats))
+	stats.bindings[storage.EncryptionModeCFB] = bindingStats[storage.EncryptionModeCFB] + bindingStats[strings.ToLower(storage.EncryptionModeCFB)]
+	stats.bindings[storage.EncryptionModeGCM] = bindingStats[storage.EncryptionModeGCM]
+
+	log.Info(fmt.Sprintf("Raw encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceStats, operationStats, bindingStats))
+	log.Info(fmt.Sprintf("Encryption mode statistics for instances: CFB=%d, GCM=%d", stats.instances[storage.EncryptionModeCFB], stats.instances[storage.EncryptionModeGCM]))
+	log.Info(fmt.Sprintf("Encryption mode statistics for operations: CFB=%d, GCM=%d", stats.operations[storage.EncryptionModeCFB], stats.operations[storage.EncryptionModeGCM]))
+	log.Info(fmt.Sprintf("Encryption mode statistics for bindings: CFB=%d, GCM=%d", stats.bindings[storage.EncryptionModeCFB], stats.bindings[storage.EncryptionModeGCM]))
+	return stats
 }
 
 func logDatabaseFipsFlags(database storage.Config, log *slog.Logger) {
