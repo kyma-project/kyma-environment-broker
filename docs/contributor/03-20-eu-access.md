@@ -1,7 +1,5 @@
 # EU Access
 
-## Overview
-
 EU Access ensures that your data residency is in the European Economic Area or Switzerland.
 
 SAP BTP, Kyma runtime supports the following EU Access BTP subaccount regions:
