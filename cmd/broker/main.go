@@ -450,11 +450,11 @@ func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfi
 		log.Info("Scheduling instance rewrite job")
 		_, err := s.Every(cfg.BatchInterval).Do(func() {
 			if runInstancesJob {
-				flag, err := rewriteInstances(db, cfg.RewriteBatchSize, log)
+				var err error
+				runInstancesJob, err = rewriteInstances(db, cfg.RewriteBatchSize, log)
 				if err != nil {
 					log.Error(fmt.Sprintf("while rewriting instances encrypted data: %s", err))
 				}
-				runInstancesJob = flag
 			}
 		})
 		if err != nil {
@@ -466,11 +466,11 @@ func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfi
 		log.Info("Scheduling operations rewrite job")
 		_, err := s.Every(cfg.BatchInterval).Do(func() {
 			if runOperationsJob {
-				flag, err := rewriteOperations(db, cfg.RewriteBatchSize, log)
+				var err error
+				runOperationsJob, err = rewriteOperations(db, cfg.RewriteBatchSize, log)
 				if err != nil {
 					log.Error(fmt.Sprintf("while rewriting operations encrypted data: %s", err))
 				}
-				runOperationsJob = flag
 			}
 		})
 		if err != nil {
@@ -482,11 +482,11 @@ func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfi
 		log.Info("Scheduling bindings rewrite job")
 		_, err := s.Every(cfg.BatchInterval).Do(func() {
 			if runBindingsJob {
-				flag, err := rewriteBindings(db, cfg.RewriteBatchSize, log)
+				var err error
+				runBindingsJob, err = rewriteBindings(db, cfg.RewriteBatchSize, log)
 				if err != nil {
 					log.Error(fmt.Sprintf("while rewriting bindings encrypted data: %s", err))
 				}
-				runBindingsJob = flag
 			}
 		})
 		if err != nil {
@@ -501,54 +501,64 @@ func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfi
 func rewriteInstances(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
 	logs.Info("Starting rewriteInstances job")
 	batch, err := db.Instances().ListInstancesEncryptedUsingCFB(batchSize)
+	counter := 0
 	if err != nil {
 		logs.Error(fmt.Sprintf("while listing instances to rewrite: %s", err))
 		return true, err
 	}
 	for _, instance := range batch {
-		logs.Info(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
+		logs.Debug(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
 		err := db.Instances().ReEncryptInstance(instance)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting instance %s: %s", instance.InstanceID, err))
 			return true, err
 		}
+		counter++
 	}
+	logs.Info(fmt.Sprintf("Rewritten %d/%d instances in this batch", counter, len(batch)))
 	return len(batch) != 0, nil
 }
 
 func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
 	logs.Info("Starting rewriteOperations job")
 	batch, err := db.Operations().ListOperationsEncryptedUsingCFB(batchSize)
+	counter := 0
+
 	if err != nil {
 		logs.Error(fmt.Sprintf("while listing operations to rewrite: %s", err))
 		return true, err
 	}
 	for _, operation := range batch {
-		logs.Info(fmt.Sprintf("Rewriting operations %s encrypted data from CFB to GCM", operation.ID))
+		logs.Debug(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
 		err := db.Operations().ReEncryptOperation(operation)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting operation %s: %s", operation.ID, err))
 			return true, err
 		}
+		counter++
 	}
+	logs.Info(fmt.Sprintf("Rewritten %d/%d operations in this batch", counter, len(batch)))
 	return len(batch) != 0, nil
 }
 
 func rewriteBindings(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
 	logs.Info("Starting rewriteBindings job")
 	batch, err := db.Bindings().ListBindingsEncryptedUsingCFB(batchSize)
+	counter := 0
 	if err != nil {
 		logs.Error(fmt.Sprintf("while listing bindings to rewrite: %s", err))
 		return true, err
 	}
 	for _, binding := range batch {
-		logs.Info(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
+		logs.Debug(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
 		err := db.Bindings().ReEncryptBinding(&binding)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting binding %s: %s", binding.ID, err))
 			return true, err
 		}
+		counter++
 	}
+	logs.Info(fmt.Sprintf("Rewritten %d/%d bindings in this batch", counter, len(batch)))
 	return len(batch) != 0, nil
 }
 
