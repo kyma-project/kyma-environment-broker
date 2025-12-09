@@ -10,7 +10,7 @@ Get the SAP BTP, Kyma runtime instance details.
    export INSTANCE_ID={SET_INSTANCE_ID}
    ```
 
-   > [!NOTE]
+   > ### Note:
    > Ensure that the BROKER_URL and INSTANCE_ID environment variables are exported as well before you proceed.
 
 2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning/deprovisioning succeeded:
@@ -66,5 +66,5 @@ Get the SAP BTP, Kyma runtime instance details.
       }
       ```
 
-  > [!NOTE]
+  > ### Note:
   > The fields under the **parameters** field can differ depending on the provisioning input.

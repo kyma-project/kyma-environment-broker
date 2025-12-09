@@ -8,7 +8,7 @@ To specify the duration for which the generated kubeconfig is valid explicitly, 
 
 The following diagram shows the flow of creating a service binding in Kyma Environment Broker (KEB). The process starts with a PUT request sent to KEB API.
 
-> [!NOTE]
+> ### Note:
 > On the diagram, "error" refers to a foreseen error in the process, not a server error.
 
 ![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
@@ -40,14 +40,14 @@ If a feature flag for Kyma bindings is enabled, KEB does the following:
 Binding creation consists of the following steps:
 1. KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body.
 
-   > [!NOTE]
+   > ### Note:
    >  Expired bindings do not count towards the bindings limit. However, as long as they exist in the database, they prevent creating new bindings with the same ID. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
 2. KEB creates ServiceAccount, ClusterRole (administrator privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. You can use the ClusterRole to modify permissions granted to the kubeconfig.
 3. The created resources are used to generate a [TokenRequest](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is wrapped in a kubeconfig template and returned to the user.
 4. The encrypted credentials are stored as an attribute in the previously created database binding.
 
-   > [!NOTE]
+   > ### Note:
    >  It is not recommended to create multiple and unused TokenRequest resources.
 
 ## Fetching a Kyma Binding
@@ -67,7 +67,7 @@ Any bindings of non-existing instances are treated as orphaned and are removed. 
 In case of errors during the resource removal, the binding database record should not be removed, which is why the resource removal happens before the binding database record removal.
 Finally, the last step is to remove the binding record from the database.
 
-> [!WARNING]
+> ### Caution:
 > Do not remove the ServiceAccount because the removal invalidates all tokens generated for that account and thus revokes access to the cluster for all clients using the kubeconfig from the binding.
 
 ## Cleanup Job

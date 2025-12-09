@@ -1,6 +1,6 @@
 # Enable Ingress Filtering
 
-> [!NOTE]
+> ### Note:
 > The ingress filtering feature is only available to SAP internal customers as it is integrated with SAP's geo-blocking solution.
 > The ingress filtering feature is available for the `aws`, `gcp`, and `azure` plans.
 
@@ -53,5 +53,5 @@ See the example of the update request:
    }"
 ```
 
-> [!NOTE]
+> ### Note:
 > Attempt to enable or disable ingress filtering for an unsupported plan or an external customer results in an error.

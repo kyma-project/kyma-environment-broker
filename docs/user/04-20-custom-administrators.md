@@ -3,7 +3,7 @@
 Kyma Environment Broker (KEB) allows you to set a custom list of runtime administrators during SAP BTP, Kyma runtime provisioning and update operations.
 To do so, specify the additional **administrators** parameter in the provisioning or update request.
 
-> [!NOTE]
+> ### Note:
 > Provide at least one administrator in the list. The empty list causes a validation error.
 
 In the provisioning request, the **administrators** parameter overwrites the default administrator list that is taken from the **user_id** field.
@@ -53,5 +53,5 @@ See the example:
    }"
 ```
 
-> [!NOTE]
+> ### Note:
 > You can't use the **user_id** field to overwrite the administrators list. Use the **administrators** parameter instead.

@@ -5,7 +5,7 @@
 The Zones Discovery feature extends Kyma Environment Broker (KEB) to dynamically determine availability zones for Kyma and additional worker node pools during provisioning and updates.
 Operators can configure worker node pools to use either static zone assignments (predefined in configuration) or dynamic zone assignments (queried live from the hyperscaler).
 
-> [!NOTE]
+> ### Note:
 > This feature is currently supported only on AWS.
 
 Configuration:

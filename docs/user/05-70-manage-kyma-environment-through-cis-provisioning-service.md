@@ -90,7 +90,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g')
    ```
    
-   > [!NOTE]
+   > ### Note:
    > You can create a maximum of 10 non-expired bindings. 
    > If you try to create more, you get the message stating that you've reached the maximum number of non-expired bindings.
 
@@ -132,7 +132,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
       kubectl get pods
       ```
       
-      > [!NOTE]
+      > ### Note:
       > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
 
 ## Next Steps
@@ -143,5 +143,5 @@ To deprovision the Kyma runtime, run:
    curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
    ```
 
-   > [!NOTE]
+   > ### Note:
    > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.

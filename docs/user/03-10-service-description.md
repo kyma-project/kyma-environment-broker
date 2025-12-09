@@ -25,7 +25,7 @@ There is also an experimental plan:
 |-----------|----------------------------------------|-------------------------------------------------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-> [!WARNING]
+> ### Caution:
 > The experimental plan may fail to work or be removed.
 
 The `alicloud` plan is disabled by default and is not intended for use.
@@ -238,7 +238,7 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 ## Own Cluster Plan
 
-> [!NOTE]
+> ### Note:
 > The `own_cluster` plan has been deprecated.
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:

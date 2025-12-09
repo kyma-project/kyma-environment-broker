@@ -109,7 +109,7 @@ broker:
     bindablePlans: aws
 ```
 
-> [!NOTE]
+> ### Note:
 > Bindings are not required to create a Kyma instance.
 
 For more information, see [Kyma Bindings](../user/05-60-kyma-bindings.md).
