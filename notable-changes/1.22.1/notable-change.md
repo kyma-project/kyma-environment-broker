@@ -1,4 +1,4 @@
-<!--{"metadata":{"requirement":"RECOMMENDED","type":"INTERNAL","category":"CONFIGURATION","additionalFiles":0}}-->
+<!--{"metadata":{"requirement":"RECOMMENDED","type":"INTERNAL","category":"CONFIGURATION"}}-->
 
 # Updating Kyma Environment Broker: Zones Discovery
 
