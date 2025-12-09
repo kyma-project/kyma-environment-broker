@@ -31,7 +31,6 @@ When introducing a KEB change that requires operator action, perform the followi
          - `requirement`: **MANDATORY** or **RECOMMENDED**
          - `type`: **EXTERNAL** or **INTERNAL**
          - `category`: **CONFIGURATION**, **FEATURE**, or **MIGRATION**
-         - `additionalFiles`: number of supporting files, such as migration scripts
         
       - Example:
      
@@ -40,8 +39,7 @@ When introducing a KEB change that requires operator action, perform the followi
           "metadata": {
             "requirement": "RECOMMENDED",
             "type": "INTERNAL",
-            "category": "CONFIGURATION",
-            "additionalFiles": 0
+            "category": "CONFIGURATION"
           }
         }
         ```

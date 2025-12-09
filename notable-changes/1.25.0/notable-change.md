@@ -1,4 +1,4 @@
-<!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"FEATURE","additionalFiles":0}}-->
+<!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"FEATURE"}}-->
 
 # Updating Kyma Environment Broker
 
