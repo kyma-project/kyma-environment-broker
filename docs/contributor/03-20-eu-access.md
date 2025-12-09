@@ -44,5 +44,5 @@ See examples of Kyma Control Plane-managed EU access configurations.
       - sap-converged-cloud -> S, HR # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   ```
 
-  EU Access is not explicitly enabled because each hyperscaler region uses a separate account pool. 
+  For these BTP subaccount regions, EU Access is not explicitly enabled because each hyperscaler region uses a separate account pool. 
   Since `eu-de-1` is only available in `cf-eu02` and `eu-de-2` only in `cf-eu01`, all clusters in these regions inherently comply with EU Access requirements.
