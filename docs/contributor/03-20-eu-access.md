@@ -7,8 +7,8 @@ EU Access requires, among others, that data residency is in the European Economi
 SAP BTP, Kyma runtime supports the following EU Access BTP subaccount regions:
 - `cf-eu11` (AWS)
 - `cf-ch20` (Azure)
-- `cf-eu01` (SAP Converged Cloud)
-- `cf-eu02` (SAP Converged Cloud)
+- `cf-eu01` (SAP Cloud Infrastructure)
+- `cf-eu02` (SAP Cloud Infrastructure)
 
 When the **PlatformRegion** is an EU access BTP subaccount region, the following happens:
 - Kyma Environment Broker (KEB) provides the **euAccess** parameter to Kyma Infrastructure Manager (KIM)
