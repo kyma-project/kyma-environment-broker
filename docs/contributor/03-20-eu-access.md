@@ -37,7 +37,7 @@ See examples of Kyma Control Plane-managed EU access configurations.
       - azure(PR=cf-ch20) -> EU # pool: hyperscalerType: azure; euAccess: true
   ```
 
-- The `cf-eu01` and `cf-eu02` Kyma runtimes using dedicated SAP Converged Cloud account pools:
+- The `cf-eu01` and `cf-eu02` Kyma runtimes using dedicated SAP Cloud Infrastructure account pools:
   ```yaml
   hap:
     rule:
