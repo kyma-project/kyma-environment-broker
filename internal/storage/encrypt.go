@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -178,7 +179,7 @@ func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 }
 
 func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte, error) {
-	switch encryptionMode {
+	switch strings.ToUpper(encryptionMode) {
 	case EncryptionModeCFB:
 		return e.decryptCFB(data)
 	case EncryptionModeGCM:
@@ -190,7 +191,7 @@ func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte
 
 func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
 	var err error
-	switch encryptionMode {
+	switch strings.ToUpper(encryptionMode) {
 	case EncryptionModeCFB:
 		err = e.decryptSMCredentials(provisioningParameters, e.decryptCFB)
 	case EncryptionModeGCM:
