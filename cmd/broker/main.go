@@ -507,7 +507,7 @@ func rewriteInstances(db storage.BrokerStorage, batchSize int, logs *slog.Logger
 		return true, err
 	}
 	for _, instance := range batch {
-		logs.Debug(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
+		logs.Info(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
 		err := db.Instances().ReEncryptInstance(instance)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting instance %s: %s", instance.InstanceID, err))
@@ -529,7 +529,7 @@ func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logge
 		return true, err
 	}
 	for _, operation := range batch {
-		logs.Debug(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
+		logs.Info(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
 		err := db.Operations().ReEncryptOperation(operation)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting operation %s: %s", operation.ID, err))
@@ -550,7 +550,7 @@ func rewriteBindings(db storage.BrokerStorage, batchSize int, logs *slog.Logger)
 		return true, err
 	}
 	for _, binding := range batch {
-		logs.Debug(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
+		logs.Info(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
 		err := db.Bindings().ReEncryptBinding(&binding)
 		if err != nil {
 			logs.Error(fmt.Sprintf("while rewriting binding %s: %s", binding.ID, err))
