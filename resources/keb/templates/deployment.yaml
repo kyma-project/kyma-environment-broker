@@ -85,6 +85,8 @@ spec:
               value: "{{ .Values.broker.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.broker.binding.minExpirationSeconds}}"
+            - name: APP_BROKER_BTP_REGIONS_MIGRATION_SAP_CONVERGED_CLOUD
+              value: {{ .Values.broker.btpRegionsMigrationSapConvergedCloud }}
             - name: APP_BROKER_CHECK_QUOTA_LIMIT
               value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION

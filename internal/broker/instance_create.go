@@ -352,6 +352,19 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
+	if details.PlanID == SapConvergedCloudPlanID {
+		newPlatformRegion, exists := b.config.BtpRegionsMigrationSapConvergedCloud[provisioningParameters.PlatformRegion]
+		if exists {
+			message := fmt.Sprintf(
+				"Cluster provisioning in the %s region is no longer supported under %s. Please use the %s BTP region.",
+				values.Region,
+				provisioningParameters.PlatformRegion,
+				newPlatformRegion,
+			)
+			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+		}
+	}
+
 	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
 		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
 			return err

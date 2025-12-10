@@ -247,6 +247,10 @@ func main() {
 
 	log.Info("Starting Kyma Environment Broker")
 
+	log.Info("BTP regions migration map",
+		"BtpRegionsMigrationSapConvergedCloud", cfg.Broker.BtpRegionsMigrationSapConvergedCloud,
+	)
+
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)

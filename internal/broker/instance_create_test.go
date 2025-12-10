@@ -3683,6 +3683,132 @@ func TestClusterName(t *testing.T) {
 	}
 }
 
+func TestBtpRegionsMigrationSapConvergedCloud_DeprecatedRegion(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"sap-converged-cloud"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+			BtpRegionsMigrationSapConvergedCloud: map[string]string{
+				"cf-eu10": "cf-eu01",
+			},
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+
+	// when
+	_, err := provisionEndpoint.Provision(
+		fixRequestContext(t, "cf-eu10"),
+		instanceID,
+		domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.SapConvergedCloudPlanID,
+			RawParameters: json.RawMessage(`{"name": "testing-name", "region": "eu-de-2"}`),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		},
+		true,
+	)
+
+	assert.EqualError(t, err, "Cluster provisioning in the eu-de-2 region is no longer supported under cf-eu10. Please use the cf-eu01 BTP region.")
+}
+
+func TestBtpRegionsMigrationSapConvergedCloud_NewRegion(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"sap-converged-cloud"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+			BtpRegionsMigrationSapConvergedCloud: map[string]string{
+				"cf-eu10": "cf-eu01",
+			},
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+
+	// when
+	_, err := provisionEndpoint.Provision(
+		fixRequestContext(t, "cf-eu01"),
+		instanceID,
+		domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.SapConvergedCloudPlanID,
+			RawParameters: json.RawMessage(`{"name": "testing-name", "region": "eu-de-2"}`),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		},
+		true,
+	)
+
+	assert.NoError(t, err)
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
