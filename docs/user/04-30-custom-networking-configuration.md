@@ -51,7 +51,7 @@ You can also specify custom ranges for Pods and services alongside worker nodes.
    }
 ```
 
-> ### Important:
+> ### Note:
 > - The provided IP range must not overlap with ranges of potential seed clusters (see [GardenerSeedCIDRs definition](https://github.com/kyma-project/kyma-environment-broker/blob/main/internal/networking/cidr.go)).
 > - The suffix must not be greater than 23 because the IP range is divided between the zones and nodes. Additionally, two ranges are reserved for `pods` and `services`, which, too, must not overlap with the IP range for nodes.
 
@@ -59,7 +59,7 @@ You can also specify custom ranges for Pods and services alongside worker nodes.
 
 Enable dual-stack networking to allow your Kyma runtime to support both IPv4 and IPv6 protocols simultaneously.
 
-> ### Important:
+> ### Note:
 > Dual-stack networking is only available for supported cloud providers: Amazon Web Services and Google Cloud.
 
 ### Dual-Stack Configuration
