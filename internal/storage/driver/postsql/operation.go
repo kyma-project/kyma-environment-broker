@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
+	"github.com/labstack/gommon/log"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -710,6 +711,7 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
+	log.Info(fmt.Sprintf("Encryption mode used to decrypt operation %s: %s [%s]", dto.ID, dto.EncryptionMode, dto.ProvisioningParameters))
 	err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
