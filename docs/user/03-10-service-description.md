@@ -42,6 +42,33 @@ There are two types of configurable provisioning parameters: the ones that are c
 
 These are the provisioning parameters that you can configure:
 
+| Parameter name                                   | Type   | Description                                                                                                      | Required | Default value   |
+|--------------------------------------------------|--------|------------------------------------------------------------------------------------------------------------------|:--------:|-----------------|
+| **name**                                         | string | Specifies the name of the cluster.                                                                               |   Yes    | None            |
+| **purpose**                                      | string | Provides a purpose for a Kyma runtime.                                                                           |    No    | None            |
+| **targetSecret**                                 | string | Provides the name of the Secret that contains hyperscaler's credentials for a Kyma runtime.                      |    No    | None            |
+| **platform_region**                              | string | Defines the platform region that is sent in the request path.                                                    |    No    | None            |
+| **platform_provider**                            | string | Defines the platform provider for a Kyma runtime.                                                                |    No    | None            |
+| **context.tenant_id**                            | string | Provides a tenant ID for a Kyma runtime.                                                                         |    No    | None            |
+| **context.subaccount_id**                        | string | Provides a subaccount ID for a Kyma runtime.                                                                     |    No    | None            |
+| **context.globalaccount_id**                     | string | Provides a global account ID for a Kyma runtime.                                                                 |    No    | None            |
+| **context.sm_operator_credentials.clientid**     | string | Provides a client ID for SAP BTP service operator.                                                               |    No    | None            |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client Secret for the SAP BTP service operator.                                                       |    No    | None            |
+| **context.sm_operator_credentials.sm_url**       | string | Provides a SAP Service Manager URL for the SAP BTP service operator.                                             |    No    | None            |
+| **context.sm_operator_credentials.url**          | string | Provides an authentication URL for the SAP BTP service operator.                                                 |    No    | None            |
+| **context.sm_operator_credentials.xsappname**    | string | Provides an XSApp name for the SAP BTP service operator.                                                         |    No    | None            |
+| **context.user_id**                              | string | Provides a user ID for a Kyma runtime.                                                                           |    No    | None            |
+| **oidc.clientID**                                | string | Provides an OIDC client ID for a Kyma runtime.                                                                   |    No    | None            |
+| **oidc.groupsClaim**                             | string | Provides an OIDC groups claim for a Kyma runtime.                                                                |    No    | `groups`        |
+| **oidc.issuerURL**                               | string | Provides an OIDC issuer URL for a Kyma runtime.                                                                  |    No    | None            |
+| **oidc.signingAlgs**                             | string | Provides the OIDC signing algorithms for a Kyma runtime.                                                         |    No    | `RS256`         |
+| **oidc.usernameClaim**                           | string | Provides an OIDC username claim for a Kyma runtime.                                                              |    No    | `email`         |
+| **oidc.usernamePrefix**                          | string | Provides an OIDC username prefix for a Kyma runtime.                                                             |    No    | None            |
+| **administrators**                               | string | Provides administrators for a Kyma runtime.                                                                      |    No    | None            |
+| **networking.nodes**                             | string | The Node network's CIDR.                                                                                         |    No    | `10.250.0.0/16` |
+| **modules.channel**                              | string | Enables the user to define their preferred release channel                                                            |    No    | Taken from the runtimeConfiguration setting, where the Kyma resource spec channel is specified per plan            |
+| **modules.default**                              | bool   | Defines whether to use a default list of modules                                                                 |    No    | None            |
+| **modules.list**                                 | array  | Defines a custom list of modules                                                                                 |    No    | None            |
 
 ### Provider-specific Parameters
 
