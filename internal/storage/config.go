@@ -30,7 +30,7 @@ type Config struct {
 type FipsConfig struct {
 	WriteGcm         bool          `envconfig:"default=false"`
 	RewriteCfb       bool          `envconfig:"default=false"`
-	RewriteBatchSize int           `envconfig:"default=1000"`
+	RewriteBatchSize int           `envconfig:"default=100"`
 	BatchInterval    time.Duration `envconfig:"default=1m"`
 }
 
