@@ -150,8 +150,6 @@ broker:
     maxExpirationSeconds: 7200
     # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener.
     minExpirationSeconds: 600
-  # Defines the mapping from deprecated BTP regions to their replacement regions for SAP Converged Cloud.
-  btpRegionsMigrationSapConvergedCloud: |-
   # Default platform region for requests if not specified.
   defaultRequestRegion: "cf-eu10"
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
@@ -189,6 +187,9 @@ broker:
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
+  
+# Defines the mapping from deprecated BTP regions to their replacement regions for SAP Converged Cloud.
+btpRegionsMigrationSapConvergedCloud: |-
 
 provisioning:
   # Maximum time a worker is allowed to process a step before it must return to the provisioning queue.
@@ -211,6 +212,8 @@ catalog:
   documentationUrl: "https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment"
 
 configPaths:
+  # # Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Converged Cloud.
+  btpRegionsMigrationSapConvergedCloud: "/config/btpRegionsMigrationSapConvergedCloud.yaml"
   # Path to the service catalog configuration file.
   catalog: "/config/catalog.yaml"
   # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.

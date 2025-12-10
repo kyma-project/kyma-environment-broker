@@ -103,6 +103,8 @@ type ProvisionEndpoint struct {
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
 	useCredentialsBindings bool
+
+	btpRegionsMigrationSapConvergedCloud map[string]string
 }
 
 const (
@@ -133,6 +135,7 @@ func NewProvision(brokerConfig Config,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
+	btpRegionsMigrationSapConvergedCloud map[string]string,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -141,31 +144,32 @@ func NewProvision(brokerConfig Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                  brokerConfig,
-		infrastructureManager:   imConfig,
-		operationsStorage:       db.Operations(),
-		instanceStorage:         db.Instances(),
-		instanceArchivedStorage: db.InstancesArchived(),
-		queue:                   queue,
-		log:                     log.With("service", "ProvisionEndpoint"),
-		enabledPlanIDs:          enabledPlanIDs,
-		plansConfig:             plansConfig,
-		shootDomain:             gardenerConfig.ShootDomain,
-		shootProject:            gardenerConfig.Project,
-		shootDnsProviders:       gardenerConfig.DNSProviders,
-		dashboardConfig:         dashboardConfig,
-		freemiumWhiteList:       freemiumWhitelist,
-		kcBuilder:               kcBuilder,
-		providerSpec:            providerSpec,
-		valuesProvider:          valuesProvider,
-		useSmallerMachineTypes:  useSmallerMachineTypes,
-		schemaService:           schemaService,
-		providerConfigProvider:  providerConfigProvider,
-		quotaClient:             quotaClient,
-		quotaWhitelist:          quotaWhitelist,
-		rulesService:            rulesService,
-		gardenerClient:          gardenerClient,
-		awsClientFactory:        awsClientFactory,
+		config:                               brokerConfig,
+		infrastructureManager:                imConfig,
+		operationsStorage:                    db.Operations(),
+		instanceStorage:                      db.Instances(),
+		instanceArchivedStorage:              db.InstancesArchived(),
+		queue:                                queue,
+		log:                                  log.With("service", "ProvisionEndpoint"),
+		enabledPlanIDs:                       enabledPlanIDs,
+		plansConfig:                          plansConfig,
+		shootDomain:                          gardenerConfig.ShootDomain,
+		shootProject:                         gardenerConfig.Project,
+		shootDnsProviders:                    gardenerConfig.DNSProviders,
+		dashboardConfig:                      dashboardConfig,
+		freemiumWhiteList:                    freemiumWhitelist,
+		kcBuilder:                            kcBuilder,
+		providerSpec:                         providerSpec,
+		valuesProvider:                       valuesProvider,
+		useSmallerMachineTypes:               useSmallerMachineTypes,
+		schemaService:                        schemaService,
+		providerConfigProvider:               providerConfigProvider,
+		quotaClient:                          quotaClient,
+		quotaWhitelist:                       quotaWhitelist,
+		rulesService:                         rulesService,
+		gardenerClient:                       gardenerClient,
+		awsClientFactory:                     awsClientFactory,
+		btpRegionsMigrationSapConvergedCloud: btpRegionsMigrationSapConvergedCloud,
 	}
 }
 
@@ -353,7 +357,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if details.PlanID == SapConvergedCloudPlanID {
-		newPlatformRegion, exists := b.config.BtpRegionsMigrationSapConvergedCloud[provisioningParameters.PlatformRegion]
+		newPlatformRegion, exists := b.btpRegionsMigrationSapConvergedCloud[provisioningParameters.PlatformRegion]
 		if exists {
 			message := fmt.Sprintf(
 				"Cluster provisioning in the %s region is no longer supported under %s. Please use the %s BTP region.",

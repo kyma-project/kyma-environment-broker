@@ -73,6 +73,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
