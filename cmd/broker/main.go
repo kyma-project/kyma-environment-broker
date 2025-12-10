@@ -443,11 +443,8 @@ func main() {
 func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfig, stats EncryptionModeStatistics, log *slog.Logger) {
 	s := gocron.NewScheduler(time.UTC)
 	runInstancesJob := stats.instances[storage.EncryptionModeCFB] > 0
-	// TODO temporarily disable operations and bindings rewrite jobs for tests
-	//runOperationsJob := stats.operations[storage.EncryptionModeCFB] > 0
-	//runBindingsJob := stats.bindings[storage.EncryptionModeCFB] > 0
-	runOperationsJob := false
-	runBindingsJob := false
+	runOperationsJob := stats.operations[storage.EncryptionModeCFB] > 0
+	runBindingsJob := stats.bindings[storage.EncryptionModeCFB] > 0
 
 	if runInstancesJob {
 		log.Info("Scheduling instance rewrite job")
@@ -535,6 +532,9 @@ func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logge
 		return true, err
 	}
 	for _, operation := range batch {
+		if operation.InstanceID != "8C080DF5-0E50-4ABF-85BD-A524EBC52BD0" {
+			continue
+		}
 		logs.Info(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
 		err := db.Operations().ReEncryptOperation(operation)
 		if err != nil {
