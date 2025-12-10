@@ -711,7 +711,7 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
-	log.Info(fmt.Sprintf("Encryption mode used to decrypt operation %s: %s [%s]", dto.ID, dto.EncryptionMode, dto.ProvisioningParameters))
+	log.Info(fmt.Sprintf("Encryption mode used to decrypt operation %s: %s [%s]", dto.ID, dto.EncryptionMode, dto.ProvisioningParameters.String))
 	err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
