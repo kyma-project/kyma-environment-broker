@@ -45,7 +45,7 @@ X-Broker-API-Version: 2.14
 ```
 
 KEB returns the `200 OK` status code with the kubeconfig in the response body.
-The [cluster name](04-05-cluster-name.md) of the Kyma runtime is used as the context name in the generated kubeconfig file.
+The [cluster name](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/04-05-cluster-name.md) of the Kyma runtime is used as the context name in the generated kubeconfig file.
 If the binding or the instance does not exist, or if the instance is suspended, KEB returns the `404 Not Found` status code.
 
 All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).

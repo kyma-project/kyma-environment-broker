@@ -74,11 +74,10 @@ These are the provisioning parameters that you can configure:
 
 These are the provisioning parameters for Azure that you can configure:
 
-<div>
-  <details>
-  <summary label="azure-plan">
-  Azure
-  </summary>
+<details>
+<summary label="azure-plan">
+Azure
+</summary>
 
 <!-- markdown-link-check-disable -->
 
@@ -96,11 +95,12 @@ These are the provisioning parameters for Azure that you can configure:
 
 <!-- markdown-link-check-enable-->
 
-  </details>
-  <details>
-  <summary label="azure-lite-plan">
-  Azure Lite
-  </summary>
+</details>
+
+<details>
+<summary label="azure-lite-plan">
+Azure Lite
+</summary>
 
 <!-- markdown-link-check-disable -->
 
@@ -118,17 +118,13 @@ These are the provisioning parameters for Azure that you can configure:
 
 <!-- markdown-link-check-enable-->
 
- </details>
- </div>
+</details>
 
 These are the provisioning parameters for AWS that you can configure:
-<div>
-  <details>
-  <summary label="aws-plan">
-  AWS
-  </summary>
-
-<!-- markdown-link-check-disable -->
+<details>
+<summary label="aws-plan">
+AWS
+</summary>
 
 | Parameter name                                       | Type   | Description                                                                                | Required | Default value |
 |------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
@@ -142,20 +138,16 @@ These are the provisioning parameters for AWS that you can configure:
 | **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 | **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
-<!-- markdown-link-check-enable-->
 
-  </details>
- </div>
+</details>
+
 
 These are the provisioning parameters for GCP that you can configure:
 
-<div>
-  <details>
-  <summary label="gcp-plan">
-  GCP
-  </summary>
-
-<!-- markdown-link-check-disable -->
+<details>
+<summary label="gcp-plan">
+GCP
+</summary>
 
 | Parameter name                                       | Type   | Description                                                                         | Required | Default value   |
 |------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-----------------|
@@ -169,20 +161,15 @@ These are the provisioning parameters for GCP that you can configure:
 | **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
 | **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None            |
 
-<!-- markdown-link-check-enable -->
 
- </details>
- </div>
+</details>
 
 These are the provisioning parameters for SapConvergedCloud that you can configure:
 
-<div>
-  <details>
-  <summary label="sap-converged-cloud-plan">
-  SapConvergedCloud
-  </summary>
-
-<!-- markdown-link-check-disable -->
+<details>
+<summary label="sap-converged-cloud-plan">
+SapConvergedCloud
+</summary>
 
 | Parameter name                                       | Type   | Description                                                                                | Required | Default value |
 |------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
@@ -196,10 +183,8 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 | **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 | **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
-<!-- markdown-link-check-enable -->
 
- </details>
- </div>
+</details>
 
 ## Trial Plan
 
@@ -212,11 +197,10 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 
 These are the provisioning parameters for the Trial plan that you can configure:
 
-<div>
-  <details>
-  <summary label="trial-plan">
-  Trial plan
-  </summary>
+<details>
+<summary label="trial-plan">
+Trial plan
+</summary>
 
 | Parameter name     | Type   | Description                                                       | Required | Possible values       | Default value                       |
 |--------------------|--------|-------------------------------------------------------------------|----------|-----------------------|-------------------------------------|
@@ -233,8 +217,7 @@ The **region** parameter is optional. If not specified, the region is calculated
 
 The mapping between the platform region and the provider region (Azure, AWS or GCP) is defined in the configuration file in the **APP_TRIAL_REGION_MAPPING_FILE_PATH** environment variable. If the platform region is not defined, the default value is `europe`.
 
- </details>
- </div>
+</details>
 
 ## Own Cluster Plan
 
@@ -243,11 +226,10 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:
 
-<div>
-  <details>
-  <summary label="own_cluster-plan">
-  Own cluster plan
-  </summary>
+<details>
+<summary label="own_cluster-plan">
+Own cluster plan
+</summary>
 
 | Parameter name  | Type   | Description                                                          | Required | Default value |
 |-----------------|--------|----------------------------------------------------------------------|----------|---------------|
@@ -256,7 +238,6 @@ These are the provisioning parameters for the `own_cluster` plan that you config
 | **shootName**   | string | Name of the shoot where you install Kyma runtime.                    | Yes      | None          |
 
 </details>
-</div>
 
 ## Preview Cluster Plan
 
@@ -266,13 +247,10 @@ The preview plan is designed for testing major changes in KEB's architecture.
 
 These are the provisioning parameters for the `preview` plan that you configure:
 
-<div>
-  <details>
-  <summary label="preview_cluster-plan">
-  Preview cluster plan
-  </summary>
-
-<!-- markdown-link-check-disable -->
+<details>
+<summary label="preview_cluster-plan">
+Preview cluster plan
+</summary>
 
 | Parameter name                                       | Type   | Description                                                                                | Required | Default value |
 |------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
@@ -289,6 +267,6 @@ These are the provisioning parameters for the `preview` plan that you configure:
 <!-- markdown-link-check-enable -->
 
 </details>
-</div>
+
 <br>
 <a name="update"><sup>1</sup> This parameter is available for <code>PATCH</code> as well, and can be updated with the same constraints as during provisioning.</a>
