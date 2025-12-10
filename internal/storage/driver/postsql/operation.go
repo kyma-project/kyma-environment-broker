@@ -709,7 +709,7 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
-	if strings.Contains(provisioningParameters.ErsContext.SMOperatorCredentials.ClientID, "!") {
+	if provisioningParameters.ErsContext.SMOperatorCredentials != nil && strings.Contains(provisioningParameters.ErsContext.SMOperatorCredentials.ClientID, "!") {
 		slog.Warn("decrypting credentials skipped because basic auth is in a plain text")
 	} else {
 		err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
