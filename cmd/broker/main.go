@@ -507,9 +507,6 @@ func rewriteInstances(db storage.BrokerStorage, batchSize int, logs *slog.Logger
 		return true, err
 	}
 	for _, instance := range batch {
-		if instance.GlobalAccountID != "8cd57dc2-edb2-45e0-af8b-7d881006e516" {
-			continue
-		}
 		logs.Info(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
 		err := db.Instances().ReEncryptInstance(instance)
 		if err != nil {
@@ -532,9 +529,6 @@ func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logge
 		return true, err
 	}
 	for _, operation := range batch {
-		if operation.InstanceID != "8C080DF5-0E50-4ABF-85BD-A524EBC52BD0" {
-			continue
-		}
 		logs.Info(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
 		err := db.Operations().ReEncryptOperation(operation)
 		if err != nil {
