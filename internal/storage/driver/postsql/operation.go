@@ -13,8 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/labstack/gommon/log"
-
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -711,13 +709,15 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
-	log.Info(fmt.Sprintf("Encryption mode used to decrypt operation %s: %s", dto.ID, dto.EncryptionMode))
-	err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
-	if err != nil {
-		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
+	if strings.Contains(provisioningParameters.ErsContext.SMOperatorCredentials.ClientID, "!") {
+		slog.Warn("decrypting credentials skipped because basic auth is in a plain text")
+	} else {
+		err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
+		if err != nil {
+			return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
+		}
 	}
-
-	err = s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
+	err := s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
