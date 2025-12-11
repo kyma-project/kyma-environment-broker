@@ -30,6 +30,9 @@ type Instances interface {
 	DeletedInstancesStatistics() (internal.DeletedStats, error)
 
 	UpdateInstanceLastOperation(instanceID, operationID string) error
+
+	ReEncryptInstance(instance internal.Instance) error
+	ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error)
 }
 
 type InstancesArchived interface {
@@ -64,6 +67,9 @@ type Operations interface {
 
 	DeleteByID(operationID string) error
 	GetAllOperations() ([]internal.Operation, error)
+
+	ReEncryptOperation(operation internal.Operation) error
+	ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error)
 }
 
 type Provisioning interface {
@@ -116,6 +122,9 @@ type Bindings interface {
 	ListByInstanceID(instanceID string) ([]internal.Binding, error)
 	ListExpired() ([]internal.Binding, error)
 	GetStatistics() (internal.BindingStats, error)
+
+	ReEncryptBinding(binding *internal.Binding) error
+	ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error)
 }
 
 type Actions interface {

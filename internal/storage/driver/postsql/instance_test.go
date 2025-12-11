@@ -1481,6 +1481,464 @@ func fixInstance(testData instanceData) *internal.Instance {
 	return &instance
 }
 
+func TestListInstancesEncryptedUsingCFB_ReturnsInstancesSuccessfully(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance1 := fixture.FixInstance("inst-id-1")
+	instance1.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id-1",
+			ClientSecret: "sm-client-secret-1",
+		},
+	}
+	instance2 := fixture.FixInstance("inst-id-2")
+	instance2.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id-2",
+			ClientSecret: "sm-client-secret-2",
+		},
+	}
+
+	// when
+	err = brokerStorage.Instances().Insert(instance1)
+	require.NoError(t, err)
+	err = brokerStorage.Instances().Insert(instance2)
+	require.NoError(t, err)
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(instances))
+
+	// Check both instances are present (order may vary)
+	instanceIDs := map[string]internal.Instance{}
+	for _, inst := range instances {
+		instanceIDs[inst.InstanceID] = inst
+	}
+
+	assert.Contains(t, instanceIDs, "inst-id-1")
+	assert.Contains(t, instanceIDs, "inst-id-2")
+	assert.Equal(t, "sm-client-id-1", instanceIDs["inst-id-1"].Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret-1", instanceIDs["inst-id-1"].Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "sm-client-id-2", instanceIDs["inst-id-2"].Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret-2", instanceIDs["inst-id-2"].Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
+func TestListInstancesEncryptedUsingCFB_ReturnsEmptyListWhenNoInstances(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(instances))
+}
+
+func TestListInstancesEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// Insert 5 instances
+	for i := 1; i <= 5; i++ {
+		instance := fixture.FixInstance(fmt.Sprintf("inst-id-%d", i))
+		err = brokerStorage.Instances().Insert(instance)
+		require.NoError(t, err)
+	}
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(2)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(instances))
+}
+
+func TestListInstancesEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.Parameters.Kubeconfig = "encrypted-kubeconfig-data"
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "encrypted-client-id",
+			ClientSecret: "encrypted-client-secret",
+		},
+	}
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(instances))
+	assert.Equal(t, instance.Parameters.Parameters.Kubeconfig, instances[0].Parameters.Parameters.Kubeconfig)
+	assert.Equal(t, instance.Parameters.ErsContext.SMOperatorCredentials.ClientID, instances[0].Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, instance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret, instances[0].Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
+func TestListInstancesEncryptedUsingCFB_ReturnsCFBEncryptedInstancesOnly(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	cfbInstance := fixture.FixInstance("inst-id-cfb")
+	err = brokerStorage.Instances().Insert(cfbInstance)
+	require.NoError(t, err)
+
+	// Switch to GCM mode for next instance
+	encrypter.SetWriteGCMMode(true)
+
+	gcmInstance := fixture.FixInstance("inst-id-gcm")
+	err = brokerStorage.Instances().Insert(gcmInstance)
+	require.NoError(t, err)
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(instances))
+	assert.Equal(t, "inst-id-cfb", instances[0].InstanceID)
+}
+
+func TestListInstancesEncryptedUsingCFB_PreservesInstanceFields(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.GlobalAccountID = "global-account-id"
+	instance.DashboardURL = "https://dashboard.example.com"
+	instance.ProviderRegion = "us-east-1"
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(instances))
+	assert.Equal(t, "inst-id", instances[0].InstanceID)
+	assert.Equal(t, "global-account-id", instances[0].GlobalAccountID)
+	assert.Equal(t, "https://dashboard.example.com", instances[0].DashboardURL)
+	assert.Equal(t, "us-east-1", instances[0].ProviderRegion)
+}
+
+func TestListInstancesEncryptedUsingCFB_HandlesMultipleSensitiveFields(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+	instance.Parameters.Parameters.Kubeconfig = "kubeconfig-data"
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// when
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(instances))
+	assert.Equal(t, "sm-client-id", instances[0].Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", instances[0].Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "kubeconfig-data", instances[0].Parameters.Parameters.Kubeconfig)
+}
+
+func TestReEncryptInstance_SuccessfullyReEncryptsInstance(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+	instance.Parameters.Parameters.Kubeconfig = "kubeconfig-data"
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	// Re-encrypt instance
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+
+	// then
+	require.NoError(t, err)
+
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(instances))
+
+	retrievedInstance, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "sm-client-id", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "kubeconfig-data", retrievedInstance.Parameters.Parameters.Kubeconfig)
+}
+
+func TestReEncryptInstance_PreservesInstanceMetadata(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.GlobalAccountID = "global-account-id"
+	instance.DashboardURL = "https://dashboard.example.com"
+	instance.ProviderRegion = "us-east-1"
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+
+	// then
+	require.NoError(t, err)
+
+	instances, err := brokerStorage.Instances().ListInstancesEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(instances))
+
+	retrievedInstance, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "inst-id", retrievedInstance.InstanceID)
+	assert.Equal(t, "global-account-id", retrievedInstance.GlobalAccountID)
+	assert.Equal(t, "https://dashboard.example.com", retrievedInstance.DashboardURL)
+	assert.Equal(t, "us-east-1", retrievedInstance.ProviderRegion)
+}
+
+func TestReEncryptInstance_ReEncryptsFromCFBToGCM(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// Verify it was inserted with CFB mode
+	statsBeforeReencrypt, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	require.NoError(t, err)
+	assert.Equal(t, 1, statsBeforeReencrypt[storage.EncryptionModeCFB])
+
+	// Switch to GCM mode
+	encrypter.SetWriteGCMMode(true)
+
+	// Re-encrypt the instance
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+
+	// then
+	require.NoError(t, err)
+
+	// Verify it was re-encrypted with GCM mode
+	statsAfterReencrypt, err := brokerStorage.EncryptionModeStats().GetEncryptionModeStatsForInstances()
+	require.NoError(t, err)
+	assert.Equal(t, 0, statsAfterReencrypt[storage.EncryptionModeCFB])
+	assert.Equal(t, 1, statsAfterReencrypt[storage.EncryptionModeGCM])
+
+	// Verify data is still accessible
+	retrievedInstance, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "sm-client-id", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
+func TestReEncryptInstance_PreservesEncryptedDataAfterReencryption(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "test-client-id",
+			ClientSecret: "test-client-secret",
+		},
+	}
+	instance.Parameters.Parameters.Kubeconfig = "test-kubeconfig-data"
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// Re-encrypt
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+
+	// then
+	require.NoError(t, err)
+
+	retrievedInstance, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "test-client-id", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "test-client-secret", retrievedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "test-kubeconfig-data", retrievedInstance.Parameters.Parameters.Kubeconfig)
+}
+
+func TestReEncryptInstance_ReturnsErrorForNonExistentInstance(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	nonExistentInstance := fixture.FixInstance("non-existent-id")
+
+	// when
+	err = brokerStorage.Instances().ReEncryptInstance(nonExistentInstance)
+
+	// then
+	require.Error(t, err)
+	assert.True(t, dberr.IsNotFound(err))
+}
+
+func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	instance := fixture.FixInstance("inst-id")
+	instance.Parameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+
+	instance.UpdatedAt = instance.UpdatedAt.UTC().Truncate(time.Second)
+	originalUpdatedAt := instance.UpdatedAt
+
+	// when
+	err = brokerStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	// Re-encrypt first time with CFB
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+	require.NoError(t, err)
+
+	// Verify data is accessible after first re-encryption
+	retrieved1, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "sm-client-id", retrieved1.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrieved1.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrieved1.UpdatedAt)
+
+	// Switch to GCM and re-encrypt again
+	encrypter.SetWriteGCMMode(true)
+	err = brokerStorage.Instances().ReEncryptInstance(instance)
+	require.NoError(t, err)
+
+	// Verify data is still accessible after switching encryption mode
+	retrieved2, err := brokerStorage.Instances().GetByID("inst-id")
+	require.NoError(t, err)
+	assert.Equal(t, "sm-client-id", retrieved2.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrieved2.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrieved2.UpdatedAt)
+}
+
 func fixProvisionOperation(instanceId string) internal.Operation {
 	operationId := fmt.Sprintf("%s-%d", instanceId, rand.Int())
 	return fixture.FixProvisioningOperation(operationId, instanceId)

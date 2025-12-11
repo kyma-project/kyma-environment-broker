@@ -266,6 +266,85 @@ func (ws writeSession) DeleteState(subaccountID string) dberr.Error {
 	return nil
 }
 
+func (ws writeSession) UpdateEncryptedDataInOperation(op dbmodel.OperationDTO) dberr.Error {
+	res, err := ws.update(OperationTableName).
+		Where(dbr.Eq("id", op.ID)).
+		Where(dbr.Eq("version", op.Version)).
+		Set("provisioning_parameters", op.ProvisioningParameters.String).
+		Set("encryption_mode", op.EncryptionMode).
+		Exec()
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return dberr.NotFound("Cannot find Operation with ID:'%s'", op.ID)
+		}
+		return dberr.Internal("Failed to update record to Operation table: %s", err)
+	}
+	rAffected, e := res.RowsAffected()
+	if e != nil {
+		// the optimistic locking requires numbers of rows affected
+		return dberr.Internal("the DB driver does not support RowsAffected operation")
+	}
+	if rAffected == int64(0) {
+		return dberr.NotFound("Cannot find Operation with ID:'%s' Version: %v", op.ID, op.Version)
+	}
+
+	return nil
+}
+
+func (ws writeSession) UpdateEncryptedDataInInstance(instance dbmodel.InstanceDTO) dberr.Error {
+	res, err := ws.update(InstancesTableName).
+		Where(dbr.Eq("instance_id", instance.InstanceID)).
+		Where(dbr.Eq("version", instance.Version)).
+		Set("provisioning_parameters", instance.ProvisioningParameters).
+		Set("encryption_mode", instance.EncryptionMode).
+		Set("updated_at", instance.UpdatedAt). // since in the DB there is default now(), we need to explicitly set it to preserve the timestamp
+		Exec()
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return dberr.NotFound("Cannot find Instance with ID:'%s'", instance.InstanceID)
+		}
+		return dberr.Internal("Failed to update record to Instance table: %s", err)
+	}
+	rAffected, e := res.RowsAffected()
+	if e != nil {
+		// the optimistic locking requires numbers of rows affected
+		return dberr.Internal("the DB driver does not support RowsAffected operation")
+	}
+	if rAffected == int64(0) {
+		return dberr.NotFound("Cannot find Instance with ID:'%s' Version: %v", instance.InstanceID, instance.Version)
+	}
+
+	return nil
+}
+
+func (ws writeSession) UpdateEncryptedDataInBinding(binding dbmodel.BindingDTO) dberr.Error {
+	res, err := ws.update(BindingsTableName).
+		Where(dbr.Eq("id", binding.ID)).
+		Where(dbr.Eq("instance_id", binding.InstanceID)).
+		Set("kubeconfig", binding.Kubeconfig).
+		Set("encryption_mode", binding.EncryptionMode).
+		Exec()
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return dberr.NotFound("Cannot find Binding with ID:'%s'", binding.ID)
+		}
+		return dberr.Internal("Failed to update record to Binding table: %s", err)
+	}
+	rAffected, e := res.RowsAffected()
+	if e != nil {
+		// the optimistic locking requires numbers of rows affected
+		return dberr.Internal("the DB driver does not support RowsAffected operation")
+	}
+	if rAffected == int64(0) {
+		return dberr.NotFound("Cannot find Binding with ID:'%s' InstanceID: %s", binding.ID, binding.InstanceID)
+	}
+
+	return nil
+}
+
 func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 	res, err := ws.update(OperationTableName).
 		Where(dbr.Eq("id", op.ID)).

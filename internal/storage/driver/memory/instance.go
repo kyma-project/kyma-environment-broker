@@ -30,6 +30,16 @@ func NewInstance(operations *operations, subaccountStates *SubaccountStates) *in
 	}
 }
 
+func (s *instances) ReEncryptInstance(instance internal.Instance) error {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	panic("implement me")
+}
+
+func (s *instances) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
+	//TODO implement me - for now this is just the stub to satisfy the interface
+	panic("implement me")
+}
+
 func (s *instances) GetDistinctSubAccounts() ([]string, error) {
 	//iterate over instances and return distinct subaccounts
 	collectedSubAccounts := make(map[string]struct{})

@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -21,6 +20,31 @@ import (
 type operations struct {
 	postsql.Factory
 	cipher Cipher
+}
+
+func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error) {
+	session := s.Factory.NewReadSession()
+
+	var (
+		err            error
+		operationsDTOs = make([]dbmodel.OperationDTO, 0)
+	)
+
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		var sessionError error
+		operationsDTOs, sessionError = session.ListOperationsEncryptedUsingCFB(batchSize)
+		if sessionError != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.toOperations(operationsDTOs)
+
+	return result, err
 }
 
 func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
@@ -685,12 +709,15 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 			return internal.Operation{}, fmt.Errorf("while unmarshal provisioning parameters: %w", err)
 		}
 	}
-	err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
-	if err != nil {
-		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
+	if provisioningParameters.ErsContext.SMOperatorCredentials != nil && strings.Contains(provisioningParameters.ErsContext.SMOperatorCredentials.ClientID, "!") {
+		slog.Warn("decrypting credentials skipped because basic auth is in a plain text")
+	} else {
+		err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
+		if err != nil {
+			return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
+		}
 	}
-
-	err = s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
+	err := s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
@@ -1051,6 +1078,35 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
+			return false, lastErr
+		}
+		return true, nil
+	})
+	return lastErr
+}
+
+func (s *operations) ReEncryptOperation(op internal.Operation) error {
+	dto, err := s.operationToDTO(&op)
+
+	if err != nil {
+		return fmt.Errorf("while converting Operation to DTO: %w", err)
+	}
+	session := s.Factory.NewWriteSession()
+
+	var lastErr error
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		lastErr = session.UpdateEncryptedDataInOperation(dto)
+		if lastErr != nil && dberr.IsNotFound(lastErr) {
+			_, lastErr = s.Factory.NewReadSession().GetOperationByID(dto.ID)
+			if dberr.IsNotFound(lastErr) {
+				return false, lastErr
+			}
+			if lastErr != nil {
+				return false, nil
+			}
+
+			// the operation exists but the version is different
+			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", dto.ID)
 			return false, lastErr
 		}
 		return true, nil

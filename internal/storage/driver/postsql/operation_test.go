@@ -747,6 +747,254 @@ func TestOperation_BothModes(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(map[string]int{storage.EncryptionModeGCM: 2}, statsForOperations))
 }
 
+func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", true)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(operations))
+}
+
+func TestListOperationsEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// Insert 5 operations
+	for i := 1; i <= 5; i++ {
+		op := fixture.FixProvisioningOperation(fmt.Sprintf("op-id-%d", i), fmt.Sprintf("inst-id-%d", i))
+		err = brokerStorage.Operations().InsertOperation(op)
+		require.NoError(t, err)
+	}
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(2)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(operations))
+}
+
+func TestListOperationsEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.ProvisioningParameters.Parameters.Kubeconfig = "encrypted-kubeconfig-data"
+	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "encrypted-client-id",
+			ClientSecret: "encrypted-client-secret",
+		},
+	}
+
+	// when
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(operations))
+	assert.Equal(t, operation.ProvisioningParameters.Parameters.Kubeconfig, operations[0].ProvisioningParameters.Parameters.Kubeconfig)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID, operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret, operations[0].ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
+func TestListOperationsEncryptedUsingCFB_ReturnsCFBEncryptedOperationsOnly(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	cfbOperation := fixture.FixProvisioningOperation("op-id-cfb", "inst-id-cfb")
+	err = brokerStorage.Operations().InsertOperation(cfbOperation)
+	require.NoError(t, err)
+
+	// Switch to GCM mode for next operation
+	encrypter.SetWriteGCMMode(true)
+
+	gcmOperation := fixture.FixProvisioningOperation("op-id-gcm", "inst-id-gcm")
+	err = brokerStorage.Operations().InsertOperation(gcmOperation)
+	require.NoError(t, err)
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(operations))
+	assert.Equal(t, "op-id-cfb", operations[0].ID)
+}
+
+func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.Description = "test description"
+	operation.State = domain.InProgress
+
+	// when
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(operations))
+	assert.Equal(t, "op-id", operations[0].ID)
+	assert.Equal(t, "inst-id", operations[0].InstanceID)
+	assert.Equal(t, "test description", operations[0].Description)
+	assert.Equal(t, domain.InProgress, operations[0].State)
+}
+
+func TestReEncryptOperation_PreservesNonEncryptedFields(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.Description = "original description"
+	operation.State = domain.InProgress
+	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "new-client-id",
+			ClientSecret: "new-client-secret",
+		},
+	}
+
+	operation.UpdatedAt = operation.UpdatedAt.UTC().Truncate(time.Second)
+	originalUpdatedAt := operation.UpdatedAt
+
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	// when
+	err = brokerStorage.Operations().ReEncryptOperation(operation)
+
+	// then
+	require.NoError(t, err)
+
+	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
+	require.NoError(t, err)
+	assert.Equal(t, "original description", retrievedOp.Description)
+	assert.Equal(t, domain.InProgress, retrievedOp.State)
+	assert.Equal(t, "new-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "new-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrievedOp.UpdatedAt, "UpdatedAt field should not change after re-encryption")
+
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(operations))
+}
+
+func TestReEncryptOperation_ReturnsErrorForNonExistentOperation(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", true)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("non-existent-op-id", "inst-id")
+
+	// when
+	err = brokerStorage.Operations().ReEncryptOperation(operation)
+
+	// then
+	require.Error(t, err)
+}
+
+func TestReEncryptedOperation_UpdatesEncryptionForCFBMode(t *testing.T) {
+	// given
+	encrypter := storage.NewEncrypter("################################", false)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	require.NoError(t, err)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
+	operation.ProvisioningParameters.ErsContext = internal.ERSContext{
+		SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
+			ClientID:     "sm-client-id",
+			ClientSecret: "sm-client-secret",
+		},
+	}
+
+	operation.UpdatedAt = operation.UpdatedAt.UTC().Truncate(time.Second)
+	originalUpdatedAt := operation.UpdatedAt
+
+	err = brokerStorage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	encrypter.SetWriteGCMMode(true)
+
+	// when
+
+	err = brokerStorage.Operations().ReEncryptOperation(operation)
+
+	// then
+	require.NoError(t, err)
+
+	// when
+	operations, err := brokerStorage.Operations().ListOperationsEncryptedUsingCFB(10)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(operations))
+
+	retrievedOp, err := brokerStorage.Operations().GetOperationByID("op-id")
+	require.NoError(t, err)
+	assert.Equal(t, "sm-client-id", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "sm-client-secret", retrievedOp.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, originalUpdatedAt, retrievedOp.UpdatedAt, "UpdatedAt field should not change after re-encryption")
+}
+
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
 	assert.Equal(t, fixture.GlobalAccountId, operation.RuntimeOperation.GlobalAccountID)
 	assert.Equal(t, fixture.Region, operation.RuntimeOperation.Region)
