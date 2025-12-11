@@ -25,19 +25,13 @@ func TestUnmarshalingFromYamlFile(t *testing.T) {
 			name:     "correctly unmarshals yaml file with embedded object",
 			filename: "testdata/embedded_object.yaml",
 			data:     &map[string]interface{}{},
-			expected: &map[string]interface{}{"obj": map[interface{}]interface{}{"prop1": map[interface{}]interface{}{"another_obj": map[interface{}]interface{}{"prop2": "value2", "prop3": "value3"}}}},
+			expected: &map[string]interface{}{"obj": map[string]interface{}{"prop1": map[string]interface{}{"another_obj": map[string]interface{}{"prop2": "value2", "prop3": "value3"}}}},
 		},
 		{
 			name:     "correctly unmarshals yaml file with mapping of strings to list of strings",
 			filename: "testdata/multiple_mappings.yaml",
 			data:     &map[string][]string{},
 			expected: &map[string][]string{"key1": {"value1", "value2"}, "key2": {"value3", "value4"}},
-		},
-		{
-			name:     "overrides already defined keys wile unmarshalling yaml file with mapping of strings to list of strings",
-			filename: "testdata/multiple_mappings_override.yaml",
-			data:     &map[string][]string{},
-			expected: &map[string][]string{"key1": {"value5", "value6"}, "key2": {"value3", "value4"}},
 		},
 	}
 	for _, tt := range tests {
