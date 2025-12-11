@@ -52,6 +52,7 @@ func TestColocateControlPlane(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -90,6 +91,7 @@ func TestColocateControlPlane(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -127,6 +129,7 @@ func TestColocateControlPlane(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
