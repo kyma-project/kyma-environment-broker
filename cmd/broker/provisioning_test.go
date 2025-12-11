@@ -3045,7 +3045,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "fast", channelValue, "ConfigMap default channel should be applied")
 	})
@@ -3088,7 +3088,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "regular", channelValue, "User-specified channel should override default")
 	})
@@ -3131,7 +3131,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "fast", channelValue, "Fast channel should be set")
 	})
@@ -3254,7 +3254,7 @@ kyma-template: |-
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "regular", channelValue, "AWS plan-specific default 'regular' should override global default 'fast'")
 
@@ -3340,7 +3340,7 @@ kyma-template: |-
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "fast", channelValue, "User selection should override plan default")
 	})
