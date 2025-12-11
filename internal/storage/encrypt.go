@@ -159,7 +159,7 @@ func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(aes)
+	gcm, err := cipher.NewGCMWithRandomNonce(aes)
 	if err != nil {
 		return nil, err
 	}
