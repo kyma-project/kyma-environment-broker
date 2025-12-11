@@ -101,5 +101,5 @@ func (r *channelResolver) extractChannelFromKymaTemplate(kymaTemplate string) (s
 		}
 	}
 
-	return "", fmt.Errorf("channel not found in kyma-template spec [%s] template %v", kymaTemplate, template)
+	return "", fmt.Errorf("channel not found in kyma-template spec [%s] template %v map[name]=%v map[spec]=%v", kymaTemplate, template, template["name"], template["spec"])
 }
