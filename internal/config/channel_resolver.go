@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ChannelResolver interface {

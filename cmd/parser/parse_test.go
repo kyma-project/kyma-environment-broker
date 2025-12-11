@@ -11,7 +11,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const RULES_TEST_CASES = "rules/test-cases.yaml"
