@@ -95,11 +95,11 @@ func (r *channelResolver) extractChannelFromKymaTemplate(kymaTemplate string) (s
 		return "", fmt.Errorf("while unmarshaling kyma-template: %w", err)
 	}
 
-	if spec, ok := template["spec"].(map[interface{}]interface{}); ok {
+	if spec, ok := template["spec"].(map[string]interface{}); ok {
 		if channel, ok := spec["channel"].(string); ok {
 			return channel, nil
 		}
 	}
 
-	return "", fmt.Errorf("channel not found in kyma-template spec [%s] template %v map[name]=%v map[spec]=%v", kymaTemplate, template, template["name"], template["spec"])
+	return "", fmt.Errorf("channel not found in kyma-template spec")
 }
