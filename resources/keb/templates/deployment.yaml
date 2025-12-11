@@ -123,6 +123,8 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_BROKER_URL
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
+            - name: APP_BTP_REGIONS_MIGRATION_SAP_CONVERGED_CLOUD_FILE_PATH
+              value: {{ .Values.configPaths.btpRegionsMigrationSapConvergedCloud }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
             - name: APP_DATABASE_FIPS_REWRITE_CFB

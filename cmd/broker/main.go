@@ -12,9 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -23,6 +20,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
+	"github.com/kyma-project/kyma-environment-broker/internal/btpregionsmigration"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -33,6 +31,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -54,6 +53,7 @@ import (
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/exp/maps"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -141,6 +141,8 @@ type Config struct {
 	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
+
+	BtpRegionsMigrationSapConvergedCloudFilePath string
 }
 
 type ProfilerConfig struct {
@@ -506,6 +508,10 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
+	btpRegionsMigrationSapConvergedCloud, err := btpregionsmigration.ReadFromFile(cfg.BtpRegionsMigrationSapConvergedCloudFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of deprecated BTP regions for SAP Converged Cloud: %d", len(btpRegionsMigrationSapConvergedCloud)))
+
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig, logs, oidcDefaultValues, cfg.InfrastructureManager),
@@ -513,7 +519,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
-			rulesService, gardenerClient, awsClientFactory),
+			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,

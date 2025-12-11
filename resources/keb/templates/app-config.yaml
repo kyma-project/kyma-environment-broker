@@ -38,3 +38,7 @@ data:
 {{- with .Values.quotaWhitelistedSubaccountIds }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  btpRegionsMigrationSapConvergedCloud.yaml: |-
+{{- with .Values.btpRegionsMigrationSapConvergedCloud }}
+{{ tpl . $ | indent 4 }}
+{{- end }}

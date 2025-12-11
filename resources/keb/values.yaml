@@ -187,6 +187,9 @@ broker:
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
+  
+# Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure.
+btpRegionsMigrationSapConvergedCloud: |-
 
 provisioning:
   # Maximum time a worker is allowed to process a step before it must return to the provisioning queue.
@@ -209,6 +212,8 @@ catalog:
   documentationUrl: "https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment"
 
 configPaths:
+  # Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure.
+  btpRegionsMigrationSapConvergedCloud: "/config/btpRegionsMigrationSapConvergedCloud.yaml"
   # Path to the service catalog configuration file.
   catalog: "/config/catalog.yaml"
   # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.

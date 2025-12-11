@@ -99,6 +99,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -177,6 +178,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -259,6 +261,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -312,6 +315,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when shootDomain is missing
@@ -390,6 +394,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -470,6 +475,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -524,6 +530,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -579,6 +586,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -648,6 +656,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -717,6 +726,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -766,6 +776,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -810,6 +821,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -861,6 +873,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -922,6 +935,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -981,6 +995,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1043,6 +1058,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"groupsPrefix":"-", "usernameClaim":"-", "usernamePrefix":"-", "requiredClaims":["claim=value"], "groupsClaim":"-"`
@@ -1104,6 +1120,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		testCases := []struct {
@@ -1206,6 +1223,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		testCases := []struct {
@@ -1297,6 +1315,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1346,6 +1365,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -1417,6 +1437,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -1478,6 +1499,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -1537,6 +1559,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -1586,6 +1609,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -1638,6 +1662,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1693,6 +1718,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1839,6 +1865,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				map[string]string{},
 			)
 
 			// when
@@ -1909,6 +1936,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				map[string]string{},
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2066,6 +2094,7 @@ func TestNetworkingValidation(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				map[string]string{},
 			)
 
 			// when
@@ -2171,6 +2200,7 @@ func TestRegionValidation(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				map[string]string{},
 			)
 
 			// when
@@ -2236,6 +2266,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2289,6 +2320,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2349,6 +2381,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	// when
@@ -2406,6 +2439,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	testCases := []struct {
@@ -2489,6 +2523,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2544,6 +2579,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	testCases := []struct {
@@ -2685,6 +2721,7 @@ func TestAutoScalerConfigurationInAdditionalWorkerNodePools(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	testCases := []struct {
@@ -2760,6 +2797,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		map[string]string{},
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2825,6 +2863,7 @@ func TestAdditionalProperties(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -2900,6 +2939,7 @@ func TestAdditionalProperties(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -2989,6 +3029,7 @@ func TestAdditionalProperties(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3053,6 +3094,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3106,6 +3148,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3169,6 +3212,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -3243,6 +3287,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3297,6 +3342,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3351,6 +3397,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3405,6 +3452,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3459,6 +3507,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			map[string]string{},
 		)
 
 		// when
@@ -3574,6 +3623,7 @@ func TestDiscoveryZones(t *testing.T) {
 				rulesService,
 				fixture.CreateGardenerClient(),
 				fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError),
+				map[string]string{},
 			)
 
 			// when
@@ -3658,6 +3708,7 @@ func TestClusterName(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				map[string]string{},
 			)
 
 			// when
@@ -3681,6 +3732,128 @@ func TestClusterName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBtpRegionsMigrationSapConvergedCloud_DeprecatedRegion(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"sap-converged-cloud"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		map[string]string{"cf-eu10": "cf-eu01"},
+	)
+
+	// when
+	_, err := provisionEndpoint.Provision(
+		fixRequestContext(t, "cf-eu10"),
+		instanceID,
+		domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.SapConvergedCloudPlanID,
+			RawParameters: json.RawMessage(`{"name": "testing-name", "region": "eu-de-2"}`),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		},
+		true,
+	)
+
+	assert.EqualError(t, err, "Cluster provisioning in the eu-de-2 region is no longer supported under cf-eu10. Please use the cf-eu01 BTP region.")
+}
+
+func TestBtpRegionsMigrationSapConvergedCloud_NewRegion(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"sap-converged-cloud"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		map[string]string{"cf-eu10": "cf-eu01"},
+	)
+
+	// when
+	_, err := provisionEndpoint.Provision(
+		fixRequestContext(t, "cf-eu01"),
+		instanceID,
+		domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.SapConvergedCloudPlanID,
+			RawParameters: json.RawMessage(`{"name": "testing-name", "region": "eu-de-2"}`),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		},
+		true,
+	)
+
+	assert.NoError(t, err)
 }
 
 func fixExistOperation() internal.Operation {

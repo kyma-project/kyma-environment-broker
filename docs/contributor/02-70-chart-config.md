@@ -87,6 +87,7 @@
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>dualStackDocsURL | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. | `https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
+| btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
 | provisioning.<br>workersAmount | Number of workers in provisioning queue. | `20` |
 | update.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the update queue. | `2m` |
@@ -94,6 +95,7 @@
 | deprovisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. | `2m` |
 | deprovisioning.<br>workersAmount | Number of workers in deprovisioning queue. | `20` |
 | catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
+| configPaths.<br>btpRegionsMigrationSapConvergedCloud | Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure. | `/config/btpRegionsMigrationSapConvergedCloud.yaml` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
 | configPaths.hapRule | Path to the rules for mapping plans and regions to hyperscaler account pools. | `/config/hapRule.yaml` |

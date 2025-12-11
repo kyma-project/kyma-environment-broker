@@ -30,6 +30,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
+| **APP_BTP_REGIONS_&#x200b;MIGRATION_SAP_&#x200b;CONVERGED_CLOUD_&#x200b;FILE_PATH** | <code>/config/btpRegionsMigrationSapConvergedCloud.yaml</code> | Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure. |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
 | **APP_DATABASE_FIPS_&#x200b;REWRITE_CFB** | <code>false</code> | Rewrite old data using AES-GCM encryption. |
 | **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>false</code> | Write using AES-GCM encryption. |
