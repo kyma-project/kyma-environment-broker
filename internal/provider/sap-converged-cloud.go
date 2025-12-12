@@ -41,7 +41,6 @@ func (p *SapConvergedCloudInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                zones,
 		ProviderType:         OpenstackProviderType,
-		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		DiskType:             "",
