@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	awsProviderName     = "aws"
-	gcpProviderName     = "gcp"
-	unrelevantMachine   = "unrelevant-machine"
-	defaultVolumeSizeGb = 80
+	awsProviderName              = "aws"
+	gcpProviderName              = "gcp"
+	sapConvergedCloudroviderName = "openstack"
+	unrelevantMachine            = "unrelevant-machine"
+	defaultVolumeSizeGb          = 80
 )
 
 type fakePlanConfigProvider struct {
@@ -625,5 +626,65 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 		assert.Equal(t, gcpProviderName, values.ProviderType)
 		assert.Equal(t, provider.DefaultGCPTrialMachineType, values.DefaultMachineType)
 		assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+	})
+
+	t.Run("SAP Converged Cloud provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 0
+
+		changedDefaultMachineType := "g_c64_m256"
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.SapConvergedCloudPlanID,
+		}
+
+		t.Run("should set default values", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.SapConvergedCloudPlanName, provider.DefaultSapConvergedCloudMachineType).
+				withMachineType(broker.SapConvergedCloudPlanName, changedDefaultMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, sapConvergedCloudroviderName, values.ProviderType)
+			assert.Equal(t, provider.DefaultSapConvergedCloudMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default machine type", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.SapConvergedCloudPlanName, changedDefaultMachineType).
+				withMachineType(broker.SapConvergedCloudPlanName, provider.DefaultSapConvergedCloudMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, sapConvergedCloudroviderName, values.ProviderType)
+			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
 	})
 }
