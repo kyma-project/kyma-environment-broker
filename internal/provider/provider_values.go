@@ -18,6 +18,7 @@ type ZonesProvider interface {
 
 type PlanConfigProvider interface {
 	DefaultVolumeSizeGb(planName string) (int, bool)
+	DefaultMachineType(planName string) string
 }
 
 type PlanSpecificValuesProvider struct {
@@ -77,7 +78,6 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 	case broker.AzureLitePlanID:
 		p = &AzureLiteInputProvider{
 			Purpose:                s.defaultPurpose,
-			UseSmallerMachineTypes: s.useSmallerMachineTypes,
 			ProvisioningParameters: provisioningParameters,
 			ZonesProvider:          s.zonesProvider,
 		}
@@ -161,10 +161,21 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 	}
 
 	values := p.Provide()
-	volumeSize, found := s.planSpec.DefaultVolumeSizeGb(broker.PlanNamesMapping[provisioningParameters.PlanID])
+	planeName := broker.PlanNamesMapping[provisioningParameters.PlanID]
+	volumeSize, found := s.planSpec.DefaultVolumeSizeGb(planeName)
 	if found {
 		values.VolumeSizeGb = volumeSize
 	}
+
+	if values.DefaultMachineType == "" && values.ProviderType != OwnProviderType {
+		defaultMachineType := s.planSpec.DefaultMachineType(planeName)
+		if defaultMachineType == "" {
+			return internal.ProviderValues{}, fmt.Errorf("plan %s (%s) does not contain default machine type", provisioningParameters.PlanID, planeName)
+		}
+
+		values.DefaultMachineType = defaultMachineType
+	}
+
 	return values, nil
 }
 
