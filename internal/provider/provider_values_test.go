@@ -11,7 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const unrelevantMachine = "unrelevant-machine"
+const (
+	awsProviderName     = "aws"
+	gcpProviderName     = "gcp"
+	unrelevantMachine   = "unrelevant-machine"
+	defaultVolumeSizeGb = 80
+)
 
 type fakePlanConfigProvider struct {
 	volumeSizes   map[string]int
@@ -57,8 +62,6 @@ func (f *fakePlanConfigProvider) withVolumeSize(planName string, size int) *fake
 func TestPlanSpecificValuesProvider(t *testing.T) {
 
 	t.Run("AWS provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 80
-
 		changedDefaultMachineType := "m6i.16xlarge"
 		changedDefaultVolumeSizeGb := 100
 
@@ -84,7 +87,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -107,7 +110,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -130,7 +133,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
 			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -163,7 +166,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultOldAWSTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -185,7 +188,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -218,7 +221,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultOldAWSTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -239,15 +242,13 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, awsProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 	})
 
 	t.Run("Azure provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 80
-
 		changedDefaultMachineType := "Standard_D64s_v5"
 		changedDefaultVolumeSizeGb := 100
 
@@ -441,8 +442,6 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("Azure Lite provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 80
-
 		changedDefaultMachineType := "Standard_D64s_v5"
 		changedDefaultVolumeSizeGb := 100
 
@@ -518,5 +517,113 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			assert.Equal(t, provider.DefaultOldAzureTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
 		})
+	})
+
+	t.Run("GCP provider", func(t *testing.T) {
+		changedDefaultMachineType := "n2-standard-64"
+		changedDefaultVolumeSizeGb := 100
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.GCPPlanID,
+		}
+
+		t.Run("should set default values", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType).
+				withMachineType(broker.GCPPlanName, changedDefaultMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, gcpProviderName, values.ProviderType)
+			assert.Equal(t, provider.DefaultGCPMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default machine type", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.GCPPlanName, changedDefaultMachineType).
+				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, gcpProviderName, values.ProviderType)
+			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default volume size", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType).
+				withVolumeSize(broker.GCPPlanName, changedDefaultVolumeSizeGb)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, gcpProviderName, values.ProviderType)
+			assert.Equal(t, provider.DefaultGCPMachineType, values.DefaultMachineType)
+			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
+
+	t.Run("GCP trial provider", func(t *testing.T) {
+		// given
+		const defaultVolumeSizeGb = 30
+
+		planConfig := newFakePlanConfigProvider().
+			withMachineType(broker.TrialPlanName, unrelevantMachine)
+
+		planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+			broker.InfrastructureManager{
+				DefaultTrialProvider: runtime.GCP,
+			},
+			provider.TestTrialPlatformRegionMapping,
+			provider.FakeZonesProvider([]string{"a", "b", "c"}),
+			planConfig,
+		)
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.TrialPlanID,
+		}
+
+		// when
+		values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, gcpProviderName, values.ProviderType)
+		assert.Equal(t, provider.DefaultGCPTrialMachineType, values.DefaultMachineType)
+		assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 	})
 }
