@@ -137,3 +137,11 @@ func (p *PlanSpecifications) IsUpgradable(planName string) bool {
 	}
 	return numberOfTargetPlans > 0
 }
+
+func (p *PlanSpecifications) DefaultMachineType(planName string) string {
+	regularMachines := p.RegularMachines(planName)
+	if len(regularMachines) == 0 {
+		return ""
+	}
+	return regularMachines[0]
+}
