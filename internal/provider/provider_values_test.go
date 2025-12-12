@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	awsProviderName              = "aws"
-	gcpProviderName              = "gcp"
-	sapConvergedCloudroviderName = "openstack"
-	unrelevantMachine            = "unrelevant-machine"
-	defaultVolumeSizeGb          = 80
+	awsProviderName               = "aws"
+	gcpProviderName               = "gcp"
+	sapConvergedCloudProviderName = "openstack"
+	alicloudProviderName          = "alicloud"
+	unrelevantMachine             = "unrelevant-machine"
+	defaultVolumeSizeGb           = 80
 )
 
 type fakePlanConfigProvider struct {
@@ -657,7 +658,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, sapConvergedCloudroviderName, values.ProviderType)
+			assert.Equal(t, sapConvergedCloudProviderName, values.ProviderType)
 			assert.Equal(t, provider.DefaultSapConvergedCloudMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
@@ -682,7 +683,65 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, sapConvergedCloudroviderName, values.ProviderType)
+			assert.Equal(t, sapConvergedCloudProviderName, values.ProviderType)
+			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
+
+	t.Run("Alicloud provider", func(t *testing.T) {
+		changedDefaultMachineType := "ecs.g9i.16xlarge"
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.AlicloudPlanID,
+		}
+
+		t.Run("should set default values", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AlicloudPlanName, provider.DefaultAlicloudMachineType).
+				withMachineType(broker.AlicloudPlanName, changedDefaultMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, alicloudProviderName, values.ProviderType)
+			assert.Equal(t, provider.DefaultAlicloudMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default machine type", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AlicloudPlanName, changedDefaultMachineType).
+				withMachineType(broker.AlicloudPlanName, provider.DefaultAlicloudMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, alicloudProviderName, values.ProviderType)
 			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
