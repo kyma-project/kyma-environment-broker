@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const unrelevantMachine = "unrelevant-machine"
+
 type fakePlanConfigProvider struct {
 	volumeSizes   map[string]int
 	machineTypes  map[string][]string
@@ -137,7 +139,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	t.Run("AWS trial provider", func(t *testing.T) {
 		const defaultVolumeSizeGb = 50
 
-		planConfig := newFakePlanConfigProvider()
+		planConfig := newFakePlanConfigProvider().
+			withMachineType(broker.TrialPlanName, unrelevantMachine)
 
 		params := internal.ProvisioningParameters{
 			PlanID: broker.TrialPlanID,
@@ -188,4 +191,57 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 		})
 	})
 
+	t.Run("AWS free provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 50
+
+		planConfig := newFakePlanConfigProvider().
+			withMachineType(broker.FreemiumPlanName, unrelevantMachine)
+
+		params := internal.ProvisioningParameters{
+			PlanID:           broker.FreemiumPlanID,
+			PlatformProvider: runtime.AWS,
+		}
+
+		t.Run("should set default values with bigger machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: false,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, provider.DefaultOldAWSTrialMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should set default values with smaller machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
 }
