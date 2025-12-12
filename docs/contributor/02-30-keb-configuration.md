@@ -62,7 +62,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE** | None | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE_VERSION** | None | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>false</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
-| **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial, freemium, and azure_lite clusters using smaller machine types. |
+| **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial and freemium clusters using smaller machine types. |
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |
 | **APP_MACHINES_&#x200b;AVAILABILITY_&#x200b;ENDPOINT** | <code>false</code> | If true, the broker exposes the API endpoint that returns the availability of machine types. |
