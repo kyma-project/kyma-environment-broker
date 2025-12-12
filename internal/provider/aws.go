@@ -76,7 +76,6 @@ func (p *AWSInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                zones,
 		ProviderType:         "aws",
-		DefaultMachineType:   DefaultAWSMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
