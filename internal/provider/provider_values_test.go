@@ -244,4 +244,199 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 	})
+
+	t.Run("Azure provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 80
+
+		changedDefaultMachineType := "Standard_D64s_v5"
+		changedDefaultVolumeSizeGb := 100
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.AzurePlanID,
+		}
+
+		t.Run("should set default values", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType).
+				withMachineType(broker.AzurePlanName, changedDefaultMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1", "2", "3"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultAzureMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default machine type", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AzurePlanName, changedDefaultMachineType).
+				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1", "2", "3"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should change default volume size", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType).
+				withVolumeSize(broker.AzurePlanName, changedDefaultVolumeSizeGb)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					MultiZoneCluster: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1", "2", "3"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultAzureMachineType, values.DefaultMachineType)
+			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
+
+	t.Run("Azure trial provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 50
+
+		planConfig := newFakePlanConfigProvider().
+			withMachineType(broker.TrialPlanName, unrelevantMachine)
+
+		params := internal.ProvisioningParameters{
+			PlanID: broker.TrialPlanID,
+		}
+
+		t.Run("should set default values with bigger machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: false,
+					DefaultTrialProvider:   runtime.Azure,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultOldAzureTrialMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should set default values with smaller machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: true,
+					DefaultTrialProvider:   runtime.Azure,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultAzureMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
+
+	t.Run("Azure free provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 50
+
+		planConfig := newFakePlanConfigProvider().
+			withMachineType(broker.FreemiumPlanName, unrelevantMachine)
+
+		params := internal.ProvisioningParameters{
+			PlanID:           broker.FreemiumPlanID,
+			PlatformProvider: runtime.Azure,
+		}
+
+		t.Run("should set default values with bigger machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: false,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultOldAzureTrialMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("should set default values with smaller machine type", func(t *testing.T) {
+			// given
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{
+					UseSmallerMachineTypes: true,
+				},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"1"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "azure", values.ProviderType)
+			assert.Equal(t, provider.DefaultAzureMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+	})
 }
