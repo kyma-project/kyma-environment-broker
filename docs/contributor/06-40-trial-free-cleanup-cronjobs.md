@@ -42,7 +42,7 @@ Use the following environment variables to configure the Jobs:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
-| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>false</code> | Write using AES-GCM encryption. |
+| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>true</code> | Write using AES-GCM encryption. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
@@ -64,7 +64,7 @@ Use the following environment variables to configure the Jobs:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_URL** | None | - |
-| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>false</code> | Write using AES-GCM encryption. |
+| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>true</code> | Write using AES-GCM encryption. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |

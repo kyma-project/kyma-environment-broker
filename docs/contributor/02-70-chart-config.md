@@ -16,7 +16,7 @@
 | global.database.managedGCP.<br>secretName | Name of the Kubernetes Secret containing DB connection values. | `kcp-postgresql` |
 | global.database.managedGCP.<br>sslModeSecretKey | Key in the database Secret for the SSL mode. | `postgresql-sslMode` |
 | global.database.managedGCP.<br>userNameSecretKey | Key in the database Secret for the database user. | `postgresql-broker-username` |
-| global.fips.writeGCM | Write using AES-GCM encryption. | `False` |
+| global.fips.writeGCM | Write using AES-GCM encryption. | `True` |
 | global.fips.<br>rewriteCFB | Rewrite old data using AES-GCM encryption. | `False` |
 | global.fips.<br>rewriteBatchSize | Number of records to process in one batch during rewrite. | `100` |
 | global.images.cloudsql_<br>proxy.repository | - | `eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy` |
