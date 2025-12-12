@@ -47,7 +47,6 @@ func (p *AlicloudInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                formattedZones,
 		ProviderType:         "alicloud",
-		DefaultMachineType:   DefaultAlicloudMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
