@@ -236,9 +236,23 @@ sap-converged-cloud:
       zones: [ "a" ]
 alicloud:
   machines:
-    ecs.g8i.large: "ecs.g8i.large (2vCPU, 8GB RAM)"
+    "ecs.g9i.large": "ecs.g9i.large (2vCPU, 8GB RAM)"
+    "ecs.g9i.xlarge": "ecs.g9i.xlarge (4vCPU, 16GB RAM)"
+    "ecs.g9i.2xlarge": "ecs.g9i.2xlarge (8vCPU, 32GB RAM)"
+    "ecs.g9i.4xlarge": "ecs.g9i.4xlarge (16vCPU, 64GB RAM)"
+    "ecs.g9i.8xlarge": "ecs.g9i.8xlarge (32vCPU, 128GB RAM)"
+    "ecs.g9i.12xlarge": "ecs.g9i.12xlarge (48vCPU, 192GB RAM)"
+    "ecs.g9i.16xlarge": "ecs.g9i.16xlarge (64vCPU, 256GB RAM)"
+    "ecs.g8i.large": "ecs.g8i.large (2vCPU, 8GB RAM)"
+    "ecs.g8i.xlarge": "ecs.g8i.xlarge (4vCPU, 16GB RAM)"
 
   regions:
+    ap-southeast-1:
+      displayName: "ap-southeast-1 (Singapore)"
+      zones: ["a", "b", "c"]
     eu-central-1:
-      displayName: "eu-central-1 (Europe, Frankfurt)"
-      zones: [ "a", "b", "c" ]
+      displayName: "eu-central-1 (Germany, Frankfurt)"
+      zones: ["a", "b", "c"]
+    eu-west-1:
+      displayName: "eu-west-1 (UK, London)"
+      zones: ["a", "b"]

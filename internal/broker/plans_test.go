@@ -16,6 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSchemaService_Alicloud(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	create, update, _ := schemaService.AlicloudSchemas("cf-eu40")
+	validateSchema(t, Marshal(create), "alicloud/alicloud-schema-additional-params-ingress.json")
+	validateSchema(t, Marshal(update), "alicloud/update-alicloud-schema-additional-params-ingress.json")
+}
+
 func TestSchemaService_Azure(t *testing.T) {
 	schemaService := createSchemaService(t)
 
@@ -161,6 +169,6 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName}, channelResolver)
+	}, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }
