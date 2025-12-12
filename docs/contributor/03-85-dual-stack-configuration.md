@@ -19,5 +19,5 @@ providersConfiguration:
 
 When **dualStack** is set to `true`, you can include the **dualStack** parameter in your provisioning requests. By default, dual-stack networking is not enabled for new instances unless you explicitly request it.
 
-> [!NOTE]
+> ### Note:
 > Dual-stack networking is supported only for Amazon Web Services and Google Cloud providers.

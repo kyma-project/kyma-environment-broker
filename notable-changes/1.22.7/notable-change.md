@@ -2,7 +2,7 @@
 
 # Updating Kyma Environment Broker: Removal of Archiving and Cleaning Flags
 
-> [!NOTE] 
+> ### Note:
 > This is a recommended change. The `archiving` and `cleaning` feature flags are now removed because both processes are always active. 
 > Without updating the configuration, the obsolete settings have no effect, but may cause confusion.
 

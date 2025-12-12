@@ -2,7 +2,7 @@
 
 # Updating Kyma Environment Broker: Dual-Stack Networking Support
 
-> [!WARNING]
+> ### Caution:
 > This is a mandatory change. You must update the Kyma Environment Broker (KEB) provider configuration to enable the new dual-stack networking feature.
 
 ## Prerequisites
