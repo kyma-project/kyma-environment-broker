@@ -25,7 +25,7 @@ func TestUnmarshalingFromYamlFile(t *testing.T) {
 			name:     "correctly unmarshals yaml file with embedded object",
 			filename: "testdata/embedded_object.yaml",
 			data:     &map[string]interface{}{},
-			expected: &map[string]interface{}{"obj": map[interface{}]interface{}{"prop1": map[interface{}]interface{}{"another_obj": map[interface{}]interface{}{"prop2": "value2", "prop3": "value3"}}}},
+			expected: &map[string]interface{}{"obj": map[string]interface{}{"prop1": map[string]interface{}{"another_obj": map[string]interface{}{"prop2": "value2", "prop3": "value3"}}}},
 		},
 		{
 			name:     "correctly unmarshals yaml file with mapping of strings to list of strings",
