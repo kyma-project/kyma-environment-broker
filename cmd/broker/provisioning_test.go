@@ -3045,7 +3045,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		err = yaml.Unmarshal([]byte(operation.KymaTemplate), &template)
 		require.NoError(t, err)
 
-		specData := template["spec"].(map[interface{}]interface{})
+		specData := template["spec"].(map[string]interface{})
 		channelValue := specData["channel"].(string)
 		assert.Equal(t, "fast", channelValue, "ConfigMap default channel should be applied")
 	})
