@@ -78,7 +78,6 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 	case broker.AzureLitePlanID:
 		p = &AzureLiteInputProvider{
 			Purpose:                s.defaultPurpose,
-			UseSmallerMachineTypes: s.useSmallerMachineTypes,
 			ProvisioningParameters: provisioningParameters,
 			ZonesProvider:          s.zonesProvider,
 		}
