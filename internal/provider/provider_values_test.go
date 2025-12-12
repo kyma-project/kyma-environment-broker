@@ -3,7 +3,6 @@ package provider_test
 import (
 	"testing"
 
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -52,66 +51,86 @@ func (f *fakePlanConfigProvider) withVolumeSize(planName string, size int) *fake
 	return f
 }
 
-func TestPlanSpecificValuesProvider_AWSPlan(t *testing.T) {
-	var changedDefaultMachineType = "m6i.16xlarge"
+func TestPlanSpecificValuesProvider(t *testing.T) {
 
-	t.Run("default values", func(t *testing.T) {
-		// given
-		planConfig := newFakePlanConfigProvider().
-			withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
-			withMachineType(broker.AWSPlanName, changedDefaultMachineType)
+	t.Run("AWS provider", func(t *testing.T) {
+		const defaultVolumeSizeGb = 80
 
-		planSpecValProvider := provider.NewPlanSpecificValuesProvider(
-			broker.InfrastructureManager{},
-			provider.TestTrialPlatformRegionMapping,
-			provider.FakeZonesProvider([]string{"a", "b", "c"}),
-			planConfig,
-		)
-
-		params := internal.ProvisioningParameters{
-			PlanID:         broker.AWSPlanID,
-			Parameters:     pkg.ProvisioningParametersDTO{},
-			PlatformRegion: "cf-eu10",
-		}
-
-		// when
-		values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, "aws", values.ProviderType)
-		assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
-		assert.Equal(t, 80, values.VolumeSizeGb)
-	})
-
-	t.Run("changed default machine type", func(t *testing.T) {
-		// given
-		planConfig := newFakePlanConfigProvider().
-			withMachineType(broker.AWSPlanName, changedDefaultMachineType).
-			withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType)
-
-		planSpecValProvider := provider.NewPlanSpecificValuesProvider(
-			broker.InfrastructureManager{},
-			provider.TestTrialPlatformRegionMapping,
-			provider.FakeZonesProvider([]string{"a", "b", "c"}),
-			planConfig,
-		)
+		changedDefaultMachineType := "m6i.16xlarge"
+		changedDefaultVolumeSizeGb := 100
 
 		params := internal.ProvisioningParameters{
 			PlanID: broker.AWSPlanID,
-			Parameters: pkg.ProvisioningParametersDTO{
-				MachineType: &changedDefaultMachineType,
-			},
-			PlatformRegion: "cf-eu10",
 		}
 
-		// when
-		values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+		t.Run("default values", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
+				withMachineType(broker.AWSPlanName, changedDefaultMachineType)
 
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, "aws", values.ProviderType)
-		assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
-		assert.Equal(t, 80, values.VolumeSizeGb)
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("changed default machine type", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AWSPlanName, changedDefaultMachineType).
+				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, changedDefaultMachineType, values.DefaultMachineType)
+			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
+		})
+
+		t.Run("changed default volume size", func(t *testing.T) {
+			// given
+			planConfig := newFakePlanConfigProvider().
+				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
+				withVolumeSize(broker.AWSPlanName, changedDefaultVolumeSizeGb)
+
+			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
+				broker.InfrastructureManager{},
+				provider.TestTrialPlatformRegionMapping,
+				provider.FakeZonesProvider([]string{"a", "b", "c"}),
+				planConfig,
+			)
+
+			// when
+			values, err := planSpecValProvider.ValuesForPlanAndParameters(params)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, "aws", values.ProviderType)
+			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
+		})
 	})
+
 }
