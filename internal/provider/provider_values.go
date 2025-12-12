@@ -167,7 +167,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		values.VolumeSizeGb = volumeSize
 	}
 
-	if values.DefaultMachineType == "" {
+	if values.DefaultMachineType == "" && values.ProviderType != OwnProviderType {
 		defaultMachineType := s.planSpec.DefaultMachineType(planeName)
 		if defaultMachineType == "" {
 			return internal.ProviderValues{}, fmt.Errorf("plan %s (%s) does not contain default machine type", provisioningParameters.PlanID, planeName)
