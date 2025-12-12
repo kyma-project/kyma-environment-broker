@@ -1,10 +1,10 @@
 # Kyma Custom Resource Template Configuration
 
-Kyma Environment Broker (KEB) provisioning process creates Kyma custom resource based on the configured template. KEB needs a ConfigMap with the configuration.
+Kyma Environment Broker (KEB) provisioning process creates a Kyma custom resource (CR) based on the configured template. KEB needs a ConfigMap with the configuration.
 
 ## ConfigMap  
 
-The appropriate ConfigMap is selected by filtering the resources using labels. KEB recognizes the ConfigMaps with configurations when they contain the label:
+The appropriate ConfigMap is selected by filtering the resources using labels. KEB recognizes the ConfigMaps with configurations when they contain the following label:
 
 ```yaml
 keb-config: "true"
@@ -34,7 +34,7 @@ data:
         - name: module2
 ```
 
-You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for Kyma CR during the provisioning operation.
+You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for the Kyma CR during the provisioning operation.
 
 > ### Note:
 > The `kyma-template` configuration is required.
@@ -114,4 +114,4 @@ data:
         modules: []
 ```
 
-The content of the ConfigMap is stored in values.yaml as `runtimeConfiguration`. More details about Kyma custom resource you can find in [Kyma CR documentation](https://github.com/kyma-project/lifecycle-manager/blob/main/docs/contributor/resources/01-kyma.md)
+The content of the ConfigMap is stored in `values.yaml` as `runtimeConfiguration`. For more details about Kyma CR, see [the Kyma CR documentation](https://github.com/kyma-project/lifecycle-manager/blob/main/docs/contributor/resources/01-kyma.md).

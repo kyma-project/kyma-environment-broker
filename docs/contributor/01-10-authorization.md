@@ -16,7 +16,7 @@ Authorization: Bearer {ACCESS_TOKEN}
 
 ## Get the Access Token
 
-Follow these steps to obtain a new access token:
+To obtain a new access token, run:
 
 ```shell
 export CLIENT_ID={CLIENT_ID}
