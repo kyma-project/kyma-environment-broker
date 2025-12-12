@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func ReadOIDCDefaultValuesFromYAML(yamlFilePath string) (pkg.OIDCConfigDTO, error) {

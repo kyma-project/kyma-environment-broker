@@ -67,7 +67,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_CIS_&#x200b;EVENTS_MAX_REQUESTS_&#x200b;PER_INTERVAL** | <code>5</code> | Maximum number of requests per interval to the CIS Events API. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;EVENTS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | Minimum interval between requests to the CIS Events API. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;EVENTS_SERVICE_URL** | <code>TBD</code> | The endpoint URL for the CIS v2 event service, used to fetch subaccount events. |
-| **SUBACCOUNT_SYNC_&#x200b;DATABASE_FIPS_WRITE_&#x200b;GCM** | <code>false</code> | Write using AES-GCM encryption. |
+| **SUBACCOUNT_SYNC_&#x200b;DATABASE_FIPS_WRITE_&#x200b;GCM** | <code>true</code> | Write using AES-GCM encryption. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_HOST** | None | Specifies the host of the database. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_NAME** | None | Specifies the name of the database. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_PASSWORD** | None | Specifies the user password for the database. |

@@ -154,3 +154,19 @@ azure_lite:
     - "Standard_D4s_v5"
     - "Standard_D4_v3"
   regions: *azure_regions
+
+
+alicloud:
+  volumeSizeGb: 80
+  regularMachines:
+    - "ecs.g9i.large"
+    - "ecs.g9i.xlarge"
+    - "ecs.g9i.2xlarge"
+    - "ecs.g9i.4xlarge"
+    - "ecs.g9i.8xlarge"
+    - "ecs.g9i.12xlarge"
+    - "ecs.g9i.16xlarge"
+    - "ecs.g8i.large"
+    - "ecs.g8i.xlarge"
+  regions:
+    default: ["ap-southeast-1","eu-central-1","eu-west-1"]

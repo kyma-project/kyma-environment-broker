@@ -33,8 +33,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BTP_REGIONS_&#x200b;MIGRATION_SAP_&#x200b;CONVERGED_CLOUD_&#x200b;FILE_PATH** | <code>/config/btpRegionsMigrationSapConvergedCloud.yaml</code> | Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure. |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
 | **APP_DATABASE_FIPS_&#x200b;REWRITE_BATCH_SIZE** | <code>100</code> | Number of records to process in one batch during rewrite. |
-| **APP_DATABASE_FIPS_&#x200b;REWRITE_CFB** | <code>false</code> | Rewrite old data using AES-GCM encryption. |
-| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>false</code> | Write using AES-GCM encryption. |
+| **APP_DATABASE_FIPS_&#x200b;REWRITE_CFB** | <code>true</code> | Rewrite old data using AES-GCM encryption. |
+| **APP_DATABASE_FIPS_&#x200b;WRITE_GCM** | <code>true</code> | Write using AES-GCM encryption. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |

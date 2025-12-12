@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ChannelResolver interface {
@@ -95,7 +95,7 @@ func (r *channelResolver) extractChannelFromKymaTemplate(kymaTemplate string) (s
 		return "", fmt.Errorf("while unmarshaling kyma-template: %w", err)
 	}
 
-	if spec, ok := template["spec"].(map[interface{}]interface{}); ok {
+	if spec, ok := template["spec"].(map[string]interface{}); ok {
 		if channel, ok := spec["channel"].(string); ok {
 			return channel, nil
 		}
