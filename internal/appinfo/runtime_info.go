@@ -60,13 +60,19 @@ func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOpera
 func (h *RuntimeInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.publisher.Publish(context.Background(), RuntimesInfoRequest{})
 
-	h.log.Info("Request to runtimes info", "request", r)
+	h.log.Info("incoming runtimes info request",
+		"method", r.Method,
+		"url", r.URL.String(),
+		"proto", r.Proto,
+		"host", r.Host,
+		"remote_addr", r.RemoteAddr,
+		"user_agent", r.UserAgent(),
+		"referer", r.Referer(),
+		"headers", r.Header,
+	)
 
 	dump, _ := ghttputil.DumpRequest(r, true)
-	h.log.Info(fmt.Sprintf("Request to runtimes info: %s", dump))
-
-	dump, _ = ghttputil.DumpRequestOut(r, true)
-	h.log.Info(fmt.Sprintf("Request to runtimes info: %s", dump))
+	h.log.Info(fmt.Sprintf("incoming runtimes info request: %s", dump))
 
 	allInstances, err := h.instanceFinder.FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
 	if err != nil {
