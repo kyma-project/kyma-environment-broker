@@ -2,10 +2,13 @@ package provider
 
 import (
 	"fmt"
+	"path/filepath"
+	"runtime"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 )
 
 type Provider interface {
@@ -46,6 +49,13 @@ func NewPlanSpecificValuesProvider(cfg broker.InfrastructureManager,
 		zonesProvider:              zonesProvider,
 		planSpec:                   planSpec,
 	}
+}
+
+func NewFakePlanSpecFromFile() (*configuration.PlanSpecifications, error) {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	plansPath := filepath.Join(dir, "testdata", "plans.yaml")
+	return configuration.NewPlanSpecificationsFromFile(plansPath)
 }
 
 func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error) {

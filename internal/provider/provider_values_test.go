@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,12 +61,6 @@ func (f *fakePlanConfigProvider) withVolumeSize(planName string, size int) *fake
 	return f
 }
 
-func NewFakePlanSpecFromFile(t *testing.T) *configuration.PlanSpecifications {
-	spec, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
-	require.NoError(t, err)
-	return spec
-}
-
 func TestPlanSpecificValuesProvider(t *testing.T) {
 
 	t.Run("AWS provider", func(t *testing.T) {
@@ -80,7 +73,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -265,7 +259,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
@@ -456,7 +451,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -532,7 +528,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -639,7 +636,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
@@ -695,7 +693,8 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := NewFakePlanSpecFromFile(t)
+			planConfig, err := provider.NewFakePlanSpecFromFile()
+			require.NoError(t, err)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
