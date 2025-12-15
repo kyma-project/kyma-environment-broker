@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	ghttputil "net/http/httputil"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -60,19 +59,20 @@ func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOpera
 func (h *RuntimeInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.publisher.Publish(context.Background(), RuntimesInfoRequest{})
 
+	headers := make(http.Header)
+	for k, v := range r.Header {
+		headers[k] = v
+	}
+	headers.Del("Authorization")
+
 	h.log.Info("incoming runtimes info request",
 		"method", r.Method,
 		"url", r.URL.String(),
 		"proto", r.Proto,
 		"host", r.Host,
 		"remote_addr", r.RemoteAddr,
-		"user_agent", r.UserAgent(),
-		"referer", r.Referer(),
-		"headers", r.Header,
+		"headers", headers,
 	)
-
-	dump, _ := ghttputil.DumpRequest(r, true)
-	h.log.Info(fmt.Sprintf("incoming runtimes info request: %s", dump))
 
 	allInstances, err := h.instanceFinder.FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
 	if err != nil {
