@@ -7,7 +7,7 @@ import (
 
 const (
 	DefaultAlicloudRegion         = "eu-central-1"
-	DefaultAlicloudMachineType    = "ecs.g8i.large"
+	DefaultAlicloudMachineType    = "ecs.g9i.large"
 	DefaultAlicloudMultiZoneCount = 3
 	DefaultAlicloudDiskType       = "cloud_essd"
 )
