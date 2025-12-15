@@ -79,8 +79,6 @@ These are the provisioning parameters for Azure that you can configure:
 Azure
 </summary>
 
-<!-- markdown-link-check-disable -->
-
 | Parameter name                                       | Type   | Description                                                                             | Required | Default value     |
 |------------------------------------------------------|--------|-----------------------------------------------------------------------------------------|:--------:|-------------------|
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                   |    No    | `Standard_D2s_v5` |
@@ -93,16 +91,12 @@ Azure
 | **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.           |    No    | `1`               |
 | **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                   |    No    | None              |
 
-<!-- markdown-link-check-enable-->
-
 </details>
 
 <details>
 <summary label="azure-lite-plan">
 Azure Lite
 </summary>
-
-<!-- markdown-link-check-disable -->
 
 | Parameter name                                       | Type   | Description                                                                         | Required | Default value     |
 |------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
@@ -115,8 +109,6 @@ Azure Lite
 | **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
 | **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
 | **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
-
-<!-- markdown-link-check-enable-->
 
 </details>
 
@@ -264,9 +256,7 @@ Preview cluster plan
 | **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 | **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
-<!-- markdown-link-check-enable -->
-
 </details>
 
 <br>
-<sup>1</sup> This parameter is available for both provisioning and update operations.
+<p><sup>1</sup> This parameter is available for both provisioning and update operations.</p>
