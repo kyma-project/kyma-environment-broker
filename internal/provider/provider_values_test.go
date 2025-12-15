@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +27,7 @@ type fakePlanConfigProvider struct {
 	hasVolumeSize map[string]bool
 }
 
-func newFakePlanConfigProvider() *fakePlanConfigProvider {
+func newFakeInMemoryPlanConfigProvider() *fakePlanConfigProvider {
 	return &fakePlanConfigProvider{
 		volumeSizes:   make(map[string]int),
 		machineTypes:  make(map[string][]string),
@@ -61,6 +62,12 @@ func (f *fakePlanConfigProvider) withVolumeSize(planName string, size int) *fake
 	return f
 }
 
+func NewFakePlanSpecFromFile(t *testing.T) *configuration.PlanSpecifications {
+	spec, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
+	require.NoError(t, err)
+	return spec
+}
+
 func TestPlanSpecificValuesProvider(t *testing.T) {
 
 	t.Run("AWS provider", func(t *testing.T) {
@@ -73,9 +80,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
-				withMachineType(broker.AWSPlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -96,7 +101,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AWSPlanName, changedDefaultMachineType).
 				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType)
 
@@ -119,7 +124,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default volume size", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
 				withVolumeSize(broker.AWSPlanName, changedDefaultVolumeSizeGb)
 
@@ -144,7 +149,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	t.Run("AWS trial provider", func(t *testing.T) {
 		const defaultVolumeSizeGb = 50
 
-		planConfig := newFakePlanConfigProvider().
+		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, unrelevantMachine)
 
 		params := internal.ProvisioningParameters{
@@ -199,7 +204,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	t.Run("AWS free provider", func(t *testing.T) {
 		const defaultVolumeSizeGb = 50
 
-		planConfig := newFakePlanConfigProvider().
+		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.FreemiumPlanName, unrelevantMachine)
 
 		params := internal.ProvisioningParameters{
@@ -260,9 +265,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType).
-				withMachineType(broker.AzurePlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
@@ -285,7 +288,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AzurePlanName, changedDefaultMachineType).
 				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType)
 
@@ -310,7 +313,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default volume size", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AzurePlanName, provider.DefaultAzureMachineType).
 				withVolumeSize(broker.AzurePlanName, changedDefaultVolumeSizeGb)
 
@@ -337,7 +340,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	t.Run("Azure trial provider", func(t *testing.T) {
 		const defaultVolumeSizeGb = 50
 
-		planConfig := newFakePlanConfigProvider().
+		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, unrelevantMachine)
 
 		params := internal.ProvisioningParameters{
@@ -392,7 +395,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	t.Run("Azure free provider", func(t *testing.T) {
 		const defaultVolumeSizeGb = 50
 
-		planConfig := newFakePlanConfigProvider().
+		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.FreemiumPlanName, unrelevantMachine)
 
 		params := internal.ProvisioningParameters{
@@ -453,9 +456,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.AzureLitePlanName, provider.DefaultOldAzureTrialMachineType).
-				withMachineType(broker.AzureLitePlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -476,7 +477,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AzureLitePlanName, changedDefaultMachineType).
 				withMachineType(broker.AzureLitePlanName, provider.DefaultOldAzureTrialMachineType)
 
@@ -499,7 +500,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default volume size", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AzureLitePlanName, provider.DefaultOldAzureTrialMachineType).
 				withVolumeSize(broker.AzureLitePlanName, changedDefaultVolumeSizeGb)
 
@@ -531,9 +532,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType).
-				withMachineType(broker.GCPPlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -554,7 +553,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.GCPPlanName, changedDefaultMachineType).
 				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType)
 
@@ -577,7 +576,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default volume size", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.GCPPlanName, provider.DefaultGCPMachineType).
 				withVolumeSize(broker.GCPPlanName, changedDefaultVolumeSizeGb)
 
@@ -603,7 +602,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 		// given
 		const defaultVolumeSizeGb = 30
 
-		planConfig := newFakePlanConfigProvider().
+		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, unrelevantMachine)
 
 		planSpecValProvider := provider.NewPlanSpecificValuesProvider(
@@ -640,9 +639,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.SapConvergedCloudPlanName, provider.DefaultSapConvergedCloudMachineType).
-				withMachineType(broker.SapConvergedCloudPlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
@@ -665,7 +662,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.SapConvergedCloudPlanName, changedDefaultMachineType).
 				withMachineType(broker.SapConvergedCloudPlanName, provider.DefaultSapConvergedCloudMachineType)
 
@@ -698,9 +695,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should set default values", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
-				withMachineType(broker.AlicloudPlanName, provider.DefaultAlicloudMachineType).
-				withMachineType(broker.AlicloudPlanName, changedDefaultMachineType)
+			planConfig := NewFakePlanSpecFromFile(t)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{
@@ -723,7 +718,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 		t.Run("should change default machine type", func(t *testing.T) {
 			// given
-			planConfig := newFakePlanConfigProvider().
+			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AlicloudPlanName, changedDefaultMachineType).
 				withMachineType(broker.AlicloudPlanName, provider.DefaultAlicloudMachineType)
 
