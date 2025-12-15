@@ -3,7 +3,9 @@ package appinfo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	ghttputil "net/http/httputil"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -40,9 +42,10 @@ type RuntimeInfoHandler struct {
 	plansConfig             broker.PlansConfig
 	defaultSubaccountRegion string
 	publisher               event.Publisher
+	log                     *slog.Logger
 }
 
-func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, publisher event.Publisher) *RuntimeInfoHandler {
+func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, publisher event.Publisher, log *slog.Logger) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
 		instanceFinder:          instanceFinder,
 		lastOperationFinder:     lastOpFinder,
@@ -50,11 +53,20 @@ func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOpera
 		plansConfig:             plansConfig,
 		defaultSubaccountRegion: region,
 		publisher:               publisher,
+		log:                     log,
 	}
 }
 
 func (h *RuntimeInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.publisher.Publish(context.Background(), RuntimesInfoRequest{})
+
+	h.log.Info("Request to runtimes info", "request", r)
+
+	dump, _ := ghttputil.DumpRequest(r, true)
+	h.log.Info(fmt.Sprintf("Request to runtimes info: %s", dump))
+
+	dump, _ = ghttputil.DumpRequestOut(r, true)
+	h.log.Info(fmt.Sprintf("Request to runtimes info: %s", dump))
 
 	allInstances, err := h.instanceFinder.FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
 	if err != nil {
