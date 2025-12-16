@@ -28,7 +28,7 @@ spec:
           containers:
             - name: kyma-environments-cleanup
               command: ["/bin/main"]
-              image: europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.25.9
+              image: europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.25.10
               imagePullPolicy: IfNotPresent
               env:
                 - name: DATABASE_EMBEDDED
