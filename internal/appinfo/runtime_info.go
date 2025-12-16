@@ -3,6 +3,7 @@ package appinfo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -40,9 +41,10 @@ type RuntimeInfoHandler struct {
 	plansConfig             broker.PlansConfig
 	defaultSubaccountRegion string
 	publisher               event.Publisher
+	log                     *slog.Logger
 }
 
-func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, publisher event.Publisher) *RuntimeInfoHandler {
+func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, publisher event.Publisher, log *slog.Logger) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
 		instanceFinder:          instanceFinder,
 		lastOperationFinder:     lastOpFinder,
@@ -50,11 +52,27 @@ func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOpera
 		plansConfig:             plansConfig,
 		defaultSubaccountRegion: region,
 		publisher:               publisher,
+		log:                     log,
 	}
 }
 
 func (h *RuntimeInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.publisher.Publish(context.Background(), RuntimesInfoRequest{})
+
+	headers := make(http.Header)
+	for k, v := range r.Header {
+		headers[k] = v
+	}
+	headers.Del("Authorization")
+
+	h.log.Info("incoming runtimes info request",
+		"method", r.Method,
+		"url", r.URL.String(),
+		"proto", r.Proto,
+		"host", r.Host,
+		"remote_addr", r.RemoteAddr,
+		"headers", headers,
+	)
 
 	allInstances, err := h.instanceFinder.FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
 	if err != nil {
