@@ -27,7 +27,7 @@ const (
 
 type BindingConfig struct {
 	Enabled              bool          `envconfig:"default=false"`
-	BindablePlans        EnablePlans   `envconfig:"default=aws"`
+	BindablePlans        StringList    `envconfig:"default=aws"`
 	ExpirationSeconds    int           `envconfig:"default=600"`
 	MaxExpirationSeconds int           `envconfig:"default=7200"`
 	MinExpirationSeconds int           `envconfig:"default=600"`

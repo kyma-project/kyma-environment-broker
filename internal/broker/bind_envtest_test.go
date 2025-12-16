@@ -84,7 +84,7 @@ func TestCreateBinding(t *testing.T) {
 
 	bindingCfg := BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			fixture.PlanName,
 		},
 		ExpirationSeconds:    expirationSeconds,

@@ -36,7 +36,7 @@ const (
 func fixBindingConfig() BindingConfig {
 	return BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			fixture.PlanName,
 		},
 		ExpirationSeconds:    600,
@@ -82,7 +82,7 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 	//// binding configuration
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			fixture.PlanName,
 		},
 		MaxBindingsCount:     maxBindingsCount,
@@ -320,7 +320,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	operation := fixture.FixOperation("operation-id", instanceID, "provision")
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
@@ -371,7 +371,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
@@ -422,7 +422,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
@@ -474,7 +474,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
@@ -528,7 +528,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 
 	bindingCfg := &BindingConfig{
 		Enabled: true,
-		BindablePlans: EnablePlans{
+		BindablePlans: StringList{
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,

@@ -12,13 +12,13 @@ type SchemaService struct {
 	providerSpec      *configuration.ProviderSpec
 	defaultOIDCConfig *pkg.OIDCConfigDTO
 
-	ingressFilteringPlans EnablePlans
+	ingressFilteringPlans StringList
 
 	cfg             Config
 	channelResolver config.ChannelResolver
 }
 
-func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans EnablePlans, channelResolver config.ChannelResolver) *SchemaService {
+func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans StringList, channelResolver config.ChannelResolver) *SchemaService {
 	return &SchemaService{
 		planSpec:              planSpec,
 		providerSpec:          providerSpec,

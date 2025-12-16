@@ -31,8 +31,8 @@ type KymaEnvironmentBroker struct {
 
 // Config represents configuration for broker
 type Config struct {
-	EnablePlans          EnablePlans `envconfig:"default=azure"`
-	OnlySingleTrialPerGA bool        `envconfig:"default=true"`
+	EnablePlans          StringList `envconfig:"default=azure"`
+	OnlySingleTrialPerGA bool       `envconfig:"default=true"`
 	URL                  string
 	OnlyOneFreePerGA     bool          `envconfig:"default=false"`
 	FreeDocsURL          string        `envconfig:"default="`
@@ -59,6 +59,9 @@ type Config struct {
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
+
+	AllowedGlobalAccountIDs           StringList `envconfig:"optional"`
+	RestrictToAllowedGlobalAccountIDs bool       `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
@@ -110,7 +113,7 @@ type InfrastructureManager struct {
 	MultiZoneCluster             bool              `envconfig:"default=false"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
-	IngressFilteringPlans        EnablePlans       `envconfig:"default=no-plan"`
+	IngressFilteringPlans        StringList        `envconfig:"default=no-plan"`
 
 	GcpVolumeSizeGb   int `envconfig:"default=80"`
 	AwsVolumeSizeGb   int `envconfig:"default=80"`
@@ -127,12 +130,12 @@ type PlanMetadata struct {
 	DisplayName string `yaml:"displayName"`
 }
 
-// EnablePlans defines the plans that should be available for provisioning
-type EnablePlans []string
+// StringList defines the plans that should be available for provisioning
+type StringList []string
 
 // Unmarshal provides custom parsing of enabled plans.
 // Implements envconfig.Unmarshal interface.
-func (m *EnablePlans) Unmarshal(in string) error {
+func (m *StringList) Unmarshal(in string) error {
 	plans := strings.Split(in, ",")
 	for _, name := range plans {
 		if _, exists := PlanIDsMapping[name]; !exists {
@@ -144,11 +147,11 @@ func (m *EnablePlans) Unmarshal(in string) error {
 	return nil
 }
 
-func (m *EnablePlans) ContainsPlanID(PlanID string) bool {
+func (m *StringList) ContainsPlanID(PlanID string) bool {
 	return m.Contains(PlanNamesMapping[PlanID])
 }
 
-func (m *EnablePlans) Contains(name string) bool {
+func (m *StringList) Contains(name string) bool {
 	lowerName := strings.ToLower(name)
 	for _, plan := range *m {
 		if lowerName == strings.ToLower(plan) {

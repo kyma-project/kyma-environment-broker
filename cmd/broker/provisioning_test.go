@@ -122,7 +122,6 @@ func TestProvisioningForTrial(t *testing.T) {
 }
 
 func TestProvisioningForAWS(t *testing.T) {
-
 	cfg := fixConfig()
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
@@ -152,6 +151,60 @@ func TestProvisioningForAWS(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+}
+
+func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
+	cfg := fixConfig()
+	cfg.Broker.AllowedGlobalAccountIDs = []string{"g-account-id"}
+	cfg.Broker.RestrictToAllowedGlobalAccountIDs = true
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid1 := uuid.New().String()
+	iid2 := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid1),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+
+	// when
+	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid2),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "not-allowed",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+					}
+		}`)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestProvisioningForAlicloud(t *testing.T) {
