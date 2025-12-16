@@ -59,6 +59,21 @@ type ErrorResponse struct {
 }
 
 func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
+	headers := make(http.Header)
+	for k, v := range r.Header {
+		headers[k] = v
+	}
+	headers.Del("Authorization")
+
+	h.log.Info("incoming runtimes info request",
+		"method", r.Method,
+		"url", r.URL.String(),
+		"proto", r.Proto,
+		"host", r.Host,
+		"remote_addr", r.RemoteAddr,
+		"headers", headers,
+	)
+
 	instanceID := r.PathValue("instance_id")
 	if instanceID == "" {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instanceID is required"))
