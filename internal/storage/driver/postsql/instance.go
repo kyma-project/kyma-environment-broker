@@ -43,7 +43,8 @@ func (s *Instance) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Ins
 	for _, dto := range instances {
 		instance, err := s.toInstance(dto)
 		if err != nil {
-			return []internal.Instance{}, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instance (instanceID: %s): %v - skipping this instance", dto.InstanceID, err))
+			continue
 		}
 		result = append(result, instance)
 	}
@@ -100,7 +101,8 @@ func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]i
 	for _, dto := range instances {
 		inst, err := s.toInstance(dto.InstanceDTO)
 		if err != nil {
-			return nil, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instance (instanceID: %s): %v - skipping this instance", dto.InstanceDTO.InstanceID, err))
+			continue
 		}
 
 		var isSuspensionOp bool
@@ -171,7 +173,8 @@ func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]intern
 	for _, dto := range instances {
 		inst, err := s.toInstance(dto)
 		if err != nil {
-			return []internal.Instance{}, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instance (instanceID: %s): %v - skipping this instance", dto.InstanceID, err))
+			continue
 		}
 		result = append(result, inst)
 	}
@@ -200,7 +203,8 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 	for _, dto := range instances {
 		inst, err := s.toInstance(dto)
 		if err != nil {
-			return []internal.Instance{}, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instance (instanceID: %s): %v - skipping this instance", dto.InstanceID, err))
+			continue
 		}
 		result = append(result, inst)
 	}
@@ -262,7 +266,7 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 
 	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.EncryptionMode)
 	if err != nil {
-		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
+		return internal.Instance{}, fmt.Errorf("while decrypting parameters (instance: %s, encryptionMode: %s): %w", dto.InstanceID, dto.EncryptionMode, err)
 	}
 
 	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.EncryptionMode)
@@ -303,7 +307,7 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 
 	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.InstanceDTO.EncryptionMode)
 	if err != nil {
-		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters: %w", err)
+		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters (instance: %s, encryptionMode: %s): %w", dto.InstanceDTO.InstanceID, dto.InstanceDTO.EncryptionMode, err)
 	}
 
 	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.InstanceDTO.EncryptionMode)
@@ -537,7 +541,8 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	for _, dto := range dtos {
 		instance, err := s.toInstance(dto.InstanceDTO)
 		if err != nil {
-			return []internal.Instance{}, 0, 0, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instance (instanceID: %s): %v - skipping this instance", dto.InstanceDTO.InstanceID, err))
+			continue
 		}
 
 		lastOp := internal.Operation{}
@@ -573,7 +578,8 @@ func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]int
 	for _, dto := range dtos {
 		instance, err := s.toInstanceWithSubaccountState(dto)
 		if err != nil {
-			return []internal.InstanceWithSubaccountState{}, 0, 0, err
+			slog.Error(fmt.Sprintf("while converting instance DTO to instanceWithSubaccountState (instanceID: %s): %v - skipping this instance", dto.InstanceDTO.InstanceID, err))
+			continue
 		}
 
 		lastOp := internal.Operation{}

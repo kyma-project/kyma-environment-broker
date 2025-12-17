@@ -130,9 +130,10 @@ func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 type DecryptFunc func(data []byte) ([]byte, error)
 
 func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
+	originalLength := len(data)
 	data, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
-		return nil, fmt.Errorf("while decoding input object: %w", err)
+		return nil, fmt.Errorf("while decoding input object (length: %d): %w", originalLength, err)
 	}
 	block, err := aes.NewCipher(e.key)
 	if err != nil {
@@ -153,7 +154,11 @@ func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
 }
 
 func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
+	originalLength := len(ciphertext)
 	ciphertext, err := base64.StdEncoding.DecodeString(string(ciphertext))
+	if err != nil {
+		return nil, fmt.Errorf("while decoding GCM ciphertext (length: %d): %w", originalLength, err)
+	}
 	aes, err := aes.NewCipher(e.key)
 	if err != nil {
 		return nil, err
@@ -179,7 +184,9 @@ func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 }
 
 func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte, error) {
-	switch strings.ToUpper(encryptionMode) {
+	mode := strings.ToUpper(encryptionMode)
+	fmt.Printf("DecryptUsingMode: using encryption mode: %s\n", mode)
+	switch mode {
 	case EncryptionModeCFB:
 		return e.decryptCFB(data)
 	case EncryptionModeGCM:
@@ -213,13 +220,13 @@ func (e *Encrypter) decryptSMCredentials(provisioningParameters *internal.Provis
 	if creds.ClientID != "" {
 		clientID, err = decryptFunc([]byte(creds.ClientID))
 		if err != nil {
-			return fmt.Errorf("while decrypting ClientID: %w", err)
+			return fmt.Errorf("while decrypting ClientID (length: %d): %w", len(creds.ClientID), err)
 		}
 	}
 	if creds.ClientSecret != "" {
 		clientSecret, err = decryptFunc([]byte(creds.ClientSecret))
 		if err != nil {
-			return fmt.Errorf("while decrypting ClientSecret: %w", err)
+			return fmt.Errorf("while decrypting ClientSecret (length: %d): %w", len(creds.ClientSecret), err)
 		}
 	}
 
