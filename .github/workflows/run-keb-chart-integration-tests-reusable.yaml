@@ -131,7 +131,13 @@ jobs:
             "context": {
               "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
               "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-              "user_id": "user@email.com"
+              "user_id": "user@email.com",
+              "sm_operator_credentials": {
+                "clientid": "cid",
+                "clientsecret": "cs",
+                "url": "url",
+                "sm_url": "sm_url"
+              }
             },
             "parameters": {
               "name": "azure-cluster",
@@ -157,6 +163,10 @@ jobs:
             done
             echo "RuntimeID: ${RUNTIME_ID}"
             echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
+
+      - name: Create kubeconfig secret for runtime
+        run: |
+          make create-kubeconfig-secret RUNTIME_ID=$RUNTIME_ID
               
       - name: Set RuntimeCR State to Ready
         run: |

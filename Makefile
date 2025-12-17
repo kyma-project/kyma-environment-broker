@@ -77,6 +77,10 @@ install:
 set-runtime-state:
 	./scripts/set_runtime_state.sh $(RUNTIME_ID) $(STATE)
 
+.PHONY: create-kubeconfig-secret
+create-kubeconfig-secret:
+	./scripts/create_kubeconfig_secret.sh $(RUNTIME_ID)
+
 ##@ Patching Kyma to specified state
 
 .PHONY: set-kyma-state
