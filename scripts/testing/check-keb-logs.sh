@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
 
 # Check KEB logs for errors and warnings
-# Usage: check-keb-logs.sh <pod_name> <stage> [allow_apiserver_error]
+# Usage: check-keb-logs.sh <pod_name> [allow_apiserver_error]
 #   pod_name: Name of the KEB pod
-#   stage: Stage name for logging (e.g., "provisioning", "update", "deprovisioning")
 #   allow_apiserver_error: Optional, set to "true" to allow APIServerURL validation error
 
 POD_NAME="${1:?Pod name is required}"
-STAGE="${2:?Stage name is required}"
-ALLOW_APISERVER_ERROR="${3:-false}"
+ALLOW_APISERVER_ERROR="${2:-false}"
 
 # standard bash error handling
 set -o nounset  # treat unset variables as an error and exit immediately.
 set -o errexit  # exit immediately when a command fails.
 set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
-
-echo "Checking KEB logs after ${STAGE}..."
 
 LOGS=$(kubectl logs -n kcp-system "$POD_NAME")
 
