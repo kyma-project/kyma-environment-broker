@@ -66,7 +66,7 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-4. Create a kubeconfig secret for the runtime. This simulates the kubeconfig that would normally be created by Kyma Infrastructure Manager (KIM):
+4. To simulate the kubeconfig created by Kyma Infrastructure Manager (KIM), create a kubeconfig Secret for the runtime.
 
    ```bash
    make create-kubeconfig-secret RUNTIME_ID=<runtime_id>
