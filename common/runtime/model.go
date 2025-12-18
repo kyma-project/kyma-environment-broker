@@ -539,7 +539,7 @@ type Channel *string
 type ModulesDTO struct {
 	Channel Channel     `json:"channel,omitempty" yaml:"channel,omitempty"`
 	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
-	List    []ModuleDTO `json:"list" yaml:"list"`
+	List    []ModuleDTO `json:"list,omitzero" yaml:"list,omitzero"`
 }
 
 type CustomResourcePolicy *string
