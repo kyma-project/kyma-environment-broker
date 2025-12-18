@@ -200,6 +200,16 @@ jobs:
       - name: Check for errors and warnings in KEB logs after provisioning
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "provisioning"
 
+      - name: Get runtime info
+        run: |
+          curl --request GET \
+          --url http://localhost:8080/info/runtimes \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16'
+
+      - name: Check for errors and warnings in KEB logs after getting runtime info
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "getting runtime info"
+
       - name: Update the instance
         run: |
           curl --request PATCH \
