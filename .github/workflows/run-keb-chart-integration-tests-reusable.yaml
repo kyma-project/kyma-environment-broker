@@ -194,29 +194,11 @@ jobs:
 
       - name: Set KEB pod name as global env
         run: |
-          POD_NAME=$(kubectl get pods -n kcp-system -l app.kubernetes.io/name=kcp-kyma-environment-broker -o jsonpath="{.items[0].metadata.name}")
+          POD_NAME=$(kubectl get pods -n kcp-system -l app.kubernetes.io/name=kyma-environment-broker -o jsonpath="{.items[0].metadata.name}")
           echo "KEB_POD_NAME=$POD_NAME" >> $GITHUB_ENV
 
       - name: Check for errors and warnings in KEB logs after provisioning
-        run: |
-          LOGS=$(kubectl logs -n kcp-system "$KEB_POD_NAME")
-          
-          ERRORS=$(echo "$LOGS" | grep -E '"level":"ERROR"' || true)
-          WARNINGS=$(echo "$LOGS" | grep -E '"level":"WARNING"' || true)
-          
-          if [ -n "$ERRORS" ]; then
-            echo "Errors found in logs:"
-            echo "$ERRORS"
-            exit 1
-          fi
-          
-          if [ -n "$WARNINGS" ]; then
-            echo "Warnings found in logs:"
-            echo "$WARNINGS"
-            exit 1
-          fi
-          
-          echo "No errors or warnings found in logs."
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "provisioning"
 
       - name: Update the instance
         run: |
@@ -269,26 +251,7 @@ jobs:
           fi
 
       - name: Check for errors and warnings in KEB logs after update
-        run: |
-          LOGS=$(kubectl logs -n kcp-system "$KEB_POD_NAME")
-          
-          # Filter out the expected error about APIServerURL validation
-          ERRORS=$(echo "$LOGS" | grep -E '"level":"ERROR"' | grep -v "while getting APIServerURL: while validation kubeconfig fetched by provisioner: there are no cluster certificate or server info" || true)
-          WARNINGS=$(echo "$LOGS" | grep -E '"level":"WARNING"' || true)
-          
-          if [ -n "$ERRORS" ]; then
-            echo "Unexpected errors found in logs:"
-            echo "$ERRORS"
-            exit 1
-          fi
-          
-          if [ -n "$WARNINGS" ]; then
-            echo "Warnings found in logs:"
-            echo "$WARNINGS"
-            exit 1
-          fi
-          
-          echo "No unexpected errors or warnings found in logs."
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "update" "true"
 
       - name: Deprovision the instance
         run: |
@@ -329,26 +292,7 @@ jobs:
           fi
 
       - name: Check for errors and warnings in KEB logs after deprovisioning
-        run: |
-          LOGS=$(kubectl logs -n kcp-system "$KEB_POD_NAME")
-          
-          # Filter out the expected error about APIServerURL validation
-          ERRORS=$(echo "$LOGS" | grep -E '"level":"ERROR"' | grep -v "while getting APIServerURL: while validation kubeconfig fetched by provisioner: there are no cluster certificate or server info" || true)
-          WARNINGS=$(echo "$LOGS" | grep -E '"level":"WARNING"' || true)
-          
-          if [ -n "$ERRORS" ]; then
-            echo "Unexpected errors found in logs:"
-            echo "$ERRORS"
-            exit 1
-          fi
-          
-          if [ -n "$WARNINGS" ]; then
-            echo "Warnings found in logs:"
-            echo "$WARNINGS"
-            exit 1
-          fi
-          
-          echo "No unexpected errors or warnings found in logs."
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "deprovisioning" "true"
 
       - name: Print runtimes in case of failure
         if: ${{ !success() }}
