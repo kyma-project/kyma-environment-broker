@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -247,10 +248,14 @@ func buildConnectionString() (string, error) {
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"))
 
+	// URL-encode username and password to handle special characters
+	encodedUser := url.QueryEscape(os.Getenv("DB_USER"))
+	encodedPassword := url.QueryEscape(os.Getenv("DB_PASSWORD"))
+
 	connectionString := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
+		encodedUser,
+		encodedPassword,
 		hostPort,
 		dbName,
 	)
