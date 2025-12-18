@@ -150,3 +150,105 @@ func Test_migrationScript_copyDir(t *testing.T) {
 
 	})
 }
+
+func Test_buildConnectionString(t *testing.T) {
+	t.Run("Should handle special characters in password", func(t *testing.T) {
+		// given
+		os.Setenv("DB_USER", "testuser")
+		os.Setenv("DB_PASSWORD", "admin12345#@!:pass")
+		os.Setenv("DB_HOST", "localhost")
+		os.Setenv("DB_PORT", "5432")
+		os.Setenv("DB_NAME", "testdb")
+		defer func() {
+			os.Unsetenv("DB_USER")
+			os.Unsetenv("DB_PASSWORD")
+			os.Unsetenv("DB_HOST")
+			os.Unsetenv("DB_PORT")
+			os.Unsetenv("DB_NAME")
+			os.Unsetenv("DB_SSL")
+		}()
+
+		// when
+		connString, err := buildConnectionString()
+
+		// then
+		assert.Nil(t, err)
+		assert.Contains(t, connString, "postgres://testuser:admin12345%23%40%21%3Apass@localhost:5432/testdb")
+		assert.Contains(t, connString, "timezone=UTC")
+	})
+
+	t.Run("Should build connection string without SSL", func(t *testing.T) {
+		// given
+		os.Setenv("DB_USER", "user")
+		os.Setenv("DB_PASSWORD", "pass")
+		os.Setenv("DB_HOST", "host")
+		os.Setenv("DB_PORT", "5432")
+		os.Setenv("DB_NAME", "dbname")
+		defer func() {
+			os.Unsetenv("DB_USER")
+			os.Unsetenv("DB_PASSWORD")
+			os.Unsetenv("DB_HOST")
+			os.Unsetenv("DB_PORT")
+			os.Unsetenv("DB_NAME")
+		}()
+
+		// when
+		connString, err := buildConnectionString()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, "postgres://user:pass@host:5432/dbname&timezone=UTC", connString)
+	})
+
+	t.Run("Should build connection string with SSL", func(t *testing.T) {
+		// given
+		os.Setenv("DB_USER", "user")
+		os.Setenv("DB_PASSWORD", "pass")
+		os.Setenv("DB_HOST", "host")
+		os.Setenv("DB_PORT", "5432")
+		os.Setenv("DB_NAME", "dbname")
+		os.Setenv("DB_SSL", "require")
+		defer func() {
+			os.Unsetenv("DB_USER")
+			os.Unsetenv("DB_PASSWORD")
+			os.Unsetenv("DB_HOST")
+			os.Unsetenv("DB_PORT")
+			os.Unsetenv("DB_NAME")
+			os.Unsetenv("DB_SSL")
+		}()
+
+		// when
+		connString, err := buildConnectionString()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, "postgres://user:pass@host:5432/dbname?sslmode=require&timezone=UTC", connString)
+	})
+
+	t.Run("Should build connection string with SSL and root certificate", func(t *testing.T) {
+		// given
+		os.Setenv("DB_USER", "user")
+		os.Setenv("DB_PASSWORD", "pass")
+		os.Setenv("DB_HOST", "host")
+		os.Setenv("DB_PORT", "5432")
+		os.Setenv("DB_NAME", "dbname")
+		os.Setenv("DB_SSL", "require")
+		os.Setenv("DB_SSLROOTCERT", "/path/to/cert")
+		defer func() {
+			os.Unsetenv("DB_USER")
+			os.Unsetenv("DB_PASSWORD")
+			os.Unsetenv("DB_HOST")
+			os.Unsetenv("DB_PORT")
+			os.Unsetenv("DB_NAME")
+			os.Unsetenv("DB_SSL")
+			os.Unsetenv("DB_SSLROOTCERT")
+		}()
+
+		// when
+		connString, err := buildConnectionString()
+
+		// then
+		assert.Nil(t, err)
+		assert.Equal(t, "postgres://user:pass@host:5432/dbname?sslmode=require&sslrootcert=/path/to/cert&timezone=UTC", connString)
+	})
+}
