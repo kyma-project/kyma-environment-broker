@@ -91,7 +91,7 @@ set-kyma-state:
 
 .PHONY: create-gardener-cluster
 create-gardener-cluster:
-	./scripts/create_gardener_cluster.sh $(GLOBAL_ACCOUNT_ID)
+	./scripts/create_gardener_cluster_cr.sh $(GLOBAL_ACCOUNT_ID)
 
 .PHONY: generate-env-docs
 generate-env-docs:

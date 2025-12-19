@@ -109,6 +109,10 @@ jobs:
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
 
+      - name: Set global account ID
+        run: |
+          echo "GLOBAL_ACCOUNT_ID=2f5011af-2fd3-44ba-ac60-eeb1148c2995" >> $GITHUB_ENV
+
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
@@ -129,7 +133,7 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-              "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+              "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
               "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
               "user_id": "user@email.com",
               "sm_operator_credentials": {
@@ -167,6 +171,10 @@ jobs:
       - name: Create kubeconfig secret for runtime
         run: |
           make create-kubeconfig-secret RUNTIME_ID=$RUNTIME_ID
+
+      - name: Create GardenerCluster CR
+        run: |
+          ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID
               
       - name: Set RuntimeCR State to Ready
         run: |
@@ -220,7 +228,7 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
                 "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
                 "user_id": "user@email.com"
             },
@@ -263,6 +271,94 @@ jobs:
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
 
+      - name: Update global account ID
+        run: |
+          echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
+
+      - name: Update the instance with new global account ID
+        run: |
+          curl --request PATCH \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'"
+            }
+          }'
+
+      - name: Wait for global account ID update to finish
+        run: |
+          while true; do
+            STATUS=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
+
+            echo "Current updating status: $STATUS"
+            if [ "$STATUS" == "succeeded" ]; then
+              echo "Global account ID update succeeded."
+              break
+            elif [ "$STATUS" == "failed" ]; then
+              echo "Global account ID update failed."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
+
+          if [ "$TOTAL_COUNT" -eq 2 ]; then
+            echo "Assertion passed: totalCount is 2."
+          else
+            echo "Assertion failed: totalCount is not 2. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Check for errors and warnings in KEB logs after global account ID update
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
+
+      - name: Verify global account ID label on Runtime CR
+        run: |
+          RUNTIME_LABEL=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "Runtime CR global account ID label: $RUNTIME_LABEL"
+          if [ "$RUNTIME_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: Runtime CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $RUNTIME_LABEL"
+            exit 1
+          fi
+          echo "Runtime CR label verification passed"
+
+      - name: Verify global account ID label on Kyma CR
+        run: |
+          KYMA_LABEL=$(kubectl get kyma $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "Kyma CR global account ID label: $KYMA_LABEL"
+          if [ "$KYMA_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: Kyma CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $KYMA_LABEL"
+            exit 1
+          fi
+          echo "Kyma CR label verification passed"
+
+      - name: Verify global account ID label on GardenerCluster CR
+        run: |
+          GARDENER_LABEL=$(kubectl get gardenercluster test-gardener-cluster -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "GardenerCluster CR global account ID label: $GARDENER_LABEL"
+          if [ "$GARDENER_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: GardenerCluster CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $GARDENER_LABEL"
+            exit 1
+          fi
+          echo "GardenerCluster CR label verification passed"
+
       - name: Deprovision the instance
         run: |
           curl --request DELETE \
@@ -273,7 +369,7 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
                 "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
                 "user_id": "user@email.com"
             }
