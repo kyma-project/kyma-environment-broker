@@ -101,7 +101,7 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
 	log.Debug(fmt.Sprintf("Retry Operation map size is: %d", len(om.retryTimestamps)))
-	om.storeTimestampIfMissing(operation.ID)
+	om.storeTimestampOrResetIfStale(operation.ID, operation.UpdatedAt)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		remainingTime := om.getRemainingTime(operation.ID, maxTime)
 		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
@@ -146,7 +146,7 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 	}
 
 	log.Info(fmt.Sprintf("retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
-	om.storeTimestampIfMissing(operation.ID)
+	om.storeTimestampOrResetIfStale(operation.ID, operation.UpdatedAt)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		return operation, retryInterval, nil
 	}
@@ -225,10 +225,14 @@ func (om *OperationManager) update(operation internal.Operation, state domain.La
 	}, log)
 }
 
-func (om *OperationManager) storeTimestampIfMissing(id string) {
+// storeTimestampOrResetIfStale stores a timestamp for the operation if missing, or resets it if the operation
+// was updated after the timestamp was stored (indicating a new processing cycle after being requeued)
+func (om *OperationManager) storeTimestampOrResetIfStale(id string, operationUpdatedAt time.Time) {
 	om.mu.Lock()
 	defer om.mu.Unlock()
 	if om.retryTimestamps[id].IsZero() {
+		om.retryTimestamps[id] = time.Now()
+	} else if operationUpdatedAt.After(om.retryTimestamps[id]) {
 		om.retryTimestamps[id] = time.Now()
 	}
 }
