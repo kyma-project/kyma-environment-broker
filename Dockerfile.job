@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/main ./cmd/${BIN}/main.go
 
 # Get latest CA certs
-FROM alpine:3.22.2 AS certs
+FROM alpine:3.23.2 AS certs
 RUN apk --update add ca-certificates
 
 # Final image

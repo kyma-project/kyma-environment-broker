@@ -7,6 +7,31 @@ set -o errexit  # exit immediately when a command fails.
 set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
+# Retry function for GitHub API calls
+retry_gh_api() {
+  local max_attempts=3
+  local delay=10
+  local attempt=1
+  local exit_code=0
+  
+  while [ $attempt -le $max_attempts ]; do
+    if [ $attempt -gt 1 ]; then
+      echo "Retry attempt $attempt/$max_attempts..." >&2
+      sleep $delay
+    fi
+    
+    if "$@"; then
+      return 0
+    else
+      exit_code=$?
+    fi
+    
+    attempt=$((attempt + 1))
+  done
+  
+  echo "Failed after $max_attempts attempts" >&2
+  return $exit_code
+}
 
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <workflow_name> <workflow_title>"
@@ -18,7 +43,7 @@ WORKFLOW_TITLE="$2"
 
 REPO="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner -q .nameWithOwner)}"
 
-workflow_id=$(gh api \
+workflow_id=$(retry_gh_api gh api \
   -H "Accept: application/vnd.github+json" \
   "/repos/${REPO}/actions/workflows" | jq -r --arg name "$WORKFLOW_NAME" '.workflows[] | select(.name == $name) | .id')
 if [ -z "$workflow_id" ] || [ "$workflow_id" = "null" ]; then
@@ -26,7 +51,7 @@ if [ -z "$workflow_id" ] || [ "$workflow_id" = "null" ]; then
   exit 1
 fi
 
-run_id=$(gh api \
+run_id=$(retry_gh_api gh api \
   -H "Accept: application/vnd.github+json" \
   "/repos/${REPO}/actions/workflows/${workflow_id}/runs" | jq -r --arg workflow_title_filter "$WORKFLOW_TITLE" '.workflow_runs[] | select(.display_title | test($workflow_title_filter; "i")) | .id' | head -n 1)
 if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
@@ -34,7 +59,7 @@ if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
   exit 1
 fi
 
-attempts=$(gh api \
+attempts=$(retry_gh_api gh api \
   -H "Accept: application/vnd.github+json" \
   "/repos/${REPO}/actions/runs/${run_id}" | jq -r '.run_attempt')
 if [ -z "$attempts" ] || [ "$attempts" = "null" ]; then
@@ -44,7 +69,7 @@ fi
 
 for attempt in $(seq 1 $attempts); do
   echo "Downloading logs for attempt $attempt..."
-  gh api \
+  retry_gh_api gh api \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "/repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/logs" > "logs_attempt_${attempt}.zip"
