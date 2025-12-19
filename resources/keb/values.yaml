@@ -182,13 +182,13 @@ broker:
   # Port for the broker status/health endpoint.
   statusPort: "8071"
   # If true, enables subaccount movement (allows changing global account for an instance).
-  subaccountMovementEnabled: "false"
+  subaccountMovementEnabled: "true"
   # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels.
   trialDocsURL: "https://help.sap.com/docs/"
   # URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema.
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
   # If true, updates runtimeCR labels when moving subaccounts.
-  updateCustomResourcesLabelsOnAccountMove: "false"
+  updateCustomResourcesLabelsOnAccountMove: "true"
   
 # Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure.
 btpRegionsMigrationSapConvergedCloud: |-
