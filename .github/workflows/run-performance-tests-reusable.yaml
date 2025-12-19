@@ -55,7 +55,7 @@ jobs:
       version: ${{ steps.get-version.outputs.k3s_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - id: get-version
         name: Get K3s version
@@ -77,7 +77,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -183,7 +183,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -336,7 +336,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -462,7 +462,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -625,7 +625,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -917,7 +917,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
