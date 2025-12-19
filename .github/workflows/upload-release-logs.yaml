@@ -23,6 +23,8 @@ jobs:
             IN_PROGRESS=$(gh run list --workflow "Create and promote release" --json status -L 1 --jq '.[] | select(.status == "in_progress") | .status')
             if [ -z "$IN_PROGRESS" ]; then
               echo "No release workflow in progress."
+              echo "Waiting 10 seconds for logs to be available..."
+              sleep 10
               break
             fi
             echo "Release workflow is in progress. Waiting 30 seconds..."
