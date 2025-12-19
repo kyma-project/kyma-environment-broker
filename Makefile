@@ -87,6 +87,12 @@ create-kubeconfig-secret:
 set-kyma-state:
 	./scripts/set_kyma_state.sh $(KYMA_ID) $(STATE)
 
+##@ Creating GardenerCluster resource
+
+.PHONY: create-gardener-cluster
+create-gardener-cluster:
+	./scripts/create_gardener_cluster.sh $(GLOBAL_ACCOUNT_ID)
+
 .PHONY: generate-env-docs
 generate-env-docs:
 	pip install -r scripts/python/requirements.txt
