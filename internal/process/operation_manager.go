@@ -53,6 +53,7 @@ func runTimestampGC(op *OperationManager, step string) {
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
 func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	om.clearRetryTimestamp(operation.ID)
 	return om.update(operation, domain.Succeeded, description, log)
 }
 
@@ -72,6 +73,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 	if t != 0 {
 		return op, t, nil
 	}
+	om.clearRetryTimestamp(operation.ID)
 
 	var retErr error
 	if err == nil {
@@ -90,6 +92,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 
 // OperationCanceled marks the operation as canceled and returns status of the operation's update
 func (om *OperationManager) OperationCanceled(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	om.clearRetryTimestamp(operation.ID)
 	return om.update(operation, internal.OperationStateCanceled, description, log)
 }
 
@@ -157,6 +160,7 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 		return op, repeat, err
 	}
 
+	om.clearRetryTimestamp(operation.ID)
 	op.EventErrorf(fmt.Errorf("%s", description), "step %s failed all retries: operation continues", stepName)
 	if opErr != nil {
 		log.Error(fmt.Sprintf("quiting step after %s of failing retries, last error: %s", maxTime.String(), opErr.Error()))
@@ -256,4 +260,10 @@ func (om *OperationManager) getRemainingTime(id string, maxTime time.Duration) t
 		}
 		return remaining
 	}
+}
+
+func (om *OperationManager) clearRetryTimestamp(opID string) {
+	om.mu.Lock()
+	defer om.mu.Unlock()
+	delete(om.retryTimestamps, opID)
 }
