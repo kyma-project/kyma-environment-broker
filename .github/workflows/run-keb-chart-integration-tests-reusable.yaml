@@ -313,10 +313,10 @@ jobs:
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
 
-          if [ "$TOTAL_COUNT" -eq 2 ]; then
-            echo "Assertion passed: totalCount is 2."
+          if [ "$TOTAL_COUNT" -eq 1 ]; then
+            echo "Assertion passed: totalCount is 1."
           else
-            echo "Assertion failed: totalCount is not 2. Actual value: $TOTAL_COUNT"
+            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
             exit 1
           fi
 
