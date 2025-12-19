@@ -174,7 +174,7 @@ jobs:
 
       - name: Create GardenerCluster CR
         run: |
-          ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID
+          ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID $RUNTIME_ID
               
       - name: Set RuntimeCR State to Ready
         run: |
@@ -349,7 +349,7 @@ jobs:
 
       - name: Verify global account ID label on GardenerCluster CR
         run: |
-          GARDENER_LABEL=$(kubectl get gardenercluster test-gardener-cluster -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          GARDENER_LABEL=$(kubectl get gardenercluster $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
           echo "GardenerCluster CR global account ID label: $GARDENER_LABEL"
           if [ "$GARDENER_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
             echo "Error: GardenerCluster CR label does not match expected global account ID"
