@@ -701,7 +701,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter, publisher)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter, publisher, logs)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
 }

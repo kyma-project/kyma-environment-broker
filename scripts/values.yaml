@@ -1,3 +1,7 @@
+broker:
+  subaccountMovementEnabled: "true"
+  updateCustomResourcesLabelsOnAccountMove: "true"
+
 plansConfiguration:
   sap-converged-cloud:
     regularMachines:

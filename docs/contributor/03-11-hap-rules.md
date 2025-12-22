@@ -38,7 +38,7 @@ The input attributes match the rule entry with the Kyma runtime request and modi
 In its minimal form, each rule consists of a **PLAN** that the rule applies to.
 In its extended form, a rule entry contains a plan and a list of input attributes. Their values are passed as `ATTR=VAL` pairs in parentheses.
 
-> [!NOTE]
+> ### Note:
 > If you do not provide any values, use empty parentheses or do not use them at all, for example:
 > * `aws`
 > * `aws()`
@@ -104,7 +104,7 @@ The **euAccess** and **shared** labels contain boolean values and are optional. 
 
 Every rule must contain at least a plan and apply the `hyperscalerType: <HYPERSCALER_NAME>` label. See an example of a simple rule entry configurations and a SecretBinding label selector that this configuration corresponds to:
 
-> [!NOTE]
+> ### Note:
 > The **tenantName** label selector requirement is skipped in the example.
 
 ```

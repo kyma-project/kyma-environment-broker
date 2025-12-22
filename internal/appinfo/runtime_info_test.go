@@ -99,7 +99,7 @@ func TestRuntimeInfoHandlerSuccess(t *testing.T) {
 				memStorage = newInMemoryStorage(t, tc.instances, tc.provisionOp, tc.deprovisionOp)
 			)
 
-			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer, event.NewPubSub(slog.Default()))
+			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer, event.NewPubSub(slog.Default()), slog.Default())
 
 			// when
 			handler.ServeHTTP(respSpy, fixReq)
@@ -130,7 +130,7 @@ func TestRuntimeInfoHandlerFailures(t *testing.T) {
 	storageMock := &automock.InstanceFinder{}
 	defer storageMock.AssertExpectations(t)
 	storageMock.On("FindAllJoinedWithOperations", mock.Anything).Return(nil, fmt.Errorf("ups.. internal info"))
-	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer, event.NewPubSub(slog.Default()))
+	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer, event.NewPubSub(slog.Default()), slog.Default())
 
 	// when
 	handler.ServeHTTP(respSpy, fixReq)
@@ -226,7 +226,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()), slog.Default())
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -336,7 +336,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()), slog.Default())
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -475,7 +475,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()))
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, event.NewPubSub(slog.Default()), slog.Default())
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -518,7 +518,7 @@ func TestRuntimesInfoHandlerMetrics(t *testing.T) {
 		return nil
 	})
 
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, pubSub)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, pubSub, slog.Default())
 
 	rr := httptest.NewRecorder()
 	router := httputil.NewRouter()

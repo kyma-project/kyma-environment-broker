@@ -6,7 +6,7 @@ and whether those machine types support high availability (HA) in each region.
 High availability is determined by checking how many availability zones in a given region support the specified machine type. 
 If the number of zones meets or exceeds the configured threshold, the machine type is considered to be highly available for that region.
 
-> [!NOTE]
+> ### Note:
 > Currently, this endpoint supports only AWS.
 
 ## Overview

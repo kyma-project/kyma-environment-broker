@@ -2,7 +2,7 @@
 
 Kyma Environment Broker (KEB) supports updating service plans. This feature allows you to change the plan of an existing Kyma runtime. However, only some plan changes are possible because the new plan must use the same provider. For example, you cannot switch from Amazon Web Services to Microsoft Azure.
 
-> [!NOTE]
+> ### Note:
 > For more information on recording plan updates as part of KEB's audit logging and operational observability, see [Actions](03-90-actions-recording.md).
 
 ## Configuration
@@ -18,7 +18,7 @@ plansConfiguration:
       - build-runtime-gcp
 ```
 
-> [!NOTE]
+> ### Note:
 > The **upgradableToPlans** field is a list of plan names to which you can upgrade the current plan. If the value is an empty (or not defined) list, or the list contains only the name of the configured plan (like `gcp` in the above example), the plan cannot be updated, and the **plan_updateable** field in the response of the `catalog` endpoint is set to `false`.
 
 ## Plan Update Request

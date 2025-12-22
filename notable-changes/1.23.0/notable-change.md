@@ -2,7 +2,7 @@
 
 # Updating Kyma Environment Broker: Updatable Cluster Name
 
-> [!WARNING]
+> ### Caution:
 > This update is mandatory. Without performing it, you will not be able to update the cluster name.
 
 ## Prerequisites

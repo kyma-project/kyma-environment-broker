@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Prepare chart for next KEB version
       run: |
@@ -71,7 +71,7 @@ jobs:
       versions: ${{ steps.get-versions.outputs.k3s_versions }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - id: get-versions
         name: Get K3s versions
@@ -87,7 +87,7 @@ jobs:
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
       - name: Wait for images to be ready
-        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
+        uses: wechuli/allcheckspassed@f423b273f5fdf73582e41f8f6f0f204d69c27379
         if: ${{ inputs.release == 'false' }}
         with:
           delay: '1'
@@ -104,10 +104,14 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Set global account ID
+        run: |
+          echo "GLOBAL_ACCOUNT_ID=2f5011af-2fd3-44ba-ac60-eeb1148c2995" >> $GITHUB_ENV
 
       - name: Install KEB chart
         run: |
@@ -129,9 +133,15 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-              "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+              "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
               "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-              "user_id": "user@email.com"
+              "user_id": "user@email.com",
+              "sm_operator_credentials": {
+                "clientid": "cid",
+                "clientsecret": "cs",
+                "url": "url",
+                "sm_url": "sm_url"
+              }
             },
             "parameters": {
               "name": "azure-cluster",
@@ -157,6 +167,14 @@ jobs:
             done
             echo "RuntimeID: ${RUNTIME_ID}"
             echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
+
+      - name: Create kubeconfig secret for runtime
+        run: |
+          make create-kubeconfig-secret RUNTIME_ID=$RUNTIME_ID
+
+      - name: Create GardenerCluster CR
+        run: |
+          ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID $RUNTIME_ID
               
       - name: Set RuntimeCR State to Ready
         run: |
@@ -182,6 +200,24 @@ jobs:
           done
           make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
 
+      - name: Set KEB pod name as global env
+        run: |
+          POD_NAME=$(kubectl get pods -n kcp-system -l app.kubernetes.io/name=kyma-environment-broker -o jsonpath="{.items[0].metadata.name}")
+          echo "KEB_POD_NAME=$POD_NAME" >> $GITHUB_ENV
+
+      - name: Check for errors and warnings in KEB logs after provisioning
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
+
+      - name: Get runtime info
+        run: |
+          curl --request GET \
+          --url http://localhost:8080/info/runtimes \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16'
+
+      - name: Check for errors and warnings in KEB logs after getting runtime info
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
+
       - name: Update the instance
         run: |
           curl --request PATCH \
@@ -192,7 +228,7 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
                 "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
                 "user_id": "user@email.com"
             },
@@ -232,6 +268,97 @@ jobs:
             exit 1
           fi
 
+      - name: Check for errors and warnings in KEB logs after update
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
+
+      - name: Update global account ID
+        run: |
+          echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
+
+      - name: Update the instance with new global account ID
+        run: |
+          curl --request PATCH \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'"
+            }
+          }'
+
+      - name: Wait for global account ID update to finish
+        run: |
+          while true; do
+            STATUS=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
+
+            echo "Current updating status: $STATUS"
+            if [ "$STATUS" == "succeeded" ]; then
+              echo "Global account ID update succeeded."
+              break
+            elif [ "$STATUS" == "failed" ]; then
+              echo "Global account ID update failed."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
+
+          if [ "$TOTAL_COUNT" -eq 1 ]; then
+            echo "Assertion passed: totalCount is 1."
+          else
+            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Check for errors and warnings in KEB logs after global account ID update
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
+
+      - name: Verify global account ID label on Runtime CR
+        run: |
+          RUNTIME_LABEL=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "Runtime CR global account ID label: $RUNTIME_LABEL"
+          if [ "$RUNTIME_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: Runtime CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $RUNTIME_LABEL"
+            exit 1
+          fi
+          echo "Runtime CR label verification passed"
+
+      - name: Verify global account ID label on Kyma CR
+        run: |
+          KYMA_LABEL=$(kubectl get kyma $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "Kyma CR global account ID label: $KYMA_LABEL"
+          if [ "$KYMA_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: Kyma CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $KYMA_LABEL"
+            exit 1
+          fi
+          echo "Kyma CR label verification passed"
+
+      - name: Verify global account ID label on GardenerCluster CR
+        run: |
+          GARDENER_LABEL=$(kubectl get gardenercluster $RUNTIME_ID -n kcp-system -o jsonpath='{.metadata.labels.kyma-project\.io/global-account-id}')
+          echo "GardenerCluster CR global account ID label: $GARDENER_LABEL"
+          if [ "$GARDENER_LABEL" != "$GLOBAL_ACCOUNT_ID" ]; then
+            echo "Error: GardenerCluster CR label does not match expected global account ID"
+            echo "Expected: $GLOBAL_ACCOUNT_ID"
+            echo "Actual: $GARDENER_LABEL"
+            exit 1
+          fi
+          echo "GardenerCluster CR label verification passed"
+
       - name: Deprovision the instance
         run: |
           curl --request DELETE \
@@ -242,7 +369,7 @@ jobs:
             "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
             "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
             "context": {
-                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
                 "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
                 "user_id": "user@email.com"
             }
@@ -269,6 +396,9 @@ jobs:
             echo "RuntimeCR still exists."
             exit 1
           fi
+
+      - name: Check for errors and warnings in KEB logs after deprovisioning
+        run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
 
       - name: Print runtimes in case of failure
         if: ${{ !success() }}

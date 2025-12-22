@@ -51,7 +51,13 @@ The diagram illustrates the architecture based on an example provisioning reques
       "context": {
          "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
          "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-         "user_id": "user@email.com"
+         "user_id": "user@email.com",
+         "sm_operator_credentials": {
+            "clientid": "cid",
+            "clientsecret": "cs",
+            "url": "url",
+            "sm_url": "sm_url"
+         }
       },
       "parameters": {
          "name": "azure-cluster",
@@ -60,19 +66,25 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-4. To simulate Kyma Infrastructure Manager (KIM) and transition the runtime to the `Ready` state, use the following command:
+4. To simulate the kubeconfig created by Kyma Infrastructure Manager (KIM), create a kubeconfig Secret for the runtime.
+
+   ```bash
+   make create-kubeconfig-secret RUNTIME_ID=<runtime_id>
+   ```
+
+5. To simulate KIM and transition the runtime to the `Ready` state, use the following command:
 
    ```bash
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
    ```
 
-5. To simulate Lifecycle Manager and transition the Kyma instance to the `Ready` state, use the following command:
+6. To simulate Lifecycle Manager and transition the Kyma instance to the `Ready` state, use the following command:
 
    ```bash
    make set-kyma-state KYMA_ID=<kyma_id> STATE=Ready
    ```
 
-6. To update the instance, use the following command. Note that this is an example of a command you can use for instance updating.
+7. To update the instance, use the following command. Note that this is an example of a command you can use for instance updating.
 
    ```bash
    curl --request PATCH \
@@ -93,7 +105,7 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-7. To deprovision the instance, use the following command. Note that this command can only work if you have used the command provided in this document to create the instance.
+8. To deprovision the instance, use the following command. Note that this command can only work if you have used the command provided in this document to create the instance.
 
    ```bash
    curl --request DELETE \

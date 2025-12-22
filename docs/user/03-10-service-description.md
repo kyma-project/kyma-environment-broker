@@ -79,21 +79,17 @@ These are the provisioning parameters for Azure that you can configure:
 Azure
 </summary>
 
-<!-- markdown-link-check-disable -->
-
 | Parameter name                                       | Type   | Description                                                                             | Required | Default value     |
 |------------------------------------------------------|--------|-----------------------------------------------------------------------------------------|:--------:|-------------------|
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                   |    No    | `Standard_D2s_v5` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                  |    No    | `50`              |
 | **region**                                           | string | Defines the cluster region.                                                             |   Yes    | None              |
 | **zones**                                            | string | Defines the list of zones in which Kyma Infrastructure Manager (KIM) creates a cluster. |    No    | `["1"]`           |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                             |    No    | `2`               |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.         |    No    | `10`              |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.     |    No    | `4`               |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.           |    No    | `1`               |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                   |    No    | None              |
-
-<!-- markdown-link-check-enable-->
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                             |    No    | `2`               |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.         |    No    | `10`              |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.     |    No    | `4`               |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.           |    No    | `1`               |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                   |    No    | None              |
 
 </details>
 
@@ -102,21 +98,17 @@ Azure
 Azure Lite
 </summary>
 
-<!-- markdown-link-check-disable -->
-
 | Parameter name                                       | Type   | Description                                                                         | Required | Default value     |
 |------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
 | **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
 | **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                           |    No    | `["1"]`           |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
-
-<!-- markdown-link-check-enable-->
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
 
 </details>
 
@@ -132,11 +124,11 @@ AWS
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
 | **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["1"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 
 </details>
@@ -155,11 +147,11 @@ GCP
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
 | **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None            |
 | **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                           |    No    | `["a"]`         |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None            |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                               |    No    | None            |
 
 
 </details>
@@ -168,7 +160,7 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 
 <details>
 <summary label="sap-converged-cloud-plan">
-SapConvergedCloud
+SAP Cloud Infrastructure
 </summary>
 
 | Parameter name                                       | Type   | Description                                                                                | Required | Default value |
@@ -177,11 +169,11 @@ SapConvergedCloud
 | **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
 | **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
 | **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["a"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 
 </details>
@@ -252,21 +244,19 @@ These are the provisioning parameters for the `preview` plan that you configure:
 Preview cluster plan
 </summary>
 
-| Parameter name                                       | Type   | Description                                                                                | Required | Default value |
-|------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
-| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
-| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
-| **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                            | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["1"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
-| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
-
-<!-- markdown-link-check-enable -->
+| Parameter name                            | Type   | Description                                                                                | Required | Default value |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                 | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["1"]`       |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 </details>
 
 <br>
-<a name="update"><sup>1</sup> This parameter is available for <code>PATCH</code> as well, and can be updated with the same constraints as during provisioning.</a>
+<p><sup>1</sup> This parameter is available for both provisioning and update operations.</p>

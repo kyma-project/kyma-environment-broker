@@ -77,11 +77,21 @@ install:
 set-runtime-state:
 	./scripts/set_runtime_state.sh $(RUNTIME_ID) $(STATE)
 
+.PHONY: create-kubeconfig-secret
+create-kubeconfig-secret:
+	./scripts/create_kubeconfig_secret.sh $(RUNTIME_ID)
+
 ##@ Patching Kyma to specified state
 
 .PHONY: set-kyma-state
 set-kyma-state:
 	./scripts/set_kyma_state.sh $(KYMA_ID) $(STATE)
+
+##@ Creating GardenerCluster resource
+
+.PHONY: create-gardener-cluster
+create-gardener-cluster:
+	./scripts/create_gardener_cluster_cr.sh $(GLOBAL_ACCOUNT_ID)
 
 .PHONY: generate-env-docs
 generate-env-docs:

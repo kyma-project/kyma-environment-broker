@@ -15,7 +15,7 @@ The provisioning process is executed when the instance is created, or an unsuspe
 Each provisioning step is responsible for a separate part of preparing Kyma runtime. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems.
 You can find all the provisioning steps in the [provisioning](../../cmd/broker/provisioning.go) file.
 
-> [!NOTE]
+> ### Note:
 > The timeout for processing this operation is set to `24h`.
 
 ## Deprovisioning
@@ -27,7 +27,7 @@ Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. I
 Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
-> [!NOTE]
+> ### Note:
 > The timeout for processing this operation is set to `24h`.
 
 ## Update
@@ -35,7 +35,7 @@ You can find all the deprovisioning steps in the [deprovisioning](../../cmd/brok
 The update process is triggered by an [OSB API update operation](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance) request.
 You can find all the updating steps in the [update](../../cmd/broker/update.go) file.
 
-> [!NOTE]
+> ### Note:
 > The updating process of Service Manager credentials is different. The credentials are stored in the KEB database, and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) updates them during reconciliation.
 
 ## Provide Additional Steps
