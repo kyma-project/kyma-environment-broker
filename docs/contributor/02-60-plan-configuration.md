@@ -40,7 +40,7 @@ plansConfiguration:
       # volume size in GB
       volumeSizeGb: 80
       
-      # defines a list of machine types
+      # defines a list of machine types, the first machine in the list becomes the default machine for the plan
       regularMachines:
         - "m6i.large"
         - "m6i.xlarge"

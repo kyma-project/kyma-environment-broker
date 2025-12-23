@@ -52,7 +52,6 @@ func (p *GCPInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                zones,
 		ProviderType:         GCPProviderType,
-		DefaultMachineType:   DefaultGCPMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,

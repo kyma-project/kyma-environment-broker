@@ -7,7 +7,7 @@ import (
 
 const (
 	DefaultAlicloudRegion         = "eu-central-1"
-	DefaultAlicloudMachineType    = "ecs.g8i.large"
+	DefaultAlicloudMachineType    = "ecs.g9i.large"
 	DefaultAlicloudMultiZoneCount = 3
 	DefaultAlicloudDiskType       = "cloud_essd"
 )
@@ -47,7 +47,6 @@ func (p *AlicloudInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                formattedZones,
 		ProviderType:         "alicloud",
-		DefaultMachineType:   DefaultAlicloudMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,

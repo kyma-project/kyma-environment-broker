@@ -23,7 +23,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -2408,7 +2407,7 @@ func TestUpdateClusterName(t *testing.T) {
 }
 
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
-	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
+	planSpec := newPlanSpec(t)
 	return provider.NewPlanSpecificValuesProvider(
 		broker.InfrastructureManager{
 			DefaultGardenerShootPurpose:  "production",
