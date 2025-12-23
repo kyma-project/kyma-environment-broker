@@ -298,7 +298,7 @@ infrastructureManager:
   machineImageVersion: ""
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
-  # If true, provisions trial, freemium, and azure_lite clusters using smaller machine types.
+  # If true, provisions trial and freemium clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 
 kubeconfig:

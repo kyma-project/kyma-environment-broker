@@ -4,7 +4,7 @@ Most Kyma plans require specifying a machine type in the request body as one of 
 
 ## Allowed Machine Types
 
-The `plansConfiguration` property contains a list of plans. Every plan has a machine types configuration. Each plan has a **regularMachines** list containing a list of available values for the **machineType** parameter. The **additionalMachines** list contains machines which are available only in additional worker node pools, for example:
+The `plansConfiguration` property contains a list of plans. Every plan has a machine types configuration. Each plan has a **regularMachines** list containing a list of available values for the **machineType** parameter. The first machine in the **regularMachines** list is the default machine for the plan. The **additionalMachines** list contains machines which are available only in additional worker node pools, for example:
 
 ```yaml
 plansConfiguration:

@@ -1,0 +1,172 @@
+sap-converged-cloud:
+  regularMachines:
+    - "g_c2_m8"
+    - "g_c4_m16"
+    - "g_c6_m24"
+    - "g_c8_m32"
+    - "g_c12_m48"
+    - "g_c16_m64"
+    - "g_c32_m128"
+    - "g_c64_m256"
+  additionalMachines:
+  regions:
+    cf-eu20: ["eu-de-1"]
+    cf-ap10: ["ap-au-1"]
+    cf-us10: ["na-us-1"]
+    cf-jp10:
+      - ap-jp-1
+    cf-eu01:
+      - eu-de-2
+    cf-eu10:
+      - eu-de-2
+    cf-us20:
+      - na-us-2
+    cf-in30:
+      - ap-ae-1
+
+gcp,build-runtime-gcp:
+  regularMachines:
+    - "n2-standard-2"
+    - "n2-standard-4"
+    - "n2-standard-8"
+    - "n2-standard-16"
+    - "n2-standard-32"
+    - "n2-standard-48"
+    - "n2-standard-64"
+  additionalMachines:
+    - "c2d-highcpu-2"
+    - "c2d-highcpu-4"
+    - "c2d-highcpu-8"
+    - "c2d-highcpu-16"
+    - "c2d-highcpu-32"
+    - "c2d-highcpu-56"
+    - "g2-standard-4"
+    - "g2-standard-8"
+    - "g2-standard-12"
+    - "g2-standard-16"
+    - "g2-standard-24"
+    - "g2-standard-32"
+    - "g2-standard-48"
+  regions:
+    cf-sa30:
+      - "me-central2"
+    default:
+      - "europe-west3"
+      - "asia-south1"
+      - "us-central1"
+      - "me-central2"
+      - "asia-northeast2"
+      - "me-west1"
+      - "southamerica-east1"
+      - "australia-southeast1"
+      - "asia-northeast1"
+      - "asia-southeast1"
+      - "us-west1"
+      - "us-east4"
+      - "europe-west4"
+
+
+preview,aws,build-runtime-aws:
+  upgradableToPlans:
+    - build-runtime-aws
+  regularMachines:
+    - "m6i.large"
+    - "m6i.xlarge"
+    - "m6i.2xlarge"
+    - "m6i.4xlarge"
+    - "m6i.8xlarge"
+    - "m6i.12xlarge"
+    - "m6i.16xlarge"
+    - "m5.large"
+    - "m5.xlarge"
+    - "m5.2xlarge"
+    - "m5.4xlarge"
+    - "m5.8xlarge"
+    - "m5.12xlarge"
+    - "m5.16xlarge"
+  additionalMachines:
+    - "c7i.large"
+    - "c7i.xlarge"
+    - "c7i.2xlarge"
+    - "c7i.4xlarge"
+    - "c7i.8xlarge"
+    - "c7i.12xlarge"
+    - "c7i.16xlarge"
+    - "g6.xlarge"
+    - "g6.2xlarge"
+    - "g6.4xlarge"
+    - "g6.8xlarge"
+    - "g6.12xlarge"
+    - "g6.16xlarge"
+    - "g4dn.xlarge"
+    - "g4dn.2xlarge"
+    - "g4dn.4xlarge"
+    - "g4dn.8xlarge"
+    - "g4dn.12xlarge"
+    - "g4dn.16xlarge"
+  regions:
+    cf-eu11: [ "eu-central-1" ]
+    default: [ "eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-2", "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2" ]
+
+azure:
+  volumeSizeGb: 80
+  upgradableToPlans:
+   - build-runtime-azure
+  regularMachines: &azure_regular_machines
+    - "Standard_D2s_v5"
+    - "Standard_D4s_v5"
+    - "Standard_D8s_v5"
+    - "Standard_D16s_v5"
+    - "Standard_D32s_v5"
+    - "Standard_D48s_v5"
+    - "Standard_D64s_v5"
+    - "Standard_D4_v3"
+    - "Standard_D8_v3"
+    - "Standard_D16_v3"
+    - "Standard_D32_v3"
+    - "Standard_D48_v3"
+    - "Standard_D64_v3"
+  additionalMachines: &azure_additional_machines
+    - "Standard_F2s_v2"
+    - "Standard_F4s_v2"
+    - "Standard_F8s_v2"
+    - "Standard_F16s_v2"
+    - "Standard_F32s_v2"
+    - "Standard_F48s_v2"
+    - "Standard_F64s_v2"
+    - "Standard_NC4as_T4_v3"
+    - "Standard_NC8as_T4_v3"
+    - "Standard_NC16as_T4_v3"
+    - "Standard_NC64as_T4_v3"
+  regions: &azure_regions
+    cf-ch20: [ "switzerlandnorth" ]
+    default: [ "eastus","centralus","westus2","uksouth","northeurope","westeurope","japaneast","southeastasia","australiaeast","brazilsouth","canadacentral" ]
+
+build-runtime-azure:
+  volumeSizeGb: 80
+  regularMachines: *azure_regular_machines
+  additionalMachines: *azure_additional_machines
+  regions: *azure_regions
+
+azure_lite:
+  regularMachines:
+    - "Standard_D4s_v5"
+    - "Standard_D2s_v5"
+    - "Standard_D4_v3"
+  regions: *azure_regions
+
+
+alicloud:
+  volumeSizeGb: 80
+  regularMachines:
+    - "ecs.g9i.large"
+    - "ecs.g9i.xlarge"
+    - "ecs.g9i.2xlarge"
+    - "ecs.g9i.4xlarge"
+    - "ecs.g9i.8xlarge"
+    - "ecs.g9i.12xlarge"
+    - "ecs.g9i.16xlarge"
+    - "ecs.g8i.large"
+    - "ecs.g8i.xlarge"
+  regions:
+    default: ["ap-southeast-1","eu-central-1","eu-west-1"]

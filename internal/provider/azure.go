@@ -43,7 +43,6 @@ type (
 	}
 	AzureLiteInputProvider struct {
 		Purpose                string
-		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 		ZonesProvider          ZonesProvider
 	}
@@ -67,7 +66,6 @@ func (p *AzureInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           zonesCount,
 		Zones:                zones,
 		ProviderType:         "azure",
-		DefaultMachineType:   DefaultAzureMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		DiskType:             "StandardSSD_LRS",
@@ -133,10 +131,6 @@ func (p *AzureTrialInputProvider) region() string {
 }
 
 func (p *AzureLiteInputProvider) Provide() internal.ProviderValues {
-	machineType := DefaultOldAzureTrialMachineType
-	if p.UseSmallerMachineTypes {
-		machineType = DefaultAzureMachineType
-	}
 	region := DefaultAzureRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
@@ -152,7 +146,6 @@ func (p *AzureLiteInputProvider) Provide() internal.ProviderValues {
 		ZonesCount:           1,
 		Zones:                zoneFullNames,
 		ProviderType:         AzureProviderType,
-		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              p.Purpose,
 		DiskType:             "StandardSSD_LRS",

@@ -1717,7 +1717,7 @@ modules: []
 `
 	operation.ProvisioningParameters.PlatformProvider = platformProvider
 
-	planSpec, _ := configuration.NewPlanSpecifications(strings.NewReader(""))
+	planSpec, _ := provider.NewFakePlanSpecFromFile()
 	valuesProvider := provider.NewPlanSpecificValuesProvider(inputConfig, nil, provider.FakeZonesProvider([]string{"a", "b", "c"}), planSpec)
 
 	values, _ := valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)

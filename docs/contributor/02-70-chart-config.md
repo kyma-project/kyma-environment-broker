@@ -124,7 +124,7 @@
 | infrastructureManager.<br>machineImage | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `false` |
-| infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial, freemium, and azure_lite clusters using smaller machine types. | `false` |
+| infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |
 | metricsv2.enabled | If true, enables metricsv2 collection and Prometheus exposure. | `False` |
