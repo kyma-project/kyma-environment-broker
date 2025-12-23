@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -66,44 +65,6 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
 
 	// when - first retry
-	assert.True(t, when > 0)
-	assert.Nil(t, err)
-
-	// then - second call
-	t.Log(op.UpdatedAt.String())
-	op.UpdatedAt = op.UpdatedAt.Add(-retryInterval - time.Second) // simulate wait of first retry
-	t.Log(op.UpdatedAt.String())
-	op, when, err = opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
-
-	// when - second call => retry
-	assert.True(t, when > 0)
-	assert.Nil(t, err)
-}
-
-func Test_OperationManager_RetryStep(t *testing.T) {
-	// given
-	const (
-		opId       = "provisioning-op-1"
-		instanceId = "instance-1"
-	)
-
-	memory := storage.NewMemoryStorage()
-	operations := memory.Operations()
-	opManager := NewOperationManager(operations, "some_step", kebErr.NotSet)
-	op := fixture.FixProvisioningOperation(opId, instanceId)
-	op.CreatedAt = time.Now().Add(-time.Hour)
-	op.UpdatedAt = time.Now()
-	op.State = internal.OperationStateInProgress
-	retryInterval := time.Second
-	maxTime := time.Second * 10
-	errorMessage := "ups ... "
-	errOut := fmt.Errorf("error occurred")
-
-	err := operations.InsertOperation(op)
-	require.NoError(t, err)
-
-	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxTime, fixLogger())
-
 	assert.True(t, when > 0)
 	assert.Nil(t, err)
 

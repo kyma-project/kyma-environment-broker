@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -162,6 +164,64 @@ func TestSkipFinishedStage(t *testing.T) {
 	op, _ := operationStorage.GetOperationByID(operation.ID)
 	assert.True(t, op.IsStageFinished("stage-1"))
 	assert.True(t, op.IsStageFinished("stage-2"))
+}
+
+func TestStepRetryWhenOperationIsProcessedAgain(t *testing.T) {
+	// given
+	const (
+		opID                  = "retry-op-1"
+		stageName             = "stage-1"
+		updatingStepName      = "updating-step"
+		retryingStepName      = "retrying-step"
+		stepRetryInterval     = 500 * time.Millisecond
+		stepMaxProcessingTime = 5 * time.Second
+	)
+
+	operation := FixOperation(opID)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
+	mgr.SpeedUp(1)
+	firstStep := &updatingStep{
+		name:             updatingStepName,
+		eventPublisher:   eventCollector,
+		operationStorage: operationStorage,
+	}
+	secondStep := &retryingStep{
+		name:              retryingStepName,
+		eventPublisher:    eventCollector,
+		operationManager:  process.NewOperationManager(operationStorage, retryingStepName, kebError.KEBDependency),
+		Retry:             true,
+		RetryInterval:     stepRetryInterval,
+		MaxProcessingTime: stepMaxProcessingTime,
+	}
+
+	err := mgr.AddStep(stageName, firstStep, nil)
+	assert.NoError(t, err)
+	err = mgr.AddStep(stageName, secondStep, nil)
+	assert.NoError(t, err)
+
+	// when
+	retry, _ := mgr.Execute(operation.ID)
+
+	// then
+	assert.Equal(t, stepRetryInterval, retry)
+
+	// process operation again
+	// when
+	retry, _ = mgr.Execute(operation.ID)
+
+	// then
+	assert.Equal(t, stepRetryInterval, retry)
+
+	// process operation again and finish it
+	secondStep.Retry = false
+
+	// when
+	retry, _ = mgr.Execute(operation.ID)
+
+	// then
+	assert.Zero(t, retry)
+	op, _ := operationStorage.GetOperationByID(operation.ID)
+	assert.True(t, op.IsStageFinished(stageName))
 }
 
 func SetupStagedManager(t *testing.T, op internal.Operation) (*process.StagedManager, storage.Operations, *CollectingEventHandler) {
@@ -369,4 +429,49 @@ func TestOperationSucceededEvent(t *testing.T) {
 	// then
 	rc.WaitForState(t, domain.Succeeded)
 	rc.AssertDurationGreaterThanZero(t)
+}
+
+type updatingStep struct {
+	name             string
+	eventPublisher   event.Publisher
+	operationStorage storage.Operations
+}
+
+func (s *updatingStep) Name() string {
+	return s.name
+}
+func (s *updatingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
+	logger.Info(fmt.Sprintf("Running %s", s.name))
+	s.eventPublisher.Publish(context.Background(), s.name)
+	if operation.State != domain.InProgress {
+		operation.State = domain.InProgress
+	}
+	updatedOp, err := s.operationStorage.UpdateOperation(operation)
+	if err != nil {
+		return operation, 0, fmt.Errorf("failed to update operation: %w", err)
+	}
+
+	return *updatedOp, 0, nil
+}
+
+type retryingStep struct {
+	name              string
+	eventPublisher    event.Publisher
+	operationManager  *process.OperationManager
+	Retry             bool
+	RetryInterval     time.Duration
+	MaxProcessingTime time.Duration
+}
+
+func (s *retryingStep) Name() string {
+	return s.name
+}
+func (s *retryingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
+	logger.Info(fmt.Sprintf("Running %s", s.name))
+	s.eventPublisher.Publish(context.Background(), s.name)
+	if s.Retry {
+		err := errors.New("should retry step")
+		return s.operationManager.RetryOperation(operation, "step retrying enabled", err, s.RetryInterval, s.MaxProcessingTime, logger)
+	}
+	return operation, 0, nil
 }
