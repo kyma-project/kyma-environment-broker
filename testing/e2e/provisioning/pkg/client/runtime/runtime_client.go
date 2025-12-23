@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log/slog"
@@ -10,8 +11,6 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/pkg/errors"
 )
 
 // tenantHeaderName is a header key name for request send by graphQL client
@@ -62,11 +61,11 @@ func (c *Client) kubeconfigForInstanceID() ([]byte, error) {
 func (c *Client) FetchRuntimeConfig() (*string, error) {
 	kubeconfig, err := c.kubeconfigForInstanceID()
 	if err != nil {
-		return nil, errors.Wrapf(err, "while getting kubeconfig %s", c.instanceID)
+		return nil, fmt.Errorf("while getting kubeconfig %s: %w", c.instanceID, err)
 	}
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "while getting runtime config")
+		return nil, fmt.Errorf("while getting runtime config: %w", err)
 	}
 	if len(kubeconfig) > 0 {
 		kcfg := string(kubeconfig)
@@ -79,14 +78,14 @@ func (c *Client) writeConfigToFile(config string) (string, error) {
 	content := []byte(config)
 	runtimeConfigTmpFile, err := ioutil.TempFile("", "runtime.*.yaml")
 	if err != nil {
-		return "", errors.Wrap(err, "while creating runtime config temp file")
+		return "", fmt.Errorf("while creating runtime config temp file: %w", err)
 	}
 
 	if _, err := runtimeConfigTmpFile.Write(content); err != nil {
-		return "", errors.Wrap(err, "while writing runtime config temp file")
+		return "", fmt.Errorf("while writing runtime config temp file: %w", err)
 	}
 	if err := runtimeConfigTmpFile.Close(); err != nil {
-		return "", errors.Wrap(err, "while closing runtime config temp file")
+		return "", fmt.Errorf("while closing runtime config temp file: %w", err)
 	}
 
 	return runtimeConfigTmpFile.Name(), nil

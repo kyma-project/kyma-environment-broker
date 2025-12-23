@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -47,7 +46,7 @@ func (c *ConfigMapClient) Get(name, namespace string) (*v1.ConfigMap, error) {
 		return true, nil
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "while getting config map")
+		return nil, fmt.Errorf("while getting config map: %w", err)
 	}
 	return &configMap, nil
 }
@@ -59,7 +58,7 @@ func (c *ConfigMapClient) Create(configMap v1.ConfigMap) error {
 			if apiErrors.IsAlreadyExists(err) {
 				err = c.Update(configMap)
 				if err != nil {
-					return false, errors.Wrap(err, "while updating a config map")
+					return false, fmt.Errorf("while updating a config map: %w", err)
 				}
 				return true, nil
 			}
@@ -69,7 +68,7 @@ func (c *ConfigMapClient) Create(configMap v1.ConfigMap) error {
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while creating config map")
+		return fmt.Errorf("while creating config map: %w", err)
 	}
 	return nil
 }
@@ -84,7 +83,7 @@ func (c *ConfigMapClient) Update(configMap v1.ConfigMap) error {
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for config map update")
+		return fmt.Errorf("while waiting for config map update: %w", err)
 	}
 	return nil
 }
@@ -103,7 +102,7 @@ func (c *ConfigMapClient) Delete(configMap v1.ConfigMap) error {
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for config map delete")
+		return fmt.Errorf("while waiting for config map delete: %w", err)
 	}
 	return nil
 }

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -53,12 +52,12 @@ func (c *UpgradeClient) UpgradeRuntime(runtimeID string) (string, error) {
 	}
 	requestBody, err := json.Marshal(payload)
 	if err != nil {
-		return "", errors.Wrap(err, "while marshaling payload request")
+		return "", fmt.Errorf("while marshaling payload request: %w", err)
 	}
 
 	response, err := c.executeRequest(http.MethodPost, fmt.Sprintf(upgradeInstancePath, c.URL), bytes.NewReader(requestBody))
 	if err != nil {
-		return "", errors.Wrap(err, "while executing upgrade runtime request")
+		return "", fmt.Errorf("while executing upgrade runtime request: %w", err)
 	}
 	if response.StatusCode != http.StatusAccepted {
 		return "", c.handleUnsupportedStatusCode(response)
@@ -67,7 +66,7 @@ func (c *UpgradeClient) UpgradeRuntime(runtimeID string) (string, error) {
 	upgradeResponse := &UpgradeRuntimeResponse{}
 	err = json.NewDecoder(response.Body).Decode(upgradeResponse)
 	if err != nil {
-		return "", errors.Wrap(err, "while decoding upgrade response")
+		return "", fmt.Errorf("while decoding upgrade response: %w", err)
 	}
 
 	return upgradeResponse.OrchestrationID, nil
@@ -78,7 +77,7 @@ func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
 	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		id, permanentError, err := c.fetchRuntimeID(instanceID)
 		if err != nil && permanentError {
-			return true, errors.Wrap(err, "cannot fetch runtimeID")
+			return true, fmt.Errorf("cannot fetch runtimeID: %w", err)
 		}
 		if err != nil {
 			c.log.Warn(fmt.Sprintf("runtime is not ready: %s ...", err))
@@ -88,7 +87,7 @@ func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
 		return true, nil
 	})
 	if err != nil {
-		return runtimeID, errors.Wrap(err, "while waiting for runtimeID")
+		return runtimeID, fmt.Errorf("while waiting for runtimeID: %w", err)
 	}
 
 	return runtimeID, nil
@@ -97,7 +96,7 @@ func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
 func (c *UpgradeClient) fetchRuntimeID(instanceID string) (string, bool, error) {
 	response, err := c.executeRequest(http.MethodGet, fmt.Sprintf(infoRuntimePath, c.URL), nil)
 	if err != nil {
-		return "", false, errors.Wrap(err, "while executing fetch runtime request")
+		return "", false, fmt.Errorf("while executing fetch runtime request: %w", err)
 	}
 	if response.StatusCode != http.StatusOK {
 		return "", false, c.handleUnsupportedStatusCode(response)
@@ -106,7 +105,7 @@ func (c *UpgradeClient) fetchRuntimeID(instanceID string) (string, bool, error) 
 	var runtimes []Runtime
 	err = json.NewDecoder(response.Body).Decode(&runtimes)
 	if err != nil {
-		return "", true, errors.Wrap(err, "while decoding upgrade response")
+		return "", true, fmt.Errorf("while decoding upgrade response: %w", err)
 	}
 
 	for _, runtime := range runtimes {
@@ -119,14 +118,14 @@ func (c *UpgradeClient) fetchRuntimeID(instanceID string) (string, bool, error) 
 		return runtime.RuntimeID, false, nil
 	}
 
-	return "", false, errors.Errorf("runtimeID for instanceID %s not exist", instanceID)
+	return "", false, fmt.Errorf("runtimeID for instanceID %s not exist", instanceID)
 }
 
 func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout time.Duration) error {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, timeout, false, func(ctx context.Context) (bool, error) {
 		permanentError, err := c.awaitOperationFinished(orchestrationID)
 		if err != nil && permanentError {
-			return true, errors.Wrap(err, "cannot fetch operation status")
+			return true, fmt.Errorf("cannot fetch operation status: %w", err)
 		}
 		if err != nil {
 			c.log.Warn(fmt.Sprintf("upgrade is not ready: %s ...", err))
@@ -135,7 +134,7 @@ func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout t
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for upgrade operation finished")
+		return fmt.Errorf("while waiting for upgrade operation finished: %w", err)
 	}
 
 	return nil
@@ -144,7 +143,7 @@ func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout t
 func (c *UpgradeClient) awaitOperationFinished(orchestrationID string) (bool, error) {
 	response, err := c.executeRequest(http.MethodGet, fmt.Sprintf(getOrchestrationPath, c.URL, orchestrationID), nil)
 	if err != nil {
-		return false, errors.Wrap(err, "while executing get orchestration request")
+		return false, fmt.Errorf("while executing get orchestration request: %w", err)
 	}
 
 	if response.StatusCode != http.StatusOK {
@@ -154,29 +153,29 @@ func (c *UpgradeClient) awaitOperationFinished(orchestrationID string) (bool, er
 	orchestrationResponse := &OrchestrationResponse{}
 	err = json.NewDecoder(response.Body).Decode(orchestrationResponse)
 	if err != nil {
-		return true, errors.Wrap(err, "while decoding orchestration response")
+		return true, fmt.Errorf("while decoding orchestration response: %w", err)
 	}
 
 	switch orchestrationResponse.State {
 	case "succeeded":
 		return false, nil
 	case "failed":
-		return true, errors.Errorf("operation is in failed state")
+		return true, fmt.Errorf("operation is in failed state")
 	default:
-		return false, errors.Errorf("operation is in %s state", orchestrationResponse.State)
+		return false, fmt.Errorf("operation is in %s state", orchestrationResponse.State)
 	}
 }
 
 func (c *UpgradeClient) executeRequest(method, url string, body io.Reader) (*http.Response, error) {
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return &http.Response{}, errors.Wrap(err, "while creating request for KEB")
+		return &http.Response{}, fmt.Errorf("while creating request for KEB: %w", err)
 	}
 	request.Header.Set("X-Broker-API-Version", "2.14")
 
 	response, err := c.client.Do(request)
 	if err != nil {
-		return &http.Response{}, errors.Wrapf(err, "while executing request to KEB on: %s", url)
+		return &http.Response{}, fmt.Errorf("while executing request to KEB on: %s: %w", url, err)
 	}
 
 	return response, nil
@@ -191,5 +190,5 @@ func (c *UpgradeClient) handleUnsupportedStatusCode(response *http.Response) err
 		body = string(responseBody)
 	}
 
-	return errors.Wrapf(err, "unsupported status code %d: (%s)", response.StatusCode, body)
+	return fmt.Errorf("unsupported status code %d: (%s): %w", response.StatusCode, body, err)
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning/pkg/client/runtime"
 	"github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning/pkg/client/v1_client"
 	"github.com/ory/hydra-maester/api/v1alpha1"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
@@ -179,7 +178,7 @@ func (ts *Suite) cleanupResources() error {
 		},
 	})
 	if err != nil {
-		return errors.Wrapf(err, "while waiting for secret %s deletion", ts.ConfigName)
+		return fmt.Errorf("while waiting for secret %s deletion: %w", ts.ConfigName, err)
 	}
 
 	ts.log.Info(fmt.Sprintf("removing config map %s", ts.ConfigName))
@@ -190,7 +189,7 @@ func (ts *Suite) cleanupResources() error {
 		},
 	})
 	if err != nil {
-		return errors.Wrapf(err, "while waiting for config map %s deletion", ts.ConfigName)
+		return fmt.Errorf("while waiting for config map %s deletion: %w", ts.ConfigName, err)
 	}
 	return nil
 }
@@ -231,7 +230,7 @@ func createBrokerOAuthConfig(ctx context.Context, k8sclient client.Client, cfg *
 
 	err := v1alpha1.AddToScheme(scheme.Scheme)
 	if err != nil {
-		return brokerOAuthConfig, errors.Wrap(err, "while adding hydra-maester v1alpha1 to schema")
+		return brokerOAuthConfig, fmt.Errorf("while adding hydra-maester v1alpha1 to schema: %w", err)
 	}
 
 	oAuth2Client := &v1alpha1.OAuth2Client{}
@@ -240,7 +239,7 @@ func createBrokerOAuthConfig(ctx context.Context, k8sclient client.Client, cfg *
 		Name:      cfg.Broker.ClientName,
 	}, oAuth2Client)
 	if err != nil {
-		return brokerOAuthConfig, errors.Wrapf(err, "while getting oAuth2Client %s", cfg.Broker.ClientName)
+		return brokerOAuthConfig, fmt.Errorf("while getting oAuth2Client %s: %w", cfg.Broker.ClientName, err)
 	}
 
 	brokerSecret := &v1.Secret{}
@@ -249,16 +248,16 @@ func createBrokerOAuthConfig(ctx context.Context, k8sclient client.Client, cfg *
 		Name:      oAuth2Client.Spec.SecretName,
 	}, brokerSecret)
 	if err != nil {
-		return brokerOAuthConfig, errors.Wrapf(err, "while getting secret %s", oAuth2Client.Spec.SecretName)
+		return brokerOAuthConfig, fmt.Errorf("while getting secret %s: %w", oAuth2Client.Spec.SecretName, err)
 	}
 
 	clientID, ok := brokerSecret.Data["client_id"]
 	if !ok {
-		return brokerOAuthConfig, errors.Errorf("cannot find client_id key in secret %s", oAuth2Client.Spec.SecretName)
+		return brokerOAuthConfig, fmt.Errorf("cannot find client_id key in secret %s", oAuth2Client.Spec.SecretName)
 	}
 	clientSecret, ok := brokerSecret.Data["client_secret"]
 	if !ok {
-		return brokerOAuthConfig, errors.Errorf("cannot find client_secret key in secret %s", oAuth2Client.Spec.SecretName)
+		return brokerOAuthConfig, fmt.Errorf("cannot find client_secret key in secret %s", oAuth2Client.Spec.SecretName)
 	}
 
 	brokerOAuthConfig.ClientID = string(clientID)

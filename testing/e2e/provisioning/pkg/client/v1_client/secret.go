@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -34,11 +33,11 @@ func (c *SecretClient) Create(secret v1.Secret) error {
 			if apiErrors.IsAlreadyExists(err) {
 				err = c.Delete(secret)
 				if err != nil {
-					return false, errors.Wrap(err, "while deleting a secret")
+					return false, fmt.Errorf("while deleting a secret: %w", err)
 				}
 				err = c.client.Create(context.Background(), &secret)
 				if err != nil {
-					return false, errors.Wrap(err, "while creating secret")
+					return false, fmt.Errorf("while creating secret: %w", err)
 				}
 				return true, nil
 			}
@@ -48,7 +47,7 @@ func (c *SecretClient) Create(secret v1.Secret) error {
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for secret creation")
+		return fmt.Errorf("while waiting for secret creation: %w", err)
 	}
 	return nil
 }
@@ -67,7 +66,7 @@ func (c *SecretClient) Delete(secret v1.Secret) error {
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for secret delete")
+		return fmt.Errorf("while waiting for secret delete: %w", err)
 	}
 	return nil
 }

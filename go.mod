@@ -23,7 +23,6 @@ require (
 	github.com/kyma-project/infrastructure-manager v0.0.0-20251105085636-90cfe5ee0c7b
 	github.com/lib/pq v1.10.9
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/sebdah/goldie/v2 v2.8.0
@@ -110,6 +109,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.4 // indirect

@@ -11,8 +11,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/pkg/errors"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -220,7 +218,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	defer func() {
 		if pErr := recover(); pErr != nil {
 			logger.Info(fmt.Sprintf("panic in RunStep in staged manager: %v", pErr))
-			err = errors.New(fmt.Sprintf("%v", pErr))
+			err = fmt.Errorf("%v", pErr)
 			om := NewOperationManager(m.operationStorage, step.Name(), kebError.KEBDependency)
 			processedOperation, _, _ = om.OperationFailed(operation, "recovered from panic", err, m.log)
 		}

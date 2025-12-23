@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v7/domain"
-	"github.com/pkg/errors"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -111,7 +111,7 @@ func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
 	c.log.Info(fmt.Sprintf("Provisioning Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName()))
 	requestByte, err := c.prepareProvisionDetails(kymaVersion)
 	if err != nil {
-		return "", errors.Wrap(err, "while preparing provision details")
+		return "", fmt.Errorf("while preparing provision details: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Provisioning parameters: %v", string(requestByte)))
 
@@ -120,7 +120,7 @@ func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
 	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPut, provisionURL, http.StatusAccepted, bytes.NewReader(requestByte), &response)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		if response.Operation == "" {
@@ -130,7 +130,7 @@ func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
 		return true, nil
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "while waiting for successful provision call")
+		return "", fmt.Errorf("while waiting for successful provision call: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Successfully send provision request, got operation ID %s", response.Operation))
 
@@ -146,13 +146,13 @@ func (c *Client) DeprovisionRuntime() (string, error) {
 	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		return true, nil
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "while waiting for successful deprovision call")
+		return "", fmt.Errorf("while waiting for successful deprovision call: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Successfully send deprovision request, got operation ID %s", response.Operation))
 	return response.Operation, nil
@@ -162,7 +162,7 @@ func (c *Client) SuspendRuntime() error {
 	c.log.Info(fmt.Sprintf("Suspending Runtime [instanceID: %s, NAME: %s]", c.instanceID, c.clusterName))
 	requestByte, err := c.prepareUpdateDetails(BoolPtr(false))
 	if err != nil {
-		return errors.Wrap(err, "while preparing update details")
+		return fmt.Errorf("while preparing update details: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Suspension parameters: %v", string(requestByte)))
 
@@ -173,13 +173,13 @@ func (c *Client) SuspendRuntime() error {
 	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPatch, suspensionURL, http.StatusOK, bytes.NewReader(requestByte), &suspensionResponse)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for successful suspension call")
+		return fmt.Errorf("while waiting for successful suspension call: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Successfully send suspension request for %s", suspensionResponse))
 	return nil
@@ -189,7 +189,7 @@ func (c *Client) UnsuspendRuntime() error {
 	c.log.Info(fmt.Sprintf("Unsuspending Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName()))
 	requestByte, err := c.prepareUpdateDetails(BoolPtr(true))
 	if err != nil {
-		return errors.Wrap(err, "while preparing update details")
+		return fmt.Errorf("while preparing update details: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Unsuspension parameters: %v", string(requestByte)))
 
@@ -200,13 +200,13 @@ func (c *Client) UnsuspendRuntime() error {
 	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPatch, suspensionURL, http.StatusOK, bytes.NewReader(requestByte), &unsuspensionResponse)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		return true, nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for successful unsuspension call")
+		return fmt.Errorf("while waiting for successful unsuspension call: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Successfully send unsuspension request for %s", unsuspensionResponse))
 	return nil
@@ -248,7 +248,7 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Minute, timeout, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodGet, lastOperationURL, http.StatusOK, nil, &response)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		c.log.Info(fmt.Sprintf("Last operation status: %s", response.State))
@@ -270,7 +270,7 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 		}
 	})
 	if err != nil {
-		return errors.Wrap(err, "while waiting for succeeded last operation")
+		return fmt.Errorf("while waiting for succeeded last operation: %w", err)
 	}
 	return nil
 }
@@ -283,7 +283,7 @@ func (c *Client) FetchDashboardURL() (string, error) {
 	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodGet, instanceDetailsURL, http.StatusOK, nil, &response)
 		if err != nil {
-			c.log.Warn(errors.Wrap(err, "while executing request").Error())
+			c.log.Warn(fmt.Errorf("while executing request: %w", err).Error())
 			return false, nil
 		}
 		if response.DashboardURL == "" {
@@ -293,7 +293,7 @@ func (c *Client) FetchDashboardURL() (string, error) {
 		return true, nil
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "while waiting for dashboardURL")
+		return "", fmt.Errorf("while waiting for dashboardURL: %w", err)
 	}
 	c.log.Info(fmt.Sprintf("Successfully fetched dashboard URL: %s", response.DashboardURL))
 
@@ -316,11 +316,11 @@ func (c *Client) prepareProvisionDetails(customVersion string) ([]byte, error) {
 	}
 	rawParameters, err := json.Marshal(parameters)
 	if err != nil {
-		return nil, errors.Wrap(err, "while marshalling parameters body")
+		return nil, fmt.Errorf("while marshalling parameters body: %w", err)
 	}
 	rawContext, err := json.Marshal(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "while marshalling context body")
+		return nil, fmt.Errorf("while marshalling context body: %w", err)
 	}
 	requestBody := domain.ProvisionDetails{
 		ServiceID:        kymaClassID,
@@ -337,7 +337,7 @@ func (c *Client) prepareProvisionDetails(customVersion string) ([]byte, error) {
 
 	requestByte, err := json.Marshal(requestBody)
 	if err != nil {
-		return nil, errors.Wrap(err, "while marshalling request body")
+		return nil, fmt.Errorf("while marshalling request body: %w", err)
 	}
 	return requestByte, nil
 }
@@ -351,7 +351,7 @@ func (c *Client) prepareUpdateDetails(active *bool) ([]byte, error) {
 	}
 	rawContext, err := json.Marshal(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "while marshalling context body")
+		return nil, fmt.Errorf("while marshalling context body: %w", err)
 	}
 	requestBody := domain.UpdateDetails{
 		ServiceID:  kymaClassID,
@@ -364,7 +364,7 @@ func (c *Client) prepareUpdateDetails(active *bool) ([]byte, error) {
 	}
 	requestByte, err := json.Marshal(requestBody)
 	if err != nil {
-		return nil, errors.Wrap(err, "while marshalling request body")
+		return nil, fmt.Errorf("while marshalling request body: %w", err)
 	}
 	return requestByte, nil
 }
@@ -372,13 +372,13 @@ func (c *Client) prepareUpdateDetails(active *bool) ([]byte, error) {
 func (c *Client) executeRequest(method, url string, expectedStatus int, body io.Reader, responseBody interface{}) error {
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return errors.Wrap(err, "while creating request for provisioning")
+		return fmt.Errorf("while creating request for provisioning: %w", err)
 	}
 	request.Header.Set("X-Broker-API-Version", "2.14")
 
 	resp, err := c.client.Do(request)
 	if err != nil {
-		return errors.Wrapf(err, "while executing request URL: %s", url)
+		return fmt.Errorf("while executing request URL: %s: %w", url, err)
 	}
 	defer c.warnOnError(resp.Body.Close)
 	if resp.StatusCode != expectedStatus {
@@ -389,12 +389,12 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, body io.
 		}
 		bodyString := string(bodyBytes)
 		c.log.Warn(fmt.Sprintf("%s", bodyString))
-		return errors.Errorf("got unexpected status code while calling Kyma Environment Broker: want: %d, got: %d (url=%s)", expectedStatus, resp.StatusCode, url)
+		return fmt.Errorf("got unexpected status code while calling Kyma Environment Broker: want: %d, got: %d (url=%s)", expectedStatus, resp.StatusCode, url)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(responseBody)
 	if err != nil {
-		return errors.Wrapf(err, "while decoding body")
+		return fmt.Errorf("while decoding body: %w", err)
 	}
 
 	return nil
