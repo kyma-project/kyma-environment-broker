@@ -32,12 +32,12 @@ func NewOperation() *operations {
 }
 
 func (s *operations) ReEncryptOperation(operation internal.Operation) error {
-	//TODO implement me - for now this is just the stub to satisfy the interface
+	// TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
 
 func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error) {
-	//TODO implement me - for now this is just the stub to satisfy the interface
+	// TODO implement me - for now this is just the stub to satisfy the interface
 	panic("implement me")
 }
 
@@ -152,6 +152,7 @@ func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation
 	if oldOp.Version != op.Version {
 		return nil, dberr.Conflict("unable to update operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
 	}
+	op.UpdatedAt = time.Now()
 	op.Version = op.Version + 1
 	s.operations[op.ID] = op
 
