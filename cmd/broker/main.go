@@ -170,7 +170,6 @@ type KubeconfigProvider interface {
 
 const (
 	createRuntimeStageName                = "create_runtime"
-	checkKymaStageName                    = "check_kyma"
 	createKymaResourceStageName           = "create_kyma_resource"
 	checkRuntimeStageName                 = "check_runtime_resource"
 	syncKubeconfigStageName               = "sync_kubeconfig"
