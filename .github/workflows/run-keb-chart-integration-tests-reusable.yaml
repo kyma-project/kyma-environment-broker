@@ -101,12 +101,8 @@ jobs:
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
 
       - name: Build and push Docker images to k3s registry
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            ./scripts/testing/build-and-push-images.sh ${{ inputs.version }}
-          else
-            ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
-          fi
+        if: ${{ inputs.release == 'false' }}
+        run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Set global account ID
         run: |
