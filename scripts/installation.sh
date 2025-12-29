@@ -68,7 +68,7 @@ if [[ "$VERSION" == PR* ]]; then
     -f ../../scripts/values.yaml \
     --set global.database.embedded.enabled=false \
     --set testConfig.kebDeployment.useAnnotations=true \
-    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" \
+    --set global.images.container_registry.path="localhost:5000" \
     --set global.secrets.mechanism=secrets \
     --debug --wait
 else
@@ -77,6 +77,7 @@ else
     -f ../../scripts/values.yaml \
     --set global.database.embedded.enabled=false \
     --set testConfig.kebDeployment.useAnnotations=true \
+    --set global.images.container_registry.path="localhost:5000" \
     --set global.secrets.mechanism=secrets \
     --debug --wait
 fi
