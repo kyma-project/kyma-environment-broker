@@ -37,7 +37,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
 
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
-		checkKymaStageName, createKymaResourceStageName})
+		checkRuntimeStageName, syncKubeconfigStageName, checkKymaStageName, createKymaResourceStageName})
 	/*
 			The provisioning process contains the following stages:
 			1. "start" - changes the state from pending to in progress if no deprovisioning is ongoing.
@@ -107,18 +107,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			stage:     createRuntimeStageName,
+			stage:     checkRuntimeStageName,
 			step:      steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			stage:     createRuntimeStageName,
+			stage:     syncKubeconfigStageName,
 			step:      steps.SyncKubeconfig(db.Operations(), k8sClient),
 			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
 		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig")
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			stage:     createRuntimeStageName,
+			stage:     injectBTPOperatorCredentialsStageName,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},
 		{
