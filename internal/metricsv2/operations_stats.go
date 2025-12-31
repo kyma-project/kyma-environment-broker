@@ -203,11 +203,7 @@ func (s *operationsStats) UpdateStats() error {
 }
 
 func (s *operationsStats) buildFQName(opType internal.OperationType, opState domain.LastOperationState) string {
-	return prometheus.BuildFQName(
-		prometheusNamespacev2,
-		prometheusSubsystemv2,
-		fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)),
-	)
+	return prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
 }
 
 // TODO: is it needed? It is used only in tests
@@ -219,9 +215,7 @@ func (s *operationsStats) GetCounter(opType internal.OperationType, opState doma
 }
 
 func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) metricKey {
-	fmtState := formatOpState(opState)
-	fmtType := formatOpType(opType)
-	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan))
+	return metricKey(fmt.Sprintf("%s_%s_%s", formatOpType(opType), formatOpState(opState), plan))
 }
 
 func formatOpType(opType internal.OperationType) string {
