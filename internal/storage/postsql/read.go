@@ -558,7 +558,7 @@ func (r readSession) getLastOperation(condition dbr.Builder) (dbmodel.OperationD
 func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
 	_, err := r.session.Select("type", "state", "provisioning_parameters ->> 'plan_id' AS plan_id").
-		Where("type IN (?, ?, ?)", "provision", "deprovision").
+		Where("type IN (?, ?)", "provision", "deprovision").
 		From(OperationTableName).
 		Load(&rows)
 	return rows, err
