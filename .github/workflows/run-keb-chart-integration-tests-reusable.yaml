@@ -87,7 +87,7 @@ jobs:
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
       - name: Wait for images to be ready
-        uses: wechuli/allcheckspassed@f423b273f5fdf73582e41f8f6f0f204d69c27379
+        uses: wechuli/allcheckspassed@b0eaef5be76003932c9520e2b3dd03c85cc43d87
         if: ${{ inputs.release == 'false' }}
         with:
           delay: '1'
