@@ -73,9 +73,7 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	for i, data := range testData {
-		key, err := statsCollector.makeKey(data.opType, data.opState, data.opPlan)
-		assert.NoError(t, err)
-		testData[i].key = key
+		testData[i].key = statsCollector.makeKey(data.opType, data.opState, data.opPlan)
 	}
 
 	err := operations.InsertOperation(internal.Operation{
