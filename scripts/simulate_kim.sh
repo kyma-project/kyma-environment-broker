@@ -56,7 +56,7 @@ while (( COUNT > 0 )); do
     fi
   done <<< "$RUNTIMES"
 
-  sleep 10
+  sleep 1
 
   COUNT=$(get_provisioning_runtimes)
 done
