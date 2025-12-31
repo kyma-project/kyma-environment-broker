@@ -26,7 +26,7 @@ type ServicesEndpoint struct {
 	defaultOIDCConfig           *pkg.OIDCConfigDTO
 	useSmallerMachineTypes      bool
 	ingressFilteringFeatureFlag bool
-	ingressFilteringPlans       EnablePlans
+	ingressFilteringPlans       StringList
 	schemaService               *SchemaService
 }
 

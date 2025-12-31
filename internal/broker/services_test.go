@@ -164,7 +164,7 @@ func TestServices_Services(t *testing.T) {
 	})
 }
 
-func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringPlans broker.EnablePlans) *broker.SchemaService {
+func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg broker.Config, ingressFilteringPlans broker.StringList) *broker.SchemaService {
 	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")

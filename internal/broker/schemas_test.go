@@ -35,7 +35,7 @@ aws:
 `))
 	require.NoError(t, err)
 	channelResolver := &fixture.FakeChannelResolver{}
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
+	svc := NewSchemaService(providers, plans, nil, Config{}, StringList{"aws"}, channelResolver)
 
 	// When
 	err = svc.Validate()
@@ -65,7 +65,7 @@ aws:
 `))
 	require.NoError(t, err)
 	channelResolver := &fixture.FakeChannelResolver{}
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
+	svc := NewSchemaService(providers, plans, nil, Config{}, StringList{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When
@@ -96,7 +96,7 @@ gcp:
 `))
 	require.NoError(t, err)
 	channelResolver := &fixture.FakeChannelResolver{}
-	svc := NewSchemaService(providers, plans, nil, Config{}, EnablePlans{"aws"}, channelResolver)
+	svc := NewSchemaService(providers, plans, nil, Config{}, StringList{"aws"}, channelResolver)
 	require.NoError(t, err)
 
 	// When

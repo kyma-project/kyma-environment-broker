@@ -3524,6 +3524,77 @@ func TestQuotaLimitCheck(t *testing.T) {
 	})
 }
 
+func TestRestrictGA(t *testing.T) {
+	// given
+	allowedGA := "ga-alllowed1"
+	notAllowedGA := "ga-not-allowed1"
+
+	// #setup memory storage
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:                       []string{"gcp", "azure"},
+			URL:                               brokerURL,
+			OnlySingleTrialPerGA:              true,
+			RestrictToAllowedGlobalAccountIDs: true,
+			AllowedGlobalAccountIDs:           []string{allowedGA},
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		fixLogger(),
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		newSchemaService(t),
+		newProviderSpec(t),
+		fixValueProvider(t),
+		false,
+		config.FakeProviderConfigProvider{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		map[string]string{},
+	)
+
+	// when
+	response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        planID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, allowedGA, subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	require.NoError(t, err)
+	assert.NotNil(t, response)
+
+	// when
+	response, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        planID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, notAllowedGA, subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	require.Error(t, err)
+}
+
 func TestDiscoveryZones(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
@@ -3940,7 +4011,7 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 
 	channelResolver := &fixture.FakeChannelResolver{}
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
-		broker.EnablePlans{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
+		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
 			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
 	return schemaService
 }
