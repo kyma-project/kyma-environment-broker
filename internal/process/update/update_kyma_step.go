@@ -48,7 +48,7 @@ func (s *UpdateKymaStep) Run(operation internal.Operation, log *slog.Logger) (in
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {
 		cfg := &internal.ConfigForPlan{}
-		err := s.configProvider.Provide(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], cfg)
+		err := s.configProvider.Provide(broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID)), cfg)
 		if err != nil {
 			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, log,
 				fmt.Errorf("unable to get config for given version and plan"))

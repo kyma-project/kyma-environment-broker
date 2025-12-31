@@ -554,16 +554,25 @@ func (r readSession) getLastOperation(condition dbr.Builder) (dbmodel.OperationD
 	return operation, nil
 }
 
+// We fetch provision, deprovision operations only because in the callers stack we filter out other types
 func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
-	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s",
-		OperationTableName)).Load(&rows)
+	_, err := r.session.Select("type", "state", "provisioning_parameters ->> 'plan_id' AS plan_id").
+		Where("type IN (?, ?)", "provision", "deprovision").
+		From(OperationTableName).
+		Load(&rows)
 	return rows, err
 }
 
 func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
 	var rows []dbmodel.OperationStatEntryV2
-	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
+
+	_, err := r.session.Select("COUNT(*)", "type", "state", "provisioning_parameters ->> 'plan_id' AS plan_id").
+		From(OperationTableName).
+		Where("state = ?", "in progress").
+		Where("type IN (?, ?, ?)", "provision", "deprovision", "update").
+		GroupBy("type", "state", "provisioning_parameters ->> 'plan_id'").
+		Load(&rows)
 	return rows, err
 }
 

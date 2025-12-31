@@ -171,7 +171,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 	}
 
 	values := p.Provide()
-	planeName := broker.PlanNamesMapping[provisioningParameters.PlanID]
+	planeName := broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(provisioningParameters.PlanID))
 	volumeSize, found := s.planSpec.DefaultVolumeSizeGb(planeName)
 	if found {
 		values.VolumeSizeGb = volumeSize

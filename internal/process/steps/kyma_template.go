@@ -36,7 +36,7 @@ func (s *InitKymaTemplate) Name() string {
 }
 
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
-	planName, found := broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
+	planName, found := broker.AvailablePlans.GetPlanNameByID(broker.PlanIDType(operation.ProvisioningParameters.PlanID))
 	if !found {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("PlanID %s not found in PlanNamesMapping", operation.ProvisioningParameters.PlanID), nil, logger)
 	}
