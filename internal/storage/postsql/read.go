@@ -567,7 +567,7 @@ func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
 	var rows []dbmodel.OperationStatEntryV2
 
-	_, err := r.session.Select("COUNT(*)", "type", "provisioning_parameters ->> 'plan_id' AS plan_id").
+	_, err := r.session.Select("COUNT(*)", "type", "state", "provisioning_parameters ->> 'plan_id' AS plan_id").
 		From(OperationTableName).
 		Where("state = ?", "in progress").
 		Where("type IN (?, ?, ?)", "provision", "deprovision", "update").
