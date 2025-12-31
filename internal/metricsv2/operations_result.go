@@ -102,7 +102,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if len(operations) != 0 {
-		s.logger.Debug(fmt.Sprintf("UpdateStats: %d operations found", len(operations)))
+		s.logger.Debug(fmt.Sprintf("UpdateGauges: %d operations found", len(operations)))
 	}
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
@@ -115,7 +115,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsResults) Handler(_ context.Context, event interface{}) error {
+func (s *operationsResults) UpdateCounters(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling operation finished event: %v", recovery))

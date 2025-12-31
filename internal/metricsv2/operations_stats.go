@@ -81,6 +81,7 @@ func (s *operationsStats) MustRegister() {
 
 	for _, plan := range plans {
 		for _, opType := range opTypes {
+			//TODO unfold the loop since only InProgress uses Gauge and Failed/Succeeded use Counter
 			for _, opState := range opStates {
 				key := s.makeKey(opType, opState, plan)
 				name := s.buildFQName(opType, opState)
@@ -108,7 +109,7 @@ func (s *operationsStats) MustRegister() {
 	}
 }
 
-func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
+func (s *operationsStats) UpdateCounters(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -120,7 +121,7 @@ func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
 
 	payload, ok := event.(process.OperationFinished)
 	if !ok {
-		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
+		return fmt.Errorf("expected process.OperationFinished but got %+v", event)
 	}
 
 	opState := payload.Operation.State
@@ -156,16 +157,16 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}()
 
 	fmt.Printf("starting operations stats metrics runJob with interval %s\n", s.poolingInterval)
-	if err := s.UpdateStats(); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
+	if err := s.UpdateGauges(); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to update metrics gauges initially: %v", err))
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.UpdateStats(); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
+			if err := s.UpdateGauges(); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to update operation metrics gauges: %v", err))
 			}
 		case <-ctx.Done():
 			return
@@ -173,7 +174,7 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}
 }
 
-func (s *operationsStats) UpdateStats() error {
+func (s *operationsStats) UpdateGauges() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 

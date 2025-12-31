@@ -107,12 +107,12 @@ func TestOperationsStats(t *testing.T) {
 
 	statsCollector = NewOperationsStats(operations, cfg, log)
 	statsCollector.MustRegister()
-	err = statsCollector.UpdateStats()
+	err = statsCollector.UpdateGauges()
 	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < testData[i].eventsCount; j++ {
-			err = statsCollector.Handler(context.TODO(), process.OperationFinished{
+			err = statsCollector.UpdateCounters(context.TODO(), process.OperationFinished{
 				PlanID:    testData[i].opPlan,
 				Operation: internal.Operation{Type: testData[i].opType, State: testData[i].opState, ID: fmt.Sprintf("test-%d", i)},
 			})
