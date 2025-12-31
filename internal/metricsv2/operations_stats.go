@@ -165,7 +165,7 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}()
 
 	fmt.Printf("starting operations stats metrics runJob with interval %s\n", s.poolingInterval)
-	if err := s.UpdateStatsMetrics(); err != nil {
+	if err := s.UpdateStats(); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
 	}
 
@@ -173,7 +173,7 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.UpdateStatsMetrics(); err != nil {
+			if err := s.UpdateStats(); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
 			}
 		case <-ctx.Done():
@@ -182,16 +182,16 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}
 }
 
-func (s *operationsStats) UpdateStatsMetrics() error {
+func (s *operationsStats) UpdateStats() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
-	stats, err := s.operations.GetOperationStatsByPlanV2()
+	statsFromDB, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
-		return fmt.Errorf("cannot fetch operations stats by plan from operations table : %s", err.Error())
+		return fmt.Errorf("cannot fetch operations statsFromDB by plan from operations table : %s", err.Error())
 	}
-	setStats := make(map[metricKey]struct{})
-	for _, stat := range stats {
+	statsSet := make(map[metricKey]struct{})
+	for _, stat := range statsFromDB {
 		key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
 		if err != nil {
 			return err
@@ -202,11 +202,11 @@ func (s *operationsStats) UpdateStatsMetrics() error {
 			return fmt.Errorf("metric not found for key %s", key)
 		}
 		metric.Set(float64(stat.Count))
-		setStats[key] = struct{}{}
+		statsSet[key] = struct{}{}
 	}
 
 	for key, metric := range s.gauges {
-		if _, ok := setStats[key]; ok {
+		if _, ok := statsSet[key]; ok {
 			continue
 		}
 		metric.Set(0)
@@ -251,15 +251,11 @@ func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.
 
 func formatOpType(opType internal.OperationType) string {
 	switch opType {
-	case internal.OperationTypeProvision, internal.OperationTypeDeprovision:
+	case
+		internal.OperationTypeProvision,
+		internal.OperationTypeDeprovision,
+		internal.OperationTypeUpdate:
 		return string(opType + "ing")
-	case internal.OperationTypeUpdate:
-		return "updating"
-	case internal.OperationTypeUpgradeCluster:
-		return "upgrading_cluster"
-	case internal.OperationTypeUpgradeKyma:
-		return "upgrading_kyma"
-
 	default:
 		return ""
 	}

@@ -109,7 +109,7 @@ func TestOperationsStats(t *testing.T) {
 
 	statsCollector = NewOperationsStats(operations, cfg, log)
 	statsCollector.MustRegister()
-	err = statsCollector.UpdateStatsMetrics()
+	err = statsCollector.UpdateStats()
 	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
