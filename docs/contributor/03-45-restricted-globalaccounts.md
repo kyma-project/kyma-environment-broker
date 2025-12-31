@@ -31,5 +31,5 @@ broker:
   restrictToAllowedGlobalAccountIDs: true
 ```
 
-When the restriction is enabled, KEB checks if the `globalaccount_id` from the provisioning request context is in the list of allowed Global Account IDs. If not, the provisioning request is rejected with an appropriate error message.
+When the restriction is enabled, KEB checks if the `globalaccount_id` from the provisioning request context is contained in the list of allowed Global Account IDs. If not, the provisioning request is rejected with an appropriate error message.
 
