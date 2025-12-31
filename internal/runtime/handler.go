@@ -60,7 +60,7 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 }
 
 func (h *Handler) AttachRoutes(router *httputil.Router) {
-	router.HandleFunc("/runtimes", h.getRuntimes)
+	router.HandleFunc("/runtimes", h.GetRuntimes)
 }
 
 func unionInstances(sets ...[]pkg.RuntimeDTO) (union []pkg.RuntimeDTO) {
@@ -172,7 +172,7 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 	}
 }
 
-func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
+func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 	toReturn := make([]pkg.RuntimeDTO, 0)
 
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(req, h.defaultMaxPage)
