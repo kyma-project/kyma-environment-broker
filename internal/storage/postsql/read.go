@@ -571,7 +571,7 @@ func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, err
 		From(OperationTableName).
 		Where("state = ?", "in progress").
 		Where("type IN (?, ?, ?)", "provision", "deprovision", "update").
-		GroupBy("type", "provisioning_parameters ->> 'plan_id'").
+		GroupBy("type", "state", "provisioning_parameters ->> 'plan_id'").
 		Load(&rows)
 	return rows, err
 }
