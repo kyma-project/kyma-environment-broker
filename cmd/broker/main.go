@@ -169,12 +169,14 @@ type KubeconfigProvider interface {
 }
 
 const (
-	createRuntimeStageName         = "create_runtime"
-	checkKymaStageName             = "check_kyma"
-	createKymaResourceStageName    = "create_kyma_resource"
-	startStageName                 = "start"
-	brokerAPISubrouterName         = "brokerAPI"
-	provisioningTakesLongThreshold = 20 * time.Minute
+	createRuntimeStageName                = "create_runtime"
+	createKymaResourceStageName           = "create_kyma_resource"
+	checkRuntimeStageName                 = "check_runtime_resource"
+	syncKubeconfigStageName               = "sync_kubeconfig"
+	injectBTPOperatorCredentialsStageName = "inject_btp_operator_credentials"
+	startStageName                        = "start"
+	brokerAPISubrouterName                = "brokerAPI"
+	provisioningTakesLongThreshold        = 20 * time.Minute
 )
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {

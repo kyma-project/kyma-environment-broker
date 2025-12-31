@@ -37,17 +37,17 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
 
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
-		checkKymaStageName, createKymaResourceStageName})
+		checkRuntimeStageName, syncKubeconfigStageName, injectBTPOperatorCredentialsStageName, createKymaResourceStageName})
 	/*
-			The provisioning process contains the following stages:
-			1. "start" - changes the state from pending to in progress if no deprovisioning is ongoing.
-			2. "create_runtime" - collects all information needed to make an input for the Provisioner request as overrides and labels.
-			Those data is collected using an InputCreator which is not persisted. That's why all steps which prepares such data must be in the same stage as "create runtime step".
-		    All steps which requires InputCreator must be run in this stage.
-			3. "check_kyma" - checks if the Kyma is installed
-			4. "post_actions" - all steps which must be executed after the runtime is provisioned
+				The provisioning process contains the following stages:
+				1. "start" - changes the state from pending to in progress if no deprovisioning is ongoing.
+				2. "create_runtime" - collects all information needed to make an input (Runtime resource) for Infrastructure Manager.
+				3. "check_runtime_resource" - checks if the Runtime resource is ready
+				4. "sync_kubeconfig" - create a secret with kubeconfig if needed
+		        5. "inject_btp_operator_credentials" - inject BTP Operator credentials if provide
+		        6. "create_kyma_resource" - creates the Kyma resource
 
-			Once the stage is done it will never be retried.
+				Once the stage is done it will never be retried.
 	*/
 
 	provisioningSteps := []struct {
@@ -107,18 +107,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			stage:     createRuntimeStageName,
+			stage:     checkRuntimeStageName,
 			step:      steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			stage:     createRuntimeStageName,
+			stage:     syncKubeconfigStageName,
 			step:      steps.SyncKubeconfig(db.Operations(), k8sClient),
 			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
 		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig")
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			stage:     createRuntimeStageName,
+			stage:     injectBTPOperatorCredentialsStageName,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},
 		{
