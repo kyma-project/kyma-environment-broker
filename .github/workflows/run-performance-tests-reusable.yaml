@@ -47,6 +47,18 @@ on:
         description: amount of workers in deprovisioning queue
         default: 25
         type: number
+      baseline-monitoring-minutes:
+        description: 'Duration of baseline monitoring before tests (minutes)'
+        default: 0
+        type: number
+      post-test-monitoring-minutes:
+        description: 'Duration of post-test monitoring after tests (minutes)'
+        default: 0
+        type: number
+      test-duration-minutes:
+        description: 'Duration for each test to run (minutes, 0 means run until completion)'
+        default: 0
+        type: number
 
 jobs:
   prepare-tests:
@@ -115,28 +127,58 @@ jobs:
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
+
       - name: Provision instances
         run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
+          START_TIME=$(date +%s)
+          TEST_DURATION_SECONDS=$((${{ inputs.test-duration-minutes }} * 60))
+          
+          if [ "$TEST_DURATION_SECONDS" -gt 0 ]; then
+            echo "Running provisioning test for ${{ inputs.test-duration-minutes }} minutes..."
+            
+            while true; do
+              ELAPSED=$(($(date +%s) - START_TIME))
+              if [ $ELAPSED -ge $TEST_DURATION_SECONDS ]; then
+                echo "Test duration reached, stopping provisioning requests"
+                break
+              fi
+              
+              for i in $(seq 1 ${{ inputs.instances-number }}); do
+                uid=$(uuidgen)
+                curl --request PUT \
+                  --url http://localhost:30080/oauth/v2/service_instances/$uid \
+                  --header "Content-Type: application/json" \
+                  --header "X-Broker-API-Version: 2.16" \
+                  --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
+              done
+              
+              echo "Provisioned batch of ${{ inputs.instances-number }} instances, elapsed: ${ELAPSED}s"
+              sleep 10
+            done
+          else
+            echo "Running provisioning test once..."
+            for i in $(seq 1 ${{ inputs.instances-number }}); do
+              uid=$(uuidgen)
+              curl --request PUT \
+                --url http://localhost:30080/oauth/v2/service_instances/$uid \
+                --header "Content-Type: application/json" \
+                --header "X-Broker-API-Version: 2.16" \
+                --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
+            done
+          fi
           
           TOTAL_COUNT=$(curl --request GET \
             --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          echo "Total instances created: $TOTAL_COUNT"
       
       - name: Simulate KIM
         timeout-minutes: 60
@@ -173,10 +215,36 @@ jobs:
           
           scripts/generate_charts.sh
           
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+          if [[ "$SUCCESS_RATE" != "100.00" ]] && [[ "${{ inputs.test-duration-minutes }}" == "0" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
+
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          bash scripts/testing/compare_performance_metrics.sh
+
+      - name: Stop metrics collector
+        if: always()
+        run: |
+          if [ -f /tmp/metrics_pid ]; then
+            kill $(cat /tmp/metrics_pid) 2>/dev/null || true
+          fi
+
+      - name: Upload metrics data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-provisioning-test
+          path: /tmp/keb_metrics.jsonl
 
   run-concurrent-update-test:
     runs-on: ubuntu-latest

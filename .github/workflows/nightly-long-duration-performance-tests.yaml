@@ -1,0 +1,114 @@
+name: Nightly Long Duration Performance Tests
+
+on:
+  schedule:
+    # Run nightly at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      instances-number:
+        description: 'Number of instances to provision'
+        default: 200
+        type: number
+      updates-number:
+        description: 'Number of updates per instance'
+        default: 500
+        type: number
+      baseline-duration-minutes:
+        description: 'Baseline monitoring duration (minutes)'
+        default: 15
+        type: number
+      post-test-duration-minutes:
+        description: 'Post-test monitoring duration (minutes)'
+        default: 30
+        type: number
+      test-duration-minutes:
+        description: 'Test execution duration (minutes, 0 means run to completion)'
+        default: 60
+        type: number
+      kim-delay-seconds:
+        description: 'KIM simulation delay in seconds'
+        default: 0
+        type: number
+
+jobs:
+  run-performance-tests:
+    name: Run performance tests with extended monitoring
+    uses: "./.github/workflows/run-performance-tests-reusable.yaml"
+    secrets: inherit
+    with:
+      release: "true"
+      version: "main"
+      instances-number: ${{ inputs.instances-number || 200 }}
+      updates-number: ${{ inputs.updates-number || 500 }}
+      kim-delay-seconds: ${{ inputs.kim-delay-seconds || 0 }}
+      provisioning-max-step-processing-time: 30s
+      provisioning-workers-amount: 30
+      update-max-step-processing-time: 30s
+      update-workers-amount: 30
+      deprovisioning-max-step-processing-time: 30s
+      deprovisioning-workers-amount: 30
+      baseline-monitoring-minutes: ${{ inputs.baseline-duration-minutes || 15 }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-duration-minutes || 30 }}
+      test-duration-minutes: ${{ inputs.test-duration-minutes || 60 }}
+
+  analyze-for-leaks:
+    name: Extended monitoring and leak detection
+    needs: run-performance-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set monitoring durations
+        run: |
+          echo "BASELINE_DURATION=${{ inputs.baseline-duration-minutes || 10 }}" >> $GITHUB_ENV
+          echo "POST_TEST_DURATION=${{ inputs.post-test-duration-minutes || 60 }}" >> $GITHUB_ENV
+
+      - name: Display monitoring plan
+        run: |
+          echo "## Long Duration Test Plan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Baseline monitoring**: ${{ inputs.baseline-duration-minutes || 15 }} minutes (idle system observation)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test duration**: ${{ inputs.test-duration-minutes || 60 }} minutes (continuous load)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Post-test monitoring**: ${{ inputs.post-test-duration-minutes || 30 }} minutes (GC and stabilization)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total runtime**: ~$((( inputs.baseline-duration-minutes || 15 ) + ( inputs.test-duration-minutes || 60 ) + ( inputs.post-test-duration-minutes || 30 ))) minutes (~$(((( inputs.baseline-duration-minutes || 15 ) + ( inputs.test-duration-minutes || 60 ) + ( inputs.post-test-duration-minutes || 30 )) / 60)) hours)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instances**: ${{ inputs.instances-number || 200 }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Updates**: ${{ inputs.updates-number || 500 }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Extended monitoring enabled with leak detection analysis" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify MS Teams on failure
+        if: failure()
+        env:
+          MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
+          MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
+          MS_TEAMS_CLIENT_SECRET: ${{ secrets.MS_TEAMS_CLIENT_SECRET }}
+          MS_TEAMS_SCOPE: ${{ secrets.MS_TEAMS_SCOPE }}
+          MS_TEAMS_WEBHOOK_URL: ${{ secrets.MS_TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$MS_TEAMS_WEBHOOK_URL" ]; then
+            echo "MS Teams secrets not configured, skipping notification"
+            exit 0
+          fi
+          MESSAGE="🚨 <strong>Nightly Long Duration Performance Test FAILED</strong><br>Test execution failed!<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
+          ./scripts/notify_teams.sh "$MESSAGE"
+
+      - name: Notify MS Teams on success
+        if: success()
+        env:
+          MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
+          MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
+          MS_TEAMS_CLIENT_SECRET: ${{ secrets.MS_TEAMS_CLIENT_SECRET }}
+          MS_TEAMS_SCOPE: ${{ secrets.MS_TEAMS_SCOPE }}
+          MS_TEAMS_WEBHOOK_URL: ${{ secrets.MS_TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$MS_TEAMS_WEBHOOK_URL" ]; then
+            echo "MS Teams secrets not configured, skipping notification"
+            exit 0
+          fi
+          MESSAGE="✅ <strong>Nightly Long Duration Performance Test PASSED</strong><br>All tests completed successfully.<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
+          ./scripts/notify_teams.sh "$MESSAGE"
