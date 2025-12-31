@@ -554,7 +554,7 @@ func (r readSession) getLastOperation(condition dbr.Builder) (dbmodel.OperationD
 	return operation, nil
 }
 
-// We fetch provision, deprovision operations only because in the callers stack we filter only these two types
+// We fetch provision, deprovision operations only because in the callers stack we filter out other types
 func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
 	_, err := r.session.Select("type", "state", "provisioning_parameters ->> 'plan_id' AS plan_id").
