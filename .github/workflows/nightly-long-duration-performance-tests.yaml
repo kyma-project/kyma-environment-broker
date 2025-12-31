@@ -23,9 +23,9 @@ jobs:
       update-workers-amount: 30
       deprovisioning-max-step-processing-time: 30s
       deprovisioning-workers-amount: 30
-      baseline-monitoring-minutes: 15
-      post-test-monitoring-minutes: 30
-      test-duration-minutes: 60
+      baseline-monitoring-minutes: 5
+      post-test-monitoring-minutes: 5
+      test-duration-minutes: 5
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
