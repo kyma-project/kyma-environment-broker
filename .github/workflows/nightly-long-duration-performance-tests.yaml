@@ -39,18 +39,18 @@ jobs:
     with:
       release: "true"
       version: "main"
-      instances-number: ${{ inputs.instances-number || 200 }}
-      updates-number: ${{ inputs.updates-number || 500 }}
-      kim-delay-seconds: ${{ inputs.kim-delay-seconds || 0 }}
+      instances-number: ${{ inputs.instances-number || '200' }}
+      updates-number: ${{ inputs.updates-number || '500' }}
+      kim-delay-seconds: ${{ inputs.kim-delay-seconds || '0' }}
       provisioning-max-step-processing-time: 30s
       provisioning-workers-amount: 30
       update-max-step-processing-time: 30s
       update-workers-amount: 30
       deprovisioning-max-step-processing-time: 30s
       deprovisioning-workers-amount: 30
-      baseline-monitoring-minutes: ${{ inputs.baseline-duration-minutes || 15 }}
-      post-test-monitoring-minutes: ${{ inputs.post-test-duration-minutes || 30 }}
-      test-duration-minutes: ${{ inputs.test-duration-minutes || 60 }}
+      baseline-monitoring-minutes: ${{ inputs.baseline-duration-minutes || '15' }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-duration-minutes || '30' }}
+      test-duration-minutes: ${{ inputs.test-duration-minutes || '60' }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
