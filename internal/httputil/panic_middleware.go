@@ -7,10 +7,6 @@ import (
 	"runtime/debug"
 )
 
-// PanicRecoveryMiddleware recovers from panics in HTTP handlers and logs them with context.
-// Apply this middleware at the router level to protect all HTTP endpoints:
-//
-//	router.Use(PanicRecoveryMiddleware(logger))
 func PanicRecoveryMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

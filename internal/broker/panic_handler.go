@@ -11,7 +11,14 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 )
 
-// WithPanicRecovery wraps a ServiceBroker implementation and adds panic recovery to all methods
+const (
+	logKeyInstanceID  = "instanceID"
+	logKeyBindingID   = "bindingID"
+	logKeyPlanID      = "planID"
+	logKeyOperationID = "operationID"
+	logKeyStack       = "stack"
+)
+
 type WithPanicRecovery struct {
 	delegate domain.ServiceBroker
 	logger   *slog.Logger
@@ -29,11 +36,11 @@ func (w *WithPanicRecovery) Services(ctx context.Context) ([]domain.Service, err
 }
 
 func (w *WithPanicRecovery) Provision(ctx context.Context, instanceID string, details domain.ProvisionDetails, asyncAllowed bool) (spec domain.ProvisionedServiceSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID, "planID", details.PlanID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyPlanID, details.PlanID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during provisioning: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during provisioning: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during provisioning: %v", r),
 				http.StatusInternalServerError,
@@ -45,11 +52,11 @@ func (w *WithPanicRecovery) Provision(ctx context.Context, instanceID string, de
 }
 
 func (w *WithPanicRecovery) Deprovision(ctx context.Context, instanceID string, details domain.DeprovisionDetails, asyncAllowed bool) (spec domain.DeprovisionServiceSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID, "planID", details.PlanID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyPlanID, details.PlanID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during deprovisioning: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during deprovisioning: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during deprovisioning: %v", r),
 				http.StatusInternalServerError,
@@ -61,11 +68,11 @@ func (w *WithPanicRecovery) Deprovision(ctx context.Context, instanceID string, 
 }
 
 func (w *WithPanicRecovery) Update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (spec domain.UpdateServiceSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID, "planID", details.PlanID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyPlanID, details.PlanID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during update: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during update: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during update: %v", r),
 				http.StatusInternalServerError,
@@ -77,11 +84,11 @@ func (w *WithPanicRecovery) Update(ctx context.Context, instanceID string, detai
 }
 
 func (w *WithPanicRecovery) GetInstance(ctx context.Context, instanceID string, details domain.FetchInstanceDetails) (spec domain.GetInstanceDetailsSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID)
+	logger := w.logger.With(logKeyInstanceID, instanceID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during get instance: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during get instance: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during get instance: %v", r),
 				http.StatusInternalServerError,
@@ -93,11 +100,11 @@ func (w *WithPanicRecovery) GetInstance(ctx context.Context, instanceID string, 
 }
 
 func (w *WithPanicRecovery) LastOperation(ctx context.Context, instanceID string, details domain.PollDetails) (spec domain.LastOperation, err error) {
-	logger := w.logger.With("instanceID", instanceID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyOperationID, details.OperationData)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during last operation: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during last operation: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during last operation: %v", r),
 				http.StatusInternalServerError,
@@ -109,11 +116,11 @@ func (w *WithPanicRecovery) LastOperation(ctx context.Context, instanceID string
 }
 
 func (w *WithPanicRecovery) Bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (spec domain.Binding, err error) {
-	logger := w.logger.With("instanceID", instanceID, "bindingID", bindingID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyBindingID, bindingID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during bind: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during bind: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during bind: %v", r),
 				http.StatusInternalServerError,
@@ -125,11 +132,11 @@ func (w *WithPanicRecovery) Bind(ctx context.Context, instanceID, bindingID stri
 }
 
 func (w *WithPanicRecovery) Unbind(ctx context.Context, instanceID, bindingID string, details domain.UnbindDetails, asyncAllowed bool) (spec domain.UnbindSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID, "bindingID", bindingID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyBindingID, bindingID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during unbind: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during unbind: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during unbind: %v", r),
 				http.StatusInternalServerError,
@@ -141,11 +148,11 @@ func (w *WithPanicRecovery) Unbind(ctx context.Context, instanceID, bindingID st
 }
 
 func (w *WithPanicRecovery) GetBinding(ctx context.Context, instanceID, bindingID string, details domain.FetchBindingDetails) (spec domain.GetBindingSpec, err error) {
-	logger := w.logger.With("instanceID", instanceID, "bindingID", bindingID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyBindingID, bindingID)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during get binding: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during get binding: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during get binding: %v", r),
 				http.StatusInternalServerError,
@@ -157,11 +164,11 @@ func (w *WithPanicRecovery) GetBinding(ctx context.Context, instanceID, bindingI
 }
 
 func (w *WithPanicRecovery) LastBindingOperation(ctx context.Context, instanceID, bindingID string, details domain.PollDetails) (spec domain.LastOperation, err error) {
-	logger := w.logger.With("instanceID", instanceID, "bindingID", bindingID)
+	logger := w.logger.With(logKeyInstanceID, instanceID, logKeyBindingID, bindingID, logKeyOperationID, details.OperationData)
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			logger.Error(fmt.Sprintf("panic recovered during last binding operation: %v", r), "stack", stack)
+			logger.Error(fmt.Sprintf("panic recovered during last binding operation: %v", r), logKeyStack, stack)
 			err = apiresponses.NewFailureResponse(
 				fmt.Errorf("internal server error during last binding operation: %v", r),
 				http.StatusInternalServerError,
