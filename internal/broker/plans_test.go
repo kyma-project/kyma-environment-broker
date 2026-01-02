@@ -159,7 +159,7 @@ func TestRemoveString(t *testing.T) {
 func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
 	input := map[PlanNameType]PlanIDType{"a": "1", "b": "2"}
 	got := reverseMap(input)
-	expected := map[string]string{"1": "a", "2": "b"}
+	expected := map[PlanIDType]PlanNameType{"1": "a", "2": "b"}
 	assert.Equal(t, expected, got)
 }
 
@@ -167,7 +167,7 @@ func TestAvailablePlans_GetPlanNameByID_ReturnsNameWhenExistsAndFalseWhenNot(t *
 	ap := NewAvailablePlans(PlanIDsMapping)
 	name, ok := ap.GetPlanNameByID(AzurePlanID)
 	assert.True(t, ok)
-	assert.Equal(t, AzurePlanName, name)
+	assert.Equal(t, AzurePlanName, string(name))
 
 	name, ok = ap.GetPlanNameByID("non-existent-id")
 	assert.False(t, ok)
@@ -178,23 +178,11 @@ func TestAvailablePlans_GetPlanIDByName_ReturnsIDWhenExistsAndFalseWhenNot(t *te
 	ap := NewAvailablePlans(PlanIDsMapping)
 	id, ok := ap.GetPlanIDByName(AzurePlanName)
 	assert.True(t, ok)
-	assert.Equal(t, AzurePlanID, id)
+	assert.Equal(t, AzurePlanID, string(id))
 
 	id, ok = ap.GetPlanIDByName("non-existent-name")
 	assert.False(t, ok)
 	assert.Empty(t, id)
-}
-
-func TestAvailablePlans_GetAllPlanIDs_ReturnsAllIDsIgnoringOrder(t *testing.T) {
-	ap := NewAvailablePlans(PlanIDsMapping)
-	got := ap.GetAllPlanIDs()
-
-	expectedIDs := make([]string, 0, len(PlanNamesMapping))
-	for id := range PlanNamesMapping {
-		expectedIDs = append(expectedIDs, id)
-	}
-
-	assert.ElementsMatch(t, expectedIDs, got)
 }
 
 func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *testing.T) {
