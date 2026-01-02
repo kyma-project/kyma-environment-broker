@@ -106,9 +106,9 @@ func reverseMap(initialMap map[PlanNameType]PlanIDType) map[PlanIDType]PlanNameT
 	return reversedMap
 }
 
-func (ap AvailablePlansType) GetPlanNameByID(planID PlanIDType) (PlanNameType, bool) {
-	planName, exists := ap.idToName[planID]
-	return planName, exists
+func (ap AvailablePlansType) GetPlanNameAsString(planID PlanIDType) string {
+	planName, _ := ap.idToName[planID]
+	return string(planName)
 }
 
 func (ap AvailablePlansType) GetPlanIDByName(planName PlanNameType) (PlanIDType, bool) {

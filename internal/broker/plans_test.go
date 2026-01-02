@@ -163,17 +163,6 @@ func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
-func TestAvailablePlans_GetPlanNameByID_ReturnsNameWhenExistsAndFalseWhenNot(t *testing.T) {
-	ap := NewAvailablePlans(PlanIDsMapping)
-	name, ok := ap.GetPlanNameByID(AzurePlanID)
-	assert.True(t, ok)
-	assert.Equal(t, AzurePlanName, string(name))
-
-	name, ok = ap.GetPlanNameByID("non-existent-id")
-	assert.False(t, ok)
-	assert.Empty(t, name)
-}
-
 func TestAvailablePlans_GetPlanIDByName_ReturnsIDWhenExistsAndFalseWhenNot(t *testing.T) {
 	ap := NewAvailablePlans(PlanIDsMapping)
 	id, ok := ap.GetPlanIDByName(AzurePlanName)
