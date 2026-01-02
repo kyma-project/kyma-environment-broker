@@ -204,7 +204,7 @@ func (s *operationsStats) UpdateGauges() error {
 }
 
 func (s *operationsStats) buildFQName(opType internal.OperationType, opState domain.LastOperationState) string {
-	return prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
+	return prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
 }
 
 // TODO: is it needed? It is used only in tests

@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	prometheusNamespacev2 = "kcp"
-	prometheusSubsystemv2 = "keb_v2"
+	prometheusNamespaceV2 = "kcp"
+	prometheusSubsystemV2 = "keb_v2"
 	logPrefix             = "@metricsv2"
 )
 

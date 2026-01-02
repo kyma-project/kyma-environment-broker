@@ -24,15 +24,15 @@ type BindDurationCollector struct {
 func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 	return &BindDurationCollector{
 		bindHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "bind_duration_millisecond",
 			Help:      "The time of the bind request",
 			Buckets:   prometheus.LinearBuckets(50, 200, 15),
 		}, []string{}),
 		unbindHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "unbind_duration_millisecond",
 			Help:      "The time of the unbind request",
 			Buckets:   prometheus.LinearBuckets(50, 200, 15),
@@ -72,8 +72,8 @@ type BindingCreationCollector struct {
 func NewBindingCreationCollector() *BindingCreationCollector {
 	return &BindingCreationCollector{
 		bindingCreated: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "binding_created_total",
 			Help:      "The total number of created bindings",
 		}, []string{"plan_id"}),
@@ -111,8 +111,8 @@ func NewBindingStatsCollector(db storage.Bindings, pollingInterval time.Duration
 		logger:          logger,
 		pollingInterval: pollingInterval,
 		MinutesSinceEarliestExpirationMetric: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "minutes_since_earliest_binding_expiration",
 			Help: "Specifies the time in minutes since the earliest binding expiration. " +
 				"The value should not be greater than the binding cleaning runJob interval. The metric is created to detect problems with the runJob.",

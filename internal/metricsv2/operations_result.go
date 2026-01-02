@@ -36,8 +36,8 @@ func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "operation_result",
 			Help:      "Metrics of operations results",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
