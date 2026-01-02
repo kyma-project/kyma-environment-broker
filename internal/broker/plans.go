@@ -85,7 +85,7 @@ type AvailablePlansType struct {
 func NewAvailablePlans(nameToIDMap map[string]string) *AvailablePlansType {
 	r := reverseMap(nameToIDMap)
 	if len(r) != len(nameToIDMap) {
-		log.Error("plan IDs and names mapping is not bijective, cannot create AvailablePlansType")
+		log.Error("plan IDs and names mapping is not bijective, cannot create AvailablePlans object")
 		return nil
 	}
 	return &AvailablePlansType{
