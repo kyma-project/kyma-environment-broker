@@ -54,7 +54,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/vrischmann/envconfig"
-	"golang.org/x/exp/maps"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -340,7 +339,7 @@ func main() {
 	// metrics collectors
 	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
 
-	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
+	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)
 
 	rulesetValid := rulesService.IsRulesetValid()
@@ -360,7 +359,7 @@ func main() {
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
 
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
 
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)

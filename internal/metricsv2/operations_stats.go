@@ -73,7 +73,7 @@ func (s *operationsStats) MustRegister() {
 
 	for _, plan := range plans {
 		for _, opType := range opTypes {
-			labels := prometheus.Labels{"plan_id": plan}
+			labels := prometheus.Labels{"plan_id": string(plan)}
 
 			keyInProgress := s.makeKey(opType, domain.InProgress, plan)
 			nameInProgress := s.buildFQName(opType, domain.InProgress)
@@ -137,7 +137,7 @@ func (s *operationsStats) UpdateCounters(_ context.Context, event interface{}) e
 		return fmt.Errorf("operation type is empty in operation finished event for operation ID %s", payload.Operation.ID)
 	}
 
-	key := s.makeKey(payload.Operation.Type, opState, string(payload.PlanID))
+	key := s.makeKey(payload.Operation.Type, opState, broker.PlanIDType(payload.PlanID))
 
 	metric, found := s.counters[key]
 	if !found || metric == nil {
@@ -183,7 +183,7 @@ func (s *operationsStats) UpdateGauges() error {
 	}
 	statsSet := make(map[metricKey]struct{})
 	for _, stat := range statsFromDB {
-		key := s.makeKey(stat.Type, stat.State, stat.PlanID)
+		key := s.makeKey(stat.Type, stat.State, broker.PlanIDType(stat.PlanID))
 
 		metric, found := s.gauges[key]
 		if !found || metric == nil {
@@ -206,15 +206,15 @@ func (s *operationsStats) buildFQName(opType internal.OperationType, opState dom
 	return prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
 }
 
-func (s *operationsStats) GetCounter(opType internal.OperationType, opState domain.LastOperationState, planID string) prometheus.Counter {
+func (s *operationsStats) GetCounter(opType internal.OperationType, opState domain.LastOperationState, planID broker.PlanIDType) prometheus.Counter {
 	key := s.makeKey(opType, opState, planID)
 	s.sync.Lock()
 	defer s.sync.Unlock()
 	return s.counters[key]
 }
 
-func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, planID string) metricKey {
-	return metricKey(fmt.Sprintf("%s_%s_%s", formatOpType(opType), formatOpState(opState), planID))
+func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, planID broker.PlanIDType) metricKey {
+	return metricKey(fmt.Sprintf("%s_%s_%s", formatOpType(opType), formatOpState(opState), string(planID)))
 }
 
 func formatOpType(opType internal.OperationType) string {

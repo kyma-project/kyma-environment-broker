@@ -157,7 +157,7 @@ func TestRemoveString(t *testing.T) {
 }
 
 func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
-	input := map[string]string{"a": "1", "b": "2"}
+	input := map[PlanNameType]PlanIDType{"a": "1", "b": "2"}
 	got := reverseMap(input)
 	expected := map[string]string{"1": "a", "2": "b"}
 	assert.Equal(t, expected, got)
@@ -199,7 +199,7 @@ func TestAvailablePlans_GetAllPlanIDs_ReturnsAllIDsIgnoringOrder(t *testing.T) {
 
 func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *testing.T) {
 	// create a map where two names map to the same ID (not bijective)
-	nameToID := map[string]string{"planA": "id1", "planB": "id1"}
+	nameToID := map[PlanNameType]PlanIDType{"planA": "id1", "planB": "id1"}
 	ap := NewAvailablePlans(nameToID)
 	assert.Nil(t, ap)
 }

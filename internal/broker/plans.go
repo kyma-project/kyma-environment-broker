@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/gommon/log"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"golang.org/x/exp/maps"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
@@ -54,7 +55,7 @@ var PlanNamesMapping = map[string]string{
 	AlicloudPlanID:          AlicloudPlanName,
 }
 
-var PlanIDsMapping = map[string]string{
+var PlanIDsMapping = map[PlanNameType]PlanIDType{
 	AzurePlanName:             AzurePlanID,
 	AWSPlanName:               AWSPlanID,
 	AzureLitePlanName:         AzureLitePlanID,
@@ -70,6 +71,9 @@ var PlanIDsMapping = map[string]string{
 	AlicloudPlanName:          AlicloudPlanID,
 }
 
+type PlanIDType string
+type PlanNameType string
+
 var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
 
 type ControlFlagsObject struct {
@@ -78,11 +82,11 @@ type ControlFlagsObject struct {
 }
 
 type AvailablePlansType struct {
-	idToName map[string]string
-	nameToID map[string]string
+	idToName map[PlanIDType]PlanNameType
+	nameToID map[PlanNameType]PlanIDType
 }
 
-func NewAvailablePlans(nameToIDMap map[string]string) *AvailablePlansType {
+func NewAvailablePlans(nameToIDMap map[PlanNameType]PlanIDType) *AvailablePlansType {
 	r := reverseMap(nameToIDMap)
 	if len(r) != len(nameToIDMap) {
 		log.Error("plan IDs and names mapping is not bijective, cannot create AvailablePlans object")
@@ -94,38 +98,38 @@ func NewAvailablePlans(nameToIDMap map[string]string) *AvailablePlansType {
 	}
 }
 
-func reverseMap(initialMap map[string]string) map[string]string {
-	reversedMap := make(map[string]string)
+func reverseMap(initialMap map[PlanNameType]PlanIDType) map[PlanIDType]PlanNameType {
+	reversedMap := make(map[PlanIDType]PlanNameType)
 	for key, value := range initialMap {
-		reversedMap[string(value)] = key
+		reversedMap[value] = key
 	}
 	return reversedMap
 }
 
-func (ap AvailablePlansType) GetPlanNameByID(planID string) (string, bool) {
+func (ap AvailablePlansType) GetPlanNameByID(planID PlanIDType) (PlanNameType, bool) {
 	planName, exists := ap.idToName[planID]
 	return planName, exists
 }
 
-func (ap AvailablePlansType) GetPlanIDByName(planName string) (string, bool) {
+func (ap AvailablePlansType) GetPlanIDByName(planName PlanNameType) (PlanIDType, bool) {
 	planID, exists := ap.nameToID[planName]
 	return planID, exists
 }
 
-func (ap AvailablePlansType) GetAllPlanIDs() []string {
-	planIDs := make([]string, 0, len(ap.idToName))
-	for planID := range ap.idToName {
-		planIDs = append(planIDs, planID)
-	}
-	return planIDs
+func (ap AvailablePlansType) GetAllPlanIDs() []PlanIDType {
+	return maps.Keys(ap.idToName)
 }
 
-func (ap AvailablePlansType) GetAllPlanNames() []string {
-	planNames := make([]string, 0, len(ap.nameToID))
-	for planName := range ap.nameToID {
-		planNames = append(planNames, planName)
+func (ap AvailablePlansType) GetAllPlanNames() []PlanNameType {
+	return maps.Keys(ap.nameToID)
+}
+
+func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
+	names := make([]string, 0, len(ap.nameToID))
+	for name := range ap.nameToID {
+		names = append(names, string(name))
 	}
-	return planNames
+	return names
 }
 
 func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
@@ -147,27 +151,6 @@ var validRegionsForTrial = map[TrialCloudRegion]struct{}{
 	Europe: {},
 	Us:     {},
 	Asia:   {},
-}
-
-func AzureRegions(euRestrictedAccess bool) []string {
-	if euRestrictedAccess {
-		return []string{
-			"switzerlandnorth",
-		}
-	}
-	return []string{
-		"eastus",
-		"centralus",
-		"westus2",
-		"uksouth",
-		"northeurope",
-		"westeurope",
-		"japaneast",
-		"southeastasia",
-		"australiaeast",
-		"brazilsouth",
-		"canadacentral",
-	}
 }
 
 func requiredSchemaProperties() []string {

@@ -139,8 +139,8 @@ func NewProvision(brokerConfig Config,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
-		id := PlanIDsMapping[planName]
-		enabledPlanIDs[id] = struct{}{}
+		id, _ := AvailablePlans.GetPlanIDByName(PlanNameType(planName))
+		enabledPlanIDs[string(id)] = struct{}{}
 	}
 
 	return &ProvisionEndpoint{

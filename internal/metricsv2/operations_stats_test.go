@@ -73,7 +73,7 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	for i, data := range testData {
-		testData[i].key = statsCollector.makeKey(data.opType, data.opState, data.opPlan)
+		testData[i].key = statsCollector.makeKey(data.opType, data.opState, broker.PlanIDType(data.opPlan))
 	}
 
 	err := operations.InsertOperation(internal.Operation{
