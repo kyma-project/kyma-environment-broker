@@ -203,7 +203,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	fatalOnError(err, log)
 	defaultOIDC := defaultOIDCValues()
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNames(), log)
 	fatalOnError(err, log)
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 	fatalOnError(err, log)
@@ -461,7 +461,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	defaultOIDC := defaultOIDCValues()
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNames(), log)
 	fatalOnError(err, log)
 	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 
