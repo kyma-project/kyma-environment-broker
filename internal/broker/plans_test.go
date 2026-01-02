@@ -201,13 +201,7 @@ func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *test
 	// create a map where two names map to the same ID (not bijective)
 	nameToID := map[string]string{"planA": "id1", "planB": "id1"}
 	ap := NewAvailablePlans(nameToID)
-
-	// NewAvailablePlans should have logged an error and returned an empty AvailablePlansType
-	// calling methods should therefore behave as if no plans are available
-	all := ap.GetAllPlanIDs()
-	assert.Empty(t, all)
-	_, ok := ap.GetPlanIDByName("planA")
-	assert.False(t, ok)
+	assert.Nil(t, ap)
 }
 
 func createSchemaService(t *testing.T) *SchemaService {

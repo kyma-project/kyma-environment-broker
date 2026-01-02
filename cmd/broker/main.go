@@ -263,7 +263,6 @@ func main() {
 
 	logConfiguration(log, cfg)
 
-	//FIPS mode check - to be removed
 	if fips140.Enabled() {
 		log.Info("FIPS mode is enabled")
 	} else {
