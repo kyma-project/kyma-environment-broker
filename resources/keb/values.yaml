@@ -8,6 +8,7 @@ deployment:
   replicaCount: 1
   securityContext:
     runAsUser: 2000
+  annotations: {}
   # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy.
   strategy: { }
 global:
@@ -574,6 +575,7 @@ runtimeReconciler:
   jobReconciliationDelay: 1s
   # Port on which the reconciler exposes Prometheus metrics.
   metricsPort: 8081
+  deploymentAnnotations: {}
 # =================================================
 
 
@@ -648,6 +650,7 @@ subaccountSync:
   storageSyncInterval: 5m
   # If true, enables updating resources during subaccount sync.
   updateResources: false
+  deploymentAnnotations: {}
 # =================================================
 
 
