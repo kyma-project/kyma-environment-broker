@@ -185,6 +185,18 @@ func TestAvailablePlans_GetPlanIDByName_ReturnsIDWhenExistsAndFalseWhenNot(t *te
 	assert.Empty(t, id)
 }
 
+func TestAvailablePlans_GetAllPlanIDs_ReturnsAllIDsIgnoringOrder(t *testing.T) {
+	ap := NewAvailablePlans(PlanIDsMapping)
+	got := ap.GetAllPlanIDs()
+
+	expectedIDs := make([]PlanIDType, 0, len(PlanNamesMapping))
+	for id := range PlanNamesMapping {
+		expectedIDs = append(expectedIDs, PlanIDType(id))
+	}
+
+	assert.ElementsMatch(t, expectedIDs, got)
+}
+
 func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *testing.T) {
 	// create a map where two names map to the same ID (not bijective)
 	nameToID := map[PlanNameType]PlanIDType{"planA": "id1", "planB": "id1"}
