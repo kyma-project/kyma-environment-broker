@@ -120,6 +120,14 @@ func (ap AvailablePlansType) GetAllPlanIDs() []string {
 	return planIDs
 }
 
+func (ap AvailablePlansType) GetAllPlanNames() []string {
+	planNames := make([]string, 0, len(ap.nameToID))
+	for planName := range ap.nameToID {
+		planNames = append(planNames, planName)
+	}
+	return planNames
+}
+
 func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		ingressFilteringEnabled:     ingressFilteringEnabled,
