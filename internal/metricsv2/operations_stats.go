@@ -18,6 +18,8 @@ import (
 
 const (
 	OpStatsMetricNameTemplate = "operations_%s_%s_total"
+	CountersPerPlanType       = 2 // succeeded, failed
+	GaugesPerPlanType         = 1 // in_progress
 )
 
 var (
@@ -50,8 +52,8 @@ var _ Exposer = (*operationsStats)(nil)
 func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.Logger) *operationsStats {
 	return &operationsStats{
 		logger:          logger,
-		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),   // TODO: get rid of magic number
-		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2), // TODO: get rid of magic number
+		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*GaugesPerPlanType),
+		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*CountersPerPlanType),
 		operations:      operations,
 		poolingInterval: cfg.OperationStatsPollingInterval,
 	}
