@@ -492,7 +492,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		if slices.Contains(updateStorage, planChangeMessage) {
 			oldPlan := PlanNamesMapping[oldPlanID]
 			newPlan := PlanNamesMapping[details.PlanID]
-			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)
+			message := fmt.Sprintf("Plan updated from %s (PlanIDType: %s) to %s (PlanIDType: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)
 			if err := b.actionStorage.InsertAction(
 				pkg.PlanUpdateActionType,
 				instance.InstanceID,

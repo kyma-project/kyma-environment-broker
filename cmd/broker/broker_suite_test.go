@@ -947,7 +947,7 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 }
 
 func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric := s.metrics.OperationStats.GetCounter(operationType, state, broker.PlanID(plan))
+	metric := s.metrics.OperationStats.GetCounter(operationType, state, plan)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
 }

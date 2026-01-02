@@ -156,6 +156,69 @@ func TestRemoveString(t *testing.T) {
 	}
 }
 
+// New tests for reverseMap and AvailablePlansType methods
+func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
+	input := map[string]string{"a": "1", "b": "2"}
+	got := reverseMap(input)
+	expected := map[string]string{"1": "a", "2": "b"}
+	assert.Equal(t, expected, got)
+}
+
+func TestReverseMap_DuplicateValuesLastWins(t *testing.T) {
+	input := map[string]string{"first": "dup", "second": "dup"}
+	got := reverseMap(input)
+	// when duplicate values exist, the last key overwrites the previous one
+	assert.Equal(t, "second", got["dup"])
+	assert.Len(t, got, 1)
+}
+
+func TestAvailablePlans_GetPlanNameByID_ReturnsNameWhenExistsAndFalseWhenNot(t *testing.T) {
+	ap := NewAvailablePlans(PlanIDsMapping)
+	name, ok := ap.GetPlanNameByID(AzurePlanID)
+	assert.True(t, ok)
+	assert.Equal(t, AzurePlanName, name)
+
+	name, ok = ap.GetPlanNameByID("non-existent-id")
+	assert.False(t, ok)
+	assert.Empty(t, name)
+}
+
+func TestAvailablePlans_GetPlanIDByName_ReturnsIDWhenExistsAndFalseWhenNot(t *testing.T) {
+	ap := NewAvailablePlans(PlanIDsMapping)
+	id, ok := ap.GetPlanIDByName(AzurePlanName)
+	assert.True(t, ok)
+	assert.Equal(t, AzurePlanID, id)
+
+	id, ok = ap.GetPlanIDByName("non-existent-name")
+	assert.False(t, ok)
+	assert.Empty(t, id)
+}
+
+func TestAvailablePlans_GetAllPlanIDs_ReturnsAllIDsIgnoringOrder(t *testing.T) {
+	ap := NewAvailablePlans(PlanIDsMapping)
+	got := ap.GetAllPlanIDs()
+
+	expectedIDs := make([]string, 0, len(PlanNamesMapping))
+	for id := range PlanNamesMapping {
+		expectedIDs = append(expectedIDs, id)
+	}
+
+	assert.ElementsMatch(t, expectedIDs, got)
+}
+
+func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *testing.T) {
+	// create a map where two names map to the same ID (not bijective)
+	nameToID := map[string]string{"planA": "id1", "planB": "id1"}
+	ap := NewAvailablePlans(nameToID)
+
+	// NewAvailablePlans should have logged an error and returned an empty AvailablePlansType
+	// calling methods should therefore behave as if no plans are available
+	all := ap.GetAllPlanIDs()
+	assert.Empty(t, all)
+	_, ok := ap.GetPlanIDByName("planA")
+	assert.False(t, ok)
+}
+
 func createSchemaService(t *testing.T) *SchemaService {
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)

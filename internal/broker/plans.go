@@ -3,13 +3,11 @@ package broker
 import (
 	"strings"
 
+	"github.com/labstack/gommon/log"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
-
-type PlanID string
-type PlanName string
 
 const (
 	GCPPlanID                 = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
@@ -72,9 +70,54 @@ var PlanIDsMapping = map[string]string{
 	AlicloudPlanName:          AlicloudPlanID,
 }
 
+var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
+
 type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
+}
+
+type AvailablePlansType struct {
+	idToName map[string]string
+	nameToID map[string]string
+}
+
+func NewAvailablePlans(nameToIDMap map[string]string) AvailablePlansType {
+	r := reverseMap(nameToIDMap)
+	if len(r) != len(nameToIDMap) {
+		log.Error("plan IDs and names mapping is not bijective, cannot create AvailablePlansType")
+		return AvailablePlansType{}
+	}
+	return AvailablePlansType{
+		idToName: r,
+		nameToID: nameToIDMap,
+	}
+}
+
+func reverseMap(initialMap map[string]string) map[string]string {
+	reversedMap := make(map[string]string)
+	for key, value := range initialMap {
+		reversedMap[string(value)] = key
+	}
+	return reversedMap
+}
+
+func (ap AvailablePlansType) GetPlanNameByID(planID string) (string, bool) {
+	planName, exists := ap.idToName[planID]
+	return planName, exists
+}
+
+func (ap AvailablePlansType) GetPlanIDByName(planName string) (string, bool) {
+	planID, exists := ap.nameToID[planName]
+	return planID, exists
+}
+
+func (ap AvailablePlansType) GetAllPlanIDs() []string {
+	planIDs := make([]string, 0, len(ap.idToName))
+	for planID := range ap.idToName {
+		planIDs = append(planIDs, planID)
+	}
+	return planIDs
 }
 
 func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
@@ -129,11 +172,6 @@ func requiredTrialSchemaProperties() []string {
 
 func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
-}
-
-func empty() *map[string]interface{} {
-	empty := make(map[string]interface{}, 0)
-	return &empty
 }
 
 func createSchemaWithProperties(properties ProvisioningProperties,
@@ -196,15 +234,6 @@ func defaultMetadata(planName string, plans PlansConfig) *domain.ServicePlanMeta
 func IsTrialPlan(planID string) bool {
 	switch planID {
 	case TrialPlanID:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsSapConvergedCloudPlan(planID string) bool {
-	switch planID {
-	case SapConvergedCloudPlanID:
 		return true
 	default:
 		return false

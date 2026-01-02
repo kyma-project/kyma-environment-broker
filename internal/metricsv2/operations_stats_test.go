@@ -24,7 +24,7 @@ func TestOperationsStats(t *testing.T) {
 	testData := []struct {
 		opType      internal.OperationType
 		opState     domain.LastOperationState
-		opPlan      broker.PlanID
+		opPlan      string
 		eventsCount int
 		key         metricKey
 	}{

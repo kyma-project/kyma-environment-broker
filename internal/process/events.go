@@ -3,8 +3,6 @@ package process
 import (
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
@@ -58,7 +56,7 @@ type OperationFailed struct {
 
 type OperationFinished struct {
 	Operation internal.Operation
-	PlanID    broker.PlanID
+	PlanID    string
 }
 
 type DeprovisioningSucceeded struct {

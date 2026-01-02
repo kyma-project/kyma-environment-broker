@@ -21,6 +21,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-project/infrastructure-manager v0.0.0-20251105085636-90cfe5ee0c7b
+	github.com/labstack/gommon v0.4.2
 	github.com/lib/pq v1.10.9
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/prometheus/client_golang v1.23.2
@@ -98,6 +99,8 @@ require (
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/kyma-project/registry-cache v0.0.0-20251023124504-71bc19cf102a // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -120,6 +123,8 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect

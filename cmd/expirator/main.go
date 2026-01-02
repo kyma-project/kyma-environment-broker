@@ -66,7 +66,7 @@ func main() {
 	}
 
 	slog.Info(fmt.Sprintf("Expiration period: %+v", cfg.ExpirationPeriod))
-	slog.Info(fmt.Sprintf("PlanID: %s", cfg.PlanID))
+	slog.Info(fmt.Sprintf("PlanIDType: %s", cfg.PlanID))
 
 	ctx := context.Background()
 	brokerClient := broker.NewClient(ctx, cfg.Broker)
