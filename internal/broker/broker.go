@@ -135,7 +135,7 @@ type EnablePlans []string
 func (m *EnablePlans) Unmarshal(in string) error {
 	plans := strings.Split(in, ",")
 	for _, name := range plans {
-		if _, exists := PlanIDsMapping[name]; !exists {
+		if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
 			return fmt.Errorf("unrecognized %v plan name", name)
 		}
 	}

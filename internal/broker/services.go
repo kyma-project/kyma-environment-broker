@@ -33,8 +33,8 @@ type ServicesEndpoint struct {
 func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig, log *slog.Logger, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
-		id := PlanIDsMapping[planName]
-		enabledPlanIDs[id] = struct{}{}
+		id, _ := AvailablePlans.GetPlanIDByName(PlanNameType(planName))
+		enabledPlanIDs[string(id)] = struct{}{}
 	}
 
 	return &ServicesEndpoint{
