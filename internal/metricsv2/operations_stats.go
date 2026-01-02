@@ -71,30 +71,37 @@ func (s *operationsStats) MustRegister() {
 
 	for _, plan := range plans {
 		for _, opType := range opTypes {
-			//TODO unfold the loop since only InProgress uses Gauge and Failed/Succeeded use Counter
-			for _, opState := range opStates {
-				key := s.makeKey(opType, opState, plan)
-				name := s.buildFQName(opType, opState)
-				labels := prometheus.Labels{"plan_id": string(plan)}
-				switch opState {
-				case domain.InProgress:
-					s.gauges[key] = prometheus.NewGauge(
-						prometheus.GaugeOpts{
-							Name:        name,
-							ConstLabels: labels,
-						},
-					)
-					prometheus.MustRegister(s.gauges[key])
-				case domain.Failed, domain.Succeeded:
-					s.counters[key] = prometheus.NewCounter(
-						prometheus.CounterOpts{
-							Name:        name,
-							ConstLabels: labels,
-						},
-					)
-					prometheus.MustRegister(s.counters[key])
-				}
-			}
+			labels := prometheus.Labels{"plan_id": plan}
+
+			keyInProgress := s.makeKey(opType, domain.InProgress, plan)
+			nameInProgress := s.buildFQName(opType, domain.InProgress)
+			s.gauges[keyInProgress] = prometheus.NewGauge(
+				prometheus.GaugeOpts{
+					Name:        nameInProgress,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.gauges[keyInProgress])
+
+			keySucceeded := s.makeKey(opType, domain.Succeeded, plan)
+			nameSucceeded := s.buildFQName(opType, domain.Succeeded)
+			s.counters[keySucceeded] = prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name:        nameSucceeded,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.counters[keySucceeded])
+
+			keyFailed := s.makeKey(opType, domain.Failed, plan)
+			nameFailed := s.buildFQName(opType, domain.Failed)
+			s.counters[keyFailed] = prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name:        nameFailed,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.counters[keyFailed])
 		}
 	}
 }
@@ -197,7 +204,6 @@ func (s *operationsStats) buildFQName(opType internal.OperationType, opState dom
 	return prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
 }
 
-// TODO: is it needed? It is used only in tests
 func (s *operationsStats) GetCounter(opType internal.OperationType, opState domain.LastOperationState, planID string) prometheus.Counter {
 	key := s.makeKey(opType, opState, planID)
 	s.sync.Lock()

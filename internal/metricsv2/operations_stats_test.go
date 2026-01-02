@@ -133,3 +133,37 @@ func TestOperationsStats(t *testing.T) {
 		assert.Equal(t, float64(testData[6].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[6].key]))
 	})
 }
+
+func TestFormatOpState_ReplacesSpacesWithUnderscores(t *testing.T) {
+	got := formatOpState(domain.InProgress)
+	assert.Equal(t, "in_progress", got)
+
+	got = formatOpState(domain.Succeeded)
+	assert.Equal(t, "succeeded", got)
+
+	got = formatOpState(domain.Failed)
+	assert.Equal(t, "failed", got)
+}
+
+func TestFormatOpState_EmptyStringReturnedAsEmpty(t *testing.T) {
+	got := formatOpState("")
+	assert.Equal(t, "", got)
+}
+
+func TestFormatOpType_ProvisionAndDeprovisionReturnProvisioningAndDeprovisioning(t *testing.T) {
+	got := formatOpType(internal.OperationTypeProvision)
+	assert.Equal(t, "provisioning", got)
+
+	got = formatOpType(internal.OperationTypeDeprovision)
+	assert.Equal(t, "deprovisioning", got)
+}
+
+func TestFormatOpType_UpdateReturnsUpdating(t *testing.T) {
+	got := formatOpType(internal.OperationTypeUpdate)
+	assert.Equal(t, "updating", got)
+}
+
+func TestFormatOpType_UnknownOperationReturnsEmptyString(t *testing.T) {
+	got := formatOpType(internal.OperationType("unknown"))
+	assert.Equal(t, "", got)
+}
