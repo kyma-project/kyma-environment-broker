@@ -156,20 +156,11 @@ func TestRemoveString(t *testing.T) {
 	}
 }
 
-// New tests for reverseMap and AvailablePlansType methods
 func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
 	input := map[string]string{"a": "1", "b": "2"}
 	got := reverseMap(input)
 	expected := map[string]string{"1": "a", "2": "b"}
 	assert.Equal(t, expected, got)
-}
-
-func TestReverseMap_DuplicateValuesLastWins(t *testing.T) {
-	input := map[string]string{"first": "dup", "second": "dup"}
-	got := reverseMap(input)
-	// when duplicate values exist, the last key overwrites the previous one
-	assert.Equal(t, "second", got["dup"])
-	assert.Len(t, got, 1)
 }
 
 func TestAvailablePlans_GetPlanNameByID_ReturnsNameWhenExistsAndFalseWhenNot(t *testing.T) {
