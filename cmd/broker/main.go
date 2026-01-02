@@ -251,6 +251,10 @@ func main() {
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
 
+	if broker.AvailablePlans == nil {
+		fatalOnError(fmt.Errorf("AvailablePlans is not initialized properly"), log)
+	}
+
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info("Registering healthz endpoint for health probes")
