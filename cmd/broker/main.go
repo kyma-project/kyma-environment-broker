@@ -389,6 +389,9 @@ func main() {
 	// create server
 	router := httputil.NewRouter()
 
+	// Apply panic recovery middleware to all HTTP endpoints
+	router.Use(httputil.PanicRecoveryMiddleware(log))
+
 	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues,
 		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, awsClientFactory)
@@ -423,7 +426,7 @@ func main() {
 		cfg.Broker.DefaultRequestRegion,
 		kcpK8sClient,
 		log)
-	runtimeHandler.AttachRoutes(router)
+	router.HandleFunc("/runtimes", runtimeHandler.GetRuntimes)
 
 	// create list requests with additional properties endpoint
 	additionalPropertiesHandler := additionalproperties.NewHandler(log, cfg.Broker.AdditionalPropertiesPath)
@@ -696,16 +699,22 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		kymaEnvBroker.ProvisionEndpoint.UseCredentialsBindings()
 	}
 
+	// Wrap broker with panic recovery for all OSB endpoints
+	brokerWithPanicRecovery := broker.NewWithPanicRecovery(kymaEnvBroker, logs)
+
 	prefixes := []string{"/{region}", ""}
 	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
 	fatalOnError(err, logs)
-	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.Broker.DefaultRequestRegion, prefixes)
+	broker.AttachRoutes(subRouter, brokerWithPanicRecovery, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.Broker.DefaultRequestRegion, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter, publisher, logs)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
-	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
+
+	// create events endpoint
+	eventsHandler := eventshandler.NewHandler(db.Events(), db.Instances())
+	router.Handle("/events", eventsHandler)
 }
 
 // queues all in progress operations by type
