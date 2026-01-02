@@ -18,7 +18,7 @@ jobs:
       updates-number: 500
       kim-delay-seconds: 0
       provisioning-max-step-processing-time: 30s
-      provisioning-workers-amount: 30
+      provisioning-workers-amount: 200
       update-max-step-processing-time: 30s
       update-workers-amount: 30
       deprovisioning-max-step-processing-time: 30s
