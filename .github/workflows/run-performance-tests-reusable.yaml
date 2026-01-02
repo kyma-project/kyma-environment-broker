@@ -29,7 +29,7 @@ on:
         type: string
       provisioning-workers-amount:
         description: amount of workers in provisioning queue
-        default: 25
+        default: 200
         type: number
       update-max-step-processing-time:
         description: max time to process a step in update queue
@@ -192,7 +192,7 @@ jobs:
           echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
-          
+
       - name: Fetch metrics
         run: |          
           METRICS=$(curl -s http://localhost:30080/metrics)
