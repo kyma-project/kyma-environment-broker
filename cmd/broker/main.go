@@ -36,6 +36,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -114,6 +115,8 @@ type Config struct {
 	Profiler ProfilerConfig
 
 	Events events.Config
+
+	MetricsV2 metricsv2.Config
 
 	Provisioning   process.StagedManagerConfiguration
 	Deprovisioning process.StagedManagerConfiguration
@@ -261,6 +264,7 @@ func main() {
 	})
 	leakDetector.Start(ctx)
 	defer leakDetector.Stop()
+	log.Info("Goroutine leak detector started", "baseline", leakDetector.GetBaseline())
 
 	logConfiguration(log, cfg)
 
@@ -338,6 +342,9 @@ func main() {
 
 	// application event broker
 	eventBroker := event.NewPubSub(log)
+
+	// metrics collectors
+	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)
