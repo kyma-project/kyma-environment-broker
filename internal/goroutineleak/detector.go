@@ -134,24 +134,34 @@ func (d *Detector) dumpGoroutineStacks(current, baseline, totalGrowth int) {
 	d.logger.Info("Analyzing goroutine stack traces...",
 		"stack_dump_bytes", n)
 
-	// Analyze and categorize goroutines
-	d.analyzeGoroutines(string(buf[:n]), current, baseline, totalGrowth)
+	// Analyze and categorize goroutines - returns new goroutines map
+	newGoroutines := d.analyzeGoroutines(string(buf[:n]), current, baseline, totalGrowth)
 
-	// Log full stack trace (truncated to prevent log overflow)
-	stackStr := string(buf[:n])
-	if len(stackStr) > 50000 {
-		d.logger.Info("Full stack trace dump (truncated)",
-			"total_length", len(stackStr),
-			"showing_first", 50000,
-			"stacks", stackStr[:50000])
+	// Log ONLY NEW goroutine stack traces (not all)
+	if len(newGoroutines) > 0 {
+		newStacksOutput := ""
+		for _, goroutinesList := range newGoroutines {
+			for _, stack := range goroutinesList {
+				newStacksOutput += stack + "\n---\n"
+			}
+		}
+
+		if len(newStacksOutput) > 50000 {
+			d.logger.Info("NEW goroutines full stack dump (truncated)",
+				"total_length", len(newStacksOutput),
+				"showing_first", 50000,
+				"stacks", newStacksOutput[:50000])
+		} else if len(newStacksOutput) > 0 {
+			d.logger.Info("NEW goroutines full stack dump",
+				"stacks", newStacksOutput)
+		}
 	} else {
-		d.logger.Info("Full stack trace dump",
-			"stacks", stackStr)
+		d.logger.Info("No new goroutines to dump")
 	}
 	d.logger.Info("=== END OF SNAPSHOT ===")
 }
 
-func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, totalGrowth int) {
+func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, totalGrowth int) map[string][]string {
 	// Common patterns to categorize goroutines
 	patterns := map[string]string{
 		"context.Background":              "context.Background without timeout",
@@ -293,6 +303,8 @@ func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, total
 			"baseline", baseline,
 			"new_goroutines", totalNew)
 	}
+
+	return newGoroutines
 }
 
 func min(a, b int) int {
