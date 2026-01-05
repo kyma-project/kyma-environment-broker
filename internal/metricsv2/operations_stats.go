@@ -122,8 +122,8 @@ func (s *operationsStats) MustRegister() {
 }
 
 func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -183,8 +183,8 @@ func (s *operationsStats) runJob(ctx context.Context) {
 }
 
 func (s *operationsStats) UpdateStatsMetrics() error {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {

@@ -67,8 +67,8 @@ func (s *operationsResults) setOperation(op internal.Operation, val float64) {
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
 // metrics set to 0 means that this event is outdated, and will be replaced by new one
 func (s *operationsResults) updateOperation(op internal.Operation) {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	oldOp, found := s.cache[op.ID]
 	if found {

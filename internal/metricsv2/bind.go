@@ -149,8 +149,8 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 }
 
 func (c *BindingStatitics) updateMetrics() error {
-	defer c.sync.Unlock()
 	c.sync.Lock()
+	defer c.sync.Unlock()
 
 	stats, err := c.db.GetStatistics()
 	if err != nil {
