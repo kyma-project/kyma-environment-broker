@@ -1102,9 +1102,9 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	// check if the instance is updated successfully
-	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, inst.DashboardURL)
+	assert.Regexp(t, dashboardUrlRegex, inst.DashboardURL)
 	// check if the API response is correct
-	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+	assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
 }
 
 func TestUpdateExpiredInstance(t *testing.T) {
