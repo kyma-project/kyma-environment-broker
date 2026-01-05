@@ -54,8 +54,6 @@ const (
 	encodedKubeconfig    = "YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmN1cnJlbnQtY29udGV4dDogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKY29udGV4dHM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY29udGV4dDoKICAgICAgY2x1c3Rlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKICAgICAgdXNlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUtdG9rZW4KY2x1c3RlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY2x1c3RlcjoKICAgICAgc2VydmVyOiBodHRwczovL2FwaS5jbHVzdGVyLW5hbWUua3ltYS1kZXYuc2hvb3QuY2FuYXJ5Lms4cy1oYW5hLm9uZGVtYW5kLmNvbQogICAgICBjZXJ0aWZpY2F0ZS1hdXRob3JpdHktZGF0YTogPi0KICAgICAgICBMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHQKdXNlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZS10b2tlbgogICAgdXNlcjoKICAgICAgdG9rZW46ID4tCiAgICAgICAgdE9rRW4K"
 	shootName            = "own-cluster-name"
 	shootDomain          = "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
-
-	dashboardUrlRegex = `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`
 )
 
 func TestProvision_Provision(t *testing.T) {
@@ -118,7 +116,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
-		assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
@@ -137,7 +135,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, instance.Parameters, operation.ProvisioningParameters)
-		assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
 		assert.Equal(t, pkg.Azure, instance.Provider)
@@ -414,7 +412,7 @@ func TestProvision_Provision(t *testing.T) {
 		// UUID with version 4 and variant 1 i.e RFC. 4122/DCE
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
-		assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
@@ -435,7 +433,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, instance.Parameters, operation.ProvisioningParameters)
-		assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
 	})

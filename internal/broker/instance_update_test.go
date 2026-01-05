@@ -41,6 +41,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const dashboardUrlRegex = `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`
+
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
 var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 var imConfigFixture = broker.InfrastructureManager{
