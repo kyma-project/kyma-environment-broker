@@ -31,6 +31,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/goroutineleak"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
@@ -256,6 +257,16 @@ func main() {
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
+
+	// Start goroutine leak detector
+	leakDetector := goroutineleak.NewDetector(log, goroutineleak.Config{
+		Interval:            30 * time.Second,
+		GrowthThreshold:     50,
+		MaxConsecutiveGrows: 3,
+	})
+	leakDetector.Start(ctx)
+	defer leakDetector.Stop()
+	log.Info("Goroutine leak detector started", "baseline", leakDetector.GetBaseline())
 
 	logConfiguration(log, cfg)
 
