@@ -4,10 +4,15 @@ metadata:
   name: {{ include "kyma-env-broker.fullname" . }}
   labels:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
-  {{ if .Values.testConfig.kebDeployment.useAnnotations }}
+  {{- if or .Values.testConfig.kebDeployment.useAnnotations (not (empty .Values.deployment.annotations)) }}
   annotations:
+    {{- if .Values.testConfig.kebDeployment.useAnnotations }}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": {{ .Values.testConfig.kebDeployment.weight | quote }}
+    {{- end }}
+    {{- with .Values.deployment.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
 spec:
   replicas: {{ .Values.deployment.replicaCount }}
