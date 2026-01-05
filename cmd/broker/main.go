@@ -260,8 +260,8 @@ func main() {
 
 	// Start goroutine leak detector
 	leakDetector := goroutineleak.NewDetector(log, goroutineleak.Config{
-		Interval:            30 * time.Second,
-		GrowthThreshold:     50,
+		Interval:            120 * time.Second,
+		GrowthThreshold:     20,
 		MaxConsecutiveGrows: 3,
 	})
 	leakDetector.Start(ctx)

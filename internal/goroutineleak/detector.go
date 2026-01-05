@@ -36,8 +36,8 @@ type Config struct {
 // DefaultConfig returns reasonable defaults for leak detection
 func DefaultConfig() Config {
 	return Config{
-		Interval:            30 * time.Second,
-		GrowthThreshold:     50,
+		Interval:            120 * time.Second,
+		GrowthThreshold:     20,
 		MaxConsecutiveGrows: 3,
 	}
 }
@@ -145,17 +145,17 @@ func (d *Detector) check() {
 			"total_growth", totalGrowth,
 			"consecutive_grows", d.consecutiveGrowth)
 
-		if d.consecutiveGrowth >= d.maxConsecutiveGrows {
-			d.logger.Error("POTENTIAL GOROUTINE LEAK DETECTED",
-				"current", current,
-				"baseline", baseline,
-				"total_growth", totalGrowth,
-				"consecutive_grows", d.consecutiveGrowth,
-				"threshold", d.growthThreshold)
+		//if d.consecutiveGrowth >= d.maxConsecutiveGrows {
+		d.logger.Error("POTENTIAL GOROUTINE LEAK DETECTED",
+			"current", current,
+			"baseline", baseline,
+			"total_growth", totalGrowth,
+			"consecutive_grows", d.consecutiveGrowth,
+			"threshold", d.growthThreshold)
 
-			// Log goroutine stack traces for debugging
-			d.dumpGoroutineStacks()
-		}
+		// Log goroutine stack traces for debugging
+		d.dumpGoroutineStacks()
+		//}
 	} else if growth < -d.growthThreshold {
 		// Significant decrease, reset consecutive counter
 		d.consecutiveGrowth = 0
