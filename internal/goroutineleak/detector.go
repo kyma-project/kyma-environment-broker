@@ -12,12 +12,13 @@ import (
 
 // Detector monitors goroutines and logs their details periodically
 type Detector struct {
-	logger        *slog.Logger
-	interval      time.Duration
-	baselineCount int
-	previousCount int
-	mu            sync.RWMutex
-	cancel        context.CancelFunc
+	logger             *slog.Logger
+	interval           time.Duration
+	baselineCount      int
+	previousCount      int
+	previousGoroutines map[string]bool // Track goroutines by their stack signature
+	mu                 sync.RWMutex
+	cancel             context.CancelFunc
 }
 
 // Config holds configuration for the goroutine monitor
@@ -40,10 +41,11 @@ func NewDetector(logger *slog.Logger, config Config) *Detector {
 	}
 
 	return &Detector{
-		logger:        logger,
-		interval:      config.Interval,
-		baselineCount: runtime.NumGoroutine(),
-		previousCount: runtime.NumGoroutine(),
+		logger:             logger,
+		interval:           config.Interval,
+		baselineCount:      runtime.NumGoroutine(),
+		previousCount:      runtime.NumGoroutine(),
+		previousGoroutines: make(map[string]bool),
 	}
 }
 
@@ -171,6 +173,12 @@ func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, total
 	// Parse goroutines
 	goroutines := strings.Split(stackTrace, "\ngoroutine ")
 	categorized := make(map[string][]string)
+	newGoroutines := make(map[string][]string)
+	currentGoroutines := make(map[string]bool)
+
+	d.mu.RLock()
+	previousGoroutines := d.previousGoroutines
+	d.mu.RUnlock()
 
 	for i, goroutine := range goroutines {
 		if i == 0 || len(goroutine) == 0 {
@@ -186,6 +194,16 @@ func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, total
 
 		header := lines[0]
 
+		// Create signature from stack (exclude goroutine ID which changes)
+		// Use lines 1-6 which contain the actual call stack
+		signature := ""
+		for j := 1; j < min(6, len(lines)); j++ {
+			signature += lines[j] + "\n"
+		}
+
+		currentGoroutines[signature] = true
+		isNew := !previousGoroutines[signature]
+
 		// Categorize by pattern
 		for pattern, category := range patterns {
 			if strings.Contains(goroutine, pattern) {
@@ -195,41 +213,76 @@ func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, total
 					context += lines[j] + "\n"
 				}
 
-				categorized[category] = append(categorized[category],
-					fmt.Sprintf("%s\n%s", header, context))
+				fullInfo := fmt.Sprintf("%s\n%s", header, context)
+				categorized[category] = append(categorized[category], fullInfo)
+
+				if isNew {
+					newGoroutines[category] = append(newGoroutines[category], fullInfo)
+				}
 				break
 			}
 		}
 	}
 
+	// Update previous goroutines
+	d.mu.Lock()
+	d.previousGoroutines = currentGoroutines
+	d.mu.Unlock()
+
+	// Count new goroutines
+	totalNew := 0
+	for _, newList := range newGoroutines {
+		totalNew += len(newList)
+	}
+
 	// Log summary
 	d.logger.Info("Goroutine analysis",
 		"total", current,
+		"new_goroutines", totalNew,
 		"categories_found", len(categorized),
 		"growth_since_start", totalGrowth)
 
-	// Log each category
-	for category, goroutinesList := range categorized {
-		count := len(goroutinesList)
-		d.logger.Info("Goroutine category",
-			"category", category,
-			"count", count)
+	// Log NEW goroutines first (most important for leak detection)
+	if len(newGoroutines) > 0 {
+		d.logger.Info("=== NEW GOROUTINES DETECTED ===",
+			"total_new", totalNew,
+			"new_categories", len(newGoroutines))
 
-		// Show first 2 examples
-		for idx, goroutineInfo := range goroutinesList {
-			if idx < 2 {
-				d.logger.Info("Example",
+		for category, newList := range newGoroutines {
+			count := len(newList)
+			d.logger.Info("NEW goroutines in category",
+				"category", category,
+				"count", count)
+
+			// Show first 2 examples of new goroutines
+			for idx, goroutineInfo := range newList {
+				if idx < 2 {
+					d.logger.Info("NEW Example",
+						"category", category,
+						"example_num", idx+1,
+						"stack", goroutineInfo)
+				}
+			}
+
+			if count > 2 {
+				d.logger.Info("Additional NEW goroutines in category",
 					"category", category,
-					"example_num", idx+1,
-					"stack", goroutineInfo)
+					"additional", count-2)
 			}
 		}
+	} else {
+		d.logger.Info("No new goroutines detected since last snapshot")
+	}
 
-		if count > 2 {
-			d.logger.Info("Additional goroutines in category",
-				"category", category,
-				"additional", count-2)
-		}
+	// Log total counts per category (for reference)
+	d.logger.Info("=== TOTAL GOROUTINE COUNTS BY CATEGORY ===")
+	for category, goroutinesList := range categorized {
+		count := len(goroutinesList)
+		newCount := len(newGoroutines[category])
+		d.logger.Info("Category summary",
+			"category", category,
+			"total", count,
+			"new", newCount)
 	}
 
 	// Warn if significant growth
@@ -237,7 +290,8 @@ func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, total
 		d.logger.Warn("Significant goroutine growth detected",
 			"growth", totalGrowth,
 			"current", current,
-			"baseline", baseline)
+			"baseline", baseline,
+			"new_goroutines", totalNew)
 	}
 }
 
