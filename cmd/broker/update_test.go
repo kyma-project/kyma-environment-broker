@@ -189,7 +189,8 @@ func TestUpdatePlan(t *testing.T) {
 				   },
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "eu-central-1"
+						"region": "eu-central-1",
+"ingressFiltering": true
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
@@ -243,6 +244,74 @@ func TestUpdatePlan(t *testing.T) {
 	assert.Equal(t, actions[0].Message, "Plan updated from aws (PlanID: 361c511f-f939-4621-b228-d0fb79a1fe15) to build-runtime-aws (PlanID: 6aae0ff3-89f7-4f12-86de-51466145422e).")
 	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
 	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
+}
+
+func TestUpdatePlanValidateTargetSchema(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": false
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+					"ingressFiltering": false
+			}
+   }`)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// plan was not changed
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "361c511f-f939-4621-b228-d0fb79a1fe15", gotInstance.ServicePlanID)
+	assert.Equal(t, "361c511f-f939-4621-b228-d0fb79a1fe15", gotInstance.Parameters.PlanID)
+	assert.Equal(t, "aws", gotInstance.ServicePlanName)
+
+	suite.AssertRuntimeResourceLabels(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		customresources.PlanIdLabel:   "361c511f-f939-4621-b228-d0fb79a1fe15",
+		customresources.PlanNameLabel: "aws",
+	})
 }
 
 func TestUpdateFailedInstance(t *testing.T) {

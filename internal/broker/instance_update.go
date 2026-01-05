@@ -408,7 +408,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 	}
 
-	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
+	err = validateIngressFiltering(details.PlanID, operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}

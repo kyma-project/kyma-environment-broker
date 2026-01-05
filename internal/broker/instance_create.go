@@ -487,7 +487,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	err = validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, l)
+	err = validateIngressFiltering(details.PlanID, provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, l)
 	if err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
@@ -570,10 +570,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	return nil
 }
 
-func validateIngressFiltering(provisioningParameters internal.ProvisioningParameters, ingressFilteringParameter *bool, plans EnablePlans, log *slog.Logger) error {
+func validateIngressFiltering(planID string, provisioningParameters internal.ProvisioningParameters, ingressFilteringParameter *bool, plans EnablePlans, log *slog.Logger) error {
 	if ingressFilteringParameter != nil {
-		if !plans.Contains(PlanNamesMapping[provisioningParameters.PlanID]) {
-			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[provisioningParameters.PlanID]))
+		if !plans.Contains(PlanNamesMapping[planID]) {
+			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[planID]))
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
 		if IsExternalLicenseType(provisioningParameters.ErsContext) && *ingressFilteringParameter {
