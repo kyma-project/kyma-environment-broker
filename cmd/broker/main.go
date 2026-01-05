@@ -694,6 +694,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 
 	if r, _ := cfg.GardenerSubscriptionResource(); r == gardener.CredentialsBindingResource {
 		kymaEnvBroker.ProvisionEndpoint.UseCredentialsBindings()
+		kymaEnvBroker.UpdateEndpoint.UseCredentialsBindings()
 	}
 
 	prefixes := []string{"/{region}", ""}

@@ -75,6 +75,8 @@ type UpdateEndpoint struct {
 	rulesService     *rules.RulesService
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
+
+	useCredentialsBindings bool
 }
 
 func NewUpdate(cfg Config,
@@ -307,7 +309,13 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
+		var awsClient aws.Client
+		if b.useCredentialsBindings {
+			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		} else {
+			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		}
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
@@ -515,6 +523,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+// UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
+// when all KCP instances are migrated to use credentials bindings
+func (b *UpdateEndpoint) UseCredentialsBindings() {
+	b.useCredentialsBindings = true
 }
 
 func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger *slog.Logger) (*internal.Instance, bool, error) {

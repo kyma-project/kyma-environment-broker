@@ -409,7 +409,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		// todo: simplify it, remove "if" when all KCP insdtances are migrated to use credentials bindings
+		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
 		var awsClient aws.Client
 		if b.useCredentialsBindings {
 			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)

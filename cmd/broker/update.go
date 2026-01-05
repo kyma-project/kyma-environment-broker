@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -32,6 +33,8 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
 
+	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
+
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource", "kyma_resource"})
 	updateSteps := []struct {
 		disabled  bool
@@ -47,6 +50,13 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 			stage:     "runtime_resource",
 			step:      steps.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
 			condition: update.SkipForOwnClusterPlan,
+			disabled:  useCredentialsBinding,
+		},
+		{
+			stage:     "runtime_resource",
+			step:      steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, awsClientFactory),
+			condition: update.SkipForOwnClusterPlan,
+			disabled:  !useCredentialsBinding,
 		},
 		{
 			stage:     "runtime_resource",
