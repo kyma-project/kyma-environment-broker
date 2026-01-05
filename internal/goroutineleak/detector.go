@@ -10,74 +10,59 @@ import (
 	"time"
 )
 
-// Detector monitors goroutine counts to detect potential leaks
+// Detector monitors goroutines and logs their details periodically
 type Detector struct {
-	logger              *slog.Logger
-	interval            time.Duration
-	growthThreshold     int
-	baselineCount       int
-	previousCount       int
-	consecutiveGrowth   int
-	maxConsecutiveGrows int
-	mu                  sync.RWMutex
-	cancel              context.CancelFunc
+	logger        *slog.Logger
+	interval      time.Duration
+	baselineCount int
+	previousCount int
+	mu            sync.RWMutex
+	cancel        context.CancelFunc
 }
 
-// Config holds configuration for the goroutine leak detector
+// Config holds configuration for the goroutine monitor
 type Config struct {
-	// Interval between checks
+	// Interval between snapshots (default: 5 minutes)
 	Interval time.Duration
-	// GrowthThreshold is the minimum number of goroutines that must increase to trigger detection
-	GrowthThreshold int
-	// MaxConsecutiveGrows is how many consecutive increases before alerting
-	MaxConsecutiveGrows int
 }
 
-// DefaultConfig returns reasonable defaults for leak detection
+// DefaultConfig returns reasonable defaults for monitoring
 func DefaultConfig() Config {
 	return Config{
-		Interval:            120 * time.Second,
-		GrowthThreshold:     20,
-		MaxConsecutiveGrows: 3,
+		Interval: 5 * time.Minute,
 	}
 }
 
-// NewDetector creates a new goroutine leak detector
+// NewDetector creates a new goroutine monitor
 func NewDetector(logger *slog.Logger, config Config) *Detector {
 	if config.Interval == 0 {
-		config.Interval = 30 * time.Second
-	}
-	if config.GrowthThreshold == 0 {
-		config.GrowthThreshold = 50
-	}
-	if config.MaxConsecutiveGrows == 0 {
-		config.MaxConsecutiveGrows = 3
+		config.Interval = 5 * time.Minute
 	}
 
 	return &Detector{
-		logger:              logger,
-		interval:            config.Interval,
-		growthThreshold:     config.GrowthThreshold,
-		maxConsecutiveGrows: config.MaxConsecutiveGrows,
-		baselineCount:       runtime.NumGoroutine(),
-		previousCount:       runtime.NumGoroutine(),
+		logger:        logger,
+		interval:      config.Interval,
+		baselineCount: runtime.NumGoroutine(),
+		previousCount: runtime.NumGoroutine(),
 	}
 }
 
-// Start begins monitoring goroutines
+// Start begins monitoring goroutines - logs immediately on startup and then periodically
 func (d *Detector) Start(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	d.cancel = cancel
 
-	d.logger.Info("Starting goroutine leak detector",
+	d.logger.Info("Starting goroutine monitor",
 		"baseline", d.baselineCount,
-		"interval", d.interval,
-		"threshold", d.growthThreshold)
+		"interval", d.interval)
+
+	// Log initial state immediately
+	d.logGoroutineSnapshot("STARTUP")
 
 	go d.monitor(ctx)
 }
 
-// Stop halts the detector
+// Stop halts the monitor
 func (d *Detector) Stop() {
 	if d.cancel != nil {
 		d.cancel()
@@ -96,19 +81,6 @@ func (d *Detector) GetBaseline() int {
 	return d.baselineCount
 }
 
-// ResetBaseline updates the baseline to the current count
-func (d *Detector) ResetBaseline() {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	current := runtime.NumGoroutine()
-	d.baselineCount = current
-	d.previousCount = current
-	d.consecutiveGrowth = 0
-
-	d.logger.Info("Reset goroutine baseline", "count", current)
-}
-
 func (d *Detector) monitor(ctx context.Context) {
 	ticker := time.NewTicker(d.interval)
 	defer ticker.Stop()
@@ -116,15 +88,15 @@ func (d *Detector) monitor(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			d.logger.Info("Stopping goroutine leak detector")
+			d.logger.Info("Stopping goroutine monitor")
 			return
 		case <-ticker.C:
-			d.check()
+			d.logGoroutineSnapshot("PERIODIC")
 		}
 	}
 }
 
-func (d *Detector) check() {
+func (d *Detector) logGoroutineSnapshot(snapshotType string) {
 	current := runtime.NumGoroutine()
 
 	d.mu.Lock()
@@ -133,55 +105,21 @@ func (d *Detector) check() {
 	growth := current - previous
 	totalGrowth := current - baseline
 	d.previousCount = current
-
-	// Check for growth
-	if growth >= d.growthThreshold {
-		d.consecutiveGrowth++
-		d.logger.Warn("Goroutine count increased significantly",
-			"current", current,
-			"previous", previous,
-			"growth", growth,
-			"baseline", baseline,
-			"total_growth", totalGrowth,
-			"consecutive_grows", d.consecutiveGrowth)
-
-		//if d.consecutiveGrowth >= d.maxConsecutiveGrows {
-		d.logger.Error("POTENTIAL GOROUTINE LEAK DETECTED",
-			"current", current,
-			"baseline", baseline,
-			"total_growth", totalGrowth,
-			"consecutive_grows", d.consecutiveGrowth,
-			"threshold", d.growthThreshold)
-
-		// Log goroutine stack traces for debugging
-		d.dumpGoroutineStacks()
-		//}
-	} else if growth < -d.growthThreshold {
-		// Significant decrease, reset consecutive counter
-		d.consecutiveGrowth = 0
-		d.logger.Info("Goroutine count decreased",
-			"current", current,
-			"previous", previous,
-			"decrease", -growth)
-	} else {
-		// Stable or minor change
-		if d.consecutiveGrowth > 0 {
-			d.consecutiveGrowth = 0
-			d.logger.Info("Goroutine count stabilized", "current", current)
-		}
-	}
 	d.mu.Unlock()
 
-	// Log periodic status
-	if current > baseline+100 {
-		d.logger.Info("Goroutine monitoring status",
-			"current", current,
-			"baseline", baseline,
-			"growth_from_baseline", totalGrowth)
-	}
+	d.logger.Info("=== GOROUTINE SNAPSHOT ===",
+		"type", snapshotType,
+		"current", current,
+		"previous", previous,
+		"baseline", baseline,
+		"growth_since_last", growth,
+		"growth_since_start", totalGrowth)
+
+	// Always dump goroutine details
+	d.dumpGoroutineStacks(current, baseline, totalGrowth)
 }
 
-func (d *Detector) dumpGoroutineStacks() {
+func (d *Detector) dumpGoroutineStacks(current, baseline, totalGrowth int) {
 	// Get buffer size estimate
 	bufferSize := runtime.NumGoroutine() * 1024
 	if bufferSize > 10*1024*1024 {
@@ -191,51 +129,48 @@ func (d *Detector) dumpGoroutineStacks() {
 	buf := make([]byte, bufferSize)
 	n := runtime.Stack(buf, true)
 
-	d.logger.Error("=== GOROUTINE LEAK DETECTED - ANALYZING STACK TRACES ===",
-		"total_goroutines", runtime.NumGoroutine(),
+	d.logger.Info("Analyzing goroutine stack traces...",
 		"stack_dump_bytes", n)
 
-	// Analyze and identify potential leak sources
-	d.identifyLeakSources(string(buf[:n]))
+	// Analyze and categorize goroutines
+	d.analyzeGoroutines(string(buf[:n]), current, baseline, totalGrowth)
 
 	// Log full stack trace (truncated to prevent log overflow)
 	stackStr := string(buf[:n])
 	if len(stackStr) > 50000 {
-		d.logger.Error("Full stack trace dump (truncated)",
+		d.logger.Info("Full stack trace dump (truncated)",
 			"total_length", len(stackStr),
 			"showing_first", 50000,
 			"stacks", stackStr[:50000])
 	} else {
-		d.logger.Error("Full stack trace dump",
+		d.logger.Info("Full stack trace dump",
 			"stacks", stackStr)
 	}
-	d.logger.Error("=== END OF STACK TRACES ===")
+	d.logger.Info("=== END OF SNAPSHOT ===")
 }
 
-func (d *Detector) identifyLeakSources(stackTrace string) {
-	d.logger.Info("Analyzing stack traces for leak sources...")
-
-	// Common patterns that indicate leaks
-	leakPatterns := map[string]string{
-		"context.Background":              "Using context.Background without timeout",
-		"time.Sleep":                      "Goroutine in long sleep",
-		"chan receive":                    "Blocked on channel receive",
-		"chan send":                       "Blocked on channel send",
-		"sync.(*WaitGroup).Wait":          "Waiting on WaitGroup",
-		"sync.(*Mutex).Lock":              "Waiting for mutex lock",
-		"io.ReadFull":                     "Blocked on I/O read",
-		"net/http.(*Client).Do":           "Blocked on HTTP request",
-		"(*Client).Get":                   "Blocked on Kubernetes API call",
-		"(*Client).Create":                "Blocked on Kubernetes API call",
-		"(*Client).Update":                "Blocked on Kubernetes API call",
-		"internal/process/steps":          "In provisioning step",
-		"internal/btpmanager/credentials": "In BTP credentials manager",
-		"internal/process/provisioning":   "In provisioning process",
+func (d *Detector) analyzeGoroutines(stackTrace string, current, baseline, totalGrowth int) {
+	// Common patterns to categorize goroutines
+	patterns := map[string]string{
+		"context.Background":              "context.Background without timeout",
+		"time.Sleep":                      "in Sleep",
+		"chan receive":                    "blocked on channel receive",
+		"chan send":                       "blocked on channel send",
+		"sync.(*WaitGroup).Wait":          "waiting on WaitGroup",
+		"sync.(*Mutex).Lock":              "waiting for mutex",
+		"io.ReadFull":                     "blocked on I/O",
+		"net/http.(*Client).Do":           "blocked on HTTP request",
+		"(*Client).Get":                   "Kubernetes API Get",
+		"(*Client).Create":                "Kubernetes API Create",
+		"(*Client).Update":                "Kubernetes API Update",
+		"internal/process/steps":          "in process steps",
+		"internal/btpmanager/credentials": "in BTP credentials",
+		"internal/process/provisioning":   "in provisioning",
 	}
 
 	// Parse goroutines
 	goroutines := strings.Split(stackTrace, "\ngoroutine ")
-	suspiciousGoroutines := make(map[string][]string)
+	categorized := make(map[string][]string)
 
 	for i, goroutine := range goroutines {
 		if i == 0 || len(goroutine) == 0 {
@@ -249,52 +184,60 @@ func (d *Detector) identifyLeakSources(stackTrace string) {
 			continue
 		}
 
-		header := lines[0] // e.g., "goroutine 123 [chan receive]:"
+		header := lines[0]
 
-		// Check for leak patterns
-		for pattern, description := range leakPatterns {
+		// Categorize by pattern
+		for pattern, category := range patterns {
 			if strings.Contains(goroutine, pattern) {
-				// Extract relevant stack frames (first 6 lines usually show the issue)
+				// Extract first 8 lines for context
 				context := ""
 				for j := 0; j < min(8, len(lines)); j++ {
 					context += lines[j] + "\n"
 				}
 
-				key := description
-				suspiciousGoroutines[key] = append(suspiciousGoroutines[key],
+				categorized[category] = append(categorized[category],
 					fmt.Sprintf("%s\n%s", header, context))
 				break
 			}
 		}
 	}
 
-	if len(suspiciousGoroutines) > 0 {
-		d.logger.Warn("Found potentially leaking goroutines",
-			"categories", len(suspiciousGoroutines))
+	// Log summary
+	d.logger.Info("Goroutine analysis",
+		"total", current,
+		"categories_found", len(categorized),
+		"growth_since_start", totalGrowth)
 
-		for category, goroutines := range suspiciousGoroutines {
-			count := len(goroutines)
-			d.logger.Warn("\n╔═══════════════════════════════════════════════════════════")
-			d.logger.Warn("║ LEAK CATEGORY", "type", category)
-			d.logger.Warn("║ COUNT", "goroutines", count)
-			d.logger.Warn("╚═══════════════════════════════════════════════════════════")
+	// Log each category
+	for category, goroutinesList := range categorized {
+		count := len(goroutinesList)
+		d.logger.Info("Goroutine category",
+			"category", category,
+			"count", count)
 
-			// Show first 3 examples of each category
-			for idx, goroutineInfo := range goroutines {
-				if idx < 3 {
-					d.logger.Warn("Example",
-						"number", idx+1,
-						"stack", goroutineInfo)
-				}
-			}
-
-			if count > 3 {
-				d.logger.Warn("More goroutines in this category",
-					"additional_count", count-3)
+		// Show first 2 examples
+		for idx, goroutineInfo := range goroutinesList {
+			if idx < 2 {
+				d.logger.Info("Example",
+					"category", category,
+					"example_num", idx+1,
+					"stack", goroutineInfo)
 			}
 		}
-	} else {
-		d.logger.Info("No obvious leak patterns detected in stack traces")
+
+		if count > 2 {
+			d.logger.Info("Additional goroutines in category",
+				"category", category,
+				"additional", count-2)
+		}
+	}
+
+	// Warn if significant growth
+	if totalGrowth > 50 {
+		d.logger.Warn("Significant goroutine growth detected",
+			"growth", totalGrowth,
+			"current", current,
+			"baseline", baseline)
 	}
 }
 

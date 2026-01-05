@@ -258,15 +258,12 @@ func main() {
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
-	// Start goroutine leak detector
+	// Start goroutine monitor - logs on startup and every 5 minutes
 	leakDetector := goroutineleak.NewDetector(log, goroutineleak.Config{
-		Interval:            120 * time.Second,
-		GrowthThreshold:     20,
-		MaxConsecutiveGrows: 3,
+		Interval: 5 * time.Minute,
 	})
 	leakDetector.Start(ctx)
 	defer leakDetector.Stop()
-	log.Info("Goroutine leak detector started", "baseline", leakDetector.GetBaseline())
 
 	logConfiguration(log, cfg)
 
