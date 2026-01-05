@@ -121,10 +121,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage:     injectBTPOperatorCredentialsStageName,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},
-		{
-			stage: createKymaResourceStageName,
-			step:  provisioning.NewApplyKymaStep(db.Operations(), k8sClient),
-		},
 	}
 	for _, step := range provisioningSteps {
 		if !step.disabled {
