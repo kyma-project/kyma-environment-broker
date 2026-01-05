@@ -48,6 +48,10 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)))
 		return operation, 0, nil
 	}
+	if len(operation.DiscoveredZones) > 0 {
+		log.Info("Available zones already discovered, skipping")
+		return operation, 0, nil
+	}
 
 	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
@@ -84,29 +88,31 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
 	}
 
-	operation.DiscoveredZones = make(map[string][]string)
+	discoveredZones := make(map[string][]string)
 	if operation.Type == internal.OperationTypeProvision {
-		operation.DiscoveredZones[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = []string{}
+		discoveredZones[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = []string{}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
-			operation.DiscoveredZones[pool.MachineType] = []string{}
+			discoveredZones[pool.MachineType] = []string{}
 		}
 	} else if operation.Type == internal.OperationTypeUpdate {
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			operation.DiscoveredZones[pool.MachineType] = []string{}
+			discoveredZones[pool.MachineType] = []string{}
 		}
 	}
 
-	for machineType := range operation.DiscoveredZones {
+	for machineType := range discoveredZones {
 		zones, err := client.AvailableZones(context.Background(), machineType)
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 		}
 		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 		log.Info(fmt.Sprintf("Available zones for machine type %s: %v", machineType, zones))
-		operation.DiscoveredZones[machineType] = zones
+		discoveredZones[machineType] = zones
 	}
 
-	return operation, 0, nil
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.DiscoveredZones = discoveredZones
+	}, log)
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
