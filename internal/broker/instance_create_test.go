@@ -37,8 +37,8 @@ import (
 )
 
 const (
-	serviceID       = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	planID          = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	serviceID       = broker.KymaServiceID
+	planID          = broker.AzurePlanID
 	clusterRegion   = "westeurope"
 	globalAccountID = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
 	subAccountID    = "3cb65e5b-e455-4799-bf35-be46e8f5a533"
