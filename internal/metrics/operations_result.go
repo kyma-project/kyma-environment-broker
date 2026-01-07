@@ -115,7 +115,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsResults) UpdateCounters(_ context.Context, event interface{}) error {
+func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling operation finished event: %v", recovery))

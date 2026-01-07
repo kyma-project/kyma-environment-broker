@@ -108,7 +108,7 @@ func (s *operationsStats) MustRegister() {
 	}
 }
 
-func (s *operationsStats) UpdateCounters(_ context.Context, event interface{}) error {
+func (s *operationsStats) UpdateMetrics(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 

@@ -112,7 +112,7 @@ func TestOperationsStats(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < testData[i].eventsCount; j++ {
-			err = statsCollector.UpdateCounters(context.TODO(), process.OperationFinished{
+			err = statsCollector.UpdateMetrics(context.TODO(), process.OperationFinished{
 				PlanID:    testData[i].opPlan,
 				Operation: internal.Operation{Type: testData[i].opType, State: testData[i].opState, ID: fmt.Sprintf("test-%d", i)},
 			})

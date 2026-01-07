@@ -23,11 +23,11 @@ const (
 )
 
 // Exposer gathers metrics and keeps these in memory and exposes to prometheus for fetching, it gathers them by:
-// listening in real time for events by "UpdateCounters"
+// listening in real time for events by "UpdateMetrics"
 // fetching data from database by "runJob"
 
 type Exposer interface {
-	Handler(ctx context.Context, event interface{}) error
+	UpdateMetrics(ctx context.Context, event interface{}) error
 	runJob(ctx context.Context)
 }
 
@@ -80,8 +80,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-	sub.Subscribe(process.OperationFinished{}, opStats.UpdateCounters)
-	sub.Subscribe(process.OperationFinished{}, opResult.UpdateCounters)
+	sub.Subscribe(process.OperationFinished{}, opStats.UpdateMetrics)
+	sub.Subscribe(process.OperationFinished{}, opResult.UpdateMetrics)
 
 	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
