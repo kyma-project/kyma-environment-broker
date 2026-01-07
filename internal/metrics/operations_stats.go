@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"context"
@@ -122,8 +122,8 @@ func (s *operationsStats) MustRegister() {
 }
 
 func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -170,6 +170,7 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -183,8 +184,8 @@ func (s *operationsStats) runJob(ctx context.Context) {
 }
 
 func (s *operationsStats) UpdateStatsMetrics() error {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	stats, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {

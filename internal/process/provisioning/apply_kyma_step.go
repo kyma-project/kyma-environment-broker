@@ -41,6 +41,9 @@ func (a *ApplyKymaStep) Name() string {
 }
 
 func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		return a.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
@@ -56,7 +59,7 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (
 
 	var existingKyma unstructured.Unstructured
 	existingKyma.SetGroupVersionKind(template.GroupVersionKind())
-	err = a.k8sClient.Get(context.Background(), client.ObjectKey{
+	err = a.k8sClient.Get(ctx, client.ObjectKey{
 		Namespace: operation.KymaResourceNamespace,
 		Name:      template.GetName(),
 	}, &existingKyma)
@@ -68,14 +71,14 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (
 		if !changed {
 			logger.Info("Kyma resource does not need any change")
 		}
-		err = a.k8sClient.Update(context.Background(), &existingKyma)
+		err = a.k8sClient.Update(ctx, &existingKyma)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to update a Kyma resource: %s", err.Error()))
 			return a.operationManager.RetryOperation(operation, "unable to update the Kyma resource", err, time.Second, 10*time.Second, logger)
 		}
 	case errors.IsNotFound(err):
 		logger.Info(fmt.Sprintf("creating Kyma resource: %s in namespace: %s", template.GetName(), template.GetNamespace()))
-		err := a.k8sClient.Create(context.Background(), template)
+		err := a.k8sClient.Create(ctx, template)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create a Kyma resource: %s", err.Error()))
 			return a.operationManager.RetryOperation(operation, "unable to create the Kyma resource", err, time.Second, 10*time.Second, logger)

@@ -31,11 +31,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/goroutineleak"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -115,7 +116,7 @@ type Config struct {
 
 	Events events.Config
 
-	MetricsV2 metricsv2.Config
+	Metrics metrics.Config
 
 	Provisioning   process.StagedManagerConfiguration
 	Deprovisioning process.StagedManagerConfiguration
@@ -257,6 +258,14 @@ func main() {
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
+	// Start goroutine monitor - logs on startup and every 5 minutes
+	leakDetector := goroutineleak.NewDetector(log, goroutineleak.Config{
+		Interval: 5 * time.Minute,
+	})
+	leakDetector.Start(ctx)
+	defer leakDetector.Stop()
+	log.Info("Goroutine leak detector started", "baseline", leakDetector.GetBaseline())
+
 	logConfiguration(log, cfg)
 
 	//FIPS mode check - to be removed
@@ -335,7 +344,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
+	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)

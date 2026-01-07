@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"context"
@@ -67,8 +67,8 @@ func (s *operationsResults) setOperation(op internal.Operation, val float64) {
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
 // metrics set to 0 means that this event is outdated, and will be replaced by new one
 func (s *operationsResults) updateOperation(op internal.Operation) {
-	defer s.sync.Unlock()
 	s.sync.Lock()
+	defer s.sync.Unlock()
 
 	oldOp, found := s.cache[op.ID]
 	if found {
@@ -79,11 +79,12 @@ func (s *operationsResults) updateOperation(op internal.Operation) {
 		delete(s.cache, op.ID)
 
 		// keep those metric and remove after finishedOperationRetentionPeriod
+		s.logger.Info(fmt.Sprintf("Retention period for finished operation %s: %s", op.ID, s.finishedOperationRetentionPeriod))
 		if s.finishedOperationRetentionPeriod > 0 {
 			go func(id string) {
 				time.Sleep(s.finishedOperationRetentionPeriod)
 				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
-				s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
+				s.logger.Info(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
 			}(op.ID)
 		}
 	} else {
@@ -145,6 +146,7 @@ func (s *operationsResults) runJob(ctx context.Context) {
 	}
 
 	ticker := time.NewTicker(s.pollingInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:

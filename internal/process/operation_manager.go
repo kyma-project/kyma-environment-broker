@@ -23,13 +23,14 @@ type OperationManager struct {
 	mu              sync.RWMutex
 }
 
-func NewOperationManager(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
+func NewOperationManager(storage storage.Operations, step string, component kebErr.Component) *OperationManager { //leak?
 	op := &OperationManager{storage: storage, component: component, step: step, retryTimestamps: make(map[string]time.Time)}
 	go func(op *OperationManager, step string) {
-		ticker := time.NewTicker(time.Hour)
+		ticker := time.NewTicker(2 * time.Minute)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
+			slog.Info(fmt.Sprintf("Running timestamp GC for step: %s", step))
 			runTimestampGC(op, step)
 		}
 	}(op, step)

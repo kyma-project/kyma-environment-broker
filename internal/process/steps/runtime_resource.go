@@ -129,7 +129,9 @@ func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operat
 			))
 		}
 		log.Error("failing operation and removing Runtime CR")
-		err = s.k8sClient.Delete(context.Background(), runtime)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = s.k8sClient.Delete(ctx, runtime)
 		if err != nil {
 			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
 		}
@@ -146,8 +148,11 @@ func (s *checkRuntimeResourceProvisioning) GetRuntimeResource(name string, names
 }
 
 func GetRuntimeResource(name string, namespace string, c client.Client) (*imv1.Runtime, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	runtime := imv1.Runtime{}
-	err := c.Get(context.Background(), client.ObjectKey{
+	err := c.Get(ctx, client.ObjectKey{
 		Namespace: namespace,
 		Name:      name,
 	}, &runtime)

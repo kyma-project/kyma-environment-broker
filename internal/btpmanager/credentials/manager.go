@@ -317,19 +317,23 @@ func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secre
 	if futureSecret == nil {
 		return fmt.Errorf("empty secret data given")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	currentSecret := apicorev1.Secret{}
-	getErr := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: BtpManagerSecretNamespace, Name: BtpManagerSecretName}, &currentSecret)
+	getErr := k8sClient.Get(ctx, client.ObjectKey{Namespace: BtpManagerSecretNamespace, Name: BtpManagerSecretName}, &currentSecret)
 	switch {
 	case getErr != nil && !apierrors.IsNotFound(getErr):
 		return fmt.Errorf("failed to get the secret for BTP Manager: %s", getErr)
 	case getErr != nil && apierrors.IsNotFound(getErr):
 		namespace := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: BtpManagerSecretNamespace}}
-		createErr := k8sClient.Create(context.Background(), namespace)
+		createErr := k8sClient.Create(ctx, namespace)
 		if createErr != nil && !apierrors.IsAlreadyExists(createErr) {
 			return fmt.Errorf("could not create %s namespace: %s", BtpManagerSecretNamespace, createErr)
 		}
 
-		createErr = k8sClient.Create(context.Background(), futureSecret)
+		createErr = k8sClient.Create(ctx, futureSecret)
 		if createErr != nil {
 			return fmt.Errorf("failed to create the secret for BTP Manager: %s", createErr)
 		}
@@ -344,7 +348,7 @@ func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secre
 		currentSecret.Data = futureSecret.Data
 		currentSecret.ObjectMeta.Labels = futureSecret.ObjectMeta.Labels
 		currentSecret.ObjectMeta.Annotations = futureSecret.ObjectMeta.Annotations
-		updateErr := k8sClient.Update(context.Background(), &currentSecret)
+		updateErr := k8sClient.Update(ctx, &currentSecret)
 		if updateErr != nil {
 			return fmt.Errorf("failed to update the secret for BTP Manager: %s", updateErr)
 		}

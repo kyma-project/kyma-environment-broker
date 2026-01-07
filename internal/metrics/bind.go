@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"context"
@@ -136,6 +136,7 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 	}
 
 	ticker := time.NewTicker(c.pollingInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -149,8 +150,8 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 }
 
 func (c *BindingStatitics) updateMetrics() error {
-	defer c.sync.Unlock()
 	c.sync.Lock()
+	defer c.sync.Unlock()
 
 	stats, err := c.db.GetStatistics()
 	if err != nil {
