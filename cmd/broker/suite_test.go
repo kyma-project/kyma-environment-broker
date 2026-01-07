@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -284,7 +284,7 @@ func fixConfig() *Config {
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		UpdateRuntimeResourceDelay:                time.Millisecond,
-		MetricsV2: metricsv2.Config{
+		Metrics: metrics.Config{
 			Enabled:                                         true,
 			OperationResultRetentionPeriod:                  time.Hour,
 			OperationResultPollingInterval:                  3 * time.Second,

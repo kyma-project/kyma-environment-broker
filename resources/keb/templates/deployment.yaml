@@ -226,15 +226,15 @@ spec:
               value: "{{ .Values.kymaDashboardConfig.landscapeURL }}"
             - name: APP_MACHINES_AVAILABILITY_ENDPOINT
               value: "{{ .Values.machinesAvailabilityEndpoint }}"
-            - name: APP_METRICSV2_ENABLED
+            - name: APP_METRICS_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
-            - name: APP_METRICSV2_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD
+            - name: APP_METRICS_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD
               value: "{{ .Values.metricsv2.operationResultFinishedOperationRetentionPeriod }}"
-            - name: APP_METRICSV2_OPERATION_RESULT_POLLING_INTERVAL
+            - name: APP_METRICS_OPERATION_RESULT_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationResultPollingInterval }}"
-            - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
+            - name: APP_METRICS_OPERATION_RESULT_RETENTION_PERIOD
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
-            - name: APP_METRICSV2_OPERATION_STATS_POLLING_INTERVAL
+            - name: APP_METRICS_OPERATION_STATS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}

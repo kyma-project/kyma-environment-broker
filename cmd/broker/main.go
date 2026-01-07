@@ -35,7 +35,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -115,7 +115,7 @@ type Config struct {
 
 	Events events.Config
 
-	MetricsV2 metricsv2.Config
+	Metrics metrics.Config
 
 	Provisioning   process.StagedManagerConfiguration
 	Deprovisioning process.StagedManagerConfiguration
@@ -335,7 +335,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
+	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)

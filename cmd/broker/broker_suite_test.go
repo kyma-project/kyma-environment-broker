@@ -30,7 +30,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -107,7 +107,7 @@ type BrokerSuiteTest struct {
 	poller broker.Poller
 
 	eventBroker              *event.PubSub
-	metrics                  *metricsv2.RegisterContainer
+	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
 }
 
@@ -149,7 +149,7 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 		Level: slog.LevelInfo,
 	}))
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db, cfg.MetricsV2, log)
+	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
@@ -958,7 +958,7 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
 		return
 	}
-	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
+	a := s.metrics.OperationResult.Metrics().With(metrics.GetLabels(operation))
 	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
 }

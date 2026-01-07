@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 const (
 	prometheusNamespacev2 = "kcp"
 	prometheusSubsystemv2 = "keb_v2"
-	logPrefix             = "@metricsv2"
+	logPrefix             = "@metrics"
 )
 
 // Exposer gathers metrics and keeps these in memory and exposes to prometheus for fetching, it gathers them by:
@@ -49,7 +49,7 @@ type RegisterContainer struct {
 
 func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
 	logger = logger.With("from:", logPrefix)
-	logger.Info("Registering metricsv2")
+	logger.Info("Registering metrics")
 	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 

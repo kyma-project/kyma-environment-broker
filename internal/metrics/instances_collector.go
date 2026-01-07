@@ -1,4 +1,4 @@
-package metricsv2
+package metrics
 
 import (
 	"fmt"

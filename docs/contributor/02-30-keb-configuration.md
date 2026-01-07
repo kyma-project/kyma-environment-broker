@@ -68,11 +68,11 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |
 | **APP_MACHINES_&#x200b;AVAILABILITY_&#x200b;ENDPOINT** | <code>false</code> | If true, the broker exposes the API endpoint that returns the availability of machine types. |
-| **APP_METRICSV2_&#x200b;ENABLED** | <code>false</code> | If true, enables metricsv2 collection and Prometheus exposure. |
-| **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;FINISHED_OPERATION_&#x200b;RETENTION_PERIOD** | <code>3h</code> | Duration of retaining finished operation results in memory. |
-| **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation results. |
-| **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;RETENTION_PERIOD** | <code>1h</code> | Duration of retaining operation results. |
-| **APP_METRICSV2_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics. |
+| **APP_METRICS_ENABLED** | <code>false</code> | If true, enables metricsv2 collection and Prometheus exposure. |
+| **APP_METRICS_&#x200b;OPERATION_RESULT_&#x200b;FINISHED_OPERATION_&#x200b;RETENTION_PERIOD** | <code>3h</code> | Duration of retaining finished operation results in memory. |
+| **APP_METRICS_&#x200b;OPERATION_RESULT_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation results. |
+| **APP_METRICS_&#x200b;OPERATION_RESULT_&#x200b;RETENTION_PERIOD** | <code>1h</code> | Duration of retaining operation results. |
+| **APP_METRICS_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics. |
 | **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/plansConfig.yaml</code> | Path to the plans configuration file, which defines available service plans. |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false). |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings. |
