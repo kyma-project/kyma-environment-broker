@@ -50,6 +50,8 @@ type RegisterContainer struct {
 func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
 	logger = logger.With("from:", logPrefix)
 	logger.Info("Registering metricsv2")
+	logger.Info(fmt.Sprintf("MetricsV2 Config: Enabled=%v, OperationResultRetentionPeriod=%v, OperationResultPollingInterval=%v, OperationStatsPollingInterval=%v, OperationResultFinishedOperationRetentionPeriod=%v, BindingsStatsPollingInterval=%v",
+		cfg.Enabled, cfg.OperationResultRetentionPeriod, cfg.OperationResultPollingInterval, cfg.OperationStatsPollingInterval, cfg.OperationResultFinishedOperationRetentionPeriod, cfg.BindingsStatsPollingInterval))
 	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 
@@ -59,9 +61,9 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	opResult := NewOperationsResults(db.Operations(), cfg, logger)
 	opResult.StartCollector(ctx)
 
-	//opStats := NewOperationsStats(db.Operations(), cfg, logger)
-	//opStats.MustRegister()
-	//opStats.StartCollector(ctx)
+	opStats := NewOperationsStats(db.Operations(), cfg, logger)
+	opStats.MustRegister()
+	opStats.StartCollector(ctx)
 
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
 	bindingStats.MustRegister()
@@ -80,7 +82,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-	//sub.Subscribe(process.OperationFinished{}, opStats.Handler)
+	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
 	sub.Subscribe(process.OperationFinished{}, opResult.Handler)
 
 	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
@@ -93,7 +95,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 
 	return &RegisterContainer{
 		OperationResult:            opResult,
-		OperationStats:             nil,
+		OperationStats:             opStats,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
 	}
