@@ -570,9 +570,9 @@ runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: false
   # Enables or disables the Runtime Reconciler deployment.
-  enabled: false
+  enabled: true
   # If true, enables the periodic reconciliation job.
-  jobEnabled: false
+  jobEnabled: true
   # Interval (in minutes) between reconciliation job runs.
   jobInterval: 1440
   # Delay before starting reconciliation after job trigger.
@@ -591,7 +591,7 @@ serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
-  enabled: false
+  enabled: true
   # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
   # Timeout for each DELETE request to the broker.
@@ -605,7 +605,7 @@ serviceBindingCleanup:
 # Subaccount Cleanup Jobs Settings
 # =================================================
 subaccountCleanup:
-  enabled: "false"
+  enabled: "true"
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
