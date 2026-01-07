@@ -52,14 +52,14 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
+	/*
+		opResult := NewOperationsResults(db.Operations(), cfg, logger)
+		opResult.StartCollector(ctx)
 
-	opResult := NewOperationsResults(db.Operations(), cfg, logger)
-	opResult.StartCollector(ctx)
-
-	opStats := NewOperationsStats(db.Operations(), cfg, logger)
-	opStats.MustRegister()
-	opStats.StartCollector(ctx)
-
+		opStats := NewOperationsStats(db.Operations(), cfg, logger)
+		opStats.MustRegister()
+		opStats.StartCollector(ctx)
+	*/
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
 	bindingStats.MustRegister()
 	bindingStats.StartCollector(ctx)
@@ -89,8 +89,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
-		OperationResult:            opResult,
-		OperationStats:             opStats,
+		OperationResult:            nil,
+		OperationStats:             nil,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
 	}
