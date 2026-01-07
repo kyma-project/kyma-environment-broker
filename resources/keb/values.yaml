@@ -190,7 +190,7 @@ broker:
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
-  # if true, restricts provisioning to only the global account IDs listed in AllowedGlobalAccountIDs.
+  # If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs.
   restrictToAllowedGlobalAccountIDs: "false"
   # Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true.
   allowedGlobalAccountIDs: ""
