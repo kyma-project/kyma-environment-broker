@@ -568,7 +568,7 @@ runtimeReconciler:
   # Enables or disables the Runtime Reconciler deployment.
   enabled: true
   # If true, enables the periodic reconciliation job.
-  jobEnabled: false
+  jobEnabled: true
   # Interval (in minutes) between reconciliation job runs.
   jobInterval: 1440
   # Delay before starting reconciliation after job trigger.
