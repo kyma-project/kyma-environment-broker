@@ -56,12 +56,12 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
 
-	//opResult := NewOperationsResults(db.Operations(), cfg, logger)
-	//	opResult.StartCollector(ctx)
+	opResult := NewOperationsResults(db.Operations(), cfg, logger)
+	opResult.StartCollector(ctx)
 
-	opStats := NewOperationsStats(db.Operations(), cfg, logger)
-	opStats.MustRegister()
-	opStats.StartCollector(ctx)
+	//opStats := NewOperationsStats(db.Operations(), cfg, logger)
+	//opStats.MustRegister()
+	//opStats.StartCollector(ctx)
 
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
 	bindingStats.MustRegister()
@@ -80,8 +80,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-	//sub.Subscribe(process.OperationFinished{}, opResult.Handler)
+	//sub.Subscribe(process.OperationFinished{}, opStats.Handler)
+	sub.Subscribe(process.OperationFinished{}, opResult.Handler)
 
 	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
@@ -92,8 +92,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
-		OperationResult:            nil,
-		OperationStats:             opStats,
+		OperationResult:            opResult,
+		OperationStats:             nil,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
 	}
