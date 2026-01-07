@@ -79,11 +79,12 @@ func (s *operationsResults) updateOperation(op internal.Operation) {
 		delete(s.cache, op.ID)
 
 		// keep those metric and remove after finishedOperationRetentionPeriod
+		s.logger.Info(fmt.Sprintf("Retention period for finished operation %s: %s", op.ID, s.finishedOperationRetentionPeriod))
 		if s.finishedOperationRetentionPeriod > 0 {
 			go func(id string) {
 				time.Sleep(s.finishedOperationRetentionPeriod)
 				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
-				s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
+				s.logger.Info(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
 			}(op.ID)
 		}
 	} else {
