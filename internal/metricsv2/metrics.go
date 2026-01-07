@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,14 +55,14 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
-	/*
-		opResult := NewOperationsResults(db.Operations(), cfg, logger)
-		opResult.StartCollector(ctx)
 
-		opStats := NewOperationsStats(db.Operations(), cfg, logger)
-		opStats.MustRegister()
-		opStats.StartCollector(ctx)
-	*/
+	//opResult := NewOperationsResults(db.Operations(), cfg, logger)
+	//	opResult.StartCollector(ctx)
+
+	opStats := NewOperationsStats(db.Operations(), cfg, logger)
+	opStats.MustRegister()
+	opStats.StartCollector(ctx)
+
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
 	bindingStats.MustRegister()
 	bindingStats.StartCollector(ctx)
@@ -72,25 +75,25 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 
 	runtimesInfoRequestsCollector := NewRuntimesInfoRequestsCollector()
 	prometheus.MustRegister(runtimesInfoRequestsCollector)
-	/*
-		sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
-		sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
-		sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
-		sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-		sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-		sub.Subscribe(process.OperationFinished{}, opResult.Handler)
 
-		sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
-		sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
-		sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
+	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
+	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
+	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
+	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
+	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
+	//sub.Subscribe(process.OperationFinished{}, opResult.Handler)
 
-		sub.Subscribe(appinfo.RuntimesInfoRequest{}, runtimesInfoRequestsCollector.OnRequest)
-	*/
+	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
+	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
+	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
+
+	sub.Subscribe(appinfo.RuntimesInfoRequest{}, runtimesInfoRequestsCollector.OnRequest)
+
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
 		OperationResult:            nil,
-		OperationStats:             nil,
+		OperationStats:             opStats,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
 	}
