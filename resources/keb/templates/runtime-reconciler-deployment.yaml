@@ -80,7 +80,7 @@ spec:
                   name: {{ .Values.global.database.managedGCP.secretName }}
                   key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
             - name: RUNTIME_RECONCILER_DRY_RUN
-              value: "{{ .Values.runtimeReconciler.dryRun }}"
+              value "{{ .Values.runtimeReconciler.dryRun }}"
             - name: RUNTIME_RECONCILER_JOB_ENABLED
               value: "{{ .Values.runtimeReconciler.jobEnabled }}"
             - name: RUNTIME_RECONCILER_JOB_INTERVAL
