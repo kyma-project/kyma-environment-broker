@@ -88,7 +88,7 @@
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>dualStackDocsURL | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. | `https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
-| broker.<br>restrictToAllowedGlobalAccountIDs | if true, restricts provisioning to only the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
+| broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
 | broker.<br>allowedGlobalAccountIDs | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. | `` |
 | btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
