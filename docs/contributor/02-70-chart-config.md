@@ -129,7 +129,7 @@
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |
-| metricsv2.enabled | If true, enables metricsv2 collection and Prometheus exposure. | `False` |
+| metricsv2.enabled | If true, enables metrics collection and Prometheus exposure. | `False` |
 | metricsv2.<br>operationResultFinishedOperationRetentionPeriod | Duration of retaining finished operation results in memory. | `3h` |
 | metricsv2.<br>operationResultPollingInterval | Frequency of polling for operation results. | `1m` |
 | metricsv2.<br>operationResultRetentionPeriod | Duration of retaining operation results. | `1h` |

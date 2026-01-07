@@ -315,7 +315,7 @@ kymaDashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 metricsv2:
-  # If true, enables metricsv2 collection and Prometheus exposure.
+  # If true, enables metrics collection and Prometheus exposure.
   enabled: false
   # Duration of retaining finished operation results in memory.
   operationResultFinishedOperationRetentionPeriod: 3h
