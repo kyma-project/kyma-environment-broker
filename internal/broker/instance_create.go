@@ -310,7 +310,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
-		DashboardURL:  dashboardURL,
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(instance, b.config.URL, b.kcBuilder),
 		},
