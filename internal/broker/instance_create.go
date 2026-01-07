@@ -830,7 +830,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
-		DashboardURL:  operation.DashboardURL,
+		DashboardURL:  dashboard.ProvideURL(instance, operation),
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},

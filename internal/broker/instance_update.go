@@ -212,7 +212,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	}
 	return domain.UpdateServiceSpec{
 		IsAsync:       false,
-		DashboardURL:  dashboardURL,
+		DashboardURL:  dashboard.ProvideURL(instance, lastProvisioningOperation),
 		OperationData: "",
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
@@ -252,7 +252,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
 			IsAsync:       false,
-			DashboardURL:  instance.DashboardURL,
+			DashboardURL:  dashboard.ProvideURL(instance, lastProvisioningOperation),
 			OperationData: "",
 			Metadata: domain.InstanceMetadata{
 				Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
@@ -517,7 +517,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 
 	return domain.UpdateServiceSpec{
 		IsAsync:       true,
-		DashboardURL:  instance.DashboardURL,
+		DashboardURL:  dashboard.ProvideURL(instance, lastProvisioningOperation),
 		OperationData: operation.ID,
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
