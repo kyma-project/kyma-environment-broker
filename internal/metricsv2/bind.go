@@ -136,6 +136,7 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 	}
 
 	ticker := time.NewTicker(c.pollingInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:

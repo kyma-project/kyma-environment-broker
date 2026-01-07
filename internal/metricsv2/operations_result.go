@@ -145,6 +145,7 @@ func (s *operationsResults) runJob(ctx context.Context) {
 	}
 
 	ticker := time.NewTicker(s.pollingInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
