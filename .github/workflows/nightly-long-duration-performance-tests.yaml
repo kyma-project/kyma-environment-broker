@@ -6,6 +6,18 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
+      baseline-monitoring-minutes:
+        description: 'Baseline monitoring duration in minutes'
+        default: '10'
+        required: false
+      post-test-monitoring-minutes:
+        description: 'Post-test monitoring duration in minutes'
+        default: '10'
+        required: false
+      test-duration-minutes:
+        description: 'Test duration in minutes (0 = run once)'
+        default: '5'
+        required: false
       memory-growth-threshold-percent:
         description: 'Allowed memory growth percent (over baseline)'
         default: '70'
@@ -40,9 +52,9 @@ jobs:
       update-workers-amount: 30
       deprovisioning-max-step-processing-time: 30s
       deprovisioning-workers-amount: 30
-      baseline-monitoring-minutes: 10
-      post-test-monitoring-minutes: 10
-      test-duration-minutes: 5
+      baseline-monitoring-minutes: ${{ github.event.inputs.baseline-monitoring-minutes || '10' }}
+      post-test-monitoring-minutes: ${{ github.event.inputs.post-test-monitoring-minutes || '10' }}
+      test-duration-minutes: ${{ github.event.inputs.test-duration-minutes || '5' }}
       memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent || '70' }}
       goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold || '50' }}
       fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold || '10' }}
