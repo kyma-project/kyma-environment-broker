@@ -5,6 +5,23 @@ on:
     # Run nightly at 2:00 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      memory-growth-threshold-percent:
+        description: 'Allowed memory growth percent (over baseline)'
+        default: '70'
+        required: false
+      goroutine-increase-threshold:
+        description: 'Allowed increase in goroutines (absolute)'
+        default: '50'
+        required: false
+      fd-increase-threshold:
+        description: 'Allowed increase in open file descriptors (absolute)'
+        default: '10'
+        required: false
+      db-conn-increase-threshold:
+        description: 'Allowed increase in DB connections (absolute)'
+        default: '5'
+        required: false
 
 jobs:
   run-performance-tests:
@@ -26,6 +43,10 @@ jobs:
       baseline-monitoring-minutes: 10
       post-test-monitoring-minutes: 10
       test-duration-minutes: 5
+      memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent || '70' }}
+      goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold || '50' }}
+      fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold || '10' }}
+      db-conn-increase-threshold: ${{ github.event.inputs.db-conn-increase-threshold || '5' }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection

@@ -10,9 +10,9 @@ set -e
 
 # Configuration - Thresholds for leak detection
 MEMORY_GROWTH_THRESHOLD_PERCENT=${MEMORY_GROWTH_THRESHOLD_PERCENT:-70}    # Max acceptable memory growth % (can be overridden by env)
-GOROUTINE_INCREASE_THRESHOLD=50       # Max acceptable goroutine increase
-FD_INCREASE_THRESHOLD=10              # Max acceptable file descriptor increase
-DB_CONN_INCREASE_THRESHOLD=5          # Max acceptable DB connection increase
+GOROUTINE_INCREASE_THRESHOLD=${GOROUTINE_INCREASE_THRESHOLD:-50}       # Max acceptable goroutine increase (can be overridden by env)
+FD_INCREASE_THRESHOLD=${FD_INCREASE_THRESHOLD:-10}              # Max acceptable file descriptor increase (can be overridden by env)
+DB_CONN_INCREASE_THRESHOLD=${DB_CONN_INCREASE_THRESHOLD:-5}          # Max acceptable DB connection increase (can be overridden by env)
 
 # Metric file
 METRICS_FILE="/tmp/keb_metrics.jsonl"

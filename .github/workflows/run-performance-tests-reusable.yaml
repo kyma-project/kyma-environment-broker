@@ -59,6 +59,22 @@ on:
         description: 'Duration for each test to run (minutes, 0 means run until completion)'
         default: 0
         type: number
+      memory-growth-threshold-percent:
+        description: 'Allowed memory growth percent (over baseline)'
+        default: 70
+        type: number
+      goroutine-increase-threshold:
+        description: 'Allowed increase in goroutines (absolute)'
+        default: 50
+        type: number
+      fd-increase-threshold:
+        description: 'Allowed increase in open file descriptors (absolute)'
+        default: 10
+        type: number
+      db-conn-increase-threshold:
+        description: 'Allowed increase in DB connections (absolute)'
+        default: 5
+        type: number
 
 jobs:
   prepare-tests:
@@ -230,6 +246,10 @@ jobs:
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
           bash scripts/testing/compare_performance_metrics.sh
 
       - name: Stop metrics collector
