@@ -67,7 +67,7 @@ calculate_average() {
     local metric_name=$1
     local start_line=$2
     local end_line=$3
-
+    
     # Map metric names to JSON keys used by monitor_metrics.sh
     local json_key=""
     case "$metric_name" in
@@ -79,7 +79,7 @@ calculate_average() {
         "go_sql_stats_connections_in_use") json_key="db_in_use" ;;
         *) json_key="$metric_name" ;;
     esac
-
+    
     # Extract metric values from specified line range
     sed -n "${start_line},${end_line}p" "$METRICS_FILE" | while read -r line; do
         value=$(echo "$line" | jq -r ".${json_key} // 0")
@@ -94,7 +94,7 @@ get_max_value() {
     local metric_name=$1
     local start_line=$2
     local end_line=$3
-
+    
     # Map metric names to JSON keys used by monitor_metrics.sh
     local json_key=""
     case "$metric_name" in
@@ -106,7 +106,7 @@ get_max_value() {
         "go_sql_stats_connections_in_use") json_key="db_in_use" ;;
         *) json_key="$metric_name" ;;
     esac
-
+    
     sed -n "${start_line},${end_line}p" "$METRICS_FILE" | while read -r line; do
         value=$(echo "$line" | jq -r ".${json_key} // 0")
         if [ "$value" != "null" ]; then
