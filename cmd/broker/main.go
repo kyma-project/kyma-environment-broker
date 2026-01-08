@@ -12,10 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-co-op/gocron"
-	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -35,6 +31,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -44,18 +41,21 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
+	"github.com/kyma-project/kyma-environment-broker/internal/version"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/go-co-op/gocron"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/exp/maps"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -223,7 +223,6 @@ func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, er
 }
 
 func main() {
-	fmt.Println("Version:", Version)
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
 	err = imv1.AddToScheme(scheme.Scheme)
@@ -719,6 +718,9 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	// create events endpoint
 	eventsHandler := eventshandler.NewHandler(db.Events(), db.Instances())
 	router.Handle("/events", eventsHandler)
+
+	versionHandler := version.NewHandler(Version)
+	versionHandler.AttachRoutes(router)
 }
 
 // queues all in progress operations by type
