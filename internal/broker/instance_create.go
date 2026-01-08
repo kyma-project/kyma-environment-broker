@@ -15,8 +15,6 @@ import (
 	"slices"
 	"strings"
 
-	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -24,6 +22,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -306,6 +305,10 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
+
+	if !IsOwnClusterPlan(provisioningParameters.PlanID) {
+		dashboardURL = ""
+	}
 
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
@@ -832,7 +835,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
-		DashboardURL:  operation.DashboardURL,
+		DashboardURL:  dashboard.ProvideURL(instance, operation),
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},

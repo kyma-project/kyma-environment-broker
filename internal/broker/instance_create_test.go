@@ -37,8 +37,8 @@ import (
 )
 
 const (
-	serviceID       = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	planID          = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	serviceID       = broker.KymaServiceID
+	planID          = broker.AzurePlanID
 	clusterRegion   = "westeurope"
 	globalAccountID = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
 	subAccountID    = "3cb65e5b-e455-4799-bf35-be46e8f5a533"
@@ -60,6 +60,7 @@ func TestProvision_Provision(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+
 	t.Run("new operation will be created", func(t *testing.T) {
 		// given
 		// #setup memory storage
@@ -115,7 +116,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
-		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
@@ -134,7 +135,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, instance.Parameters, operation.ProvisioningParameters)
-		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
 		assert.Equal(t, pkg.Azure, instance.Provider)
@@ -411,7 +412,7 @@ func TestProvision_Provision(t *testing.T) {
 		// UUID with version 4 and variant 1 i.e RFC. 4122/DCE
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
-		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
@@ -432,7 +433,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, instance.Parameters, operation.ProvisioningParameters)
-		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+		assert.Empty(t, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
 	})

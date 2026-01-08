@@ -103,6 +103,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	response, err := getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 	assert.Equal(t, nil, err, "Get returned error when expected to pass")
 	assert.Len(t, response.Metadata.Labels, 1)
+	assert.Regexp(t, dashboardUrlRegex, response.DashboardURL)
 }
 
 func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
