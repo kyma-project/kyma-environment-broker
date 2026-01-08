@@ -23,7 +23,7 @@ jobs:
       update-workers-amount: 30
       deprovisioning-max-step-processing-time: 30s
       deprovisioning-workers-amount: 30
-      baseline-monitoring-minutes: 5
+      baseline-monitoring-minutes: 10
       post-test-monitoring-minutes: 10
       test-duration-minutes: 5
 
