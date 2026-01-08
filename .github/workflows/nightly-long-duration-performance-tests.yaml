@@ -10,6 +10,50 @@ on:
         description: 'Baseline monitoring duration in minutes'
         default: '10'
         required: false
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: 'true'
+        required: false
+      version:
+        description: 'Release version'
+        default: 'main'
+        required: false
+      instances-number:
+        description: 'Number of instances to provision'
+        default: '200'
+        required: false
+      updates-number:
+        description: 'Number of updates per instance'
+        default: '500'
+        required: false
+      kim-delay-seconds:
+        description: 'KIM delay seconds'
+        default: '0'
+        required: false
+      provisioning-max-step-processing-time:
+        description: 'Provisioning max step processing time'
+        default: '30s'
+        required: false
+      provisioning-workers-amount:
+        description: 'Provisioning workers amount'
+        default: '300'
+        required: false
+      update-max-step-processing-time:
+        description: 'Update max step processing time'
+        default: '30s'
+        required: false
+      update-workers-amount:
+        description: 'Update workers amount'
+        default: '30'
+        required: false
+      deprovisioning-max-step-processing-time:
+        description: 'Deprovisioning max step processing time'
+        default: '30s'
+        required: false
+      deprovisioning-workers-amount:
+        description: 'Deprovisioning workers amount'
+        default: '30'
+        required: false
       post-test-monitoring-minutes:
         description: 'Post-test monitoring duration in minutes'
         default: '10'
@@ -41,24 +85,24 @@ jobs:
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:
-      release: "true"
-      version: "main"
-      instances-number: 200
-      updates-number: 500
-      kim-delay-seconds: 0
-      provisioning-max-step-processing-time: 30s
-      provisioning-workers-amount: 300
-      update-max-step-processing-time: 30s
-      update-workers-amount: 30
-      deprovisioning-max-step-processing-time: 30s
-      deprovisioning-workers-amount: 30
-      baseline-monitoring-minutes: ${{ github.event.inputs.baseline-monitoring-minutes || '10' }}
-      post-test-monitoring-minutes: ${{ github.event.inputs.post-test-monitoring-minutes || '10' }}
-      test-duration-minutes: ${{ github.event.inputs.test-duration-minutes || '5' }}
-      memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent || '70' }}
-      goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold || '50' }}
-      fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold || '10' }}
-      db-conn-increase-threshold: ${{ github.event.inputs.db-conn-increase-threshold || '5' }}
+      release: ${{ github.event.inputs.release }}
+      version: ${{ github.event.inputs.version }}
+      instances-number: ${{ github.event.inputs.instances-number }}
+      updates-number: ${{ github.event.inputs.updates-number }}
+      kim-delay-seconds: ${{ github.event.inputs.kim-delay-seconds }}
+      provisioning-max-step-processing-time: ${{ github.event.inputs.provisioning-max-step-processing-time }}
+      provisioning-workers-amount: ${{ github.event.inputs.provisioning-workers-amount }}
+      update-max-step-processing-time: ${{ github.event.inputs.update-max-step-processing-time }}
+      update-workers-amount: ${{ github.event.inputs.update-workers-amount }}
+      deprovisioning-max-step-processing-time: ${{ github.event.inputs.deprovisioning-max-step-processing-time }}
+      deprovisioning-workers-amount: ${{ github.event.inputs.deprovisioning-workers-amount }}
+      baseline-monitoring-minutes: ${{ github.event.inputs.baseline-monitoring-minutes }}
+      post-test-monitoring-minutes: ${{ github.event.inputs.post-test-monitoring-minutes }}
+      test-duration-minutes: ${{ github.event.inputs.test-duration-minutes }}
+      memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent }}
+      goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold }}
+      fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold }}
+      db-conn-increase-threshold: ${{ github.event.inputs.db-conn-increase-threshold }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
