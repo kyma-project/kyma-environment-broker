@@ -223,6 +223,7 @@ func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, er
 }
 
 func main() {
+	fmt.Println("Version:", Version)
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
 	err = imv1.AddToScheme(scheme.Scheme)
