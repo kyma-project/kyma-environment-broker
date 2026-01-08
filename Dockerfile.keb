@@ -14,8 +14,7 @@ RUN mkdir /user && \
     echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
     echo 'appuser:x:2000:' > /user/group
 
-ARG VERSION=dev
-ARG TARGETOS TARGETARCH
+ARG TARGETOS TARGETARCH VERSION
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
     CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
