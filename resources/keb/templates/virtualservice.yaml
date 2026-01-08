@@ -179,7 +179,7 @@ spec:
           regex: /version
     route:
       - destination:
-          host: { { include "kyma-env-broker.fullname" . } }
+          host: {{ include "kyma-env-broker.fullname" . }}
           port:
             number: 80
   {{ end }}
