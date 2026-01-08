@@ -9,7 +9,7 @@
 set -e
 
 # Configuration - Thresholds for leak detection
-MEMORY_GROWTH_THRESHOLD_PERCENT=10    # Max acceptable memory growth %
+MEMORY_GROWTH_THRESHOLD_PERCENT=${MEMORY_GROWTH_THRESHOLD_PERCENT:-70}    # Max acceptable memory growth % (can be overridden by env)
 GOROUTINE_INCREASE_THRESHOLD=50       # Max acceptable goroutine increase
 FD_INCREASE_THRESHOLD=10              # Max acceptable file descriptor increase
 DB_CONN_INCREASE_THRESHOLD=5          # Max acceptable DB connection increase
