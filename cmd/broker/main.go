@@ -179,6 +179,8 @@ const (
 	provisioningTakesLongThreshold        = 20 * time.Minute
 )
 
+var Version string
+
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	if profiler.Memory == false {
 		return
@@ -221,6 +223,7 @@ func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, er
 }
 
 func main() {
+	fmt.Println("Kyma Environment Broker version:", Version)
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
 	err = imv1.AddToScheme(scheme.Scheme)
