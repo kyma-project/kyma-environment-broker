@@ -307,3 +307,38 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: istio-version
+  namespace: kcp-system
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods:
+        - GET
+        paths:
+        - /version
+    from:
+      - source:
+          requestPrincipals:
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
+          {{- end }}
+          {{- else }}
+          - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - {{ .Values.oidc.groups.admin }}
+      - {{ .Values.oidc.groups.operator }}
+      - {{ .Values.oidc.groups.viewer }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}
