@@ -17,15 +17,15 @@ import (
 )
 
 // exposed metrics:
-// - kcp_keb_v2_operations_{plan_id}_provisioning_failed_total
-// - kcp_keb_v2_operations_{plan_id}_provisioning_in_progress_total
-// - kcp_keb_v2_operations_{plan_id}_provisioning_succeeded_total
-// - kcp_keb_v2_operations_{plan_id}_deprovisioning_failed_total
-// - kcp_keb_v2_operations_{plan_id}_deprovisioning_in_progress_total
-// - kcp_keb_v2_operations_{plan_id}_deprovisioning_succeeded_total
-// - kcp_keb_v2_operations_{plan_id}_update_failed_total
-// - kcp_keb_v2_operations_{plan_id}_update_in_progress_total
-// - kcp_keb_v2_operations_{plan_id}_update_succeeded_total
+// - kcp_keb_v2_operations_provisioning_failed_total
+// - kcp_keb_v2_operations_provisioning_in_progress_total
+// - kcp_keb_v2_operations_provisioning_succeeded_total
+// - kcp_keb_v2_operations_deprovisioning_failed_total
+// - kcp_keb_v2_operations_deprovisioning_in_progress_total
+// - kcp_keb_v2_operations_deprovisioning_succeeded_total
+// - kcp_keb_v2_operations_update_failed_total
+// - kcp_keb_v2_operations_update_in_progress_total
+// - kcp_keb_v2_operations_update_succeeded_total
 
 const (
 	OpStatsMetricNameTemplate = "operations_%s_%s_total"
