@@ -19,7 +19,7 @@ ARG TARGETOS TARGETARCH
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
     CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -ldflags "-X github.com/kyma-project/kyma-environment-broker/cmd/broker.Version=${VERSION}" \
+    go build -ldflags "-X main.Version=${VERSION}" \
     -o /bin/kyma-env-broker ./cmd/broker/
 
 RUN touch /swagger.yaml
