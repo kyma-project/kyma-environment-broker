@@ -684,8 +684,6 @@ func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO,
 		return dbmodel.OperationDTO{}, fmt.Errorf("while marshal provisioning parameters: %w", err)
 	}
 
-	encryptionMode := s.cipher.GetEncryptionMode()
-
 	return dbmodel.OperationDTO{
 		ID:                     op.ID,
 		Type:                   op.Type,
@@ -698,7 +696,6 @@ func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO,
 		InstanceID:             op.InstanceID,
 		ProvisioningParameters: storage.StringToSQLNullString(string(pp)),
 		FinishedStages:         storage.StringToSQLNullString(strings.Join(op.FinishedStages, ",")),
-		EncryptionMode:         encryptionMode,
 	}, nil
 }
 
@@ -713,12 +710,12 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 	if provisioningParameters.ErsContext.SMOperatorCredentials != nil && strings.Contains(provisioningParameters.ErsContext.SMOperatorCredentials.ClientID, "!") {
 		slog.Warn("decrypting credentials skipped because basic auth is in a plain text")
 	} else {
-		err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters, dto.EncryptionMode)
+		err := s.cipher.DecryptSMCredentialsUsingMode(&provisioningParameters)
 		if err != nil {
 			return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
 		}
 	}
-	err := s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters, dto.EncryptionMode)
+	err := s.cipher.DecryptKubeconfigUsingMode(&provisioningParameters)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
