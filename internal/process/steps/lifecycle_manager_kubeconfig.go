@@ -82,7 +82,7 @@ func initSecret(o internal.Operation) *corev1.Secret {
 			Name:      KymaKubeconfigName(o),
 		},
 		StringData: map[string]string{
-			"config": o.Kubeconfig,
+			"config": o.ProvisioningParameters.Parameters.Kubeconfig,
 		},
 	}
 	ApplyLabelsAndAnnotationsForLM(secret, o)
