@@ -1169,3 +1169,146 @@ jobs:
           name: metrics-mixed-operations-test
           path: /tmp/keb_metrics.jsonl
           
+  run-runtimes-endpoint-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION="1.25.18"
+          else
+            make install VERSION="1.25.18"
+          fi
+          
+      - name: Start metrics collector
+        run: |
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
+
+      - name: Fetch runtimes using GET endpoint
+        run: |
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          sleep 5
+          
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+          
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          
+          SUCCESS_COUNT=0
+          for i in {1..100}; do
+            STATUS_CODE=$(curl --write-out "%{http_code}" --silent --output /dev/null \
+              --request GET \
+              --url "http://localhost:30080/runtimes" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16')
+            if [[ "$STATUS_CODE" == "200" ]]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            fi
+          done
+          SUCCESS_RATE=$((SUCCESS_COUNT * 100 / 100))
+          echo "Success rate of runtimes requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+
+          echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Number of Instances | Average Time per Page | Maximum Time per Page |" >> $GITHUB_STEP_SUMMARY
+          echo "| :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
+
+          fetch_and_measure() {
+            local num_instances=$1
+            local pages=$2
+
+            TOTAL_TIME=0
+            MAX_TIME=0
+
+            for PAGE in $(seq 1 $pages); do
+              START=$(date +%s%3N)
+              curl --silent --request GET \
+                --url "http://localhost:30080/runtimes?page=$PAGE" \
+                --header 'Content-Type: application/json' \
+                --header 'X-Broker-API-Version: 2.16' > /dev/null
+              END=$(date +%s%3N)
+              ELAPSED=$((END - START))
+              TOTAL_TIME=$((TOTAL_TIME + ELAPSED))
+              if (( ELAPSED > MAX_TIME )); then
+                MAX_TIME=$ELAPSED
+              fi
+            done
+            AVG_TIME=$((TOTAL_TIME / pages))
+
+            echo "| $num_instances | $AVG_TIME ms | $MAX_TIME ms |" >> $GITHUB_STEP_SUMMARY
+          }
+
+          # 1k
+          fetch_and_measure 1000 10
+
+          # 10k
+          for i in {1..9}; do
+            PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          done
+          fetch_and_measure 10000 100
+
+          # 100k
+          for i in {1..90}; do
+            PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          done
+          fetch_and_measure 100000 100
+
+          echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          
+          if [[ "$SUCCESS_RATE" != "100" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100"
+            exit 1
+          fi
+
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
+      - name: Stop metrics collector
+        if: always()
+        run: |
+          if [ -f /tmp/metrics_pid ]; then
+            kill $(cat /tmp/metrics_pid) 2>/dev/null || true
+          fi
+
+      - name: Upload metrics data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-runtimes-endpoint-test
+          path: /tmp/keb_metrics.jsonl
