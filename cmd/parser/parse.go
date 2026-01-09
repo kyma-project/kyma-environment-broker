@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -71,7 +70,7 @@ func (cmd *ParseCommand) Run() error {
 
 	var rulesService *rules.RulesService
 	var err error
-	allowedPlans := sets.New(maps.Keys(broker.PlanIDsMapping)...)
+	allowedPlans := sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...)
 	requiredPlans := sets.New[string]()
 	if cmd.ruleFilePath != "" {
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)

@@ -52,7 +52,7 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger *sl
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {
 		cfg := &internal.ConfigForPlan{}
-		err := step.configProvider.Provide(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], cfg) // TODO check if this is properly passed
+		err := step.configProvider.Provide(broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID)), cfg) // TODO check if this is properly passed
 		if err != nil {
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, logger,
 				fmt.Errorf("unable to get config for given version and plan"))

@@ -391,6 +391,7 @@ func (s *operations) GetNotFinishedOperationsByType(operationType internal.Opera
 	return s.toOperations(operations)
 }
 
+// TODO: If we use GROUP BY in the query, we can avoid this processing in the code
 func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationStats, error) {
 	entries, err := s.Factory.NewReadSession().GetOperationStats()
 	if err != nil {

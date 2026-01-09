@@ -43,7 +43,7 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	result.ProvisioningFinishedAt = provisioningOperation.UpdatedAt
 	result.ProvisioningState = provisioningOperation.State
 	result.PlanID = provisioningOperation.ProvisioningParameters.PlanID
-	result.PlanName = broker.PlanNamesMapping[result.PlanID]
+	result.PlanName = broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(result.PlanID))
 	result.InstanceID = provisioningOperation.InstanceID
 	result.GlobalAccountID = provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID
 	result.SubaccountID = provisioningOperation.ProvisioningParameters.ErsContext.SubAccountID

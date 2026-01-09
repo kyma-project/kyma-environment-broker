@@ -50,7 +50,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -203,7 +202,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	fatalOnError(err, log)
 	defaultOIDC := defaultOIDCValues()
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 	fatalOnError(err, log)
@@ -212,7 +211,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 
-	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	require.NoError(t, err)
 	if rulesService.ValidationInfo != nil {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
@@ -461,7 +460,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	defaultOIDC := defaultOIDCValues()
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
 	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 
@@ -818,7 +817,7 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceLabels(opId string) {
 		customresources.PlatformRegionLabel:  operation.ProvisioningParameters.PlatformRegion,
 		customresources.RegionLabel:          operation.Region,
 		customresources.CloudProviderLabel:   operation.CloudProvider,
-		customresources.PlanNameLabel:        broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
+		customresources.PlanNameLabel:        broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID)),
 	})
 }
 
@@ -946,9 +945,8 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 	return operationResponse
 }
 
-func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric, err := s.metrics.OperationStats.Metric(operationType, state, broker.PlanID(plan))
-	assert.NoError(s.t, err)
+func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan broker.PlanIDType, expected int) {
+	metric := s.metrics.OperationStats.GetCounter(operationType, state, plan)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
 }
