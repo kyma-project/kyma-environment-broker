@@ -18,7 +18,7 @@ POSTGRES_VERSION="17"
 
 DB_NAME="broker"
 DB_USER="usr"
-DB_PWD="fips-compliant-password"
+DB_PWD="FIPS-compliant-password"
 DB_PORT="5432"
 DB_SSL_PARAM="disable"
 POSTGRES_MULTIPLE_DATABASES="broker"
