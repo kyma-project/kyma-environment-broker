@@ -260,12 +260,12 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 		return internal.Instance{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.EncryptionMode)
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params)
 	if err != nil {
 		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.EncryptionMode)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params)
 
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
@@ -301,12 +301,12 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.InstanceDTO.EncryptionMode)
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params)
 	if err != nil {
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.InstanceDTO.EncryptionMode)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
@@ -452,8 +452,6 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		return dbmodel.InstanceDTO{}, fmt.Errorf("while marshaling parameters: %w", err)
 	}
 
-	encryptionMode := s.cipher.GetEncryptionMode()
-
 	return dbmodel.InstanceDTO{
 		InstanceID:                  instance.InstanceID,
 		RuntimeID:                   instance.RuntimeID,
@@ -474,7 +472,6 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		ExpiredAt:                   instance.ExpiredAt,
 		Version:                     instance.Version,
 		Provider:                    string(instance.Provider),
-		EncryptionMode:              encryptionMode,
 	}, nil
 }
 
