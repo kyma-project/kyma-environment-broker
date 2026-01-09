@@ -403,14 +403,6 @@ jobs:
           
             sleep 10
           done
-        
-      - name: Post-test monitoring period
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
-
       - name: Fetch metrics
         run: |
           sleep 15
@@ -428,12 +420,24 @@ jobs:
           fi
           echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
-          scripts/generate_charts.sh
           
           if [[ "$SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
 
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
