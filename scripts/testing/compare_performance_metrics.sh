@@ -45,11 +45,21 @@ if [ "$TOTAL_LINES" -lt 20 ]; then
 fi
 
 # Calculate baseline and post-test ranges
-# Baseline: First 5% of samples
-# Post-test: Last 5% of samples
-BASELINE_COUNT=$((TOTAL_LINES / 20))
-POST_TEST_COUNT=$((TOTAL_LINES / 20))
+# Baseline: First N samples
+# Post-test: Last N samples
+BASELINE_COUNT=50
+POST_TEST_COUNT=50
 
+# Ensure we don't exceed available samples
+if [ "$BASELINE_COUNT" -gt "$((TOTAL_LINES / 3))" ]; then
+    BASELINE_COUNT=$((TOTAL_LINES / 3))
+fi
+
+if [ "$POST_TEST_COUNT" -gt "$((TOTAL_LINES / 3))" ]; then
+    POST_TEST_COUNT=$((TOTAL_LINES / 3))
+fi
+
+# Minimum of 5 samples required
 if [ "$BASELINE_COUNT" -lt 5 ]; then
     BASELINE_COUNT=5
 fi
