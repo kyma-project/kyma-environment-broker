@@ -217,7 +217,10 @@ printf "  Peak: %.2f MiB\n" "$PEAK_MEMORY"
 printf "  Post-test: %.2f MiB\n" "$POST_TEST_MEMORY"
 printf "  Difference: %.2f MiB (%.1f%%)\n" "$MEMORY_DIFF" "$MEMORY_GROWTH_PERCENT"
 
-MEMORY_GROWTH_ABS=$(awk "BEGIN {print ($MEMORY_GROWTH_PERCENT < 0) ? -$MEMORY_GROWTH_PERCENT : $MEMORY_GROWTH_PERCENT}")
+MEMORY_GROWTH_ABS=$(awk "BEGIN {
+    val = $MEMORY_GROWTH_PERCENT;
+    print (val < 0) ? -val : val
+}")
 MEMORY_THRESHOLD_CHECK=$(awk "BEGIN {print ($MEMORY_GROWTH_ABS > $MEMORY_GROWTH_THRESHOLD_PERCENT) ? 1 : 0}")
 
 if [ "$MEMORY_THRESHOLD_CHECK" -eq 1 ]; then
@@ -237,7 +240,10 @@ printf "  Baseline: %.2f MiB\n" "$BASELINE_HEAP"
 printf "  Post-test: %.2f MiB\n" "$POST_TEST_HEAP"
 printf "  Difference: %.2f MiB (%.1f%%)\n" "$HEAP_DIFF" "$HEAP_GROWTH_PERCENT"
 
-HEAP_GROWTH_ABS=$(awk "BEGIN {print ($HEAP_GROWTH_PERCENT < 0) ? -$HEAP_GROWTH_PERCENT : $HEAP_GROWTH_PERCENT}")
+HEAP_GROWTH_ABS=$(awk "BEGIN {
+    val = $HEAP_GROWTH_PERCENT;
+    print (val < 0) ? -val : val
+}")
 HEAP_THRESHOLD_CHECK=$(awk "BEGIN {print ($HEAP_GROWTH_ABS > $MEMORY_GROWTH_THRESHOLD_PERCENT) ? 1 : 0}")
 
 if [ "$HEAP_THRESHOLD_CHECK" -eq 1 ]; then
