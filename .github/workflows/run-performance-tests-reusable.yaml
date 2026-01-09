@@ -267,3 +267,193 @@ jobs:
         with:
           name: metrics-provisioning-test
           path: /tmp/keb_metrics.jsonl
+
+  run-concurrent-update-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
+
+      - name: Prepare values.yaml
+        run: |
+          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Populate database
+        run: |
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          PORT_FORWARD_PID=$!
+          echo $PORT_FORWARD_PID
+          sleep 5
+
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+
+          kill $PORT_FORWARD_PID
+          
+      - name: Start metrics collector
+        run: |
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
+
+      - name: Provision instances
+        run: |
+          for i in $(seq 1 ${{ inputs.instances-number }}); do
+            uid=$(uuidgen)
+            curl --request PUT \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
+          done
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:30080/runtimes?plan=azure \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Simulate KIM
+        timeout-minutes: 60
+        env:
+          KIM_DELAY_SECONDS: 0
+        run: |
+          scripts/simulate_kim.sh
+          
+          RESPONSE_JSON=$(curl --request GET \
+            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16')
+          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
+
+          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
+            exit 1
+          fi
+        
+      - name: Update instances
+        timeout-minutes: 60
+        run: |
+          PAGE=1
+          
+          while true; do
+            RESPONSE=$(curl --request GET \
+              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16')
+          
+            COUNT=$(echo "$RESPONSE" | jq '.count')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+          
+            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
+              curl --request PATCH \
+                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+                --header "Content-Type: application/json" \
+                --header "X-Broker-API-Version: 2.16" \
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
+            done
+          
+            PAGE=$((PAGE + 1))
+          done
+          
+          while true; do
+            UPDATED_COUNT=$(curl --request GET \
+              --url "http://localhost:30080/runtimes?plan=azure&state=succeeded,failed" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          
+            if [ "$UPDATED_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+              echo "All instances are updated. Done."
+              break
+            fi
+          
+            sleep 10
+          done
+        
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Fetch metrics
+        run: |
+          sleep 15
+          
+          METRICS=$(curl -s http://localhost:30080/metrics)
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
+          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          
+          scripts/generate_charts.sh
+          
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
+      - name: Stop metrics collector
+        if: always()
+        run: |
+          if [ -f /tmp/metrics_pid ]; then
+            kill $(cat /tmp/metrics_pid) 2>/dev/null || true
+          fi
+
+      - name: Upload metrics data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-update-test
+          path: /tmp/keb_metrics.jsonl
