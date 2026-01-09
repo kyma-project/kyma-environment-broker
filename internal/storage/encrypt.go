@@ -3,10 +3,8 @@ package storage
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -69,23 +67,6 @@ func (e *Encrypter) EncryptKubeconfig(provisioningParameters *internal.Provision
 	return nil
 }
 
-func (e *Encrypter) encryptCFB(data []byte) ([]byte, error) {
-	block, err := aes.NewCipher(e.key)
-	if err != nil {
-		return nil, err
-	}
-	b := base64.StdEncoding.EncodeToString(data)
-	bytes := make([]byte, aes.BlockSize+len(b))
-	iv := bytes[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-	cfb := cipher.NewCFBEncrypter(block, iv)
-	cfb.XORKeyStream(bytes[aes.BlockSize:], []byte(b))
-
-	return []byte(base64.StdEncoding.EncodeToString(bytes)), nil
-}
-
 func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 	aes, err := aes.NewCipher(e.key)
 	if err != nil {
@@ -101,29 +82,6 @@ func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 
 // Decryption
 type DecryptFunc func(data []byte) ([]byte, error)
-
-func (e *Encrypter) decryptCFB(data []byte) ([]byte, error) {
-	data, err := base64.StdEncoding.DecodeString(string(data))
-	if err != nil {
-		return nil, fmt.Errorf("while decoding input object: %w", err)
-	}
-	block, err := aes.NewCipher(e.key)
-	if err != nil {
-		return nil, err
-	}
-	if len(data) < aes.BlockSize {
-		return nil, fmt.Errorf("cipher text is too short")
-	}
-	iv := data[:aes.BlockSize]
-	data = data[aes.BlockSize:]
-	cfb := cipher.NewCFBDecrypter(block, iv)
-	cfb.XORKeyStream(data, data)
-	decryptedData, err := base64.StdEncoding.DecodeString(string(data))
-	if err != nil {
-		return nil, fmt.Errorf("while decoding internal object: %w", err)
-	}
-	return decryptedData, nil
-}
 
 func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 	ciphertext, err := base64.StdEncoding.DecodeString(string(ciphertext))

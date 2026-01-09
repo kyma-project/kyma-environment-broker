@@ -15,52 +15,6 @@ type testDto struct {
 	Data string `json:"data"`
 }
 
-func TestNewEncrypterInGCMWriteMode(t *testing.T) {
-	secretKey := rand.String(32)
-
-	e := NewEncrypter(secretKey)
-
-	t.Run("encrypt json", func(t *testing.T) {
-
-		dto := testDto{
-			Data: secretKey,
-		}
-
-		j, err := json.Marshal(&dto)
-		require.NoError(t, err)
-
-		cipherText, err := e.Encrypt(j)
-		require.NoError(t, err)
-		assert.NotEqual(t, j, cipherText)
-
-		cipherText, err = e.decryptGCM(cipherText)
-		require.NoError(t, err)
-		assert.Equal(t, j, cipherText)
-
-		_, err = e.decryptCFB(cipherText)
-		require.Error(t, err)
-
-		err = json.Unmarshal(cipherText, &dto)
-		require.NoError(t, err)
-	})
-
-	t.Run("encrypt string", func(t *testing.T) {
-		dto := []byte("test")
-
-		cipherText, err := e.Encrypt(dto)
-		require.NoError(t, err)
-		assert.NotEqual(t, dto, cipherText)
-
-		cipherText, err = e.decryptGCM(cipherText)
-		require.NoError(t, err)
-		assert.Equal(t, dto, cipherText)
-
-		_, err = e.decryptCFB(cipherText)
-		require.Error(t, err)
-	})
-
-}
-
 func TestInvalidKey(t *testing.T) {
 	secretKey := "1"
 

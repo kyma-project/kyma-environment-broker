@@ -1,13 +1,11 @@
 package postsql_test
 
 import (
-	"fmt"
 	"math"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -302,143 +300,4 @@ func TestBinding_ModeGCM(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, retrievedBinding)
 	assert.Equal(t, fixedBinding.Kubeconfig, retrievedBinding.Kubeconfig)
-}
-
-func TestListBindingsEncryptedUsingCFB_ReturnsBindingsSuccessfully(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	binding1 := fixture.FixBinding("binding-1")
-	binding1.Kubeconfig = "kubeconfig-1"
-	binding2 := fixture.FixBinding("binding-2")
-	binding2.Kubeconfig = "kubeconfig-2"
-
-	// when
-	err = brokerStorage.Bindings().Insert(&binding1)
-	require.NoError(t, err)
-	err = brokerStorage.Bindings().Insert(&binding2)
-	require.NoError(t, err)
-
-	// when
-	bindings, err := brokerStorage.Bindings().ListBindingsEncryptedUsingCFB(10)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, 2, len(bindings))
-
-	// Verify bindings are present (order may vary)
-	bindingMap := map[string]internal.Binding{}
-	for _, b := range bindings {
-		bindingMap[b.ID] = b
-	}
-
-	assert.Contains(t, bindingMap, "binding-1")
-	assert.Contains(t, bindingMap, "binding-2")
-	assert.Equal(t, "kubeconfig-1", bindingMap["binding-1"].Kubeconfig)
-	assert.Equal(t, "kubeconfig-2", bindingMap["binding-2"].Kubeconfig)
-}
-
-func TestListBindingsEncryptedUsingCFB_ReturnsEmptyListWhenNoBindings(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	// when
-	bindings, err := brokerStorage.Bindings().ListBindingsEncryptedUsingCFB(10)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, 0, len(bindings))
-}
-
-func TestListBindingsEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	// Insert 5 bindings
-	for i := 1; i <= 5; i++ {
-		binding := fixture.FixBinding(fmt.Sprintf("binding-%d", i))
-		err = brokerStorage.Bindings().Insert(&binding)
-		require.NoError(t, err)
-	}
-
-	// when
-	bindings, err := brokerStorage.Bindings().ListBindingsEncryptedUsingCFB(2)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, 2, len(bindings))
-}
-
-func TestListBindingsEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	binding := fixture.FixBinding("binding-1")
-	binding.Kubeconfig = "encrypted-kubeconfig-data"
-
-	// when
-	err = brokerStorage.Bindings().Insert(&binding)
-	require.NoError(t, err)
-
-	// when
-	bindings, err := brokerStorage.Bindings().ListBindingsEncryptedUsingCFB(10)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, 1, len(bindings))
-	assert.Equal(t, binding.Kubeconfig, bindings[0].Kubeconfig)
-}
-
-func TestReEncryptBinding_PreservesBindingMetadata(t *testing.T) {
-	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
-	require.NoError(t, err)
-	defer func() {
-		err := storageCleanup()
-		assert.NoError(t, err)
-	}()
-
-	binding := fixture.FixBinding("binding-1")
-	binding.CreatedBy = "test-user"
-	binding.ExpirationSeconds = 3600
-
-	// when
-	err = brokerStorage.Bindings().Insert(&binding)
-	require.NoError(t, err)
-
-	err = brokerStorage.Bindings().ReEncryptBinding(&binding)
-
-	// then
-	require.NoError(t, err)
-
-	retrievedBinding, err := brokerStorage.Bindings().Get(binding.InstanceID, binding.ID)
-	require.NoError(t, err)
-	assert.Equal(t, "binding-1", retrievedBinding.ID)
-	assert.Equal(t, "test-user", retrievedBinding.CreatedBy)
-	assert.Equal(t, int64(3600), retrievedBinding.ExpirationSeconds)
 }
