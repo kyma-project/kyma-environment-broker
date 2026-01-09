@@ -1251,7 +1251,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 func TestInstance_ModeCFB(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1284,7 +1284,7 @@ func TestInstance_ModeCFB(t *testing.T) {
 
 func TestInstance_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################")
 	encrypter.SetWriteGCMMode(true)
 
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
@@ -1319,7 +1319,7 @@ func TestInstance_ModeGCM(t *testing.T) {
 
 func TestInstance_BothModes(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1483,7 +1483,7 @@ func fixInstance(testData instanceData) *internal.Instance {
 
 func TestListInstancesEncryptedUsingCFB_ReturnsInstancesSuccessfully(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1535,7 +1535,7 @@ func TestListInstancesEncryptedUsingCFB_ReturnsInstancesSuccessfully(t *testing.
 
 func TestListInstancesEncryptedUsingCFB_ReturnsEmptyListWhenNoInstances(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1553,7 +1553,7 @@ func TestListInstancesEncryptedUsingCFB_ReturnsEmptyListWhenNoInstances(t *testi
 
 func TestListInstancesEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1578,7 +1578,7 @@ func TestListInstancesEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
 
 func TestListInstancesEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1612,7 +1612,7 @@ func TestListInstancesEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
 
 func TestListInstancesEncryptedUsingCFB_ReturnsCFBEncryptedInstancesOnly(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1642,7 +1642,7 @@ func TestListInstancesEncryptedUsingCFB_ReturnsCFBEncryptedInstancesOnly(t *test
 
 func TestListInstancesEncryptedUsingCFB_PreservesInstanceFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1673,7 +1673,7 @@ func TestListInstancesEncryptedUsingCFB_PreservesInstanceFields(t *testing.T) {
 
 func TestListInstancesEncryptedUsingCFB_HandlesMultipleSensitiveFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1707,7 +1707,7 @@ func TestListInstancesEncryptedUsingCFB_HandlesMultipleSensitiveFields(t *testin
 
 func TestReEncryptInstance_SuccessfullyReEncryptsInstance(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1749,7 +1749,7 @@ func TestReEncryptInstance_SuccessfullyReEncryptsInstance(t *testing.T) {
 
 func TestReEncryptInstance_PreservesInstanceMetadata(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1787,7 +1787,7 @@ func TestReEncryptInstance_PreservesInstanceMetadata(t *testing.T) {
 
 func TestReEncryptInstance_ReEncryptsFromCFBToGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1836,7 +1836,7 @@ func TestReEncryptInstance_ReEncryptsFromCFBToGCM(t *testing.T) {
 
 func TestReEncryptInstance_PreservesEncryptedDataAfterReencryption(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1872,7 +1872,7 @@ func TestReEncryptInstance_PreservesEncryptedDataAfterReencryption(t *testing.T)
 
 func TestReEncryptInstance_ReturnsErrorForNonExistentInstance(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -1892,7 +1892,7 @@ func TestReEncryptInstance_ReturnsErrorForNonExistentInstance(t *testing.T) {
 
 func TestReEncryptInstance_HandlesMultipleReencryptions(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {

@@ -570,7 +570,7 @@ func TestOperation(t *testing.T) {
 
 func TestOperation_ModeCFB(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -608,7 +608,7 @@ func TestOperation_ModeCFB(t *testing.T) {
 
 func TestOperation_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################")
 	encrypter.SetWriteGCMMode(true)
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
@@ -650,7 +650,7 @@ func TestOperation_ModeGCM(t *testing.T) {
 
 func TestOperation_BothModes(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -749,7 +749,7 @@ func TestOperation_BothModes(t *testing.T) {
 
 func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -767,7 +767,7 @@ func TestListOperationsEncryptedUsingCFB_ReturnsEmptyListWhenNoOperations(t *tes
 
 func TestListOperationsEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -792,7 +792,7 @@ func TestListOperationsEncryptedUsingCFB_RespectsBatchSize(t *testing.T) {
 
 func TestListOperationsEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -826,7 +826,7 @@ func TestListOperationsEncryptedUsingCFB_HandlesEncryptedData(t *testing.T) {
 
 func TestListOperationsEncryptedUsingCFB_ReturnsCFBEncryptedOperationsOnly(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -856,7 +856,7 @@ func TestListOperationsEncryptedUsingCFB_ReturnsCFBEncryptedOperationsOnly(t *te
 
 func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -886,7 +886,7 @@ func TestListOperationsEncryptedUsingCFB_PreservesOperationFields(t *testing.T) 
 
 func TestReEncryptOperation_PreservesNonEncryptedFields(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -933,7 +933,7 @@ func TestReEncryptOperation_PreservesNonEncryptedFields(t *testing.T) {
 
 func TestReEncryptOperation_ReturnsErrorForNonExistentOperation(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", true)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {
@@ -952,7 +952,7 @@ func TestReEncryptOperation_ReturnsErrorForNonExistentOperation(t *testing.T) {
 
 func TestReEncryptedOperation_UpdatesEncryptionForCFBMode(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################", false)
+	encrypter := storage.NewEncrypter("################################")
 	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
 	require.NoError(t, err)
 	defer func() {

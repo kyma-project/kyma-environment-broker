@@ -78,7 +78,7 @@ func initAll(ctx context.Context, cfg Config) (*http.Client, storage.BrokerStora
 	db, connection, err := storage.NewFromConfig(
 		cfg.Database,
 		events.Config{},
-		storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm),
+		storage.NewEncrypter(cfg.Database.SecretKey),
 	)
 
 	if err != nil {
