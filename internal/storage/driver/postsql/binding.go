@@ -75,39 +75,6 @@ func (s *Binding) Update(binding *internal.Binding) error {
 	return nil
 }
 
-func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
-	dtos, err := s.Factory.NewReadSession().ListBindingsEncryptedUsingCFB(batchSize)
-	if err != nil {
-		return []internal.Binding{}, err
-	}
-	var bindings []internal.Binding
-	for _, dto := range dtos {
-		binding, err := s.toBinding(dto)
-		if err != nil {
-			return []internal.Binding{}, err
-		}
-
-		bindings = append(bindings, binding)
-	}
-	return bindings, err
-}
-
-func (s *Binding) ReEncryptBinding(binding *internal.Binding) error {
-	dto, err := s.toBindingDTO(binding)
-	if err != nil {
-		return err
-	}
-
-	sess := s.Factory.NewWriteSession()
-	err = sess.UpdateEncryptedDataInBinding(dto)
-
-	if err != nil {
-		return fmt.Errorf("while updating binding encrypted data with ID %s: %w", binding.ID, err)
-	}
-
-	return nil
-}
-
 func (s *Binding) Delete(instanceID, bindingID string) error {
 	sess := s.Factory.NewWriteSession()
 	return sess.DeleteBinding(instanceID, bindingID)
@@ -162,8 +129,6 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		return dbmodel.BindingDTO{}, fmt.Errorf("while encrypting kubeconfig: %w", err)
 	}
 
-	encryptionMode := s.cipher.GetEncryptionMode()
-
 	return dbmodel.BindingDTO{
 		Kubeconfig:        string(encrypted),
 		ID:                binding.ID,
@@ -172,12 +137,11 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		ExpirationSeconds: binding.ExpirationSeconds,
 		CreatedBy:         binding.CreatedBy,
 		ExpiresAt:         binding.ExpiresAt,
-		EncryptionMode:    encryptionMode,
 	}, nil
 }
 
 func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
-	decrypted, err := s.cipher.DecryptUsingMode([]byte(dto.Kubeconfig), dto.EncryptionMode)
+	decrypted, err := s.cipher.DecryptUsingMode([]byte(dto.Kubeconfig))
 	if err != nil {
 		return internal.Binding{}, fmt.Errorf("while decrypting kubeconfig: %w", err)
 	}

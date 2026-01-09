@@ -25,7 +25,6 @@ type BrokerStorage interface {
 	Bindings() Bindings
 	Actions() Actions
 	TimeZones() TimeZones
-	EncryptionModeStats() EncryptionModeStats
 }
 
 const (
@@ -53,15 +52,14 @@ func NewFromConfigAndConnectionURL(cfg Config, evcfg events.Config, cipher postg
 
 	operation := postgres.NewOperation(factory, cipher)
 	return storage{
-		instance:            postgres.NewInstance(factory, operation, cipher),
-		operation:           operation,
-		events:              events.New(evcfg, eventstorage.New(factory)),
-		subaccountStates:    postgres.NewSubaccountStates(factory),
-		instancesArchived:   postgres.NewInstanceArchived(factory),
-		bindings:            postgres.NewBinding(factory, cipher),
-		actions:             postgres.NewAction(factory),
-		timezones:           postgres.NewTimeZones(factory),
-		encryptionModeStats: postgres.NewEncryptionModeStats(factory),
+		instance:          postgres.NewInstance(factory, operation, cipher),
+		operation:         operation,
+		events:            events.New(evcfg, eventstorage.New(factory)),
+		subaccountStates:  postgres.NewSubaccountStates(factory),
+		instancesArchived: postgres.NewInstanceArchived(factory),
+		bindings:          postgres.NewBinding(factory, cipher),
+		actions:           postgres.NewAction(factory),
+		timezones:         postgres.NewTimeZones(factory),
 	}, connection, nil
 }
 
@@ -128,15 +126,14 @@ func requiredContains[T comparable](el *T, sl []T) bool {
 }
 
 type storage struct {
-	instance            Instances
-	operation           Operations
-	events              Events
-	subaccountStates    SubaccountStates
-	instancesArchived   InstancesArchived
-	bindings            Bindings
-	actions             Actions
-	timezones           TimeZones
-	encryptionModeStats EncryptionModeStats
+	instance          Instances
+	operation         Operations
+	events            Events
+	subaccountStates  SubaccountStates
+	instancesArchived InstancesArchived
+	bindings          Bindings
+	actions           Actions
+	timezones         TimeZones
 }
 
 func (s storage) Instances() Instances {
@@ -176,7 +173,3 @@ func (s storage) Actions() Actions {
 }
 
 func (s storage) TimeZones() TimeZones { return s.timezones }
-
-func (s storage) EncryptionModeStats() EncryptionModeStats {
-	return s.encryptionModeStats
-}

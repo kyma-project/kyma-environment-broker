@@ -43,7 +43,7 @@ func main() {
 	brokerClient := broker.NewClientWithRequestTimeoutAndRetries(ctx, cfg.Broker, cfg.Job.RequestTimeout, cfg.Job.RequestRetries)
 	brokerClient.UserAgent = broker.ServiceBindingCleanupJobName
 
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
 

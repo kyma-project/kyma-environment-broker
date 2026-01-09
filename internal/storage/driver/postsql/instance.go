@@ -24,33 +24,6 @@ type Instance struct {
 	cipher     Cipher
 }
 
-func (s *Instance) ListInstancesEncryptedUsingCFB(batchSize int) ([]internal.Instance, error) {
-	var instances []dbmodel.InstanceDTO
-	var err error
-	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		var sessionError error
-		instances, sessionError = s.Factory.NewReadSession().ListInstancesEncryptedUsingCFB(batchSize)
-		if sessionError != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var result []internal.Instance
-	for _, dto := range instances {
-		instance, err := s.toInstance(dto)
-		if err != nil {
-			return []internal.Instance{}, err
-		}
-		result = append(result, instance)
-	}
-
-	return result, nil
-}
-
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	sess := s.Factory.NewReadSession()
 	var (
@@ -260,12 +233,12 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 		return internal.Instance{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.EncryptionMode)
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params)
 	if err != nil {
 		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.EncryptionMode)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params)
 
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
@@ -301,12 +274,12 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptSMCredentialsUsingMode(&params, dto.InstanceDTO.EncryptionMode)
+	err = s.cipher.DecryptSMCredentialsUsingMode(&params)
 	if err != nil {
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	err = s.cipher.DecryptKubeconfigUsingMode(&params, dto.InstanceDTO.EncryptionMode)
+	err = s.cipher.DecryptKubeconfigUsingMode(&params)
 	if err != nil {
 		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
@@ -403,41 +376,6 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 	return &instance, nil
 }
 
-func (s *Instance) ReEncryptInstance(instance internal.Instance) error {
-	sess := s.Factory.NewWriteSession()
-	dto, err := s.toInstanceDTO(instance)
-	if err != nil {
-		return err
-	}
-	var lastErr dberr.Error
-	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		lastErr = sess.UpdateEncryptedDataInInstance(dto)
-
-		switch {
-		case dberr.IsNotFound(lastErr):
-			_, lastErr = s.Factory.NewReadSession().GetInstanceByID(instance.InstanceID)
-			if dberr.IsNotFound(lastErr) {
-				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
-			}
-			if lastErr != nil {
-				return false, nil
-			}
-
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("instance update conflict, instance ID: %s", instance.InstanceID)
-			return false, lastErr
-		case lastErr != nil:
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return lastErr
-	}
-	instance.Version = instance.Version + 1
-	return nil
-}
-
 func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDTO, error) {
 	err := s.cipher.EncryptSMCredentials(&instance.Parameters)
 	if err != nil {
@@ -451,8 +389,6 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 	if err != nil {
 		return dbmodel.InstanceDTO{}, fmt.Errorf("while marshaling parameters: %w", err)
 	}
-
-	encryptionMode := s.cipher.GetEncryptionMode()
 
 	return dbmodel.InstanceDTO{
 		InstanceID:                  instance.InstanceID,
@@ -474,7 +410,6 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 		ExpiredAt:                   instance.ExpiredAt,
 		Version:                     instance.Version,
 		Provider:                    string(instance.Provider),
-		EncryptionMode:              encryptionMode,
 	}, nil
 }
 

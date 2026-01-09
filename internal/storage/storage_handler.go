@@ -23,7 +23,7 @@ const (
 // TODO use Options pattern to configure test storage (e.g. with encrypter, connection url, etc.)
 func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 	connectionURL := config.ConnectionURL()
-	encrypter := NewEncrypter(config.SecretKey, config.Fips.WriteGcm)
+	encrypter := NewEncrypter(config.SecretKey)
 	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
 }
 
@@ -33,7 +33,7 @@ func GetStorageForTestWithMutableEncrypter(config Config, encrypter *Encrypter) 
 }
 
 func GetStorageForTestUsingConnectionURL(config Config, connectionURL string) (func() error, BrokerStorage, error) {
-	encrypter := NewEncrypter(config.SecretKey, config.Fips.WriteGcm)
+	encrypter := NewEncrypter(config.SecretKey)
 	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
 }
 

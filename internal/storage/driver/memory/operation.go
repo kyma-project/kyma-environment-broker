@@ -31,16 +31,6 @@ func NewOperation() *operations {
 	}
 }
 
-func (s *operations) ReEncryptOperation(operation internal.Operation) error {
-	//TODO implement me - for now this is just the stub to satisfy the interface
-	panic("implement me")
-}
-
-func (s *operations) ListOperationsEncryptedUsingCFB(batchSize int) ([]internal.Operation, error) {
-	//TODO implement me - for now this is just the stub to satisfy the interface
-	panic("implement me")
-}
-
 func (s *operations) DeleteByID(operationID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
