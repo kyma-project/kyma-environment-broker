@@ -17,6 +17,7 @@ jobs:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
       context: .
+      build-args: VERSION=PR-${{ github.event.pull_request.number }}
 
    environments-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
