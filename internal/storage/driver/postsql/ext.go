@@ -13,7 +13,4 @@ type Cipher interface {
 	// methods used to encrypt/decrypt kubeconfig
 	EncryptKubeconfig(pp *internal.ProvisioningParameters) error
 	DecryptKubeconfigUsingMode(pp *internal.ProvisioningParameters, encryptionMode string) error
-
-	GetWriteGCMMode() bool
-	GetEncryptionMode() string
 }
