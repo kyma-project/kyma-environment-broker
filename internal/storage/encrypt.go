@@ -189,7 +189,7 @@ func (e *Encrypter) decryptSMCredentials(provisioningParameters *internal.Provis
 	return nil
 }
 
-func (e *Encrypter) DecryptKubeconfigUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
+func (e *Encrypter) DecryptKubeconfigUsingMode(provisioningParameters *internal.ProvisioningParameters) error {
 	return e.decryptKubeconfig(provisioningParameters, e.decryptGCM)
 }
 

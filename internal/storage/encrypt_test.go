@@ -129,14 +129,14 @@ func TestDecryptSMCredentialsUsingModeWithNilCredentials(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptSMCredentialsUsingMode(params, EncryptionModeCFB)
+	err := e.DecryptSMCredentialsUsingMode(params)
 	require.NoError(t, err)
 	assert.Nil(t, params.ErsContext.SMOperatorCredentials)
 }
 
 func TestDecryptSMCredentialsUsingModeWithEmptyCredentials(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
+	e := NewEncrypter(secretKey)
 
 	params := &internal.ProvisioningParameters{
 		ErsContext: internal.ERSContext{
@@ -147,36 +147,15 @@ func TestDecryptSMCredentialsUsingModeWithEmptyCredentials(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptSMCredentialsUsingMode(params, EncryptionModeCFB)
+	err := e.DecryptSMCredentialsUsingMode(params)
 	require.NoError(t, err)
 	assert.Equal(t, "", params.ErsContext.SMOperatorCredentials.ClientID)
 	assert.Equal(t, "", params.ErsContext.SMOperatorCredentials.ClientSecret)
 }
 
-func TestDecryptKubeconfigUsingCFBMode(t *testing.T) {
-	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
-
-	params := &internal.ProvisioningParameters{
-		Parameters: runtime.ProvisioningParametersDTO{
-			Kubeconfig: "kubeconfig-cfb-content",
-		},
-	}
-
-	err := e.EncryptKubeconfig(params)
-	require.NoError(t, err)
-
-	encryptedKubeconfig := params.Parameters.Kubeconfig
-	assert.NotEqual(t, "kubeconfig-cfb-content", encryptedKubeconfig)
-
-	err = e.DecryptKubeconfigUsingMode(params, EncryptionModeCFB)
-	require.NoError(t, err)
-	assert.Equal(t, "kubeconfig-cfb-content", params.Parameters.Kubeconfig)
-}
-
 func TestDecryptKubeconfigUsingGCMMode(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, true)
+	e := NewEncrypter(secretKey)
 
 	params := &internal.ProvisioningParameters{
 
@@ -191,14 +170,14 @@ func TestDecryptKubeconfigUsingGCMMode(t *testing.T) {
 	encryptedKubeconfig := params.Parameters.Kubeconfig
 	assert.NotEqual(t, "kubeconfig-gcm-content", encryptedKubeconfig)
 
-	err = e.DecryptKubeconfigUsingMode(params, EncryptionModeGCM)
+	err = e.DecryptKubeconfigUsingMode(params)
 	require.NoError(t, err)
 	assert.Equal(t, "kubeconfig-gcm-content", params.Parameters.Kubeconfig)
 }
 
 func TestDecryptKubeconfigUsingModeWithEmptyKubeconfig(t *testing.T) {
 	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
+	e := NewEncrypter(secretKey)
 
 	params := &internal.ProvisioningParameters{
 		Parameters: runtime.ProvisioningParametersDTO{
@@ -206,71 +185,7 @@ func TestDecryptKubeconfigUsingModeWithEmptyKubeconfig(t *testing.T) {
 		},
 	}
 
-	err := e.DecryptKubeconfigUsingMode(params, EncryptionModeCFB)
+	err := e.DecryptKubeconfigUsingMode(params)
 	require.NoError(t, err)
 	assert.Equal(t, "", params.Parameters.Kubeconfig)
-}
-
-func TestDecryptSMCredentialsUsingModeWithDefaultFallbackToCFB(t *testing.T) {
-	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
-
-	params := &internal.ProvisioningParameters{
-		ErsContext: internal.ERSContext{
-			SMOperatorCredentials: &internal.ServiceManagerOperatorCredentials{
-				ClientID:     "default-client-id",
-				ClientSecret: "default-client-secret",
-			},
-		},
-	}
-
-	err := e.EncryptSMCredentials(params)
-	require.NoError(t, err)
-
-	err = e.DecryptSMCredentialsUsingMode(params, "unknown-mode")
-	require.NoError(t, err)
-	assert.Equal(t, "default-client-id", params.ErsContext.SMOperatorCredentials.ClientID)
-	assert.Equal(t, "default-client-secret", params.ErsContext.SMOperatorCredentials.ClientSecret)
-}
-
-func TestDecryptKubeconfigUsingModeWithDefaultFallbackToCFB(t *testing.T) {
-	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
-
-	params := &internal.ProvisioningParameters{
-		Parameters: runtime.ProvisioningParametersDTO{
-			Kubeconfig: "default-kubeconfig",
-		},
-	}
-
-	err := e.EncryptKubeconfig(params)
-	require.NoError(t, err)
-
-	err = e.DecryptKubeconfigUsingMode(params, "unknown-mode")
-	require.NoError(t, err)
-	assert.Equal(t, "default-kubeconfig", params.Parameters.Kubeconfig)
-}
-
-func TestEncryptAndDecryptWithDifferentModes(t *testing.T) {
-	secretKey := rand.String(32)
-	e := NewEncrypter(secretKey, false)
-
-	data := []byte("mixed mode test data")
-
-	cfbEncrypted, err := e.encryptCFB(data)
-	require.NoError(t, err)
-
-	e.SetWriteGCMMode(true)
-	gcmEncrypted, err := e.encryptGCM(data)
-	require.NoError(t, err)
-
-	assert.NotEqual(t, cfbEncrypted, gcmEncrypted)
-
-	cfbDecrypted, err := e.DecryptUsingMode(cfbEncrypted, EncryptionModeCFB)
-	require.NoError(t, err)
-	assert.Equal(t, data, cfbDecrypted)
-
-	gcmDecrypted, err := e.DecryptUsingMode(gcmEncrypted, EncryptionModeGCM)
-	require.NoError(t, err)
-	assert.Equal(t, data, gcmDecrypted)
 }
