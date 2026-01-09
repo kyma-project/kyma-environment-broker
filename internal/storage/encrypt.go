@@ -151,11 +151,11 @@ func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (e *Encrypter) DecryptUsingMode(data []byte, encryptionMode string) ([]byte, error) {
+func (e *Encrypter) DecryptUsingMode(data []byte) ([]byte, error) {
 	return e.decryptGCM(data)
 }
 
-func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *internal.ProvisioningParameters, encryptionMode string) error {
+func (e *Encrypter) DecryptSMCredentialsUsingMode(provisioningParameters *internal.ProvisioningParameters) error {
 	return e.decryptSMCredentials(provisioningParameters, e.decryptGCM)
 }
 

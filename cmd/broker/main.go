@@ -279,7 +279,7 @@ func main() {
 		fatalOnError(err, log)
 	}
 
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
 	// create storage
 	var db storage.BrokerStorage
