@@ -288,9 +288,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
+            make install VERSION="1.25.18"
           else
-            make install VERSION=PR-${{ inputs.version }}
+            make install VERSION="1.25.18"
           fi
 
       - name: Populate database
