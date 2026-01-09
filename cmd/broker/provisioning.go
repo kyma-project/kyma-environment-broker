@@ -36,20 +36,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
 
-	//provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
-	//	checkRuntimeStageName, syncKubeconfigStageName, injectBTPOperatorCredentialsStageName, createKymaResourceStageName})
-	/*
-				The provisioning process contains the following stages:
-				1. "start" - changes the state from pending to in progress if no deprovisioning is ongoing.
-				2. "create_runtime" - collects all information needed to make an input (Runtime resource) for Infrastructure Manager.
-				3. "check_runtime_resource" - checks if the Runtime resource is ready
-				4. "sync_kubeconfig" - create a secret with kubeconfig if needed
-		        5. "inject_btp_operator_credentials" - inject BTP Operator credentials if provide
-		        6. "create_kyma_resource" - creates the Kyma resource
-
-				Once the stage is done it will never be retried.
-	*/
-
 	provisioningSteps := []struct {
 		disabled  bool
 		step      process.Step
