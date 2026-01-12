@@ -16,7 +16,7 @@ func TestConfig_ConnectionURL(t *testing.T) {
 			name: "default config",
 			config: Config{
 				User:     "postgres",
-				Password: "FIPS-compl1antPwd!",
+				Password: "password",
 				Host:     "localhost",
 				Port:     "5432",
 				Name:     "broker",
@@ -28,7 +28,7 @@ func TestConfig_ConnectionURL(t *testing.T) {
 			name: "with SSL enabled",
 			config: Config{
 				User:        "postgres",
-				Password:    "FIPS-compl1antPwd!",
+				Password:    "password",
 				Host:        "localhost",
 				Port:        "5432",
 				Name:        "broker",
@@ -41,7 +41,7 @@ func TestConfig_ConnectionURL(t *testing.T) {
 			name: "with SSL enabled",
 			config: Config{
 				User:        "postgres",
-				Password:    "FIPS-compl1antPwd!",
+				Password:    "password",
 				Host:        "localhost",
 				Port:        "5432",
 				Name:        "broker",
