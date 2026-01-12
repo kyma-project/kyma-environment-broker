@@ -85,7 +85,7 @@ on:
         required: false
       version:
         description: 'Release version'
-        default: 'main'
+        default: ''
         required: false
 jobs:
   run-performance-tests:
@@ -106,7 +106,6 @@ jobs:
       deprovisioning-workers-amount: ${{ github.event.inputs.deprovisioning-workers-amount }}
       baseline-monitoring-minutes: ${{ github.event.inputs.baseline-monitoring-minutes }}
       post-test-monitoring-minutes: ${{ github.event.inputs.post-test-monitoring-minutes }}
-      test-duration-minutes: ${{ github.event.inputs.test-duration-minutes }}
       memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent }}
       goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold }}
       fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold }}

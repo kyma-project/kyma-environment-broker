@@ -28,10 +28,6 @@ on:
         description: 'Duration of post-test monitoring after tests (minutes)'
         default: '2'
         type: string
-      test-duration-minutes:
-        description: 'Duration for each test to run (minutes, 0 means run until completion)'
-        default: '2'
-        type: string
 
       # Test Configuration
       instances-number:
@@ -78,11 +74,11 @@ on:
       # Release Configuration
       release:
         description: 'Determines if the workflow is called from release'
-        default: 'true'
+        default: 'false'
         type: string
       version:
         description: 'Release version'
-        default: '0.0.0.0'
+        default: ''
         type: string
 
 jobs:
@@ -127,9 +123,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
 
       - name: Populate database
@@ -161,49 +157,26 @@ jobs:
 
       - name: Provision instances
         run: |
-          START_TIME=$(date +%s)
-          TEST_DURATION_SECONDS=$((${{ inputs.test-duration-minutes }} * 60))
-          
-          if [ "$TEST_DURATION_SECONDS" -gt 0 ]; then
-            echo "Running provisioning test for ${{ inputs.test-duration-minutes }} minutes..."
-            
-            while true; do
-              ELAPSED=$(($(date +%s) - START_TIME))
-              if [ $ELAPSED -ge $TEST_DURATION_SECONDS ]; then
-                echo "Test duration reached, stopping provisioning requests"
-                break
-              fi
-              
-              for i in $(seq 1 ${{ inputs.instances-number }}); do
-                uid=$(uuidgen)
-                curl --request PUT \
-                  --url http://localhost:30080/oauth/v2/service_instances/$uid \
-                  --header "Content-Type: application/json" \
-                  --header "X-Broker-API-Version: 2.16" \
-                  --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-              done
-              
-              echo "Provisioned batch of ${{ inputs.instances-number }} instances, elapsed: ${ELAPSED}s"
-              sleep 10
-            done
-          else
-            echo "Running provisioning test once..."
-            for i in $(seq 1 ${{ inputs.instances-number }}); do
-              uid=$(uuidgen)
-              curl --request PUT \
-                --url http://localhost:30080/oauth/v2/service_instances/$uid \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-            done
-          fi
-          
+          for i in $(seq 1 ${{ inputs.instances-number }}); do
+            uid=$(uuidgen)
+            curl --request PUT \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
+          done
+
           TOTAL_COUNT=$(curl --request GET \
             --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
-          echo "Total instances created: $TOTAL_COUNT"
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
       
       - name: Simulate KIM
         timeout-minutes: 60
@@ -247,7 +220,7 @@ jobs:
           
           scripts/generate_charts.sh
           
-          if [[ "$SUCCESS_RATE" != "100.00" ]] && [[ "${{ inputs.test-duration-minutes }}" == "0" ]]; then
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
@@ -287,17 +260,17 @@ jobs:
 
       - name: Prepare values.yaml
         run: |
-          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
           yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
           yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
 
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
 
       - name: Populate database
@@ -488,9 +461,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
 
       - name: Populate database
@@ -647,17 +620,17 @@ jobs:
 
       - name: Prepare values.yaml
         run: |
-          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
           yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
           yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
 
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
 
       - name: Populate database
@@ -863,9 +836,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
 
       - name: Populate database
@@ -1191,9 +1164,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="1.25.18"
+            make install VERSION="${{ inputs.version }}"
           else
-            make install VERSION="1.25.18"
+            make install VERSION=PR-"${{ inputs.version }}"
           fi
           
       - name: Start metrics collector
