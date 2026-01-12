@@ -3,6 +3,7 @@ name: Run performance tests (reusable)
 on:
   workflow_call:
     inputs:
+      # Release Configuration
       release:
         description: 'Determines if the workflow is called from release'
         default: 'true'
@@ -11,41 +12,33 @@ on:
         description: 'Release version'
         default: '0.0.0.0'
         type: string
+      
+      # Test Configuration
       instances-number:
-        description: number of instances to be provisioned
+        description: 'Number of instances to be provisioned'
         default: '100'
         type: string
       updates-number:
-        description: number of updates on a single instance
+        description: 'Number of updates on a single instance'
         default: '300'
         type: string
+      
+      # Timing Configuration
       kim-delay-seconds:
-        description: time to wait before transitioning the runtime CR to the Ready state
+        description: 'Time to wait before transitioning the runtime CR to the Ready state'
         default: '0'
         type: string
       provisioning-max-step-processing-time:
-        description: max time to process a step in provisioning queue
+        description: 'Max time to process a step in provisioning queue'
         default: '30s'
-        type: string
-      provisioning-workers-amount:
-        description: amount of workers in provisioning queue
-        default: '200'
         type: string
       update-max-step-processing-time:
-        description: max time to process a step in update queue
+        description: 'Max time to process a step in update queue'
         default: '30s'
-        type: string
-      update-workers-amount:
-        description: amount of workers in update queue
-        default: '25'
         type: string
       deprovisioning-max-step-processing-time:
-        description: max time to process a step in deprovisioning queue
+        description: 'Max time to process a step in deprovisioning queue'
         default: '30s'
-        type: string
-      deprovisioning-workers-amount:
-        description: amount of workers in deprovisioning queue
-        default: '25'
         type: string
       baseline-monitoring-minutes:
         description: 'Duration of baseline monitoring before tests (minutes)'
@@ -59,6 +52,22 @@ on:
         description: 'Duration for each test to run (minutes, 0 means run until completion)'
         default: '0'
         type: string
+      
+      # Workers Configuration
+      provisioning-workers-amount:
+        description: 'Amount of workers in provisioning queue'
+        default: '200'
+        type: string
+      update-workers-amount:
+        description: 'Amount of workers in update queue'
+        default: '25'
+        type: string
+      deprovisioning-workers-amount:
+        description: 'Amount of workers in deprovisioning queue'
+        default: '25'
+        type: string
+      
+      # Leak Detection Thresholds
       memory-growth-threshold-percent:
         description: 'Allowed memory growth percent (over baseline)'
         default: '70'
