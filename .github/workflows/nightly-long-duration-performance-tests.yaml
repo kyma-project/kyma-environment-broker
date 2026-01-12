@@ -116,26 +116,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set monitoring durations
-        run: |
-          echo "BASELINE_DURATION=15" >> $GITHUB_ENV
-          echo "POST_TEST_DURATION=30" >> $GITHUB_ENV
-
-      - name: Display monitoring plan
-        run: |
-          echo "## Long Duration Test Plan" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Baseline monitoring**: 15 minutes (idle system observation)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test duration**: 60 minutes (continuous load)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Post-test monitoring**: 30 minutes (GC and stabilization)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total runtime**: ~105 minutes (~2 hours)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- **Instances**: 200" >> $GITHUB_STEP_SUMMARY
-          echo "- **Updates**: 500" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Extended monitoring enabled with leak detection analysis" >> $GITHUB_STEP_SUMMARY
-
       - name: Notify MS Teams on failure
         if: failure()
         env:
@@ -150,20 +130,4 @@ jobs:
             exit 0
           fi
           MESSAGE="🚨 <strong>Nightly Long Duration Performance Test FAILED</strong><br>Test execution failed!<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
-          ./scripts/notify_teams.sh "$MESSAGE"
-
-      - name: Notify MS Teams on success
-        if: success()
-        env:
-          MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
-          MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
-          MS_TEAMS_CLIENT_SECRET: ${{ secrets.MS_TEAMS_CLIENT_SECRET }}
-          MS_TEAMS_SCOPE: ${{ secrets.MS_TEAMS_SCOPE }}
-          MS_TEAMS_WEBHOOK_URL: ${{ secrets.MS_TEAMS_WEBHOOK_URL }}
-        run: |
-          if [ -z "$MS_TEAMS_WEBHOOK_URL" ]; then
-            echo "MS Teams secrets not configured, skipping notification"
-            exit 0
-          fi
-          MESSAGE="✅ <strong>Nightly Long Duration Performance Test PASSED</strong><br>All tests completed successfully.<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
           ./scripts/notify_teams.sh "$MESSAGE"
