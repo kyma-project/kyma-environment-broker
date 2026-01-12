@@ -940,6 +940,8 @@ jobs:
           KIM_DELAY_SECONDS: 0
         run: |
           scripts/simulate_kim.sh
+
+          sleep 15
           
           RESPONSE_JSON=$(curl --request GET \
             --url "http://localhost:30080/runtimes?plan=azure_lite&state=succeeded" \
