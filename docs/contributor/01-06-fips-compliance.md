@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 		-o /bin/kyma-env-broker ./cmd/broker/
 ```
 
-The **GOFIPS140=v1.0.0** environment variable enables building against the Go FIPS 140 module and configures the application to run in the FIPS 140-3 mode.
+The `GOFIPS140=v1.0.0` environment variable enables building against the Go FIPS 140 module and configures the application to run in the FIPS 140-3 mode.
 
 ### Runtime Controls
 
@@ -34,7 +34,7 @@ This combination ensures the broker runs exclusively with FIPS-approved algorith
 
 ## Approved Cryptographic Algorithms
 
-For the authoritative list and requirements around approved algorithms and testing, refer to [NIST SP 800‑140C supplemental information](https://csrc.nist.gov/projects/cmvp/sp800-140c).
+For the authoritative list and requirements around approved algorithms and testing, refer to [SP 800-140C: Approved Security Functions](https://csrc.nist.gov/projects/cmvp/sp800-140c).
 
 When `GODEBUG=fips140=only` is active, KEB relies on the Go FIPS module’s set of approved algorithms. Any attempt to use non-approved algorithms will be blocked at the runtime.
 
@@ -45,9 +45,7 @@ When connecting to PostgreSQL, configure password authentication to use SCRAM-SH
 The minimal password length is 112 bits.
 
 > [!TIP]
-> To upgrade an existing installation from **md5** to **scram-sha-256**, after having ensured that all client libraries in use are new enough to support SCRAM, set password_encryption = 'scram-sha-256' in postgresql.conf, make all users set new passwords, and change the authentication method specifications in pg_hba.conf to scram-sha-256.
-
-For more information, see [PostgreSQL documentation](https://www.postgresql.org/docs/current/auth-password.html).
+> _To upgrade an existing installation from `md5` to `scram-sha-256`, after having ensured that all client libraries in use are new enough to support SCRAM, set `password_encryption = 'scram-sha-256'` in `postgresql.conf`, make all users set new passwords, and change the authentication method specifications in `pg_hba.conf` to `scram-sha-256`._ (From the [PostgreSQL documentation](https://www.postgresql.org/docs/current/auth-password.html)).
 
 ## Verification
 
