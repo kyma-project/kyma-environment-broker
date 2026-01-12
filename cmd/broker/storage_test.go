@@ -18,7 +18,7 @@ func brokerStorageE2ETestConfig() storage.Config {
 	return storage.Config{
 		Host:            "localhost",
 		User:            "test",
-		Password:        "test",
+		Password:        "FIPS-compl1antPwd!",
 		Port:            "5431",
 		Name:            "test-e2e",
 		SSLMode:         "disable",
