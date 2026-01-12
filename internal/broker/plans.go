@@ -3,13 +3,12 @@ package broker
 import (
 	"strings"
 
+	"github.com/labstack/gommon/log"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"golang.org/x/exp/maps"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
-
-type PlanID string
-type PlanName string
 
 const (
 	GCPPlanID                 = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
@@ -40,23 +39,7 @@ const (
 	AlicloudPlanName          = "alicloud"
 )
 
-var PlanNamesMapping = map[string]string{
-	GCPPlanID:               GCPPlanName,
-	AWSPlanID:               AWSPlanName,
-	AzurePlanID:             AzurePlanName,
-	AzureLitePlanID:         AzureLitePlanName,
-	TrialPlanID:             TrialPlanName,
-	SapConvergedCloudPlanID: SapConvergedCloudPlanName,
-	FreemiumPlanID:          FreemiumPlanName,
-	OwnClusterPlanID:        OwnClusterPlanName,
-	PreviewPlanID:           PreviewPlanName,
-	BuildRuntimeAWSPlanID:   BuildRuntimeAWSPlanName,
-	BuildRuntimeGCPPlanID:   BuildRuntimeGCPPlanName,
-	BuildRuntimeAzurePlanID: BuildRuntimeAzurePlanName,
-	AlicloudPlanID:          AlicloudPlanName,
-}
-
-var PlanIDsMapping = map[string]string{
+var PlanIDsMapping = map[PlanNameType]PlanIDType{
 	AzurePlanName:             AzurePlanID,
 	AWSPlanName:               AWSPlanID,
 	AzureLitePlanName:         AzureLitePlanID,
@@ -72,9 +55,66 @@ var PlanIDsMapping = map[string]string{
 	AlicloudPlanName:          AlicloudPlanID,
 }
 
+type PlanIDType string
+type PlanNameType string
+
+var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
+
 type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
 	rejectUnsupportedParameters bool
+}
+
+type AvailablePlansType struct {
+	idToName map[PlanIDType]PlanNameType
+	nameToID map[PlanNameType]PlanIDType
+}
+
+func NewAvailablePlans(nameToIDMap map[PlanNameType]PlanIDType) *AvailablePlansType {
+	r := reverseMap(nameToIDMap)
+	if len(r) != len(nameToIDMap) {
+		log.Error("plan IDs and names mapping is not bijective, cannot create AvailablePlans object")
+		return nil
+	}
+	return &AvailablePlansType{
+		idToName: r,
+		nameToID: nameToIDMap,
+	}
+}
+
+func reverseMap(initialMap map[PlanNameType]PlanIDType) map[PlanIDType]PlanNameType {
+	reversedMap := make(map[PlanIDType]PlanNameType)
+	for key, value := range initialMap {
+		reversedMap[value] = key
+	}
+	return reversedMap
+}
+
+func (ap AvailablePlansType) GetPlanNameOrEmpty(planID PlanIDType) string {
+	planName, _ := ap.idToName[planID]
+	return string(planName)
+}
+
+func (ap AvailablePlansType) GetPlanNameByID(planID PlanIDType) (string, bool) {
+	planName, exists := ap.idToName[planID]
+	return string(planName), exists
+}
+
+func (ap AvailablePlansType) GetPlanIDByName(planName PlanNameType) (PlanIDType, bool) {
+	planID, exists := ap.nameToID[planName]
+	return planID, exists
+}
+
+func (ap AvailablePlansType) GetAllPlanIDs() []PlanIDType {
+	return maps.Keys(ap.idToName)
+}
+
+func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
+	names := make([]string, 0, len(ap.nameToID))
+	for name := range ap.nameToID {
+		names = append(names, string(name))
+	}
+	return names
 }
 
 func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
@@ -98,27 +138,6 @@ var validRegionsForTrial = map[TrialCloudRegion]struct{}{
 	Asia:   {},
 }
 
-func AzureRegions(euRestrictedAccess bool) []string {
-	if euRestrictedAccess {
-		return []string{
-			"switzerlandnorth",
-		}
-	}
-	return []string{
-		"eastus",
-		"centralus",
-		"westus2",
-		"uksouth",
-		"northeurope",
-		"westeurope",
-		"japaneast",
-		"southeastasia",
-		"australiaeast",
-		"brazilsouth",
-		"canadacentral",
-	}
-}
-
 func requiredSchemaProperties() []string {
 	return []string{"name", "region"}
 }
@@ -129,11 +148,6 @@ func requiredTrialSchemaProperties() []string {
 
 func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
-}
-
-func empty() *map[string]interface{} {
-	empty := make(map[string]interface{}, 0)
-	return &empty
 }
 
 func createSchemaWithProperties(properties ProvisioningProperties,
@@ -202,15 +216,6 @@ func IsTrialPlan(planID string) bool {
 	}
 }
 
-func IsSapConvergedCloudPlan(planID string) bool {
-	switch planID {
-	case SapConvergedCloudPlanID:
-		return true
-	default:
-		return false
-	}
-}
-
 func IsFreemiumPlan(planID string) bool {
 	switch planID {
 	case FreemiumPlanID:
@@ -245,12 +250,4 @@ func removeString(slice []string, str string) []string {
 		}
 	}
 	return result
-}
-
-func AllPlanNames() []string {
-	planNames := make([]string, 0, len(PlanNamesMapping))
-	for _, planName := range PlanNamesMapping {
-		planNames = append(planNames, planName)
-	}
-	return planNames
 }

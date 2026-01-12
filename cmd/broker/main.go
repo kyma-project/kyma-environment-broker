@@ -12,10 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-co-op/gocron"
-	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -35,6 +31,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -44,6 +41,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
+	"github.com/kyma-project/kyma-environment-broker/internal/version"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
@@ -54,8 +52,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/vrischmann/envconfig"
-	"golang.org/x/exp/maps"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -179,6 +177,8 @@ const (
 	provisioningTakesLongThreshold        = 20 * time.Minute
 )
 
+var Version string
+
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	if profiler.Memory == false {
 		return
@@ -251,6 +251,10 @@ func main() {
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
 
+	if broker.AvailablePlans == nil {
+		fatalOnError(fmt.Errorf("AvailablePlans is not initialized properly"), log)
+	}
+
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info("Registering healthz endpoint for health probes")
@@ -259,7 +263,6 @@ func main() {
 
 	logConfiguration(log, cfg)
 
-	//FIPS mode check - to be removed
 	if fips140.Enabled() {
 		log.Info("FIPS mode is enabled")
 	} else {
@@ -278,15 +281,7 @@ func main() {
 		fatalOnError(err, log)
 	}
 
-	logDatabaseFipsFlags(cfg.Database, log)
-
-	if cfg.Database.Fips.RewriteCfb && !cfg.Database.Fips.WriteGcm {
-		log.Info("Database FIPS RewriteCfb is enabled while WriteGcm is disabled. There is no sense to run rewrite in this configuration.")
-		cfg.Database.Fips.RewriteCfb = false
-		log.Info("Database FIPS RewriteCfb has been disabled.")
-	}
-
-	cipher := storage.NewEncrypter(cfg.Database.SecretKey, cfg.Database.Fips.WriteGcm)
+	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
 	// create storage
 	var db storage.BrokerStorage
@@ -305,13 +300,6 @@ func main() {
 	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("KEB local time: %s time zone: %s", time.Now().String(), time.Now().Location().String()))
 	log.Info(fmt.Sprintf("Storage time zone: %s", timeZone))
-
-	// log statistics about encryption mode
-	encryptionModeStats := getEncryptionModeStatistics(db, log)
-
-	if cfg.Database.Fips.RewriteCfb {
-		go runRewriteEncryptedDataJobs(db, cfg.Database.Fips, encryptionModeStats, log)
-	}
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
@@ -337,7 +325,7 @@ func main() {
 	// metrics collectors
 	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
 
-	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
+	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)
 
 	rulesetValid := rulesService.IsRulesetValid()
@@ -357,7 +345,7 @@ func main() {
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
 
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
-	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AllPlanNames(), log)
+	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
 
 	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
@@ -446,165 +434,6 @@ func main() {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
 	})
 	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
-}
-
-func runRewriteEncryptedDataJobs(db storage.BrokerStorage, cfg storage.FipsConfig, stats EncryptionModeStatistics, log *slog.Logger) {
-	s := gocron.NewScheduler(time.UTC)
-	runInstancesJob := stats.instances[storage.EncryptionModeCFB] > 0
-	runOperationsJob := stats.operations[storage.EncryptionModeCFB] > 0
-	runBindingsJob := stats.bindings[storage.EncryptionModeCFB] > 0
-
-	if runInstancesJob {
-		log.Info("Scheduling instance rewrite job")
-		_, err := s.Every(cfg.BatchInterval).Do(func() {
-			if runInstancesJob {
-				var err error
-				runInstancesJob, err = rewriteInstances(db, cfg.RewriteBatchSize, log)
-				if err != nil {
-					log.Error(fmt.Sprintf("while rewriting instances encrypted data: %s", err))
-				}
-			}
-		})
-		if err != nil {
-			log.Error(fmt.Sprintf("while scheduling instance rewrite job: %s", err))
-		}
-	}
-
-	if runOperationsJob {
-		log.Info("Scheduling operations rewrite job")
-		_, err := s.Every(cfg.BatchInterval).Do(func() {
-			if runOperationsJob {
-				var err error
-				runOperationsJob, err = rewriteOperations(db, cfg.RewriteBatchSize, log)
-				if err != nil {
-					log.Error(fmt.Sprintf("while rewriting operations encrypted data: %s", err))
-				}
-			}
-		})
-		if err != nil {
-			log.Error(fmt.Sprintf("while scheduling operations rewrite job: %s", err))
-		}
-	}
-
-	if runBindingsJob {
-		log.Info("Scheduling bindings rewrite job")
-		_, err := s.Every(cfg.BatchInterval).Do(func() {
-			if runBindingsJob {
-				var err error
-				runBindingsJob, err = rewriteBindings(db, cfg.RewriteBatchSize, log)
-				if err != nil {
-					log.Error(fmt.Sprintf("while rewriting bindings encrypted data: %s", err))
-				}
-			}
-		})
-		if err != nil {
-			log.Error(fmt.Sprintf("while scheduling bindings rewrite job: %s", err))
-		}
-	}
-
-	s.StartBlocking() // blocks the current goroutine - we do not reach the end of the function
-
-}
-
-func rewriteInstances(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
-	logs.Info("Starting rewriteInstances job")
-	batch, err := db.Instances().ListInstancesEncryptedUsingCFB(batchSize)
-	counter := 0
-	if err != nil {
-		logs.Error(fmt.Sprintf("while listing instances to rewrite: %s", err))
-		return true, err
-	}
-	for _, instance := range batch {
-		logs.Info(fmt.Sprintf("Rewriting instance %s encrypted data from CFB to GCM", instance.InstanceID))
-		err := db.Instances().ReEncryptInstance(instance)
-		if err != nil {
-			logs.Error(fmt.Sprintf("while rewriting instance %s: %s", instance.InstanceID, err))
-			return true, err
-		}
-		counter++
-	}
-	logs.Info(fmt.Sprintf("Rewritten %d/%d instances in this batch", counter, len(batch)))
-	return len(batch) != 0, nil
-}
-
-func rewriteOperations(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
-	logs.Info("Starting rewriteOperations job")
-	batch, err := db.Operations().ListOperationsEncryptedUsingCFB(batchSize)
-	counter := 0
-
-	if err != nil {
-		logs.Error(fmt.Sprintf("while listing operations to rewrite: %s", err))
-		return true, err
-	}
-	for _, operation := range batch {
-		logs.Info(fmt.Sprintf("Rewriting operation %s encrypted data from CFB to GCM", operation.ID))
-		err := db.Operations().ReEncryptOperation(operation)
-		if err != nil {
-			logs.Error(fmt.Sprintf("while rewriting operation %s: %s", operation.ID, err))
-			return true, err
-		}
-		counter++
-	}
-	logs.Info(fmt.Sprintf("Rewritten %d/%d operations in this batch", counter, len(batch)))
-	return len(batch) != 0, nil
-}
-
-func rewriteBindings(db storage.BrokerStorage, batchSize int, logs *slog.Logger) (bool, error) {
-	logs.Info("Starting rewriteBindings job")
-	batch, err := db.Bindings().ListBindingsEncryptedUsingCFB(batchSize)
-	counter := 0
-	if err != nil {
-		logs.Error(fmt.Sprintf("while listing bindings to rewrite: %s", err))
-		return true, err
-	}
-	for _, binding := range batch {
-		logs.Info(fmt.Sprintf("Rewriting bindings %s encrypted data from CFB to GCM", binding.ID))
-		err := db.Bindings().ReEncryptBinding(&binding)
-		if err != nil {
-			logs.Error(fmt.Sprintf("while rewriting binding %s: %s", binding.ID, err))
-			return true, err
-		}
-		counter++
-	}
-	logs.Info(fmt.Sprintf("Rewritten %d/%d bindings in this batch", counter, len(batch)))
-	return len(batch) != 0, nil
-}
-
-type EncryptionModeStatistics struct {
-	instances  map[string]int
-	operations map[string]int
-	bindings   map[string]int
-}
-
-func getEncryptionModeStatistics(db storage.BrokerStorage, log *slog.Logger) EncryptionModeStatistics {
-	dbStats := db.EncryptionModeStats()
-	stats := EncryptionModeStatistics{instances: make(map[string]int), operations: make(map[string]int), bindings: make(map[string]int)}
-	instanceStats, err := dbStats.GetEncryptionModeStatsForInstances()
-	fatalOnError(err, log)
-	stats.instances[storage.EncryptionModeCFB] = instanceStats[storage.EncryptionModeCFB] + instanceStats[strings.ToLower(storage.EncryptionModeCFB)]
-	stats.instances[storage.EncryptionModeGCM] = instanceStats[storage.EncryptionModeGCM]
-	operationStats, err := dbStats.GetEncryptionModeStatsForOperations()
-	fatalOnError(err, log)
-	stats.operations[storage.EncryptionModeCFB] = operationStats[storage.EncryptionModeCFB] + operationStats[strings.ToLower(storage.EncryptionModeCFB)]
-	stats.operations[storage.EncryptionModeGCM] = operationStats[storage.EncryptionModeGCM]
-	bindingStats, err := dbStats.GetEncryptionModeStatsForBindings()
-	fatalOnError(err, log)
-	stats.bindings[storage.EncryptionModeCFB] = bindingStats[storage.EncryptionModeCFB] + bindingStats[strings.ToLower(storage.EncryptionModeCFB)]
-	stats.bindings[storage.EncryptionModeGCM] = bindingStats[storage.EncryptionModeGCM]
-
-	log.Info(fmt.Sprintf("Raw encryption mode statistics: Instances: %v, Operations: %v, Bindings: %v", instanceStats, operationStats, bindingStats))
-	log.Info(fmt.Sprintf("Encryption mode statistics for instances: CFB=%d, GCM=%d", stats.instances[storage.EncryptionModeCFB], stats.instances[storage.EncryptionModeGCM]))
-	log.Info(fmt.Sprintf("Encryption mode statistics for operations: CFB=%d, GCM=%d", stats.operations[storage.EncryptionModeCFB], stats.operations[storage.EncryptionModeGCM]))
-	log.Info(fmt.Sprintf("Encryption mode statistics for bindings: CFB=%d, GCM=%d", stats.bindings[storage.EncryptionModeCFB], stats.bindings[storage.EncryptionModeGCM]))
-	return stats
-}
-
-func logDatabaseFipsFlags(database storage.Config, log *slog.Logger) {
-	log.Info(fmt.Sprintf("Database FIPS WriteGcm mode: %v", database.Fips.WriteGcm))
-	log.Info(fmt.Sprintf("Database FIPS RewriteCfb mode: %v", database.Fips.RewriteCfb))
-	if database.Fips.RewriteCfb {
-		log.Info(fmt.Sprintf("Database FIPS RewriteCfb Batch Size: %d", database.Fips.RewriteBatchSize))
-	}
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
@@ -716,6 +545,9 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	// create events endpoint
 	eventsHandler := eventshandler.NewHandler(db.Events(), db.Instances())
 	router.Handle("/events", eventsHandler)
+
+	versionHandler := version.NewHandler(Version)
+	versionHandler.AttachRoutes(router)
 }
 
 // queues all in progress operations by type

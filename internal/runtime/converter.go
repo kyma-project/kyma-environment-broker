@@ -80,9 +80,8 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 			target.Error = &source.LastError
 		}
 		if source.UpdatedPlanID != "" {
-			target.UpdatedPlanName = broker.PlanNamesMapping[source.UpdatedPlanID]
+			target.UpdatedPlanName = broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(source.UpdatedPlanID))
 		}
-
 	}
 }
 

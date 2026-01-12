@@ -14,16 +14,6 @@ type Binding struct {
 	data map[string]internal.Binding
 }
 
-func (s *Binding) ListBindingsEncryptedUsingCFB(batchSize int) ([]internal.Binding, error) {
-	//TODO implement me - for now this is just the stub to satisfy the interface
-	panic("implement me")
-}
-
-func (s *Binding) ReEncryptBinding(binding *internal.Binding) error {
-	//TODO implement me - for now this is just the stub to satisfy the interface
-	panic("implement me")
-}
-
 func NewBinding() *Binding {
 	return &Binding{
 		data: make(map[string]internal.Binding),

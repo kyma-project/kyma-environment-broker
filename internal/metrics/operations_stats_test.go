@@ -24,7 +24,7 @@ func TestOperationsStats(t *testing.T) {
 	testData := []struct {
 		opType      internal.OperationType
 		opState     domain.LastOperationState
-		opPlan      broker.PlanID
+		opPlan      string
 		eventsCount int
 		key         metricKey
 	}{
@@ -73,9 +73,7 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	for i, data := range testData {
-		key, err := statsCollector.makeKey(data.opType, data.opState, data.opPlan)
-		assert.NoError(t, err)
-		testData[i].key = key
+		testData[i].key = statsCollector.makeKey(data.opType, data.opState, broker.PlanIDType(data.opPlan))
 	}
 
 	err := operations.InsertOperation(internal.Operation{
@@ -109,12 +107,12 @@ func TestOperationsStats(t *testing.T) {
 
 	statsCollector = NewOperationsStats(operations, cfg, log)
 	statsCollector.MustRegister()
-	err = statsCollector.UpdateStatsMetrics()
+	err = statsCollector.UpdateGauges()
 	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < testData[i].eventsCount; j++ {
-			err = statsCollector.Handler(context.TODO(), process.OperationFinished{
+			err = statsCollector.UpdateMetrics(context.TODO(), process.OperationFinished{
 				PlanID:    testData[i].opPlan,
 				Operation: internal.Operation{Type: testData[i].opType, State: testData[i].opState, ID: fmt.Sprintf("test-%d", i)},
 			})
@@ -134,4 +132,38 @@ func TestOperationsStats(t *testing.T) {
 		assert.Equal(t, float64(testData[5].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[5].key]))
 		assert.Equal(t, float64(testData[6].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[6].key]))
 	})
+}
+
+func TestFormatOpState_ReplacesSpacesWithUnderscores(t *testing.T) {
+	got := formatOpState(domain.InProgress)
+	assert.Equal(t, "in_progress", got)
+
+	got = formatOpState(domain.Succeeded)
+	assert.Equal(t, "succeeded", got)
+
+	got = formatOpState(domain.Failed)
+	assert.Equal(t, "failed", got)
+}
+
+func TestFormatOpState_EmptyStringReturnedAsEmpty(t *testing.T) {
+	got := formatOpState("")
+	assert.Equal(t, "", got)
+}
+
+func TestFormatOpType_ProvisionAndDeprovisionReturnProvisioningAndDeprovisioning(t *testing.T) {
+	got := formatOpType(internal.OperationTypeProvision)
+	assert.Equal(t, "provisioning", got)
+
+	got = formatOpType(internal.OperationTypeDeprovision)
+	assert.Equal(t, "deprovisioning", got)
+}
+
+func TestFormatOpType_UpdateReturnsUpdating(t *testing.T) {
+	got := formatOpType(internal.OperationTypeUpdate)
+	assert.Equal(t, "updating", got)
+}
+
+func TestFormatOpType_UnknownOperationReturnsEmptyString(t *testing.T) {
+	got := formatOpType(internal.OperationType("unknown"))
+	assert.Equal(t, "", got)
 }

@@ -15,8 +15,6 @@ import (
 	"slices"
 	"strings"
 
-	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -24,6 +22,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -139,8 +138,8 @@ func NewProvision(brokerConfig Config,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
-		id := PlanIDsMapping[planName]
-		enabledPlanIDs[id] = struct{}{}
+		id, _ := AvailablePlans.GetPlanIDByName(PlanNameType(planName))
+		enabledPlanIDs[string(id)] = struct{}{}
 	}
 
 	return &ProvisionEndpoint{
@@ -287,7 +286,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		ServiceID:       provisioningParameters.ServiceID,
 		ServiceName:     KymaServiceName,
 		ServicePlanID:   provisioningParameters.PlanID,
-		ServicePlanName: PlanNamesMapping[provisioningParameters.PlanID],
+		ServicePlanName: AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
 		DashboardURL:    dashboardURL,
 		Parameters:      operation.ProvisioningParameters,
 		Provider:        pkg.CloudProviderFromString(providerValues.ProviderType),
@@ -306,6 +305,10 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
+
+	if !IsOwnClusterPlan(provisioningParameters.PlanID) {
+		dashboardURL = ""
+	}
 
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
@@ -386,7 +389,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	colocateControlPlane := valueOfBoolPtr(parameters.ColocateControlPlane)
 	if colocateControlPlane {
 		platformRegion, _ := middleware.RegionFromContext(ctx)
-		supportedRegions := b.schemaService.PlanRegions(PlanNamesMapping[details.PlanID], platformRegion)
+		supportedRegions := b.schemaService.PlanRegions(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID)), platformRegion)
 		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
 			return err
 		}
@@ -580,8 +583,9 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 
 func validateIngressFiltering(provisioningParameters internal.ProvisioningParameters, ingressFilteringParameter *bool, plans StringList, log *slog.Logger) error {
 	if ingressFilteringParameter != nil {
-		if !plans.Contains(PlanNamesMapping[provisioningParameters.PlanID]) {
-			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[provisioningParameters.PlanID]))
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID))
+		if !plans.Contains(planName) {
+			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, planName))
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
 		if IsExternalLicenseType(provisioningParameters.ErsContext) && *ingressFilteringParameter {
@@ -831,7 +835,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
 		OperationData: operation.ID,
-		DashboardURL:  operation.DashboardURL,
+		DashboardURL:  dashboard.ProvideURL(instance, operation),
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
@@ -1029,13 +1033,14 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 	}
 
 	if usedQuota > 0 || update {
-		assignedQuota, err := quotaClient.GetQuota(subAccountID, PlanNamesMapping[planID])
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))
+		assignedQuota, err := quotaClient.GetQuota(subAccountID, planName)
 		if err != nil {
-			return fmt.Errorf("Failed to get assigned quota for plan %s: %w.", PlanNamesMapping[planID], err)
+			return fmt.Errorf("Failed to get assigned quota for plan %s: %w.", planName, err)
 		}
 
 		if usedQuota >= assignedQuota {
-			return fmt.Errorf("Kyma instances quota exceeded for plan %s. assignedQuota: %d, remainingQuota: 0. Contact your administrator.", PlanNamesMapping[planID], assignedQuota)
+			return fmt.Errorf("Kyma instances quota exceeded for plan %s. assignedQuota: %d, remainingQuota: 0. Contact your administrator.", planName, assignedQuota)
 		}
 	}
 
@@ -1053,7 +1058,7 @@ func newAWSClient(
 ) (aws.Client, error) {
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
-		Plan:              PlanNamesMapping[provisioningParameters.PlanID],
+		Plan:              AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
 		PlatformRegion:    provisioningParameters.PlatformRegion,
 		HyperscalerRegion: values.Region,
 		Hyperscaler:       values.ProviderType,
@@ -1108,7 +1113,7 @@ func newAWSClientUsingCredentialsBinding(
 ) (aws.Client, error) {
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
-		Plan:              PlanNamesMapping[provisioningParameters.PlanID],
+		Plan:              AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
 		PlatformRegion:    provisioningParameters.PlatformRegion,
 		HyperscalerRegion: values.Region,
 		Hyperscaler:       values.ProviderType,

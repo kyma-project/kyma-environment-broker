@@ -15,8 +15,8 @@ type RuntimesInfoRequestsCollector struct {
 func NewRuntimesInfoRequestsCollector() *RuntimesInfoRequestsCollector {
 	return &RuntimesInfoRequestsCollector{
 		requestTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "runtimes_info_requests_total",
 			Help:      "Total number of requests to the runtimes info endpoint",
 		}, nil),

@@ -79,8 +79,6 @@ spec:
               value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
               value: {{ .Values.cis.v2.eventServiceURL | required "please specify .Values.cis.v2.eventServiceURL" | quote }}
-            - name: SUBACCOUNT_SYNC_DATABASE_FIPS_WRITE_GCM
-              value: "{{ .Values.global.fips.writeGCM }}"
             - name: SUBACCOUNT_SYNC_DATABASE_HOST
               valueFrom:
                 secretKeyRef:

@@ -136,12 +136,6 @@ spec:
               value: {{ .Values.configPaths.btpRegionsMigrationSapConvergedCloud }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
-            - name: APP_DATABASE_FIPS_REWRITE_BATCH_SIZE
-              value: "{{ .Values.global.fips.rewriteBatchSize }}"
-            - name: APP_DATABASE_FIPS_REWRITE_CFB
-              value: "{{ .Values.global.fips.rewriteCFB }}"
-            - name: APP_DATABASE_FIPS_WRITE_GCM
-              value: "{{ .Values.global.fips.writeGCM }}"
             - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:

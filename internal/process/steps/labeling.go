@@ -13,7 +13,7 @@ func SetCommonLabels(labels map[string]string, operation internal.Operation) map
 	labels[customresources.InstanceIdLabel] = operation.InstanceID
 	labels[customresources.RuntimeIdLabel] = operation.RuntimeID
 	labels[customresources.PlanIdLabel] = operation.ProvisioningParameters.PlanID
-	labels[customresources.PlanNameLabel] = broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
+	labels[customresources.PlanNameLabel] = broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID))
 	labels[customresources.GlobalAccountIdLabel] = operation.ProvisioningParameters.ErsContext.GlobalAccountID
 	labels[customresources.SubaccountIdLabel] = operation.ProvisioningParameters.ErsContext.SubAccountID
 	labels[customresources.ShootNameLabel] = operation.ShootName
@@ -29,6 +29,6 @@ func UpdatePlanLabels(labels map[string]string, planID string) map[string]string
 		labels = make(map[string]string)
 	}
 	labels[customresources.PlanIdLabel] = planID
-	labels[customresources.PlanNameLabel] = broker.PlanNamesMapping[planID]
+	labels[customresources.PlanNameLabel] = broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(planID))
 	return labels
 }

@@ -162,8 +162,7 @@ func IsNotSapConvergedCloud(cloudProvider string) bool {
 }
 
 func IsIngressFilteringEnabled(planID string, config broker.InfrastructureManager, external bool) bool {
-	ingressFiltering := config.IngressFilteringPlans.Contains(broker.PlanNamesMapping[planID]) && !external
-	return ingressFiltering
+	return config.IngressFilteringPlans.Contains(broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(planID))) && !external
 }
 
 func ProvisioningTakesLongerMessage(changeDescriptionThreshold time.Duration) string {

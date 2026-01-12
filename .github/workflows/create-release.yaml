@@ -97,6 +97,7 @@ jobs:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
       context: .
+      build-args: VERSION=${{ inputs.name }}
       tags: ${{ inputs.name }}
 
   build-environments-cleanup-image:

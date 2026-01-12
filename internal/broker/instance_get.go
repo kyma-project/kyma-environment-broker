@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -74,7 +75,7 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 	spec := domain.GetInstanceDetailsSpec{
 		ServiceID:    instance.ServiceID,
 		PlanID:       instance.ServicePlanID,
-		DashboardURL: instance.DashboardURL,
+		DashboardURL: dashboard.ProvideURL(instance, op),
 		Parameters:   parameters,
 		Metadata: domain.InstanceMetadata{
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),

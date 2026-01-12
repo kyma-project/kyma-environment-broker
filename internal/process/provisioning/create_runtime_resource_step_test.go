@@ -1606,7 +1606,7 @@ func assertLabels(t *testing.T, operation internal.Operation, runtime imv1.Runti
 	assert.Equal(t, operation.InstanceID, runtime.Labels[customresources.InstanceIdLabel])
 	assert.Equal(t, operation.RuntimeID, runtime.Labels[customresources.RuntimeIdLabel])
 	assert.Equal(t, operation.ProvisioningParameters.PlanID, runtime.Labels[customresources.PlanIdLabel])
-	assert.Equal(t, broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], runtime.Labels[customresources.PlanNameLabel])
+	assert.Equal(t, broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID)), runtime.Labels[customresources.PlanNameLabel])
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.GlobalAccountID, runtime.Labels[customresources.GlobalAccountIdLabel])
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SubAccountID, runtime.Labels[customresources.SubaccountIdLabel])
 	assert.Equal(t, operation.ShootName, runtime.Labels[customresources.ShootNameLabel])

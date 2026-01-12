@@ -14,10 +14,12 @@ RUN mkdir /user && \
     echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
     echo 'appuser:x:2000:' > /user/group
 
-ARG TARGETOS TARGETARCH
+ARG TARGETOS TARGETARCH VERSION
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /bin/kyma-env-broker ./cmd/broker/
+    CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -ldflags "-X main.Version=${VERSION}" \
+    -o /bin/kyma-env-broker ./cmd/broker/
 
 RUN touch /swagger.yaml
 

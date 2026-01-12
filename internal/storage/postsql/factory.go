@@ -63,12 +63,6 @@ type ReadSession interface {
 	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
 	ListActions(instanceID string) ([]runtime.Action, error)
 	GetTimeZone() (string, dberr.Error)
-	GetEncryptionModeStatsForInstances() (map[string]int, error)
-	GetEncryptionModeStatsForOperations() (map[string]int, error)
-	GetEncryptionModeStatsForBindings() (map[string]int, error)
-	ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error)
-	ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error)
-	ListInstancesEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -89,9 +83,6 @@ type WriteSession interface {
 	DeleteBinding(instanceID, bindingID string) dberr.Error
 	UpdateInstanceLastOperation(instanceID, operationID string) error
 	InsertAction(actionType runtime.ActionType, instanceID, message, oldValue, newValue string) dberr.Error
-	UpdateEncryptedDataInInstance(instance dbmodel.InstanceDTO) dberr.Error
-	UpdateEncryptedDataInBinding(binding dbmodel.BindingDTO) dberr.Error
-	UpdateEncryptedDataInOperation(operation dbmodel.OperationDTO) dberr.Error
 }
 
 type Transaction interface {
