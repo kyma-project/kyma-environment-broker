@@ -53,11 +53,11 @@ on:
         required: false
       update-workers-amount:
         description: 'Update workers amount'
-        default: '30'
+        default: '300'
         required: false
       deprovisioning-workers-amount:
         description: 'Deprovisioning workers amount'
-        default: '30'
+        default: '300'
         required: false
       
       # Leak Detection Thresholds
