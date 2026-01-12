@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	PostgresImage = "postgres:15.1"
+	PostgresImage = "postgres:latest"
 )
 
 type DockerHelper struct {
