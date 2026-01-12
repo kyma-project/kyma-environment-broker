@@ -183,7 +183,7 @@ func (h *RuntimeInfoHandler) planNameOrDefault(inst internal.InstanceWithOperati
 	if inst.ServicePlanName != "" {
 		return inst.ServicePlanName
 	}
-	return broker.PlanNamesMapping[inst.ServicePlanID]
+	return broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(inst.ServicePlanID))
 }
 
 func getIfNotZero(in time.Time) *time.Time {

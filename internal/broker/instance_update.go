@@ -147,7 +147,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to get instance")
 	}
-	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, PlanNamesMapping[instance.ServicePlanID]))
+	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
@@ -399,7 +399,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 
 		multiError := pkg.MachineTypeMultiError{}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(PlanNamesMapping[details.PlanID])); err != nil {
+			planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(planName)); err != nil {
 				multiError.Append(err)
 			}
 		}
@@ -417,7 +418,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	oldPlanID := instance.ServicePlanID
 	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
-		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(PlanNamesMapping[instance.ServicePlanID], PlanNamesMapping[details.PlanID]) {
+		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)), AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))) {
 			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
 				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
 					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
@@ -428,14 +429,16 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			operation.ProvisioningParameters.PlanID = details.PlanID
 			instance.Parameters.PlanID = details.PlanID
 			instance.ServicePlanID = details.PlanID
-			instance.ServicePlanName = PlanNamesMapping[details.PlanID]
+			instance.ServicePlanName = AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 			updateStorage = append(updateStorage, planChangeMessage)
 		} else {
 			logger.Info(fmt.Sprintf("Plan change not allowed."))
+			sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+			targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
-				fmt.Errorf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", PlanNamesMapping[instance.ServicePlanID], instance.ServicePlanID, PlanNamesMapping[details.PlanID], details.PlanID),
+				fmt.Errorf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
 				http.StatusBadRequest,
-				fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", PlanNamesMapping[instance.ServicePlanID], instance.ServicePlanID, PlanNamesMapping[details.PlanID], details.PlanID),
+				fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
 			)
 		}
 	}
@@ -498,8 +501,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 
 		if slices.Contains(updateStorage, planChangeMessage) {
-			oldPlan := PlanNamesMapping[oldPlanID]
-			newPlan := PlanNamesMapping[details.PlanID]
+			oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(oldPlanID))
+			newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, oldPlanID, newPlan, details.PlanID)
 			if err := b.actionStorage.InsertAction(
 				pkg.PlanUpdateActionType,

@@ -36,8 +36,8 @@ func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "operation_result",
 			Help:      "Metrics of operations results",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
@@ -102,7 +102,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if len(operations) != 0 {
-		s.logger.Debug(fmt.Sprintf("UpdateStatsMetrics: %d operations found", len(operations)))
+		s.logger.Debug(fmt.Sprintf("UpdateGauges: %d operations found", len(operations)))
 	}
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
@@ -115,7 +115,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsResults) Handler(_ context.Context, event interface{}) error {
+func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling operation finished event: %v", recovery))

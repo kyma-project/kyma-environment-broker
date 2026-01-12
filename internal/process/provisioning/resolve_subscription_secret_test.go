@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -325,7 +324,7 @@ func createRulesService(t *testing.T) *rules.RulesService {
 	require.NoError(t, err)
 	defer os.Remove(tmpfile)
 
-	rs, err := rules.NewRulesServiceFromFile(tmpfile, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New("aws", "azure", "gcp", "trial"))
+	rs, err := rules.NewRulesServiceFromFile(tmpfile, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New("aws", "azure", "gcp", "trial"))
 	require.NoError(t, err)
 
 	return rs

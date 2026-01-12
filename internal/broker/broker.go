@@ -138,7 +138,7 @@ type StringList []string
 func (m *StringList) Unmarshal(in string) error {
 	plans := strings.Split(in, ",")
 	for _, name := range plans {
-		if _, exists := PlanIDsMapping[name]; !exists {
+		if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
 			return fmt.Errorf("unrecognized %v plan name", name)
 		}
 	}
@@ -147,8 +147,8 @@ func (m *StringList) Unmarshal(in string) error {
 	return nil
 }
 
-func (m *StringList) ContainsPlanID(PlanID string) bool {
-	return m.Contains(PlanNamesMapping[PlanID])
+func (m *StringList) ContainsPlanID(planID string) bool {
+	return m.Contains(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID)))
 }
 
 func (m *StringList) Contains(name string) bool {

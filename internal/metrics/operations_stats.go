@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/setup"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -18,31 +17,24 @@ import (
 )
 
 // exposed metrics:
-// - kcp_keb_v2_operations_{plan_name}_provisioning_failed_total
-// - kcp_keb_v2_operations_{plan_name}_provisioning_in_progress_total
-// - kcp_keb_v2_operations_{plan_name}_provisioning_succeeded_total
-// - kcp_keb_v2_operations_{plan_name}_deprovisioning_failed_total
-// - kcp_keb_v2_operations_{plan_name}_deprovisioning_in_progress_total
-// - kcp_keb_v2_operations_{plan_name}_deprovisioning_succeeded_total
-// - kcp_keb_v2_operations_{plan_name}_update_failed_total
-// - kcp_keb_v2_operations_{plan_name}_update_in_progress_total
-// - kcp_keb_v2_operations_{plan_name}_update_succeeded_total
+// - kcp_keb_v2_operations_provisioning_failed_total
+// - kcp_keb_v2_operations_provisioning_in_progress_total
+// - kcp_keb_v2_operations_provisioning_succeeded_total
+// - kcp_keb_v2_operations_deprovisioning_failed_total
+// - kcp_keb_v2_operations_deprovisioning_in_progress_total
+// - kcp_keb_v2_operations_deprovisioning_succeeded_total
+// - kcp_keb_v2_operations_update_failed_total
+// - kcp_keb_v2_operations_update_in_progress_total
+// - kcp_keb_v2_operations_update_succeeded_total
 
 const (
-	OpStatsMetricName = "operations_%s_%s_total"
+	OpStatsMetricNameTemplate = "operations_%s_%s_total"
+	CountersPerPlanType       = 2 // succeeded, failed
+	GaugesPerPlanType         = 1 // in_progress
 )
 
 var (
-	plans = []broker.PlanID{
-		broker.AzurePlanID,
-		broker.AzureLitePlanID,
-		broker.AWSPlanID,
-		broker.GCPPlanID,
-		broker.SapConvergedCloudPlanID,
-		broker.TrialPlanID,
-		broker.FreemiumPlanID,
-		broker.PreviewPlanID,
-	}
+	plans   = broker.AvailablePlans.GetAllPlanIDs()
 	opTypes = []internal.OperationType{
 		internal.OperationTypeProvision,
 		internal.OperationTypeDeprovision,
@@ -71,15 +63,15 @@ var _ Exposer = (*operationsStats)(nil)
 func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.Logger) *operationsStats {
 	return &operationsStats{
 		logger:          logger,
-		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
-		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
+		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*GaugesPerPlanType),
+		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*CountersPerPlanType),
 		operations:      operations,
 		poolingInterval: cfg.OperationStatsPollingInterval,
 	}
 }
 
 func (s *operationsStats) StartCollector(ctx context.Context) {
-	s.logger.Info("Starting operations stats collector")
+	s.logger.Info("Starting operations statistics collector")
 	go s.runJob(ctx)
 }
 
@@ -92,36 +84,42 @@ func (s *operationsStats) MustRegister() {
 
 	for _, plan := range plans {
 		for _, opType := range opTypes {
-			for _, opState := range opStates {
-				key, err := s.makeKey(opType, opState, plan)
-				setup.FatalOnError(err)
-				name, err := s.buildName(opType, opState)
-				setup.FatalOnError(err)
-				labels := prometheus.Labels{"plan_id": string(plan)}
-				switch opState {
-				case domain.InProgress:
-					s.gauges[key] = prometheus.NewGauge(
-						prometheus.GaugeOpts{
-							Name:        name,
-							ConstLabels: labels,
-						},
-					)
-					prometheus.MustRegister(s.gauges[key])
-				case domain.Failed, domain.Succeeded:
-					s.counters[key] = prometheus.NewCounter(
-						prometheus.CounterOpts{
-							Name:        name,
-							ConstLabels: labels,
-						},
-					)
-					prometheus.MustRegister(s.counters[key])
-				}
-			}
+			labels := prometheus.Labels{"plan_id": string(plan)}
+
+			keyInProgress := s.makeKey(opType, domain.InProgress, plan)
+			nameInProgress := s.buildFQName(opType, domain.InProgress)
+			s.gauges[keyInProgress] = prometheus.NewGauge(
+				prometheus.GaugeOpts{
+					Name:        nameInProgress,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.gauges[keyInProgress])
+
+			keySucceeded := s.makeKey(opType, domain.Succeeded, plan)
+			nameSucceeded := s.buildFQName(opType, domain.Succeeded)
+			s.counters[keySucceeded] = prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name:        nameSucceeded,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.counters[keySucceeded])
+
+			keyFailed := s.makeKey(opType, domain.Failed, plan)
+			nameFailed := s.buildFQName(opType, domain.Failed)
+			s.counters[keyFailed] = prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name:        nameFailed,
+					ConstLabels: labels,
+				},
+			)
+			prometheus.MustRegister(s.counters[keyFailed])
 		}
 	}
 }
 
-func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
+func (s *operationsStats) UpdateMetrics(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -133,7 +131,7 @@ func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
 
 	payload, ok := event.(process.OperationFinished)
 	if !ok {
-		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
+		return fmt.Errorf("expected process.OperationFinished but got %+v", event)
 	}
 
 	opState := payload.Operation.State
@@ -142,11 +140,15 @@ func (s *operationsStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("operation state is %s, but operation counter supports only failed or succeded operations events ", payload.Operation.State)
 	}
 
-	key, err := s.makeKey(payload.Operation.Type, opState, payload.PlanID)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
+	if payload.PlanID == "" {
+		return fmt.Errorf("plan ID is empty in operation finished event for operation ID %s", payload.Operation.ID)
 	}
+
+	if payload.Operation.Type == "" {
+		return fmt.Errorf("operation type is empty in operation finished event for operation ID %s", payload.Operation.ID)
+	}
+
+	key := s.makeKey(payload.Operation.Type, opState, broker.PlanIDType(payload.PlanID))
 
 	metric, found := s.counters[key]
 	if !found || metric == nil {
@@ -165,16 +167,16 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}()
 
 	fmt.Printf("starting operations stats metrics runJob with interval %s\n", s.poolingInterval)
-	if err := s.UpdateStatsMetrics(); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
+	if err := s.UpdateGauges(); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to update metrics gauges initially: %v", err))
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.UpdateStatsMetrics(); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
+			if err := s.UpdateGauges(); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to update operation metrics gauges: %v", err))
 			}
 		case <-ctx.Done():
 			return
@@ -182,31 +184,28 @@ func (s *operationsStats) runJob(ctx context.Context) {
 	}
 }
 
-func (s *operationsStats) UpdateStatsMetrics() error {
+func (s *operationsStats) UpdateGauges() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
-	stats, err := s.operations.GetOperationStatsByPlanV2()
+	statsFromDB, err := s.operations.GetOperationStatsByPlanV2()
 	if err != nil {
-		return fmt.Errorf("cannot fetch operations stats by plan from operations table : %s", err.Error())
+		return fmt.Errorf("cannot fetch operations statistics by plan from operations table : %s", err.Error())
 	}
-	setStats := make(map[metricKey]struct{})
-	for _, stat := range stats {
-		key, err := s.makeKey(stat.Type, stat.State, broker.PlanID(stat.PlanID))
-		if err != nil {
-			return err
-		}
+	statsSet := make(map[metricKey]struct{})
+	for _, stat := range statsFromDB {
+		key := s.makeKey(stat.Type, stat.State, broker.PlanIDType(stat.PlanID))
 
 		metric, found := s.gauges[key]
 		if !found || metric == nil {
 			return fmt.Errorf("metric not found for key %s", key)
 		}
 		metric.Set(float64(stat.Count))
-		setStats[key] = struct{}{}
+		statsSet[key] = struct{}{}
 	}
 
 	for key, metric := range s.gauges {
-		if _, ok := setStats[key]; ok {
+		if _, ok := statsSet[key]; ok {
 			continue
 		}
 		metric.Set(0)
@@ -214,39 +213,19 @@ func (s *operationsStats) UpdateStatsMetrics() error {
 	return nil
 }
 
-func (s *operationsStats) buildName(opType internal.OperationType, opState domain.LastOperationState) (string, error) {
-	fmtState := formatOpState(opState)
-	fmtType := formatOpType(opType)
-
-	if fmtType == "" || fmtState == "" {
-		return "", fmt.Errorf("cannot build name for operation: type: %s, state: %s", opType, opState)
-	}
-
-	return prometheus.BuildFQName(
-		prometheusNamespacev2,
-		prometheusSubsystemv2,
-		fmt.Sprintf(OpStatsMetricName, fmtType, fmtState),
-	), nil
+func (s *operationsStats) buildFQName(opType internal.OperationType, opState domain.LastOperationState) string {
+	return prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, fmt.Sprintf(OpStatsMetricNameTemplate, formatOpType(opType), formatOpState(opState)))
 }
 
-func (s *operationsStats) Metric(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (prometheus.Counter, error) {
-	key, err := s.makeKey(opType, opState, plan)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return prometheus.NewGauge(prometheus.GaugeOpts{}), err
-	}
+func (s *operationsStats) GetCounter(opType internal.OperationType, opState domain.LastOperationState, planID broker.PlanIDType) prometheus.Counter {
+	key := s.makeKey(opType, opState, planID)
 	s.sync.Lock()
 	defer s.sync.Unlock()
-	return s.counters[key], nil
+	return s.counters[key]
 }
 
-func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
-	fmtState := formatOpState(opState)
-	fmtType := formatOpType(opType)
-	if fmtType == "" || fmtState == "" || plan == "" {
-		return "", fmt.Errorf("cannot build key for operation: type - '%s', state - '%s' with planID - '%s'", opType, opState, plan)
-	}
-	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan)), nil
+func (s *operationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, planID broker.PlanIDType) metricKey {
+	return metricKey(fmt.Sprintf("%s_%s_%s", formatOpType(opType), formatOpState(opState), string(planID)))
 }
 
 func formatOpType(opType internal.OperationType) string {
@@ -255,11 +234,6 @@ func formatOpType(opType internal.OperationType) string {
 		return string(opType + "ing")
 	case internal.OperationTypeUpdate:
 		return "updating"
-	case internal.OperationTypeUpgradeCluster:
-		return "upgrading_cluster"
-	case internal.OperationTypeUpgradeKyma:
-		return "upgrading_kyma"
-
 	default:
 		return ""
 	}

@@ -45,7 +45,7 @@ func TestOperationsResult(t *testing.T) {
 		)
 
 		eventBroker := event.NewPubSub(log)
-		eventBroker.Subscribe(process.OperationFinished{}, resultsCollector.Handler)
+		eventBroker.Subscribe(process.OperationFinished{}, resultsCollector.UpdateMetrics)
 
 		ops, err := operations.GetAllOperations()
 		assert.NoError(t, err)
@@ -78,7 +78,7 @@ func TestOperationsResult(t *testing.T) {
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(newOp))))
 
 		opEvent := fixRandomOp(randomCreatedAt(), domain.InProgress)
-		err = resultsCollector.Handler(context.Background(), process.OperationFinished{Operation: opEvent})
+		err = resultsCollector.UpdateMetrics(context.Background(), process.OperationFinished{Operation: opEvent})
 		assert.NoError(t, err)
 
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(opEvent))))

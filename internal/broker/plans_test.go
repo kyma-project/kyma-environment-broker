@@ -156,6 +156,31 @@ func TestRemoveString(t *testing.T) {
 	}
 }
 
+func TestReverseMap_ReversesKeyValuePairs(t *testing.T) {
+	input := map[PlanNameType]PlanIDType{"a": "1", "b": "2"}
+	got := reverseMap(input)
+	expected := map[PlanIDType]PlanNameType{"1": "a", "2": "b"}
+	assert.Equal(t, expected, got)
+}
+
+func TestAvailablePlans_GetPlanIDByName_ReturnsIDWhenExistsAndFalseWhenNot(t *testing.T) {
+	ap := NewAvailablePlans(PlanIDsMapping)
+	id, ok := ap.GetPlanIDByName(AzurePlanName)
+	assert.True(t, ok)
+	assert.Equal(t, AzurePlanID, string(id))
+
+	id, ok = ap.GetPlanIDByName("non-existent-name")
+	assert.False(t, ok)
+	assert.Empty(t, id)
+}
+
+func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *testing.T) {
+	// create a map where two names map to the same ID (not bijective)
+	nameToID := map[PlanNameType]PlanIDType{"planA": "id1", "planB": "id1"}
+	ap := NewAvailablePlans(nameToID)
+	assert.Nil(t, ap)
+}
+
 func createSchemaService(t *testing.T) *SchemaService {
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)

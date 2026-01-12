@@ -27,15 +27,15 @@ type OperationDurationCollector struct {
 func NewOperationDurationCollector(logger *slog.Logger) *OperationDurationCollector {
 	return &OperationDurationCollector{
 		provisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "provisioning_duration_minutes",
 			Help:      "The time of the provisioning process",
 			Buckets:   prometheus.LinearBuckets(6, 2, 58),
 		}, []string{"plan_id"}),
 		deprovisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: prometheusNamespacev2,
-			Subsystem: prometheusSubsystemv2,
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
 			Name:      "deprovisioning_duration_minutes",
 			Help:      "The time of the deprovisioning process",
 			Buckets:   prometheus.LinearBuckets(6, 2, 58),

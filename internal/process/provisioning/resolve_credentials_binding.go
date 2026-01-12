@@ -125,7 +125,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 
 func (s *ResolveCredentialsBindingStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
 	return &rules.ProvisioningAttributes{
-		Plan:              broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
+		Plan:              broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(operation.ProvisioningParameters.PlanID)),
 		PlatformRegion:    operation.ProvisioningParameters.PlatformRegion,
 		HyperscalerRegion: operation.ProviderValues.Region,
 		Hyperscaler:       operation.ProviderValues.ProviderType,
