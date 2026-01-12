@@ -31,10 +31,6 @@ on:
         description: 'Post-test monitoring duration in minutes'
         default: '10'
         required: false
-      test-duration-minutes:
-        description: 'Test duration in minutes (0 = run once)'
-        default: '5'
-        required: false
 
       # Test Configuration
       instances-number:
@@ -49,15 +45,15 @@ on:
       # Workers Configuration
       provisioning-workers-amount:
         description: 'Provisioning workers amount'
-        default: '300'
+        default: '25'
         required: false
       update-workers-amount:
         description: 'Update workers amount'
-        default: '300'
+        default: '25'
         required: false
       deprovisioning-workers-amount:
         description: 'Deprovisioning workers amount'
-        default: '300'
+        default: '25'
         required: false
       
       # Leak Detection Thresholds
