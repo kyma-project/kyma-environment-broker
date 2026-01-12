@@ -123,9 +123,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
 
       - name: Populate database
@@ -268,9 +268,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
 
       - name: Populate database
@@ -461,9 +461,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
 
       - name: Populate database
@@ -628,9 +628,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
 
       - name: Populate database
@@ -836,9 +836,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
 
       - name: Populate database
@@ -1164,9 +1164,9 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION="${{ inputs.version }}"
+            make install VERSION=${{ inputs.version }}
           else
-            make install VERSION=PR-"${{ inputs.version }}"
+            make install VERSION=PR-${{ inputs.version }}
           fi
           
       - name: Start metrics collector
