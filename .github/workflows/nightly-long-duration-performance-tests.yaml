@@ -5,27 +5,7 @@ on:
     # Run nightly at 2:00 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      # Release Configuration
-      release:
-        description: 'Determines if the workflow is called from release'
-        default: 'true'
-        required: false
-      version:
-        description: 'Release version'
-        default: 'main'
-        required: false
-      
-      # Test Configuration
-      instances-number:
-        description: 'Number of instances to provision'
-        default: '100'
-        required: false
-      updates-number:
-        description: 'Number of updates per instance'
-        default: '500'
-        required: false
-      
+    inputs:      
       # Timing Configuration
       kim-delay-seconds:
         description: 'KIM delay seconds'
@@ -54,6 +34,16 @@ on:
       test-duration-minutes:
         description: 'Test duration in minutes (0 = run once)'
         default: '5'
+        required: false
+
+      # Test Configuration
+      instances-number:
+        description: 'Number of instances to provision'
+        default: '100'
+        required: false
+      updates-number:
+        description: 'Number of updates per instance'
+        default: '500'
         required: false
       
       # Workers Configuration
@@ -88,6 +78,15 @@ on:
         default: '5'
         required: false
 
+      # Release Configuration
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: 'true'
+        required: false
+      version:
+        description: 'Release version'
+        default: 'main'
+        required: false
 jobs:
   run-performance-tests:
     name: Run performance tests with extended monitoring
