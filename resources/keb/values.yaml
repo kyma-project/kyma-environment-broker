@@ -40,13 +40,6 @@ global:
       sslModeSecretKey: "postgresql-sslMode"
       # Key in the database Secret for the database user.
       userNameSecretKey: "postgresql-broker-username"
-  fips:
-    # Write using AES-GCM encryption.
-    writeGCM: true
-    # Rewrite old data using AES-GCM encryption.
-    rewriteCFB: true
-    # Number of records to process in one batch during rewrite.
-    rewriteBatchSize: 100
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
