@@ -205,7 +205,13 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 
 func (c *Config) Validate() error {
 	_, err := c.GardenerSubscriptionResource()
-	return err
+	if err != nil {
+		return err
+	}
+	if err := c.Broker.Validate(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, error) {
@@ -256,6 +262,8 @@ func main() {
 	}
 
 	log.Info("Starting Kyma Environment Broker")
+
+	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %s", cfg.Broker.RestrictToAllowedGlobalAccounts))
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
@@ -452,6 +460,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
+	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
 
 	r, _ := cfg.GardenerSubscriptionResource()
 	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))

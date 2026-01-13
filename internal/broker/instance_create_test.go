@@ -3544,11 +3544,11 @@ func TestRestrictGA(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:                       []string{"gcp", "azure"},
-			URL:                               brokerURL,
-			OnlySingleTrialPerGA:              true,
-			RestrictToAllowedGlobalAccountIDs: true,
-			AllowedGlobalAccountIDs:           []string{allowedGA},
+			EnablePlans:                     []string{"gcp", "azure"},
+			URL:                             brokerURL,
+			OnlySingleTrialPerGA:            true,
+			RestrictToAllowedGlobalAccounts: true,
+			AllowedGlobalAccounts:           []string{allowedGA},
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		imConfigFixture,

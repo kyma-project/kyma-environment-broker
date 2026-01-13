@@ -155,8 +155,8 @@ func TestProvisioningForAWS(t *testing.T) {
 
 func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.AllowedGlobalAccountIDs = []string{"g-account-id"}
-	cfg.Broker.RestrictToAllowedGlobalAccountIDs = true
+	cfg.Broker.AllowedGlobalAccounts = []string{"g-account-id"}
+	cfg.Broker.RestrictToAllowedGlobalAccounts = true
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()

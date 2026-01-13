@@ -76,7 +76,7 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
-            - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNT_IDS
+            - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ .Values.broker.allowedGlobalAccountIDs }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
               value: "{{ .Values.broker.binding.bindablePlans}}"
@@ -120,7 +120,7 @@ spec:
               value: "{{ .Values.broker.port }}"
             - name: APP_BROKER_REJECT_UNSUPPORTED_PARAMETERS
               value: "{{ .Values.broker.rejectUnsupportedParameters }}"
-            - name: APP_BROKER_RESTRICT_TO_ALLOWED_GLOBAL_ACCOUNT_IDS
+            - name: APP_BROKER_RESTRICT_TO_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ .Values.broker.restrictToAllowedGlobalAccountIDs }}"
             - name: APP_BROKER_STATUS_PORT
               value: "{{ .Values.broker.statusPort }}"

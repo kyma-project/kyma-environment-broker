@@ -346,8 +346,8 @@ func valueOfBoolPtr(ptr *bool) bool {
 }
 
 func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, l *slog.Logger) error {
-	if b.config.RestrictToAllowedGlobalAccountIDs {
-		if !b.config.AllowedGlobalAccountIDs.Contains(provisioningParameters.ErsContext.GlobalAccountID) {
+	if b.config.RestrictToAllowedGlobalAccounts {
+		if !b.config.AllowedGlobalAccounts.Contains(provisioningParameters.ErsContext.GlobalAccountID) {
 			message := fmt.Sprintf("The Global Account %s is not allowed to provision a Kyma runtime", provisioningParameters.ErsContext.GlobalAccountID)
 			l.Info(message)
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
