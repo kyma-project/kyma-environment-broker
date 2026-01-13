@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	PostgresImage = "europe-docker.pkg.dev/kyma-project/prod/external/postgres:11.21-alpine3.18"
+	PostgresImage = "postgres:latest"
 )
 
 type DockerHelper struct {

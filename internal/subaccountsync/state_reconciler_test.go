@@ -1579,7 +1579,7 @@ func brokerStorageTestConfig() storage.Config {
 	return storage.Config{
 		Host:            "localhost",
 		User:            "test",
-		Password:        "test",
+		Password:        "FIPS-compl1antPwd!",
 		Port:            "5432",
 		Name:            "test-sync",
 		SSLMode:         "disable",
