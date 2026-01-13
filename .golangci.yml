@@ -1,15 +1,82 @@
 run:
   allow-parallel-runners: true
-  timeout: 2m
+  timeout: 5m
+
 output:
-  format: "colored-tab:stderr,github-actions:stdout"
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: false
+  formats:
+    - format: colored-line-number
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
 linters:
   disable-all: true
   enable:
-    - errcheck
-    - goimports
-    - govet
-    - gofmt
+    # Original linters
+    - errcheck      # Checks for unchecked errors
+    - goimports     # Checks import formatting
+    - govet         # Go vet checks (printf, struct tags, etc)
+    - gofmt         # Checks code formatting
+    
+    # Code quality & bugs
+    - staticcheck   # Comprehensive static analysis
+    - gosimple      # Suggests code simplifications
+    - ineffassign   # Detects ineffectual assignments
+    - unused        # Finds unused constants, variables, functions
+    - typecheck     # Type checks the Go code
+    
+    # Performance
+    - bodyclose     # Checks HTTP response body is closed
+    - noctx         # Finds HTTP requests without context
+    - sqlclosecheck # Checks SQL rows/statements are closed
+    
+    # Style & maintainability  
+    - goconst       # Finds repeated strings that should be constants
+    - misspell      # Fixes spelling mistakes in comments
+    - unconvert     # Removes unnecessary type conversions
+    - unparam       # Reports unused function parameters
+    - whitespace    # Checks for unnecessary whitespace
+    
+    # Security
+    - gosec         # Security-focused checks
+
+linters-settings:
+  errcheck:
+    check-blank: false
+    check-type-assertions: false
+    
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+    
+  staticcheck:
+    checks: ["all"]
+    
+  gosimple:
+    checks: ["all"]
+    
+  unused:
+    check-exported: false
+    
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G101  # Look for hard coded credentials
+      - G104  # Audit errors not checked (covered by errcheck)
+      - G402  # TLS MinVersion too low (may need for compatibility)
+      - G404  # Use of weak random number generator
+      
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    
+  misspell:
+    locale: US
+    
+  whitespace:
+    multi-if: false
+    multi-func: false
