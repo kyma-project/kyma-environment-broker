@@ -108,7 +108,7 @@ spec:
       allowHeaders:
         - Authorization
         - Content-Type
-      allowMethods: [ "GET" ]
+      allowMethods: ["GET"]
       allowOrigins:
         - regex: ".*"
     match:
