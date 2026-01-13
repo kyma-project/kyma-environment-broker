@@ -2,7 +2,7 @@ name: Nightly Long Duration Performance Tests
 
 on:
   schedule:
-    - cron: '40 * * * *'
+    - cron: '0 23 * * *'
   workflow_dispatch:
     inputs:      
       # Timing Configuration
