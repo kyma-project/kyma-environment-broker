@@ -2,8 +2,7 @@ name: Nightly Long Duration Performance Tests
 
 on:
   schedule:
-    # Run nightly at 2:00 AM UTC
-    - cron: '0 2 * * *'
+    - cron: '40 * * * *'
   workflow_dispatch:
     inputs:      
       # Timing Configuration
@@ -89,23 +88,23 @@ jobs:
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:
-      release: ${{ github.event.inputs.release }}
-      version: ${{ github.event.inputs.version }}
-      instances-number: ${{ github.event.inputs.instances-number }}
-      updates-number: ${{ github.event.inputs.updates-number }}
-      kim-delay-seconds: ${{ github.event.inputs.kim-delay-seconds }}
-      provisioning-max-step-processing-time: ${{ github.event.inputs.provisioning-max-step-processing-time }}
-      provisioning-workers-amount: ${{ github.event.inputs.provisioning-workers-amount }}
-      update-max-step-processing-time: ${{ github.event.inputs.update-max-step-processing-time }}
-      update-workers-amount: ${{ github.event.inputs.update-workers-amount }}
-      deprovisioning-max-step-processing-time: ${{ github.event.inputs.deprovisioning-max-step-processing-time }}
-      deprovisioning-workers-amount: ${{ github.event.inputs.deprovisioning-workers-amount }}
-      baseline-monitoring-minutes: ${{ github.event.inputs.baseline-monitoring-minutes }}
-      post-test-monitoring-minutes: ${{ github.event.inputs.post-test-monitoring-minutes }}
-      memory-growth-threshold-percent: ${{ github.event.inputs.memory-growth-threshold-percent }}
-      goroutine-increase-threshold: ${{ github.event.inputs.goroutine-increase-threshold }}
-      fd-increase-threshold: ${{ github.event.inputs.fd-increase-threshold }}
-      db-conn-increase-threshold: ${{ github.event.inputs.db-conn-increase-threshold }}
+      release: ${{ inputs.release || 'true' }}
+      version: ${{ inputs.version || '' }}
+      instances-number: ${{ inputs.instances-number || '100' }}
+      updates-number: ${{ inputs.updates-number || '500' }}
+      kim-delay-seconds: ${{ inputs.kim-delay-seconds || '0' }}
+      provisioning-max-step-processing-time: ${{ inputs.provisioning-max-step-processing-time || '30s' }}
+      update-max-step-processing-time: ${{ inputs.update-max-step-processing-time || '30s' }}
+      deprovisioning-max-step-processing-time: ${{ inputs.deprovisioning-max-step-processing-time || '30s' }}
+      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '10' }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '10' }}
+      provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
+      update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
+      deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
+      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '70' }}
+      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '50' }}
+      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '10' }}
+      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '5' }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
