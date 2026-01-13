@@ -1,6 +1,18 @@
 broker:
   subaccountMovementEnabled: "true"
   updateCustomResourcesLabelsOnAccountMove: "true"
+  
+metricsv2:
+  # If true, enables metrics collection and Prometheus exposure.
+  enabled: false
+  # Duration of retaining finished operation results in memory.
+  operationResultFinishedOperationRetentionPeriod: 5m
+  # Frequency of polling for operation results.
+  operationResultPollingInterval: 1m
+  # Duration of retaining operation results.
+  operationResultRetentionPeriod: 2m
+  # Frequency of polling for operation statistics.
+  operationStatsPollingInterval: 1m
 
 plansConfiguration:
   sap-converged-cloud:

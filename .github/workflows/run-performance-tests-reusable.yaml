@@ -2,51 +2,84 @@ name: Run performance tests (reusable)
 
 on:
   workflow_call:
-    inputs:
+    inputs:      
+      # Timing Configuration
+      kim-delay-seconds:
+        description: 'Time to wait before transitioning the runtime CR to the Ready state'
+        default: '0'
+        type: string
+      provisioning-max-step-processing-time:
+        description: 'Max time to process a step in provisioning queue'
+        default: '30s'
+        type: string
+      update-max-step-processing-time:
+        description: 'Max time to process a step in update queue'
+        default: '30s'
+        type: string
+      deprovisioning-max-step-processing-time:
+        description: 'Max time to process a step in deprovisioning queue'
+        default: '30s'
+        type: string
+      baseline-monitoring-minutes:
+        description: 'Duration of baseline monitoring before tests (minutes)'
+        default: '2'
+        type: string
+      post-test-monitoring-minutes:
+        description: 'Duration of post-test monitoring after tests (minutes)'
+        default: '2'
+        type: string
+
+      # Test Configuration
+      instances-number:
+        description: 'Number of instances to be provisioned'
+        default: '100'
+        type: string
+      updates-number:
+        description: 'Number of updates on a single instance'
+        default: '300'
+        type: string
+      
+      # Workers Configuration
+      provisioning-workers-amount:
+        description: 'Amount of workers in provisioning queue'
+        default: '200'
+        type: string
+      update-workers-amount:
+        description: 'Amount of workers in update queue'
+        default: '25'
+        type: string
+      deprovisioning-workers-amount:
+        description: 'Amount of workers in deprovisioning queue'
+        default: '25'
+        type: string
+      
+      # Leak Detection Thresholds
+      memory-growth-threshold-percent:
+        description: 'Allowed memory growth percent (over baseline)'
+        default: '70'
+        type: string
+      goroutine-increase-threshold:
+        description: 'Allowed increase in goroutines (absolute)'
+        default: '50'
+        type: string
+      fd-increase-threshold:
+        description: 'Allowed increase in open file descriptors (absolute)'
+        default: '10'
+        type: string
+      db-conn-increase-threshold:
+        description: 'Allowed increase in DB connections (absolute)'
+        default: '5'
+        type: string
+
+      # Release Configuration
       release:
         description: 'Determines if the workflow is called from release'
-        default: "true"
+        default: 'false'
         type: string
       version:
         description: 'Release version'
-        default: "0.0.0.0"
+        default: ''
         type: string
-      instances-number:
-        description: number of instances to be provisioned
-        default: 100
-        type: number
-      updates-number:
-        description: number of updates on a single instance
-        default: 300
-        type: number
-      kim-delay-seconds:
-        description: time to wait before transitioning the runtime CR to the Ready state
-        default: 0
-        type: number
-      provisioning-max-step-processing-time:
-        description: max time to process a step in provisioning queue
-        default: 30s
-        type: string
-      provisioning-workers-amount:
-        description: amount of workers in provisioning queue
-        default: 25
-        type: number
-      update-max-step-processing-time:
-        description: max time to process a step in update queue
-        default: 30s
-        type: string
-      update-workers-amount:
-        description: amount of workers in update queue
-        default: 25
-        type: number
-      deprovisioning-max-step-processing-time:
-        description: max time to process a step in deprovisioning queue
-        default: 30s
-        type: string
-      deprovisioning-workers-amount:
-        description: amount of workers in deprovisioning queue
-        default: 25
-        type: number
 
 jobs:
   prepare-tests:
@@ -63,7 +96,7 @@ jobs:
           VERSION=($(./scripts/testing/get-latest-k3s-releases.sh 1 | jq -r))
           echo "k3s_version=${VERSION}" >> "${GITHUB_OUTPUT}"
       - name: Wait for images to be ready
-        uses: wechuli/allcheckspassed@b0eaef5be76003932c9520e2b3dd03c85cc43d87
+        uses: wechuli/allcheckspassed@f423b273f5fdf73582e41f8f6f0f204d69c27379
         if: ${{ inputs.release == 'false' }}
         with:
           delay: '1'
@@ -115,6 +148,13 @@ jobs:
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
+
       - name: Provision instances
         run: |
           for i in $(seq 1 ${{ inputs.instances-number }}); do
@@ -125,7 +165,7 @@ jobs:
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           done
-          
+
           TOTAL_COUNT=$(curl --request GET \
             --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
@@ -144,6 +184,13 @@ jobs:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
         
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
       - name: Fetch metrics
         run: |          
           METRICS=$(curl -s http://localhost:30080/metrics)
@@ -178,6 +225,15 @@ jobs:
             exit 1
           fi
 
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
   run-concurrent-update-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -190,8 +246,8 @@ jobs:
 
       - name: Prepare values.yaml
         run: |
-          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
           yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
           yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
 
@@ -222,6 +278,13 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
 
       - name: Provision instances
         run: |
@@ -306,7 +369,6 @@ jobs:
           
             sleep 10
           done
-        
       - name: Fetch metrics
         run: |
           sleep 15
@@ -324,13 +386,35 @@ jobs:
           fi
           echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
-          scripts/generate_charts.sh
           
           if [[ "$SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
-          
+
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
   run-multiple-updates-on-a-single-instance-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -373,6 +457,13 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
 
       - name: Provision the instance
         run: |
@@ -449,14 +540,32 @@ jobs:
             SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
           echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-
-          scripts/generate_charts.sh
           
           if [[ "$SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
-          
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
   run-concurrent-deprovisoning-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -469,8 +578,8 @@ jobs:
 
       - name: Prepare values.yaml
         run: |
-          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
           yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
           yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
 
@@ -501,6 +610,13 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
 
       - name: Provision instances
         run: |
@@ -588,6 +704,8 @@ jobs:
 
       - name: Fetch metrics
         run: |
+          sleep 15
+          
           METRICS=$(curl -s http://localhost:30080/metrics)
           
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
@@ -612,14 +730,34 @@ jobs:
             AVG_DEPROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($DEPROVISIONING_DURATION / $DEPROVISIONING_COUNT)}")
           fi
           echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-
-          scripts/generate_charts.sh
           
           if [[ "$SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
             exit 1
           fi
-          
+
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
   run-mixed-operations-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -666,6 +804,13 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
 
       - name: Provision instances
         run: |
@@ -719,6 +864,8 @@ jobs:
           KIM_DELAY_SECONDS: 0
         run: |
           scripts/simulate_kim.sh
+
+          sleep 15
           
           RESPONSE_JSON=$(curl --request GET \
             --url "http://localhost:30080/runtimes?plan=azure_lite&state=succeeded" \
@@ -826,6 +973,8 @@ jobs:
         
       - name: Fetch metrics
         run: |
+          sleep 15
+          
           METRICS=$(curl -s http://localhost:30080/metrics)
           
           # Provisioning metrics
@@ -894,8 +1043,6 @@ jobs:
             AVG_DEPROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($DEPROVISIONING_DURATION / $DEPROVISIONING_COUNT)}")
           fi
           echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-
-          scripts/generate_charts.sh
           
           if [[ "$PROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
             echo "Error: PROVISIONING_SUCCESS_RATE is $PROVISIONING_SUCCESS_RATE, expected 100.00"
@@ -911,7 +1058,29 @@ jobs:
             echo "Error: DEPROVISIONING_SUCCESS_RATE is $DEPROVISIONING_SUCCESS_RATE, expected 100.00"
             exit 1
           fi
-          
+
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+      - name: Analyze metrics for leaks
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          bash scripts/testing/compare_performance_metrics.sh
+
   run-runtimes-endpoint-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -934,6 +1103,13 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+
+      - name: Baseline monitoring period
+        if: ${{ inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
+          echo "Baseline monitoring completed"
 
       - name: Fetch runtimes using GET endpoint
         run: |
@@ -1013,5 +1189,20 @@ jobs:
             exit 1
           fi
 
-      - name: Fetch metrics
-        run: scripts/generate_charts.sh
+      - name: Post-test monitoring period
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
+          echo "Post-test monitoring completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+
+          scripts/generate_charts.sh
+
+      - name: Analyze metrics for leaks (disabled)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          echo "Disabled"

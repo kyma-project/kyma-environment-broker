@@ -25,7 +25,6 @@ Use the following environment variables to configure the application:
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
-| **RUNTIME_RECONCILER_&#x200b;DATABASE_FIPS_WRITE_&#x200b;GCM** | <code>true</code> | Write using AES-GCM encryption. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_HOST** | None | Specifies the host of the database. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_NAME** | None | Specifies the name of the database. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_PASSWORD** | None | Specifies the user password for the database. |

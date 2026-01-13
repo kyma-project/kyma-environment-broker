@@ -59,8 +59,6 @@ spec:
                   value: {{ .Values.cis.v2.requestInterval | quote }}
                 - name: APP_CLIENT_VERSION
                   value: "{{ .Values.subaccountCleanup.clientV2VersionName }}"
-                - name: APP_DATABASE_FIPS_WRITE_GCM
-                  value: "{{ .Values.global.fips.writeGCM }}"
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:

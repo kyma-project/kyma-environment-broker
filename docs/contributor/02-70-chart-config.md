@@ -16,30 +16,27 @@
 | global.database.managedGCP.<br>secretName | Name of the Kubernetes Secret containing DB connection values. | `kcp-postgresql` |
 | global.database.managedGCP.<br>sslModeSecretKey | Key in the database Secret for the SSL mode. | `postgresql-sslMode` |
 | global.database.managedGCP.<br>userNameSecretKey | Key in the database Secret for the database user. | `postgresql-broker-username` |
-| global.fips.writeGCM | Write using AES-GCM encryption. | `True` |
-| global.fips.<br>rewriteCFB | Rewrite old data using AES-GCM encryption. | `True` |
-| global.fips.<br>rewriteBatchSize | Number of records to process in one batch during rewrite. | `100` |
 | global.images.cloudsql_<br>proxy.repository | - | `eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy` |
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.25.19` |
+| global.images.kyma_environment_<br>broker.version | - | `1.25.21` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.19` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.21` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.19` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.21` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.19` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.21` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.19` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.21` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.19` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.21` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.19` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.21` |
 | global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.19` |
+| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.21` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.19` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.21` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |

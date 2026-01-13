@@ -28,8 +28,6 @@ spec:
               env:
                 - name: APP_BROKER_URL
                   value: "http://{{ include "kyma-env-broker.fullname" . }}"
-                - name: APP_DATABASE_FIPS_WRITE_GCM
-                  value: "{{ .Values.global.fips.writeGCM }}"
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:

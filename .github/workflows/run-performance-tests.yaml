@@ -12,14 +12,29 @@ jobs:
   run-performance-tests:
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     with:
+      # Release Configuration
       release: "false"
       version: ${{ github.event.pull_request.number }}
-      instances-number: 100
-      updates-number: 300
-      kim-delay-seconds: 0
-      provisioning-max-step-processing-time: 30s
-      provisioning-workers-amount: 25
-      update-max-step-processing-time: 30s
-      update-workers-amount: 25
-      deprovisioning-max-step-processing-time: 30s
-      deprovisioning-workers-amount: 25
+      
+      # Test Configuration
+      instances-number: "100"
+      updates-number: "300"
+      
+      # Timing Configuration
+      kim-delay-seconds: "0"
+      provisioning-max-step-processing-time: "30s"
+      update-max-step-processing-time: "30s"
+      deprovisioning-max-step-processing-time: "30s"
+      baseline-monitoring-minutes: "0"
+      post-test-monitoring-minutes: "0"
+      
+      # Workers Configuration
+      provisioning-workers-amount: "25"
+      update-workers-amount: "25"
+      deprovisioning-workers-amount: "25"
+      
+      # Leak Detection Thresholds (use defaults)
+      memory-growth-threshold-percent: "70"
+      goroutine-increase-threshold: "50"
+      fd-increase-threshold: "10"
+      db-conn-increase-threshold: "5"

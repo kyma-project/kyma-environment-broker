@@ -1,0 +1,131 @@
+name: Nightly Long Duration Performance Tests
+
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:      
+      # Timing Configuration
+      kim-delay-seconds:
+        description: 'KIM delay seconds'
+        default: '0'
+        required: false
+      provisioning-max-step-processing-time:
+        description: 'Provisioning max step processing time'
+        default: '30s'
+        required: false
+      update-max-step-processing-time:
+        description: 'Update max step processing time'
+        default: '30s'
+        required: false
+      deprovisioning-max-step-processing-time:
+        description: 'Deprovisioning max step processing time'
+        default: '30s'
+        required: false
+      baseline-monitoring-minutes:
+        description: 'Baseline monitoring duration in minutes'
+        default: '10'
+        required: false
+      post-test-monitoring-minutes:
+        description: 'Post-test monitoring duration in minutes'
+        default: '10'
+        required: false
+
+      # Test Configuration
+      instances-number:
+        description: 'Number of instances to provision'
+        default: '100'
+        required: false
+      updates-number:
+        description: 'Number of updates per instance'
+        default: '500'
+        required: false
+      
+      # Workers Configuration
+      provisioning-workers-amount:
+        description: 'Provisioning workers amount'
+        default: '25'
+        required: false
+      update-workers-amount:
+        description: 'Update workers amount'
+        default: '25'
+        required: false
+      deprovisioning-workers-amount:
+        description: 'Deprovisioning workers amount'
+        default: '25'
+        required: false
+      
+      # Leak Detection Thresholds
+      memory-growth-threshold-percent:
+        description: 'Allowed memory growth percent (over baseline)'
+        default: '70'
+        required: false
+      goroutine-increase-threshold:
+        description: 'Allowed increase in goroutines (absolute)'
+        default: '50'
+        required: false
+      fd-increase-threshold:
+        description: 'Allowed increase in open file descriptors (absolute)'
+        default: '10'
+        required: false
+      db-conn-increase-threshold:
+        description: 'Allowed increase in DB connections (absolute)'
+        default: '5'
+        required: false
+
+      # Release Configuration
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: 'true'
+        required: false
+      version:
+        description: 'Release version'
+        default: ''
+        required: false
+jobs:
+  run-performance-tests:
+    name: Run performance tests with extended monitoring
+    uses: "./.github/workflows/run-performance-tests-reusable.yaml"
+    secrets: inherit
+    with:
+      release: ${{ inputs.release || 'true' }}
+      version: ${{ inputs.version || '' }}
+      instances-number: ${{ inputs.instances-number || '100' }}
+      updates-number: ${{ inputs.updates-number || '500' }}
+      kim-delay-seconds: ${{ inputs.kim-delay-seconds || '0' }}
+      provisioning-max-step-processing-time: ${{ inputs.provisioning-max-step-processing-time || '30s' }}
+      update-max-step-processing-time: ${{ inputs.update-max-step-processing-time || '30s' }}
+      deprovisioning-max-step-processing-time: ${{ inputs.deprovisioning-max-step-processing-time || '30s' }}
+      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '30' }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '30' }}
+      provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
+      update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
+      deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
+      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '70' }}
+      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '50' }}
+      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '10' }}
+      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '5' }}
+
+  analyze-for-leaks:
+    name: Extended monitoring and leak detection
+    needs: run-performance-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Notify MS Teams on failure
+        if: failure()
+        env:
+          MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
+          MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
+          MS_TEAMS_CLIENT_SECRET: ${{ secrets.MS_TEAMS_CLIENT_SECRET }}
+          MS_TEAMS_SCOPE: ${{ secrets.MS_TEAMS_SCOPE }}
+          MS_TEAMS_WEBHOOK_URL: ${{ secrets.MS_TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$MS_TEAMS_WEBHOOK_URL" ]; then
+            echo "MS Teams secrets not configured, skipping notification"
+            exit 0
+          fi
+          MESSAGE="🚨 <strong>Nightly Long Duration Performance Test FAILED</strong><br>Test execution failed!<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
+          ./scripts/notify_teams.sh "$MESSAGE"

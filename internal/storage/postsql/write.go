@@ -55,7 +55,6 @@ func (ws writeSession) InsertBinding(binding dbmodel.BindingDTO) dberr.Error {
 		Pair("kubeconfig", binding.Kubeconfig).
 		Pair("expiration_seconds", binding.ExpirationSeconds).
 		Pair("created_by", binding.CreatedBy).
-		Pair("encryption_mode", binding.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -74,7 +73,6 @@ func (ws writeSession) UpdateBinding(binding dbmodel.BindingDTO) dberr.Error {
 	_, err := ws.update(BindingsTableName).
 		Set("kubeconfig", binding.Kubeconfig).
 		Set("expires_at", binding.ExpiresAt).
-		Set("encryption_mode", binding.EncryptionMode).
 		Where(dbr.Eq("id", binding.ID)).
 		Where(dbr.Eq("instance_id", binding.InstanceID)).
 		Exec()
@@ -139,7 +137,6 @@ func (ws writeSession) InsertInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Pair("deleted_at", instance.DeletedAt).
 		Pair("expired_at", instance.ExpiredAt).
 		Pair("version", instance.Version).
-		Pair("encryption_mode", instance.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -185,7 +182,6 @@ func (ws writeSession) UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Set("deleted_at", instance.DeletedAt).
 		Set("version", instance.Version+1).
 		Set("expired_at", instance.ExpiredAt).
-		Set("encryption_mode", instance.EncryptionMode).
 		Exec()
 	if err != nil {
 		return dberr.Internal("Failed to update record to Instance table: %s", err)
@@ -216,7 +212,6 @@ func (ws writeSession) InsertOperation(op dbmodel.OperationDTO) dberr.Error {
 		Pair("data", op.Data).
 		Pair("provisioning_parameters", op.ProvisioningParameters.String).
 		Pair("finished_stages", op.FinishedStages).
-		Pair("encryption_mode", op.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -271,7 +266,6 @@ func (ws writeSession) UpdateEncryptedDataInOperation(op dbmodel.OperationDTO) d
 		Where(dbr.Eq("id", op.ID)).
 		Where(dbr.Eq("version", op.Version)).
 		Set("provisioning_parameters", op.ProvisioningParameters.String).
-		Set("encryption_mode", op.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -297,7 +291,6 @@ func (ws writeSession) UpdateEncryptedDataInInstance(instance dbmodel.InstanceDT
 		Where(dbr.Eq("instance_id", instance.InstanceID)).
 		Where(dbr.Eq("version", instance.Version)).
 		Set("provisioning_parameters", instance.ProvisioningParameters).
-		Set("encryption_mode", instance.EncryptionMode).
 		Set("updated_at", instance.UpdatedAt). // since in the DB there is default now(), we need to explicitly set it to preserve the timestamp
 		Exec()
 
@@ -324,7 +317,6 @@ func (ws writeSession) UpdateEncryptedDataInBinding(binding dbmodel.BindingDTO) 
 		Where(dbr.Eq("id", binding.ID)).
 		Where(dbr.Eq("instance_id", binding.InstanceID)).
 		Set("kubeconfig", binding.Kubeconfig).
-		Set("encryption_mode", binding.EncryptionMode).
 		Exec()
 
 	if err != nil {
@@ -360,7 +352,6 @@ func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 		Set("data", op.Data).
 		Set("provisioning_parameters", op.ProvisioningParameters.String).
 		Set("finished_stages", op.FinishedStages).
-		Set("encryption_mode", op.EncryptionMode).
 		Exec()
 
 	if err != nil {

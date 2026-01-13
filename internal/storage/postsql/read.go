@@ -22,61 +22,6 @@ type readSession struct {
 	session *dbr.Session
 }
 
-func (r readSession) ListBindingsEncryptedUsingCFB(batchSize int) ([]dbmodel.BindingDTO, error) {
-	var bindingDTOS []dbmodel.BindingDTO
-	stmt := r.session.Select("*").From(BindingsTableName).Where("UPPER(encryption_mode) = 'AES-CFB'").Limit(uint64(batchSize))
-	_, err := stmt.Load(&bindingDTOS)
-	return bindingDTOS, err
-}
-
-func (r readSession) ListInstancesEncryptedUsingCFB(batchSize int) ([]dbmodel.InstanceDTO, error) {
-	var instanceDTOS []dbmodel.InstanceDTO
-	stmt := r.session.Select("*").From(InstancesTableName).Where("UPPER(encryption_mode) = 'AES-CFB'").Limit(uint64(batchSize))
-	_, err := stmt.Load(&instanceDTOS)
-	return instanceDTOS, err
-}
-
-func (r readSession) ListOperationsEncryptedUsingCFB(batchSize int) ([]dbmodel.OperationDTO, error) {
-	var operationDTOS []dbmodel.OperationDTO
-	stmt := r.session.Select("*").From(OperationTableName).Where("UPPER(encryption_mode) = 'AES-CFB'").Limit(uint64(batchSize))
-	_, err := stmt.Load(&operationDTOS)
-	return operationDTOS, err
-}
-
-func (r readSession) GetEncryptionModeStatsForInstances() (map[string]int, error) {
-	return r.getEncryptionModeStats(InstancesTableName)
-}
-
-func (r readSession) GetEncryptionModeStatsForOperations() (map[string]int, error) {
-	return r.getEncryptionModeStats(OperationTableName)
-}
-
-func (r readSession) GetEncryptionModeStatsForBindings() (map[string]int, error) {
-	return r.getEncryptionModeStats(BindingsTableName)
-}
-
-func (r readSession) getEncryptionModeStats(tableName string) (map[string]int, error) {
-	var rows []dbmodel.EncryptionModeStatsDTO
-	var stmt *dbr.SelectStmt
-	stmt = r.session.
-		Select("encryption_mode", "count(*) as total").
-		From(tableName).
-		GroupBy("encryption_mode")
-
-	_, err := stmt.Load(&rows)
-
-	if err != nil {
-		return nil, err
-	}
-	mappedRows := make(map[string]int)
-	for _, row := range rows {
-		mode := row.EncryptionMode
-		mappedRows[mode] = row.Total
-	}
-
-	return mappedRows, err
-}
-
 func (r readSession) GetTimeZone() (string, dberr.Error) {
 	var timeZone string
 
@@ -183,7 +128,7 @@ func (r readSession) getInstancesJoinedWithOperationStatement() *dbr.SelectStmt 
 		Select("instances.instance_id, instances.runtime_id, instances.global_account_id, instances.subscription_global_account_id, instances.service_id,"+
 			" instances.service_plan_id, instances.dashboard_url, instances.provisioning_parameters, instances.created_at,"+
 			" instances.updated_at, instances.deleted_at, instances.sub_account_id, instances.service_name, instances.service_plan_name,"+
-			" instances.subscription_secret_name, instances.provider_region, instances.provider, instances.encryption_mode, operations.state, operations.description, operations.type, operations.created_at AS operation_created_at, operations.data").
+			" instances.subscription_secret_name, instances.provider_region, instances.provider, operations.state, operations.description, operations.type, operations.created_at AS operation_created_at, operations.data").
 		From(InstancesTableName).
 		LeftJoin(OperationTableName, join)
 	return stmt
