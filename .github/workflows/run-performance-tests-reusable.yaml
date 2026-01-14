@@ -1230,3 +1230,66 @@ jobs:
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
           echo "Disabled"
+
+  run-idle-monitoring-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Start metrics collector
+        run: |
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: First monitoring period (baseline)
+        run: |
+          DURATION=${{ inputs.baseline-monitoring-minutes }}
+          if [ "$DURATION" -eq 0 ]; then
+            DURATION=5
+          fi
+          echo "First monitoring period: $DURATION minutes..."
+          sleep $(($DURATION * 60))
+          echo "First monitoring period completed"
+
+      - name: Second monitoring period (post-test)
+        run: |
+          DURATION=${{ inputs.post-test-monitoring-minutes }}
+          if [ "$DURATION" -eq 0 ]; then
+            DURATION=5
+          fi
+          echo "Second monitoring period: $DURATION minutes..."
+          sleep $(($DURATION * 60))
+          echo "Second monitoring period completed"
+
+      - name: Generate charts
+        run: |
+          sleep 15
+          scripts/generate_charts.sh
+
+      - name: Set up Python
+        if: ${{ inputs.post-test-monitoring-minutes > 0 || inputs.baseline-monitoring-minutes > 0 }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
+      - name: Analyze metrics for leaks (idle system)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 || inputs.baseline-monitoring-minutes > 0 }}
+        run: |
+          export MEMORY_GROWTH_THRESHOLD_PERCENT=${{ inputs.memory-growth-threshold-percent }}
+          export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
+          export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
+          export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
+          python3 scripts/python/compare_performance_metrics.py
