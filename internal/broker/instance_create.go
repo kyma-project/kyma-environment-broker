@@ -3,7 +3,6 @@ package broker
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -266,11 +265,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	operation.ShootDomain = fmt.Sprintf("%s.%s", shootName, shootDomainSuffix)
 	operation.ShootDNSProviders = b.shootDnsProviders
 	operation.DashboardURL = dashboardURL
-	// for own cluster plan - KEB uses provided shoot name and shoot domain
-	if IsOwnClusterPlan(provisioningParameters.PlanID) {
-		operation.ShootName = provisioningParameters.Parameters.ShootName
-		operation.ShootDomain = provisioningParameters.Parameters.ShootDomain
-	}
 	logger.Info(fmt.Sprintf("Runtime ShootDomain: %s", operation.ShootDomain))
 
 	err = b.operationsStorage.InsertOperation(operation.Operation)
@@ -305,10 +299,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
-
-	if !IsOwnClusterPlan(provisioningParameters.PlanID) {
-		dashboardURL = ""
-	}
 
 	return domain.ProvisionedServiceSpec{
 		IsAsync:       true,
@@ -520,18 +510,6 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	// EU Access
 	if isEuRestrictedAccess(ctx) {
 		l.Info("EU Access restricted instance creation")
-	}
-
-	if IsOwnClusterPlan(details.PlanID) {
-		decodedKubeconfig, err := base64.StdEncoding.DecodeString(parameters.Kubeconfig)
-		if err != nil {
-			return fmt.Errorf("while decoding kubeconfig: %w", err)
-		}
-		parameters.Kubeconfig = string(decodedKubeconfig)
-		err = validateKubeconfig(parameters.Kubeconfig)
-		if err != nil {
-			return fmt.Errorf("while validating kubeconfig: %w", err)
-		}
 	}
 
 	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
@@ -851,11 +829,7 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 }
 
 func (b *ProvisionEndpoint) createDashboardURL(planID, instanceID string) string {
-	if IsOwnClusterPlan(planID) {
-		return b.dashboardConfig.LandscapeURL
-	} else {
-		return fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
-	}
+	return fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
 }
 
 func validateCidr(cidr string) (*net.IPNet, error) {
