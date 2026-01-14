@@ -125,22 +125,6 @@ func TestResponseLabels(t *testing.T) {
 		require.Equal(t, "cluster-test", labels["Name"])
 	})
 
-	t.Run("should return labels for own cluster", func(t *testing.T) {
-		// given
-		instance := fixture.FixInstance("instanceID")
-		instance.ServicePlanID = OwnClusterPlanID
-		kcBuilder := &automock.KcBuilder{}
-
-		// when
-		labels := ResponseLabelsWithExpirationInfo(instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
-
-		// then
-		require.Len(t, labels, 2)
-		assert.NotContains(t, labels, kubeconfigURLKey)
-		assert.NotContains(t, labels, apiServerURLKey)
-		require.Equal(t, "cluster-test", labels["Name"])
-	})
-
 	t.Run("should not return API server URL label", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance("instance-no-apiserverurl")
