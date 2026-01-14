@@ -39,7 +39,6 @@ for IMAGE_SPEC in "${IMAGES[@]}"; do
     # Add build args if they exist
     if [ -n "$BUILD_ARGS" ]; then
         BUILD_CMD="${BUILD_CMD} --build-arg ${BUILD_ARGS}"
-        echo $BUILD_CMD
     fi
 
     # Build the image
