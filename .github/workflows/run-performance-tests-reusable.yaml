@@ -238,7 +238,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          python3 scripts/testing/compare_performance_metrics.py
+          python3 scripts/python/compare_performance_metrics.py
 
   run-concurrent-update-test:
     runs-on: ubuntu-latest
@@ -419,7 +419,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          python3 scripts/testing/compare_performance_metrics.py
+          python3 scripts/python/compare_performance_metrics.py
 
   run-multiple-updates-on-a-single-instance-test:
     runs-on: ubuntu-latest
@@ -576,7 +576,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          python3 scripts/testing/compare_performance_metrics.py
+          python3 scripts/python/compare_performance_metrics.py
 
   run-concurrent-deprovisoning-test:
     runs-on: ubuntu-latest
@@ -774,7 +774,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          python3 scripts/testing/compare_performance_metrics.py
+          python3 scripts/python/compare_performance_metrics.py
 
   run-mixed-operations-test:
     runs-on: ubuntu-latest
@@ -1103,7 +1103,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          python3 scripts/testing/compare_performance_metrics.py
+          python3 scripts/python/compare_performance_metrics.py
 
   run-runtimes-endpoint-test:
     runs-on: ubuntu-latest
