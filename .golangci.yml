@@ -13,26 +13,12 @@ issues:
     # Exclude test files from noisy style linters
     - path: _test\.go
       linters:
-        - goconst       # Test data strings don't need to be constants
-        - whitespace    # Formatting in tests is less critical
         - gosec         # Security checks less relevant in tests
-        - gosimple      # Code simplification in tests less important
-        - unparam       # Test parameters often unused intentionally
-        - unused        # Test utilities may be used in future
     
-    # Exclude e2e and test utilities from unused checks
+    # Exclude e2e and test utilities from unused checks  
     - path: (e2e|_test\.go|test_|suite_test\.go)
       linters:
         - unused        # Test utilities may be used in future/other tests
-    
-    # Exclude noisy linters from entire codebase temporarily
-    - linters:
-        - goconst       # String constants can be addressed later
-        - gosimple      # Code simplifications are style improvements
-        - whitespace    # Formatting is cosmetic
-        - misspell      # Spelling in comments is low priority
-        - unparam       # Unused parameters often required for interfaces
-        - ineffassign   # Many false positives, needs manual review
     
     # Specific gosec exclusions
     - linters:
@@ -53,24 +39,13 @@ linters:
     
     # Code quality & bugs
     - staticcheck   # Comprehensive static analysis
-    - gosimple      # Suggests code simplifications
-    - ineffassign   # Detects ineffectual assignments
-    - unused        # Finds unused constants, variables, functions
     - typecheck     # Type checks the Go code
     
-    # Performance
+    # Performance & resources
     - bodyclose     # Checks HTTP response body is closed
     - noctx         # Finds HTTP requests without context
-    - sqlclosecheck # Checks SQL rows/statements are closed
     
-    # Style & maintainability  
-    - goconst       # Finds repeated strings that should be constants
-    - misspell      # Fixes spelling mistakes in comments
-    - unconvert     # Removes unnecessary type conversions
-    - unparam       # Reports unused function parameters
-    - whitespace    # Checks for unnecessary whitespace
-    
-    # Security
+    # Security (critical only)
     - gosec         # Security-focused checks
 
 linters-settings:
