@@ -154,6 +154,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision instances
         run: |
@@ -291,6 +294,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision instances
         run: |
@@ -470,6 +476,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision the instance
         run: |
@@ -629,6 +638,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision instances
         run: |
@@ -829,6 +841,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision instances
         run: |
@@ -1134,6 +1149,9 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
+          
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Fetch runtimes using GET endpoint
         run: |
