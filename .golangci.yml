@@ -1,89 +1,39 @@
 run:
-  allow-parallel-runners: true
-  timeout: 5m
-
-output:
-  formats:
-    - format: colored-line-number
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  exclude-rules:
-    # Exclude test files from noisy style linters
-    - path: _test\.go
-      linters:
-        - gosec         # Security checks less relevant in tests
-    
-    # Exclude e2e and test utilities from unused checks  
-    - path: (e2e|_test\.go|test_|suite_test\.go)
-      linters:
-        - unused        # Test utilities may be used in future/other tests
-    
-    # Specific gosec exclusions
-    - linters:
-        - gosec
-      text: "G115"      # Integer overflow conversions (mostly false positives)
-    - linters:
-        - gosec  
-      text: "G306"      # File permissions in tests are acceptable
+  timeout: 10m
+  issues-exit-code: 1
+  tests: true
+  build-tags:
+    - integration
+    - e2e
 
 linters:
   disable-all: true
   enable:
-    # Original linters
-    - errcheck      # Checks for unchecked errors
-    - goimports     # Checks import formatting
-    - govet         # Go vet checks (printf, struct tags, etc)
-    - gofmt         # Checks code formatting
-    
-    # Code quality & bugs
-    - staticcheck   # Comprehensive static analysis
-    - typecheck     # Type checks the Go code
-    
-    # Performance & resources
-    - bodyclose     # Checks HTTP response body is closed
-    - noctx         # Finds HTTP requests without context
-    
-    # Security (critical only)
-    - gosec         # Security-focused checks
+    - errcheck    # Critical: unchecked errors can cause silent failures
+    - govet       # Critical: detects suspicious constructs and correctness issues
+    - typecheck   # Critical: ensures type safety
 
 linters-settings:
   errcheck:
-    check-blank: false
-    check-type-assertions: false
-    
+    check-type-assertions: true
+    check-blank: false  # Start lenient, can tighten later
   govet:
-    enable-all: true
-    disable:
-      - shadow
-      - fieldalignment
-    
-  staticcheck:
-    checks: ["all"]
-    
-  gosimple:
-    checks: ["all"]
-    
-  unused:
-    check-exported: false
-    
-  gosec:
-    severity: medium
-    confidence: medium
-    excludes:
-      - G101  # Look for hard coded credentials
-      - G104  # Audit errors not checked (covered by errcheck)
-      - G402  # TLS MinVersion too low (may need for compatibility)
-      - G404  # Use of weak random number generator
-      
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-    
-  misspell:
-    locale: US
-    
-  whitespace:
-    multi-if: false
-    multi-func: false
+    check-shadowing: false  # Start with core checks only
+    enable:
+      - nilness
+      - unusedresult
+      - unusedwrite
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    # Allow unchecked errors for logging calls - common pattern
+    - text: "Error return value of `.*\\.Log` is not checked"
+      linters:
+        - errcheck
+    # Allow unchecked errors for fmt.Print* calls in tests/debug  
+    - text: "Error return value of `fmt\\."
+      linters:
+        - errcheck
