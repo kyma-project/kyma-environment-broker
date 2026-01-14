@@ -95,15 +95,6 @@ jobs:
         run: |
           VERSION=($(./scripts/testing/get-latest-k3s-releases.sh 1 | jq -r))
           echo "k3s_version=${VERSION}" >> "${GITHUB_OUTPUT}"
-      - name: Wait for images to be ready
-        uses: wechuli/allcheckspassed@f423b273f5fdf73582e41f8f6f0f204d69c27379
-        if: ${{ inputs.release == 'false' }}
-        with:
-          delay: '1'
-          retries: '15'
-          polling_interval: '1'
-          checks_include: 'kyma-environment-broker-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
-          verbose: true
 
   run-concurrent-provisioning-test:
     runs-on: ubuntu-latest
@@ -114,6 +105,10 @@ jobs:
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
+        
+      - name: Build and push Docker images to k3s registry
+        if: ${{ inputs.release == 'false' }}
+        run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
         
       - name: Prepare values.yaml
         run: |

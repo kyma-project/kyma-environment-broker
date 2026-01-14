@@ -63,15 +63,17 @@ kubectl apply -f resources/installation/templates/
 # Deploy KEB helm chart
 cd resources/keb
 if [[ "$VERSION" == PR* ]]; then
+  # For PR versions, use local k3s registry
   helm install keb ../keb \
     --namespace kcp-system \
     -f ../../scripts/values.yaml \
     --set global.database.embedded.enabled=false \
     --set testConfig.kebDeployment.useAnnotations=true \
-    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" \
+    --set global.images.container_registry.path="localhost:5000" \
     --set global.secrets.mechanism=secrets \
     --debug --wait
 else
+  # For release versions, use the production registry (from values.yaml default)
   helm install keb ../keb \
     --namespace kcp-system \
     -f ../../scripts/values.yaml \
