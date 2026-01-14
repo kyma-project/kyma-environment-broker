@@ -23,6 +23,7 @@ type deleteKubeconfig struct {
 	operationManager *process.OperationManager
 }
 
+// TODO check if this can be removed since it's not used afaik
 func DeleteKubeconfig(os storage.Operations, k8sClient client.Client) deleteKubeconfig {
 	step := deleteKubeconfig{k8sClient: k8sClient}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
