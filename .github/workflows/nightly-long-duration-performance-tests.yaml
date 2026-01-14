@@ -96,8 +96,8 @@ jobs:
       provisioning-max-step-processing-time: ${{ inputs.provisioning-max-step-processing-time || '30s' }}
       update-max-step-processing-time: ${{ inputs.update-max-step-processing-time || '30s' }}
       deprovisioning-max-step-processing-time: ${{ inputs.deprovisioning-max-step-processing-time || '30s' }}
-      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '30' }}
-      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '30' }}
+      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '120' }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '120' }}
       provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
       update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
