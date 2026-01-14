@@ -225,6 +225,12 @@ jobs:
             exit 1
           fi
 
+      - name: Set up Python
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -232,7 +238,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          bash scripts/testing/compare_performance_metrics.sh
+          python3 scripts/testing/compare_performance_metrics.py
 
   run-concurrent-update-test:
     runs-on: ubuntu-latest
@@ -413,7 +419,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          bash scripts/testing/compare_performance_metrics.sh
+          python3 scripts/testing/compare_performance_metrics.py
 
   run-multiple-updates-on-a-single-instance-test:
     runs-on: ubuntu-latest
@@ -557,6 +563,12 @@ jobs:
 
           scripts/generate_charts.sh
 
+      - name: Set up Python
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -564,7 +576,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          bash scripts/testing/compare_performance_metrics.sh
+          python3 scripts/testing/compare_performance_metrics.py
 
   run-concurrent-deprovisoning-test:
     runs-on: ubuntu-latest
@@ -749,6 +761,12 @@ jobs:
 
           scripts/generate_charts.sh
 
+      - name: Set up Python
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -756,7 +774,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          bash scripts/testing/compare_performance_metrics.sh
+          python3 scripts/testing/compare_performance_metrics.py
 
   run-mixed-operations-test:
     runs-on: ubuntu-latest
@@ -1072,6 +1090,12 @@ jobs:
 
           scripts/generate_charts.sh
 
+      - name: Set up Python
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -1079,7 +1103,7 @@ jobs:
           export GOROUTINE_INCREASE_THRESHOLD=${{ inputs.goroutine-increase-threshold }}
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
-          bash scripts/testing/compare_performance_metrics.sh
+          python3 scripts/testing/compare_performance_metrics.py
 
   run-runtimes-endpoint-test:
     runs-on: ubuntu-latest
