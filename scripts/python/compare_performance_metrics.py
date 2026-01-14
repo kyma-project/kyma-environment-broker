@@ -235,20 +235,45 @@ def main():
         sys.exit(1)
     
     # Calculate sample ranges
-    baseline_count = min(50, total_samples // 3)
+    # Check if baseline sample count is specified (from baseline monitoring period)
+    baseline_samples_file = Path('/tmp/baseline_samples_count')
+    
+    if baseline_samples_file.exists():
+        try:
+            with open(baseline_samples_file, 'r') as f:
+                baseline_end_idx = int(f.read().strip())
+            # Use samples just before test execution as baseline
+            baseline_count = min(50, baseline_end_idx)
+            baseline_count = max(5, baseline_count)
+            baseline_start_idx = max(0, baseline_end_idx - baseline_count)
+            
+            print(f"📈 Baseline samples: {baseline_count} readings before test execution (samples {baseline_start_idx}-{baseline_end_idx})")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not read baseline marker, using first samples: {e}")
+            baseline_count = min(50, total_samples // 3)
+            baseline_count = max(5, baseline_count)
+            baseline_start_idx = 0
+            baseline_end_idx = baseline_count
+            print(f"📈 Baseline samples: First {baseline_count} readings")
+    else:
+        # Fallback to first N samples
+        baseline_count = min(50, total_samples // 3)
+        baseline_count = max(5, baseline_count)
+        baseline_start_idx = 0
+        baseline_end_idx = baseline_count
+        print(f"📈 Baseline samples: First {baseline_count} readings")
+    
     post_test_count = min(50, total_samples // 3)
-    baseline_count = max(5, baseline_count)
     post_test_count = max(5, post_test_count)
     
-    print(f"📈 Baseline samples: First {baseline_count} readings")
     print(f"📉 Post-test samples: Last {post_test_count} readings")
     
     # Calculate metrics
-    baseline = calculate_average_metrics(metrics, 0, baseline_count)
+    baseline = calculate_average_metrics(metrics, baseline_start_idx, baseline_end_idx)
     post_test = calculate_average_metrics(metrics, total_samples - post_test_count, total_samples)
     
-    # Calculate peak values during test execution
-    test_start = baseline_count
+    # Calculate peak values during test execution (after baseline, before post-test)
+    test_start = baseline_end_idx
     test_end = total_samples - post_test_count
     peak_goroutines, peak_memory, peak_fds = get_peak_metrics(metrics, test_start, test_end)
     
