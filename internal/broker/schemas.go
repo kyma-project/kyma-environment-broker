@@ -98,10 +98,6 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 	trialUpdateSchema := s.TrialSchema(true)
 	outputPlans[TrialPlanID] = s.defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialCreateSchema, trialUpdateSchema)
 
-	ownClusterCreateSchema := s.OwnClusterSchema(false)
-	ownClusterUpdateSchema := s.OwnClusterSchema(true)
-	outputPlans[OwnClusterPlanID] = s.defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterCreateSchema, ownClusterUpdateSchema)
-
 	return outputPlans
 }
 
@@ -322,28 +318,6 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	}
 
 	return createSchemaWithProperties(properties, s.defaultOIDCConfig, update, requiredTrialSchemaProperties(), flags)
-}
-
-func (s *SchemaService) OwnClusterSchema(update bool) *map[string]interface{} {
-	properties := ProvisioningProperties{
-		ShootName:   ShootNameProperty(),
-		ShootDomain: ShootDomainProperty(),
-		UpdateProperties: UpdateProperties{
-			Name:       NameProperty(update),
-			Kubeconfig: KubeconfigProperty(),
-		},
-	}
-
-	if update {
-		return createSchemaWith(properties.UpdateProperties, []string{}, s.cfg.RejectUnsupportedParameters)
-	} else {
-		defaultChannel := "regular"
-		if s.channelResolver != nil {
-			defaultChannel, _ = s.channelResolver.GetChannelForPlan(OwnClusterPlanName)
-		}
-		properties.Modules = NewModulesSchema(s.cfg.RejectUnsupportedParameters, defaultChannel)
-		return createSchemaWith(properties, requiredOwnClusterSchemaProperties(), s.cfg.RejectUnsupportedParameters)
-	}
 }
 
 func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
