@@ -72,11 +72,18 @@ POST_TEST_COUNT=$(( POST_TEST_COUNT > 50 ? 50 : POST_TEST_COUNT ))
 POST_TEST_COUNT=$(( POST_TEST_COUNT < 5 ? 5 : POST_TEST_COUNT ))
 POST_TEST_START=$(( DATA_POINTS - POST_TEST_COUNT ))
 
-echo "### Leak Detection Analysis Ranges" >> $GITHUB_STEP_SUMMARY
+echo "### 📊 Metrics Timeline Overview" >> $GITHUB_STEP_SUMMARY
 echo "" >> $GITHUB_STEP_SUMMARY
-echo "- 🟦 **Baseline period**: Samples ${BASELINE_START}-${BASELINE_END} (${BASELINE_COUNT} samples)" >> $GITHUB_STEP_SUMMARY
-echo "- 🟥 **Post-test period**: Samples ${POST_TEST_START}-${DATA_POINTS} (${POST_TEST_COUNT} samples)" >> $GITHUB_STEP_SUMMARY
-echo "- 📈 **Test execution**: Samples ${BASELINE_END}-${POST_TEST_START}" >> $GITHUB_STEP_SUMMARY
+echo "```" >> $GITHUB_STEP_SUMMARY
+echo "Total samples: ${DATA_POINTS}" >> $GITHUB_STEP_SUMMARY
+echo "" >> $GITHUB_STEP_SUMMARY
+echo "Timeline:" >> $GITHUB_STEP_SUMMARY
+echo "├─ 🟦 Baseline Period:  samples ${BASELINE_START}-${BASELINE_END} (${BASELINE_COUNT} samples)" >> $GITHUB_STEP_SUMMARY
+echo "├─ 📈 Test Execution:   samples ${BASELINE_END}-${POST_TEST_START} ($((POST_TEST_START - BASELINE_END)) samples)" >> $GITHUB_STEP_SUMMARY
+echo "└─ 🟥 Post-Test Period: samples ${POST_TEST_START}-${DATA_POINTS} (${POST_TEST_COUNT} samples)" >> $GITHUB_STEP_SUMMARY
+echo "" >> $GITHUB_STEP_SUMMARY
+echo "Leak analysis compares 🟦 Baseline vs 🟥 Post-Test metrics" >> $GITHUB_STEP_SUMMARY
+echo "```" >> $GITHUB_STEP_SUMMARY
 echo "" >> $GITHUB_STEP_SUMMARY
       
 echo '```mermaid' >> $GITHUB_STEP_SUMMARY
