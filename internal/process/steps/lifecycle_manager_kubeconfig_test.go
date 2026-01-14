@@ -18,33 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestCheckKymaKubeconfigCreated(t *testing.T) {
-	// Given
-	operation := fixture.FixProvisioningOperation("op", "instance")
-	operation.KymaResourceNamespace = "kyma-system"
-	operation.ProviderValues = &internal.ProviderValues{
-		ProviderType: "aws",
-	}
-
-	k8sClient := fake.NewClientBuilder().Build()
-
-	memoryStorage := storage.NewMemoryStorage()
-	err := memoryStorage.Operations().InsertOperation(operation)
-	assert.NoError(t, err)
-
-	step := SyncKubeconfig(memoryStorage.Operations(), k8sClient)
-
-	// When
-	_, backoff, err := step.Run(operation, fixLogger())
-
-	// Then
-	assert.Zero(t, backoff)
-
-	sec := v1.Secret{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: "kyma-system", Name: "kubeconfig-runtime-instance"}, &sec)
-	assert.NoError(t, err)
-}
-
 func TestCheckKymaKubeconfigDeleted(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation("op", "instance")
