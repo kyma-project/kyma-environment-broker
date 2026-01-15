@@ -34,7 +34,6 @@ const (
 	ServiceManagerPassword         = "p"
 	ServiceManagerURL              = "https://service-manager.local"
 	InstanceDashboardURL           = "https://dashboard.local"
-	XSUAADataXSAppName             = "XSApp"
 	MonitoringUsername             = "username"
 	MonitoringPassword             = "password"
 	AWSTenantName                  = "aws-tenant-1"
@@ -75,16 +74,6 @@ func FixERSContext(id string) internal.ERSContext {
 		Active:          ptr.Bool(true),
 		UserID:          userID,
 		LicenseType:     &licenseType,
-	}
-}
-
-func FixProvisioningParametersWithDTO(id string, planID string, params pkg.ProvisioningParametersDTO) internal.ProvisioningParameters {
-	return internal.ProvisioningParameters{
-		PlanID:         planID,
-		ServiceID:      ServiceId,
-		ErsContext:     FixERSContext(id),
-		Parameters:     params,
-		PlatformRegion: Region,
 	}
 }
 

@@ -20,10 +20,6 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 )
 
-const (
-	timeoutForRuntimeDeletion = 10 * time.Minute
-)
-
 type DeleteRuntimeResourceStep struct {
 	operationManager *process.OperationManager
 	kcpClient        client.Client
