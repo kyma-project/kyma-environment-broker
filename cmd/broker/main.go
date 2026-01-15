@@ -229,6 +229,12 @@ func logConfigDefaults(log *slog.Logger, cfg Config) {
 		field := t.Field(i)
 		value := v.Field(i)
 
+		// Only process fields that have both envconfig and check tags
+		checkTag := field.Tag.Get("check")
+		if checkTag == "" {
+			continue
+		}
+
 		tag := field.Tag.Get("envconfig")
 		if tag == "" {
 			continue
