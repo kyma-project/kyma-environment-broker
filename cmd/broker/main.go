@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"reflect"
 	gruntime "runtime"
 	"runtime/pprof"
 	"strings"
@@ -218,6 +219,42 @@ func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, er
 	default:
 		return schema.GroupVersionResource{}, fmt.Errorf("invalid SubscriptionGardenerResource: %s. Supported values are SecretBinding and CredentialsBinding", c.SubscriptionGardenerResource)
 	}
+}
+
+func logConfigDefaults(log *slog.Logger, cfg Config) {
+	t := reflect.TypeOf(cfg)
+	v := reflect.ValueOf(cfg)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		value := v.Field(i)
+
+		tag := field.Tag.Get("envconfig")
+		if tag == "" {
+			continue
+		}
+
+		defaultValue := extractDefaultValue(tag)
+		if defaultValue == "" {
+			continue
+		}
+
+		currentValue := fmt.Sprintf("%v", value.Interface())
+		marker := ""
+		if currentValue == defaultValue {
+			marker = " *"
+		}
+
+		log.Info(fmt.Sprintf("%s=%s%s", field.Name, currentValue, marker))
+	}
+}
+
+func extractDefaultValue(tag string) string {
+	parts := strings.Split(tag, "=")
+	if len(parts) == 2 && strings.TrimSpace(parts[0]) == "default" {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
 }
 
 func main() {
