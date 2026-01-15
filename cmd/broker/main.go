@@ -99,7 +99,7 @@ type Config struct {
 
 	TrialRegionMappingFilePath string
 
-	MaxPaginationPage int `envconfig:"default=100"`
+	MaxPaginationPage int `envconfig:"default=100" check:""`
 
 	LogLevel string `envconfig:"default=info"`
 
