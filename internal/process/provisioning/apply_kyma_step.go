@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -17,9 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -95,26 +91,4 @@ func (a *ApplyKymaStep) addLabelsAndName(operation internal.Operation, obj *unst
 	// Kyma resource name must be created once again
 	obj.SetName(steps.CreateKymaNameFromOperation(operation))
 	return !reflect.DeepEqual(obj.GetLabels(), oldLabels)
-}
-
-func (a *ApplyKymaStep) createUnstructuredKyma(operation internal.Operation) (*unstructured.Unstructured, error) {
-	tmpl := a.kymaTemplate(operation)
-
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
-	var rawObj runtime.RawExtension
-	if err := decoder.Decode(&rawObj); err != nil {
-		return nil, err
-	}
-	obj, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
-	return unstructuredObj, nil
-}
-
-func (a *ApplyKymaStep) kymaTemplate(operation internal.Operation) []byte {
-	return []byte(operation.KymaTemplate)
 }
