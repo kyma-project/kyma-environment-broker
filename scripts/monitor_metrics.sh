@@ -33,7 +33,20 @@ touch "$METRICS_FILE"
 
 while true; do
   TIMESTAMP=$(date +%s)
-  METRICS=$(curl -s http://localhost:30080/metrics)
+  
+  # Try to fetch metrics, skip this iteration if it fails
+  if ! METRICS=$(curl -s --max-time 5 http://localhost:30080/metrics 2>/dev/null); then
+    echo "Warning: Failed to fetch metrics at $(date), retrying..." >&2
+    sleep 2
+    continue
+  fi
+  
+  # Skip if metrics are empty
+  if [ -z "$METRICS" ]; then
+    echo "Warning: Empty metrics response at $(date), retrying..." >&2
+    sleep 2
+    continue
+  fi
 
   GO_GOROUTINES=$(echo "$METRICS" | awk '/^go_goroutines/ {print $2}')
   OPEN_FDS=$(echo "$METRICS" | awk '/^process_open_fds/ {print $2}')
