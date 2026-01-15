@@ -115,7 +115,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Notify MS Teams on failure
-        if: failure()
+        if: ${{ !success() }}
         env:
           MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
           MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
@@ -129,3 +129,13 @@ jobs:
           fi
           MESSAGE="🚨 <strong>Nightly Long Duration Performance Test FAILED</strong><br>Test execution failed!<br><a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
           ./scripts/notify_teams.sh "$MESSAGE"
+
+      - name: Notify slack channel about failure
+        if: ${{ !success() }}
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: kyma-gopher-private-alerts
+            text: "Nightly Long Duration Performance Test has failed. Check the details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
