@@ -106,7 +106,6 @@ type ProvisionEndpoint struct {
 }
 
 const (
-	ConvergedCloudBlockedMsg                           = "This offer is currently not available."
 	IngressFilteringNotSupportedForPlanMsg             = "ingress filtering is not available for %s plan"
 	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
