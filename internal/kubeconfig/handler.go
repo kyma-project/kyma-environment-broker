@@ -21,7 +21,6 @@ const attachmentName = "kubeconfig.yaml"
 
 type KcBuilder interface {
 	Build(*internal.Instance) (string, error)
-	BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error)
 	GetServerURL(runtimeID string) (string, error)
 }
 
