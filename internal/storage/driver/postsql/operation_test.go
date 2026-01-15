@@ -49,8 +49,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Shanghai", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTestUsingConnectionURL(cfg,
-			fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'Asia/Shanghai'"))
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg,
+			storage.WithConnectionURL(fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'Asia/Shanghai'")))
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -107,7 +107,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in UTC", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -158,8 +158,8 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning in Los Angeles", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTestUsingConnectionURL(cfg,
-			fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'America/Los_Angeles'"))
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg,
+			storage.WithConnectionURL(fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode, "'America/Los_Angeles'")))
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -569,8 +569,7 @@ func TestOperation(t *testing.T) {
 
 func TestOperation_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 	require.NoError(t, err)
 	defer func() {
 		err := storageCleanup()

@@ -20,24 +20,35 @@ const (
 	Down
 )
 
-// TODO use Options pattern to configure test storage (e.g. with encrypter, connection url, etc.)
-func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
-	connectionURL := config.ConnectionURL()
-	encrypter := NewEncrypter(config.SecretKey)
-	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
+type StorageForTests struct {
+	config        Config
+	connectionURL string
+	encrypter     *Encrypter
 }
 
-func GetStorageForTestWithMutableEncrypter(config Config, encrypter *Encrypter) (func() error, BrokerStorage, error) {
-	connectionURL := config.ConnectionURL()
-	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
+type Option func(*StorageForTests)
+
+func WithConnectionURL(url string) Option {
+	return func(s *StorageForTests) {
+		s.connectionURL = url
+	}
 }
 
-func GetStorageForTestUsingConnectionURL(config Config, connectionURL string) (func() error, BrokerStorage, error) {
-	encrypter := NewEncrypter(config.SecretKey)
-	return GetTestStorageUsingEncrypterAndConnectionURL(config, encrypter, connectionURL)
+func GetStorageForTests(config Config, options ...Option) (func() error, BrokerStorage, error) {
+	storageForTests := &StorageForTests{
+		config:        config,
+		connectionURL: config.ConnectionURL(),
+		encrypter:     NewEncrypter(config.SecretKey),
+	}
+
+	for _, option := range options {
+		option(storageForTests)
+	}
+
+	return GetTestStorage(storageForTests.config, storageForTests.encrypter, storageForTests.connectionURL)
 }
 
-func GetTestStorageUsingEncrypterAndConnectionURL(config Config, encrypter *Encrypter, connectionURL string) (func() error, BrokerStorage, error) {
+func GetTestStorage(config Config, encrypter *Encrypter, connectionURL string) (func() error, BrokerStorage, error) {
 	storageForTests, connection, err := NewFromConfigAndConnectionURL(config, events.Config{}, encrypter, connectionURL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("while creating storage: %w", err)
