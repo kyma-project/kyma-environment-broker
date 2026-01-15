@@ -3,12 +3,11 @@ package provisioning
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/google/uuid"
-
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
