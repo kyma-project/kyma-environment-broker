@@ -604,7 +604,7 @@ func panicOnError(err error) {
 	}
 }
 
-func (c Config) getLogLevel() slog.Level {
+func (c *Config) getLogLevel() slog.Level {
 	switch strings.ToUpper(c.LogLevel) {
 	case "DEBUG":
 		return slog.LevelDebug
