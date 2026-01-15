@@ -1,4 +1,4 @@
-GOLINT_VER = v1.64.8
+GOLINT_VER = v2.8.0
 ifeq (,$(GOLINT_TIMEOUT))
 GOLINT_TIMEOUT=2m
 endif

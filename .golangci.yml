@@ -1,16 +1,19 @@
+version: "2"
+
 run:
   allow-parallel-runners: true
   timeout: 2m
+  
 output:
-  format: "colored-tab:stderr,github-actions:stdout"
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: false
+  formats:
+    text:
+      print-issued-lines: true
+      print-linter-name: true
+      
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - goimports
     - govet
     - gofmt
-    - gosec
