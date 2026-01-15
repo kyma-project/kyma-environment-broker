@@ -34,17 +34,15 @@ type Handler struct {
 	allowOrigins      string
 	instanceStorage   storage.Instances
 	operationStorage  storage.Operations
-	ownClusterPlanID  string
 	log               *slog.Logger
 }
 
-func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownClusterPlanID string, log *slog.Logger) *Handler {
+func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, log *slog.Logger) *Handler {
 	return &Handler{
 		instanceStorage:   storage.Instances(),
 		operationStorage:  storage.Operations(),
 		kubeconfigBuilder: b,
 		allowOrigins:      origins,
-		ownClusterPlanID:  ownClusterPlanID,
 		log:               log,
 	}
 }
@@ -79,11 +77,6 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.ownClusterPlanID == instance.ServicePlanID {
-		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("kubeconfig for instance %s does not exist", instanceID))
-		return
-	}
-
 	if instance.RuntimeID == "" {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("kubeconfig for instance %s does not exist. Provisioning could be in progress, please try again later", instanceID))
 		return
@@ -115,12 +108,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newKubeconfig string
-	if instance.ServicePlanID == h.ownClusterPlanID {
-		newKubeconfig, err = h.kubeconfigBuilder.BuildFromAdminKubeconfig(instance, instance.InstanceDetails.Kubeconfig)
-	} else {
-		newKubeconfig, err = h.kubeconfigBuilder.Build(instance)
-	}
+	newKubeconfig, err := h.kubeconfigBuilder.Build(instance)
 	if err != nil {
 		msgFmt := "while building kubeconfig: %s"
 		if IsNotFound(err) {

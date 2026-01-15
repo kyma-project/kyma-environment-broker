@@ -211,7 +211,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 
-	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	require.NoError(t, err)
 	if rulesService.ValidationInfo != nil {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)

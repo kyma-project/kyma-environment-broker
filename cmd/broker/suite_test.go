@@ -221,20 +221,7 @@ seedRegions:
 }
 
 func fixConfig() *Config {
-	brokerConfigPlans := []string{
-		"azure",
-		"trial",
-		"aws",
-		"own_cluster",
-		"preview",
-		"sap-converged-cloud",
-		"gcp",
-		"free",
-		"build-runtime-aws",
-		"build-runtime-gcp",
-		"build-runtime-azure",
-		"alicloud",
-	}
+	brokerConfigPlans := broker.AvailablePlans.GetAllPlanNamesAsStrings()
 
 	return &Config{
 		DbInMemory:                         true,

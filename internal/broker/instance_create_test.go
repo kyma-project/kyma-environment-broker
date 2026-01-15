@@ -44,16 +44,12 @@ const (
 	subAccountID    = "3cb65e5b-e455-4799-bf35-be46e8f5a533"
 	userID          = "test@test.pl"
 
-	instanceID           = "d3d5dca4-5dc8-44ee-a825-755c2a3fb839"
-	otherInstanceID      = "87bfaeaa-48eb-40d6-84f3-3d5368eed3eb"
-	existOperationID     = "920cbfd9-24e9-4aa2-aa77-879e9aabe140"
-	clusterName          = "cluster-testing"
-	region               = "eu"
-	brokerURL            = "example.com"
-	notEncodedKubeconfig = "apiVersion: v1\\nkind: Config"
-	encodedKubeconfig    = "YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmN1cnJlbnQtY29udGV4dDogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKY29udGV4dHM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY29udGV4dDoKICAgICAgY2x1c3Rlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKICAgICAgdXNlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUtdG9rZW4KY2x1c3RlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY2x1c3RlcjoKICAgICAgc2VydmVyOiBodHRwczovL2FwaS5jbHVzdGVyLW5hbWUua3ltYS1kZXYuc2hvb3QuY2FuYXJ5Lms4cy1oYW5hLm9uZGVtYW5kLmNvbQogICAgICBjZXJ0aWZpY2F0ZS1hdXRob3JpdHktZGF0YTogPi0KICAgICAgICBMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHQKdXNlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZS10b2tlbgogICAgdXNlcjoKICAgICAgdG9rZW46ID4tCiAgICAgICAgdE9rRW4K"
-	shootName            = "own-cluster-name"
-	shootDomain          = "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
+	instanceID       = "d3d5dca4-5dc8-44ee-a825-755c2a3fb839"
+	otherInstanceID  = "87bfaeaa-48eb-40d6-84f3-3d5368eed3eb"
+	existOperationID = "920cbfd9-24e9-4aa2-aa77-879e9aabe140"
+	clusterName      = "cluster-testing"
+	region           = "eu"
+	brokerURL        = "example.com"
 )
 
 func TestProvision_Provision(t *testing.T) {

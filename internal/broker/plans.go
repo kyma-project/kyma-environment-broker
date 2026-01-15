@@ -143,10 +143,6 @@ func requiredTrialSchemaProperties() []string {
 	return []string{"name"}
 }
 
-func requiredOwnClusterSchemaProperties() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
-}
-
 func createSchemaWithProperties(properties ProvisioningProperties,
 	defaultOIDCConfig *pkg.OIDCConfigDTO,
 	update bool,
