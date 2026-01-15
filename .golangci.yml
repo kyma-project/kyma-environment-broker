@@ -13,8 +13,9 @@ output:
 linters:
   default: none
   enable:
-    - errcheck
-    - govet
+    # High-value linters with excellent signal-to-noise ratio
+    - errcheck    # Check for unchecked errors
+    - govet       # Go's built-in static analyzer 
   exclusions:
     presets:
       - common-false-positives
