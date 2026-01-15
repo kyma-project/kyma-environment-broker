@@ -10,13 +10,11 @@ import (
 	"os"
 	"testing"
 
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +22,6 @@ const (
 	instanceID        = "93241a34-8ab5-4f10-978e-eaa6f8ad551c"
 	operationID       = "306f2406-e972-4fae-8edd-50fc50e56817"
 	instanceRuntimeID = "e04813ba-244a-4150-8670-506c37959388"
-	ownClusterPlanID  = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
 )
 
 func TestHandler_GetKubeconfig(t *testing.T) {
@@ -135,7 +132,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 
 			router := httputil.NewRouter()
 
-			handler := NewHandler(db, builder, "", ownClusterPlanID, log)
+			handler := NewHandler(db, builder, "", log)
 			handler.AttachRoutes(router)
 
 			server := httptest.NewServer(router)
@@ -166,63 +163,6 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
-	// given
-	instance := internal.Instance{
-		Parameters: internal.ProvisioningParameters{
-			Parameters: pkg.ProvisioningParametersDTO{
-				Kubeconfig: "custom-kubeconfig",
-			},
-		},
-		InstanceDetails: internal.InstanceDetails{
-			Kubeconfig: "custom-kubeconfig",
-		},
-		InstanceID:    instanceID,
-		RuntimeID:     runtimeID,
-		ServicePlanID: ownClusterPlanID,
-	}
-
-	operation := internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			ID:         operationID,
-			InstanceID: instance.InstanceID,
-			State:      domain.Succeeded,
-			InstanceDetails: internal.InstanceDetails{
-				Kubeconfig: "custom-kubeconfig",
-			},
-			Type: internal.OperationTypeProvision,
-		},
-	}
-
-	db := storage.NewMemoryStorage()
-	err := db.Instances().Insert(instance)
-	require.NoError(t, err)
-	err = db.Operations().InsertProvisioningOperation(operation)
-	require.NoError(t, err)
-
-	// we do not expect usage of KcBuilder
-	builder := &automock.KcBuilder{}
-	defer builder.AssertExpectations(t)
-
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
-	router := httputil.NewRouter()
-
-	handler := NewHandler(db, builder, "", ownClusterPlanID, log)
-	handler.AttachRoutes(router)
-
-	server := httptest.NewServer(router)
-
-	// when
-	response, err := http.Get(fmt.Sprintf("%s/kubeconfig/%s", server.URL, instanceID))
-	require.NoError(t, err)
-
-	// then
-	assert.Equal(t, http.StatusNotFound, response.StatusCode)
 }
 
 func TestHandler_specifyAllowOriginHeader(t *testing.T) {
@@ -273,7 +213,7 @@ func TestHandler_specifyAllowOriginHeader(t *testing.T) {
 			request := &http.Request{Header: d.requestHeader}
 			response := &httptest.ResponseRecorder{}
 
-			handler := NewHandler(storage.NewMemoryStorage(), nil, d.origins, ownClusterPlanID, nil)
+			handler := NewHandler(storage.NewMemoryStorage(), nil, d.origins, nil)
 
 			// when
 			handler.specifyAllowOriginHeader(request, response)

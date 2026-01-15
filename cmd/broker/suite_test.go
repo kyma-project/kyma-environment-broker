@@ -121,7 +121,6 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 				"overrides-plan-aws":                 "true",
 				"overrides-plan-free":                "true",
 				"overrides-plan-gcp":                 "true",
-				"overrides-plan-own_cluster":         "true",
 				"overrides-plan-sap-converged-cloud": "true",
 				"overrides-version-2.0.0-rc4":        "true",
 				"overrides-version-2.0.0":            "true",
