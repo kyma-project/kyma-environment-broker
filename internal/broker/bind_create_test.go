@@ -328,7 +328,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
-	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding := fixture.FixBinding(bindingID, fixture.WithInstanceID(instanceID))
 	brokerStorage := storage.NewMemoryStorage()
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
@@ -379,7 +379,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
-	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding := fixture.FixBinding(bindingID, fixture.WithInstanceID(instanceID))
 	brokerStorage := storage.NewMemoryStorage()
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
@@ -430,7 +430,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
-	binding := fixture.FixExpiredBindingWithInstanceID(bindingID, instanceID, time.Minute*15)
+	binding := fixture.FixBinding(bindingID, fixture.WithInstanceID(instanceID), fixture.WithOffset(time.Minute*15))
 	brokerStorage := storage.NewMemoryStorage()
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
@@ -483,7 +483,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 		MaxBindingsCount:     10,
 	}
 
-	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding := fixture.FixBinding(bindingID, fixture.WithInstanceID(instanceID))
 	binding.Kubeconfig = ""
 	brokerStorage := storage.NewMemoryStorage()
 	err := brokerStorage.Instances().Insert(instance)
@@ -536,7 +536,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
-	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding := fixture.FixBinding(bindingID, fixture.WithInstanceID(instanceID))
 	brokerStorage := storage.NewMemoryStorage()
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
