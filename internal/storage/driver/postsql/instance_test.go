@@ -468,8 +468,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 			fixture.FixProvisioningOperation("op3", "inst3"),
 			fixture.FixProvisioningOperation("op4", "expiredinstance"),
 		}
-		fixBinding := fixture.FixBinding("binding1")
-		fixBinding.InstanceID = fixInstances[0].InstanceID
+		fixBinding := fixture.FixBinding("binding1", fixture.WithInstanceID(fixInstances[0].InstanceID))
 		err = brokerStorage.Bindings().Insert(&fixBinding)
 		require.NoError(t, err)
 		for i, v := range fixInstances {

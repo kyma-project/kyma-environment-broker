@@ -37,15 +37,6 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			},
 			expectedRepeat: false,
 		},
-		"in progress upgrade shoot": {
-			beforeFunc: func(os storage.Operations) {
-				op := fixture.FixUpgradeClusterOperation("op-id", "iid")
-				op.State = domain.InProgress
-				err := os.InsertUpgradeClusterOperation(op)
-				require.NoError(t, err)
-			},
-			expectedRepeat: true,
-		},
 		"in progress update": {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpdatingOperation("op-id", "iid")

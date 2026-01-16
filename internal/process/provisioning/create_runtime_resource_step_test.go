@@ -1701,7 +1701,7 @@ func fixOperationForCreateRuntimeResourceStep(operationID, instanceID, planID, r
 		PlatformRegion: platformRegion,
 	}
 
-	operation := fixture.FixProvisioningOperationWithProvisioningParameters(operationID, instanceID, provisioningParameters)
+	operation := fixture.FixProvisioningOperation(operationID, instanceID, fixture.WithProvisioningParameters(provisioningParameters))
 	operation.State = domain.InProgress
 	operation.KymaTemplate = `
 apiVersion: operator.kyma-project.io/v1beta2

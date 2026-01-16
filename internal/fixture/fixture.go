@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
-	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +27,7 @@ const (
 	PlanName                       = "azure"
 	SubscriptionSecretName         = "azure-subscription"
 	GlobalAccountId                = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
-	SubscriptionGlobalAccountID    = ""
+	SubscriptionGlobalAccountID    = "subscription-global-account-id"
 	Region                         = "westeurope"
 	InstanceDashboardURL           = "https://dashboard.local"
 	MonitoringUsername             = "username"
@@ -148,110 +147,6 @@ func FixInstance(id string) internal.Instance {
 	return FixInstanceWithProvisioningParameters(id, FixProvisioningParameters(id))
 }
 
-func FixOperationWithProvisioningParameters(id, instanceId string, opType internal.OperationType, params internal.ProvisioningParameters) internal.Operation {
-	var (
-		description = fmt.Sprintf("Description for operation %s", id)
-	)
-
-	return internal.Operation{
-		InstanceDetails:        FixInstanceDetails(instanceId),
-		ID:                     id,
-		Type:                   opType,
-		Version:                0,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now().Add(time.Hour * 48),
-		InstanceID:             instanceId,
-		ProvisionerOperationID: "",
-		State:                  domain.Succeeded,
-		Description:            description,
-		ProvisioningParameters: params,
-		FinishedStages:         []string{"prepare", "check_provisioning"},
-	}
-}
-
-func FixOperation(id, instanceId string, opType internal.OperationType) internal.Operation {
-	return FixOperationWithProvisioningParameters(id, instanceId, opType, FixProvisioningParameters(id))
-}
-
-func FixProvisioningOperation(operationId, instanceId string) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.DashboardURL = "https://console.kyma.org"
-	return o
-}
-
-func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId string, provisioningParameters internal.ProvisioningParameters) internal.Operation {
-	o := FixOperationWithProvisioningParameters(operationId, instanceId, internal.OperationTypeProvision, provisioningParameters)
-	o.DashboardURL = "https://console.kyma.org"
-	return o
-}
-
-func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
-	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDCConnectDTO{
-			List: []pkg.OIDCConfigDTO{
-				{
-					ClientID:       "clinet-id-oidc",
-					GroupsClaim:    "groups",
-					IssuerURL:      "issuer-url",
-					SigningAlgs:    []string{"signingAlgs"},
-					UsernameClaim:  "sub",
-					UsernamePrefix: "",
-				},
-			},
-		},
-	}
-	return internal.UpdatingOperation{
-		Operation: o,
-	}
-}
-
-func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal.UpdatingOperation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
-	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDCConnectDTO{
-			OIDCConfigDTO: &pkg.OIDCConfigDTO{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				GroupsPrefix:   "-",
-				IssuerURL:      "issuer-url",
-				SigningAlgs:    []string{"signingAlgs"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "",
-				RequiredClaims: []string{"claim1=value1", "claim2=value2"},
-			},
-		},
-	}
-	return internal.UpdatingOperation{
-		Operation: o,
-	}
-}
-
-func FixProvisioningOperationWithProvider(operationId, instanceId string, provider pkg.CloudProvider) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.DashboardURL = "https://console.kyma.org"
-	return o
-}
-
-func FixDeprovisioningOperation(operationId, instanceId string) internal.DeprovisioningOperation {
-	return internal.DeprovisioningOperation{
-		Operation: FixDeprovisioningOperationAsOperation(operationId, instanceId),
-	}
-}
-
-func FixDeprovisioningOperationAsOperation(operationId, instanceId string) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeDeprovision)
-	o.Temporary = false
-	return o
-}
-
-func FixSuspensionOperationAsOperation(operationId, instanceId string) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeDeprovision)
-	o.Temporary = true
-	o.ProvisioningParameters.PlanID = TrialPlan
-	return o
-}
-
 func FixDNSProvidersConfig() gardener.DNSProvidersData {
 	return gardener.DNSProvidersData{
 		Providers: []gardener.DNSProviderData{
@@ -263,42 +158,6 @@ func FixDNSProvidersConfig() gardener.DNSProvidersData {
 			},
 		},
 	}
-}
-
-type BindingOption func(binding *internal.Binding)
-
-func WithOffset(offset time.Duration) BindingOption {
-	return func(b *internal.Binding) {
-		b.CreatedAt = time.Now().Add(-offset)
-		b.UpdatedAt = time.Now().Add(time.Minute*5 - offset)
-		b.ExpiresAt = time.Now().Add(time.Minute*10 - offset)
-	}
-}
-
-func WithInstanceID(instanceID string) BindingOption {
-	return func(b *internal.Binding) {
-		b.InstanceID = instanceID
-	}
-}
-
-func FixBinding(id string, opts ...BindingOption) internal.Binding {
-	binding := internal.Binding{
-		ID:         id,
-		InstanceID: fmt.Sprintf("instance-%s", id),
-
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now().Add(time.Minute * 5),
-		ExpiresAt: time.Now().Add(time.Minute * 10),
-
-		Kubeconfig:        "kubeconfig",
-		ExpirationSeconds: 600,
-		CreatedBy:         "john.smith@email.com",
-	}
-
-	for _, opt := range opts {
-		opt(&binding)
-	}
-	return binding
 }
 
 const KymaTemplate = `
