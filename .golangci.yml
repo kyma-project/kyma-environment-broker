@@ -1,15 +1,35 @@
+version: "2"
+
 run:
   allow-parallel-runners: true
   timeout: 2m
+  
 output:
-  format: "colored-tab:stderr,github-actions:stdout"
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: false
+  formats:
+    text:
+      print-issued-lines: true
+      print-linter-name: true
+      
 linters:
-  disable-all: true
+  default: none
   enable:
-    - errcheck
+    # High-value linters with excellent signal-to-noise ratio
+    - errcheck    # Check for unchecked errors
+    - govet       # Go's built-in static analyzer 
+  exclusions:
+    presets:
+      - common-false-positives
+    rules:
+      # Exclude errcheck for defer Close() calls which are common and usually safe to ignore
+      - linters:
+          - errcheck
+        text: "Error return value of.*Close.*is not checked"
+      # Exclude errcheck for common os operations that are often safe to ignore
+      - linters:
+          - errcheck
+        text: "Error return value of.*os\\.(Remove|RemoveAll|Setenv|Unsetenv).*is not checked"
+
+formatters:
+  enable:
     - goimports
-    - govet
     - gofmt

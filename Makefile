@@ -1,4 +1,4 @@
-GOLINT_VER = v1.64.8
+GOLINT_VER = v2.8.0
 ifeq (,$(GOLINT_TIMEOUT))
 GOLINT_TIMEOUT=2m
 endif
@@ -29,10 +29,10 @@ go-lint: go-lint-install ## linter config in file at root of project -> '.golang
 	golangci-lint run --timeout=$(GOLINT_TIMEOUT)
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
-	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
+	@if [ "$(shell command golangci-lint version --short 2>/dev/null)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
-		echo golangci installed with version: $(shell command golangci-lint version --format short); \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLINT_VER); \
+		echo golangci installed with version: $(shell command golangci-lint version --short 2>/dev/null); \
 	fi;
 	
 ##@ Tests
@@ -55,9 +55,35 @@ check-go-mod-tidy: ## check if go mod tidy needed
 ##@ Development support commands
 
 .PHONY: fix
-fix: go-lint-install ## try to fix automatically issues
+fix: go-lint-install ## automatically fix code issues with formatting, imports, and linting
+	@echo "Running automatic code fixes..."
+	@echo "├── Running go mod tidy..."
 	go mod tidy -v
+	@echo "├── Running goimports (organize imports and format)..."
+	go run golang.org/x/tools/cmd/goimports@latest -w -local github.com/kyma-project/kyma-environment-broker .
+	@echo "├── Running gofmt (standard formatting)..."
+	gofmt -s -w .
+	@echo "├── Running golangci-lint auto-fixes..."
 	golangci-lint run --fix
+	@echo "All automatic fixes completed!"
+
+.PHONY: format
+format: ## format Go code using goimports and gofmt
+	@echo "Formatting Go code..."
+	go run golang.org/x/tools/cmd/goimports@latest -w -local github.com/kyma-project/kyma-environment-broker .
+	gofmt -s -w .
+	@echo "Code formatting completed!"
+
+.PHONY: fix-lint-issues
+fix-lint-issues: go-lint-install ## fix specific linter issues that can be auto-corrected
+	@echo "Fixing auto-correctable linter issues..."
+	@echo "├── Fixing unconvert issues..."
+	go run github.com/mdempsky/unconvert@latest -apply ./...
+	@echo "├── Running golangci-lint auto-fixes (gofmt, goimports, etc.)..."  
+	golangci-lint run --fix || true
+	@echo "Auto-correctable linter fixes completed!"
+	@echo "Run 'make go-lint' to see remaining issues that require manual fixes"
+
 
 ##@ Tools
 
