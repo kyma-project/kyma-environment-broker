@@ -23,6 +23,18 @@ func WithProvider(provider string) OperationOption {
 	}
 }
 
+func WithPlanID(planID string) OperationOption {
+	return func(o *internal.Operation) {
+		o.ProvisioningParameters.PlanID = planID
+	}
+}
+
+func SetTemporary() OperationOption {
+	return func(o *internal.Operation) {
+		o.Temporary = true
+	}
+}
+
 func FixProvisioningOperation(operationID, instanceID string, opts ...OperationOption) internal.Operation {
 
 	o := FixOperation(operationID, instanceID, internal.OperationTypeProvision, opts...)
@@ -30,6 +42,7 @@ func FixProvisioningOperation(operationID, instanceID string, opts ...OperationO
 	for _, opt := range opts {
 		opt(&o)
 	}
+
 	return o
 }
 
@@ -48,6 +61,7 @@ func FixOperation(operationID, instanceID string, operationType internal.Operati
 		ProvisioningParameters: FixProvisioningParameters(operationID),
 		FinishedStages:         []string{"prepare", "check_provisioning"},
 		DashboardURL:           "https://console.kyma.org",
+		Temporary:              false,
 	}
 
 	for _, opt := range opts {
@@ -62,7 +76,7 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
-					ClientID:       "clinet-id-oidc",
+					ClientID:       "clinet-id-oidc", //TODO: Typo to be fixed later
 					GroupsClaim:    "groups",
 					IssuerURL:      "issuer-url",
 					SigningAlgs:    []string{"signingAlgs"},
@@ -105,14 +119,9 @@ func FixDeprovisioningOperation(operationId, instanceId string) internal.Deprovi
 }
 
 func FixDeprovisioningOperationAsOperation(operationId, instanceId string) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeDeprovision)
-	o.Temporary = false
-	return o
+	return FixOperation(operationId, instanceId, internal.OperationTypeDeprovision)
 }
 
 func FixSuspensionOperationAsOperation(operationId, instanceId string) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeDeprovision)
-	o.Temporary = true
-	o.ProvisioningParameters.PlanID = TrialPlan
-	return o
+	return FixOperation(operationId, instanceId, internal.OperationTypeDeprovision, SetTemporary(), WithPlanID(TrialPlan))
 }
