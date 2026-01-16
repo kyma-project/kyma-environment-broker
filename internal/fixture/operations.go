@@ -52,7 +52,7 @@ func FixProvisioningOperation(operationID, instanceID string, opts ...OperationO
 	return o
 }
 
-func FixOperation(operationID, instanceID string, operationType string, opts ...OperationOption) internal.Operation {
+func FixOperation(operationID, instanceID string, operationType internal.OperationType, opts ...OperationOption) internal.Operation {
 	o := internal.Operation{
 		InstanceDetails:        FixInstanceDetails(instanceID),
 		ID:                     operationID,
