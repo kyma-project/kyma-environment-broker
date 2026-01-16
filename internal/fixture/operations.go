@@ -24,21 +24,8 @@ func WithProvider(provider string) OperationOption {
 }
 
 func FixProvisioningOperation(operationID, instanceID string, opts ...OperationOption) internal.Operation {
-	o := internal.Operation{
-		InstanceDetails:        FixInstanceDetails(instanceID),
-		ID:                     operationID,
-		Type:                   internal.OperationTypeProvision,
-		Version:                0,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now().Add(time.Hour * 48),
-		InstanceID:             instanceID,
-		ProvisionerOperationID: "",
-		State:                  domain.Succeeded,
-		Description:            fmt.Sprintf("Description for operation %s", operationID),
-		ProvisioningParameters: FixProvisioningParameters(operationID),
-		FinishedStages:         []string{"prepare", "check_provisioning"},
-		DashboardURL:           "https://console.kyma.org",
-	}
+
+	o := FixOperation(operationID, instanceID, internal.OperationTypeProvision, opts...)
 
 	for _, opt := range opts {
 		opt(&o)
