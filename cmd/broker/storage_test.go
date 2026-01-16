@@ -74,7 +74,7 @@ func GetStorageForE2ETests() (func() error, storage.BrokerStorage, error) {
 	if dbInMemoryForE2ETests() {
 		return nil, storage.NewMemoryStorage(), nil
 	}
-	return storage.GetStorageForTest(brokerStorageE2ETestConfig())
+	return storage.GetStorageForTests(brokerStorageE2ETestConfig())
 }
 
 func dbInMemoryForE2ETests() bool {

@@ -83,7 +83,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 	}
 
 	log.Error(fmt.Sprintf("Step execution failed: %v", retErr))
-	operation.EventErrorf(err, "operation failed")
+	operation.EventErrorf(retErr, "operation failed")
 
 	return op, 0, retErr
 }

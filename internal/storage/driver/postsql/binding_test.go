@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -277,8 +276,7 @@ func TestBindingMetrics_NoBindings(t *testing.T) {
 }
 
 func TestBinding_ModeGCM(t *testing.T) {
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 	require.NoError(t, err)
 	defer func() {
 		err := storageCleanup()
