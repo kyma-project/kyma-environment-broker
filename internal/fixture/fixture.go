@@ -252,21 +252,6 @@ func FixSuspensionOperationAsOperation(operationId, instanceId string) internal.
 	return o
 }
 
-func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
-	o.RuntimeOperation = FixRuntimeOperation()
-	return internal.UpgradeClusterOperation{
-		Operation: o,
-	}
-}
-
-func FixRuntimeOperation() internal.RuntimeOperation {
-	return internal.RuntimeOperation{
-		GlobalAccountID: GlobalAccountId,
-		Region:          Region,
-	}
-}
-
 func FixDNSProvidersConfig() gardener.DNSProvidersData {
 	return gardener.DNSProvidersData{
 		Providers: []gardener.DNSProviderData{
