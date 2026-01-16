@@ -47,18 +47,6 @@ const (
 	AWSLeastUsedSharedSecretName   = "aws-least-used-shared"
 )
 
-func FixServiceManagerEntryDTO() *internal.ServiceManagerEntryDTO {
-	return &internal.ServiceManagerEntryDTO{
-		Credentials: internal.ServiceManagerCredentials{
-			BasicAuth: internal.ServiceManagerBasicAuth{
-				Username: ServiceManagerUsername,
-				Password: ServiceManagerPassword,
-			},
-		},
-		URL: ServiceManagerURL,
-	}
-}
-
 func FixERSContext(id string) internal.ERSContext {
 	var (
 		tenantID     = fmt.Sprintf("Tenant-%s", id)
@@ -295,35 +283,39 @@ func FixDNSProvidersConfig() gardener.DNSProvidersData {
 	}
 }
 
-func FixBinding(id string) internal.Binding {
-	var instanceID = fmt.Sprintf("instance-%s", id)
+type BindingOption func(binding *internal.Binding)
 
-	return FixBindingWithInstanceID(id, instanceID)
+func WithOffset(offset time.Duration) BindingOption {
+	return func(b *internal.Binding) {
+		b.CreatedAt = time.Now().Add(-offset)
+		b.UpdatedAt = time.Now().Add(time.Minute*5 - offset)
+		b.ExpiresAt = time.Now().Add(time.Minute*10 - offset)
+	}
 }
 
-func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Binding {
+func WithInstanceID(instanceID string) BindingOption {
+	return func(b *internal.Binding) {
+		b.InstanceID = instanceID
+	}
+}
+
+func FixBinding(id string, opts ...BindingOption) internal.Binding {
+	binding := FixDefaultBinding(id)
+
+	for _, opt := range opts {
+		opt(&binding)
+	}
+	return binding
+}
+
+func FixDefaultBinding(id string) internal.Binding {
 	return internal.Binding{
-		ID:         bindingID,
-		InstanceID: instanceID,
+		ID:         id,
+		InstanceID: fmt.Sprintf("instance-%s", id),
 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now().Add(time.Minute * 5),
 		ExpiresAt: time.Now().Add(time.Minute * 10),
-
-		Kubeconfig:        "kubeconfig",
-		ExpirationSeconds: 600,
-		CreatedBy:         "john.smith@email.com",
-	}
-}
-
-func FixExpiredBindingWithInstanceID(bindingID string, instanceID string, offset time.Duration) internal.Binding {
-	return internal.Binding{
-		ID:         bindingID,
-		InstanceID: instanceID,
-
-		CreatedAt: time.Now().Add(-offset),
-		UpdatedAt: time.Now().Add(time.Minute*5 - offset),
-		ExpiresAt: time.Now().Add(time.Minute*10 - offset),
 
 		Kubeconfig:        "kubeconfig",
 		ExpirationSeconds: 600,
