@@ -297,16 +297,7 @@ func WithInstanceID(instanceID string) BindingOption {
 }
 
 func FixBinding(id string, opts ...BindingOption) internal.Binding {
-	binding := FixDefaultBinding(id)
-
-	for _, opt := range opts {
-		opt(&binding)
-	}
-	return binding
-}
-
-func FixDefaultBinding(id string) internal.Binding {
-	return internal.Binding{
+	binding := internal.Binding{
 		ID:         id,
 		InstanceID: fmt.Sprintf("instance-%s", id),
 
@@ -318,6 +309,11 @@ func FixDefaultBinding(id string) internal.Binding {
 		ExpirationSeconds: 600,
 		CreatedBy:         "john.smith@email.com",
 	}
+
+	for _, opt := range opts {
+		opt(&binding)
+	}
+	return binding
 }
 
 const KymaTemplate = `
