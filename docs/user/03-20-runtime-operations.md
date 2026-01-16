@@ -16,7 +16,7 @@ Each provisioning step is responsible for a separate part of preparing Kyma runt
 You can find all the provisioning steps in the [provisioning](../../cmd/broker/provisioning.go) file.
 
 > ### Note:
-> The timeout for processing this operation is set to `24h`.
+> The timeout for processing this operation is set to `7h`.
 
 ## Deprovisioning
 
@@ -28,7 +28,7 @@ Once the step is successfully executed, it isn't retried (every deprovisioning s
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
 > ### Note:
-> The timeout for processing this operation is set to `24h`.
+> The timeout for processing this operation is set to `7h`.
 
 ## Update
 
@@ -59,33 +59,25 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-   * `Name()` method returns the name of the step that is used in logs.
-   * `Run()` method implements the functionality of the step. The method receives operations as an argument to which it can add appropriate overrides or save other used variables. You must always return the modified operation from the method.
+    * `Name()` method returns the name of the step that is used in logs.
+    * `Run()` method implements the functionality of the step. The method receives operations as an argument to which it can add appropriate overrides or save other used variables. You must always return the modified operation from the method.
 
-    ```go
-    operation.InputCreator.AppendOverrides(COMPONENT_NAME, []*gqlschema.ConfigEntryInput{
-        {
-            Key:   "path.to.key",
-            Value: SOME_VALUE,
-        },
-        {
-            Key:    "path.to.secret",
-            Value:  SOME_VALUE,
-            Secret: ptr.Bool(true),
-        },
-    })
-    ```
+        ```go
+        return k.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+            op.KymaResourceNamespace = decodeKymaTemplate.GetNamespace()
+            op.KymaTemplate = updatedKymaTemplate
+        }, k.logger)
+        ```
 
     If your functionality requires saving data in the storage, you can do it by adding fields to the generic `internal.Operation`, a specific implementation of that structure, or the InstanceDetails, all of which are defined in [model.go](../../internal/model.go). The difference is that for a specific operation implementation, new fields are only visible for that specific type and InstanceDetails is copied during operation initialization across all operations that concert a given runtime. The example below shows how to extend operation with additional fields:
     
     ```go
     type Operation struct {
+        // following fields are stored in the storage
+        ID        string        `json:"-"`
 
-        // These fields are serialized to JSON and stored in the storage
-        RuntimeVersion RuntimeVersionData `json:"runtime_version"`
-
-        // These fields are not stored in the storage
-        InputCreator InputCreator `json:"-"`
+        // following fields are serialized to JSON and stored in the storage
+        InstanceDetails
     }
     ```
 
@@ -101,8 +93,8 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         "net/http"
         "time"
 
-        "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal"
-        "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal/storage"
+        "github.com/kyma-project/kyma-environment-broker/internal"
+        "github.com/kyma-project/kyma-environment-broker/internal/storage"
     )
 
     type HelloWorldStep struct {
@@ -131,7 +123,6 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         log.Info("Start step")
 
         // Check whether your step should be run or if its job has been done in the previous iteration
-        // All non-save operation data are empty (e.g. InputCreator overrides)
 
         // Add your logic here
 
@@ -161,15 +152,6 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
             // Handle a process failure by returning an error or time.Duration
         }
 
-        // If your step finishes with data which should be added to override used during the Runtime provisioning,
-        // add an extra value to operation.InputCreator, then return the updated version of the Application
-        updatedOperation.InputCreator.AppendOverrides("component-name", []*gqlschema.ConfigEntryInput{
-            {
-                Key:   "some.key",
-                Value: body.token,
-            },
-        })
-
         // Return the updated version of the Application
         return *updatedOperation, 0, nil
     }
@@ -179,13 +161,13 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
 
     ```go
     provisioningSteps := []struct {
-   		stage   string
-   		step     provisioning.Step
-   	}{
-   		{
-   			stage: "create_runtime",
-   			step:   provisioning.NewHelloWorldStep(db.Operations(), &http.Client{}),
-   		},
+        disabled  bool
+        step      process.Step
+        condition process.StepCondition
+    }{
+        {
+            step: provisioning.NewHelloWorldStep(db.Operations(), &http.Client{}),
+        },
     }
     ```
 
