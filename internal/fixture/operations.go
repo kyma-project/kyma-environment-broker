@@ -76,7 +76,7 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
-					ClientID:       "clinet-id-oidc", //TODO: Typo to be fixed later
+					ClientID:       "client-id-oidc",
 					GroupsClaim:    "groups",
 					IssuerURL:      "issuer-url",
 					SigningAlgs:    []string{"signingAlgs"},
