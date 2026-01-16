@@ -82,8 +82,14 @@ const (
 	OperationTypeProvision OperationType = "provision"
 	// OperationTypeDeprovision means deprovision OperationType
 	OperationTypeDeprovision OperationType = "deprovision"
+	// OperationTypeUndefined means undefined OperationType
+	OperationTypeUndefined OperationType = ""
+	// OperationTypeUpgradeKyma means upgrade Kyma OperationType
+	OperationTypeUpgradeKyma OperationType = "upgradeKyma"
 	// OperationTypeUpdate means update
 	OperationTypeUpdate OperationType = "update"
+	// OperationTypeUpgradeCluster means upgrade cluster (shoot) OperationType
+	OperationTypeUpgradeCluster OperationType = "upgradeCluster"
 )
 
 // replacement for orchestration constants

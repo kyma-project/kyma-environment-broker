@@ -17,12 +17,6 @@ func WithProvisioningParameters(params internal.ProvisioningParameters) Operatio
 	}
 }
 
-func WithDashboardURL(url string) OperationOption {
-	return func(o *internal.Operation) {
-		o.DashboardURL = url
-	}
-}
-
 func WithProvider(provider string) OperationOption {
 	return func(o *internal.Operation) {
 		o.CloudProvider = provider
@@ -115,11 +109,6 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 	return internal.UpdatingOperation{
 		Operation: o,
 	}
-}
-
-func FixProvisioningOperationWithProvider(operationId, instanceId string, provider pkg.CloudProvider) internal.Operation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	return o
 }
 
 func FixDeprovisioningOperation(operationId, instanceId string) internal.DeprovisioningOperation {
