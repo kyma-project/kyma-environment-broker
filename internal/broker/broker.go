@@ -60,11 +60,20 @@ type Config struct {
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
 
-	AllowedGlobalAccountIDs           StringList `envconfig:"optional"`
-	RestrictToAllowedGlobalAccountIDs bool       `envconfig:"default=false"`
+	AllowedGlobalAccounts           StringList `envconfig:"optional"`
+	RestrictToAllowedGlobalAccounts bool
 }
 
 type ServicesConfig map[string]Service
+
+func (cfg *Config) Validate() error {
+	for _, name := range cfg.EnablePlans {
+		if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
+			return fmt.Errorf("unrecognized %v plan name", name)
+		}
+	}
+	return nil
+}
 
 func NewServicesConfigFromFile(path string) (ServicesConfig, error) {
 	yamlFile, err := ioutil.ReadFile(path)
@@ -137,18 +146,8 @@ type StringList []string
 // Implements envconfig.Unmarshal interface.
 func (m *StringList) Unmarshal(in string) error {
 	plans := strings.Split(in, ",")
-	for _, name := range plans {
-		if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
-			return fmt.Errorf("unrecognized %v plan name", name)
-		}
-	}
-
 	*m = plans
 	return nil
-}
-
-func (m *StringList) ContainsPlanID(planID string) bool {
-	return m.Contains(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID)))
 }
 
 func (m *StringList) Contains(name string) bool {

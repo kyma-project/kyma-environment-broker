@@ -95,7 +95,7 @@ build-hap:
 
 .PHONY: install
 install:
-	./scripts/installation.sh $(VERSION)
+	./scripts/installation.sh $(VERSION) $(LOCAL_REGISTRY)
 
 ##@ Patching Runtime to specified state
 

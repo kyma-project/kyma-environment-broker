@@ -694,58 +694,6 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
-func TestUpdateWithOwnClusterPlan(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		`{
-				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   "plan_id": "03e3cb66-a4c6-4c6a-b4b0-5d42224debea",
-				   "context": {
-					   "sm_operator_credentials": {
-						   "clientid": "cid",
-						   "clientsecret": "cs",
-						   "url": "url",
-						   "sm_url": "sm_url"
-					   },
-					   "globalaccount_id": "g-account-id",
-					   "subaccount_id": "sub-id",
-					   "user_id": "john.smith@email.com"
-				   },
-					"parameters": {
-						"name": "testing-cluster",
-						"shootName": "shoot-name",
-						"shootDomain": "kyma-dev.shoot.canary.k8s-hana.ondemand.com",
-						"kubeconfig":"YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmN1cnJlbnQtY29udGV4dDogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKY29udGV4dHM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY29udGV4dDoKICAgICAgY2x1c3Rlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKICAgICAgdXNlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUtdG9rZW4KY2x1c3RlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY2x1c3RlcjoKICAgICAgc2VydmVyOiBodHRwczovL2FwaS5jbHVzdGVyLW5hbWUua3ltYS1kZXYuc2hvb3QuY2FuYXJ5Lms4cy1oYW5hLm9uZGVtYW5kLmNvbQogICAgICBjZXJ0aWZpY2F0ZS1hdXRob3JpdHktZGF0YTogPi0KICAgICAgICBMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHQKdXNlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZS10b2tlbgogICAgdXNlcjoKICAgICAgdG9rZW46ID4tCiAgICAgICAgdE9rRW4K"
-			}
-   }`)
-	opID := suite.DecodeOperationID(resp)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// when
-	// OSB update:
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com"
-       },
-		"parameters": {
-			"kubeconfig":"YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCmN1cnJlbnQtY29udGV4dDogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKY29udGV4dHM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY29udGV4dDoKICAgICAgY2x1c3Rlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUKICAgICAgdXNlcjogc2hvb3QtLWt5bWEtZGV2LS1jbHVzdGVyLW5hbWUtdG9rZW4KY2x1c3RlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZQogICAgY2x1c3RlcjoKICAgICAgc2VydmVyOiBodHRwczovL2FwaS5jbHVzdGVyLW5hbWUua3ltYS1kZXYuc2hvb3QuY2FuYXJ5Lms4cy1oYW5hLm9uZGVtYW5kLmNvbQogICAgICBjZXJ0aWZpY2F0ZS1hdXRob3JpdHktZGF0YTogPi0KICAgICAgICBMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHQKdXNlcnM6CiAgLSBuYW1lOiBzaG9vdC0ta3ltYS1kZXYtLWNsdXN0ZXItbmFtZS10b2tlbgogICAgdXNlcjoKICAgICAgdG9rZW46ID4tCiAgICAgICAgdE9rRW4K"
-		}
-   }`)
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	upgradeOperationID := suite.DecodeOperationID(resp)
-	suite.AssertKymaResourceExists(upgradeOperationID)
-	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
-		"kyma-project.io/platform-region": "cf-eu10",
-	})
-}
-
 func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)

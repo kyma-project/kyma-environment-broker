@@ -88,7 +88,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		},
 		&container.HostConfig{
 			PortBindings: nat.PortMap{
-				("5432" + "/tcp"): []nat.PortBinding{{
+				"5432" + "/tcp": []nat.PortBinding{{
 					HostIP:   "0.0.0.0",
 					HostPort: config.Port,
 				}},

@@ -1594,7 +1594,7 @@ func getStorageForTests() (func() error, storage.BrokerStorage, error) {
 	if useInMemoryStorage {
 		return nil, storage.NewMemoryStorage(), nil
 	}
-	return storage.GetStorageForTest(brokerStorageTestConfig())
+	return storage.GetStorageForTests(brokerStorageTestConfig())
 }
 
 func setupStorageContainer() func() {

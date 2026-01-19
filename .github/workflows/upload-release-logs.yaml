@@ -56,3 +56,13 @@ jobs:
         run: |
           MESSAGE="❌ <strong>Logs uploading to release failed. <a href='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'>View details</a>"
           ./scripts/notify_teams.sh "$MESSAGE"
+
+      - name: Notify slack channel about failure
+        if: ${{ !success() }}
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: kyma-gopher-private-alerts
+            text: "Logs uploading to release failed. Check the details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

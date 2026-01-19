@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -113,15 +112,15 @@ func TestBinding(t *testing.T) {
 
 		// given
 		sameInstanceID := uuid.New().String()
-		fixedBinding := fixture.FixBindingWithInstanceID("1", sameInstanceID)
+		fixedBinding := fixture.FixBinding("1", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("2", sameInstanceID)
+		fixedBinding = fixture.FixBinding("2", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("3", sameInstanceID)
+		fixedBinding = fixture.FixBinding("3", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
@@ -145,15 +144,15 @@ func TestBinding(t *testing.T) {
 		// given
 		sameInstanceID := uuid.New().String()
 		differentInstanceID := uuid.New().String()
-		fixedBinding := fixture.FixBindingWithInstanceID("1", sameInstanceID)
+		fixedBinding := fixture.FixBinding("1", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("2", sameInstanceID)
+		fixedBinding = fixture.FixBinding("2", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("3", differentInstanceID)
+		fixedBinding = fixture.FixBinding("3", fixture.WithInstanceID(differentInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
@@ -180,15 +179,15 @@ func TestBinding(t *testing.T) {
 
 		// given
 		sameInstanceID := uuid.New().String()
-		fixedBinding := fixture.FixBindingWithInstanceID("1", sameInstanceID)
+		fixedBinding := fixture.FixBinding("1", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("2", sameInstanceID)
+		fixedBinding = fixture.FixBinding("2", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
-		fixedBinding = fixture.FixBindingWithInstanceID("3", sameInstanceID)
+		fixedBinding = fixture.FixBinding("3", fixture.WithInstanceID(sameInstanceID))
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
 		assert.NoError(t, err)
 
@@ -277,8 +276,7 @@ func TestBindingMetrics_NoBindings(t *testing.T) {
 }
 
 func TestBinding_ModeGCM(t *testing.T) {
-	encrypter := storage.NewEncrypter("################################")
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 	require.NoError(t, err)
 	defer func() {
 		err := storageCleanup()

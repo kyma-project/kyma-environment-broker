@@ -25,8 +25,6 @@ const (
 	SapConvergedCloudPlanName = "sap-converged-cloud"
 	FreemiumPlanID            = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
 	FreemiumPlanName          = "free"
-	OwnClusterPlanID          = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
-	OwnClusterPlanName        = "own_cluster"
 	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
 	PreviewPlanName           = "preview"
 	BuildRuntimeAWSPlanID     = "6aae0ff3-89f7-4f12-86de-51466145422e"
@@ -47,7 +45,6 @@ var PlanIDsMapping = map[PlanNameType]PlanIDType{
 	TrialPlanName:             TrialPlanID,
 	SapConvergedCloudPlanName: SapConvergedCloudPlanID,
 	FreemiumPlanName:          FreemiumPlanID,
-	OwnClusterPlanName:        OwnClusterPlanID,
 	PreviewPlanName:           PreviewPlanID,
 	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
 	BuildRuntimeGCPPlanName:   BuildRuntimeGCPPlanID,
@@ -146,10 +143,6 @@ func requiredTrialSchemaProperties() []string {
 	return []string{"name"}
 }
 
-func requiredOwnClusterSchemaProperties() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
-}
-
 func createSchemaWithProperties(properties ProvisioningProperties,
 	defaultOIDCConfig *pkg.OIDCConfigDTO,
 	update bool,
@@ -223,10 +216,6 @@ func IsFreemiumPlan(planID string) bool {
 	default:
 		return false
 	}
-}
-
-func IsOwnClusterPlan(planID string) bool {
-	return planID == OwnClusterPlanID
 }
 
 func filter(items *[]interface{}, included map[string]interface{}) interface{} {

@@ -87,7 +87,7 @@ func NewInMemoryEvents() *inMemoryEvents {
 	}
 }
 
-func (_ inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
+func (_ *inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
 	return
 }
 

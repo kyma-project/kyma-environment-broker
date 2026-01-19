@@ -86,7 +86,7 @@ func (s *RemoveInstanceStep) Run(operation internal.Operation, log *slog.Logger)
 	return operation, backoff, nil
 }
 
-func (s RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log *slog.Logger) time.Duration {
+func (s *RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log *slog.Logger) time.Duration {
 	backoff := time.Second
 
 	instance, err := s.instanceStorage.GetByID(instanceID)
@@ -106,7 +106,7 @@ func (s RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log *
 	return 0
 }
 
-func (s RemoveInstanceStep) removeInstancePermanently(instanceID string, log *slog.Logger) time.Duration {
+func (s *RemoveInstanceStep) removeInstancePermanently(instanceID string, log *slog.Logger) time.Duration {
 	err := s.instanceStorage.Delete(instanceID)
 	if err != nil {
 		log.Error(fmt.Sprintf("unable to remove instance %s from the storage: %s", instanceID, err))
@@ -116,7 +116,7 @@ func (s RemoveInstanceStep) removeInstancePermanently(instanceID string, log *sl
 	return 0
 }
 
-func (s RemoveInstanceStep) markInstanceNeedsRetrySomeSteps(instanceID string, log *slog.Logger) time.Duration {
+func (s *RemoveInstanceStep) markInstanceNeedsRetrySomeSteps(instanceID string, log *slog.Logger) time.Duration {
 	backoff := time.Second
 
 	instance, err := s.instanceStorage.GetByID(instanceID)

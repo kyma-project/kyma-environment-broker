@@ -53,19 +53,16 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
 				provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval})),
-			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  useCredentialsBinding,
+			disabled: useCredentialsBinding,
 		},
 		{
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
 				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval})),
-			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  !useCredentialsBinding,
+			disabled: !useCredentialsBinding,
 		},
 		{
-			step:      steps.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
-			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  useCredentialsBinding,
+			step:     steps.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
+			disabled: useCredentialsBinding,
 		},
 		{
 			step:     steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, awsClientFactory),
@@ -78,18 +75,12 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
 		{
-			step:      provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec),
-			condition: provisioning.SkipForOwnClusterPlan,
+			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec),
 		},
 		{
-			step:      steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
-			condition: provisioning.SkipForOwnClusterPlan,
+			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 		},
-		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			step:      steps.SyncKubeconfig(db.Operations(), k8sClient),
-			condition: provisioning.DoForOwnClusterPlanOnly,
-		},
-		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig")
+		{
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
 		},

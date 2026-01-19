@@ -98,8 +98,6 @@ const (
 	OperationStateCanceled   = "canceled"
 	OperationStateRetrying   = "retrying"
 	OperationStateCanceling  = "canceling"
-	OperationStateSucceeded  = "succeeded"
-	OperationStateFailed     = "failed"
 	OperationStateInProgress = "in progress"
 )
 

@@ -41,7 +41,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = fixture.AWSTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
@@ -76,7 +76,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "azure"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.Azure)))
 		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = fixture.AzureTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
@@ -111,7 +111,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "azure"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.Azure)))
 		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -145,7 +145,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "gcp"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.GCP)))
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -179,7 +179,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.TrialPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -213,7 +213,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "openstack"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.SapConvergedCloud)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.SapConvergedCloud)))
 		operation.ProvisioningParameters.PlanID = broker.SapConvergedCloudPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -247,7 +247,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -281,7 +281,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 			providerType   = "gcp"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.GCP)))
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}

@@ -121,7 +121,6 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 				"overrides-plan-aws":                 "true",
 				"overrides-plan-free":                "true",
 				"overrides-plan-gcp":                 "true",
-				"overrides-plan-own_cluster":         "true",
 				"overrides-plan-sap-converged-cloud": "true",
 				"overrides-version-2.0.0-rc4":        "true",
 				"overrides-version-2.0.0":            "true",
@@ -221,20 +220,7 @@ seedRegions:
 }
 
 func fixConfig() *Config {
-	brokerConfigPlans := []string{
-		"azure",
-		"trial",
-		"aws",
-		"own_cluster",
-		"preview",
-		"sap-converged-cloud",
-		"gcp",
-		"free",
-		"build-runtime-aws",
-		"build-runtime-gcp",
-		"build-runtime-azure",
-		"alicloud",
-	}
+	brokerConfigPlans := broker.AvailablePlans.GetAllPlanNamesAsStrings()
 
 	return &Config{
 		DbInMemory:                         true,

@@ -167,14 +167,8 @@ type KubeconfigProvider interface {
 }
 
 const (
-	createRuntimeStageName                = "create_runtime"
-	createKymaResourceStageName           = "create_kyma_resource"
-	checkRuntimeStageName                 = "check_runtime_resource"
-	syncKubeconfigStageName               = "sync_kubeconfig"
-	injectBTPOperatorCredentialsStageName = "inject_btp_operator_credentials"
-	startStageName                        = "start"
-	brokerAPISubrouterName                = "brokerAPI"
-	provisioningTakesLongThreshold        = 20 * time.Minute
+	brokerAPISubrouterName         = "brokerAPI"
+	provisioningTakesLongThreshold = 20 * time.Minute
 )
 
 var Version string
@@ -205,7 +199,13 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 
 func (c *Config) Validate() error {
 	_, err := c.GardenerSubscriptionResource()
-	return err
+	if err != nil {
+		return err
+	}
+	if err := c.Broker.Validate(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, error) {
@@ -256,6 +256,8 @@ func main() {
 	}
 
 	log.Info("Starting Kyma Environment Broker")
+
+	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
@@ -325,7 +327,7 @@ func main() {
 	// metrics collectors
 	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
 
-	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
+	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
 
 	rulesetValid := rulesService.IsRulesetValid()
@@ -388,7 +390,7 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
-	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, log.With("service", "kubeconfigHandle"))
+	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, log.With("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
 	if !cfg.DisableProcessOperationsInProgress {
@@ -452,6 +454,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
+	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
 
 	r, _ := cfg.GardenerSubscriptionResource()
 	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))
@@ -601,7 +604,7 @@ func panicOnError(err error) {
 	}
 }
 
-func (c Config) getLogLevel() slog.Level {
+func (c *Config) getLogLevel() slog.Level {
 	switch strings.ToUpper(c.LogLevel) {
 	case "DEBUG":
 		return slog.LevelDebug

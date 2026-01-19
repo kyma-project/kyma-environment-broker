@@ -1,7 +1,6 @@
 package steps
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -35,10 +34,6 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 	}
 	a["skr-domain"] = operation.ShootDomain
 	object.SetAnnotations(a)
-}
-
-func KymaKubeconfigName(operation internal.Operation) string {
-	return fmt.Sprintf("kubeconfig-%v", KymaName(operation))
 }
 
 func KymaName(operation internal.Operation) string {

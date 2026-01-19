@@ -2,6 +2,8 @@ package steps
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -385,4 +387,10 @@ func TestDiscoverAvailableZonesCBStep_UpdateHappyPath(t *testing.T) {
 	assert.Len(t, operation.DiscoveredZones, 2)
 	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

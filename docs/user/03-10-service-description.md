@@ -211,26 +211,6 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 </details>
 
-## Own Cluster Plan
-
-> ### Note:
-> The `own_cluster` plan has been deprecated.
-
-These are the provisioning parameters for the `own_cluster` plan that you configure:
-
-<details>
-<summary label="own_cluster-plan">
-Own cluster plan
-</summary>
-
-| Parameter name  | Type   | Description                                                          | Required | Default value |
-|-----------------|--------|----------------------------------------------------------------------|----------|---------------|
-| **kubeconfig**  | string | Kubeconfig that points to the cluster where you instal Kyma runtime. | Yes      | None          |
-| **shootDomain** | string | Domain of the shoot where you install Kyma runtime.                  | Yes      | None          |
-| **shootName**   | string | Name of the shoot where you install Kyma runtime.                    | Yes      | None          |
-
-</details>
-
 ## Preview Cluster Plan
 
 The preview plan is designed for testing major changes in KEB's architecture.

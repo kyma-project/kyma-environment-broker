@@ -4,7 +4,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
-| **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNT_IDS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
+| **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |
@@ -26,7 +26,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_&#x200b;OPERATION_TIMEOUT** | <code>7h</code> | Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.). If the operation exceeds this timeout, it is marked as failed. |
 | **APP_BROKER_PORT** | <code>8080</code> | Port for the broker HTTP server. |
 | **APP_BROKER_REJECT_&#x200b;UNSUPPORTED_&#x200b;PARAMETERS** | <code>false</code> | If true, rejects requests that contain parameters that are not defined in schemas. |
-| **APP_BROKER_RESTRICT_&#x200b;TO_ALLOWED_GLOBAL_&#x200b;ACCOUNT_IDS** | <code>false</code> | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. |
+| **APP_BROKER_RESTRICT_&#x200b;TO_ALLOWED_GLOBAL_&#x200b;ACCOUNTS** | <code>false</code> | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. |
 | **APP_BROKER_STATUS_&#x200b;PORT** | <code>8071</code> | Port for the broker status/health endpoint. |
 | **APP_BROKER_&#x200b;SUBACCOUNT_MOVEMENT_&#x200b;ENABLED** | <code>false</code> | If true, enables subaccount movement (allows changing global account for an instance). |
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |

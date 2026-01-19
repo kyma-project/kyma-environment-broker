@@ -65,20 +65,29 @@ func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token str
 	}, kubeconfigTemplateForKymaBindings)
 }
 
-func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error) {
+func (b *Builder) unmarshal(kubeconfigContent []byte) (*kubeconfig, error) {
+	var kubeCfg kubeconfig
+
+	err := yaml.Unmarshal(kubeconfigContent, &kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshaling kubeconfig: %w", err)
+	}
+	if err := b.validKubeconfig(kubeCfg); err != nil {
+		return nil, fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
+	}
+	return &kubeCfg, nil
+}
+
+func (b *Builder) Build(instance *internal.Instance) (string, error) {
 	if instance.RuntimeID == "" {
 		return "", fmt.Errorf("RuntimeID must not be empty")
 	}
 
 	var kubeconfigContent []byte
 	var err error
-	if adminKubeconfig == "" {
-		kubeconfigContent, err = b.kubeconfigProvider.KubeconfigForRuntimeID(instance.RuntimeID)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		kubeconfigContent = []byte(adminKubeconfig)
+	kubeconfigContent, err = b.kubeconfigProvider.KubeconfigForRuntimeID(instance.RuntimeID)
+	if err != nil {
+		return "", err
 	}
 
 	kubeCfg, err := b.unmarshal(kubeconfigContent)
@@ -97,23 +106,6 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
 		OIDCConfigs: OIDCConfigs,
 	}, kubeconfigTemplate)
-}
-
-func (b *Builder) unmarshal(kubeconfigContent []byte) (*kubeconfig, error) {
-	var kubeCfg kubeconfig
-
-	err := yaml.Unmarshal(kubeconfigContent, &kubeCfg)
-	if err != nil {
-		return nil, fmt.Errorf("while unmarshaling kubeconfig: %w", err)
-	}
-	if err := b.validKubeconfig(kubeCfg); err != nil {
-		return nil, fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
-	}
-	return &kubeCfg, nil
-}
-
-func (b *Builder) Build(instance *internal.Instance) (string, error) {
-	return b.BuildFromAdminKubeconfig(instance, "")
 }
 
 func (b *Builder) GetServerURL(runtimeID string) (string, error) {

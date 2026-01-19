@@ -164,8 +164,6 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			return internal.ProviderValues{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}
 
-	case broker.OwnClusterPlanID:
-		p = &OwnClusterinputProvider{}
 	default:
 		return internal.ProviderValues{}, fmt.Errorf("plan %s not supported", provisioningParameters.PlanID)
 	}
@@ -177,7 +175,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 		values.VolumeSizeGb = volumeSize
 	}
 
-	if values.DefaultMachineType == "" && values.ProviderType != OwnProviderType {
+	if values.DefaultMachineType == "" {
 		defaultMachineType := s.planSpec.DefaultMachineType(planeName)
 		if defaultMachineType == "" {
 			return internal.ProviderValues{}, fmt.Errorf("plan %s (%s) does not contain default machine type", provisioningParameters.PlanID, planeName)

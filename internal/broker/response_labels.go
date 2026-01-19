@@ -33,7 +33,7 @@ func ResponseLabels(instance internal.Instance, brokerURL string, kubeconfigBuil
 
 	responseLabels := make(map[string]any, 0)
 	responseLabels["Name"] = instance.Parameters.Parameters.Name
-	if !IsOwnClusterPlan(instance.ServicePlanID) && instance.RuntimeID != "" {
+	if instance.RuntimeID != "" {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
 		apiServerUrl, err := kubeconfigBuilder.GetServerURL(instance.RuntimeID)
 		switch {

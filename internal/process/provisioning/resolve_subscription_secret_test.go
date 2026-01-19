@@ -44,7 +44,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = fixture.AWSTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
@@ -79,7 +79,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "azure"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.Azure)))
 		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = fixture.AzureTenantName
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
@@ -114,7 +114,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "azure"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.Azure)))
 		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -148,7 +148,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "gcp"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.GCP)))
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -182,7 +182,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.TrialPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -216,7 +216,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "openstack"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.SapConvergedCloud)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.SapConvergedCloud)))
 		operation.ProvisioningParameters.PlanID = broker.SapConvergedCloudPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -250,7 +250,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "aws"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -284,7 +284,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "gcp"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.GCP)))
 		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -312,6 +312,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 }
 
 func createRulesService(t *testing.T) *rules.RulesService {
+	// TODO could be simpler if we create service form slice not file
 	content := `rule:
                       - aws(PR=cf-eu11) -> EU
                       - aws(PR=cf-ap11)

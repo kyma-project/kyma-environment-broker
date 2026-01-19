@@ -29,7 +29,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	cfg := brokerStorageDatabaseTestConfig()
 
 	t.Run("Should create and update instance", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -105,7 +105,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should fetch instance statistics", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -168,7 +168,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should fetch ERS context statistics", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -236,7 +236,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should get distinct subaccounts from active instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -269,7 +269,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should fetch no distinct subaccounts from empty table of active instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -286,7 +286,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -357,7 +357,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances based on subaccount list", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -392,7 +392,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on page and page size", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -447,7 +447,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -468,8 +468,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 			fixture.FixProvisioningOperation("op3", "inst3"),
 			fixture.FixProvisioningOperation("op4", "expiredinstance"),
 		}
-		fixBinding := fixture.FixBinding("binding1")
-		fixBinding.InstanceID = fixInstances[0].InstanceID
+		fixBinding := fixture.FixBinding("binding1", fixture.WithInstanceID(fixInstances[0].InstanceID))
 		err = brokerStorage.Bindings().Insert(&fixBinding)
 		require.NoError(t, err)
 		for i, v := range fixInstances {
@@ -576,7 +575,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list instances with proper subaccount state info", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -747,7 +746,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -867,7 +866,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list trial instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -948,7 +947,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list regular instances and not completely deprovisioned instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -1023,7 +1022,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list not completely deprovisioned instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -1092,7 +1091,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 	})
 
 	t.Run("Should list suspended instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -1171,7 +1170,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 	// given
 	cfg := brokerStorageDatabaseTestConfig()
-	storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+	storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
 	require.NoError(t, err)
 	require.NotNil(t, brokerStorage)
 	defer func() {
@@ -1250,9 +1249,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 func TestInstance_ModeGCM(t *testing.T) {
 	// given
-	encrypter := storage.NewEncrypter("################################")
-
-	storageCleanup, brokerStorage, err := GetStorageForDatabaseTestsWithEncrypter(encrypter)
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 	require.NoError(t, err)
 	defer func() {
 		err := storageCleanup()
