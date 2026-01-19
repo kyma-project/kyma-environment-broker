@@ -55,35 +55,9 @@ check-go-mod-tidy: ## check if go mod tidy needed
 ##@ Development support commands
 
 .PHONY: fix
-fix: go-lint-install ## automatically fix code issues with formatting, imports, and linting
-	@echo "Running automatic code fixes..."
-	@echo "├── Running go mod tidy..."
+fix: go-lint-install ## try to fix automatically issues
 	go mod tidy -v
-	@echo "├── Running goimports (organize imports and format)..."
-	go run golang.org/x/tools/cmd/goimports@latest -w -local github.com/kyma-project/kyma-environment-broker .
-	@echo "├── Running gofmt (standard formatting)..."
-	gofmt -s -w .
-	@echo "├── Running golangci-lint auto-fixes..."
 	golangci-lint run --fix
-	@echo "All automatic fixes completed!"
-
-.PHONY: format
-format: ## format Go code using goimports and gofmt
-	@echo "Formatting Go code..."
-	go run golang.org/x/tools/cmd/goimports@latest -w -local github.com/kyma-project/kyma-environment-broker .
-	gofmt -s -w .
-	@echo "Code formatting completed!"
-
-.PHONY: fix-lint-issues
-fix-lint-issues: go-lint-install ## fix specific linter issues that can be auto-corrected
-	@echo "Fixing auto-correctable linter issues..."
-	@echo "├── Fixing unconvert issues..."
-	go run github.com/mdempsky/unconvert@latest -apply ./...
-	@echo "├── Running golangci-lint auto-fixes (gofmt, goimports, etc.)..."  
-	golangci-lint run --fix || true
-	@echo "Auto-correctable linter fixes completed!"
-	@echo "Run 'make go-lint' to see remaining issues that require manual fixes"
-
 
 ##@ Tools
 
