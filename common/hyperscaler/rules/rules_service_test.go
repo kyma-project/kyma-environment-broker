@@ -37,7 +37,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 		tmpfile, err := CreateTempFile(content)
 		require.NoError(t, err)
-		defer os.Remove(tmpfile)
+		defer func() { _ = os.Remove(tmpfile) }()
 
 		// when
 		service, err := NewRulesServiceFromFile(tmpfile, sets.New[string](), sets.New[string]())

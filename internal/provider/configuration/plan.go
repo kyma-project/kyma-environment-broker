@@ -18,7 +18,7 @@ func NewPlanSpecificationsFromFile(filePath string) (*PlanSpecifications, error)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Use the existing function to parse the specifications
 	return NewPlanSpecifications(file)

@@ -600,7 +600,7 @@ func (s *BrokerSuiteTest) waitForRuntimeAndMakeItReady(id string) {
 
 func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.ErrorResponse {
 	m, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	require.NoError(s.t, err)
 
 	r := apiresponses.ErrorResponse{}

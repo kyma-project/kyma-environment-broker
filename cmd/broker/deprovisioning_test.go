@@ -78,7 +78,7 @@ func TestReDeprovision(t *testing.T) {
 	suite.WaitForInstanceArchivedCreated(iid)
 	suite.WaitFor(func() bool {
 		resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), ``)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		data := suite.ParseLastOperationResponse(resp)
 		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 	})
@@ -146,7 +146,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 	suite.WaitForInstanceArchivedCreated(iid)
 	suite.WaitFor(func() bool {
 		resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), ``)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		data := suite.ParseLastOperationResponse(resp)
 		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 	})
@@ -191,7 +191,7 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	suite.WaitForInstanceArchivedCreated(iid)
 	suite.WaitFor(func() bool {
 		resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), ``)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		data := suite.ParseLastOperationResponse(resp)
 		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 	})

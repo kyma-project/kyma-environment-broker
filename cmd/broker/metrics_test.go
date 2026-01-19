@@ -156,7 +156,7 @@ func TestMetrics(t *testing.T) {
 		suite.WaitFor(
 			func() bool {
 				resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", instance1), ``)
-				defer resp.Body.Close()
+				defer func() { _ = resp.Body.Close() }()
 				data := suite.ParseLastOperationResponse(resp)
 				return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 			})
@@ -170,7 +170,7 @@ func TestMetrics(t *testing.T) {
 		suite.WaitFor(
 			func() bool {
 				resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", instance7), ``)
-				defer resp.Body.Close()
+				defer func() { _ = resp.Body.Close() }()
 				data := suite.ParseLastOperationResponse(resp)
 				return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 			})

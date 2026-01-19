@@ -36,7 +36,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 	tmpfile, err := CreateTempFile(content)
 	require.NoError(t, err)
 
-	defer os.Remove(tmpfile)
+	defer func() { _ = os.Remove(tmpfile) }()
 
 	svc, err := NewRulesServiceFromFile(tmpfile, sets.New[string]("azure", "gcp", "trial", "aws", "free"), sets.New[string]("azure", "gcp", "trial", "aws", "free"))
 	require.NoError(t, err)

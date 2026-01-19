@@ -142,7 +142,7 @@ func invokeMigration() error {
 	if err != nil {
 		return fmt.Errorf("# COULD NOT CREATE TEMPORARY DIRECTORY FOR MIGRATION: %w", err)
 	}
-	defer os.RemoveAll(migrationExecPath)
+	defer func() { _ = os.RemoveAll(migrationExecPath) }()
 
 	ms := migrationScript{
 		fs: osFS{},
@@ -277,13 +277,13 @@ func (m *migrationScript) copyFile(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("opening file: %w", err)
 	}
-	defer rd.Close()
+	defer func() { _ = rd.Close() }()
 
 	wr, err := m.fs.Create(dst)
 	if err != nil {
 		return fmt.Errorf("creating file: %w", err)
 	}
-	defer wr.Close()
+	defer func() { _ = wr.Close() }()
 
 	_, err = m.fs.Copy(wr, rd)
 	if err != nil {

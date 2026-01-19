@@ -309,7 +309,7 @@ func TestExpiration(t *testing.T) {
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		var newOperationIDResp temp
 		require.NoError(t, json.Unmarshal(body, &newOperationIDResp))

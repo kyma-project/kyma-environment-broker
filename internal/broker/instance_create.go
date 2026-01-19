@@ -999,7 +999,7 @@ func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, 
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.Write(append(data, '\n')); err != nil {
 		return fmt.Errorf("failed to write payload: %w", err)

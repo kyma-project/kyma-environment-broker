@@ -16,7 +16,7 @@ func TestLoad(t *testing.T) {
 
 		tmpfile, err := CreateTempFile(content)
 		require.NoError(t, err)
-		defer os.Remove(tmpfile)
+		defer func() { _ = os.Remove(tmpfile) }()
 
 		// when
 		var config RulesConfig

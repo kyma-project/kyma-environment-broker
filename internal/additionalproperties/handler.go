@@ -85,7 +85,7 @@ func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Reque
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while opening additional properties file: %s", err.Error()))
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	skip := pageNumber * pageSize
 	end := skip + pageSize

@@ -36,7 +36,7 @@ func (t *Template) Execute() error {
 		return fmt.Errorf("while opening file: %w", err)
 	}
 
-	defer output.Close()
+	defer func() { _ = output.Close() }()
 
 	err = schema.Execute(output, t.Templates)
 	if err != nil {

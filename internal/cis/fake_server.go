@@ -75,7 +75,7 @@ func newSubaccountsEndpoint() (*subaccountsEndpoint, error) {
 	endpoint := &subaccountsEndpoint{subaccounts: make(map[string]map[string]interface{}, 0)}
 
 	f, err := os.Open(subaccountsJSONPath)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if err != nil {
 		return nil, fmt.Errorf("while reading subaccounts JSON file: %w", err)
 	}
@@ -135,7 +135,7 @@ func newEventsEndpoint() (*eventsEndpoint, error) {
 	endpoint := &eventsEndpoint{events: make([]map[string]interface{}, 0)}
 
 	f, err := os.Open(eventsJSONPath)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if err != nil {
 		return nil, fmt.Errorf("while reading events JSON file: %w", err)
 	}

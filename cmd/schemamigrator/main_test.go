@@ -154,18 +154,18 @@ func Test_migrationScript_copyDir(t *testing.T) {
 func Test_buildConnectionString(t *testing.T) {
 	t.Run("Should handle special characters in password", func(t *testing.T) {
 		// given
-		os.Setenv("DB_USER", "testuser")
-		os.Setenv("DB_PASSWORD", "admin12345#@!:pass")
-		os.Setenv("DB_HOST", "localhost")
-		os.Setenv("DB_PORT", "5432")
-		os.Setenv("DB_NAME", "testdb")
+		_ = os.Setenv("DB_USER", "testuser")
+		_ = os.Setenv("DB_PASSWORD", "admin12345#@!:pass")
+		_ = os.Setenv("DB_HOST", "localhost")
+		_ = os.Setenv("DB_PORT", "5432")
+		_ = os.Setenv("DB_NAME", "testdb")
 		defer func() {
-			os.Unsetenv("DB_USER")
-			os.Unsetenv("DB_PASSWORD")
-			os.Unsetenv("DB_HOST")
-			os.Unsetenv("DB_PORT")
-			os.Unsetenv("DB_NAME")
-			os.Unsetenv("DB_SSL")
+			_ = os.Unsetenv("DB_USER")
+			_ = os.Unsetenv("DB_PASSWORD")
+			_ = os.Unsetenv("DB_HOST")
+			_ = os.Unsetenv("DB_PORT")
+			_ = os.Unsetenv("DB_NAME")
+			_ = os.Unsetenv("DB_SSL")
 		}()
 
 		// when
@@ -179,17 +179,17 @@ func Test_buildConnectionString(t *testing.T) {
 
 	t.Run("Should build connection string without SSL", func(t *testing.T) {
 		// given
-		os.Setenv("DB_USER", "user")
-		os.Setenv("DB_PASSWORD", "pass")
-		os.Setenv("DB_HOST", "host")
-		os.Setenv("DB_PORT", "5432")
-		os.Setenv("DB_NAME", "dbname")
+		_ = os.Setenv("DB_USER", "user")
+		_ = os.Setenv("DB_PASSWORD", "pass")
+		_ = os.Setenv("DB_HOST", "host")
+		_ = os.Setenv("DB_PORT", "5432")
+		_ = os.Setenv("DB_NAME", "dbname")
 		defer func() {
-			os.Unsetenv("DB_USER")
-			os.Unsetenv("DB_PASSWORD")
-			os.Unsetenv("DB_HOST")
-			os.Unsetenv("DB_PORT")
-			os.Unsetenv("DB_NAME")
+			_ = os.Unsetenv("DB_USER")
+			_ = os.Unsetenv("DB_PASSWORD")
+			_ = os.Unsetenv("DB_HOST")
+			_ = os.Unsetenv("DB_PORT")
+			_ = os.Unsetenv("DB_NAME")
 		}()
 
 		// when
@@ -202,19 +202,19 @@ func Test_buildConnectionString(t *testing.T) {
 
 	t.Run("Should build connection string with SSL", func(t *testing.T) {
 		// given
-		os.Setenv("DB_USER", "user")
-		os.Setenv("DB_PASSWORD", "pass")
-		os.Setenv("DB_HOST", "host")
-		os.Setenv("DB_PORT", "5432")
-		os.Setenv("DB_NAME", "dbname")
-		os.Setenv("DB_SSL", "require")
+		_ = os.Setenv("DB_USER", "user")
+		_ = os.Setenv("DB_PASSWORD", "pass")
+		_ = os.Setenv("DB_HOST", "host")
+		_ = os.Setenv("DB_PORT", "5432")
+		_ = os.Setenv("DB_NAME", "dbname")
+		_ = os.Setenv("DB_SSL", "require")
 		defer func() {
-			os.Unsetenv("DB_USER")
-			os.Unsetenv("DB_PASSWORD")
-			os.Unsetenv("DB_HOST")
-			os.Unsetenv("DB_PORT")
-			os.Unsetenv("DB_NAME")
-			os.Unsetenv("DB_SSL")
+			_ = os.Unsetenv("DB_USER")
+			_ = os.Unsetenv("DB_PASSWORD")
+			_ = os.Unsetenv("DB_HOST")
+			_ = os.Unsetenv("DB_PORT")
+			_ = os.Unsetenv("DB_NAME")
+			_ = os.Unsetenv("DB_SSL")
 		}()
 
 		// when
@@ -227,21 +227,21 @@ func Test_buildConnectionString(t *testing.T) {
 
 	t.Run("Should build connection string with SSL and root certificate", func(t *testing.T) {
 		// given
-		os.Setenv("DB_USER", "user")
-		os.Setenv("DB_PASSWORD", "pass")
-		os.Setenv("DB_HOST", "host")
-		os.Setenv("DB_PORT", "5432")
-		os.Setenv("DB_NAME", "dbname")
-		os.Setenv("DB_SSL", "require")
-		os.Setenv("DB_SSLROOTCERT", "/path/to/cert")
+		_ = os.Setenv("DB_USER", "user")
+		_ = os.Setenv("DB_PASSWORD", "pass")
+		_ = os.Setenv("DB_HOST", "host")
+		_ = os.Setenv("DB_PORT", "5432")
+		_ = os.Setenv("DB_NAME", "dbname")
+		_ = os.Setenv("DB_SSL", "require")
+		_ = os.Setenv("DB_SSLROOTCERT", "/path/to/cert")
 		defer func() {
-			os.Unsetenv("DB_USER")
-			os.Unsetenv("DB_PASSWORD")
-			os.Unsetenv("DB_HOST")
-			os.Unsetenv("DB_PORT")
-			os.Unsetenv("DB_NAME")
-			os.Unsetenv("DB_SSL")
-			os.Unsetenv("DB_SSLROOTCERT")
+			_ = os.Unsetenv("DB_USER")
+			_ = os.Unsetenv("DB_PASSWORD")
+			_ = os.Unsetenv("DB_HOST")
+			_ = os.Unsetenv("DB_PORT")
+			_ = os.Unsetenv("DB_NAME")
+			_ = os.Unsetenv("DB_SSL")
+			_ = os.Unsetenv("DB_SSLROOTCERT")
 		}()
 
 		// when

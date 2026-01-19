@@ -322,7 +322,7 @@ func createRulesService(t *testing.T) *rules.RulesService {
                       - trial -> S`
 	tmpfile, err := rules.CreateTempFile(content)
 	require.NoError(t, err)
-	defer os.Remove(tmpfile)
+	defer func() { _ = os.Remove(tmpfile) }()
 
 	rs, err := rules.NewRulesServiceFromFile(tmpfile, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New("aws", "azure", "gcp", "trial"))
 	require.NoError(t, err)

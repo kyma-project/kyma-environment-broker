@@ -40,7 +40,7 @@ func NewProviderSpecFromFile(filePath string) (*ProviderSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Use the existing function to parse the specifications
 	return NewProviderSpec(file)

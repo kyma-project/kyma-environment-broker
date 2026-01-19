@@ -38,7 +38,7 @@ func (c *TestCases) loadCases() {
 }
 
 func (c *TestCases) writeCases() {
-	os.Remove(RULES_TEST_CASES)
+	_ = os.Remove(RULES_TEST_CASES)
 
 	bytes, err := yaml.Marshal(c)
 	if err != nil {

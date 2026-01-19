@@ -873,7 +873,7 @@ func (r readSession) ListDeletedInstanceIDs(amount int) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var ids []string
 	for rows.Next() {
 		var id string

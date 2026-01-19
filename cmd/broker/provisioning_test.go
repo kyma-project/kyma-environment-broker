@@ -60,7 +60,7 @@ func TestCatalog(t *testing.T) {
 
 	content, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if outputToFile {
 		if prettyJson {

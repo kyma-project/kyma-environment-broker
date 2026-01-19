@@ -115,7 +115,7 @@ func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisRespon
 	if err != nil {
 		return CisResponse{}, fmt.Errorf("while executing request to event service: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	switch {
 	case response.StatusCode == http.StatusTooManyRequests:

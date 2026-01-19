@@ -68,7 +68,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			return nil, fmt.Errorf("while pulling dbImage: %w of %s", err, config.Image)
 		}
 		_, err = io.Copy(os.Stdout, reader)
-		reader.Close()
+		_ = reader.Close()
 		if err != nil {
 			return nil, fmt.Errorf("while handling dbImage: %w of %s", err, config.Name)
 		}
