@@ -81,7 +81,7 @@ func main() {
 
 	migrateErr := invokeMigration()
 	if migrateErr != nil {
-		slog.Info(fmt.Sprintf("while invoking migration: %s", migrateErr))
+		slog.Error(fmt.Sprintf("while invoking migration: %s", migrateErr))
 	}
 
 	// continue with cleanup
