@@ -90,13 +90,15 @@ func (s *DeprovisionRetriggerService) PerformCleanup() error {
 	instancesToDeprovisionAgain, _, _, err := s.instanceStorage.List(notCompletelyDeletedFilter)
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("while getting not completely deprovisioned instances: %s", err))
-		return err
+		return fmt.Errorf("while getting not completely deprovisioned instances: %w", err)
 	}
 
 	if s.cfg.DryRun {
 		s.logInstances(instancesToDeprovisionAgain)
-		slog.Info(fmt.Sprintf("Instances to retrigger deprovisioning: %d", len(instancesToDeprovisionAgain)))
+		slog.Info(
+			"Dry run completed",
+			"instancesToRetrigger", len(instancesToDeprovisionAgain),
+		)
 	} else {
 		failuresCount, sanityFailedCount := s.retriggerDeprovisioningForInstances(instancesToDeprovisionAgain)
 		deprovisioningAccepted := len(instancesToDeprovisionAgain) - failuresCount - sanityFailedCount
