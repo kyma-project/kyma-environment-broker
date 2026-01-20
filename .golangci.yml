@@ -19,7 +19,8 @@ linters:
   enable:
     # High-value linters with excellent signal-to-noise ratio
     - errcheck    # Check for unchecked errors
-    - govet       # Go's built-in static analyzer 
+    - govet       # Go's built-in static analyzer
+    - misspell    # Detect commonly misspelled words
 
 formatters:
   enable:

@@ -645,7 +645,7 @@ func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersConte
 		return
 	}
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
-		b.log.Error(fmt.Sprintf("failed to save update request with additonal properties: %v", err))
+		b.log.Error(fmt.Sprintf("failed to save update request with additional properties: %v", err))
 	}
 }
 

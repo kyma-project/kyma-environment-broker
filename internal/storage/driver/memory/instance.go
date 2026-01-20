@@ -149,9 +149,9 @@ func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	}
 
 	// In database instance details are marshalled and kept as strings.
-	// If marshaling is ommited below, fields with `json:"-"` are never cleared
+	// If marshaling is omitted below, fields with `json:"-"` are never cleared
 	// when stored in memory db. Marshaling in the current contenxt allows for
-	// memory db to behave similary to production env.
+	// memory db to behave similarly to production env.
 	marshaled, err := json.Marshal(inst)
 	unmarshaledInstance := internal.Instance{}
 	err = json.Unmarshal(marshaled, &unmarshaledInstance)

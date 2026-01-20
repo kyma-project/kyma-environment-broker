@@ -924,7 +924,7 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 		return
 	}
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName), ersContext, rawParameters); err != nil {
-		b.log.Error(fmt.Sprintf("failed to save provisioning request with additonal properties: %v", err))
+		b.log.Error(fmt.Sprintf("failed to save provisioning request with additional properties: %v", err))
 	}
 }
 

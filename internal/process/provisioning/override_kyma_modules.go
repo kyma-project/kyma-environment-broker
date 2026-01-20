@@ -52,7 +52,7 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger *slog.Log
 		customModulesListPassed := modulesParams.Default == nil && modulesParams.List != nil // 2 & 3 case
 		overrideModules := defaultModulesSetToFalse || customModulesListPassed
 		if overrideModules {
-			k.logger.Info("custom modules parameters are set, the content of list will replace current modules section. Default settings will be overriden.")
+			k.logger.Info("custom modules parameters are set, the content of list will replace current modules section. Default settings will be overridden.")
 			return k.handleModulesOverride(operation, *modulesParams)
 		}
 	}

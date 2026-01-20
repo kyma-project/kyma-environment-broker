@@ -156,7 +156,7 @@ func TestParserValidation(t *testing.T) {
 
 	parser := &SimpleParser{}
 
-	t.Run("with paranthesis only, no attributes", func(t *testing.T) {
+	t.Run("with parenthesis only, no attributes", func(t *testing.T) {
 		rule, err := parser.Parse("()")
 		require.Nil(t, rule)
 		require.Error(t, err)
@@ -337,7 +337,7 @@ func TestParserValidation(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("without input attirbute value", func(t *testing.T) {
+	t.Run("without input attribute value", func(t *testing.T) {
 		rule, err := parser.Parse("azure(PR)")
 		require.Nil(t, rule)
 		require.Error(t, err)
