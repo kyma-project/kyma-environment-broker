@@ -47,7 +47,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), slog.Default())
 		service.chunksAmount = 2
 
 		// When
@@ -92,7 +92,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 			slog.SetDefault(l)
 		}()
 
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), slog.Default())
 		service.chunksAmount = 5
 
 		// When
@@ -102,8 +102,8 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 		assert.NoError(t, err)
 
 		logContents := cw.buf.String()
-		assert.Contains(t, logContents, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID ad6af000-e647-44ea-a3bb-db8672d5bc7e: cannot deprovision")
-		assert.Contains(t, logContents, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID 07d368f2-c294-47e7-8d66-20b73ef46342: cannot deprovision")
+		assert.Contains(t, logContents, "Part of deprovisioning process failed: while deprovisioning instance with ID ad6af000-e647-44ea-a3bb-db8672d5bc7e: cannot deprovision")
+		assert.Contains(t, logContents, "Part of deprovisioning process failed: while deprovisioning instance with ID 07d368f2-c294-47e7-8d66-20b73ef46342: cannot deprovision")
 	})
 
 	t.Run("process should return with error", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 		brokerClient := &mocks.BrokerClient{}
 		memoryStorage := storage.NewMemoryStorage()
 
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), slog.Default())
 		service.chunksAmount = 7
 
 		// When
