@@ -83,20 +83,20 @@ func (s *Manager) MatchInstance(kymaName string) (*internal.Instance, error) {
 		Name:      kymaName,
 	}, kyma)
 	if err != nil && errors.IsNotFound(err) {
-		return nil, fmt.Errorf(fmt.Sprintf("not found secret with name %s on cluster : %s", kymaName, err))
+		return nil, fmt.Errorf("not found secret with name %s on cluster : %s", kymaName, err)
 	} else if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("unexpected error while getting secret %s from cluster : %s", kymaName, err))
+		return nil, fmt.Errorf("unexpected error while getting secret %s from cluster : %s", kymaName, err)
 	}
 	s.logger.Info(fmt.Sprintf("found kyma CR on kcp for kyma name: %s", kymaName))
 	labels := kyma.GetLabels()
 	instanceId, ok := labels[instanceIdLabel]
 	if !ok {
-		return nil, fmt.Errorf(fmt.Sprintf("not found instance for kyma name %s : %s", kymaName, err))
+		return nil, fmt.Errorf("not found instance for kyma name %s : %s", kymaName, err)
 	}
-	s.logger.Info(fmt.Sprintf("found instance id %s for kyma name %s", instanceId, kymaName))
+	s.logger.Info("found instance id %s for kyma name %s", instanceId, kymaName)
 	instance, err := s.instances.GetByID(instanceId)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("while getting instance %s from db %s", instanceId, err))
+		return nil, fmt.Errorf("while getting instance %s from db %s", instanceId, err)
 	}
 	s.logger.Info(fmt.Sprintf("instance %s found in db", instance.InstanceID))
 	return instance, err
