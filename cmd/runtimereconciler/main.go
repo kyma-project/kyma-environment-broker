@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 	jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
-	if cfg.JobEnabled && err != nil {
+	if err != nil {
 		fatalOnError(err, logs)
 	}
 
@@ -73,12 +73,9 @@ func main() {
 
 	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun)
 
-	logs.Info(fmt.Sprintf("job enabled? %t", cfg.JobEnabled))
-	if cfg.JobEnabled {
-		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs, metricsRegistry, cfg.MetricsPort, AppPrefix)
-		logs.Info(fmt.Sprintf("runtime-reconciler created job every %d m", cfg.JobInterval))
-		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
-	}
+	btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs, metricsRegistry, cfg.MetricsPort, AppPrefix)
+	logs.Info(fmt.Sprintf("runtime-reconciler created job every %d m", cfg.JobInterval))
+	btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 
 	<-ctx.Done()
 }
