@@ -216,7 +216,7 @@ func (c *Client) Unbind(binding internal.Binding) error {
 		return err
 	}
 
-	slog.Info(fmt.Sprintf("successfully unbound service binding with ID %q", binding.ID))
+	slog.Info(fmt.Sprintf("successfully unbound service binding with ID %q and instance ID %q", binding.ID, binding.InstanceID))
 
 	return nil
 }
