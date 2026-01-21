@@ -29,7 +29,7 @@ go-lint: go-lint-install ## linter config in file at root of project -> '.golang
 	golangci-lint run --timeout=$(GOLINT_TIMEOUT)
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
-	@if [ "$(shell command golangci-lint version --short)" != "$(GOLINT_VER)" ]; then \
+	@if [ "v$(shell command golangci-lint version --short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
 		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLINT_VER); \
 		echo golangci installed with version: $(shell command golangci-lint version --short); \
