@@ -22,7 +22,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	cfg *Config, db storage.BrokerStorage,
 	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger) *process.Queue {
 
-	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
+	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
 
 	deprovisioningSteps := []struct {
 		disabled bool

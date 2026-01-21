@@ -24,7 +24,10 @@ type FreeSubscriptionStep struct {
 	gardenerNS     string
 }
 
-const freeSubscriptionStepName = "Free_Subscription_Step"
+const (
+	freeSubscriptionStepName = "Free_Subscription_Step"
+	labelValueTrue           = "true"
+)
 
 var _ process.Step = &FreeSubscriptionStep{}
 
@@ -66,19 +69,19 @@ func (s *FreeSubscriptionStep) Run(operation internal.Operation, logger *slog.Lo
 	}
 
 	// check if shared
-	if secretBinding.GetLabels()["shared"] == "true" {
+	if secretBinding.GetLabels()["shared"] == labelValueTrue {
 		logger.Info("Subscription is shared, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if internal
-	if secretBinding.GetLabels()["internal"] == "true" {
+	if secretBinding.GetLabels()["internal"] == labelValueTrue {
 		logger.Info("Subscription is internal, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if dirty
-	if secretBinding.GetLabels()["dirty"] == "true" {
+	if secretBinding.GetLabels()["dirty"] == labelValueTrue {
 		logger.Info("Subscription is already marked as dirty, nothing to free")
 		return operation, 0, nil
 	}

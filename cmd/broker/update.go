@@ -33,7 +33,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
 
-	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == "credentialsbinding"
+	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
 
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource", "kyma_resource"})
 	updateSteps := []struct {

@@ -28,6 +28,7 @@ const (
 	instanceID            = "instance-id"
 	dbSecretKey           = "1234567890123456"
 	gardenerKymaNamespace = "kyma"
+	trueValue             = "true"
 )
 
 var (
@@ -153,8 +154,8 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 	}
 
 	for _, version := range additionalKymaVersions {
-		override.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"
-		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"
+		override.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = trueValue
+		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = trueValue
 	}
 
 	kebCfg := &coreV1.ConfigMap{

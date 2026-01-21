@@ -110,6 +110,7 @@ const (
 	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
+	maskedKubeconfig                                   = "*****"
 )
 
 func NewProvision(brokerConfig Config,
@@ -318,7 +319,7 @@ func (b *ProvisionEndpoint) UseCredentialsBindings() {
 }
 
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
-	parameters.Kubeconfig = "*****"
+	parameters.Kubeconfig = maskedKubeconfig
 	logger.Info(fmt.Sprintf("Runtime parameters: %+v", parameters))
 }
 

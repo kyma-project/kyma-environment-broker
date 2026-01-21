@@ -12,13 +12,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const kymaNamespace = "kyma-ns"
+
 func TestCheckRuntimeResourceDeletionStep_ResourceNotExists(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
 	op.RuntimeResourceName = "runtime-name"
-	op.KymaResourceNamespace = "kyma-ns"
+	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	assert.NoError(t, memoryStorage.Operations().InsertOperation(op))
 	kcpClient := fake.NewClientBuilder().Build()
@@ -38,10 +40,10 @@ func TestCheckRuntimeResourceDeletionStep_Run(t *testing.T) {
 	assert.NoError(t, err)
 	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
 	op.RuntimeResourceName = "runtime-name"
-	op.KymaResourceNamespace = "kyma-ns"
+	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	assert.NoError(t, memoryStorage.Operations().InsertOperation(op))
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("kyma-ns", "runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, "runtime-name")).Build()
 
 	// when
 	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, time.Minute)

@@ -12,6 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testInstanceID = "test-instance-id"
+	testPlanID     = "test-plan-id"
+	testBindingID  = "test-binding-id"
+)
+
 // mockBroker implements domain.ServiceBroker for testing
 type mockBroker struct {
 	shouldPanic bool
@@ -95,8 +101,8 @@ func TestWithPanicRecovery_Provision(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		planID := "test-plan-id"
+		instanceID := testInstanceID
+		planID := testPlanID
 		details := domain.ProvisionDetails{PlanID: planID}
 
 		// when
@@ -135,8 +141,8 @@ func TestWithPanicRecovery_Deprovision(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		planID := "test-plan-id"
+		instanceID := testInstanceID
+		planID := testPlanID
 		details := domain.DeprovisionDetails{PlanID: planID}
 
 		// when
@@ -175,8 +181,8 @@ func TestWithPanicRecovery_Update(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		planID := "test-plan-id"
+		instanceID := testInstanceID
+		planID := testPlanID
 		details := domain.UpdateDetails{PlanID: planID}
 
 		// when
@@ -215,7 +221,7 @@ func TestWithPanicRecovery_GetInstance(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
+		instanceID := testInstanceID
 
 		// when
 		_, err := wrapper.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -252,7 +258,7 @@ func TestWithPanicRecovery_LastOperation(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
+		instanceID := testInstanceID
 		operationID := "test-operation-id"
 		details := domain.PollDetails{OperationData: operationID}
 
@@ -292,8 +298,8 @@ func TestWithPanicRecovery_Bind(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		bindingID := "test-binding-id"
+		instanceID := testInstanceID
+		bindingID := testBindingID
 
 		// when
 		_, err := wrapper.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, true)
@@ -331,8 +337,8 @@ func TestWithPanicRecovery_Unbind(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		bindingID := "test-binding-id"
+		instanceID := testInstanceID
+		bindingID := testBindingID
 
 		// when
 		_, err := wrapper.Unbind(context.Background(), instanceID, bindingID, domain.UnbindDetails{}, true)
@@ -370,8 +376,8 @@ func TestWithPanicRecovery_GetBinding(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		bindingID := "test-binding-id"
+		instanceID := testInstanceID
+		bindingID := testBindingID
 
 		// when
 		_, err := wrapper.GetBinding(context.Background(), instanceID, bindingID, domain.FetchBindingDetails{})
@@ -409,8 +415,8 @@ func TestWithPanicRecovery_LastBindingOperation(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := "test-instance-id"
-		bindingID := "test-binding-id"
+		instanceID := testInstanceID
+		bindingID := testBindingID
 		operationID := "test-operation-id"
 		details := domain.PollDetails{OperationData: operationID}
 

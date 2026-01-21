@@ -18,6 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	shootNameC012345   = "c-012345"
+	shootDomainC012345 = "c-012345.sap.com"
+)
+
 func TestSuspension(t *testing.T) {
 	// given
 	provisioning := NewDummyQueue()
@@ -139,8 +144,8 @@ func TestUnsuspension(t *testing.T) {
 
 	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
-	instance.InstanceDetails.ShootName = "c-012345"
-	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
+	instance.InstanceDetails.ShootName = shootNameC012345
+	instance.InstanceDetails.ShootDomain = shootDomainC012345
 
 	err := st.Instances().Insert(*instance)
 	require.NoError(t, err)
@@ -163,8 +168,8 @@ func TestUnsuspension(t *testing.T) {
 
 	assert.Equal(t, domain.LastOperationState(internal.OperationStatePending), op.State)
 	assert.Equal(t, instance.InstanceID, op.InstanceID)
-	assert.Equal(t, "c-012345", op.ShootName)
-	assert.Equal(t, "c-012345.sap.com", op.ShootDomain)
+	assert.Equal(t, shootNameC012345, op.ShootName)
+	assert.Equal(t, shootDomainC012345, op.ShootDomain)
 }
 
 func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
@@ -175,8 +180,8 @@ func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
 
 	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
-	instance.InstanceDetails.ShootName = "c-012345"
-	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
+	instance.InstanceDetails.ShootName = shootNameC012345
+	instance.InstanceDetails.ShootDomain = shootDomainC012345
 
 	err := st.Instances().Insert(*instance)
 	require.NoError(t, err)
@@ -205,8 +210,8 @@ func TestUnsuspensionForExpiredInstance(t *testing.T) {
 
 	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
-	instance.InstanceDetails.ShootName = "c-012345"
-	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
+	instance.InstanceDetails.ShootName = shootNameC012345
+	instance.InstanceDetails.ShootDomain = shootDomainC012345
 	instance.ExpiredAt = ptr.Time(time.Now())
 
 	err := st.Instances().Insert(*instance)

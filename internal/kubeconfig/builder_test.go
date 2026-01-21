@@ -33,7 +33,7 @@ func TestBuilder_BuildFromRuntimeResource_NilAdditionalOIDC(t *testing.T) {
 
 	runtimeResource := &imv1.Runtime{}
 	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.ObjectMeta.Namespace = kcpNamespace
 	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = nil
 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
@@ -66,7 +66,7 @@ func TestBuilder_BuildFromRuntimeResource_EmptyAdditionalOIDC(t *testing.T) {
 
 	runtimeResource := &imv1.Runtime{}
 	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.ObjectMeta.Namespace = kcpNamespace
 	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{}
 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
@@ -100,7 +100,7 @@ func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 
 	runtimeResource := &imv1.Runtime{}
 	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.ObjectMeta.Namespace = kcpNamespace
 	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{
 		{
 			OIDCConfig: gardener.OIDCConfig{
@@ -141,7 +141,7 @@ func TestBuilder_BuildFromRuntimeResource_MultipleAdditionalOIDC(t *testing.T) {
 
 	runtimeResource := &imv1.Runtime{}
 	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.ObjectMeta.Namespace = kcpNamespace
 	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{
 		{
 			OIDCConfig: gardener.OIDCConfig{

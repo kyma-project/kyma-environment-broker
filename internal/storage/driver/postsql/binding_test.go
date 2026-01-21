@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testBindingId = "test"
+
 func TestBinding(t *testing.T) {
 
 	t.Run("should create, load and delete binding without errors", func(t *testing.T) {
@@ -23,7 +25,6 @@ func TestBinding(t *testing.T) {
 		}()
 
 		// given
-		testBindingId := "test"
 		fixedBinding := fixture.FixBinding(testBindingId)
 
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
@@ -64,7 +65,6 @@ func TestBinding(t *testing.T) {
 		}()
 
 		// given
-		testBindingId := "test"
 		fixedBinding := fixture.FixBinding(testBindingId)
 
 		// when
@@ -87,7 +87,6 @@ func TestBinding(t *testing.T) {
 		}()
 
 		// given
-		testBindingId := "test"
 		fixedBinding := fixture.FixBinding(testBindingId)
 
 		err = brokerStorage.Bindings().Insert(&fixedBinding)
@@ -284,7 +283,6 @@ func TestBinding_ModeGCM(t *testing.T) {
 	}()
 
 	// given
-	testBindingId := "test"
 	fixedBinding := fixture.FixBinding(testBindingId)
 
 	// when

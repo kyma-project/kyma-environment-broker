@@ -66,19 +66,19 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 	}
 
 	// check if shared
-	if credentialsBinding.GetLabels()["shared"] == "true" {
+	if credentialsBinding.GetLabels()["shared"] == labelValueTrue {
 		logger.Info("Subscription is shared, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if internal
-	if credentialsBinding.GetLabels()["internal"] == "true" {
+	if credentialsBinding.GetLabels()["internal"] == labelValueTrue {
 		logger.Info("Subscription is internal, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if dirty
-	if credentialsBinding.GetLabels()["dirty"] == "true" {
+	if credentialsBinding.GetLabels()["dirty"] == labelValueTrue {
 		logger.Info("Subscription is already marked as dirty, nothing to free")
 		return operation, 0, nil
 	}

@@ -29,6 +29,7 @@ import (
 )
 
 const numberOfUpgradeOperationsToReturn = 2
+const labelValueTrue = "true"
 
 type Handler struct {
 	instancesDb         storage.Instances
@@ -422,10 +423,10 @@ func (h *Handler) getFilters(req *http.Request) dbmodel.InstanceFilter {
 	filter.Regions = query[pkg.RegionParam]
 	filter.Shoots = query[pkg.ShootParam]
 	filter.Plans = query[pkg.PlanParam]
-	if v, exists := query[pkg.WithBindingsParam]; exists && v[0] == "true" {
+	if v, exists := query[pkg.WithBindingsParam]; exists && v[0] == labelValueTrue {
 		filter.BindingExists = ptr.Bool(true)
 	}
-	if v, exists := query[pkg.ExpiredParam]; exists && v[0] == "true" {
+	if v, exists := query[pkg.ExpiredParam]; exists && v[0] == labelValueTrue {
 		filter.Expired = ptr.Bool(true)
 	}
 	states := query[pkg.StateParam]
@@ -508,7 +509,7 @@ func getBoolParam(param string, req *http.Request) bool {
 	requested := false
 	params := req.URL.Query()[param]
 	for _, p := range params {
-		if p == "true" {
+		if p == labelValueTrue {
 			requested = true
 			break
 		}

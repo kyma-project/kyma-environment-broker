@@ -22,6 +22,8 @@ const (
 	subaccountIDJSONKey = "guid"
 	eventTypeJSONKey    = "eventType"
 	actionTimeJSONKey   = "actionTime"
+	asc                 = "ASC"
+	desc                = "DESC"
 )
 
 type fakeServer struct {
@@ -175,8 +177,8 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if sortOrder == "" || (sortOrder != "ASC" && sortOrder != "DESC") {
-		sortOrder = "ASC"
+	if sortOrder == "" || (sortOrder != asc && sortOrder != desc) {
+		sortOrder = asc
 	}
 	if sortField != "" {
 		if err := events.sortEvents(sortField, sortOrder); err != nil {
@@ -326,11 +328,11 @@ func (e *mutableEvents) sortEventsByActionTime(sortOrder string) error {
 			}
 
 			switch sortOrder {
-			case "ASC":
+			case asc:
 				if actionTime1 > actionTime2 {
 					(*e)[i], (*e)[j] = (*e)[j], (*e)[i]
 				}
-			case "DESC":
+			case desc:
 				if actionTime1 < actionTime2 {
 					(*e)[i], (*e)[j] = (*e)[j], (*e)[i]
 				}

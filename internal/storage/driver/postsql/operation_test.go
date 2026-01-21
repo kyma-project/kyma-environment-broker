@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const operationDescription = "description"
+
 func TestOperation(t *testing.T) {
 
 	cfg := brokerStorageDatabaseTestConfig()
@@ -318,8 +320,8 @@ func TestOperation(t *testing.T) {
 		givenOperation.State = domain.InProgress
 		givenOperation.CreatedAt = time.Now().Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = time.Now().Truncate(time.Millisecond).Add(time.Second)
-		givenOperation.ProvisionerOperationID = "target-op-id"
-		givenOperation.Description = "description"
+		givenOperation.ProvisionerOperationID = targetOperationID
+		givenOperation.Description = operationDescription
 		givenOperation.Version = 1
 		givenOperation.RuntimeOperation.Region = fixture.Region
 		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
@@ -389,8 +391,8 @@ func TestOperation(t *testing.T) {
 		givenOperation1.State = domain.InProgress
 		givenOperation1.CreatedAt = givenOperation1.CreatedAt.Truncate(time.Millisecond)
 		givenOperation1.UpdatedAt = givenOperation1.UpdatedAt.Truncate(time.Millisecond).Add(time.Second)
-		givenOperation1.ProvisionerOperationID = "target-op-id"
-		givenOperation1.Description = "description"
+		givenOperation1.ProvisionerOperationID = targetOperationID
+		givenOperation1.Description = operationDescription
 		givenOperation1.Version = 1
 
 		givenOperation2 := internal.UpgradeClusterOperation{
@@ -399,8 +401,8 @@ func TestOperation(t *testing.T) {
 		givenOperation2.State = domain.InProgress
 		givenOperation2.CreatedAt = givenOperation2.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
 		givenOperation2.UpdatedAt = givenOperation2.UpdatedAt.Truncate(time.Millisecond).Add(time.Minute).Add(time.Second)
-		givenOperation2.ProvisionerOperationID = "target-op-id"
-		givenOperation2.Description = "description"
+		givenOperation2.ProvisionerOperationID = targetOperationID
+		givenOperation2.Description = operationDescription
 		givenOperation2.Version = 1
 
 		givenOperation3 := internal.UpgradeClusterOperation{
@@ -409,7 +411,7 @@ func TestOperation(t *testing.T) {
 		givenOperation3.State = internal.OperationStatePending
 		givenOperation3.CreatedAt = givenOperation3.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Hour)
 		givenOperation3.UpdatedAt = givenOperation3.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Hour).Add(10 * time.Minute)
-		givenOperation3.ProvisionerOperationID = "target-op-id"
+		givenOperation3.ProvisionerOperationID = targetOperationID
 		givenOperation3.Description = "pending-operation"
 		givenOperation3.Version = 1
 		givenOperation3.RuntimeOperation.Region = fixture.Region

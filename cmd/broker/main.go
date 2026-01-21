@@ -169,6 +169,7 @@ type KubeconfigProvider interface {
 const (
 	brokerAPISubrouterName         = "brokerAPI"
 	provisioningTakesLongThreshold = 20 * time.Minute
+	credentialsBinding             = "credentialsbinding"
 )
 
 var Version string

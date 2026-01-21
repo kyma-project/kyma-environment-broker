@@ -27,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const operationStateInProgress = "in progress"
+
 var siCRD = []byte(`
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -87,7 +89,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		require.NoError(t, err)
 
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		step := NewBTPOperatorCleanupStep(ms, clientProvider)
 
 		// when
@@ -134,7 +136,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.ProvisioningParameters.PlanID = broker.AWSPlanID
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
@@ -180,7 +182,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		require.NoError(t, err)
 
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		op.Temporary = false
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
@@ -221,7 +223,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
@@ -260,7 +262,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op.Temporary = true
 		op.ProvisioningParameters.PlanID = broker.TrialPlanID
 		op.UserAgent = broker.AccountCleanupJob
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
@@ -297,7 +299,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
-		op.State = "in progress"
+		op.State = operationStateInProgress
 		op.Temporary = true
 		op.ProvisioningParameters.PlanID = broker.TrialPlanID
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
@@ -320,7 +322,7 @@ func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
 	step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewK8sClientFromSecretProvider(k8sCli))
 	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
-	op.State = "in progress"
+	op.State = operationStateInProgress
 
 	// when
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -341,7 +343,7 @@ func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
 	step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
-	op.State = "in progress"
+	op.State = operationStateInProgress
 	op.RuntimeID = ""
 
 	// when

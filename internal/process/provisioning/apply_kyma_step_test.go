@@ -20,6 +20,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const brokerPlanNameAzure = "azure"
+const licenseTypeCustomer = "CUSTOMER"
+
 /*
 Running tests with real K8S cluster instead of fake client.
 
@@ -41,8 +44,8 @@ kubectl get kymas -o yaml -n kyma-system
 func TestCreatingKymaResource(t *testing.T) {
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
-	operation.ProviderValues.ProviderType = "azure"
-	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
+	*operation.ProvisioningParameters.ErsContext.LicenseType = licenseTypeCustomer
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -69,7 +72,7 @@ func TestCreatingKymaResource(t *testing.T) {
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 
@@ -83,8 +86,8 @@ func TestCreatingKymaResourceWithCloudProviderInOperation(t *testing.T) {
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
 	operation.CloudProvider = "Azure"
-	operation.ProviderValues.ProviderType = "azure"
-	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
+	*operation.ProvisioningParameters.ErsContext.LicenseType = licenseTypeCustomer
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -111,7 +114,7 @@ func TestCreatingKymaResourceWithCloudProviderInOperation(t *testing.T) {
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 
@@ -125,7 +128,7 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 	t.Run("Without compass runtime ID", func(t *testing.T) {
 		// given
 		operation, cli := fixOperationForApplyKymaResource(t)
-		operation.ProviderValues.ProviderType = "azure"
+		operation.ProviderValues.ProviderType = brokerPlanNameAzure
 		storage := storage.NewMemoryStorage()
 		err := storage.Operations().InsertOperation(operation)
 		require.NoError(t, err)
@@ -152,7 +155,7 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 			"kyma-project.io/platform-region":     "westeurope",
 			"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 			"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-			"kyma-project.io/broker-plan-name":    "azure",
+			"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 			"operator.kyma-project.io/managed-by": "lifecycle-manager",
 			"kyma-project.io/provider":            "Azure"}
 		assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
@@ -165,8 +168,8 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
 	operation.KymaResourceNamespace = "namespace-in-time-of-creation"
-	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
-	operation.ProviderValues.ProviderType = "azure"
+	*operation.ProvisioningParameters.ErsContext.LicenseType = licenseTypeCustomer
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -193,7 +196,7 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
@@ -207,7 +210,7 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
 	operation.KymaResourceNamespace = "namespace-in-time-of-creation"
-	operation.ProviderValues.ProviderType = "azure"
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -234,7 +237,7 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 	assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
@@ -247,8 +250,8 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
-	operation.ProviderValues.ProviderType = "azure"
-	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
+	*operation.ProvisioningParameters.ErsContext.LicenseType = licenseTypeCustomer
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -287,7 +290,7 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 
@@ -297,7 +300,7 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
-	operation.ProviderValues.ProviderType = "azure"
+	operation.ProviderValues.ProviderType = brokerPlanNameAzure
 	storage := storage.NewMemoryStorage()
 	err := storage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
@@ -336,7 +339,7 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 		"kyma-project.io/platform-region":     "westeurope",
 		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
 		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-		"kyma-project.io/broker-plan-name":    "azure",
+		"kyma-project.io/broker-plan-name":    brokerPlanNameAzure,
 		"operator.kyma-project.io/managed-by": "lifecycle-manager",
 		"kyma-project.io/provider":            "Azure"}
 
