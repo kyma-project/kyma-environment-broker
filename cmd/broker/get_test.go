@@ -41,6 +41,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfig(t *testing.
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -48,6 +49,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfig(t *testing.
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -107,6 +109,7 @@ func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -114,6 +117,7 @@ func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -178,6 +182,7 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -185,6 +190,7 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -252,6 +258,7 @@ func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testi
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -259,6 +266,7 @@ func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testi
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -325,6 +333,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -332,6 +341,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -405,6 +415,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -412,6 +423,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -484,6 +496,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -504,11 +517,13 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{
@@ -581,6 +596,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 						}
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -609,11 +625,13 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 				}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	// then
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s", iid), ``)
+	defer func() { _ = resp.Body.Close() }()
 	r, e := io.ReadAll(resp.Body)
 	require.NoError(t, e)
 	assert.JSONEq(t, fmt.Sprintf(`{

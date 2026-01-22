@@ -74,6 +74,7 @@ func HaltIstioSidecar() error {
 	if err != nil {
 		return fmt.Errorf("while sending post to quit Istio sidecar: %s", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		fmt.Printf("Quiting istio, response status is: %d", resp.StatusCode)

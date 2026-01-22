@@ -84,13 +84,12 @@ func (c *Client) do(subAccountID, planName string) (int, error, bool) {
 		c.log.Error(fmt.Sprintf("Authentication API returned: %v", err))
 		return 0, fmt.Errorf("The authentication service is currently unavailable. Please try again later"), true
 	}
-
-	defer func(body io.ReadCloser) {
-		err := body.Close()
+	defer func() {
+		err := resp.Body.Close()
 		if err != nil {
 			c.log.Warn(fmt.Sprintf("while closing response body: %s", err.Error()))
 		}
-	}(resp.Body)
+	}()
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return 0, fmt.Errorf("while reading response body: %w", err), true

@@ -40,6 +40,7 @@ func TestReDeprovision(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -56,12 +57,14 @@ func TestReDeprovision(t *testing.T) {
 	// FIRST DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	deprovisioningID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(deprovisioningID, domain.Failed)
 
 	// SECOND DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	deprovisioningID = suite.DecodeOperationID(resp)
 
 	suite.WaitForOperationState(deprovisioningID, domain.InProgress)
@@ -108,6 +111,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -124,12 +128,14 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 	// FIRST DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	deprovisioningID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(deprovisioningID, domain.Failed)
 
 	// SECOND DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	deprovisioningID = suite.DecodeOperationID(resp)
 
 	suite.WaitForOperationState(deprovisioningID, domain.InProgress)
@@ -174,6 +180,7 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -184,6 +191,7 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// when
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	opID = suite.DecodeOperationID(resp)
 	suite.FinishDeprovisioningOperationByKIM(opID)
 
@@ -225,12 +233,14 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 						"name": "testing-cluster"
 				}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
 	// deprovision
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid1),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	depOpID := suite.DecodeOperationID(resp)
 
 	suite.FinishDeprovisioningOperationByKIM(depOpID)
@@ -257,12 +267,14 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 						"region": "eu-central-1"
 				}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID = suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
 	// deprovision
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=b1a5764e-2ea1-4f95-94c0-2b4538b37b55&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid2),
 		``)
+	defer func() { _ = resp.Body.Close() }()
 	depOpID = suite.DecodeOperationID(resp)
 
 	suite.FinishDeprovisioningOperationByKIM(depOpID)
@@ -270,6 +282,7 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	// when
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?instance_id=%s&state=deprovisioned", iid1), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -284,6 +297,7 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	// when
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?account=%s&subaccount=%s&state=deprovisioned", "g-account-id", "sub-id"), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -298,6 +312,7 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	// when
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?plan=%s&state=deprovisioned", "trial"), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -311,6 +326,7 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	// when
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?region=%s&state=deprovisioned", "eu-central-1"), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)

@@ -112,20 +112,17 @@ func (s *Service) getEnvironment() (string, error) {
 func (s *Service) PerformCleanup() error {
 	instancesToDelete, runtimeCRsToDelete, shootsToDelete, err := s.getStaleRuntimesByShoots(s.LabelSelector)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while getting stale shoots to delete: %v", err))
-		return err
+		return fmt.Errorf("while getting stale shoots to delete: %w", err)
 	}
 
 	err = s.cleanupInstances(instancesToDelete)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while cleaning instances: %v", err))
-		return err
+		return fmt.Errorf("while cleaning instances: %w", err)
 	}
 
 	err = s.cleanUpRuntimeCRs(runtimeCRsToDelete)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while cleaning runtime CRs: %v", err))
-		return err
+		return fmt.Errorf("while cleaning runtime CRs: %w", err)
 	}
 
 	return s.cleanupShoots(shootsToDelete)
@@ -252,8 +249,7 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]internal.Ins
 func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) error {
 	opID, err := s.brokerService.Deprovision(instance)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while triggering deprovisioning for instance ID %q: %v", instance.InstanceID, err))
-		return err
+		return fmt.Errorf("while triggering deprovisioning for instance ID %q: %w", instance.InstanceID, err)
 	}
 
 	slog.Info(fmt.Sprintf("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID))
@@ -301,8 +297,7 @@ func (s *Service) deleteRuntimeCR(runtime runtime) error {
 
 	err = s.k8sClient.Delete(context.Background(), &runtimeCR)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while deleting runtime CR for runtime ID %q: %v", runtime.ID, err))
-		return err
+		return fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtime.ID, err)
 	}
 
 	slog.Info(fmt.Sprintf("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID))

@@ -53,8 +53,7 @@ func (s *Service) PerformCleanup() error {
 				slog.Info(fmt.Sprintf("instance with ID: %q does not exist for service binding with ID %q", binding.InstanceID, binding.ID))
 				continue
 			}
-			slog.Error(fmt.Sprintf("while sending unbind request for service binding ID %q: %s", binding.ID, err))
-			return err
+			return fmt.Errorf("while sending unbind request for service binding ID %q and instance ID %q: %w", binding.ID, binding.InstanceID, err)
 		}
 	}
 	return nil

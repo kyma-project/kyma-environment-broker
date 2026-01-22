@@ -3,7 +3,6 @@ package subaccountsync
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -61,12 +60,12 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 	if err != nil {
 		return CisEventsResponse{}, fmt.Errorf("while executing request to event service: %v", err)
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+	defer func() {
+		err := response.Body.Close()
 		if err != nil {
 			c.log.Warn(fmt.Sprintf("failed to close response body: %s", err.Error()))
 		}
-	}(response.Body)
+	}()
 
 	if response.StatusCode != http.StatusOK {
 		return CisEventsResponse{}, fmt.Errorf("while processing response: %s", c.handleErrorStatusCode(response))

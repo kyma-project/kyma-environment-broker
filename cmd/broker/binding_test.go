@@ -40,6 +40,7 @@ func TestBinding(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -50,6 +51,7 @@ func TestBinding(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	b, _ := io.ReadAll(resp.Body)
 	suite.Log(string(b))
@@ -64,6 +66,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": "600"
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		b, err := io.ReadAll(resp.Body)
@@ -86,6 +89,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 600
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 			`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -94,6 +98,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 600
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// "expiration_seconds": 600 is a default value from the config in tests
@@ -102,6 +107,7 @@ func TestBinding(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
@@ -115,6 +121,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 600
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 
 		time.Sleep(2 * time.Second)
 
@@ -126,6 +133,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 600
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		r, _ := io.ReadAll(resp.Body)
 		fmt.Printf("%s", r)
@@ -141,6 +149,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 900
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 			`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -149,6 +158,7 @@ func TestBinding(t *testing.T) {
 					"expiration_seconds": 930
 				}
                }`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 
 	})
@@ -188,6 +198,7 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+	defer func() { _ = response.Body.Close() }()
 	require.Equal(t, http.StatusCreated, response.StatusCode)
 
 	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID2),
@@ -195,19 +206,23 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+	defer func() { _ = response.Body.Close() }()
 	require.Equal(t, http.StatusCreated, response.StatusCode)
 
 	// when we deprovision successfully
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
+	defer func() { _ = response.Body.Close() }()
 	deprovisioningID := suite.DecodeOperationID(response)
 	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
 	suite.WaitForInstanceRemoval(iid)
 
 	// when we remove bindings and the instance is already removed
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID1), "")
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusGone, response.StatusCode)
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusGone, response.StatusCode)
 
 	// then expect bindings to be removed
@@ -238,6 +253,7 @@ func TestFailedProvisioning(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.WaitForOperationState(opID, domain.InProgress)
 	// just wait for timeout
@@ -249,6 +265,7 @@ func TestFailedProvisioning(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+	defer func() { _ = response.Body.Close() }()
 
 	// then expect 400 as agreed in the contract
 	require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -276,6 +293,7 @@ func TestProvisioningInProgress(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.WaitForProvisioningState(opID, domain.InProgress)
 	// when we create binding
@@ -284,6 +302,7 @@ func TestProvisioningInProgress(t *testing.T) {
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
                 "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
+	defer func() { _ = response.Body.Close() }()
 
 	// then expect 400 as agreed in the contract
 	require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -312,6 +331,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -322,6 +342,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	           "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 	           "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 	          }`)
+	defer func() { _ = response.Body.Close() }()
 	require.Equal(t, http.StatusCreated, response.StatusCode)
 
 	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID2),
@@ -329,6 +350,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	           "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 	           "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 	          }`)
+	defer func() { _ = response.Body.Close() }()
 	require.Equal(t, http.StatusCreated, response.StatusCode)
 
 	//when we suspend Service instance - OSB context update
@@ -342,6 +364,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	       "active": false
 	   }
 	}`)
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
@@ -350,8 +373,10 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 
 	// when we remove bindings we just return OK
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID1), "")
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
@@ -370,5 +395,6 @@ func TestBindingCreationTimeout(t *testing.T) {
 					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"parameters": {}
                }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
 }

@@ -34,11 +34,13 @@ func TestLastOperationWithoutOperationIDHappyPath(t *testing.T) {
 			"name": "testing-cluster"
 		}
 	}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
 	//when
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	//then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -69,11 +71,13 @@ func TestLastOperationWithOperationIDHappyPath(t *testing.T) {
 			"name": "testing-cluster"
 		}
 	}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
 	//when
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation?operation=%s", iid, opID), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	//then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -87,6 +91,7 @@ func TestLastOperationNotExistingInstance(t *testing.T) {
 
 	//when
 	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation", iid), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	//then
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -103,6 +108,7 @@ func TestLastOperationNotExistingOperation(t *testing.T) {
 
 	//when
 	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation?operation=%s", iid, oid), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	//then
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -135,6 +141,7 @@ func TestLastOperationWithOperationIDAndNotExistingInstanceID(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
@@ -142,6 +149,7 @@ func TestLastOperationWithOperationIDAndNotExistingInstanceID(t *testing.T) {
 
 	//when
 	resp = suite.CallAPI("GET", fmt.Sprintf("oauth/v2/service_instances/%s/last_operation?operation=%s", oid, opID), "")
+	defer func() { _ = resp.Body.Close() }()
 
 	//then
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)

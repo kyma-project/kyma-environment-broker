@@ -17,12 +17,10 @@ output:
 linters:
   default: none
   enable:
-    # High-value linters with excellent signal-to-noise ratio
     - errcheck    # Check for unchecked errors
     - govet       # Go's built-in static analyzer
     - misspell    # Detect commonly misspelled words
     - goconst      # Find repeated strings that could be replaced by a constant
-    
 formatters:
   enable:
     - goimports

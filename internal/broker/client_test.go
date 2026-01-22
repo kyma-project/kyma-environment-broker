@@ -172,6 +172,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
+		defer func() { _ = response.Body.Close() }()
 		assert.Equal(t, response.StatusCode, http.StatusNotFound)
 
 		// when
@@ -179,6 +180,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
+		defer func() { _ = responseOtherThanNotFound.Body.Close() }()
 		assert.NotEqual(t, responseOtherThanNotFound.StatusCode, http.StatusNotFound)
 	})
 }

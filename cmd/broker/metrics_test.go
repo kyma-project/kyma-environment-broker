@@ -44,6 +44,7 @@ func TestMetrics(t *testing.T) {
 					}
 		}`, plan, region)
 		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid), body)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		return suite.DecodeOperationID(resp)
 	}
@@ -57,6 +58,7 @@ func TestMetrics(t *testing.T) {
 				"license_type": "CUSTOMER"
 			}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		return suite.DecodeOperationID(resp)
 	}
@@ -65,6 +67,7 @@ func TestMetrics(t *testing.T) {
 		resp := suite.CallAPI(
 			"DELETE", fmt.Sprintf(
 				"oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		return suite.DecodeOperationID(resp)
 	}
@@ -80,6 +83,7 @@ func TestMetrics(t *testing.T) {
 				}
                }
 `)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 	}
 

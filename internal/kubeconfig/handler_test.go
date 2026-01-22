@@ -140,6 +140,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 			// when
 			response, err := http.Get(fmt.Sprintf("%s/kubeconfig/%s", server.URL, d.instanceID))
 			require.NoError(t, err)
+			defer func() { _ = response.Body.Close() }()
 
 			// then
 			require.Equal(t, d.expectedStatusCode, response.StatusCode)

@@ -53,6 +53,7 @@ func TestUpdate(t *testing.T) {
 						}
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -75,6 +76,7 @@ func TestUpdate(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
@@ -134,6 +136,7 @@ func TestUpdateWithKIM(t *testing.T) {
 						"region": "eu-central-1"
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -157,6 +160,7 @@ func TestUpdateWithKIM(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -192,6 +196,7 @@ func TestUpdatePlan(t *testing.T) {
 						"region": "eu-central-1"
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -216,6 +221,7 @@ func TestUpdatePlan(t *testing.T) {
 					"parameters": {
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
@@ -273,6 +279,7 @@ func TestUpdateFailedInstance(t *testing.T) {
 						"name": "testing-cluster"
 				}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	// just wait for timeout and failed operation
 	suite.WaitForOperationState(opID, domain.Failed)
@@ -295,6 +302,7 @@ func TestUpdateFailedInstance(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 	errResponse := suite.DecodeErrorResponse(resp)
 
@@ -333,6 +341,7 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -355,6 +364,7 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -402,6 +412,7 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 						"name": "testing-cluster"
 				}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
@@ -430,6 +441,7 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 	errResponse := suite.DecodeErrorResponse(resp)
 
@@ -461,6 +473,7 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -478,6 +491,7 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 		"parameters": {
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -531,6 +545,7 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -549,6 +564,7 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 			
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -595,6 +611,7 @@ func TestUpdateContext(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -610,6 +627,7 @@ func TestUpdateContext(t *testing.T) {
            "user_id": "john.smith@email.com"
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	suite.AssertKymaResourceExists(opID)
@@ -644,6 +662,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 
@@ -663,6 +682,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
            "active": false
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
@@ -682,6 +702,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
        }
        
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processKIMProvisioningByInstanceID(iid)
@@ -724,6 +745,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -742,6 +764,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
            "active": false
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
@@ -767,6 +790,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 			}
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOpID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
@@ -788,6 +812,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
            "active": true
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	// WHEN
@@ -835,6 +860,7 @@ func TestUpdateNotExistingInstance(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -851,6 +877,7 @@ func TestUpdateNotExistingInstance(t *testing.T) {
            "user_id": "john.smith@email.com"
        }
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
 	suite.AssertKymaResourceExists(opID)
@@ -885,6 +912,7 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -902,6 +930,7 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 		"parameters": {
 		}
   }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -947,6 +976,7 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -964,6 +994,7 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 		"parameters": {
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1011,6 +1042,7 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1036,6 +1068,7 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1083,6 +1116,7 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1101,6 +1135,7 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 			"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1143,6 +1178,7 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 				"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1163,6 +1199,7 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 		"parameters": {
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1213,6 +1250,7 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 				"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1234,6 +1272,7 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 			}
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1284,6 +1323,7 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 				"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1302,6 +1342,7 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 			"administrators":["newAdmin3@kyma.cx", "newAdmin4@kyma.cx"]
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1353,6 +1394,7 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 				"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1377,6 +1419,7 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 			"administrators":["newAdmin3@kyma.cx", "newAdmin4@kyma.cx"]
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1427,6 +1470,7 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 				"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1445,6 +1489,7 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 			"administrators":["newAdmin3@kyma.cx", "newAdmin4@kyma.cx"]
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1479,6 +1524,7 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 			"administrators":["newAdmin5@kyma.cx", "newAdmin6@kyma.cx"]
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1522,6 +1568,7 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 		"maxUnavailable":4
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1543,6 +1590,7 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 		"maxUnavailable":7
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1606,6 +1654,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 		"maxUnavailable":4
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, opID)
@@ -1628,6 +1677,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 		"maxUnavailable":7
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -1659,6 +1709,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 		"name": "testing-cluster"
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1677,6 +1728,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 		"autoScalerMin":25
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -1694,6 +1746,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 		"autoScalerMax":15
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1719,6 +1772,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 		"autoScalerMin":14
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
@@ -1741,6 +1795,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 		"autoScalerMin":16
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -1777,6 +1832,7 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1799,6 +1855,7 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 			"name": "testing-cluster"
 		}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionID := suite.WaitForLastOperation(iid, domain.InProgress)
 	suite.FinishDeprovisioningOperationByKIM(suspensionID)
@@ -1834,6 +1891,7 @@ func TestUpdateMachineType(t *testing.T) {
 		"name": "testing-cluster"
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1854,6 +1912,7 @@ func TestUpdateMachineType(t *testing.T) {
 		"machineType":"m5.2xlarge"
 	}
 }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
@@ -1890,6 +1949,7 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1921,6 +1981,7 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -1961,6 +2022,7 @@ func TestUpdateNetworkFilterForInternal(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -1992,6 +2054,7 @@ func TestUpdateNetworkFilterForInternal(t *testing.T) {
 				"ingressFiltering": true
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	require.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -2032,6 +2095,7 @@ func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -2064,6 +2128,7 @@ func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 				"ingressFiltering": true
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
@@ -2097,6 +2162,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -2125,6 +2191,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 				"license_type": "CUSTOMER"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
@@ -2165,6 +2232,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -2183,6 +2251,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 				"license_type": "CUSTOMER"
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -2201,6 +2270,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 			    "administrators":["xyz@sap.com", "xyz@gmail.com", "xyz@abc.com"]
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -2236,6 +2306,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2250,6 +2321,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 			"globalaccount_id": "g-account-id-new"
 		}
 	}`)
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 }
 
@@ -2277,6 +2349,7 @@ func TestUpdateParamsForExpiredInstance(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2291,6 +2364,7 @@ func TestUpdateParamsForExpiredInstance(t *testing.T) {
 					"administrators":["xyz@sap.com", "xyz@gmail.com", "xyz@abc.com"]
 				}
 			}`)
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
 }
 
@@ -2317,6 +2391,7 @@ func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 				"name": "testing-cluster"
 			}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	opID := suite.DecodeOperationID(response)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2334,6 +2409,7 @@ func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 					"license_type": "CUSTOMER"
 				}
 		}`)
+	defer func() { _ = response.Body.Close() }()
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 }
 
@@ -2360,6 +2436,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							"region": "eu-central-1"
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2393,6 +2470,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -2435,6 +2513,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2461,6 +2540,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -2509,6 +2589,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2527,6 +2608,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							"additionalWorkerNodePools": []
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -2588,6 +2670,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2640,6 +2723,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
@@ -2678,6 +2762,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							"region": "us-east-1"
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2718,6 +2803,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -2761,6 +2847,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2787,6 +2874,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -2818,6 +2906,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -2852,6 +2941,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2878,6 +2968,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -2912,6 +3003,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
@@ -2938,6 +3030,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 							]
 						}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	})
 }
@@ -2969,6 +3062,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3009,6 +3103,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3044,6 +3139,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3067,6 +3163,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3103,6 +3200,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3127,6 +3225,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3180,6 +3279,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3203,6 +3303,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 	t.Run("should reject update empty OIDC list with OIDC object that has no values", func(t *testing.T) {
@@ -3229,6 +3330,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3252,6 +3354,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
@@ -3297,6 +3400,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3328,6 +3432,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3364,6 +3469,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3385,6 +3491,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3420,6 +3527,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3444,6 +3552,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3481,6 +3590,7 @@ func TestUpdateOIDC(t *testing.T) {
 					"region": "eu-central-1"
 				}
    			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 		suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3504,6 +3614,7 @@ func TestUpdateOIDC(t *testing.T) {
 					}
 				}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3545,6 +3656,7 @@ func TestUpdateGlobalAccountID(t *testing.T) {
 						"region": "eu-central-1"
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3569,6 +3681,7 @@ func TestUpdateGlobalAccountID(t *testing.T) {
 					"parameters": {
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
@@ -3616,6 +3729,7 @@ func TestUpdate_ZonesDiscovery(t *testing.T) {
 							]
 						}
    			}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -3660,6 +3774,7 @@ func TestUpdate_ZonesDiscovery(t *testing.T) {
 							]
 						}
    			}`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
@@ -3698,6 +3813,7 @@ func TestUpdateClusterName(t *testing.T) {
 						"region": "eu-central-1"
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 
@@ -3726,6 +3842,7 @@ func TestUpdateClusterName(t *testing.T) {
 						"name": "updated-name"
 			}
    }`)
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
@@ -3769,6 +3886,7 @@ func TestUpdate_CredentialsBinding(t *testing.T) {
 							]
 						}
    			}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.waitForRuntimeAndMakeItReady(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -3813,6 +3931,7 @@ func TestUpdate_CredentialsBinding(t *testing.T) {
 							]
 						}
    			}`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 

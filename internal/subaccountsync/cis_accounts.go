@@ -3,7 +3,6 @@ package subaccountsync
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -42,13 +41,12 @@ func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateT
 	if err != nil {
 		return CisStateType{}, fmt.Errorf("while executing request to accounts technical service: %w", err)
 	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+	defer func() {
+		err := response.Body.Close()
 		if err != nil {
 			c.log.Warn(fmt.Sprintf("failed to close response body: %s", err.Error()))
 		}
-	}(response.Body)
+	}()
 
 	if response.StatusCode == http.StatusNotFound {
 		return CisStateType{}, nil

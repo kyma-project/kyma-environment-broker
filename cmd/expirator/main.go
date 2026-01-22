@@ -104,8 +104,7 @@ func (s *CleanupService) PerformCleanup() error {
 	instances, count, err := s.getInstances(filter)
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("while getting instances: %s", err))
-		return err
+		return fmt.Errorf("while getting instances: %s", err)
 	}
 
 	instancesToExpire, instancesToExpireCount := s.filterInstances(
@@ -178,7 +177,6 @@ func (s *CleanupService) expireInstance(instance internal.Instance) (processed b
 	slog.Info(fmt.Sprintf("About to make instance expired for instanceID: %+v", instance.InstanceID))
 	suspensionUnderWay, err := s.brokerClient.SendExpirationRequest(instance)
 	if err != nil {
-		slog.Error(fmt.Sprintf("while sending expiration request for instanceID %q: %s", instance.InstanceID, err))
 		return suspensionUnderWay, err
 	}
 	return suspensionUnderWay, nil

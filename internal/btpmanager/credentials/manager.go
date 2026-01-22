@@ -83,24 +83,20 @@ func (s *Manager) MatchInstance(kymaName string) (*internal.Instance, error) {
 		Name:      kymaName,
 	}, kyma)
 	if err != nil && errors.IsNotFound(err) {
-		s.logger.Error(fmt.Sprintf("not found secret with name %s on cluster : %s", kymaName, err))
-		return nil, err
+		return nil, fmt.Errorf("not found secret with name %s on cluster : %s", kymaName, err)
 	} else if err != nil {
-		s.logger.Error(fmt.Sprintf("unexpected error while getting secret %s from cluster : %s", kymaName, err))
-		return nil, err
+		return nil, fmt.Errorf("unexpected error while getting secret %s from cluster : %s", kymaName, err)
 	}
 	s.logger.Info(fmt.Sprintf("found kyma CR on kcp for kyma name: %s", kymaName))
 	labels := kyma.GetLabels()
 	instanceId, ok := labels[instanceIdLabel]
 	if !ok {
-		s.logger.Error(fmt.Sprintf("not found instance for kyma name %s : %s", kymaName, err))
-		return nil, err
+		return nil, fmt.Errorf("not found instance for kyma name %s : %s", kymaName, err)
 	}
 	s.logger.Info(fmt.Sprintf("found instance id %s for kyma name %s", instanceId, kymaName))
 	instance, err := s.instances.GetByID(instanceId)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("while getting instance %s from db %s", instanceId, err))
-		return nil, err
+		return nil, fmt.Errorf("while getting instance %s from db %s", instanceId, err)
 	}
 	s.logger.Info(fmt.Sprintf("instance %s found in db", instance.InstanceID))
 	return instance, err
@@ -208,8 +204,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be re-created", instance.InstanceID))
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger.With("instanceID", instance.InstanceID)); err != nil {
-				s.logger.Error(fmt.Sprintf("while re-creating secret in cluster for instance %s", instance.InstanceID))
-				return false, false, err
+				return false, false, fmt.Errorf("while re-creating secret in cluster for instance %s", instance.InstanceID)
 			}
 			s.logger.Info(fmt.Sprintf("sap-btp-manager secret on cluster for instance %s re-created successfully", instance.InstanceID))
 		}
@@ -232,8 +227,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be updated", instance.InstanceID))
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
-				s.logger.Error(fmt.Sprintf("while updating secret in cluster for instance %s %s", instance.InstanceID, err))
-				return false, false, err
+				return false, false, fmt.Errorf("while updating secret in cluster for instance %s %s", instance.InstanceID, err)
 			}
 			s.logger.Info(fmt.Sprintf("btp-manager secret on cluster updated for instance %s to match state from instances db", instance.InstanceID))
 		}
@@ -249,7 +243,7 @@ func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
 	areSecretEqualByKey := func(key string) (bool, error) {
 		currentValue, ok := s1.Data[key]
 		if !ok {
-			return false, fmt.Errorf("while getting the value for the  key %s in the first secret", key)
+			return false, fmt.Errorf("while getting the value for the key %s in the first secret", key)
 		}
 		expectedValue, ok := s2.Data[key]
 		if !ok {
@@ -262,8 +256,7 @@ func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
 	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
 		equal, err := areSecretEqualByKey(key)
 		if err != nil {
-			s.logger.Error(fmt.Sprintf("getting value for key %s", key))
-			return nil, err
+			return nil, fmt.Errorf("while comparing values for key %s : %s", key, err)
 		}
 		if !equal {
 			notEqual = append(notEqual, key)

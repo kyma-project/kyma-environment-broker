@@ -116,6 +116,7 @@ func TestExpiration(t *testing.T) {
 				resp := suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 					testCase.Request)
+				defer func() { _ = resp.Body.Close() }()
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				provisioningOpID := suite.DecodeOperationID(resp)
@@ -149,6 +150,7 @@ func TestExpiration(t *testing.T) {
 				resp := suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 					testCase.Request)
+				defer func() { _ = resp.Body.Close() }()
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				provisioningOpID := suite.DecodeOperationID(resp)
@@ -179,6 +181,7 @@ func TestExpiration(t *testing.T) {
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")
+				defer func() { _ = resp.Body.Close() }()
 
 				// then
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
@@ -203,6 +206,7 @@ func TestExpiration(t *testing.T) {
 				resp := suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 					testCase.Request)
+				defer func() { _ = resp.Body.Close() }()
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				provisioningOpID := suite.DecodeOperationID(resp)
@@ -236,6 +240,7 @@ func TestExpiration(t *testing.T) {
 				resp := suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 					testCase.Request)
+				defer func() { _ = resp.Body.Close() }()
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				provisioningOpID := suite.DecodeOperationID(resp)
@@ -245,6 +250,7 @@ func TestExpiration(t *testing.T) {
 				resp = suite.CallAPI(http.MethodDelete,
 					fmt.Sprintf(deprovisioningRequestPathFormat, instanceID, broker.TrialPlanID),
 					trialDeprovisioningRequestBody)
+				defer func() { _ = resp.Body.Close() }()
 
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
@@ -278,6 +284,7 @@ func TestExpiration(t *testing.T) {
 				resp := suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 					testCase.Request)
+				defer func() { _ = resp.Body.Close() }()
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				provisioningOpID := suite.DecodeOperationID(resp)
@@ -306,6 +313,7 @@ func TestExpiration(t *testing.T) {
 				resp = suite.CallAPI(http.MethodPatch,
 					fmt.Sprintf(updateRequestPathFormat, instanceID),
 					unsuspensionRequestBody)
+				defer func() { _ = resp.Body.Close() }()
 
 				// then
 				assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -326,6 +334,7 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			awsProvisioningRequestBody)
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 		provisioningOpID := suite.DecodeOperationID(resp)
@@ -336,6 +345,7 @@ func TestExpiration(t *testing.T) {
 		resp = suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(expirationRequestPathFormat, instanceID),
 			"")
+		defer func() { _ = resp.Body.Close() }()
 
 		// then
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)

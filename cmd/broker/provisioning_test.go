@@ -103,6 +103,7 @@ func TestProvisioningForTrial(t *testing.T) {
 						"autoscalerMin": 13
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 
@@ -143,6 +144,7 @@ func TestProvisioningForAWS(t *testing.T) {
 						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 
@@ -179,6 +181,7 @@ func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 
@@ -204,6 +207,7 @@ func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
@@ -229,6 +233,7 @@ func TestProvisioningForAlicloud(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 
@@ -260,6 +265,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -272,6 +278,7 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 
 	r := suite.CallAPI("GET", "oauth/v2/machines_availability", "")
+	defer func() { _ = r.Body.Close() }()
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
@@ -299,6 +306,7 @@ func TestProvisioning_CredentialsBindings(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -311,6 +319,7 @@ func TestProvisioning_CredentialsBindings(t *testing.T) {
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 
 	r := suite.CallAPI("GET", "oauth/v2/machines_availability", "")
+	defer func() { _ = r.Body.Close() }()
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
@@ -338,6 +347,7 @@ func TestProvisioning_ColocateControlPlane(t *testing.T) {
 						"colocateControlPlane": false
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -368,6 +378,7 @@ func TestProvisioning_ColocateControlPlane(t *testing.T) {
 						"colocateControlPlane": true
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -398,6 +409,7 @@ func TestProvisioning_ColocateControlPlane(t *testing.T) {
 						"colocateControlPlane": true
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Contains(t, string(parsedResponse), "cannot colocate the control plane in the us-east-1 region")
@@ -435,6 +447,7 @@ func TestProvisioning_ColocateControlPlane(t *testing.T) {
 						"colocateControlPlane": true
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
@@ -467,6 +480,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 						"ingressFiltering": true
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -497,6 +511,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 						"ingressFiltering": false
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -526,6 +541,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -556,6 +572,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 							"ingressFiltering": true
 						}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
@@ -580,6 +597,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 							"ingressFiltering": true
 						}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
@@ -609,6 +627,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 							"region": "eu-de-1"
 						}
 			}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -637,6 +656,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 						"region": "eu-de-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Contains(t, string(parsedResponse), "plan-id not in the catalog")
 	})
@@ -659,6 +679,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 						"region": "eu-de-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Contains(t, string(parsedResponse), "plan-id not in the catalog")
 	})
@@ -681,6 +702,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 						"region": "invalid"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Contains(t, string(parsedResponse), "while validating input parameters: at '/region': value must be")
 	})
@@ -708,6 +730,7 @@ func TestProvisioning_Preview(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.waitForRuntimeAndMakeItReady(opID)
@@ -749,6 +772,7 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -785,6 +809,7 @@ func TestProvisioning_AllNetworkingParametersForAWS(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -820,6 +845,7 @@ func TestProvisioning_DualStackNetworkingParametersForAWS(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -863,6 +889,7 @@ func TestProvisioning_CompleteNetworkingWithDualStackForAWS(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -905,6 +932,7 @@ func TestProvisioning_NetworkingWithoutDualStackForAWS(t *testing.T) {
 				}
 			}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 
 	suite.processKIMProvisioningByOperationID(opID)
@@ -942,6 +970,7 @@ func TestProvisioning_AWSWithEURestrictedAccessBadRequest(t *testing.T) {
 						"region":"us-west-2"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	// then
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
@@ -971,6 +1000,7 @@ func TestProvisioning_AzureWithEURestrictedAccessBadRequest(t *testing.T) {
 						"region":"japaneast"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	// then
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
@@ -1000,6 +1030,7 @@ func TestProvisioning_AzureWithEURestrictedAccessHappyFlow(t *testing.T) {
 						"region":"switzerlandnorth"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1038,6 +1069,7 @@ func TestProvisioning_AzureWithEURestrictedAccessDefaultRegion(t *testing.T) {
 						"region": "switzerlandnorth"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1076,6 +1108,7 @@ func TestProvisioning_AWSWithEURestrictedAccessHappyFlow(t *testing.T) {
 						"region":"eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1115,6 +1148,7 @@ func TestProvisioning_AWSWithEURestrictedAccessDefaultRegion(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1154,6 +1188,7 @@ func TestProvisioning_TrialWithEmptyRegion(t *testing.T) {
 						"region":""
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1192,6 +1227,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1214,6 +1250,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"name": "testing-cluster-2"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	// then
 	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 }
@@ -1245,6 +1282,7 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -1508,6 +1546,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`, tc.planID, regionParam))
+			defer func() { _ = resp.Body.Close() }()
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			opID := suite.DecodeOperationID(resp)
 
@@ -1572,6 +1611,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1631,6 +1671,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1679,6 +1720,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1723,6 +1765,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1776,6 +1819,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1823,6 +1867,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -1874,6 +1919,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 						}
 					}
 		}`, broker.AWSPlanID))
+		defer func() { _ = resp.Body.Close() }()
 		parsedResponse := suite.ReadResponse(resp)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		assert.Contains(t, string(parsedResponse), "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
@@ -1906,6 +1952,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.WaitForProvisioningState(opID, domain.InProgress)
@@ -1943,6 +1990,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 						"administrators": ["admin1@test.com", "admin2@test.com"]
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.WaitForProvisioningState(opID, domain.InProgress)
@@ -1980,6 +2028,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 						"administrators": [""]
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.WaitForProvisioningState(opID, domain.InProgress)
@@ -2017,6 +2066,7 @@ func TestProvisioning_WithNetworkFilters(t *testing.T) {
 						"ingressFiltering": true
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	opID := suite.DecodeOperationID(resp)
 	require.NotEmpty(t, opID)
 	suite.processKIMProvisioningByOperationID(opID)
@@ -2054,6 +2104,7 @@ func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 						"ingressFiltering": true
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
 	parsedResponse := suite.ReadResponse(resp)
 	assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
@@ -2086,6 +2137,7 @@ func TestProvisioning_NetworkFilter_External_False(t *testing.T) {
 						"ingressFiltering": false
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusAccepted)
 }
 
@@ -2128,6 +2180,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2169,6 +2222,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2214,6 +2268,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2248,6 +2303,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2282,6 +2338,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 
@@ -2316,6 +2373,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 
@@ -2363,6 +2421,7 @@ func TestProvisioning_Modules(t *testing.T) {
 				}
 			}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -2390,6 +2449,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -2425,6 +2485,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -2459,6 +2520,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -2494,6 +2556,7 @@ func TestProvisioning_Modules(t *testing.T) {
 						}
 					}
 				}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -2538,6 +2601,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 						]
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByInstanceID(iid)
@@ -2550,6 +2614,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 1, 1, 1)
 
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?runtime_config=true&account=%s&subaccount=%s&state=provisioned", "g-account-id", "sub-id"), "")
+	defer func() { _ = resp.Body.Close() }()
 	response, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	var runtimes pkg.RuntimesPage
@@ -2629,6 +2694,7 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 						]
 					}
 		}`)
+	defer func() { _ = resp.Body.Close() }()
 
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByInstanceID(iid)
@@ -2666,6 +2732,7 @@ func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 						"region": "eu-central-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2694,6 +2761,7 @@ func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 						"region": "europe-west3"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2722,6 +2790,7 @@ func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 						"region": "westeurope"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 
 		opID := suite.DecodeOperationID(resp)
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2851,6 +2920,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`, tc.planID, clusterRegion))
+			defer func() { _ = resp.Body.Close() }()
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			opID := suite.DecodeOperationID(resp)
 
@@ -2910,6 +2980,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 						]
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2949,6 +3020,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 						"region": "us-east-1"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -2982,6 +3054,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 						"name": "testing-cluster"
 					}
 		}`)
+		defer func() { _ = resp.Body.Close() }()
 		opID := suite.DecodeOperationID(resp)
 
 		suite.processKIMProvisioningByOperationID(opID)
@@ -3018,6 +3091,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		operationID := suite.DecodeOperationID(response)
 		suite.processKIMProvisioningByOperationID(operationID)
@@ -3061,6 +3135,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 			}
 		}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		operationID := suite.DecodeOperationID(response)
 		suite.processKIMProvisioningByOperationID(operationID)
@@ -3104,6 +3179,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 			}
 		}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		operationID := suite.DecodeOperationID(response)
 		suite.processKIMProvisioningByOperationID(operationID)
@@ -3147,6 +3223,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 			}
 		}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		// then - verify request was rejected with schema validation error
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -3227,6 +3304,7 @@ kyma-template: |-
 				"region": "eu-central-1"
 			}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		operationID := suite.DecodeOperationID(response)
 		suite.processKIMProvisioningByOperationID(operationID)
@@ -3313,6 +3391,7 @@ kyma-template: |-
 			}
 		}
 		}`)
+		defer func() { _ = response.Body.Close() }()
 
 		operationID := suite.DecodeOperationID(response)
 		suite.processKIMProvisioningByOperationID(operationID)

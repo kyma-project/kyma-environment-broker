@@ -3,6 +3,7 @@ package cis
 import (
 	"fmt"
 	"log/slog"
+	"sync/atomic"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -23,18 +24,25 @@ type SubAccountCleanupService struct {
 	brokerClient BrokerClient
 	storage      storage.Instances
 	chunksAmount int
+	log          *slog.Logger
+
+	deprovisioned atomic.Int64
+	failed        atomic.Int64
 }
 
-func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, storage storage.Instances) *SubAccountCleanupService {
+func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, storage storage.Instances, log *slog.Logger) *SubAccountCleanupService {
 	return &SubAccountCleanupService{
 		client:       client,
 		brokerClient: brokerClient,
 		storage:      storage,
 		chunksAmount: 50,
+		log:          log,
 	}
 }
 
 func (ac *SubAccountCleanupService) Run() error {
+	ac.log.Info("Starting SubAccount cleanup process")
+
 	subaccounts, err := ac.client.FetchSubaccountsToDelete()
 	if err != nil {
 		return fmt.Errorf("while fetching subaccounts by client: %w", err)
@@ -42,27 +50,39 @@ func (ac *SubAccountCleanupService) Run() error {
 
 	subaccountsBatch := chunk(ac.chunksAmount, subaccounts)
 	chunks := len(subaccountsBatch)
+	ac.log.Info("Subaccounts divided into chunks", "chunks", chunks)
+
 	errCh := make(chan error)
 	done := make(chan struct{})
 	var isDone bool
 
-	for _, chunk := range subaccountsBatch {
+	for i, chunk := range subaccountsBatch {
+		ac.log.Info(
+			"Starting deprovisioning goroutine",
+			"chunkIndex", i,
+			"subaccountsInChunk", len(chunk),
+		)
 		go ac.executeDeprovisioning(chunk, done, errCh)
 	}
 
 	for !isDone {
 		select {
 		case err := <-errCh:
-			slog.Warn(fmt.Sprintf("part of deprovisioning process failed with error: %s", err))
+			slog.Warn(fmt.Sprintf("Part of deprovisioning process failed: %s", err))
 		case <-done:
 			chunks--
+			ac.log.Info("Deprovisioning chunk finished", "remainingChunks", chunks)
 			if chunks == 0 {
 				isDone = true
 			}
 		}
 	}
 
-	slog.Info("SubAccount cleanup process finished")
+	slog.Info(
+		"SubAccount cleanup process finished",
+		"instancesDeprovisioned", ac.deprovisioned.Load(),
+		"instancesFailed", ac.failed.Load(),
+	)
 	return nil
 }
 
@@ -76,10 +96,17 @@ func (ac *SubAccountCleanupService) executeDeprovisioning(subaccounts []string, 
 	for _, instance := range instances {
 		operation, err := ac.brokerClient.Deprovision(instance)
 		if err != nil {
-			errCh <- fmt.Errorf("error occurred during deprovisioning instance with ID %s: %w", instance.InstanceID, err)
+			ac.failed.Add(1)
+			errCh <- fmt.Errorf("while deprovisioning instance with ID %s: %w", instance.InstanceID, err)
 			continue
 		}
-		slog.Info(fmt.Sprintf("deprovisioning for instance %s (SubAccountID: %s) was triggered, operation: %s", instance.InstanceID, instance.SubAccountID, operation))
+		ac.deprovisioned.Add(1)
+		ac.log.Info(
+			"Deprovisioning triggered",
+			"subAccountID", instance.SubAccountID,
+			"instanceID", instance.InstanceID,
+			"operation", operation,
+		)
 	}
 
 	done <- struct{}{}

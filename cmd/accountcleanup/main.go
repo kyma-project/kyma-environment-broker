@@ -64,7 +64,7 @@ func main() {
 	brokerClient.UserAgent = broker.AccountCleanupJob
 
 	// create SubAccountCleanerService and execute process
-	sacs := cis.NewSubAccountCleanupService(client, brokerClient, db.Instances())
+	sacs := cis.NewSubAccountCleanupService(client, brokerClient, db.Instances(), logger)
 	fatalOnError(sacs.Run())
 
 	// do not use defer, close must be done before halting
