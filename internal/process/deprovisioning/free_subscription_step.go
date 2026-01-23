@@ -24,10 +24,7 @@ type FreeSubscriptionStep struct {
 	gardenerNS     string
 }
 
-const (
-	freeSubscriptionStepName = "Free_Subscription_Step"
-	labelValueTrue           = "true"
-)
+const freeSubscriptionStepName = "Free_Subscription_Step"
 
 var _ process.Step = &FreeSubscriptionStep{}
 
@@ -69,19 +66,19 @@ func (s *FreeSubscriptionStep) Run(operation internal.Operation, logger *slog.Lo
 	}
 
 	// check if shared
-	if secretBinding.GetLabels()["shared"] == labelValueTrue {
+	if checkIfLabelIsTrue(secretBinding.GetLabels()["shared"]) {
 		logger.Info("Subscription is shared, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if internal
-	if secretBinding.GetLabels()["internal"] == labelValueTrue {
+	if checkIfLabelIsTrue(secretBinding.GetLabels()["internal"]) {
 		logger.Info("Subscription is internal, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if dirty
-	if secretBinding.GetLabels()["dirty"] == labelValueTrue {
+	if checkIfLabelIsTrue(secretBinding.GetLabels()["dirty"]) {
 		logger.Info("Subscription is already marked as dirty, nothing to free")
 		return operation, 0, nil
 	}
@@ -105,7 +102,7 @@ func (s *FreeSubscriptionStep) Run(operation internal.Operation, logger *slog.Lo
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels["dirty"] = "true"
+	labels["dirty"] = "true" //nolint:goconst
 	secretBinding.SetLabels(labels)
 
 	_, err = s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerNS).Update(context.Background(), secretBinding, metav1.UpdateOptions{})

@@ -36,9 +36,11 @@ const (
 	timeout      = 2 * time.Second
 )
 
-const betaEnabledTrueValue = "true"
-
 var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+func isBetaEnabledTrue(val string) bool {
+	return val == "true"
+}
 
 func TestUpdater(t *testing.T) {
 	// given
@@ -113,7 +115,7 @@ func TestUpdater(t *testing.T) {
 		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName, metav1.GetOptions{})
 			require.NoError(t, err)
-			if actual.GetLabels()[BetaEnabledLabelKey] == betaEnabledTrueValue && actual.GetLabels()[UsedForProductionLabelKey] == usedForProductionTestValue {
+			if isBetaEnabledTrue(actual.GetLabels()[BetaEnabledLabelKey]) && actual.GetLabels()[UsedForProductionLabelKey] == usedForProductionTestValue {
 				return true, nil
 			}
 			return false, nil
@@ -160,7 +162,7 @@ func TestUpdater(t *testing.T) {
 			assert.Len(t, actual.Items, 2)
 			require.NoError(t, err)
 			for _, un := range actual.Items {
-				if un.GetLabels()[BetaEnabledLabelKey] != betaEnabledTrueValue && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
+				if isBetaEnabledTrue(un.GetLabels()[BetaEnabledLabelKey]) && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
 					return false, nil
 				}
 			}
@@ -211,7 +213,7 @@ func TestUpdater(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, actual.Items, 1)
 			for _, un := range actual.Items {
-				if un.GetLabels()[BetaEnabledLabelKey] != betaEnabledTrueValue && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
+				if isBetaEnabledTrue(un.GetLabels()[BetaEnabledLabelKey]) && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
 					return false, nil
 				}
 			}

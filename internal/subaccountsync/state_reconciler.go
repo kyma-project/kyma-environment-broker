@@ -15,8 +15,11 @@ import (
 const (
 	usedForProductionLabel    = "USED_FOR_PRODUCTION"
 	notUsedForProductionLabel = "NOT_USED_FOR_PRODUCTION"
-	betaEnabledTrue           = "true"
 )
+
+func isBetaEnabledTrue(val string) bool {
+	return val == "true" //nolint:goconst
+}
 
 func (reconciler *stateReconcilerType) recreateStateFromDB() {
 	logs := reconciler.logger
@@ -29,7 +32,7 @@ func (reconciler *stateReconcilerType) recreateStateFromDB() {
 	for _, subaccount := range dbStates {
 		//create subaccount state in inMemoryState
 		reconciler.inMemoryState[subaccountIDType(subaccount.ID)] = subaccountStateType{
-			cisState: CisStateType{subaccount.BetaEnabled == betaEnabledTrue, subaccount.UsedForProduction, subaccount.ModifiedAt},
+			cisState: CisStateType{isBetaEnabledTrue(subaccount.BetaEnabled), subaccount.UsedForProduction, subaccount.ModifiedAt},
 		}
 	}
 
@@ -341,7 +344,7 @@ func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccoun
 		for _, runtimeState := range runtimes {
 			outdated = outdated || runtimeState.betaEnabled == ""
 			outdated = outdated || runtimeState.usedForProduction == ""
-			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled != betaEnabledTrue)
+			outdated = outdated || (cisState.BetaEnabled && !isBetaEnabledTrue(runtimeState.betaEnabled))
 			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 			outdated = outdated || cisState.UsedForProduction != runtimeState.usedForProduction
 		}
