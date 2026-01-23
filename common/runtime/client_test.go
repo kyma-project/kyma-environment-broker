@@ -23,7 +23,7 @@ var fixToken FakeTokenSource = "fake-token-1234"
 func (t FakeTokenSource) Token() (*oauth2.Token, error) {
 	return &oauth2.Token{
 		AccessToken: string(t),
-		Expiry:      time.Now().Add(time.Duration(12 * time.Hour)),
+		Expiry:      time.Now().Add(12 * time.Hour),
 	}, nil
 }
 

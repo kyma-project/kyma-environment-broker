@@ -1576,7 +1576,7 @@ func Test_IsExternalCustomer(t *testing.T) {
 
 func assertSecurityWithDefaultAdministrator(t *testing.T, runtime imv1.Runtime) {
 	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, []string{"User-operation-01"})
-	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress(imv1.Egress{Enabled: true}))
+	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress{Enabled: true})
 }
 
 func assertSecurityEgressEnabled(t *testing.T, runtime imv1.Runtime) {

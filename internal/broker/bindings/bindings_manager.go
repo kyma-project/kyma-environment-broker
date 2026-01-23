@@ -141,7 +141,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		return "", time.Time{}, fmt.Errorf("while creating a kubeconfig: %v", err)
 	}
 
-	return string(kubeconfigContent), expiresAt, nil
+	return kubeconfigContent, expiresAt, nil
 }
 
 func (c *ServiceAccountBindingsManager) Delete(ctx context.Context, instance *internal.Instance, bindingID string) error {

@@ -22,6 +22,7 @@ linters:
     - bodyclose   # Check whether HTTP response bodies are closed
     - misspell    # Detect commonly misspelled words
     - goconst     # Find repeated strings that could be replaced by a constant
+    - unconvert   # Detect redundant type conversions
 formatters:
   enable:
     - goimports
