@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -32,15 +31,6 @@ type Queue struct {
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 	// add queue name field that could be logged later on
-	workersInUseGauge := promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "kcp",
-		Subsystem: "keb_v2",
-		Name:      "queue_workers_in_use",
-		Help:      "Number of queue workers currently processing items",
-		ConstLabels: prometheus.Labels{
-			"queue_name": name,
-		},
-	})
 
 	return &Queue{
 		queue:             workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
@@ -49,7 +39,7 @@ func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 		log:               log.With("queueName", name),
 		speedFactor:       1,
 		name:              name,
-		workersInUseGauge: workersInUseGauge,
+		workersInUseGauge: QueueWorkersInUse.WithLabelValues(name),
 	}
 }
 
