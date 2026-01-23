@@ -95,7 +95,8 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 
 	for _, shoot := range shootlist.Items {
 		sh := gardener.Shoot{Unstructured: shoot}
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
+		// shoots could be not migrated yet, that's why check also secretBindingName field
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
 			logger.Info(fmt.Sprintf("Subscription is still used by shoot %s, nothing to free", sh.GetName()))
 			return operation, 0, nil
 		}
