@@ -3,6 +3,7 @@
 The Kyma environment uses availability zones to provide high availability and fault tolerance for your applications and workloads.
 
 Availability zones are isolated failure domains within a single geographical region, connected through low-latency networks, and operating independently with their own power, network, and cooling infrastructure.
+This separation minimizes the risk that a failure in one zone affects the others, and a localized issue causes widespread disruption to applications and services.
 
 ## Setup and Configurations
 
