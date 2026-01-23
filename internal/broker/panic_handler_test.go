@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	testInstanceID = "test-instance-id"
-	testPlanID     = "test-plan-id"
-	testBindingID  = "test-binding-id"
+	testInstanceID  = "test-instance-id"
+	testPlanID      = "test-plan-id"
+	testBindingID   = "test-binding-id"
+	testOperationID = "test-operation-id"
 )
 
 // mockBroker implements domain.ServiceBroker for testing
@@ -101,12 +102,10 @@ func TestWithPanicRecovery_Provision(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		planID := testPlanID
-		details := domain.ProvisionDetails{PlanID: planID}
+		details := domain.ProvisionDetails{PlanID: testPlanID}
 
 		// when
-		_, err := wrapper.Provision(context.Background(), instanceID, details, true)
+		_, err := wrapper.Provision(context.Background(), testInstanceID, details, true)
 
 		// then
 		require.Error(t, err)
@@ -114,8 +113,8 @@ func TestWithPanicRecovery_Provision(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during provisioning: test panic in Provision")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "planID="+planID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "planID="+testPlanID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -126,7 +125,7 @@ func TestWithPanicRecovery_Provision(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.Provision(context.Background(), "instance-id", domain.ProvisionDetails{}, true)
+		_, err := wrapper.Provision(context.Background(), testInstanceID, domain.ProvisionDetails{}, true)
 
 		// then
 		require.NoError(t, err)
@@ -141,12 +140,10 @@ func TestWithPanicRecovery_Deprovision(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		planID := testPlanID
-		details := domain.DeprovisionDetails{PlanID: planID}
+		details := domain.DeprovisionDetails{PlanID: testPlanID}
 
 		// when
-		_, err := wrapper.Deprovision(context.Background(), instanceID, details, true)
+		_, err := wrapper.Deprovision(context.Background(), testInstanceID, details, true)
 
 		// then
 		require.Error(t, err)
@@ -154,8 +151,8 @@ func TestWithPanicRecovery_Deprovision(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during deprovisioning: test panic in Deprovision")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "planID="+planID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "planID="+testPlanID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -166,7 +163,7 @@ func TestWithPanicRecovery_Deprovision(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.Deprovision(context.Background(), "instance-id", domain.DeprovisionDetails{}, true)
+		_, err := wrapper.Deprovision(context.Background(), testInstanceID, domain.DeprovisionDetails{}, true)
 
 		// then
 		require.NoError(t, err)
@@ -181,12 +178,10 @@ func TestWithPanicRecovery_Update(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		planID := testPlanID
-		details := domain.UpdateDetails{PlanID: planID}
+		details := domain.UpdateDetails{PlanID: testPlanID}
 
 		// when
-		_, err := wrapper.Update(context.Background(), instanceID, details, true)
+		_, err := wrapper.Update(context.Background(), testInstanceID, details, true)
 
 		// then
 		require.Error(t, err)
@@ -194,8 +189,8 @@ func TestWithPanicRecovery_Update(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during update: test panic in Update")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "planID="+planID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "planID="+testPlanID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -206,7 +201,7 @@ func TestWithPanicRecovery_Update(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.Update(context.Background(), "instance-id", domain.UpdateDetails{}, true)
+		_, err := wrapper.Update(context.Background(), testInstanceID, domain.UpdateDetails{}, true)
 
 		// then
 		require.NoError(t, err)
@@ -221,10 +216,8 @@ func TestWithPanicRecovery_GetInstance(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-
 		// when
-		_, err := wrapper.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
+		_, err := wrapper.GetInstance(context.Background(), testInstanceID, domain.FetchInstanceDetails{})
 
 		// then
 		require.Error(t, err)
@@ -232,7 +225,7 @@ func TestWithPanicRecovery_GetInstance(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during get instance: test panic in GetInstance")
-		assert.Contains(t, logs, "instanceID="+instanceID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -243,7 +236,7 @@ func TestWithPanicRecovery_GetInstance(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.GetInstance(context.Background(), "instance-id", domain.FetchInstanceDetails{})
+		_, err := wrapper.GetInstance(context.Background(), testInstanceID, domain.FetchInstanceDetails{})
 
 		// then
 		require.NoError(t, err)
@@ -258,12 +251,10 @@ func TestWithPanicRecovery_LastOperation(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		operationID := "test-operation-id"
-		details := domain.PollDetails{OperationData: operationID}
+		details := domain.PollDetails{OperationData: testOperationID}
 
 		// when
-		_, err := wrapper.LastOperation(context.Background(), instanceID, details)
+		_, err := wrapper.LastOperation(context.Background(), testInstanceID, details)
 
 		// then
 		require.Error(t, err)
@@ -271,8 +262,8 @@ func TestWithPanicRecovery_LastOperation(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during last operation: test panic in LastOperation")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "operationID="+operationID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "operationID="+testOperationID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -283,7 +274,7 @@ func TestWithPanicRecovery_LastOperation(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.LastOperation(context.Background(), "instance-id", domain.PollDetails{})
+		_, err := wrapper.LastOperation(context.Background(), testInstanceID, domain.PollDetails{})
 
 		// then
 		require.NoError(t, err)
@@ -298,11 +289,8 @@ func TestWithPanicRecovery_Bind(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		bindingID := testBindingID
-
 		// when
-		_, err := wrapper.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, true)
+		_, err := wrapper.Bind(context.Background(), testInstanceID, testBindingID, domain.BindDetails{}, true)
 
 		// then
 		require.Error(t, err)
@@ -310,8 +298,8 @@ func TestWithPanicRecovery_Bind(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during bind: test panic in Bind")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "bindingID="+bindingID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "bindingID="+testBindingID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -322,7 +310,7 @@ func TestWithPanicRecovery_Bind(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.Bind(context.Background(), "instance-id", "binding-id", domain.BindDetails{}, true)
+		_, err := wrapper.Bind(context.Background(), testInstanceID, testBindingID, domain.BindDetails{}, true)
 
 		// then
 		require.NoError(t, err)
@@ -337,11 +325,8 @@ func TestWithPanicRecovery_Unbind(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		bindingID := testBindingID
-
 		// when
-		_, err := wrapper.Unbind(context.Background(), instanceID, bindingID, domain.UnbindDetails{}, true)
+		_, err := wrapper.Unbind(context.Background(), testInstanceID, testBindingID, domain.UnbindDetails{}, true)
 
 		// then
 		require.Error(t, err)
@@ -349,8 +334,8 @@ func TestWithPanicRecovery_Unbind(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during unbind: test panic in Unbind")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "bindingID="+bindingID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "bindingID="+testBindingID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -361,7 +346,7 @@ func TestWithPanicRecovery_Unbind(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.Unbind(context.Background(), "instance-id", "binding-id", domain.UnbindDetails{}, true)
+		_, err := wrapper.Unbind(context.Background(), testInstanceID, testBindingID, domain.UnbindDetails{}, true)
 
 		// then
 		require.NoError(t, err)
@@ -376,11 +361,8 @@ func TestWithPanicRecovery_GetBinding(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		bindingID := testBindingID
-
 		// when
-		_, err := wrapper.GetBinding(context.Background(), instanceID, bindingID, domain.FetchBindingDetails{})
+		_, err := wrapper.GetBinding(context.Background(), testInstanceID, testBindingID, domain.FetchBindingDetails{})
 
 		// then
 		require.Error(t, err)
@@ -388,8 +370,8 @@ func TestWithPanicRecovery_GetBinding(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during get binding: test panic in GetBinding")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "bindingID="+bindingID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "bindingID="+testBindingID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -400,7 +382,7 @@ func TestWithPanicRecovery_GetBinding(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.GetBinding(context.Background(), "instance-id", "binding-id", domain.FetchBindingDetails{})
+		_, err := wrapper.GetBinding(context.Background(), testInstanceID, testBindingID, domain.FetchBindingDetails{})
 
 		// then
 		require.NoError(t, err)
@@ -415,13 +397,10 @@ func TestWithPanicRecovery_LastBindingOperation(t *testing.T) {
 		mockBroker := &mockBroker{shouldPanic: true}
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
-		instanceID := testInstanceID
-		bindingID := testBindingID
-		operationID := "test-operation-id"
-		details := domain.PollDetails{OperationData: operationID}
+		details := domain.PollDetails{OperationData: testOperationID}
 
 		// when
-		_, err := wrapper.LastBindingOperation(context.Background(), instanceID, bindingID, details)
+		_, err := wrapper.LastBindingOperation(context.Background(), testInstanceID, testBindingID, details)
 
 		// then
 		require.Error(t, err)
@@ -429,9 +408,9 @@ func TestWithPanicRecovery_LastBindingOperation(t *testing.T) {
 
 		logs := logOutput.String()
 		assert.Contains(t, logs, "panic recovered during last binding operation: test panic in LastBindingOperation")
-		assert.Contains(t, logs, "instanceID="+instanceID)
-		assert.Contains(t, logs, "bindingID="+bindingID)
-		assert.Contains(t, logs, "operationID="+operationID)
+		assert.Contains(t, logs, "instanceID="+testInstanceID)
+		assert.Contains(t, logs, "bindingID="+testBindingID)
+		assert.Contains(t, logs, "operationID="+testOperationID)
 		assert.Contains(t, logs, "stack=")
 	})
 
@@ -442,7 +421,7 @@ func TestWithPanicRecovery_LastBindingOperation(t *testing.T) {
 		wrapper := broker.NewWithPanicRecovery(mockBroker, logger)
 
 		// when
-		_, err := wrapper.LastBindingOperation(context.Background(), "instance-id", "binding-id", domain.PollDetails{})
+		_, err := wrapper.LastBindingOperation(context.Background(), testInstanceID, testBindingID, domain.PollDetails{})
 
 		// then
 		require.NoError(t, err)
