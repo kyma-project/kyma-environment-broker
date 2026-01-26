@@ -1,6 +1,6 @@
 <!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"FEATURE"}}-->
 
-# Updating Kyma Environment Broker
+# Updating Kyma Environment Broker: Configurable Default Release Channel
 
 > ### Caution:
 > This update is mandatory. Without performing it, you will not be able to use the feature in the SAP BTP cockpit.
