@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -22,18 +24,27 @@ type Queue struct {
 	log       *slog.Logger
 	name      string
 
-	speedFactor int64
+	speedFactor       int64
+	workersInUseGauge prometheus.Gauge
 }
+
+var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "kcp",
+	Subsystem: "keb_v2",
+	Name:      "queue_workers_in_use",
+	Help:      "Number of queue workers currently processing items",
+}, []string{"queue_name"})
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
-		queue:       workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
-		executor:    executor,
-		waitGroup:   sync.WaitGroup{},
-		log:         log.With("queueName", name),
-		speedFactor: 1,
-		name:        name,
+		queue:             workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
+		executor:          executor,
+		waitGroup:         sync.WaitGroup{},
+		log:               log.With("queueName", name),
+		speedFactor:       1,
+		name:              name,
+		workersInUseGauge: queueWorkersInUseMetric.WithLabelValues(name),
 	}
 }
 
@@ -88,11 +99,13 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 					return true
 				}
 
+				q.workersInUseGauge.Inc()
 				id := key.(string)
 				workerLogger := log.With("operationID", id)
 				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
 
 				defer func() {
+					q.workersInUseGauge.Dec()
 					if err := recover(); err != nil {
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
