@@ -50,6 +50,7 @@ const (
 	clusterName      = "cluster-testing"
 	region           = "eu"
 	brokerURL        = "example.com"
+	oidcParams       = `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 )
 
 func TestProvision_Provision(t *testing.T) {
@@ -1018,8 +1019,6 @@ func TestProvision_Provision(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-ch20"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
@@ -1365,8 +1364,6 @@ func TestProvision_Provision(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
@@ -1420,8 +1417,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			map[string]string{},
 		)
-
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
@@ -1969,8 +1964,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu20"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
@@ -2022,8 +2015,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			map[string]string{},
 		)
-
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu11"), instanceID, domain.ProvisionDetails{
@@ -2797,8 +2788,6 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, expectedRegion), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
@@ -2851,7 +2840,6 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 		expectedErr := fmt.Errorf("[instanceID: %s] cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, missingRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
@@ -2915,7 +2903,6 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			map[string]string{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 		expectedErr := fmt.Errorf("[instanceID: %s] cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, unsupportedRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(

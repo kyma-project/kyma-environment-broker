@@ -81,7 +81,7 @@ func TestOperationsStats(t *testing.T) {
 		State: testData[4].opState,
 		Type:  testData[4].opType,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			PlanID: string(testData[4].opPlan),
+			PlanID: testData[4].opPlan,
 		},
 	})
 	assert.NoError(t, err)
@@ -90,7 +90,7 @@ func TestOperationsStats(t *testing.T) {
 		State: testData[5].opState,
 		Type:  testData[5].opType,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			PlanID: string(testData[5].opPlan),
+			PlanID: testData[5].opPlan,
 		},
 	})
 	assert.NoError(t, err)

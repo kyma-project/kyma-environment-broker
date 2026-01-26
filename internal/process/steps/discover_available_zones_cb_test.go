@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	instanceID  = "instance-1"
-	operationID = "operation-1"
+	instanceID                = "instance-1"
+	operationID               = "operation-1"
+	subscriptionSecretNameAWS = "aws-most-used-shared"
+	machineTypeM6ILarge       = "m6i.large"
 )
 
 func TestDiscoverAvailableZonesCBStep_ZonesDiscoveryDisabled(t *testing.T) {
@@ -25,14 +27,14 @@ func TestDiscoverAvailableZonesCBStep_ZonesDiscoveryDisabled(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "m6i.large"
+	machineType := machineTypeM6ILarge
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
@@ -110,7 +112,7 @@ func TestDiscoverAvailableZonesCBStep_SubscriptionSecretNameFromOperation(t *tes
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "m6i.large"
+	machineType := machineTypeM6ILarge
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
@@ -128,7 +130,7 @@ func TestDiscoverAvailableZonesCBStep_SubscriptionSecretNameFromOperation(t *tes
 			AutoScalerMax: 1,
 		},
 	}
-	subscriptionSecretName := "aws-most-used-shared"
+	subscriptionSecretName := subscriptionSecretNameAWS
 	operation.ProvisioningParameters.Parameters.TargetSecret = &subscriptionSecretName
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -161,7 +163,7 @@ func TestDiscoverAvailableZonesCBStep_RegionFromProviderValues(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -169,7 +171,7 @@ func TestDiscoverAvailableZonesCBStep_RegionFromProviderValues(t *testing.T) {
 	operation.RuntimeID = instance.RuntimeID
 	operation.ProvisioningParameters.Parameters.Region = nil
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{Region: "eu-west-2", ProviderType: "aws"}
-	machineType := "m6i.large"
+	machineType := machineTypeM6ILarge
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
@@ -218,7 +220,7 @@ func TestDiscoverAvailableZonesCBStep_MachineTypeFromProviderValues(t *testing.T
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -253,7 +255,7 @@ func TestDiscoverAvailableZonesCBStep_RepeatWhenAWSError(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
@@ -286,14 +288,14 @@ func TestDiscoverAvailableZonesCBStep_ProvisioningHappyPath(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "m6i.large"
+	machineType := machineTypeM6ILarge
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
@@ -342,7 +344,7 @@ func TestDiscoverAvailableZonesCBStep_UpdateHappyPath(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = "aws-most-used-shared"
+	instance.SubscriptionSecretName = subscriptionSecretNameAWS
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 

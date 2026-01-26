@@ -41,7 +41,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const dashboardUrlRegex = `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`
+const (
+	additionalWorkerNodePools = `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	dashboardUrlRegex         = `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`
+)
 
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
 var fakeKcpK8sClient = fake.NewClientBuilder().Build()
@@ -1512,7 +1515,7 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 	}{
 		"Single AWS G6 GPU machine type": {
 			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: additionalWorkerNodePools,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Multiple AWS G6 GPU machine types": {
@@ -1695,8 +1698,6 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
-
-	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -2279,7 +2280,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 		{
 			name:                      "Should fail if AWS returns error for Kyma worker node pool",
 			awsError:                  fmt.Errorf("AWS error"),
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: additionalWorkerNodePools,
 			expectedError:             "Failed to validate the number of available zones. Please try again later.",
 		},
 		{
@@ -2287,7 +2288,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 			zones: map[string][]string{
 				"m6i.large": {"eu-west-2a", "eu-west-2b"},
 			},
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: additionalWorkerNodePools,
 			expectedError:             "In the eu-west-2, the m6i.large machine type is not available in 3 zones.",
 		},
 		{
@@ -2296,7 +2297,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {},
 			},
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: additionalWorkerNodePools,
 			expectedError:             "In the eu-west-2, the g6.xlarge machine type is not available.",
 		},
 		{
@@ -2305,7 +2306,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 				"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c", "eu-west-2d"},
 				"g6.xlarge": {"eu-west-2a", "eu-west-2b"},
 			},
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: additionalWorkerNodePools,
 			expectedError:             "In the eu-west-2, the machine types: g6.xlarge (used in worker node pools: name-1) are not available in 3 zones. If you want to use this machine types, set HA to false.",
 		},
 		{

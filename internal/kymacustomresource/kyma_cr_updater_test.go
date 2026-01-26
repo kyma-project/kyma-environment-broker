@@ -21,10 +21,13 @@ import (
 
 // Kyma CR K8s data
 const (
-	group    = "operator.kyma-project.io"
-	version  = "v1beta2"
-	resource = "kymas"
-	kind     = "Kyma"
+	group                      = "operator.kyma-project.io"
+	version                    = "v1beta2"
+	resource                   = "kymas"
+	kind                       = "Kyma"
+	kymaCRName1                = "kyma-cr-1"
+	kymaCRName2                = "kyma-cr-2"
+	usedForProductionTestValue = "USED_FOR_PRODUCTION"
 )
 
 const (
@@ -34,6 +37,10 @@ const (
 )
 
 var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+func isBetaEnabledTrue(val string) bool {
+	return val == "true"
+}
 
 func TestUpdater(t *testing.T) {
 	// given
@@ -51,7 +58,7 @@ func TestUpdater(t *testing.T) {
 
 	t.Run("should not update Kyma CRs when the queue is empty", func(t *testing.T) {
 		// given
-		kymaCRName := "kyma-cr-1"
+		kymaCRName := kymaCRName1
 		mockKymaCR := &unstructured.Unstructured{}
 		mockKymaCR.SetGroupVersionKind(gvk)
 		mockKymaCR.SetName(kymaCRName)
@@ -78,7 +85,7 @@ func TestUpdater(t *testing.T) {
 
 	t.Run("should update a Kyma CR with the given subaccount id label when the queue has a matching element", func(t *testing.T) {
 		// given
-		kymaCRName := "kyma-cr-1"
+		kymaCRName := kymaCRName1
 		mockKymaCR := &unstructured.Unstructured{}
 		mockKymaCR.SetGroupVersionKind(gvk)
 		mockKymaCR.SetName(kymaCRName)
@@ -90,7 +97,7 @@ func TestUpdater(t *testing.T) {
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID:      subaccountID,
 			BetaEnabled:       "true",
-			UsedForProduction: "USED_FOR_PRODUCTION",
+			UsedForProduction: usedForProductionTestValue,
 			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
@@ -108,7 +115,7 @@ func TestUpdater(t *testing.T) {
 		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName, metav1.GetOptions{})
 			require.NoError(t, err)
-			if actual.GetLabels()[BetaEnabledLabelKey] == "true" && actual.GetLabels()[UsedForProductionLabelKey] == "USED_FOR_PRODUCTION" {
+			if isBetaEnabledTrue(actual.GetLabels()[BetaEnabledLabelKey]) && actual.GetLabels()[UsedForProductionLabelKey] == usedForProductionTestValue {
 				return true, nil
 			}
 			return false, nil
@@ -119,7 +126,7 @@ func TestUpdater(t *testing.T) {
 
 	t.Run("should update all Kyma CRs with the given subaccount id label when the queue has a matching element", func(t *testing.T) {
 		// given
-		kymaCRName1, kymaCRName2 := "kyma-cr-1", "kyma-cr-2"
+		kymaCRName1, kymaCRName2 := kymaCRName1, kymaCRName2
 		mockKymaCR1 := &unstructured.Unstructured{}
 		mockKymaCR1.SetGroupVersionKind(gvk)
 		mockKymaCR1.SetName(kymaCRName1)
@@ -135,7 +142,7 @@ func TestUpdater(t *testing.T) {
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID:      subaccountID,
 			BetaEnabled:       "true",
-			UsedForProduction: "USED_FOR_PRODUCTION",
+			UsedForProduction: usedForProductionTestValue,
 			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
@@ -155,7 +162,7 @@ func TestUpdater(t *testing.T) {
 			assert.Len(t, actual.Items, 2)
 			require.NoError(t, err)
 			for _, un := range actual.Items {
-				if un.GetLabels()[BetaEnabledLabelKey] != "true" && un.GetLabels()[UsedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
+				if !isBetaEnabledTrue(un.GetLabels()[BetaEnabledLabelKey]) && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
 					return false, nil
 				}
 			}
@@ -167,7 +174,7 @@ func TestUpdater(t *testing.T) {
 
 	t.Run("should update just one Kyma CR with the given subaccount id label when the queue has a matching element", func(t *testing.T) {
 		// given
-		kymaCRName1, kymaCRName2 := "kyma-cr-1", "kyma-cr-2"
+		kymaCRName1, kymaCRName2 := kymaCRName1, kymaCRName2
 		otherSubaccountID := "subaccount-id-2"
 
 		mockKymaCR1 := &unstructured.Unstructured{}
@@ -186,7 +193,7 @@ func TestUpdater(t *testing.T) {
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID:      subaccountID,
 			BetaEnabled:       "true",
-			UsedForProduction: "USED_FOR_PRODUCTION",
+			UsedForProduction: usedForProductionTestValue,
 			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
@@ -206,7 +213,7 @@ func TestUpdater(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, actual.Items, 1)
 			for _, un := range actual.Items {
-				if un.GetLabels()[BetaEnabledLabelKey] != "true" && un.GetLabels()[UsedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
+				if !isBetaEnabledTrue(un.GetLabels()[BetaEnabledLabelKey]) && un.GetLabels()[UsedForProductionLabelKey] != usedForProductionTestValue {
 					return false, nil
 				}
 			}

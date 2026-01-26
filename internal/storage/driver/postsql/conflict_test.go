@@ -12,6 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	targetOperationID    = "target-op-id"
+	descriptionModified1 = "new modified description 1"
+	descriptionModified2 = "new modified description 2"
+)
+
 func TestConflict(t *testing.T) {
 
 	t.Run("Conflict Operations", func(t *testing.T) {
@@ -27,7 +33,7 @@ func TestConflict(t *testing.T) {
 
 			givenOperation := fixture.FixOperation("operation-001", "inst-id", internal.OperationTypeProvision)
 			givenOperation.State = domain.InProgress
-			givenOperation.ProvisionerOperationID = "target-op-id"
+			givenOperation.ProvisionerOperationID = targetOperationID
 
 			svc := brokerStorage.Operations()
 
@@ -45,8 +51,8 @@ func TestConflict(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotOperation1.Description = "new modified description 1"
-			gotOperation2.Description = "new modified description 2"
+			gotOperation1.Description = descriptionModified1
+			gotOperation2.Description = descriptionModified2
 			_, err = svc.UpdateOperation(*gotOperation1)
 			require.NoError(t, err)
 
@@ -73,7 +79,7 @@ func TestConflict(t *testing.T) {
 
 			givenOperation := fixture.FixOperation("operation-001", "inst-id", internal.OperationTypeDeprovision)
 			givenOperation.State = domain.InProgress
-			givenOperation.ProvisionerOperationID = "target-op-id"
+			givenOperation.ProvisionerOperationID = targetOperationID
 
 			svc := brokerStorage.Operations()
 
@@ -90,8 +96,8 @@ func TestConflict(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotOperation1.Description = "new modified description 1"
-			gotOperation2.Description = "new modified description 2"
+			gotOperation1.Description = descriptionModified1
+			gotOperation2.Description = descriptionModified2
 			_, err = svc.UpdateOperation(*gotOperation1)
 			require.NoError(t, err)
 
@@ -118,7 +124,7 @@ func TestConflict(t *testing.T) {
 
 			givenOperation := fixture.FixProvisioningOperation("operation-001", "inst-id")
 			givenOperation.State = domain.InProgress
-			givenOperation.ProvisionerOperationID = "target-op-id"
+			givenOperation.ProvisionerOperationID = targetOperationID
 
 			svc := brokerStorage.Operations()
 
@@ -135,8 +141,8 @@ func TestConflict(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotOperation1.Description = "new modified description 1"
-			gotOperation2.Description = "new modified description 2"
+			gotOperation1.Description = descriptionModified1
+			gotOperation2.Description = descriptionModified2
 			_, err = svc.UpdateProvisioningOperation(*gotOperation1)
 			require.NoError(t, err)
 
@@ -163,7 +169,7 @@ func TestConflict(t *testing.T) {
 
 			givenOperation := fixture.FixDeprovisioningOperation("operation-001", "inst-id")
 			givenOperation.State = domain.InProgress
-			givenOperation.ProvisionerOperationID = "target-op-id"
+			givenOperation.ProvisionerOperationID = targetOperationID
 
 			svc := brokerStorage.Deprovisioning()
 
@@ -178,8 +184,8 @@ func TestConflict(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotOperation1.Description = "new modified description 1"
-			gotOperation2.Description = "new modified description 2"
+			gotOperation1.Description = descriptionModified1
+			gotOperation2.Description = descriptionModified2
 			_, err = svc.UpdateDeprovisioningOperation(*gotOperation1)
 			require.NoError(t, err)
 

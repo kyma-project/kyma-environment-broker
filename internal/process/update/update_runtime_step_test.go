@@ -31,6 +31,11 @@ import (
 
 var memoryStorage = storage.NewMemoryStorage()
 
+const (
+	runtimeResourceName = "runtime-name"
+	kcpSystemNamespace  = "kcp-system"
+)
+
 func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -40,8 +45,8 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	operations := db.Operations()
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kyma-ns"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
@@ -59,11 +64,11 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		MachineType: ptr.String("new-machine-type"),
 	}
@@ -76,7 +81,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	assert.Zero(t, backoff)
 
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Equal(t, "new-machine-type", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 
@@ -86,11 +91,11 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	expectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
 			ClientID:       ptr.String("client-id-oidc"),
@@ -107,7 +112,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 		},
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -117,7 +122,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -133,11 +138,11 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidcWithJWKS("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidcWithJWKS(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters.OIDC.EncodedJwksArray = "-"
 	expectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
@@ -155,7 +160,7 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 		},
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -165,7 +170,7 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -181,11 +186,11 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	expectedOIDCConfig := imv1.OIDCConfig{
 		OIDCConfig: gardener.OIDCConfig{
 			ClientID:       ptr.String("client-id-oidc"),
@@ -202,7 +207,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 		},
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -212,7 +217,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -228,11 +233,11 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
@@ -285,7 +290,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 		},
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -295,7 +300,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -312,11 +317,11 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
@@ -409,7 +414,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 		}(),
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -419,7 +424,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -439,18 +444,18 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{},
 		},
 	}
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	t.Logf("gotRuntime: %+v", gotRuntime)
 	// when
@@ -460,7 +465,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
@@ -511,8 +516,8 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 				IngressFilteringPlans: []string{"aws", "gcp", "azure"}}
 
 			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-			operation.RuntimeResourceName = "runtime-name"
-			operation.KymaResourceNamespace = "kcp-system"
+			operation.RuntimeResourceName = runtimeResourceName
+			operation.KymaResourceNamespace = kcpSystemNamespace
 			operation.UpdatingParameters = internal.UpdatingParametersDTO{
 				IngressFiltering: testCase.ingressFilteringParameter,
 			}
@@ -520,7 +525,7 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
 			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
 
-			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithNetworkFilter("runtime-name", testCase.initialIngressFiltering, testCase.initialEgressFiltering)).Build()
+			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithNetworkFilter(runtimeResourceName, testCase.initialIngressFiltering, testCase.initialEgressFiltering)).Build()
 			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, inputConfig, nil, &workers.Provider{}, fixValuesProvider())
 
 			// when
@@ -531,7 +536,7 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 			assert.Zero(t, backoff)
 
 			runtime := imv1.Runtime{}
-			err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &runtime)
+			err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &runtime)
 			require.NoError(t, err)
 
 			assert.Equal(t, imv1.Egress{Enabled: testCase.expectedEgressResult}, runtime.Spec.Security.Networking.Filter.Egress)
@@ -545,7 +550,7 @@ func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	initialRuntime := fixRuntimeResource("runtime-name").(*imv1.Runtime)
+	initialRuntime := fixRuntimeResource(runtimeResourceName).(*imv1.Runtime)
 	initialRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{
 		OIDCConfig: gardener.OIDCConfig{
 			ClientID:       ptr.String("client-id-oidc"),
@@ -561,12 +566,12 @@ func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(initialRuntime).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, &workers.Provider{}, fixValuesProvider())
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters.OIDC.OIDCConfigDTO.RequiredClaims = []string{"-"}
 
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
 	assert.NotEmpty(t, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
@@ -578,7 +583,7 @@ func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
 	assert.Equal(t, map[string]string(nil), (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims)
@@ -588,12 +593,12 @@ func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, nil, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider())
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
-	operation.RuntimeResourceName = "runtime-name"
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.DiscoveredZones = map[string][]string{
 		"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 		"m5.large":  {"zone-i", "zone-j", "zone-k", "zone-l"},
@@ -625,7 +630,7 @@ func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
 	assert.Zero(t, backoff)
 
 	var gotRuntime imv1.Runtime
-	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
@@ -646,7 +651,7 @@ func fixRuntimeResource(name string) runtime.Object {
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: "kcp-system",
+			Namespace: kcpSystemNamespace,
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -672,7 +677,7 @@ func fixRuntimeResourceWithNetworkFilter(name string, ingressFilter, egressFilte
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: "kcp-system",
+			Namespace: kcpSystemNamespace,
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -706,7 +711,7 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: "kcp-system",
+			Namespace: kcpSystemNamespace,
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -749,7 +754,7 @@ func fixRuntimeResourceWithOneAdditionalOidcWithJWKS(name string) runtime.Object
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: "kcp-system",
+			Namespace: kcpSystemNamespace,
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -793,7 +798,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: "kcp-system",
+			Namespace: kcpSystemNamespace,
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{

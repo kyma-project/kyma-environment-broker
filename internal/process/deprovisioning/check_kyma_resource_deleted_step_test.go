@@ -18,15 +18,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+const kymaResourceNamespace = "kyma-system"
+
 func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	operation.KymaResourceNamespace = "kyma-system"
+	operation.KymaResourceNamespace = kymaResourceNamespace
 	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()
 
-	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
+	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, kymaResourceNamespace, "some-other-Runtime-ID")
 	require.NoError(t, err)
 
 	memoryStorage := storage.NewMemoryStorage()
@@ -46,14 +48,14 @@ func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	operation.KymaResourceNamespace = "kyma-system"
+	operation.KymaResourceNamespace = kymaResourceNamespace
 	operation.RuntimeID = ""
 	operation.KymaResourceName = ""
 	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()
 
-	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, "kyma-system", "some-other-Runtime-ID")
+	err := fixture.FixKymaResourceWithGivenRuntimeID(kcpClient, kymaResourceNamespace, "some-other-Runtime-ID")
 	require.NoError(t, err)
 
 	memoryStorage := storage.NewMemoryStorage()
@@ -73,7 +75,7 @@ func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 func TestCheckKymaResourceDeleted_RetryWhenStillExists(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	operation.KymaResourceNamespace = "kyma-system"
+	operation.KymaResourceNamespace = kymaResourceNamespace
 	operation.KymaTemplate = fixture.KymaTemplate
 
 	kcpClient := fake.NewClientBuilder().Build()

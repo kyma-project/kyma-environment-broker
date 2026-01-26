@@ -26,6 +26,10 @@ type FreeCredentialsBindingStep struct {
 
 const freeCredentialsBindingStepName = "Free_Credentials_Binding_Step"
 
+func checkIfLabelIsTrue(val string) bool {
+	return val == "true" //nolint:goconst
+}
+
 var _ process.Step = &FreeCredentialsBindingStep{}
 
 func NewFreeCredentialsBindingStep(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string) *FreeCredentialsBindingStep {
@@ -66,19 +70,19 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 	}
 
 	// check if shared
-	if credentialsBinding.GetLabels()["shared"] == "true" {
+	if checkIfLabelIsTrue(credentialsBinding.GetLabels()["shared"]) {
 		logger.Info("Subscription is shared, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if internal
-	if credentialsBinding.GetLabels()["internal"] == "true" {
+	if checkIfLabelIsTrue(credentialsBinding.GetLabels()["internal"]) {
 		logger.Info("Subscription is internal, nothing to free")
 		return operation, 0, nil
 	}
 
 	// check if dirty
-	if credentialsBinding.GetLabels()["dirty"] == "true" {
+	if checkIfLabelIsTrue(credentialsBinding.GetLabels()["dirty"]) {
 		logger.Info("Subscription is already marked as dirty, nothing to free")
 		return operation, 0, nil
 	}

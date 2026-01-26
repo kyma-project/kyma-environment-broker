@@ -137,7 +137,7 @@ func (s *operationsStats) UpdateMetrics(_ context.Context, event interface{}) er
 	opState := payload.Operation.State
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter supports only failed or succeded operations events ", payload.Operation.State)
+		return fmt.Errorf("operation state is %s, but operation counter supports only failed or succeeded operations events ", payload.Operation.State)
 	}
 
 	if payload.PlanID == "" {

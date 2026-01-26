@@ -25,7 +25,7 @@ func TestUpdateKymaStep_PlanNotChanged(t *testing.T) {
 	operations := db.Operations()
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
-	operation.KymaResourceNamespace = "kcp-system"
+	operation.KymaResourceNamespace = kcpSystemNamespace
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 

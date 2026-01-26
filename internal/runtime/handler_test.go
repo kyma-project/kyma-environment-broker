@@ -31,6 +31,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
+const (
+	testID1 = "Test1"
+	testID2 = "Test2"
+	testID3 = "Test3"
+	testID4 = "Test4"
+)
+
 func TestRuntimeHandler(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -42,8 +49,6 @@ func TestRuntimeHandler(t *testing.T) {
 
 		db := storage.NewMemoryStorage()
 		instances := db.Instances()
-		testID1 := "Test1"
-		testID2 := "Test2"
 		testTime1 := time.Now()
 		testTime2 := time.Now().Add(time.Minute)
 		testInstance1 := internal.Instance{
@@ -146,8 +151,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID1 := "Test1"
-		testID2 := "Test2"
 		testTime1 := time.Now()
 		testTime2 := time.Now().Add(time.Minute)
 		testInstance1 := fixInstance(testID1, testTime1)
@@ -196,9 +199,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID1 := "Test1"
-		testID2 := "Test2"
-		testID3 := "Test3"
 		testTime1 := time.Now()
 		testTime2 := time.Now().Add(time.Minute)
 		testInstance1 := fixInstance(testID1, testTime1)
@@ -299,7 +299,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID1 := "Test1"
 		testTime1 := time.Now()
 		testInstance1 := fixInstance(testID1, testTime1)
 
@@ -520,17 +519,16 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstance(testID, testTime)
+		testInstance := fixInstance(testID1, testTime)
 
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
-		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
@@ -557,7 +555,7 @@ func TestRuntimeHandler(t *testing.T) {
 
 		require.Equal(t, 1, out.TotalCount)
 		require.Equal(t, 1, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
@@ -577,7 +575,7 @@ func TestRuntimeHandler(t *testing.T) {
 
 		require.Equal(t, 1, out.TotalCount)
 		require.Equal(t, 1, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.Nil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
@@ -600,17 +598,16 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		operations := db.Operations()
 		instances := db.Instances()
 
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
-		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
@@ -637,7 +634,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		require.Equal(t, 1, out.TotalCount)
 		require.Equal(t, 1, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
@@ -657,7 +654,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		require.Equal(t, 1, out.TotalCount)
 		require.Equal(t, 1, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.Nil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
@@ -670,22 +667,18 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		instances := db.Instances()
 		subaccountStates := db.SubaccountStates()
 
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance1 := fixInstanceForPreview(testID, testTime)
+		testInstance1 := fixInstanceForPreview(testID1, testTime)
 		testInstance1.SubAccountID = "subaccount-1"
 
-		testID2 := "Test2"
 		testTime = time.Now()
 		testInstance2 := fixInstanceForPreview(testID2, testTime)
 		testInstance2.SubAccountID = "subaccount-1"
 
-		testID3 := "Test3"
 		testTime = time.Now()
 		testInstance3 := fixInstanceForPreview(testID3, testTime)
 		testInstance3.SubAccountID = "subaccount-3"
 
-		testID4 := "Test4"
 		testTime = time.Now()
 		testInstance4 := fixInstanceForPreview(testID4, testTime)
 		testInstance4.SubAccountID = "subaccount-4"
@@ -708,7 +701,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = subaccountStates.UpsertState(internal.SubaccountState{ID: testInstance3.SubAccountID, UsedForProduction: "", BetaEnabled: "false", ModifiedAt: 1})
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 		provOp2 := fixture.FixProvisioningOperation(fixRandomID(), testID2)
@@ -720,7 +713,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		provOp4 := fixture.FixProvisioningOperation(fixRandomID(), testID3)
 		err = operations.InsertOperation(provOp4)
 		require.NoError(t, err)
-		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
@@ -747,7 +740,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		require.Equal(t, 4, out.TotalCount)
 		require.Equal(t, 4, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
@@ -767,7 +760,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		require.Equal(t, 4, out.TotalCount)
 		require.Equal(t, 4, out.Count)
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.Nil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, "true", out.Data[0].BetaEnabled)
@@ -787,15 +780,14 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		operations := db.Operations()
 		instances := db.Instances()
 		bindings := db.Bindings()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 		testInstance.Provider = "aws"
-		testInstance.RuntimeID = fmt.Sprintf("runtime-%s", testID)
+		testInstance.RuntimeID = fmt.Sprintf("runtime-%s", testID1)
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		operation := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		operation := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		operation.KymaResourceNamespace = "kcp-system"
 
 		err = operations.InsertOperation(operation)
@@ -825,7 +817,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = json.Unmarshal(rr.Body.Bytes(), &out)
 		require.NoError(t, err)
 
-		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Bindings)
 	})
 
@@ -834,14 +826,13 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
@@ -872,9 +863,8 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 		licenseType := "SAPDEV"
 		testInstance.Parameters.ErsContext.LicenseType = &licenseType
 		commercialModel := "SUBSCRIPTION"
@@ -883,7 +873,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
@@ -916,14 +906,13 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
@@ -954,20 +943,19 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		operations := db.Operations()
 		instances := db.Instances()
 		actions := db.Actions()
-		testID := "Test1"
 		testTime := time.Now()
-		testInstance := fixInstanceForPreview(testID, testTime)
+		testInstance := fixInstanceForPreview(testID1, testTime)
 
 		err := instances.Insert(testInstance)
 		require.NoError(t, err)
 
-		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
-		err = actions.InsertAction(pkg.PlanUpdateActionType, testID, "test-message-1", "old-value-1", "new-value-1")
+		err = actions.InsertAction(pkg.PlanUpdateActionType, testID1, "test-message-1", "old-value-1", "new-value-1")
 		assert.NoError(t, err)
-		err = actions.InsertAction(pkg.SubaccountMovementActionType, testID, "test-message-2", "old-value-2", "new-value-2")
+		err = actions.InsertAction(pkg.SubaccountMovementActionType, testID1, "test-message-2", "old-value-2", "new-value-2")
 		assert.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)

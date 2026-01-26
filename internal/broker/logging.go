@@ -27,7 +27,7 @@ func hideSensitiveDataFromRawContext(d []byte) map[string]interface{} {
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.String:
 			if _, exists := openKeys[k]; !exists {
-				data[k] = "*****"
+				data[k] = maskedKubeconfig
 			}
 		case reflect.Map:
 			data[k] = hideSensitiveDataFromContext(v.(map[string]interface{}))
@@ -44,7 +44,7 @@ func hideSensitiveDataFromContext(input map[string]interface{}) map[string]inter
 		}
 		if reflect.TypeOf(v).Kind() == reflect.String {
 			if _, exists := openKeys[k]; !exists {
-				input[k] = "*****"
+				input[k] = maskedKubeconfig
 			}
 		}
 		if reflect.TypeOf(v).Kind() == reflect.Map {

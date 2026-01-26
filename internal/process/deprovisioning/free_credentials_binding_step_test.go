@@ -16,17 +16,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const subscriptionSecretName = "sb-01"
+
 func TestFreeCredentialsBinding_SubscriptionSecretNameFromInstance(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.GlobalAccountID = operation.GlobalAccountID
-	instance.SubscriptionSecretName = "sb-01"
+	instance.SubscriptionSecretName = subscriptionSecretName
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
-	gClient := gardener.NewDynamicFakeClient(newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
+	gClient := gardener.NewDynamicFakeClient(newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 		"tenantName": instance.GlobalAccountID,
 	}))
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
@@ -36,7 +38,7 @@ func TestFreeCredentialsBinding_SubscriptionSecretNameFromInstance(t *testing.T)
 	assert.Zero(t, backoff)
 
 	// then
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), "sb-01", metav1.GetOptions{})
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "true", gotSB.GetLabels()["dirty"])
 }
@@ -47,11 +49,11 @@ func TestFreeCredentialsBinding_DoNotReleaseIfShared(t *testing.T) {
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.GlobalAccountID = operation.GlobalAccountID
-	instance.SubscriptionSecretName = "sb-01"
+	instance.SubscriptionSecretName = subscriptionSecretName
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
-	gClient := gardener.NewDynamicFakeClient(newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
+	gClient := gardener.NewDynamicFakeClient(newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 		"shared": "true",
 	}))
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
@@ -61,7 +63,7 @@ func TestFreeCredentialsBinding_DoNotReleaseIfShared(t *testing.T) {
 	assert.Zero(t, backoff)
 
 	// then
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), "sb-01", metav1.GetOptions{})
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.NotContains(t, gotSB.GetLabels(), "dirty")
 }
@@ -72,18 +74,18 @@ func TestFreeCredentialsBinding_SubscriptionSecretNameFromTargetSecret(t *testin
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
 	instance := fixGCPInstance(operation.InstanceID)
 	operation.GlobalAccountID = instance.GlobalAccountID
-	operation.ProvisioningParameters.Parameters.TargetSecret = ptr.String("sb-01")
+	operation.ProvisioningParameters.Parameters.TargetSecret = ptr.String(subscriptionSecretName)
 	_ = memoryStorage.Operations().InsertOperation(operation)
 	pOperation := fixture.FixProvisioningOperation("provisioning-id", operation.InstanceID)
-	pOperation.ProvisioningParameters.Parameters.TargetSecret = ptr.String("sb-01")
+	pOperation.ProvisioningParameters.Parameters.TargetSecret = ptr.String(subscriptionSecretName)
 	_ = memoryStorage.Operations().InsertOperation(pOperation)
-	instance.Parameters.Parameters.TargetSecret = ptr.String("sb-01")
+	instance.Parameters.Parameters.TargetSecret = ptr.String(subscriptionSecretName)
 	instance.SubscriptionSecretName = ""
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID}),
 	)
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
@@ -93,7 +95,7 @@ func TestFreeCredentialsBinding_SubscriptionSecretNameFromTargetSecret(t *testin
 	assert.Zero(t, backoff)
 
 	// then
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), "sb-01", metav1.GetOptions{})
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "true", gotSB.GetLabels()["dirty"])
 }
@@ -115,7 +117,7 @@ func TestFreeCredentialsBinding_SubscriptionWasNotAssigned(t *testing.T) {
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID}),
 	)
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
@@ -132,17 +134,17 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
 	instance := fixGCPInstance(operation.InstanceID)
-	instance.SubscriptionSecretName = "sb-01"
+	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID,
 		}),
-		newShootWithCredentialsBindingRef("shoot-01", "sb-01"),
-		newShootWithCredentialsBindingRef("shoot-02", "sb-01"),
+		newShootWithCredentialsBindingRef("shoot-01", subscriptionSecretName),
+		newShootWithCredentialsBindingRef("shoot-02", subscriptionSecretName),
 	)
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
 
@@ -153,7 +155,7 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, repeat)
 
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), "sb-01", metav1.GetOptions{})
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.NotContains(t, gotSB.GetLabels(), "dirty")
 }

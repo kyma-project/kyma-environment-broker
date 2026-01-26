@@ -81,7 +81,7 @@ func TestParser(t *testing.T) {
 			lines := strings.Split(string(out), "\n")
 			output := rules.RemoveWhitespaces(lines[0])
 			outputTrimmed := strings.Trim(output, "\n")
-			require.Equal(t, expected, outputTrimmed, fmt.Sprintf("While evaluating: %s", string(c.Name)))
+			require.Equal(t, expected, outputTrimmed, fmt.Sprintf("While evaluating: %s", c.Name))
 		}
 	})
 }

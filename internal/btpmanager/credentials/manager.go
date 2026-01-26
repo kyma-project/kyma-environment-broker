@@ -132,7 +132,7 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Me
 			updateNotDoneDueOkState++
 		}
 	}
-	s.logger.Info(fmt.Sprintf("runtime-reconciler summary: total %d instances: %d skipped, %d are OK, update was needed (and done with success) for %d instances, errors occured for %d instances",
+	s.logger.Info(fmt.Sprintf("runtime-reconciler summary: total %d instances: %d skipped, %d are OK, update was needed (and done with success) for %d instances, errors occurred for %d instances",
 		len(instances), skippedCount, updateNotDoneDueOkState, updateDone, updateNotDoneDueError))
 	return ReconcileStats{
 		instanceCnt:     len(instances),

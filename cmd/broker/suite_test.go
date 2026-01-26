@@ -153,8 +153,8 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 	}
 
 	for _, version := range additionalKymaVersions {
-		override.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"
-		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"
+		override.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"   //nolint:goconst
+		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true" //nolint:goconst
 	}
 
 	kebCfg := &coreV1.ConfigMap{
