@@ -38,6 +38,7 @@ var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 }, []string{"queue_name"})
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
+	// add queue name field that could be logged later on
 	return &Queue{
 		queue:             workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
 		executor:          executor,
