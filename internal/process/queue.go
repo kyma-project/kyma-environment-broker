@@ -13,6 +13,23 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+var (
+	queueWorkersInUse    *prometheus.GaugeVec
+	queueMetricsInitOnce sync.Once
+)
+
+func initQueueMetrics() {
+	queueMetricsInitOnce.Do(func() {
+		queueWorkersInUse = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "kcp",
+			Subsystem: "keb_v2",
+			Name:      "queue_workers_in_use",
+			Help:      "Number of queue workers currently processing items",
+		}, []string{"queue_name"})
+		prometheus.MustRegister(queueWorkersInUse)
+	})
+}
+
 type Executor interface {
 	Execute(operationID string) (time.Duration, error)
 }
@@ -31,6 +48,7 @@ type Queue struct {
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 	// add queue name field that could be logged later on
+	initQueueMetrics()
 
 	return &Queue{
 		queue:             workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
@@ -39,7 +57,7 @@ func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 		log:               log.With("queueName", name),
 		speedFactor:       1,
 		name:              name,
-		workersInUseGauge: QueueWorkersInUse.WithLabelValues(name),
+		workersInUseGauge: queueWorkersInUse.WithLabelValues(name),
 	}
 }
 
