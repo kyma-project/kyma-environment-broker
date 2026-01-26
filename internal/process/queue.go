@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"runtime/debug"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,7 +25,6 @@ type Queue struct {
 	name      string
 
 	speedFactor       int64
-	workersInUse      atomic.Int64
 	workersInUseGauge prometheus.Gauge
 }
 
@@ -101,13 +99,13 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 					return true
 				}
 
-				q.workersInUseGauge.Set(float64(q.workersInUse.Add(1)))
+				q.workersInUseGauge.Inc()
 				id := key.(string)
 				workerLogger := log.With("operationID", id)
 				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
 
 				defer func() {
-					q.workersInUseGauge.Set(float64(q.workersInUse.Add(-1)))
+					q.workersInUseGauge.Dec()
 					if err := recover(); err != nil {
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
