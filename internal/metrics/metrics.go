@@ -32,10 +32,10 @@ type Exposer interface {
 
 type Config struct {
 	Enabled                                         bool          `envconfig:"default=false"`
-	OperationResultRetentionPeriod                  time.Duration `envconfig:"default=1h"`
+	OperationResultRetentionPeriod                  time.Duration `envconfig:"default=1m"`
 	OperationResultPollingInterval                  time.Duration `envconfig:"default=1m"`
 	OperationStatsPollingInterval                   time.Duration `envconfig:"default=1m"`
-	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
+	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=1m"`
 	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
 }
 

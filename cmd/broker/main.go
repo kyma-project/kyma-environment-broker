@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	pprof "net/http/pprof"
 	"os"
-	gruntime "runtime"
-	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -173,27 +172,27 @@ const (
 var Version string
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
-	if !profiler.Memory {
-		return
-	}
-	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
-	if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage: %v", profiler.Path, err))
-	}
-	for {
-		profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
-		logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
-		profFile, err := os.Create(profName)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed: %v", profName, err))
-		}
-		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
-		}
-		gruntime.GC()
-		time.Sleep(profiler.Sampling)
-	}
+	//if profiler.Memory == false {
+	//	return
+	//}
+	//logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
+	//if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
+	//	logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage: %v", profiler.Path, err))
+	//}
+	//for {
+	//	profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
+	//	logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
+	//	profFile, err := os.Create(profName)
+	//	if err != nil {
+	//		logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed: %v", profName, err))
+	//	}
+	//	err = pprof.Lookup("allocs").WriteTo(profFile, 0)
+	//	if err != nil {
+	//		logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
+	//	}
+	//	gruntime.GC()
+	//	time.Sleep(profiler.Sampling)
+	//}
 }
 
 func (c *Config) Validate() error {
@@ -260,7 +259,7 @@ func main() {
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
-	go periodicProfile(log, cfg.Profiler)
+	//go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
 
@@ -326,7 +325,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
+	//_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
@@ -426,6 +425,14 @@ func main() {
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
+
+	// create /debug/pprof endpoint
+
+	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	router.Handle("/debug/pprof/trace", pprof.Handler("trace"))
+	router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
