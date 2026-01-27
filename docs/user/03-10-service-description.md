@@ -23,7 +23,7 @@ There is also an experimental `preview` plan:
 
 | Plan name | Plan ID                                | Description                                               |
 |-----------|----------------------------------------|-----------------------------------------------------------|
-| `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using KymaLifecycle Manager. |
+| `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Kyma Lifecycle Manager. |
 
 > ### Caution:
 > The experimental plan may fail to work or be removed.
@@ -72,11 +72,11 @@ You can configure the following provisioning parameters:
 <!--check "default" in 69 with PKJ-->
 ### Provider-Specific Parameters
 
-You can configure the following provisioning parameters for Azure:
+You can configure the following provisioning parameters for Microsoft Azure:
 
 <details>
 <summary label="azure-plan">
-Azure
+Microsoft Azure
 </summary>
 
 | Parameter name                            | Type   | Description                                                                                   | Required | Default value     |
@@ -112,7 +112,7 @@ Azure Lite
 
 </details>
 
-You can configure the following provisioning parameters for AWS:
+You can configure the following provisioning parameters for Amazon Web Services (AWS):
 
 <details>
 <summary label="aws-plan">
@@ -139,7 +139,7 @@ You can configure the following provisioning parameters for Google Cloud:
 
 <details>
 <summary label="gcp-plan">
-GCP
+Google Cloud
 </summary>
 
 | Parameter name                            | Type   | Description                                                                                | Required | Default value   |
