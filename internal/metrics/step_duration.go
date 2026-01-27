@@ -11,9 +11,9 @@ import (
 )
 
 // StepDurationCollector provides histograms which describes the time of provisioning/update/deprovisioning steps:
-// - kcp_keb_provisioning_step_duration_seconds
-// - kcp_keb_update_step_duration_seconds
-// - kcp_keb_deprovisioning_step_duration_seconds
+// - kcp_keb_v2_provisioning_step_duration_seconds
+// - kcp_keb_v2_update_step_duration_seconds
+// - kcp_keb_v2_deprovisioning_step_duration_seconds
 type StepDurationCollector struct {
 	provisioningStepHistogram   *prometheus.HistogramVec
 	updateStepHistogram         *prometheus.HistogramVec
@@ -30,7 +30,7 @@ func NewStepDurationCollector() *StepDurationCollector {
 			Buckets: prometheus.ExponentialBuckets(
 				0.001, // 1 ms
 				2,     // double each time
-				15,
+				20,    // ~10 minutes
 			),
 		}, []string{"plan_id", "step_name"}),
 		updateStepHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -41,7 +41,7 @@ func NewStepDurationCollector() *StepDurationCollector {
 			Buckets: prometheus.ExponentialBuckets(
 				0.001, // 1 ms
 				2,     // double each time
-				15,
+				20,    // ~10 minutes
 			),
 		}, []string{"plan_id", "step_name"}),
 		deprovisioningStepHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -52,7 +52,7 @@ func NewStepDurationCollector() *StepDurationCollector {
 			Buckets: prometheus.ExponentialBuckets(
 				0.001, // 1 ms
 				2,     // double each time
-				15,
+				20,    // ~10 minutes
 			),
 		}, []string{"plan_id", "step_name"}),
 	}
