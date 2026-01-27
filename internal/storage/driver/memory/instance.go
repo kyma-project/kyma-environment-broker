@@ -342,8 +342,8 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 
 	for _, s := range states {
 		result := (s == dbmodel.InstanceSucceeded && op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision) ||
-			(s == dbmodel.InstanceFailed && op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision)) ||
-			(s == dbmodel.InstanceError && op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision) ||
+			(s == dbmodel.InstanceFailed && op.State == domain.Failed && op.Type != internal.OperationTypeUpdate) ||
+			(s == dbmodel.InstanceError && op.State == domain.Failed && op.Type == internal.OperationTypeUpdate) ||
 			(s == dbmodel.InstanceProvisioning && op.Type == internal.OperationTypeProvision && op.State == domain.InProgress) ||
 			(s == dbmodel.InstanceDeprovisioning && op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress) ||
 			(s == dbmodel.InstanceUpdating && op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress) ||
