@@ -2,18 +2,18 @@
 
 Check the operation status for the provisioning and deprovisioning operations.
 
-## Steps
+## Procedure
 
-1. Export the operation ID that you obtained during [provisioning](05-10-provisioning-kyma-environment.md) or [deprovisioning](05-20-deprovisioning-kyma-environment.md) as an environment variable:
+1. Export the operation ID that you obtained during [provisioning](05-10-provisioning-kyma-environment.md) or [deprovisioning](05-20-deprovisioning-kyma-environment.md) as an environment variable.
 
    ```bash
    export OPERATION_ID={OBTAINED_OPERATION_ID}
    ```
 
    > ### Note:
-   > Ensure that the **BROKER_URL** and **INSTANCE_ID** environment variables are exported as well before you proceed.
+   > Before you proceed, ensure that the **BROKER_URL** and **INSTANCE_ID** environment variables are also exported.
 
-2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning or deprovisioning succeeded.
+2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning or deprovisioning succeeded.<!--linking to a contributor doc? should we move it to user folder?-->
 
    ```bash
    curl --request GET "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID/last_operation?operation=$OPERATION_ID&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281" \
@@ -21,7 +21,7 @@ Check the operation status for the provisioning and deprovisioning operations.
    --header "$AUTHORIZATION_HEADER"
    ```
 
-   A successful call returns the operation status and description:
+   A successful call returns the operation status and description.
 
       ```json
       {

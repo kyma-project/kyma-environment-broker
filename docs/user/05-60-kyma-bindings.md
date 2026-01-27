@@ -6,10 +6,10 @@ The Kyma binding is an abstraction of Kyma Environment Broker (KEB) that allows 
 
 KEB manages the bindings and keeps them in a database together with generated kubeconfigs stored in an encrypted format. Management of bindings is allowed through the KEB bindings API, which consists of three endpoints: PUT, GET, and DELETE. An additional cleanup job periodically removes expired binding records from the database.
 
-You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. Requests to create a binding are configured to time out after 15 minutes.
+You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to the PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. Requests to create a binding are configured to time out after 15 minutes.
 
 > ### Note:
-> You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
+> You can find all endpoints in [KEB's Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
 
 ## Kyma Bindings API Request Examples
 
@@ -31,13 +31,13 @@ X-Broker-API-Version: 2.14
 }
 ```
 
-If a binding is successfully created, the endpoint returns one of the following responses: 
+If the binding is successfully created, the endpoint returns one of the following responses: 
 * `201 Created` if the current request created the binding. 
 * `200 OK` if the binding already existed.
 
 ### Fetch a Service Binding
 
-To fetch a binding, use a GET request to KEB API:
+To fetch a binding, use a GET request to KEB API.
 
 ```
 GET http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}
@@ -52,7 +52,7 @@ All HTTP codes are based on the [OSB API specification](https://github.com/opens
 
 ### Remove a Service Binding
 
-To remove a binding, send a DELETE request to KEB API:
+To remove a binding, send a DELETE request to KEB API.
 
 ```
 DELETE http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?plan_id={{plan_id}}&service_id={{service_id}}
