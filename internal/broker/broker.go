@@ -62,6 +62,8 @@ type Config struct {
 
 	AllowedGlobalAccounts           StringList `envconfig:"optional"`
 	RestrictToAllowedGlobalAccounts bool
+
+	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
