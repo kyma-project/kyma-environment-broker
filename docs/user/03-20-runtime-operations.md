@@ -1,13 +1,13 @@
 # SAP BTP, Kyma Runtime Operations
 
-Kyma Environment Broker (KEB) allows you to configure operations you can run on SAP BTP, Kyma runtime. Each operation is processed by several steps arranged in stages and ordered in a queue. As every step can be re-launched multiple times, you should determine a behavior for each step in case of a processing failure. It can:
+Kyma Environment Broker (KEB) allows you to configure operations you can run on SAP BTP, Kyma runtime. Each operation is processed by several single-step stages ordered in a queue. As every step can be re-launched multiple times, you should determine a behavior for each step in case of a processing failure. Choose one of the following options:
 
-* Return an error, which interrupts the entire process, or skip step execution.
-* Repeat the entire operation after a specified period.
+* Returning an error, which interrupts the entire process, or skipping step execution.
+* Repeating the entire operation after a specified period.
 
 ## Stages
 
-A stage is a grouping unit for steps. An operation can consist of multiple stages, and a stage can consist of multiple steps. Once all the steps in a stage are successfully executed, the stage is marked as finished and never repeated, even if the next stage fails. If a step within a given stage fails, the whole stage is repeated from the beginning.
+An operation can consist of multiple stages, which are single-step grouping units. Once the step in a stage is successfully executed, the stage is marked as finished and never repeated, even if the next stage fails. If the step within a given stage fails, the stage is repeated.
 
 ## Provisioning
 
@@ -172,5 +172,5 @@ The following examples present how to extend the KEB process based on the provis
     }
     ```
 
-   Once all the steps in the stage have run successfully, the stage is  not retried even if the application is restarted.
+   Once the step in the stage has run successfully, the stage is  not retried even if the application is restarted.
   </details>
