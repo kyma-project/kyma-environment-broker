@@ -41,6 +41,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		testInstanceId := "test"
 		expiredID := "expired-id"
 		fixInstance := fixture.FixInstance(testInstanceId)
+		fixInstance.EmptyUpdates = 5
 		expiredInstance := fixture.FixInstance(expiredID)
 		expiredInstance.ExpiredAt = ptr.Time(time.Now())
 
@@ -81,6 +82,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, fixInstance.DashboardURL, inst.DashboardURL)
 		assert.Equal(t, fixInstance.Parameters, inst.Parameters)
 		assert.Equal(t, fixInstance.Provider, inst.Provider)
+		assert.Equal(t, fixInstance.EmptyUpdates, inst.EmptyUpdates)
 		assert.False(t, inst.IsExpired())
 		assert.NotEmpty(t, inst.CreatedAt)
 		assert.NotEmpty(t, inst.UpdatedAt)
