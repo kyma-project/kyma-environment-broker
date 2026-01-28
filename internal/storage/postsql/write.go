@@ -137,6 +137,7 @@ func (ws writeSession) InsertInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Pair("deleted_at", instance.DeletedAt).
 		Pair("expired_at", instance.ExpiredAt).
 		Pair("version", instance.Version).
+		Pair("empty_updates", instance.EmptyUpdates).
 		Exec()
 
 	if err != nil {
@@ -182,6 +183,7 @@ func (ws writeSession) UpdateInstance(instance dbmodel.InstanceDTO) dberr.Error 
 		Set("deleted_at", instance.DeletedAt).
 		Set("version", instance.Version+1).
 		Set("expired_at", instance.ExpiredAt).
+		Set("empty_updates", instance.EmptyUpdates).
 		Exec()
 	if err != nil {
 		return dberr.Internal("Failed to update record to Instance table: %s", err)

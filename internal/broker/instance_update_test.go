@@ -495,6 +495,12 @@ func fixSuspensionOperation() internal.DeprovisioningOperation {
 	return deprovisioningOperation
 }
 
+func fixUpdateOperation(id string, state domain.LastOperationState) internal.Operation {
+	op := fixture.FixOperation(id, instanceID, internal.OperationTypeUpdate)
+	op.State = state
+	return op
+}
+
 func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	// given
 	instance := internal.Instance{
@@ -2405,6 +2411,143 @@ func TestUpdateClusterName(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 			}
+		})
+	}
+}
+
+func TestUpdateWithoutOperation(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		initialParameters string
+		updateParameters  string
+
+		expectedSync bool
+	}{
+		"Empty update": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1"}`,
+			updateParameters:  `{}`,
+			expectedSync:      true,
+		},
+		"Update without change": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1"}`,
+			updateParameters:  `{"machineType":"m5.xlarge"}`,
+			expectedSync:      true,
+		},
+		"Update with a change": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1"}`,
+			updateParameters:  `{"machineType":"m5.2xlarge"}`,
+			expectedSync:      false,
+		},
+		"Update with unknown parameter": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1"}`,
+			updateParameters:  `{"machineType":"m5.xlarge", "foo":"bar"}`,
+			expectedSync:      true,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			initialParams := pkg.ProvisioningParametersDTO{}
+			require.NoError(t, json.Unmarshal([]byte(tc.initialParameters), &initialParams))
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = broker.AWSPlanID
+			provisioningOperation := fixProvisioningOperation("provisioning01")
+			provisioningOperation.ProvisioningParameters.Parameters = initialParams
+			instance.Parameters = provisioningOperation.ProvisioningParameters
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			svc := broker.NewUpdate(broker.Config{SyncEmptyUpdateResponseEnabled: true}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+			// when
+			updateSpec, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AWSPlanID,
+				RawParameters:   json.RawMessage(tc.updateParameters),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedSync, !updateSpec.IsAsync)
+
+		})
+	}
+}
+
+func TestUpdateWithoutOperationDependsOnLastOperation(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		lastOperationState domain.LastOperationState
+
+		expectedSync bool
+	}{
+		"Last operation finished": {
+			lastOperationState: domain.Succeeded,
+			expectedSync:       true,
+		},
+		"Last operation failed": {
+			lastOperationState: domain.Failed,
+			expectedSync:       false,
+		},
+		"Last operation in progress": {
+			lastOperationState: domain.InProgress,
+			expectedSync:       false,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			initialParams := pkg.ProvisioningParametersDTO{}
+			require.NoError(t, json.Unmarshal([]byte(`{"machineType":"m5.xlarge","region":"eu-west-1"}`), &initialParams))
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = broker.AWSPlanID
+			provisioningOperation := fixProvisioningOperation("provisioning01")
+			provisioningOperation.ProvisioningParameters.Parameters = initialParams
+			provisioningOperation.CreatedAt = time.Now().Add(-10 * time.Minute)
+			instance.Parameters = provisioningOperation.ProvisioningParameters
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+			require.NoError(t, err)
+
+			update := fixUpdateOperation("update01", tc.lastOperationState)
+			update.State = tc.lastOperationState
+			err = st.Operations().InsertOperation(update)
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			svc := broker.NewUpdate(broker.Config{SyncEmptyUpdateResponseEnabled: true}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+			// when
+			updateSpec, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          broker.AWSPlanID,
+				RawParameters:   json.RawMessage(`{"machineType":"m5.xlarge","region":"eu-west-1"}`),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedSync, !updateSpec.IsAsync)
+
 		})
 	}
 }
