@@ -464,6 +464,14 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
 
+	// log metrics config
+	logs.Info(fmt.Sprintf("Metrics.Enabled: %t", cfg.Metrics.Enabled))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultRetentionPeriod: %s", cfg.Metrics.OperationResultRetentionPeriod))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultPollingInterval: %s", cfg.Metrics.OperationResultPollingInterval))
+	logs.Info(fmt.Sprintf("Metrics.OperationStatsPollingInterval: %s", cfg.Metrics.OperationStatsPollingInterval))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultFinishedOperationRetentionPeriod: %s", cfg.Metrics.OperationResultFinishedOperationRetentionPeriod))
+	logs.Info(fmt.Sprintf("Metrics.BindingsStatsPollingInterval: %s", cfg.Metrics.BindingsStatsPollingInterval))
+
 	r, _ := cfg.GardenerSubscriptionResource()
 	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))
 }

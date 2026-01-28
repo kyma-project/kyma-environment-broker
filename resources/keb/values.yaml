@@ -309,7 +309,7 @@ kymaDashboardConfig:
 
 metricsv2:
   # If true, enables metrics collection and Prometheus exposure.
-  enabled: false
+  enabled: true
   # Duration of retaining finished operation results in memory.
   operationResultFinishedOperationRetentionPeriod: 3m
   # Frequency of polling for operation results.
