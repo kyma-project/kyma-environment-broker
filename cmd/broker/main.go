@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	_ "net/http/pprof"
+	pp "net/http/pprof"
 	"os"
 	gruntime "runtime"
 	"runtime/pprof"
@@ -427,6 +427,10 @@ func main() {
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
+
+	// create /debug/pprof endpoint
+
+	router.Handle("/debug/pprof/", http.HandlerFunc(pp.Index))
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
