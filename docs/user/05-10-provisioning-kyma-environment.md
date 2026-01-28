@@ -18,8 +18,7 @@ Provision SAP BTP, Kyma runtime on Microsoft Azure using Kyma Environment Broker
    > ### Note:
    > **INSTANCE_ID** and **NAME** must be unique. It is recommended to use UUID as an **INSTANCE_ID**.
 
-2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client.<!--why are we linking to the condtibutor docu? should we move the doc to the user folder?-->
-
+2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client.
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```  

@@ -66,10 +66,10 @@ You can configure the following provisioning parameters:
 | **oidc.usernamePrefix**                          | string | Provides an OIDC username prefix for a Kyma runtime.                                        |    No    | None            |
 | **administrators**                               | string | Provides administrators for a Kyma runtime.                                                 |    No    | None            |
 | **networking.nodes**                             | string | The node network's CIDR.                                                                    |    No    | `10.250.0.0/16` |
-| **modules.channel**                              | string | Enables the user to define their preferred default release channel                          |    No    | Taken from the runtimeConfiguration setting, where the Kyma resource spec channel is specified per plan. |
-| **modules.default**                              | bool   | Defines whether to use a default list of modules                                            |    No    | None            |
-| **modules.list**                                 | array  | Defines a custom list of modules                                                            |    No    | None            |
-<!--check "default" in 69 with PKJ-->
+| **modules.channel**                              | string | Enables the user to define their preferred default release channel.                         |    No    | Taken from the runtimeConfiguration setting, where the Kyma resource spec channel is specified per plan. |
+| **modules.default**                              | bool   | Defines whether to use a default list of modules.                                           |    No    | None            |
+| **modules.list**                                 | array  | Defines a custom list of modules.                                                           |    No    | None            |
+
 ### Provider-Specific Parameters
 
 You can configure the following provisioning parameters for Microsoft Azure:

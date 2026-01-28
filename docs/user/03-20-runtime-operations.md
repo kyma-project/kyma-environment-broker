@@ -23,7 +23,7 @@ You can find all the provisioning steps in the [provisioning](../../cmd/broker/p
 Each deprovisioning step is responsible for a separate part of cleaning Kyma runtime dependencies. To properly deprovision all the dependencies, you need the data used during the Kyma runtime provisioning. The first step finds the previous operation and copies the data.
 
 None of the deprovisioning steps should block the entire deprovisioning operation. To skip a step in case of a retry timeout, use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct. Set a 5-minute timeout, at most, for retries in a step.
-Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. It fails the operation in case of a timeout while checking for Kyma Infrastructure Manager (KIM) to remove the shoot.<!--this isn't very clear to me; how about: It fails the operation in case of a timeout while checking if Kyma Infrastructure Manager (KIM) has removed/is removing?/ the shoot.-->
+Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. The operation fails due to a timeout if Kyma Infrastructure Manager (KIM) doesn't remove the shoot within the given time.
 Once the step is successfully executed, it isn't retried. Every deprovisioning step is defined in a separate stage. If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 For all the deprovisioning steps, see the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
