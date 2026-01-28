@@ -29,6 +29,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_RESTRICT_&#x200b;TO_ALLOWED_GLOBAL_&#x200b;ACCOUNTS** | <code>false</code> | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. |
 | **APP_BROKER_STATUS_&#x200b;PORT** | <code>8071</code> | Port for the broker status/health endpoint. |
 | **APP_BROKER_&#x200b;SUBACCOUNT_MOVEMENT_&#x200b;ENABLED** | <code>false</code> | If true, enables subaccount movement (allows changing global account for an instance). |
+| **APP_BROKER_SYNC_&#x200b;EMPTY_UPDATE_&#x200b;RESPONSE_ENABLED** | <code>true</code> | If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted". |
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |

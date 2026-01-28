@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -76,7 +77,8 @@ type UpdateEndpoint struct {
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
 
-	useCredentialsBindings bool
+	useCredentialsBindings         bool
+	syncEmptyUpdateResponseEnabled bool
 }
 
 func NewUpdate(cfg Config,
@@ -106,27 +108,28 @@ func NewUpdate(cfg Config,
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
 		instanceStorage:                          db.Instances(),
-		operationStorage:                         db.Operations(),
-		actionStorage:                            db.Actions(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,
 		subaccountMovementEnabled:                subaccountMovementEnabled,
 		updateCustomResourcesLabelsOnAccountMove: updateCustomResourcesLabelsOnAccountMove,
+		operationStorage:                         db.Operations(),
+		actionStorage:                            db.Actions(),
 		updatingQueue:                            queue,
 		plansConfig:                              plansConfig,
-		valuesProvider:                           valuesProvider,
 		dashboardConfig:                          dashboardConfig,
 		kcBuilder:                                kcBuilder,
 		kcpClient:                                kcpClient,
-		providerSpec:                             providerSpec,
+		valuesProvider:                           valuesProvider,
 		infrastructureManagerConfig:              imConfig,
 		schemaService:                            schemaService,
+		providerSpec:                             providerSpec,
 		planSpec:                                 planSpec,
 		quotaClient:                              quotaClient,
 		quotaWhitelist:                           quotaWhitelist,
 		rulesService:                             rulesService,
 		gardenerClient:                           gardenerClient,
 		awsClientFactory:                         awsClientFactory,
+		syncEmptyUpdateResponseEnabled:           cfg.SyncEmptyUpdateResponseEnabled,
 	}
 }
 
@@ -443,10 +446,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 	}
 	operation.ProviderValues = &providerValues
-	err = b.operationStorage.InsertOperation(operation)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, err
-	}
+	oldParameters := instance.Parameters.Parameters
 
 	if params.OIDC.IsProvided() {
 		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
@@ -515,6 +515,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			}
 		}
 	}
+	if b.shouldResponseSynchronously(oldParameters, instance, logger) {
+		return b.processSyncResponseOk(instance, logger)
+	}
+	logger.Debug("Creating update operation in the database")
+	err = b.operationStorage.InsertOperation(operation)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
+	}
 	logger.Debug("Adding update operation to the processing queue")
 	b.updatingQueue.Add(operationID)
 
@@ -526,6 +534,27 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) shouldResponseSynchronously(oldParameters pkg.ProvisioningParametersDTO, instance *internal.Instance, logger *slog.Logger) bool {
+	if !b.syncEmptyUpdateResponseEnabled {
+		return false
+	}
+	if !reflect.DeepEqual(oldParameters, instance.Parameters.Parameters) {
+		return false
+	}
+	lastOperation, err := b.operationStorage.GetLastOperation(instance.InstanceID)
+	if err != nil {
+		return false
+	}
+
+	// if the last operation did not succeed, we cannot respond synchronously
+	// Last change could fail, we cannot accept and response OK for next update which do the same.
+	if lastOperation.State != domain.Succeeded {
+		logger.Info(fmt.Sprintf("Last operation %s %s did not succeeded (state: %s), cannot respond synchronously", lastOperation.Type, lastOperation.ID, lastOperation.State))
+		return false
+	}
+	return true
 }
 
 // UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
@@ -647,6 +676,20 @@ func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersConte
 	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
 		b.log.Error(fmt.Sprintf("failed to save update request with additional properties: %v", err))
 	}
+}
+
+// todo: change name
+func (b *UpdateEndpoint) processSyncResponseOk(instance *internal.Instance, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
+	logger.Info("parameters did not change, skipping creation of an operation")
+	instance.EmptyUpdates++
+	_, err := b.instanceStorage.Update(*instance)
+	if err != nil {
+		// storing EmptyUpdates failed, but we can still return OK response
+		logger.Error(fmt.Sprintf("unable to update instance: %s", err.Error()))
+	}
+	return domain.UpdateServiceSpec{
+		IsAsync: false,
+	}, nil
 }
 
 func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {

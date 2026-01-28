@@ -1,0 +1,1 @@
+alter table instances drop column if exists "empty_updates";
