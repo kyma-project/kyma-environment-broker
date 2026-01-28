@@ -36,7 +36,7 @@ type Config struct {
 	OperationResultRetentionPeriod                  time.Duration `envconfig:"default=1h"`
 	OperationResultPollingInterval                  time.Duration `envconfig:"default=1m"`
 	OperationStatsPollingInterval                   time.Duration `envconfig:"default=1m"`
-	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
+	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=1m"`
 	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
 }
 

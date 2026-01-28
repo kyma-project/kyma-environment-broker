@@ -66,7 +66,7 @@ func (s *operationsResults) setOperation(op internal.Operation, val float64) {
 // each metric have labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
 // metrics set to 0 means that this event is outdated, and will be replaced by new one
-func (s *operationsResults) updateOperation(op internal.Operation) {
+func (s *operationsResults) updateMetricsForOperation(op internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -83,12 +83,13 @@ func (s *operationsResults) updateOperation(op internal.Operation) {
 			go func(id string) {
 				time.Sleep(s.finishedOperationRetentionPeriod)
 				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
-				s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
+				s.logger.Info(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
 			}(op.ID)
 		}
 	} else {
 		s.cache[op.ID] = op
 	}
+	s.logger.Info(fmt.Sprintf("Metrics cache size = %d", len(s.cache)))
 }
 
 func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
@@ -109,7 +110,7 @@ func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	}
 
 	for _, op := range operations {
-		s.updateOperation(op)
+		s.updateMetricsForOperation(op)
 	}
 	s.lastUpdate = now
 	return nil
@@ -125,7 +126,7 @@ func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) 
 	switch ev := event.(type) {
 	case process.OperationFinished:
 		s.logger.Debug(fmt.Sprintf("Handling OperationFinished event: OpID=%s State=%s", ev.Operation.ID, ev.Operation.State))
-		s.updateOperation(ev.Operation)
+		s.updateMetricsForOperation(ev.Operation)
 	default:
 		s.logger.Error(fmt.Sprintf("Handling OperationFinished, unexpected event type: %T", event))
 	}
