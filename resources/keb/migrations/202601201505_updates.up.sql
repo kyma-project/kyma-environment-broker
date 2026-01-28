@@ -1,0 +1,1 @@
+alter table instances add column if not exists "empty_updates" integer default 0;
