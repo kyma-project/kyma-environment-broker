@@ -1,6 +1,6 @@
 # Additional Worker Node Pools
 
-To create an SAP BTP, Kyma runtime with additional worker node pools, specify the `additionalWorkerNodePools` provisioning parameter.
+To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.
 To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**.
 
 See the example:
@@ -41,9 +41,9 @@ See the example:
    }"
 ```
 
-If you do not provide the `additionalWorkerNodePools` list in the provisioning request, no additional worker node pools are created.
+If you do not provide the **additionalWorkerNodePools** list in the provisioning request, no additional worker node pools are created.
 
-If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay unchanged.
+If you do not provide the **additionalWorkerNodePools** list in the update request, the saved additional worker node pools stay unchanged.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
 If you rename your existing additional worker node pool, it is deleted, and a new one is created.
 
@@ -56,7 +56,7 @@ If high availability is disabled, all resources are placed in a single, randomly
 However, it is not recommended for production environments. Setting the **autoScalerMin** value to 0 results in an automatic removal of the additional worker nodes depending on the current workload in the cluster.
 If there are no user workloads deployed onto the nodes associated with the given additional worker node pool, the nodes are removed automatically. The process should take around 30 minutes.
 
-See the following JSON example without the `additionalWorkerNodePools` list:
+See the following JSON example without the **additionalWorkerNodePools** list:
 
 ```json
 {
@@ -72,7 +72,7 @@ See the following JSON example without the `additionalWorkerNodePools` list:
 }
 ```
 
-See the following JSON example, where the `additionalWorkerNodePools` is an empty list:
+See the following JSON example, where the **additionalWorkerNodePools** is an empty list:
 
 ```json
 {
@@ -139,7 +139,7 @@ The update operation overwrites the additional worker node pools with the list p
     }
     ```
 
-3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` list from the JSON file provided in the update request:
+3. The additional worker node pools are updated to include the values of the **additionalWorkerNodePools** list from the JSON file provided in the following update request:
 
     ```json
     {

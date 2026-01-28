@@ -1,10 +1,10 @@
 # Provision SAP BTP, Kyma Runtime Using Kyma Environment Broker
 
-Provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
+Provision SAP BTP, Kyma runtime on Microsoft Azure using Kyma Environment Broker (KEB).
 
-## Steps
+## Procedure
 
-1. Export these values as environment variables:
+1. Export these values as environment variables.
 
    ```bash
    export BROKER_URL={KYMA_ENVIRONMENT_BROKER_URL}
@@ -18,8 +18,7 @@ Provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
    > ### Note:
    > **INSTANCE_ID** and **NAME** must be unique. It is recommended to use UUID as an **INSTANCE_ID**.
 
-2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
-
+2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client.
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```  
@@ -30,7 +29,7 @@ Provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
      kubectl port-forward -n kcp-system deployments/kcp-kyma-environment-broker 8080
    ```
 
-3. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters in the [Service Description](03-10-service-description.md) document.
+3. Make a call to KEB to create a Kyma runtime instance on Microsoft Azure. Find the list of possible request parameters in the [Service Description](03-10-service-description.md) document.
 
    ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -51,7 +50,7 @@ Provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
    }"
    ```
 
-   A successful call returns the operation ID:
+   A successful call returns the operation ID.
 
     ```json
    {

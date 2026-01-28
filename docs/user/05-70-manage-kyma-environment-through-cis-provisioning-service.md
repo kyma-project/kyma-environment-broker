@@ -6,16 +6,20 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 * Your subaccount must have entitlements for SAP BTP, Kyma runtime and SAP Cloud Management Service for SAP BTP. See [Managing Entitlements and Quotas Using the Cockpit](https://help.sap.com/docs/btp/sap-business-technology-platform/managing-entitlements-and-quotas-using-cockpit?&version=Cloud).
 
-* CLI tools
+* Command line interface (CLI) tools:
 
   * [kubectl](https://kubernetes.io/docs/reference/kubectl/)
   * [jq](https://jqlang.github.io/jq/)
   * [curl](https://curl.se/)
-  * (optional) SAP BTP command line interface (btp CLI). See [Download and Start Using the btp CLI Client](https://help.sap.com/docs/btp/sap-business-technology-platform/download-and-start-using-btp-cli-client?version=Cloud).
+  * SAP BTP command line interface (btp CLI). See [Download and Start Using the btp CLI Client](https://help.sap.com/docs/btp/sap-business-technology-platform/download-and-start-using-btp-cli-client?version=Cloud).
 
-## Steps
+## Context
 
-1. Provision the SAP Cloud Management service instance with the `local` plan and create a binding to get the credentials for the Provisioning Service API. To do that, you can use:
+To manage a Kyma instance automatically, create a Kyma service binding. The Kyma service binding enables getting a Kyma kubeconfig, which in turn allows for accessing a Kyma cluster, deploying applications, running tests, and deleting the resources in a fully automated way.
+
+## Procedure
+
+1. Provision the SAP Cloud Management service instance with the `local` plan and create a binding to get the credentials for the Provisioning Service API. To do that, you can use one of the following methods:
    
    * SAP BTP cockpit, as described in [Getting an Access Token for SAP Cloud Management Service APIs](https://help.sap.com/docs/btp/sap-business-technology-platform/getting-access-token-for-sap-cloud-management-service-apis?version=Cloud).
    * btp CLI and follow these steps:
@@ -70,13 +74,13 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    export USER_ID={USER_ID}
    ```
 
-6. Provision the Kyma runtime and save the instance ID in the **INSTANCE_ID** environment variable.
+6. Provision the Kyma runtime instance and save the instance ID in the **INSTANCE_ID** environment variable.
 
    ```bash
    INSTANCE_ID=$(curl -s -X POST "$PROVISIONING_SERVICE_URL/provisioning/v1/environments" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"environmentType\":\"$ENVIRONMENT_TYPE\",\"parameters\":{\"name\":\"$NAME\",\"region\":\"$REGION\"},\"planName\":\"$PLAN\",\"serviceName\":\"$SERVICE_NAME\",\"user\":\"$USER_ID\"}" | jq -r '.id')
    ```
 
-7. Optionally, set the **EXPIRATION_SECONDS** environment variable to the number of seconds (from 600 to 7200) after which a binding expires.
+7. **Optional:** Set the **EXPIRATION_SECONDS** environment variable to the number of seconds (from 600 to 7200) after which a binding expires.
 
    ```bash
    export EXPIRATION_SECONDS={EXPIRATION_SECONDS}
@@ -91,7 +95,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    ```
    
    > ### Note:
-   > You can create a maximum of 10 non-expired bindings. 
+   > You can have a maximum of 10 non-expired bindings. 
    > If you try to create more, you get the message stating that you've reached the maximum number of non-expired bindings.
 
 9. Get the binding credentials and save them in a kubeconfig file.
@@ -106,7 +110,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
     export KUBECONFIG=kubeconfig.yaml
     ```
 
-11. Verify the connection to the cluster. Run a kubectl command to get Pods:
+11. Verify the connection to the cluster. Run a kubectl command to get Pods.
 
     ```bash
     kubectl get pods
@@ -114,13 +118,13 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
     kubectl should return the list of Pods in the `default` namespace running in the cluster, which means that the cluster is accessible.
 
-12.  (Optional) To view the details of the binding you have created, list all bindings for the instance.
+12.  **Optional:** To view the details of the binding you have created, list all bindings for the instance.
 
       ```bash
       curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
       ```
 
-13. (Optional) For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
+13. **Optional:** For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
       
       ```bash
       curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
@@ -137,7 +141,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 ## Next Steps
 
-To deprovision the Kyma runtime, run:
+To deprovision Kyma runtime, run:
 
    ```bash
    curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
@@ -145,3 +149,7 @@ To deprovision the Kyma runtime, run:
 
    > ### Note:
    > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
+
+## Related Information
+
+[Account Administration Using APIs of the SAP Cloud Management Service](https://help.sap.com/docs/btp/sap-business-technology-platform/account-administration-using-apis-of-sap-cloud-management-service?locale=en-US&version=Cloud)

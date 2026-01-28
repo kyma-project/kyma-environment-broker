@@ -22,7 +22,7 @@ API for module configuration is built on the **oneOf** feature from the JSON sch
    }
    ```
 
-* If you want to use your custom modules' list configuration, you must pass the **list** with the modules you want installed.
+* If you want to use your custom modules' list configuration, pass the **list** with the modules you want installed.
 
    ```json
    "modules": {

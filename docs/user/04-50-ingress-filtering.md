@@ -8,7 +8,7 @@ Kyma Environment Broker (KEB) allows you to enable or disable ingress filtering 
 By default, ingress filtering is disabled.
 To enable it, set the additional **ingressFiltering** parameter to `true` in the provisioning or update request.
 
-See the example:
+See an example of the provisioning request:
 
 ```bash
    export VERSION=1.15.0
@@ -32,7 +32,7 @@ See the example:
    }"
 ```
 
-See the example of the update request:
+See an example of the update request:
 
 ```bash
    export VERSION=1.15.0
@@ -54,4 +54,4 @@ See the example of the update request:
 ```
 
 > ### Note:
-> Attempt to enable or disable ingress filtering for an unsupported plan or an external customer results in an error.
+> An attempt to enable or disable ingress filtering for an unsupported plan or an external customer results in an error.
