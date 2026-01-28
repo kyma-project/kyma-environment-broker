@@ -139,16 +139,10 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	expirationSeconds := b.config.ExpirationSeconds
-	if parameters.ExpirationSeconds != 0 {
-		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
-			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
-		}
-		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
-			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
-		}
-		expirationSeconds = parameters.ExpirationSeconds
+
+	expirationSeconds, apiResponse := b.validateExpirationSeconds(parameters, expirationSeconds)
+	if apiResponse != nil {
+		return domain.Binding{}, apiResponse
 	}
 
 	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
@@ -175,7 +169,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 			message := fmt.Sprintf("binding already exists but with different parameters")
 			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
 		}
-		if bindingFromDB.ExpiresAt.After(time.Now()) {
+		if bindingFromDB.ExpiresAt.After(time.Now()) && len(bindingFromDB.Kubeconfig) == 0 {
 			if len(bindingFromDB.Kubeconfig) == 0 {
 				message := fmt.Sprintf("binding creation already in progress")
 				return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
@@ -193,35 +187,15 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
-	//TODO we get here if binding is not found in storage or it is expired
-	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	err = b.checkAgainstLimit(err, instanceID)
 	if err != nil {
-		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
+		return domain.Binding{}, err
 	}
 
-	bindingCount := len(bindingList)
-	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
-	if bindingCount == b.config.MaxBindingsCount-1 {
-		b.log.Info(message)
-	}
-	if bindingCount >= b.config.MaxBindingsCount {
-		expiredCount := 0
-		for _, binding := range bindingList {
-			if binding.ExpiresAt.Before(time.Now()) {
-				expiredCount++
-			}
-		}
-		if (bindingCount - expiredCount) == (b.config.MaxBindingsCount - 1) {
-			b.log.Info(message)
-		}
-		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
-			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
-			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
-		}
-	}
+	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, instance)
+}
 
+func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, bindingID string, expirationSeconds int, bindingContext BindingContext, instance *internal.Instance) (domain.Binding, error) {
 	var kubeconfig string
 	binding := &internal.Binding{
 		ID:         bindingID,
@@ -235,7 +209,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
 
-	err = b.bindingsStorage.Insert(binding)
+	err := b.bindingsStorage.Insert(binding)
 	switch {
 	case dberr.IsAlreadyExists(err):
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
@@ -274,6 +248,52 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 			ExpiresAt: binding.ExpiresAt.Format(expiresAtLayout),
 		},
 	}, nil
+}
+
+func (b *BindEndpoint) validateExpirationSeconds(parameters BindingParams, expirationSeconds int) (int, error) {
+	if parameters.ExpirationSeconds != 0 {
+		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
+			return 0, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+		}
+		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
+			return 0, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+		}
+		expirationSeconds = parameters.ExpirationSeconds
+	}
+	return expirationSeconds, nil
+}
+
+func (b *BindEndpoint) checkAgainstLimit(err error, instanceID string) error {
+	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	if err != nil {
+		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
+		return apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
+	}
+
+	bindingCount := len(bindingList)
+	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
+	if bindingCount == b.config.MaxBindingsCount-1 {
+		b.log.Info(message)
+	}
+	if bindingCount >= b.config.MaxBindingsCount {
+		expiredCount := 0
+		for _, binding := range bindingList {
+			if binding.ExpiresAt.Before(time.Now()) {
+				expiredCount++
+			}
+		}
+		if (bindingCount - expiredCount) == (b.config.MaxBindingsCount - 1) {
+			b.log.Info(message)
+		}
+		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
+			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
+			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
+			return apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+		}
+	}
+	return nil
 }
 
 func (b *BindEndpoint) IsPlanBindable(planName string) bool {
