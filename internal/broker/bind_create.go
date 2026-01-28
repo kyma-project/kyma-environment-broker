@@ -193,13 +193,21 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
-	//TODO we get here if binding is not found in storage or it is expired
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
 	if err != nil {
 		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
+	errorApiResponse := b.checkAgainstLimit(bindingList, instanceID)
+	if errorApiResponse != nil {
+		return domain.Binding{}, errorApiResponse
+	}
+
+	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, err, instance)
+}
+
+func (b *BindEndpoint) checkAgainstLimit(bindingList []internal.Binding, instanceID string) error {
 	bindingCount := len(bindingList)
 	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
 	if bindingCount == b.config.MaxBindingsCount-1 {
@@ -218,10 +226,13 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
 			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+			return apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 	}
+	return nil
+}
 
+func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, bindingID string, expirationSeconds int, bindingContext BindingContext, err error, instance *internal.Instance) (domain.Binding, error) {
 	var kubeconfig string
 	binding := &internal.Binding{
 		ID:         bindingID,
