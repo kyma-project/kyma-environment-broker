@@ -165,9 +165,12 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
 	}
 
-	binding, apiResponse, found := b.searchDbForBinding(err, instanceID, bindingID, expirationSeconds)
-	if found {
-		return binding, apiResponse
+	binding, err := b.searchDbForBinding(err, instanceID, bindingID, expirationSeconds)
+	if err != nil {
+		return domain.Binding{}, err
+	}
+	if binding != nil {
+		return *binding, nil
 	}
 
 	// we need new binding, check limits
@@ -177,31 +180,31 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
-	errorApiResponse := b.checkAgainstLimit(bindingList, instanceID)
-	if errorApiResponse != nil {
-		return domain.Binding{}, errorApiResponse
+	err = b.checkAgainstLimit(bindingList, instanceID)
+	if err != nil {
+		return domain.Binding{}, err
 	}
 
 	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, err, instance)
 }
 
-func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingID string, expirationSeconds int) (domain.Binding, error, bool) {
+func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingID string, expirationSeconds int) (*domain.Binding, error) {
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message), true
+		return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(expirationSeconds) {
 			message := fmt.Sprintf("binding already exists but with different parameters")
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message), true
+			return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			if len(bindingFromDB.Kubeconfig) == 0 {
 				message := fmt.Sprintf("binding creation already in progress")
-				return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message), true
+				return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 			}
-			return domain.Binding{
+			return &domain.Binding{
 				IsAsync:       false,
 				AlreadyExists: true,
 				Credentials: Credentials{
@@ -210,10 +213,10 @@ func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingI
 				Metadata: domain.BindingMetadata{
 					ExpiresAt: bindingFromDB.ExpiresAt.Format(expiresAtLayout),
 				},
-			}, nil, true
+			}, nil
 		}
 	}
-	return domain.Binding{}, nil, false
+	return nil, nil
 }
 
 func (b *BindEndpoint) checkAgainstLimit(bindingList []internal.Binding, instanceID string) error {
