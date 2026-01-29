@@ -165,22 +165,46 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
 	}
 
+	binding, err := b.searchDbForBinding(err, instanceID, bindingID, expirationSeconds)
+	if err != nil {
+		return domain.Binding{}, err
+	}
+	if binding != nil {
+		return *binding, nil
+	}
+
+	// we need new binding, check limits
+	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	if err != nil {
+		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
+	}
+
+	err = b.checkAgainstLimit(bindingList, instanceID)
+	if err != nil {
+		return domain.Binding{}, err
+	}
+
+	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, err, instance)
+}
+
+func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingID string, expirationSeconds int) (*domain.Binding, error) {
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
+		return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(expirationSeconds) {
 			message := fmt.Sprintf("binding already exists but with different parameters")
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
+			return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			if len(bindingFromDB.Kubeconfig) == 0 {
 				message := fmt.Sprintf("binding creation already in progress")
-				return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
+				return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 			}
-			return domain.Binding{
+			return &domain.Binding{
 				IsAsync:       false,
 				AlreadyExists: true,
 				Credentials: Credentials{
@@ -192,14 +216,10 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 			}, nil
 		}
 	}
+	return nil, nil
+}
 
-	//TODO we get here if binding is not found in storage or it is expired
-	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
-	if err != nil {
-		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
-	}
-
+func (b *BindEndpoint) checkAgainstLimit(bindingList []internal.Binding, instanceID string) error {
 	bindingCount := len(bindingList)
 	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
 	if bindingCount == b.config.MaxBindingsCount-1 {
@@ -218,10 +238,13 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
 			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
-			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+			return apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 	}
+	return nil
+}
 
+func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, bindingID string, expirationSeconds int, bindingContext BindingContext, err error, instance *internal.Instance) (domain.Binding, error) {
 	var kubeconfig string
 	binding := &internal.Binding{
 		ID:         bindingID,
