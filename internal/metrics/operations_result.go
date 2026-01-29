@@ -70,11 +70,8 @@ func (s *operationsResults) updateMetricsForOperation(op internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
-	oldOp, found := s.cache[op.ID]
-	if found {
-		s.setOperation(oldOp, 0)
-	}
-	s.setOperation(op, 1)
+	s.setMetricsValue(op)
+
 	if op.State == domain.Failed || op.State == domain.Succeeded {
 		delete(s.cache, op.ID)
 
@@ -90,6 +87,14 @@ func (s *operationsResults) updateMetricsForOperation(op internal.Operation) {
 		s.cache[op.ID] = op
 	}
 	s.logger.Info(fmt.Sprintf("Metrics cache size = %d", len(s.cache)))
+}
+
+func (s *operationsResults) setMetricsValue(op internal.Operation) {
+	oldOp, found := s.cache[op.ID]
+	if found {
+		s.setOperation(oldOp, 0)
+	}
+	s.setOperation(op, 1)
 }
 
 func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
