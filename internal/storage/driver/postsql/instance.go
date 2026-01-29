@@ -315,6 +315,7 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 			DeletedAt:                   dto.DeletedAt,
 			ExpiredAt:                   dto.ExpiredAt,
 			Version:                     dto.InstanceDTO.Version,
+			EmptyUpdates:                dto.EmptyUpdates,
 			Provider:                    pkg.CloudProvider(dto.Provider)},
 		BetaEnabled:       betaEnabled,
 		UsedForProduction: usedForProduction,
