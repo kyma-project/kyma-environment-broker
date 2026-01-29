@@ -68,6 +68,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 			log.Error("cannot save cluster ID")
 			return updatedOperation, backoff, nil
 		}
+		operation = updatedOperation
 	}
 
 	secret, err := btpmanagercredentials.PrepareSecret(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, clusterID)
