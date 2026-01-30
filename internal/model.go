@@ -109,7 +109,7 @@ type RuntimeOperation struct {
 }
 
 type Operation struct {
-	// following fields are stored in the storage
+	// the following fields are stored in the storage
 	ID        string        `json:"-"`
 	Version   int           `json:"-"`
 	CreatedAt time.Time     `json:"-"`
