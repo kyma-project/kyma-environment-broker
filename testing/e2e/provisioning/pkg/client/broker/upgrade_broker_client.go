@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	infoRuntimePath      = "%s/info/runtimes"
 	upgradeInstancePath  = "%s/upgrade/kyma"
 	getOrchestrationPath = "%s/orchestrations/%s"
 )
@@ -70,55 +69,6 @@ func (c *UpgradeClient) UpgradeRuntime(runtimeID string) (string, error) {
 	}
 
 	return upgradeResponse.OrchestrationID, nil
-}
-
-func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
-	var runtimeID string
-	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
-		id, permanentError, err := c.fetchRuntimeID(instanceID)
-		if err != nil && permanentError {
-			return true, fmt.Errorf("cannot fetch runtimeID: %w", err)
-		}
-		if err != nil {
-			c.log.Warn(fmt.Sprintf("runtime is not ready: %s ...", err))
-			return false, nil
-		}
-		runtimeID = id
-		return true, nil
-	})
-	if err != nil {
-		return runtimeID, fmt.Errorf("while waiting for runtimeID: %w", err)
-	}
-
-	return runtimeID, nil
-}
-
-func (c *UpgradeClient) fetchRuntimeID(instanceID string) (string, bool, error) {
-	response, err := c.executeRequest(http.MethodGet, fmt.Sprintf(infoRuntimePath, c.URL), nil)
-	if err != nil {
-		return "", false, fmt.Errorf("while executing fetch runtime request: %w", err)
-	}
-	if response.StatusCode != http.StatusOK {
-		return "", false, c.handleUnsupportedStatusCode(response)
-	}
-
-	var runtimes []Runtime
-	err = json.NewDecoder(response.Body).Decode(&runtimes)
-	if err != nil {
-		return "", true, fmt.Errorf("while decoding upgrade response: %w", err)
-	}
-
-	for _, runtime := range runtimes {
-		if runtime.ServiceInstanceID != instanceID {
-			continue
-		}
-		if runtime.RuntimeID == "" {
-			continue
-		}
-		return runtime.RuntimeID, false, nil
-	}
-
-	return "", false, fmt.Errorf("runtimeID for instanceID %s not exist", instanceID)
 }
 
 func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout time.Duration) error {

@@ -3,17 +3,14 @@ package postsql_test
 import (
 	"fmt"
 	"math/rand"
-	"sort"
 	"testing"
 	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
@@ -285,77 +282,6 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 
 		// then
 		assert.Equal(t, 0, len(subaccounts))
-	})
-
-	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
-		require.NoError(t, err)
-		require.NotNil(t, brokerStorage)
-		defer func() {
-			err := storageCleanup()
-			assert.NoError(t, err)
-		}()
-
-		// populate database with samples
-		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "A1"}),
-			*fixInstance(instanceData{val: "B1"}),
-			*fixInstance(instanceData{val: "C1"}),
-		}
-
-		for _, i := range fixInstances {
-			err = brokerStorage.Instances().Insert(i)
-			require.NoError(t, err)
-		}
-
-		fixProvisionOps := []internal.Operation{
-			fixProvisionOperation("A1"),
-			fixProvisionOperation("B1"),
-			fixProvisionOperation("C1"),
-		}
-
-		for _, op := range fixProvisionOps {
-			err = brokerStorage.Operations().InsertOperation(op)
-			require.NoError(t, err)
-		}
-
-		fixDeprovisionOps := []internal.DeprovisioningOperation{
-			fixDeprovisionOperation("A1"),
-			fixDeprovisionOperation("B1"),
-			fixDeprovisionOperation("C1"),
-		}
-
-		for _, op := range fixDeprovisionOps {
-			err = brokerStorage.Operations().InsertDeprovisioningOperation(op)
-			require.NoError(t, err)
-		}
-
-		// then
-		out, err := brokerStorage.Instances().FindAllJoinedWithOperations(predicate.SortAscByCreatedAt())
-		require.NoError(t, err)
-
-		require.Len(t, out, 6)
-
-		//  checks order of instance, the oldest should be first
-		sorted := sort.SliceIsSorted(out, func(i, j int) bool {
-			return out[i].CreatedAt.Before(out[j].CreatedAt)
-		})
-		assert.True(t, sorted)
-
-		// ignore time as this is set internally by database so will be different
-		assertInstanceByIgnoreTime(t, fixInstances[0], out[0].Instance)
-		assertInstanceByIgnoreTime(t, fixInstances[0], out[1].Instance)
-		assertInstanceByIgnoreTime(t, fixInstances[1], out[2].Instance)
-		assertInstanceByIgnoreTime(t, fixInstances[1], out[3].Instance)
-		assertInstanceByIgnoreTime(t, fixInstances[2], out[4].Instance)
-		assertInstanceByIgnoreTime(t, fixInstances[2], out[5].Instance)
-
-		assertEqualOperation(t, fixProvisionOps[0], out[0])
-		assertEqualOperation(t, fixDeprovisionOps[0], out[1])
-		assertEqualOperation(t, fixProvisionOps[1], out[2])
-		assertEqualOperation(t, fixDeprovisionOps[1], out[3])
-		assertEqualOperation(t, fixProvisionOps[2], out[4])
-		assertEqualOperation(t, fixDeprovisionOps[2], out[5])
 	})
 
 	t.Run("Should fetch instances based on subaccount list", func(t *testing.T) {
@@ -1283,20 +1209,6 @@ func assertInstanceByIgnoreTime(t *testing.T, want, got internal.Instance) {
 	want.ExpiredAt, got.ExpiredAt = nil, nil
 
 	assert.EqualValues(t, want, got)
-}
-
-func assertEqualOperation(t *testing.T, want interface{}, got internal.InstanceWithOperation) {
-	t.Helper()
-	switch want := want.(type) {
-	case internal.ProvisioningOperation:
-		assert.EqualValues(t, internal.OperationTypeProvision, got.Type.String)
-		assert.EqualValues(t, want.State, got.State.String)
-		assert.EqualValues(t, want.Description, got.Description.String)
-	case internal.DeprovisioningOperation:
-		assert.EqualValues(t, internal.OperationTypeDeprovision, got.Type.String)
-		assert.EqualValues(t, want.State, got.State.String)
-		assert.EqualValues(t, want.Description, got.Description.String)
-	}
 }
 
 type instanceData struct {
