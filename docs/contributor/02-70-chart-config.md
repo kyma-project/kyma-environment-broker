@@ -20,23 +20,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.25.27` |
+| global.images.kyma_environment_<br>broker.version | - | `1.25.30` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.27` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.30` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.27` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.30` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.27` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.30` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.27` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.30` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.27` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.30` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.27` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.30` |
 | global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.27` |
+| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.30` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.27` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.30` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -87,6 +87,7 @@
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
 | broker.<br>allowedGlobalAccountIDs | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. | `` |
+| broker.<br>syncEmptyUpdateResponseEnabled | If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted". | `true` |
 | btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
 | provisioning.<br>workersAmount | Number of workers in provisioning queue. | `20` |

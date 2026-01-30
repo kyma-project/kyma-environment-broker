@@ -1,8 +1,8 @@
 # Deprovision SAP BTP, Kyma Runtime Using Kyma Environment Broker
 
-Deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
+Deprovision SAP BTP, Kyma runtime on Microsoft Azure using Kyma Environment Broker (KEB).
 
-## Steps
+## Procedure
 
 1. Ensure that these environment variables are exported:
 
@@ -11,13 +11,13 @@ Deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
    export INSTANCE_ID={INSTANCE_ID_FROM_PROVISIONING_CALL}
    ```
 
-2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
+2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client.
 
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```
 
-3. Make a call to KEB to delete a Kyma runtime on Azure.
+3. Make a call to KEB to delete a Kyma runtime instance on Microsoft Azure.
 
    ```bash
    curl  --request DELETE "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
@@ -25,7 +25,7 @@ Deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
    --header "$AUTHORIZATION_HEADER"
    ```
 
-A successful call returns the operation ID:
+A successful call returns the operation ID.
 
    ```json
    {
@@ -41,7 +41,7 @@ The standard workflow for the [SAP BTP service operator](https://github.com/SAP/
 keep the external services provisioned through the SAP BTP service operator still operational. In this case, when calling deprovisioning in the SAP BTP cockpit, users are informed
 there are still instances provisioned by the SAP BTP service operator, and the user is expected to handle the cleanup.
 
-There is one exception, and that is the [Subaccount Cleanup CronJob](../contributor/06-30-subaccount-cleanup-cronjob.md). KEB [parses the `User-Agent` HTTP header](../../internal/process/deprovisioning/btp_operator_cleanup.go#L87) for
-`DELETE` call on `/service_instances/${instance_id}` endpoint and forwards it through the operation to the processing step `btp_operator_cleanup` handling
-soft delete for existing SAP BTP service operator resources. Because the `subaccount-cleanup` Job is triggered automatically and deletes only Kyma runtimes where the whole subaccount is
+There is one exception, and that is the [Subaccount Cleanup CronJob](../contributor/06-30-subaccount-cleanup-cronjob.md). KEB [parses the `User-Agent` HTTP header](../../internal/process/deprovisioning/btp_operator_cleanup.go#L87) for a
+`DELETE` call on the `/service_instances/${instance_id}` endpoint and forwards it through the operation to the processing step `btp_operator_cleanup` handling
+soft delete for existing SAP BTP service operator resources. Since the `subaccount-cleanup` Job is triggered automatically and deletes only Kyma runtimes where the whole subaccount is
 intended for deletion, it is necessary to execute the SAP BTP service operator cleanup procedure as well.

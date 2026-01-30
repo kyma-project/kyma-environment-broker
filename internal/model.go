@@ -46,6 +46,7 @@ type Instance struct {
 	Version      int
 	Provider     pkg.CloudProvider
 	Reconcilable bool
+	EmptyUpdates int
 }
 
 type InstanceWithSubaccountState struct {

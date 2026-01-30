@@ -41,6 +41,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		testInstanceId := "test"
 		expiredID := "expired-id"
 		fixInstance := fixture.FixInstance(testInstanceId)
+		fixInstance.EmptyUpdates = 5
 		expiredInstance := fixture.FixInstance(expiredID)
 		expiredInstance.ExpiredAt = ptr.Time(time.Now())
 
@@ -81,6 +82,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, fixInstance.DashboardURL, inst.DashboardURL)
 		assert.Equal(t, fixInstance.Parameters, inst.Parameters)
 		assert.Equal(t, fixInstance.Provider, inst.Provider)
+		assert.Equal(t, fixInstance.EmptyUpdates, inst.EmptyUpdates)
 		assert.False(t, inst.IsExpired())
 		assert.NotEmpty(t, inst.CreatedAt)
 		assert.NotEmpty(t, inst.UpdatedAt)
@@ -585,7 +587,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 
 		// populate database with samples
 		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "inst1", subAccountID: "common-subaccount"}),
+			*fixInstance(instanceData{val: "inst1", subAccountID: "common-subaccount", emptyUpdates: 5}),
 			*fixInstance(instanceData{val: "inst2"}),
 			*fixInstance(instanceData{val: "inst3"}),
 			*fixInstance(instanceData{val: "expiredinstance", expired: true}),
@@ -653,6 +655,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
 		assert.Equal(t, fixSubaccountStates[0].BetaEnabled, out[0].BetaEnabled)
 		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[0].UsedForProduction)
+		assert.Equal(t, fixInstances[0].EmptyUpdates, out[0].EmptyUpdates)
 
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{InstanceIDs: []string{fixInstances[1].InstanceID}})
@@ -1304,6 +1307,7 @@ type instanceData struct {
 	expired         bool
 	trial           bool
 	deletedAt       time.Time
+	emptyUpdates    int
 }
 
 func fixInstance(testData instanceData) *internal.Instance {
@@ -1325,6 +1329,7 @@ func fixInstance(testData instanceData) *internal.Instance {
 	}
 
 	instance := fixture.FixInstance(testData.val)
+	instance.EmptyUpdates = testData.emptyUpdates
 	instance.GlobalAccountID = gaid
 	instance.SubscriptionGlobalAccountID = gaid
 	instance.SubAccountID = suid

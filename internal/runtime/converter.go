@@ -108,6 +108,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		Parameters:      instance.Parameters.Parameters,
 		LicenseType:     instance.Parameters.ErsContext.LicenseType,
 		CommercialModel: instance.Parameters.ErsContext.CommercialModel,
+		EmptyUpdates:    instance.EmptyUpdates,
 	}
 
 	toReturn.SubscriptionSecretName = &instance.SubscriptionSecretName

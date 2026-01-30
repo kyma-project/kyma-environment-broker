@@ -62,6 +62,8 @@ type InstanceDTO struct {
 	ExpiredAt *time.Time
 
 	Version int
+
+	EmptyUpdates int
 }
 
 type InstanceWithOperationDTO struct {
