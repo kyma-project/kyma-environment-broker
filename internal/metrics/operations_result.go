@@ -81,7 +81,7 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 	}
 	s.setOperation(operation, 1)
 	operationLabels := GetLabels(operation)
-	s.metrics.With(operationLabels).Set(0)
+	s.metrics.With(operationLabels).Set(1)
 
 	if operation.State == domain.Failed || operation.State == domain.Succeeded {
 		delete(s.cache, operation.ID)
