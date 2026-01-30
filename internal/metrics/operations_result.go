@@ -69,7 +69,7 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 	s.sync.Lock()
 
 	cachedOperation, found := s.cache[operation.ID]
-	// TODO if found and labels are the same, we can skip updating the metric
+	// TODO if found and new labels are the same, we can skip updating the metric
 	if found {
 		s.metrics.With(cachedOperation.labels).Set(0)
 	}
