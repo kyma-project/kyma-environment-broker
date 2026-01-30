@@ -27,8 +27,7 @@ type operationsResults struct {
 }
 
 type cachedOperationType struct {
-	operationID string
-	labels      map[string]string
+	labels map[string]string
 }
 
 var _ Exposer = (*operationsResults)(nil)
@@ -89,7 +88,7 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 			}(operation.ID)
 		}
 	} else {
-		s.cache[operation.ID] = cachedOperationType{operationID: operation.ID, labels: operationLabels}
+		s.cache[operation.ID] = cachedOperationType{labels: operationLabels}
 	}
 }
 
