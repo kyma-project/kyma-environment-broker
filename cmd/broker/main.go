@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	pprof "net/http/pprof"
 	"os"
 	"strings"
 	"time"
@@ -425,14 +424,6 @@ func main() {
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
-
-	// create /debug/pprof endpoint
-
-	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	router.Handle("/debug/pprof/trace", pprof.Handler("trace"))
-	router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)

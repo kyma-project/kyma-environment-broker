@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,10 +20,15 @@ type operationsResults struct {
 	metrics                          *prometheus.GaugeVec
 	lastUpdate                       time.Time
 	operations                       storage.Operations
-	cache                            map[string]internal.Operation
+	cache                            map[string]cachedOperationType
 	pollingInterval                  time.Duration
 	sync                             sync.Mutex
-	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever, otherwise they are deleted after this period (starting from the time of operation finish)
+	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever; otherwise they are deleted after this period (starting from the time of operation finish)
+}
+
+type cachedOperationType struct {
+	operationID string
+	labels      map[string]string
 }
 
 var _ Exposer = (*operationsResults)(nil)
@@ -34,7 +38,7 @@ func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger
 		operations: db,
 		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
-		cache:      make(map[string]internal.Operation),
+		cache:      make(map[string]cachedOperationType),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespaceV2,
 			Subsystem: prometheusSubsystemV2,
@@ -70,21 +74,20 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
-	// TODO we do not need to store entire operation: only fields required for labels
-
-	oldOp, found := s.cache[operation.ID]
+	cachedOperation, found := s.cache[operation.ID]
 	// TODO if found and labels are the same, we can skip updating the metric
 	if found {
-		s.setOperation(oldOp, 0)
+		s.metrics.With(cachedOperation.labels).Set(0)
 	}
 	s.setOperation(operation, 1)
+	operationLabels := GetLabels(operation)
+	s.metrics.With(operationLabels).Set(0)
+
 	if operation.State == domain.Failed || operation.State == domain.Succeeded {
 		delete(s.cache, operation.ID)
 
 		// keep those metric and remove after finishedOperationRetentionPeriod
-		// TODO is there any point to keep this more than till next polling?
 		if s.finishedOperationRetentionPeriod > 0 {
-			// TODO so we have goroutine per finished operation, is it ok for KEB scale?
 			go func(id string) {
 				time.Sleep(s.finishedOperationRetentionPeriod)
 				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
@@ -92,9 +95,8 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 			}(operation.ID)
 		}
 	} else {
-		s.cache[operation.ID] = operation
+		s.cache[operation.ID] = cachedOperationType{operationID: operation.ID, labels: operationLabels}
 	}
-	s.logger.Info(fmt.Sprintf("Metrics cache size = %d", len(s.cache)))
 }
 
 func (s *operationsResults) UpdateOperationResultsMetricsInTimeRange() (err error) {
