@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"time"
@@ -191,16 +190,6 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 }
 
 func (o *Operation) Merge(operation *Operation) {
-}
-
-type InstanceWithOperation struct {
-	Instance
-
-	Type           sql.NullString
-	State          sql.NullString
-	Description    sql.NullString
-	OpCreatedAt    time.Time
-	IsSuspensionOp bool
 }
 
 type InstanceDetails struct {

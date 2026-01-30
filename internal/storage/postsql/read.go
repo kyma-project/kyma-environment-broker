@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
 	"golang.org/x/exp/slices"
 
 	"github.com/gocraft/dbr"
@@ -119,34 +118,6 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 	}
 
 	return subAccounts, nil
-}
-
-// TODO: CAVEAT in case of large operations table
-func (r readSession) getInstancesJoinedWithOperationStatement() *dbr.SelectStmt {
-	join := fmt.Sprintf("%s.instance_id = %s.instance_id", InstancesTableName, OperationTableName)
-	stmt := r.session.
-		Select("instances.instance_id, instances.runtime_id, instances.global_account_id, instances.subscription_global_account_id, instances.service_id,"+
-			" instances.service_plan_id, instances.dashboard_url, instances.provisioning_parameters, instances.created_at,"+
-			" instances.updated_at, instances.deleted_at, instances.sub_account_id, instances.service_name, instances.service_plan_name,"+
-			" instances.subscription_secret_name, instances.provider_region, instances.provider, operations.state, operations.description, operations.type, operations.created_at AS operation_created_at, operations.data").
-		From(InstancesTableName).
-		LeftJoin(OperationTableName, join)
-	return stmt
-}
-
-func (r readSession) FindAllInstancesJoinedWithOperation(prct ...predicate.Predicate) ([]dbmodel.InstanceWithOperationDTO, dberr.Error) {
-	var instances []dbmodel.InstanceWithOperationDTO
-
-	stmt := r.getInstancesJoinedWithOperationStatement()
-	for _, p := range prct {
-		p.ApplyToPostgres(stmt)
-	}
-
-	if _, err := stmt.Load(&instances); err != nil {
-		return nil, dberr.Internal("Failed to fetch all instances: %s", err)
-	}
-
-	return instances, nil
 }
 
 func (r readSession) GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, dberr.Error) {
@@ -415,21 +386,6 @@ func (r readSession) GetOperationsForIDs(opIDlist []string) ([]dbmodel.Operation
 		Select("*").
 		From(OperationTableName).
 		Where("id IN ?", opIDlist).
-		Load(&operations)
-	if err != nil {
-		return nil, dberr.Internal("Failed to get operations: %s", err)
-	}
-	return operations, nil
-}
-
-func (r readSession) ListOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error) {
-	typeCondition := dbr.Eq("type", operationType)
-	var operations []dbmodel.OperationDTO
-
-	_, err := r.session.
-		Select("*").
-		From(OperationTableName).
-		Where(typeCondition).
 		Load(&operations)
 	if err != nil {
 		return nil, dberr.Internal("Failed to get operations: %s", err)

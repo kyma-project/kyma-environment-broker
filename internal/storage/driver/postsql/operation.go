@@ -245,38 +245,6 @@ func (s *operations) UpdateDeprovisioningOperation(operation internal.Deprovisio
 	return &operation, lastErr
 }
 
-// ListDeprovisioningOperationsByInstanceID
-func (s *operations) ListDeprovisioningOperationsByInstanceID(instanceID string) ([]internal.DeprovisioningOperation, error) {
-	operations, err := s.listOperationsByInstanceIdAndType(instanceID, internal.OperationTypeDeprovision)
-	if err != nil {
-		return nil, err
-	}
-
-	ret, err := s.toDeprovisioningOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// ListDeprovisioningOperations lists deprovisioning operations
-func (s *operations) ListDeprovisioningOperations() ([]internal.DeprovisioningOperation, error) {
-	var lastErr dberr.Error
-
-	operations, err := s.listOperationsByType(internal.OperationTypeDeprovision)
-	if err != nil {
-		return nil, lastErr
-	}
-
-	ret, err := s.toDeprovisioningOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
 // GetLastOperation returns Operation for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
 func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, error) {
 	session := s.Factory.NewReadSession()
@@ -766,20 +734,6 @@ func (s *operations) toProvisioningOperationList(ops []dbmodel.OperationDTO) ([]
 	return result, nil
 }
 
-func (s *operations) toDeprovisioningOperationList(ops []dbmodel.OperationDTO) ([]internal.DeprovisioningOperation, error) {
-	result := make([]internal.DeprovisioningOperation, 0)
-
-	for _, op := range ops {
-		o, err := s.toDeprovisioningOperation(&op)
-		if err != nil {
-			return nil, fmt.Errorf("while converting to upgrade kyma operation: %w", err)
-		}
-		result = append(result, *o)
-	}
-
-	return result, nil
-}
-
 func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDTO, error) {
 	serialized, err := json.Marshal(op)
 	if err != nil {
@@ -1065,24 +1019,6 @@ func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operat
 
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
-		if lastErr != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-	return operations, lastErr
-}
-
-func (s *operations) listOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, error) {
-	session := s.Factory.NewReadSession()
-	operations := []dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operations, lastErr = session.ListOperationsByType(operationType)
 		if lastErr != nil {
 			return false, nil
 		}

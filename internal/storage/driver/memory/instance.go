@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -11,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
@@ -46,58 +44,6 @@ func (s *instances) GetDistinctSubAccounts() ([]string, error) {
 
 func (s *instances) UpdateInstanceLastOperation(instanceID, operationID string) error {
 	return nil
-}
-
-func (s *instances) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
-	var instances []internal.InstanceWithOperation
-
-	// simulate left join without grouping on column
-	for id, v := range s.instances {
-		dOps, dErr := s.operationsStorage.ListDeprovisioningOperationsByInstanceID(id)
-		if dErr != nil && !dberr.IsNotFound(dErr) {
-			return nil, dErr
-		}
-		pOps, pErr := s.operationsStorage.ListProvisioningOperationsByInstanceID(id)
-		if pErr != nil && !dberr.IsNotFound(pErr) {
-			return nil, pErr
-		}
-
-		if !dberr.IsNotFound(dErr) {
-			for _, op := range dOps {
-				instances = append(instances, internal.InstanceWithOperation{
-					Instance:       v,
-					Type:           sql.NullString{String: string(internal.OperationTypeDeprovision), Valid: true},
-					State:          sql.NullString{String: string(op.State), Valid: true},
-					Description:    sql.NullString{String: op.Description, Valid: true},
-					OpCreatedAt:    op.CreatedAt,
-					IsSuspensionOp: op.Temporary,
-				})
-			}
-		}
-
-		if !dberr.IsNotFound(pErr) {
-			for _, op := range pOps {
-				instances = append(instances, internal.InstanceWithOperation{
-					Instance:       v,
-					Type:           sql.NullString{String: string(internal.OperationTypeProvision), Valid: true},
-					State:          sql.NullString{String: string(op.State), Valid: true},
-					Description:    sql.NullString{String: op.Description, Valid: true},
-					OpCreatedAt:    op.CreatedAt,
-					IsSuspensionOp: false,
-				})
-			}
-		}
-
-		if dberr.IsNotFound(dErr) && dberr.IsNotFound(pErr) {
-			instances = append(instances, internal.InstanceWithOperation{Instance: v})
-		}
-	}
-
-	for _, p := range prct {
-		p.ApplyToInMemory(instances)
-	}
-
-	return instances, nil
 }
 
 func (s *instances) FindAllInstancesForRuntimes(runtimeIdList []string) ([]internal.Instance, error) {

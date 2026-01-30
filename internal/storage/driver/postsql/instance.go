@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -50,76 +49,6 @@ func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *I
 		operations: operations,
 		cipher:     cipher,
 	}
-}
-
-func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
-	sess := s.Factory.NewReadSession()
-	var (
-		instances []dbmodel.InstanceWithOperationDTO
-		lastErr   dberr.Error
-	)
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		instances, lastErr = sess.FindAllInstancesJoinedWithOperation(prct...)
-		if lastErr != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-
-	var result []internal.InstanceWithOperation
-	for _, dto := range instances {
-		inst, err := s.toInstance(dto.InstanceDTO)
-		if err != nil {
-			return nil, err
-		}
-
-		var isSuspensionOp bool
-
-		switch internal.OperationType(dto.Type.String) {
-		case internal.OperationTypeProvision:
-			isSuspensionOp = false
-		case internal.OperationTypeDeprovision:
-			deprovOp, err := s.toDeprovisioningOp(&dto)
-			if err != nil {
-				slog.Error(fmt.Sprintf("while unmarshalling DTO deprovisioning operation data: %v", err))
-			}
-			isSuspensionOp = deprovOp.Temporary
-		}
-
-		result = append(result, internal.InstanceWithOperation{
-			Instance:       inst,
-			Type:           dto.Type,
-			State:          dto.State,
-			Description:    dto.Description,
-			OpCreatedAt:    dto.OperationCreatedAt.Time,
-			IsSuspensionOp: isSuspensionOp,
-		})
-	}
-
-	return result, nil
-}
-
-func (s *Instance) toProvisioningOp(dto *dbmodel.InstanceWithOperationDTO) (*internal.ProvisioningOperation, error) {
-	var provOp internal.ProvisioningOperation
-	err := json.Unmarshal([]byte(dto.Data.String), &provOp)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data")
-	}
-
-	return &provOp, nil
-}
-
-func (s *Instance) toDeprovisioningOp(dto *dbmodel.InstanceWithOperationDTO) (*internal.DeprovisioningOperation, error) {
-	var deprovOp internal.DeprovisioningOperation
-	err := json.Unmarshal([]byte(dto.Data.String), &deprovOp)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall deprovisioning data")
-	}
-
-	return &deprovOp, nil
 }
 
 func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]internal.Instance, error) {

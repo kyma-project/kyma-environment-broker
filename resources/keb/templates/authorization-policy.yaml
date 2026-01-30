@@ -46,39 +46,6 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: istio-info-runtimes
-  namespace: kcp-system
-spec:
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        methods:
-        - GET
-        paths:
-        - /info/runtimes
-    from:
-      - source:
-          requestPrincipals:
-          {{- if .Values.oidc.issuers }}
-          {{- range $i, $p := .Values.oidc.issuers }}
-          - {{ $p}}/*
-          {{- end }}
-          {{- else }}
-          - {{ tpl .Values.oidc.issuer $ }}/*
-          {{- end }}
-    when:
-    - key: request.auth.claims[scp]
-      values:
-      - cld:read
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-      app.kubernetes.io/instance: {{ .Values.namePrefix }}
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
   name: istio-oauth2-local
   namespace: kcp-system
 spec:

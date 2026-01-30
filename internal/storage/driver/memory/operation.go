@@ -299,40 +299,6 @@ func (s *operations) UpdateDeprovisioningOperation(op internal.DeprovisioningOpe
 	return &op, nil
 }
 
-func (s *operations) ListDeprovisioningOperationsByInstanceID(instanceID string) ([]internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	operations := make([]internal.DeprovisioningOperation, 0)
-	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.Type == internal.OperationTypeDeprovision {
-			operations = append(operations, internal.DeprovisioningOperation{Operation: op})
-		}
-	}
-
-	if len(operations) != 0 {
-		s.sortDeprovisioningByCreatedAtDesc(operations)
-		return operations, nil
-	}
-
-	return nil, dberr.NotFound("instance deprovisioning operations with instanceID %s not found", instanceID)
-}
-
-func (s *operations) ListDeprovisioningOperations() ([]internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	operations := make([]internal.DeprovisioningOperation, 0)
-	for _, op := range s.operations {
-		if op.Type == internal.OperationTypeDeprovision {
-			operations = append(operations, internal.DeprovisioningOperation{Operation: op})
-		}
-	}
-
-	s.sortDeprovisioningByCreatedAtDesc(operations)
-	return operations, nil
-}
-
 func (s *operations) InsertUpgradeClusterOperation(operation internal.UpgradeClusterOperation) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

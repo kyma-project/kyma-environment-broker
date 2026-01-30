@@ -3,14 +3,12 @@ package postsql
 import (
 	"time"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
-
-	"github.com/gocraft/dbr"
 )
 
 //go:generate mockery --name=Factory
@@ -22,7 +20,6 @@ type Factory interface {
 
 //go:generate mockery --name=ReadSession
 type ReadSession interface {
-	FindAllInstancesJoinedWithOperation(prct ...predicate.Predicate) ([]dbmodel.InstanceWithOperationDTO, dberr.Error)
 	FindAllInstancesForRuntimes(runtimeIdList []string) ([]dbmodel.InstanceDTO, dberr.Error)
 	FindAllInstancesForSubAccounts(subAccountslist []string) ([]dbmodel.InstanceDTO, dberr.Error)
 	GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, dberr.Error)
@@ -36,7 +33,6 @@ type ReadSession interface {
 	GetOperationsByInstanceID(inID string) ([]dbmodel.OperationDTO, dberr.Error)
 	GetOperationsForIDs(opIdList []string) ([]dbmodel.OperationDTO, dberr.Error)
 	ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error)
-	ListOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error)
 	GetOperationStats() ([]dbmodel.OperationStatEntry, error)
 	GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error)
 	GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error)
