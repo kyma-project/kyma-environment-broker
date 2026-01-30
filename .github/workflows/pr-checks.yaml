@@ -27,7 +27,7 @@ jobs:
         run: | 
           echo "PRs from kyma-gopher-bot are automatically green"
           exit 0
-      - uses: wechuli/allcheckspassed@b0eaef5be76003932c9520e2b3dd03c85cc43d87
+      - uses: wechuli/allcheckspassed@1d00cf0c34c4b0805db8866d8913f22e7125301e
         if: ${{ github.event.pull_request.user.login != 'kyma-gopher-bot' }}
         with:
           delay: '1'
