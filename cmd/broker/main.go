@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	pprof "net/http/pprof"
 	"os"
-	gruntime "runtime"
-	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -175,27 +174,27 @@ const (
 var Version string
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
-	if profiler.Memory == false {
-		return
-	}
-	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
-	if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage: %v", profiler.Path, err))
-	}
-	for {
-		profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
-		logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
-		profFile, err := os.Create(profName)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed: %v", profName, err))
-		}
-		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
-		}
-		gruntime.GC()
-		time.Sleep(profiler.Sampling)
-	}
+	//if profiler.Memory == false {
+	//	return
+	//}
+	//logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
+	//if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
+	//	logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage: %v", profiler.Path, err))
+	//}
+	//for {
+	//	profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
+	//	logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
+	//	profFile, err := os.Create(profName)
+	//	if err != nil {
+	//		logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed: %v", profName, err))
+	//	}
+	//	err = pprof.Lookup("allocs").WriteTo(profFile, 0)
+	//	if err != nil {
+	//		logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
+	//	}
+	//	gruntime.GC()
+	//	time.Sleep(profiler.Sampling)
+	//}
 }
 
 func (c *Config) Validate() error {
@@ -262,7 +261,7 @@ func main() {
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
-	go periodicProfile(log, cfg.Profiler)
+	//go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
 
@@ -427,6 +426,14 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
+	// create /debug/pprof endpoint
+
+	router.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	router.Handle("/debug/pprof/trace", pprof.Handler("trace"))
+	router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
 	})
@@ -456,6 +463,14 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
+
+	// log metrics config
+	logs.Info(fmt.Sprintf("Metrics.Enabled: %t", cfg.Metrics.Enabled))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultRetentionPeriod: %s", cfg.Metrics.OperationResultRetentionPeriod))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultPollingInterval: %s", cfg.Metrics.OperationResultPollingInterval))
+	logs.Info(fmt.Sprintf("Metrics.OperationStatsPollingInterval: %s", cfg.Metrics.OperationStatsPollingInterval))
+	logs.Info(fmt.Sprintf("Metrics.OperationResultFinishedOperationRetentionPeriod: %s", cfg.Metrics.OperationResultFinishedOperationRetentionPeriod))
+	logs.Info(fmt.Sprintf("Metrics.BindingsStatsPollingInterval: %s", cfg.Metrics.BindingsStatsPollingInterval))
 
 	r, _ := cfg.GardenerSubscriptionResource()
 	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))
