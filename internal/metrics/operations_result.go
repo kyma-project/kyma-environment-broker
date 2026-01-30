@@ -61,11 +61,6 @@ func (s *operationsResults) Metrics() *prometheus.GaugeVec {
 	return s.metrics
 }
 
-func (s *operationsResults) setOperation(op internal.Operation, val float64) {
-	labels := GetLabels(op)
-	s.metrics.With(labels).Set(val)
-}
-
 // operation_result metrics works on 0/1 system.
 // each metric has labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happens in a KEB system and will be persisted in Prometheus Server
@@ -79,7 +74,6 @@ func (s *operationsResults) updateMetricsForCompletedOperation(operation interna
 	if found {
 		s.metrics.With(cachedOperation.labels).Set(0)
 	}
-	s.setOperation(operation, 1)
 	operationLabels := GetLabels(operation)
 	s.metrics.With(operationLabels).Set(1)
 
