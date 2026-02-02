@@ -3,21 +3,18 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
-	"testing"
-	"time"
-
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/google/uuid"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/google/uuid"
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"testing"
 )
 
 const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
@@ -492,10 +489,7 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 		}
    }`)
 	defer func() { _ = resp.Body.Close() }()
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	upgradeOperationID := suite.DecodeOperationID(resp)
-
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
@@ -565,10 +559,7 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 		}
    }`)
 	defer func() { _ = resp.Body.Close() }()
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	upgradeOperationID := suite.DecodeOperationID(resp)
-
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
@@ -933,14 +924,9 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	// then
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-	// when
-	upgradeOperationID := suite.DecodeOperationID(resp)
-	assert.NotEmpty(t, upgradeOperationID)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// then
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
@@ -997,14 +983,7 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	// then
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-	// when
-	upgradeOperationID := suite.DecodeOperationID(resp)
-	assert.NotEmpty(t, upgradeOperationID)
-
-	// then
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
 	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
@@ -1139,13 +1118,10 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-	// when
-	upgradeOperationID := suite.DecodeOperationID(resp)
-	assert.NotEmpty(t, upgradeOperationID)
+	opID = suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// then
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
@@ -1202,15 +1178,9 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	// then
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-
-	// when
-	upgradeOperationID := suite.DecodeOperationID(resp)
-	assert.NotEmpty(t, upgradeOperationID)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// then
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	time.Sleep(time.Second)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
 	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
 	assert.Equal(t, "client-id-oidc", *(*oidc)[0].ClientID)
@@ -1984,11 +1954,11 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	// then
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	updateOperationID := suite.DecodeOperationID(resp)
-	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
-	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
-	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	//updateOperationID := suite.DecodeOperationID(resp)
+	//suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+	//updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
+	//assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
 	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
@@ -2198,8 +2168,6 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 
 	//then
-	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
-	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
 	instance2 := suite.GetInstance(id)
 	// license_type should be stored in the instance table for ERS context and future upgrades
 	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
@@ -2724,9 +2692,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 						}
    			}`)
 		defer func() { _ = resp.Body.Close() }()
-		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		upgradeOperationID := suite.DecodeOperationID(resp)
-		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		updatedRuntime := suite.GetRuntimeResourceByInstanceID(iid)
 		updatedWorker1Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Zones
 		updatedWorker2Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[1].Zones

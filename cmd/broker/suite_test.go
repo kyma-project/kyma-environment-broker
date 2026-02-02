@@ -262,6 +262,7 @@ func fixConfig() *Config {
 			GardenerSeedsCacheConfigMapName: "gardener-seeds-cache",
 			EnablePlanUpgrades:              true,
 			DualStackDocsURL:                "https://placeholder.com",
+			SyncEmptyUpdateResponseEnabled:  true,
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		MaxPaginationPage:                         100,
