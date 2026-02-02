@@ -470,3 +470,12 @@ jobs:
         run: |
           git checkout main
           gh release edit ${{ inputs.name }} --draft=false
+
+  upload-release-report:
+      needs: [publish-release]
+      if: ${{ !inputs.dry-run }}
+      uses: kyma-project/compliancy/.github/workflows/upload-release-report.yml@main
+      with:
+        release_version: ${{ inputs.name }}
+      secrets:
+        RELEASE_LOG_UPLOADER_SA: ${{ secrets.RELEASE_LOG_UPLOADER_SA }}
