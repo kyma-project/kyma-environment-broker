@@ -1955,10 +1955,7 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 
 	// then
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	//updateOperationID := suite.DecodeOperationID(resp)
-	//suite.WaitForOperationState(updateOperationID, domain.Succeeded)
-	//updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
-	//assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
+
 	suite.AssertNetworkFiltering(instance.InstanceID, false, false)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
