@@ -59,8 +59,7 @@ func (u *Updater) Run() error {
 		}
 		u.logger.Debug(fmt.Sprintf("Item dequeued - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 
-		ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
-		defer cancel()
+		ctxWithTimeout, _ := context.WithTimeout(u.ctx, k8sRequestInterval)
 
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(ctxWithTimeout, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
