@@ -208,16 +208,16 @@ func invokeMigration() error {
 		err = migrateInstance.Down()
 	}
 
-	if err != nil && !errors.Is(migrate.ErrNoChange, err) {
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("during migration: %w", err)
-	} else if errors.Is(migrate.ErrNoChange, err) {
+	} else if errors.Is(err, migrate.ErrNoChange) {
 		slog.Info("# NO CHANGES DETECTED #")
 	}
 
 	slog.Info("# MIGRATION DONE #")
 
 	currentMigrationVer, _, err := migrateInstance.Version()
-	if err == migrate.ErrNilVersion {
+	if errors.Is(err, migrate.ErrNilVersion) {
 		slog.Info("# NO ACTIVE MIGRATION VERSION #")
 	} else if err != nil {
 		return fmt.Errorf("during acquiring active migration version: %w", err)
