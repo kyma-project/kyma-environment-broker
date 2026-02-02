@@ -1,7 +1,6 @@
 package dbmodel
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -64,16 +63,6 @@ type InstanceDTO struct {
 	Version int
 
 	EmptyUpdates int
-}
-
-type InstanceWithOperationDTO struct {
-	InstanceDTO
-
-	Type               sql.NullString
-	State              sql.NullString
-	OperationCreatedAt sql.NullTime
-	Data               sql.NullString
-	Description        sql.NullString
 }
 
 type InstanceWithExtendedOperationDTO struct {

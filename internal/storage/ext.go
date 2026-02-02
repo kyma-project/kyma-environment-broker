@@ -7,11 +7,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
 )
 
 type Instances interface {
-	FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error)
 	FindAllInstancesForRuntimes(runtimeIdList []string) ([]internal.Instance, error)
 	FindAllInstancesForSubAccounts(subAccountslist []string) ([]internal.Instance, error)
 	GetByID(instanceID string) (*internal.Instance, error)
@@ -79,8 +77,6 @@ type Deprovisioning interface {
 	GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error)
 	GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error)
 	UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error)
-	ListDeprovisioningOperationsByInstanceID(instanceID string) ([]internal.DeprovisioningOperation, error)
-	ListDeprovisioningOperations() ([]internal.DeprovisioningOperation, error)
 }
 
 type UpgradeCluster interface {

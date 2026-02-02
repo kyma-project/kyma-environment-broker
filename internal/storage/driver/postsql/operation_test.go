@@ -369,11 +369,6 @@ func TestOperation(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		// when
-		opList, err := svc.ListDeprovisioningOperationsByInstanceID("inst-id")
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, 2, len(opList))
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {

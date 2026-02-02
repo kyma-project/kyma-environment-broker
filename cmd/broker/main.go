@@ -17,7 +17,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
-	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/btpregionsmigration"
@@ -549,10 +548,6 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	broker.AttachRoutes(subRouter, brokerWithPanicRecovery, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.Broker.DefaultRequestRegion, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
-
-	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter, publisher, logs)
-	router.Handle("/info/runtimes", runtimesInfoHandler)
 
 	// create events endpoint
 	eventsHandler := eventshandler.NewHandler(db.Events(), db.Instances())

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -73,9 +72,6 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	bindCrestedCollector := NewBindingCreationCollector()
 	prometheus.MustRegister(bindCrestedCollector)
 
-	runtimesInfoRequestsCollector := NewRuntimesInfoRequestsCollector()
-	prometheus.MustRegister(runtimesInfoRequestsCollector)
-
 	stepDurationCollector := NewStepDurationCollector()
 	prometheus.MustRegister(stepDurationCollector)
 
@@ -90,8 +86,6 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
 	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
-
-	sub.Subscribe(appinfo.RuntimesInfoRequest{}, runtimesInfoRequestsCollector.OnRequest)
 
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
