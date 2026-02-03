@@ -34,16 +34,19 @@ jobs:
       - name: Download logs from all attempts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          RELEASE_VERSION: ${{ github.event.release.tag_name }}
         run: ./scripts/download_workflow_logs.sh "Create and promote release" "Create and promote release ${{ github.event.release.tag_name }}"
 
       - name: Upload logs as release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in logs_attempt_*.zip; do
-            echo "Uploading $file to release ${{ github.event.release.tag_name }}..."
-            gh release upload ${{ github.event.release.tag_name }} "$file" --repo "$GITHUB_REPOSITORY" --clobber
-          done
+          COMBINED_ZIP="${{ github.event.repository.name }}_${{ github.event.release.tag_name }}.zip"
+          
+          echo "Uploading $COMBINED_ZIP to release ${{ github.event.release.tag_name }}..."
+          gh release upload ${{ github.event.release.tag_name }} "$COMBINED_ZIP" --repo "$GITHUB_REPOSITORY" --clobber
 
       - name: Notify MS Teams channel about failure
         if: ${{ !success() }}

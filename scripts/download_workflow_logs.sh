@@ -75,4 +75,6 @@ for attempt in $(seq 1 $attempts); do
     "/repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/logs" > "logs_attempt_${attempt}.zip"
 done
 
+zip "${REPO_NAME}_${RELEASE_VERSION}.zip" logs_attempt_*.zip
+
 echo "Downloaded logs for $attempts attempt(s)."
