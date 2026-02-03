@@ -78,6 +78,7 @@ The workflow performs the following steps:
 2. Waits for the "Create and promote release" workflow to finish if it is still in progress
 3. Downloads logs from all attempts of the "Create and promote release" workflow for the current release
 4. Uploads the downloaded logs as assets to the current GitHub release
+5. Uploads the downloaded logs to a GCP bucket
 
 ## Reusable Workflows
 
