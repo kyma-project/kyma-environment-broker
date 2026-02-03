@@ -18,7 +18,7 @@ type OperationManager struct {
 	component kebErr.Component
 	step      string
 
-	// stores timestamp to calculate timeout in retry* methods, the key is the operation.ID
+	// map stores timestamp to calculate timeout in retry* methods; the key is the operation.ID
 	retryTimestamps map[string]time.Time
 	mu              sync.RWMutex
 }
@@ -39,8 +39,9 @@ func NewOperationManager(storage storage.Operations, step string, component kebE
 func runTimestampGC(op *OperationManager, step string) {
 	numberOfDeletions := 0
 	op.mu.Lock()
+	slog.Info("Operation Manager for step %s is running timestamp GC, current map size: %d", step, len(op.retryTimestamps))
 	for opId, ts := range op.retryTimestamps {
-		if time.Since(ts) > 48*time.Hour {
+		if time.Since(ts) > 2*time.Hour {
 			delete(op.retryTimestamps, opId)
 			numberOfDeletions++
 		}
