@@ -28,8 +28,8 @@ const (
 )
 
 func ResponseLabels(instance internal.Instance, brokerURL string, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
-	brokerURL = strings.TrimLeft(brokerURL, "https://")
-	brokerURL = strings.TrimLeft(brokerURL, "http://")
+	brokerURL, _ = strings.CutPrefix(brokerURL, "https://")
+	brokerURL, _ = strings.CutPrefix(brokerURL, "http://")
 
 	responseLabels := make(map[string]any, 0)
 	responseLabels["Name"] = instance.Parameters.Parameters.Name

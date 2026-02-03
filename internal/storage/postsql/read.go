@@ -510,8 +510,7 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
 		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
 		Where(buildInstanceStateFilters("o1", filter)).
-		GroupBy(fmt.Sprintf("%s.sub_account_id", InstancesTableName)).
-		Having(fmt.Sprintf("count(*) > 1"))
+		GroupBy(fmt.Sprintf("%s.sub_account_id", InstancesTableName))
 
 	_, err := stmt.Load(&rows)
 	return rows, err

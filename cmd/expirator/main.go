@@ -10,9 +10,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+
 	"github.com/vrischmann/envconfig"
 )
 
@@ -96,8 +98,7 @@ func main() {
 }
 
 func (s *CleanupService) PerformCleanup() error {
-
-	filter := dbmodel.InstanceFilter{PlanIDs: []string{s.cfg.PlanID}}
+	filter := dbmodel.InstanceFilter{PlanIDs: []string{s.cfg.PlanID}, Expired: ptr.Bool(false)}
 	if s.cfg.TestRun {
 		filter.SubAccountIDs = []string{s.cfg.TestSubaccountID}
 	}
@@ -119,7 +120,7 @@ func (s *CleanupService) PerformCleanup() error {
 		slog.Info(fmt.Sprintf("Instances: %+v, to expire now: %+v, to be left non-expired: %+v", count, instancesToExpireCount, instancesToBeLeftCount))
 	} else {
 		suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount := s.cleanupInstances(instancesToExpire)
-		slog.Info(fmt.Sprintf("Instances: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v just marked expired: %+v, failures: %+v",
+		slog.Info(fmt.Sprintf("Instances: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v, just marked expired: %+v, failures: %+v",
 			count, instancesToExpireCount, instancesToBeLeftCount, suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount))
 	}
 	return nil
