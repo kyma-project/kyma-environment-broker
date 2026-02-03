@@ -10,6 +10,8 @@ permissions:
 jobs:
   upload-release-logs:
     runs-on: ubuntu-latest
+    env:
+      COMBINED_ZIP: ${{ github.event.repository.name }}_${{ github.event.release.tag_name }}.zip
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -43,10 +45,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMBINED_ZIP="${{ github.event.repository.name }}_${{ github.event.release.tag_name }}.zip"
-          
           echo "Uploading $COMBINED_ZIP to release ${{ github.event.release.tag_name }}..."
           gh release upload ${{ github.event.release.tag_name }} "$COMBINED_ZIP" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.RELEASE_LOG_UPLOADER_SA }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_KYMA_PROJECT_PROJECT_ID }}
+
+      - name: Upload report to the GCP bucket
+        run: gsutil cp "$COMBINED_ZIP" gs://kyma_release_test_logs/
 
       - name: Notify MS Teams channel about failure
         if: ${{ !success() }}
