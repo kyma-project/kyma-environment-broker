@@ -39,22 +39,15 @@ func NewOperationManager(storage storage.Operations, step string, component kebE
 func runTimestampGC(op *OperationManager, step string) {
 	numberOfDeletions := 0
 	op.mu.Lock()
-	defer op.mu.Unlock()
-	slog.Info("Operation Manager for step %s is running timestamp GC, current map size: %d", step, len(op.retryTimestamps))
 	for opId, ts := range op.retryTimestamps {
 		if time.Since(ts) > 48*time.Hour {
 			delete(op.retryTimestamps, opId)
 			numberOfDeletions++
 		}
 	}
+	op.mu.Unlock()
 	if numberOfDeletions > 0 {
-		// recreate map to free memory
-		tempMap := make(map[string]time.Time, len(op.retryTimestamps))
-		for opId, ts := range op.retryTimestamps {
-			tempMap[opId] = ts
-		}
-		op.retryTimestamps = tempMap
-		slog.Info("Operation Manager for step %s has deleted %d old timestamps and recreated the map to free memory", step, numberOfDeletions)
+		slog.Info("Operation Manager for step %s has deleted %d old timestamps", step, numberOfDeletions)
 	}
 }
 
