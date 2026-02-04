@@ -1,6 +1,6 @@
 module github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioning-service-test
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/stretchr/testify v1.11.1
