@@ -67,12 +67,18 @@ if [ -z "$attempts" ] || [ "$attempts" = "null" ]; then
   exit 1
 fi
 
+LOGS_DIR="${REPO_NAME}_${RELEASE_VERSION}"
+mkdir -p "$LOGS_DIR"
+
 for attempt in $(seq 1 $attempts); do
   echo "Downloading logs for attempt $attempt..."
   retry_gh_api gh api \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    "/repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/logs" > "logs_attempt_${attempt}.zip"
+    "/repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/logs" > "${LOGS_DIR}/${LOGS_DIR}_attempt_${attempt}.zip"
 done
+
+zip -r "${LOGS_DIR}.zip" "$LOGS_DIR"
+rm -rf "$LOGS_DIR"
 
 echo "Downloaded logs for $attempts attempt(s)."
