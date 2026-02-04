@@ -2,14 +2,14 @@ package gardener
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
 func ReadDNSProvidersValuesFromYAML(yamlFilePath string) (DNSProvidersData, error) {
 	var values DNSProvidersData
-	yamlFile, err := ioutil.ReadFile(yamlFilePath)
+	yamlFile, err := os.ReadFile(yamlFilePath)
 	if err != nil {
 		return DNSProvidersData{}, fmt.Errorf("while reading YAML file with DNS default values: %w", err)
 	}

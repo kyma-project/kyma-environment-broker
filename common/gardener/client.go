@@ -3,7 +3,7 @@ package gardener
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -311,7 +311,7 @@ var (
 
 func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error) {
 
-	rawKubeconfig, err := ioutil.ReadFile(kubeconfigPath)
+	rawKubeconfig, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Gardener Kubeconfig from path %s: %s", kubeconfigPath, err.Error())
 	}
