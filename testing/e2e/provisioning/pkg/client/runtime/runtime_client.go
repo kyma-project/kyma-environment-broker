@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"os"
@@ -76,7 +75,7 @@ func (c *Client) FetchRuntimeConfig() (*string, error) {
 
 func (c *Client) writeConfigToFile(config string) (string, error) {
 	content := []byte(config)
-	runtimeConfigTmpFile, err := ioutil.TempFile("", "runtime.*.yaml")
+	runtimeConfigTmpFile, err := os.CreateTemp("", "runtime.*.yaml")
 	if err != nil {
 		return "", fmt.Errorf("while creating runtime config temp file: %w", err)
 	}
