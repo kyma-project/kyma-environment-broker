@@ -159,7 +159,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, internal.InstanceStats{
 			TotalNumberOfInstances: 3,
 			PerGlobalAccountID:     map[string]int{"A": 2, "C": 1},
-			PerSubAcocuntID:        map[string]int{"sub-01": 2},
+			PerSubAcocuntID:        map[string]int{"sub-01": 2, "sub-02": 1},
 		}, stats)
 		assert.Equal(t, 3, numberOfInstancesA)
 		assert.Equal(t, 1, numberOfInstancesC)
