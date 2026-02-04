@@ -18,7 +18,7 @@ type OperationManager struct {
 	component kebErr.Component
 	step      string
 
-	// stores timestamp to calculate timeout in retry* methods, the key is the operation.ID
+	// map stores timestamp to calculate timeout in retry* methods; the key is the operation.ID
 	retryTimestamps map[string]time.Time
 	mu              sync.RWMutex
 }
@@ -118,9 +118,14 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
-	om.storeCreatedAtIfMissing(operation.ID, operation.CreatedAt)
-	if !om.isTimeoutOccurred(operation.ID, maxTime) {
-		remainingTime := om.getRemainingTime(operation.ID, maxTime)
+	sinceCreation := time.Since(operation.CreatedAt)
+
+	if sinceCreation <= maxTime {
+		remainingTime := maxTime - sinceCreation
+		if remainingTime < 0 {
+			remainingTime = 0
+		}
+
 		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
 		return operation, retryInterval, nil
 	}
@@ -226,14 +231,6 @@ func (om *OperationManager) storeTimestampIfMissing(id string) {
 	defer om.mu.Unlock()
 	if om.retryTimestamps[id].IsZero() {
 		om.retryTimestamps[id] = time.Now()
-	}
-}
-
-func (om *OperationManager) storeCreatedAtIfMissing(id string, createdAt time.Time) {
-	om.mu.Lock()
-	defer om.mu.Unlock()
-	if om.retryTimestamps[id].IsZero() {
-		om.retryTimestamps[id] = createdAt
 	}
 }
 
