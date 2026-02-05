@@ -677,6 +677,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -723,6 +724,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -835,6 +838,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin(t *testi
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -880,6 +885,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -937,6 +944,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -979,6 +987,8 @@ func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -1026,6 +1036,7 @@ func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -1063,6 +1074,8 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -1096,6 +1109,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
@@ -1112,6 +1126,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
+	assert.NoError(t, err)
 
 	// then
 	assert.NoError(t, err)
@@ -1140,6 +1155,8 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "zone"}
 
 	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -1184,6 +1201,8 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *test
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "zone"}
 
 	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
@@ -1349,6 +1368,8 @@ func TestCreateRuntimeResourceStep_AWS_ZonesDiscovery(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)

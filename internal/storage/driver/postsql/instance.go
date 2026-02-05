@@ -24,7 +24,7 @@ type Instance struct {
 }
 
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
-	sess := s.Factory.NewReadSession()
+	sess := s.NewReadSession()
 	var (
 		subAccounts []string
 		lastErr     dberr.Error
@@ -52,7 +52,7 @@ func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *I
 }
 
 func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]internal.Instance, error) {
-	sess := s.Factory.NewReadSession()
+	sess := s.NewReadSession()
 	var instances []dbmodel.InstanceDTO
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -82,7 +82,7 @@ func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]intern
 }
 
 func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]internal.Instance, error) {
-	sess := s.Factory.NewReadSession()
+	sess := s.NewReadSession()
 	var (
 		instances []dbmodel.InstanceDTO
 		lastErr   dberr.Error
@@ -111,7 +111,7 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 }
 
 func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error) {
-	sess := s.Factory.NewReadSession()
+	sess := s.NewReadSession()
 	var result int
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		count, err := sess.GetNumberOfInstancesForGlobalAccountID(globalAccountID)
@@ -123,7 +123,7 @@ func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string
 
 // TODO: Wrap retries in single method WithRetries
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
-	sess := s.Factory.NewReadSession()
+	sess := s.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -262,7 +262,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 		return err
 	}
 
-	sess := s.Factory.NewWriteSession()
+	sess := s.NewWriteSession()
 	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
@@ -273,7 +273,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 }
 
 func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error) {
-	sess := s.Factory.NewWriteSession()
+	sess := s.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 }
 
 func (s *Instance) Delete(instanceID string) error {
-	sess := s.Factory.NewWriteSession()
+	sess := s.NewWriteSession()
 	return sess.DeleteInstance(instanceID)
 }
 
@@ -408,7 +408,7 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 		}
 
 		lastOp := internal.Operation{}
-		err = json.Unmarshal([]byte(dto.OperationDTO.Data), &lastOp)
+		err = json.Unmarshal([]byte(dto.Data), &lastOp)
 		if err != nil {
 			return nil, 0, 0, fmt.Errorf("while unmarshalling operation data: %w", err)
 		}
@@ -425,7 +425,7 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 }
 
 func (s *Instance) UpdateInstanceLastOperation(instanceID, operationID string) error {
-	sess := s.Factory.NewWriteSession()
+	sess := s.NewWriteSession()
 	return sess.UpdateInstanceLastOperation(instanceID, operationID)
 }
 
@@ -444,7 +444,7 @@ func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]int
 		}
 
 		lastOp := internal.Operation{}
-		err = json.Unmarshal([]byte(dto.OperationDTO.Data), &lastOp)
+		err = json.Unmarshal([]byte(dto.Data), &lastOp)
 		if err != nil {
 			return nil, 0, 0, fmt.Errorf("while unmarshalling operation data: %w", err)
 		}

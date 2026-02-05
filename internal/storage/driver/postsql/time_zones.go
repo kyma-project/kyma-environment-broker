@@ -19,7 +19,7 @@ func NewTimeZones(sess postsql.Factory) *TimeZones {
 }
 
 func (timeZones *TimeZones) GetTimeZone() (string, error) {
-	sess := timeZones.Factory.NewReadSession()
+	sess := timeZones.NewReadSession()
 	var (
 		timeZone string
 		lastErr  dberr.Error

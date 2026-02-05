@@ -35,7 +35,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if runtimeId != "" {
 		instances, _, _, err := h.i.List(dbmodel.InstanceFilter{RuntimeIDs: split(runtimeId)})
 		if err != nil {
-			http.Error(w, err.Error(), 503)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 		for _, i := range instances {
@@ -44,15 +44,15 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	events, err := h.e.ListEvents(events.EventFilter{InstanceIDs: instanceIds, OperationIDs: operationIds})
 	if err != nil {
-		http.Error(w, err.Error(), 503)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	bytes, err := json.Marshal(events)
 	if err != nil {
-		http.Error(w, err.Error(), 503)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	if _, err = w.Write(bytes); err != nil {
-		http.Error(w, err.Error(), 503)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
 }

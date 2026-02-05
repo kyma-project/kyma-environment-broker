@@ -202,9 +202,10 @@ func invokeMigration() error {
 	}(migrateInstance)
 	migrateInstance.Log = &Logger{}
 
-	if direction == "up" {
+	switch direction {
+	case "up":
 		err = migrateInstance.Up()
-	} else if direction == "down" {
+	case "down":
 		err = migrateInstance.Down()
 	}
 

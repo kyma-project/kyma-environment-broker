@@ -371,7 +371,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 	}
 	if rejectUnsupportedParameters {
 		if oidcTypeExpanded, ok := OIDCs.OneOf[1].(OIDCTypeExpanded); ok {
-			oidcTypeExpanded.Type.AdditionalProperties = false
+			oidcTypeExpanded.AdditionalProperties = false
 			OIDCs.OneOf[1] = oidcTypeExpanded
 		}
 	}
@@ -438,7 +438,7 @@ func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
 		Required: []string{"clientID", "issuerURL"},
 	}
 	if rejectUnsupportedParameters {
-		OIDCType.Type.AdditionalProperties = false
+		OIDCType.AdditionalProperties = false
 	}
 	OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
 	OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
@@ -698,7 +698,7 @@ func NewNetworkingSchema(rejectUnsupportedParameters bool, providerSpec *configu
 		Required:   []string{"nodes"},
 	}
 	if rejectUnsupportedParameters {
-		networkingType.Type.AdditionalProperties = false
+		networkingType.AdditionalProperties = false
 	}
 	return networkingType
 }
@@ -715,7 +715,7 @@ func NewSchema(properties interface{}, required []string, rejectUnsupportedParam
 		LoadCurrentConfig: true,
 	}
 	if rejectUnsupportedParameters {
-		rootSchema.Type.AdditionalProperties = false
+		rootSchema.AdditionalProperties = false
 	}
 	return rootSchema
 }
@@ -805,7 +805,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 		},
 	}
 	if rejectUnsupportedParameters {
-		additionalWorkerNodePoolsType.Items.Type.AdditionalProperties = false
+		additionalWorkerNodePoolsType.Items.AdditionalProperties = false
 	}
 	return additionalWorkerNodePoolsType
 }

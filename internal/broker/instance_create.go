@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -421,14 +422,14 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 		if err != nil {
 			l.Error(fmt.Sprintf("unable to create AWS client: %s", err))
-			return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+			return apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
 			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				l.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+				return apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 			}
 			discoveredZones[machineType] = zonesCount
 		}
@@ -443,7 +444,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return err
 	}
 
-	if err := parameters.AutoScalerParameters.Validate(values.DefaultAutoScalerMin, values.DefaultAutoScalerMax); err != nil {
+	if err := parameters.Validate(values.DefaultAutoScalerMin, values.DefaultAutoScalerMax); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 	if parameters.OIDC.IsProvided() {
@@ -566,11 +567,11 @@ func validateIngressFiltering(provisioningParameters internal.ProvisioningParame
 		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID))
 		if !plans.Contains(planName) {
 			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, planName))
-			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
+			return errors.New(IngressFilteringOptionIsNotSupported)
 		}
 		if IsExternalLicenseType(provisioningParameters.ErsContext) && *ingressFilteringParameter {
 			log.Info(IngressFilteringNotSupportedForExternalCustomerMsg)
-			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
+			return errors.New(IngressFilteringOptionIsNotSupported)
 		}
 	}
 	return nil
@@ -726,7 +727,7 @@ func checkAvailableZones(
 			zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
 			if err != nil {
 				log.Error(fmt.Sprintf("while getting available zones: %v", err))
-				return fmt.Errorf(FailedToValidateZonesMsg)
+				return errors.New(FailedToValidateZonesMsg)
 			}
 			if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
 				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {

@@ -87,8 +87,7 @@ func NewInMemoryEvents() *inMemoryEvents {
 	}
 }
 
-func (_ *inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
-	return
+func (*inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
 }
 
 func (e *inMemoryEvents) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceID, operationID string) {

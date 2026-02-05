@@ -225,12 +225,12 @@ func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.O
 
 	operations := make([]internal.Operation, 0)
 	for _, op := range s.operations {
-		if (op.CreatedAt.After(from) || op.CreatedAt == from) && (op.CreatedAt.Before(to) || op.CreatedAt == to) {
+		if (op.CreatedAt.After(from) || op.CreatedAt.Equal(from)) && (op.CreatedAt.Before(to) || op.CreatedAt.Equal(to)) {
 			operations = append(operations, op)
 			continue
 		}
 
-		if (op.UpdatedAt.After(from) || op.UpdatedAt == from) && (op.UpdatedAt.Before(to) || op.UpdatedAt == to) {
+		if (op.UpdatedAt.After(from) || op.UpdatedAt.Equal(from)) && (op.UpdatedAt.Before(to) || op.UpdatedAt.Equal(to)) {
 			operations = append(operations, op)
 			continue
 		}
@@ -303,7 +303,7 @@ func (s *operations) InsertUpgradeClusterOperation(operation internal.UpgradeClu
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := operation.Operation.ID
+	id := operation.ID
 	if _, exists := s.upgradeClusterOperations[id]; exists {
 		return dberr.AlreadyExists("instance operation with id %s already exist", id)
 	}
@@ -327,15 +327,15 @@ func (s *operations) UpdateUpgradeClusterOperation(op internal.UpgradeClusterOpe
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	oldOp, exists := s.upgradeClusterOperations[op.Operation.ID]
+	oldOp, exists := s.upgradeClusterOperations[op.ID]
 	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.Operation.ID)
+		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
 	}
 	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update upgradeKyma operation with id %s (for instance id %s) - conflict", op.Operation.ID, op.InstanceID)
+		return nil, dberr.Conflict("unable to update upgradeKyma operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
 	}
 	op.Version = op.Version + 1
-	s.upgradeClusterOperations[op.Operation.ID] = op
+	s.upgradeClusterOperations[op.ID] = op
 
 	return &op, nil
 }
@@ -490,14 +490,14 @@ func (s *operations) GetOperationsForIDs(opIdList []string) ([]internal.Operatio
 	ops := make([]internal.Operation, 0)
 	for _, opID := range opIdList {
 		for _, op := range s.updateOperations {
-			if op.Operation.ID == opID {
+			if op.ID == opID {
 				ops = append(ops, op.Operation)
 			}
 		}
 	}
 	for _, opID := range opIdList {
 		for _, op := range s.upgradeClusterOperations {
-			if op.Operation.ID == opID {
+			if op.ID == opID {
 				ops = append(ops, op.Operation)
 			}
 		}

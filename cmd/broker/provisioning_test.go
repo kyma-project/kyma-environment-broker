@@ -56,7 +56,7 @@ func TestCatalog(t *testing.T) {
 	defer suite.TearDown()
 
 	// when
-	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
+	resp := suite.CallAPI("GET", "oauth/v2/catalog", ``)
 
 	content, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
