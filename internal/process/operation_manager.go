@@ -13,12 +13,17 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
+const (
+	timeStampGCInterval = time.Hour
+	timeStampTTL        = 48 * time.Hour
+)
+
 type OperationManager struct {
 	storage   storage.Operations
 	component kebErr.Component
 	step      string
 
-	// stores timestamp to calculate timeout in retry* methods, the key is the operation.ID
+	// map stores timestamp to calculate timeout in retry* methods; the key is the operation.ID
 	retryTimestamps map[string]time.Time
 	mu              sync.RWMutex
 }
@@ -26,7 +31,7 @@ type OperationManager struct {
 func NewOperationManager(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
 	op := &OperationManager{storage: storage, component: component, step: step, retryTimestamps: make(map[string]time.Time)}
 	go func(op *OperationManager, step string) {
-		ticker := time.NewTicker(time.Hour)
+		ticker := time.NewTicker(timeStampGCInterval)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
@@ -39,15 +44,22 @@ func NewOperationManager(storage storage.Operations, step string, component kebE
 func runTimestampGC(op *OperationManager, step string) {
 	numberOfDeletions := 0
 	op.mu.Lock()
+	defer op.mu.Unlock()
+	slog.Info("Operation Manager for step %s is running timestamp GC, current map size: %d", step, len(op.retryTimestamps))
 	for opId, ts := range op.retryTimestamps {
-		if time.Since(ts) > 48*time.Hour {
+		if time.Since(ts) > timeStampTTL {
 			delete(op.retryTimestamps, opId)
 			numberOfDeletions++
 		}
 	}
-	op.mu.Unlock()
 	if numberOfDeletions > 0 {
-		slog.Info("Operation Manager for step %s has deleted %d old timestamps", step, numberOfDeletions)
+		// recreate map to free memory
+		tempMap := make(map[string]time.Time, len(op.retryTimestamps))
+		for opId, ts := range op.retryTimestamps {
+			tempMap[opId] = ts
+		}
+		op.retryTimestamps = tempMap
+		slog.Info("Operation Manager for step %s has deleted %d old timestamps and recreated the map to free memory", step, numberOfDeletions)
 	}
 }
 
@@ -118,9 +130,14 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 
-	om.storeCreatedAtIfMissing(operation.ID, operation.CreatedAt)
-	if !om.isTimeoutOccurred(operation.ID, maxTime) {
-		remainingTime := om.getRemainingTime(operation.ID, maxTime)
+	sinceCreation := time.Since(operation.CreatedAt)
+
+	if sinceCreation <= maxTime {
+		remainingTime := maxTime - sinceCreation
+		if remainingTime < 0 {
+			remainingTime = 0
+		}
+
 		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
 		return operation, retryInterval, nil
 	}
@@ -226,14 +243,6 @@ func (om *OperationManager) storeTimestampIfMissing(id string) {
 	defer om.mu.Unlock()
 	if om.retryTimestamps[id].IsZero() {
 		om.retryTimestamps[id] = time.Now()
-	}
-}
-
-func (om *OperationManager) storeCreatedAtIfMissing(id string, createdAt time.Time) {
-	om.mu.Lock()
-	defer om.mu.Unlock()
-	if om.retryTimestamps[id].IsZero() {
-		om.retryTimestamps[id] = createdAt
 	}
 }
 

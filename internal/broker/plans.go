@@ -3,11 +3,9 @@ package broker
 import (
 	"strings"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/labstack/gommon/log"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
-	"golang.org/x/exp/maps"
-
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 const (
@@ -103,7 +101,11 @@ func (ap AvailablePlansType) GetPlanIDByName(planName PlanNameType) (PlanIDType,
 }
 
 func (ap AvailablePlansType) GetAllPlanIDs() []PlanIDType {
-	return maps.Keys(ap.idToName)
+	ids := make([]PlanIDType, 0, len(ap.idToName))
+	for id := range ap.idToName {
+		ids = append(ids, id)
+	}
+	return ids
 }
 
 func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
