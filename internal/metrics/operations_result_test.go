@@ -37,10 +37,11 @@ func TestOperationsResult(t *testing.T) {
 
 		resultsCollector := newResultsCollector(
 			operations, Config{
-				Enabled:                        true,
-				OperationResultPollingInterval: 5 * time.Minute,
-				OperationStatsPollingInterval:  5 * time.Minute,
-				OperationResultRetentionPeriod: 24 * time.Hour,
+				Enabled:                                         true,
+				OperationResultPollingInterval:                  5 * time.Minute,
+				OperationStatsPollingInterval:                   5 * time.Minute,
+				OperationResultRetentionPeriod:                  24 * time.Hour,
+				OperationResultFinishedOperationRetentionPeriod: 24 * time.Hour,
 			}, log,
 		)
 
@@ -113,6 +114,54 @@ func TestOperationsResult(t *testing.T) {
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp4))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp3))))
 	})
+}
+
+func TestRemovalOfOutdatedData(t *testing.T) {
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	operations := storage.NewMemoryStorage().Operations()
+
+	// fix three operations
+
+	_ = operations.InsertOperation(fixRandomOp(time.Now().UTC().Add(-2*time.Hour), domain.InProgress))
+	_ = operations.InsertOperation(fixRandomOp(time.Now().UTC().Add(-2*time.Hour), domain.Succeeded))
+	_ = operations.InsertOperation(fixRandomOp(time.Now().UTC().Add(-2*time.Hour), domain.Failed))
+
+	resultsCollector := newResultsCollector(
+		operations, Config{
+			Enabled:                                         true,
+			OperationResultPollingInterval:                  5 * time.Minute,
+			OperationStatsPollingInterval:                   5 * time.Minute,
+			OperationResultRetentionPeriod:                  24 * time.Hour,
+			OperationResultFinishedOperationRetentionPeriod: 24 * time.Hour,
+		}, log,
+	)
+
+	eventBroker := event.NewPubSub(log)
+	eventBroker.Subscribe(process.OperationFinished{}, resultsCollector.UpdateMetrics)
+
+	ops, err := operations.GetAllOperations()
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(ops))
+
+	err = resultsCollector.UpdateResultMetricsInTimeRange()
+	assert.NoError(t, err)
+
+	for _, op := range ops {
+		assert.Equal(
+			t, float64(1), testutil.ToFloat64(
+				resultsCollector.metrics.With(GetLabels(op)),
+			),
+		)
+	}
+	assert.Equal(t, 3, len(resultsCollector.cache))
+	resultsCollector.deleteMarked(time.Now().UTC())
+	assert.Equal(t, 3, len(resultsCollector.cache))
+	resultsCollector.deleteMarked(time.Now().UTC().Add(24 * time.Hour))
+	assert.Equal(t, 1, len(resultsCollector.cache))
 }
 
 func insertRandomOperations(t *testing.T, operations storage.Operations, count int) {

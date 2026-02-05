@@ -27,14 +27,14 @@ type resultsCollector struct {
 }
 
 type cachedOperationType struct {
-	labels       map[string]string
-	deletionTime time.Time
+	labels   map[string]string
+	deleteAt time.Time
 }
 
 var _ Exposer = (*resultsCollector)(nil)
 
 func newResultsCollector(db storage.Operations, cfg Config, logger *slog.Logger) *resultsCollector {
-	opInfo := &resultsCollector{
+	collector := &resultsCollector{
 		operations: db,
 		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
@@ -49,7 +49,7 @@ func newResultsCollector(db storage.Operations, cfg Config, logger *slog.Logger)
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
 
-	return opInfo
+	return collector
 }
 
 func (s *resultsCollector) startCollectorJob(ctx context.Context) {
@@ -61,7 +61,7 @@ func (s *resultsCollector) deleteMarked(now time.Time) {
 	s.sync.Lock()
 	defer s.sync.Unlock()
 	for id, cachedOp := range s.cache {
-		if !cachedOp.deletionTime.IsZero() && cachedOp.deletionTime.Before(now) {
+		if !cachedOp.deleteAt.IsZero() && cachedOp.deleteAt.Before(now) {
 			delete(s.cache, id)
 			count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
 			s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
@@ -77,12 +77,15 @@ func (s *resultsCollector) Metrics() *prometheus.GaugeVec {
 // each metric has labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happens in a KEB system and will be persisted in Prometheus Server
 // metrics set to 0 means that this event is outdated, and will be replaced by a new one
-func (s *resultsCollector) updateMetricsForCompletedOperation(operation internal.Operation) {
+func (s *resultsCollector) updateMetricsForOperation(operation internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
 	cachedOperation, found := s.cache[operation.ID]
 	if found {
+		if !cachedOperation.deleteAt.IsZero() {
+			return
+		}
 		s.metrics.With(cachedOperation.labels).Set(0)
 	}
 	operationLabels := GetLabels(operation)
@@ -97,7 +100,7 @@ func (s *resultsCollector) updateMetricsForCompletedOperation(operation internal
 
 func (s *resultsCollector) markForDeletion(operationID string) {
 	cachedOp := s.cache[operationID]
-	cachedOp.deletionTime = time.Now().UTC().Add(s.finishedOperationRetentionPeriod)
+	cachedOp.deleteAt = time.Now().UTC().Add(s.finishedOperationRetentionPeriod)
 	s.cache[operationID] = cachedOp
 }
 
@@ -119,7 +122,7 @@ func (s *resultsCollector) UpdateResultMetricsInTimeRange() (err error) {
 	}
 
 	for _, op := range operations {
-		s.updateMetricsForCompletedOperation(op)
+		s.updateMetricsForOperation(op)
 	}
 	s.lastUpdate = now
 	return nil
@@ -135,7 +138,7 @@ func (s *resultsCollector) UpdateMetrics(_ context.Context, event interface{}) e
 	switch ev := event.(type) {
 	case process.OperationFinished:
 		s.logger.Debug(fmt.Sprintf("Handling OperationFinished event: OpID=%s State=%s", ev.Operation.ID, ev.Operation.State))
-		s.updateMetricsForCompletedOperation(ev.Operation)
+		s.updateMetricsForOperation(ev.Operation)
 	default:
 		s.logger.Error(fmt.Sprintf("Handling OperationFinished, unexpected event type: %T", event))
 	}
