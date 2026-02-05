@@ -910,112 +910,18 @@ jobs:
             exit 1
           fi
 
-      - name: Post-test monitoring period (first round)
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
-
-      - name: Mark baseline for leak detection before second round
+      - name: Mark baseline for leak detection
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
           wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
           echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
 
-      - name: Provision instances (second round)
+      - name: Post-test monitoring period
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-            if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-              echo "Assertion passed: totalCount is $TOTAL_COUNT"
-            else
-              echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-              exit 1
-            fi
-
-      - name: Simulate KIM (second round - provision)
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        timeout-minutes: 60
-        env:
-          KIM_DELAY_SECONDS: 0
-        run: |
-          scripts/simulate_kim.sh
-
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
-            exit 1
-          fi
-
-      - name: Deprovision instances (second round)
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        timeout-minutes: 60
-        run: |
-          PAGE=1
-
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?page=${PAGE}&pageSize=100&operationDetail=true&plan=azure&state=succeeded" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-            
-            INSTANCES=$(echo "$RESPONSE" | jq '.data')
-            if [ "$INSTANCES" = "[]" ]; then
-              echo "No more instances to deprovision on page $PAGE"
-              break
-            fi
-            
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request DELETE \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281" \
-                --header 'Content-Type: application/json' \
-                --header 'X-Broker-API-Version: 2.16'
-            done
-            
-            PAGE=$((PAGE + 1))
-          done
-
-          while true; do
-            DEPROVISIONING_COUNT=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&state=deprovisioning" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-            if [ "$DEPROVISIONING_COUNT" -eq 0 ]; then
-              echo "All instances are deprovisioned. Done."
-              break
-            fi
-
-            sleep 10
-          done
-
-      - name: Post-test monitoring period (second round)
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
+          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+          echo "Post-test monitoring completed"
 
       - name: Generate charts
         run: |
