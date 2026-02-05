@@ -169,7 +169,7 @@ jobs:
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
-            if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
             echo "Assertion passed: totalCount is $TOTAL_COUNT"
           else
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
