@@ -35,7 +35,7 @@ func TestOperationsResult(t *testing.T) {
 
 		insertRandomOperations(t, operations, operationsCount)
 
-		resultsCollector := NewOperationsResults(
+		resultsCollector := newResultsCollector(
 			operations, Config{
 				Enabled:                        true,
 				OperationResultPollingInterval: 5 * time.Minute,
@@ -51,7 +51,7 @@ func TestOperationsResult(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, operationsCount, len(ops))
 
-		err = resultsCollector.UpdateOperationResultsMetricsInTimeRange()
+		err = resultsCollector.UpdateResultMetricsInTimeRange()
 		assert.NoError(t, err)
 
 		for _, op := range ops {
@@ -66,7 +66,7 @@ func TestOperationsResult(t *testing.T) {
 		err = operations.InsertOperation(newOp)
 		assert.NoError(t, err)
 
-		err = resultsCollector.UpdateOperationResultsMetricsInTimeRange()
+		err = resultsCollector.UpdateResultMetricsInTimeRange()
 		assert.NoError(t, err)
 
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(newOp))))
@@ -105,7 +105,7 @@ func TestOperationsResult(t *testing.T) {
 		err = operations.InsertOperation(existingOp4)
 		assert.NoError(t, err)
 
-		err = resultsCollector.UpdateOperationResultsMetricsInTimeRange()
+		err = resultsCollector.UpdateResultMetricsInTimeRange()
 		assert.NoError(t, err)
 
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp1))))
