@@ -189,6 +189,12 @@ jobs:
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
 
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+
       - name: Provision instances (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -448,6 +454,12 @@ jobs:
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
 
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+
       - name: Update instances (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         timeout-minutes: 60
@@ -567,9 +579,6 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision the instance
         run: |
@@ -657,6 +666,12 @@ jobs:
           echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
+
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
 
       - name: Update the instance (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -902,6 +917,12 @@ jobs:
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
 
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+
       - name: Provision instances (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -1074,9 +1095,6 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Provision instances
         run: |
@@ -1332,6 +1350,12 @@ jobs:
           sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
           echo "Post-test monitoring completed"
 
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: |
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+
       - name: Run mixed operations (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
@@ -1473,9 +1497,6 @@ jobs:
           echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
 
       - name: Fetch runtimes using GET endpoint
         run: |
