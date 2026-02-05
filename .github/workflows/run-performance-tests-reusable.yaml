@@ -483,7 +483,7 @@ jobs:
                 --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":16}}'
             done
           
             PAGE=$((PAGE + 1))
@@ -1305,7 +1305,7 @@ jobs:
                 --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":16}}'
             done
 
             PAGE=$((PAGE + 1))
