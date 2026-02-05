@@ -1404,6 +1404,9 @@ jobs:
           sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
           echo "Baseline monitoring completed"
 
+          # Mark the end of baseline period
+          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+
       - name: Fetch runtimes using GET endpoint
         run: |
           kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
