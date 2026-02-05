@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"gopkg.in/yaml.v3"
@@ -10,7 +10,7 @@ import (
 
 func ReadOIDCDefaultValuesFromYAML(yamlFilePath string) (pkg.OIDCConfigDTO, error) {
 	var values pkg.OIDCConfigDTO
-	yamlFile, err := ioutil.ReadFile(yamlFilePath)
+	yamlFile, err := os.ReadFile(yamlFilePath)
 	if err != nil {
 		return pkg.OIDCConfigDTO{}, fmt.Errorf("while reading YAML file with OIDC default values: %w", err)
 	}

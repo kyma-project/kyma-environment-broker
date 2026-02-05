@@ -2,7 +2,7 @@ package broker
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -78,7 +78,7 @@ func (cfg *Config) Validate() error {
 }
 
 func NewServicesConfigFromFile(path string) (ServicesConfig, error) {
-	yamlFile, err := ioutil.ReadFile(path)
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("while reading YAML file with managed components list: %w", err)
 	}

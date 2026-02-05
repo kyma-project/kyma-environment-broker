@@ -2,7 +2,7 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +25,7 @@ func initTestDBInstancesTables(t *testing.T, connectionURL string) error {
 	}
 
 	dirPath := "./../../../resources/keb/migrations/"
-	files, err := ioutil.ReadDir(dirPath)
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		t.Logf("Cannot read files from directory %s", dirPath)
 		return err
@@ -33,7 +33,7 @@ func initTestDBInstancesTables(t *testing.T, connectionURL string) error {
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
-			v, err := ioutil.ReadFile(dirPath + file.Name())
+			v, err := os.ReadFile(dirPath + file.Name())
 			if err != nil {
 				t.Logf("Cannot read file %s", file.Name())
 			}

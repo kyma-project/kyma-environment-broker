@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"os"
@@ -382,7 +381,7 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, body io.
 	}
 	defer c.warnOnError(resp.Body.Close)
 	if resp.StatusCode != expectedStatus {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			c.log.Error(err.Error())
 			os.Exit(1)

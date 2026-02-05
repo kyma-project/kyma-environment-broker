@@ -3,7 +3,7 @@ package kubeconfig
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -151,7 +151,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 				require.Equal(t, "application/json", response.Header.Get("Content-Type"))
 			}
 
-			body, err := ioutil.ReadAll(response.Body)
+			body, err := io.ReadAll(response.Body)
 			require.NoError(t, err)
 
 			if d.pass {

@@ -2,13 +2,13 @@ package provider
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
 func ReadPlatformRegionMappingFromFile(filename string) (map[string]string, error) {
-	regionConfig, err := ioutil.ReadFile(filename)
+	regionConfig, err := os.ReadFile(filename)
 	if err != nil {
 		return map[string]string{}, fmt.Errorf("while reading %s file with region mapping config: %w", filename, err)
 	}

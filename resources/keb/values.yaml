@@ -72,7 +72,7 @@ global:
       version: "1.25.36"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: "1.25.36"
+      version: 1.25.36
   ingress:
     domainName: localhost
   istio:

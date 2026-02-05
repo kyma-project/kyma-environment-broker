@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"time"
@@ -133,7 +132,7 @@ func (c *UpgradeClient) executeRequest(method, url string, body io.Reader) (*htt
 
 func (c *UpgradeClient) handleUnsupportedStatusCode(response *http.Response) error {
 	var body string
-	responseBody, err := ioutil.ReadAll(response.Body)
+	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		body = "cannot read body response"
 	} else {

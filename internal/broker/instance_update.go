@@ -202,6 +202,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	}
 
 	if b.processingEnabled {
+		previousInstance := *instance
 		instance, suspendStatusChange, err := b.processContext(instance, details, lastProvisioningOperation, logger)
 		if err != nil {
 			return domain.UpdateServiceSpec{}, err
@@ -210,7 +211,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 		// NOTE: KEB currently can't process update parameters in one call along with context update
 		// this block makes it that KEB ignores any parameters updates if context update changed suspension state
 		if !suspendStatusChange && !instance.IsExpired() {
-			return b.processUpdateParameters(ctx, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
+			return b.processUpdateParameters(ctx, &previousInstance, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
 	return domain.UpdateServiceSpec{
@@ -250,7 +251,7 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 	return ersContext.ERSUpdate()
 }
 
-func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousInstance, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
 		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
@@ -446,7 +447,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 		}
 	}
 	operation.ProviderValues = &providerValues
-	oldParameters := instance.Parameters.Parameters
 
 	if params.OIDC.IsProvided() {
 		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
@@ -515,7 +515,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 			}
 		}
 	}
-	if b.shouldResponseSynchronously(oldParameters, instance, logger) {
+	if b.shouldResponseSynchronously(previousInstance, instance, logger) {
 		return b.processSyncResponseOk(instance, logger)
 	}
 	logger.Debug("Creating update operation in the database")
@@ -536,14 +536,22 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, instance *
 	}, nil
 }
 
-func (b *UpdateEndpoint) shouldResponseSynchronously(oldParameters pkg.ProvisioningParametersDTO, instance *internal.Instance, logger *slog.Logger) bool {
+func (b *UpdateEndpoint) shouldResponseSynchronously(previousInstance, currentInstance *internal.Instance, logger *slog.Logger) bool {
 	if !b.syncEmptyUpdateResponseEnabled {
 		return false
 	}
-	if !reflect.DeepEqual(oldParameters, instance.Parameters.Parameters) {
+	// do not compare "Active" field
+	previousInstance.Parameters.ErsContext.Active = currentInstance.Parameters.ErsContext.Active
+	if !reflect.DeepEqual(previousInstance.Parameters, currentInstance.Parameters) {
 		return false
 	}
-	lastOperation, err := b.operationStorage.GetLastOperation(instance.InstanceID)
+	if previousInstance.ServicePlanID != currentInstance.ServicePlanID {
+		return false
+	}
+	if previousInstance.GlobalAccountID != currentInstance.GlobalAccountID {
+		return false
+	}
+	lastOperation, err := b.operationStorage.GetLastOperation(currentInstance.InstanceID)
 	if err != nil {
 		return false
 	}
