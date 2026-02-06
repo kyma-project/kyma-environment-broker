@@ -112,7 +112,7 @@ jobs:
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Provision an instance
-        run: scripts/testing/provision_instances.sh 1 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster http://localhost:8080
+        run: scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:8080
 
       - name: Get RuntimeID
         run: |
