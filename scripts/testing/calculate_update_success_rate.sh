@@ -7,7 +7,6 @@ set -o nounset  # treat unset variables as an error and exit immediately.
 set -o errexit  # exit immediately when a command fails.
 set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
-set -x
 
 PLAN_ID=${1:?Plan ID required}
 BASE_URL=${2:-http://localhost:30080}
@@ -28,15 +27,11 @@ TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
 echo "DEBUG: SUCCEEDED_TOTAL=$SUCCEEDED_TOTAL, FAILED_TOTAL=$FAILED_TOTAL, TOTAL=$TOTAL"
 
 if [ "$TOTAL" -eq 0 ]; then
-  echo "ERROR: No update operations found for plan_id=${PLAN_ID}"
-  echo "Searching for any operation results with this plan_id..."
-  echo "$METRICS" | grep "plan_id=\"${PLAN_ID}\"" || echo "No operations found at all for this plan_id"
-  exit 1
+  SUCCESS_RATE=0
+else
+    SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
 fi
 
-SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-
-echo "Success rate of update requests: $SUCCESS_RATE%"
 echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
 
 if [[ "$SUCCESS_RATE" != "100.00" ]]; then
