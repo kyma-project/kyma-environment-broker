@@ -323,7 +323,19 @@ jobs:
           scripts/simulate_kim.sh
           
           # Wait for provisioning to complete (reusing wait_for_provisioning for state check)
-          scripts/testing/wait_for_provisioning.sh azure-cluster http://localhost:30080
+          #scripts/testing/wait_for_provisioning.sh azure-cluster http://localhost:30080
+          INSTANCE_JSON=$(curl --request GET \
+            --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16')
+          INSTANCE_STATE=$(echo "$INSTANCE_JSON" | jq '.data[0].status.state')
+
+          if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
+            echo "Assertion passed: state is $INSTANCE_STATE"
+          else
+            echo "Assertion failed: state is not 'succeeded'. Actual value: $INSTANCE_STATE"
+            exit 1
+          fi
 
       - name: Update the instance
         timeout-minutes: 60
