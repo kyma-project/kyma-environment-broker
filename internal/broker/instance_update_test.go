@@ -1777,11 +1777,11 @@ func TestMachineTypeUpdateInMultipleAdditionalWorkerNodePools(t *testing.T) {
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfig, newSchemaService(t), nil, nil, nil, nil, nil)
 
-	additionalWorkerNodePools := fmt.Sprintf(`[
+	additionalWorkerNodePools := `[
 {"name": "name-1", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20},
 {"name": "name-2", "machineType": "Standard_D2s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20},
 {"name": "name-new", "machineType": "Standard_D2s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}
-]`)
+]`
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",

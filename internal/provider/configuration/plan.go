@@ -117,7 +117,7 @@ func (p *PlanSpecifications) IsUpgradableBetween(from, to string) bool {
 		return false
 	}
 	for _, upgradablePlan := range plan.UpgradableToPlans {
-		if strings.ToLower(upgradablePlan) == strings.ToLower(to) {
+		if strings.EqualFold(upgradablePlan, to) {
 			return true
 		}
 	}
@@ -131,7 +131,7 @@ func (p *PlanSpecifications) IsUpgradable(planName string) bool {
 	}
 	numberOfTargetPlans := 0
 	for _, target := range plan.UpgradableToPlans {
-		if strings.ToLower(target) != strings.ToLower(planName) {
+		if !strings.EqualFold(target, planName) {
 			numberOfTargetPlans++
 		}
 	}

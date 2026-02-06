@@ -70,7 +70,7 @@ func NewMemoryStorage() BrokerStorage {
 		operation:         op,
 		subaccountStates:  ss,
 		instance:          memory.NewInstance(op, ss),
-		events:            events.New(events.Config{}, NewInMemoryEvents()),
+		events:            events.New(events.Config{}, newInMemoryEvents()),
 		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
 		bindings:          memory.NewBinding(),
 		actions:           memory.NewAction(),
@@ -81,14 +81,14 @@ type inMemoryEvents struct {
 	events []eventsapi.EventDTO
 }
 
-func NewInMemoryEvents() *inMemoryEvents {
+func newInMemoryEvents() *inMemoryEvents {
 	return &inMemoryEvents{
 		events: make([]eventsapi.EventDTO, 0),
 	}
 }
 
-func (_ *inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
-	return
+func (*inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Duration) {
+	panic("not implemented")
 }
 
 func (e *inMemoryEvents) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceID, operationID string) {

@@ -196,12 +196,12 @@ func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingI
 	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(expirationSeconds) {
-			message := fmt.Sprintf("binding already exists but with different parameters")
+			message := "binding already exists but with different parameters"
 			return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			if len(bindingFromDB.Kubeconfig) == 0 {
-				message := fmt.Sprintf("binding creation already in progress")
+				message := "binding creation already in progress"
 				return nil, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 			}
 			return &domain.Binding{

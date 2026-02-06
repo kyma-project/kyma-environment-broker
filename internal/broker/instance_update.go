@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -190,7 +191,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	if err == nil {
 		if !lastDeprovisioningOperation.Temporary {
 			// it is not a suspension, but real deprovisioning
-			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.Operation.ID))
+			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
 		}
 	}
@@ -322,14 +323,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		}
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
 			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 			}
 			discoveredZones[machineType] = zonesCount
 		}
@@ -428,7 +429,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 				}
 			}
-			logger.Info(fmt.Sprintf("Plan change accepted."))
+			logger.Info("Plan change accepted.")
 			operation.UpdatedPlanID = details.PlanID
 			operation.ProvisioningParameters.PlanID = details.PlanID
 			instance.Parameters.PlanID = details.PlanID
@@ -436,7 +437,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			instance.ServicePlanName = AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 			updateStorage = append(updateStorage, planChangeMessage)
 		} else {
-			logger.Info(fmt.Sprintf("Plan change not allowed."))
+			logger.Info("Plan change not allowed.")
 			sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 			targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(

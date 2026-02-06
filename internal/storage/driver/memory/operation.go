@@ -225,12 +225,12 @@ func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.O
 
 	operations := make([]internal.Operation, 0)
 	for _, op := range s.operations {
-		if (op.CreatedAt.After(from) || op.CreatedAt == from) && (op.CreatedAt.Before(to) || op.CreatedAt == to) {
+		if (op.CreatedAt.After(from) || op.CreatedAt.Equal(from)) && (op.CreatedAt.Before(to) || op.CreatedAt.Equal(to)) {
 			operations = append(operations, op)
 			continue
 		}
 
-		if (op.UpdatedAt.After(from) || op.UpdatedAt == from) && (op.UpdatedAt.Before(to) || op.UpdatedAt == to) {
+		if (op.UpdatedAt.After(from) || op.UpdatedAt.Equal(from)) && (op.UpdatedAt.Before(to) || op.UpdatedAt.Equal(to)) {
 			operations = append(operations, op)
 			continue
 		}
