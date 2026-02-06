@@ -40,7 +40,7 @@ type Config struct {
 }
 
 type RegisterContainer struct {
-	OperationResult            *operationsResults
+	OperationResult            *resultsCollector
 	OperationStats             *operationsStats
 	OperationDurationCollector *OperationDurationCollector
 	InstancesCollector         *InstancesCollector
@@ -55,8 +55,8 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
 
-	opResult := NewOperationsResults(db.Operations(), cfg, logger)
-	opResult.StartCollector(ctx)
+	opResult := newResultsCollector(db.Operations(), cfg, logger)
+	opResult.startCollectorJob(ctx)
 
 	opStats := NewOperationsStats(db.Operations(), cfg, logger)
 	opStats.MustRegister()

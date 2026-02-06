@@ -15,7 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type operationsResults struct {
+type resultsCollector struct {
 	logger                           *slog.Logger
 	metrics                          *prometheus.GaugeVec
 	lastUpdate                       time.Time
@@ -27,13 +27,14 @@ type operationsResults struct {
 }
 
 type cachedOperationType struct {
-	labels map[string]string
+	labels   map[string]string
+	deleteAt time.Time
 }
 
-var _ Exposer = (*operationsResults)(nil)
+var _ Exposer = (*resultsCollector)(nil)
 
-func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger) *operationsResults {
-	opInfo := &operationsResults{
+func newResultsCollector(db storage.Operations, cfg Config, logger *slog.Logger) *resultsCollector {
+	collector := &resultsCollector{
 		operations: db,
 		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
@@ -48,15 +49,27 @@ func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
 
-	return opInfo
+	return collector
 }
 
-func (s *operationsResults) StartCollector(ctx context.Context) {
-	s.logger.Info("Starting operations results collector")
+func (s *resultsCollector) startCollectorJob(ctx context.Context) {
+	s.logger.Info("Starting operation results collector job")
 	go s.runJob(ctx)
 }
 
-func (s *operationsResults) Metrics() *prometheus.GaugeVec {
+func (s *resultsCollector) deleteMarked(now time.Time) {
+	s.sync.Lock()
+	defer s.sync.Unlock()
+	for id, cachedOp := range s.cache {
+		if !cachedOp.deleteAt.IsZero() && cachedOp.deleteAt.Before(now) {
+			delete(s.cache, id)
+			count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
+			s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
+		}
+	}
+}
+
+func (s *resultsCollector) Metrics() *prometheus.GaugeVec {
 	return s.metrics
 }
 
@@ -64,35 +77,34 @@ func (s *operationsResults) Metrics() *prometheus.GaugeVec {
 // each metric has labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happens in a KEB system and will be persisted in Prometheus Server
 // metrics set to 0 means that this event is outdated, and will be replaced by a new one
-func (s *operationsResults) updateMetricsForCompletedOperation(operation internal.Operation) {
+func (s *resultsCollector) updateMetricsForOperation(operation internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
 	cachedOperation, found := s.cache[operation.ID]
-	// TODO if found and new labels are the same, we can skip updating the metric
 	if found {
+		if !cachedOperation.deleteAt.IsZero() {
+			return
+		}
 		s.metrics.With(cachedOperation.labels).Set(0)
 	}
 	operationLabels := GetLabels(operation)
 	s.metrics.With(operationLabels).Set(1)
 
 	if operation.State == domain.Failed || operation.State == domain.Succeeded {
-		delete(s.cache, operation.ID)
-
-		// keep those metric and remove after finishedOperationRetentionPeriod
-		if s.finishedOperationRetentionPeriod > 0 {
-			go func(id string) {
-				time.Sleep(s.finishedOperationRetentionPeriod)
-				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
-				s.logger.Debug(fmt.Sprintf("Deleted %d metrics for operation %s", count, id))
-			}(operation.ID)
-		}
+		s.markForDeletion(operation.ID)
 	} else {
 		s.cache[operation.ID] = cachedOperationType{labels: operationLabels}
 	}
 }
 
-func (s *operationsResults) UpdateOperationResultsMetricsInTimeRange() (err error) {
+func (s *resultsCollector) markForDeletion(operationID string) {
+	cachedOp := s.cache[operationID]
+	cachedOp.deleteAt = time.Now().UTC().Add(s.finishedOperationRetentionPeriod)
+	s.cache[operationID] = cachedOp
+}
+
+func (s *resultsCollector) UpdateResultMetricsInTimeRange() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic recovered: %v", r)
@@ -110,13 +122,13 @@ func (s *operationsResults) UpdateOperationResultsMetricsInTimeRange() (err erro
 	}
 
 	for _, op := range operations {
-		s.updateMetricsForCompletedOperation(op)
+		s.updateMetricsForOperation(op)
 	}
 	s.lastUpdate = now
 	return nil
 }
 
-func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) error {
+func (s *resultsCollector) UpdateMetrics(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling operation finished event: %v", recovery))
@@ -126,7 +138,7 @@ func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) 
 	switch ev := event.(type) {
 	case process.OperationFinished:
 		s.logger.Debug(fmt.Sprintf("Handling OperationFinished event: OpID=%s State=%s", ev.Operation.ID, ev.Operation.State))
-		s.updateMetricsForCompletedOperation(ev.Operation)
+		s.updateMetricsForOperation(ev.Operation)
 	default:
 		s.logger.Error(fmt.Sprintf("Handling OperationFinished, unexpected event type: %T", event))
 	}
@@ -134,14 +146,14 @@ func (s *operationsResults) UpdateMetrics(_ context.Context, event interface{}) 
 	return nil
 }
 
-func (s *operationsResults) runJob(ctx context.Context) {
+func (s *resultsCollector) runJob(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while collecting operations results metrics: %v", recovery))
 		}
 	}()
 
-	if err := s.UpdateOperationResultsMetricsInTimeRange(); err != nil {
+	if err := s.UpdateResultMetricsInTimeRange(); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to update metrics: %v", err))
 	}
 
@@ -149,8 +161,11 @@ func (s *operationsResults) runJob(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.UpdateOperationResultsMetricsInTimeRange(); err != nil {
+			if err := s.UpdateResultMetricsInTimeRange(); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to update operations info metrics: %v", err))
+			}
+			if s.finishedOperationRetentionPeriod > 0 {
+				s.deleteMarked(time.Now().UTC())
 			}
 		case <-ctx.Done():
 			return
