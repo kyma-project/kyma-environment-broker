@@ -533,8 +533,6 @@ jobs:
           scripts/testing/assert_runtime_count.sh azure_lite ${{ inputs.instances-number }} http://localhost:30080
           scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
           scripts/testing/assert_runtime_count.sh azure ${{ inputs.instances-number }} http://localhost:30080
-            exit 1
-          fi
           
       - name: Simulate KIM
         timeout-minutes: 60
