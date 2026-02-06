@@ -134,7 +134,7 @@ func (p *ProviderSpec) findRegion(cp runtime.CloudProvider, region string) *regi
 func (p *ProviderSpec) findProviderDTO(cp runtime.CloudProvider) *providerDTO {
 	for name, provider := range p.data {
 		// remove '-' to support "sap-converged-cloud" for CloudProvider SapConvergedCloud
-		if strings.ToLower(strings.ReplaceAll(string(name), "-", "")) == strings.ToLower(string(cp)) {
+		if strings.EqualFold(strings.ReplaceAll(string(name), "-", ""), string(cp)) {
 			return &provider
 		}
 	}
@@ -144,7 +144,7 @@ func (p *ProviderSpec) findProviderDTO(cp runtime.CloudProvider) *providerDTO {
 func (p *ProviderSpec) Validate(provider runtime.CloudProvider, region string) error {
 	if dto := p.findRegion(provider, region); dto != nil {
 		providerDTO := p.findProviderDTO(provider)
-		if !providerDTO.ZonesDiscovery && (dto.Zones == nil || len(dto.Zones) == 0) {
+		if !providerDTO.ZonesDiscovery && len(dto.Zones) == 0 {
 			return fmt.Errorf("region %s for provider %s has no zones defined", region, provider)
 		}
 		if dto.DisplayName == "" {

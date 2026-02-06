@@ -46,7 +46,7 @@ func (s *Binding) Update(binding *internal.Binding) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if foundBinding, found := s.data[binding.ID]; !(found && binding.InstanceID == foundBinding.InstanceID) {
+	if foundBinding, found := s.data[binding.ID]; !found || binding.InstanceID != foundBinding.InstanceID {
 		return dberr.AlreadyExists("binding with id %s does not exist", binding.ID)
 	}
 	s.data[binding.ID] = *binding

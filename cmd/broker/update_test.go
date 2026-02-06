@@ -860,7 +860,7 @@ func TestUpdateNotExistingInstance(t *testing.T) {
 	// provisioning done, let's start an update
 
 	// when
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/not-existing"),
+	resp = suite.CallAPI("PATCH", "oauth/cf-eu10/v2/service_instances/not-existing",
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
        "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",

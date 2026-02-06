@@ -50,7 +50,7 @@ func (s *ResolveCredentialsBindingStep) Run(operation internal.Operation, log *s
 	}
 	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
-		msg := fmt.Sprintf("resolving secret name")
+		msg := "resolving secret name"
 		return s.operationManager.RetryOperation(operation, msg, err, s.stepRetryTuple.Interval, s.stepRetryTuple.Timeout, log)
 	}
 

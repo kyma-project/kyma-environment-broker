@@ -60,14 +60,14 @@ func SetupEnvtest(t *testing.T) int {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	fmt.Println(fmt.Sprintf("script process PID; %d", cmd.Process.Pid))
-	fmt.Println(fmt.Sprintf("envtest setup output: %s err: %s \n", out.String(), stderr.String()))
+	fmt.Printf("script process PID; %d\n", cmd.Process.Pid)
+	fmt.Printf("envtest setup output: %s err: %s \n", out.String(), stderr.String())
 	if err != nil {
 		require.NoError(t, err)
 	}
 	require.NotEmpty(t, out)
 	assets := out.String()
-	assets = strings.Replace(assets, "\n", "", -1)
+	assets = strings.ReplaceAll(assets, "\n", "")
 	err = os.Setenv(envTestAssets, assets)
 	require.NoError(t, err)
 	return cmd.Process.Pid
@@ -82,5 +82,5 @@ func CleanupEnvtestBinaries(pid int) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	_ = cmd.Run()
-	fmt.Println(fmt.Sprintf("envtest binaries cleanup output: %s err: %s \n", out.String(), stderr.String()))
+	fmt.Printf("envtest binaries cleanup output: %s err: %s \n", out.String(), stderr.String())
 }

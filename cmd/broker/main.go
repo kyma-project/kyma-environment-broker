@@ -174,7 +174,7 @@ const (
 var Version string
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
-	if profiler.Memory == false {
+	if !profiler.Memory {
 		return
 	}
 	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))

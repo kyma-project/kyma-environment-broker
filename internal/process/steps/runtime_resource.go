@@ -55,7 +55,7 @@ const (
 	kcpRetryTimeout  = 20 * time.Second
 )
 
-func (_ *checkRuntimeResource) Name() string {
+func (*checkRuntimeResource) Name() string {
 	return "Check_RuntimeResource_Update"
 }
 
@@ -81,7 +81,7 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logge
 	}
 }
 
-func (_ *checkRuntimeResourceProvisioning) Name() string {
+func (*checkRuntimeResourceProvisioning) Name() string {
 	return "Check_RuntimeResource_Provisioning"
 }
 

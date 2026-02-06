@@ -646,10 +646,8 @@ func (e *Environment) getSkrsForSimulateChange(skrIndexes []int) []*envtest.Envi
 	var result []*envtest.Environment
 	if skrIndexes == nil || len(skrIndexes) == 0 {
 		indexSet := map[int]struct{}{}
-		for {
-			if len(indexSet) == changedInstancesCount {
-				break
-			}
+		for len(indexSet) != changedInstancesCount {
+
 			random := rand.Intn(expectedInstancesCount)
 			_, ok := indexSet[random]
 			if !ok {
