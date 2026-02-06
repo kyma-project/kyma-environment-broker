@@ -35,6 +35,8 @@ For all the deprovisioning steps, see the [deprovisioning](../../cmd/broker/depr
 The update process is triggered by an [OSB API update operation](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance) request.
 For all the updating steps, see the [update](../../cmd/broker/update.go) file.
 
+According to the OSB API specification, the update response may be synchronous with HTTP 200 status. It can happen, when the parameters do not change.
+
 > ### Note:
 > The updating process of SAP Service Manager credentials is different. The credentials are stored in the KEB database, and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) updates them during reconciliation.
 
