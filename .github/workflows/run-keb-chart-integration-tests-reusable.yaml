@@ -112,7 +112,10 @@ jobs:
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Provision an instance
-        run: scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:8080
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:8080
 
       - name: Get RuntimeID
         run: |
