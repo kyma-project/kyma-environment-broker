@@ -562,10 +562,8 @@ jobs:
       - name: Run mixed operations
         run: |
           # Provisioning requests
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            scripts/testing/provision_instances.sh single $uid ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
-          done
+
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
 
           scripts/testing/assert_runtime_count.sh gcp ${{ inputs.instances-number }} http://localhost:30080
           
