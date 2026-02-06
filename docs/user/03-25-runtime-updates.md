@@ -50,6 +50,7 @@ Then an update is triggered:
       }
    }'
    ```
+The broker response with HTTP 202 status, because the `machineType` parameter has changed and the update operation is created and processed asynchronously. Wait for the operation is finished.
 The second update request which does not modify any parameter:
    ```bash
    curl --request PATCH \
