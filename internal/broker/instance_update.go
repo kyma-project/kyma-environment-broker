@@ -695,6 +695,7 @@ func (b *UpdateEndpoint) processSyncResponseOk(instance *internal.Instance, logg
 		// storing EmptyUpdates failed, but we can still return OK response
 		logger.Error(fmt.Sprintf("unable to update instance: %s", err.Error()))
 	}
+
 	return domain.UpdateServiceSpec{
 		IsAsync: false,
 	}, nil
@@ -714,4 +715,18 @@ func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorker
 
 	message := fmt.Sprintf("HA zones setting is permanent and cannot be changed for additional worker node pools: %s.", strings.Join(poolsWithChangedHAZones, ", "))
 	return fmt.Errorf("%s", message)
+}
+
+type EmptyUpdateProcessed struct {
+	PlanID          string
+	GlobalAccountID string
+	InstanceID      string
+}
+
+func NewEmptyUpdateProcessed(instnace *internal.Instance) EmptyUpdateProcessed {
+	return EmptyUpdateProcessed{
+		PlanID:          instnace.ServicePlanID,
+		GlobalAccountID: instnace.GlobalAccountID,
+		InstanceID:      instnace.InstanceID,
+	}
 }
