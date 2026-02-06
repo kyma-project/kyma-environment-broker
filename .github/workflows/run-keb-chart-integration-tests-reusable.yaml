@@ -181,8 +181,8 @@ jobs:
 
       - name: Wait for global account ID update to finish
         run: ./scripts/testing/wait_for_update.sh azure-cluster
-      - name: Assert update totalCount is 1 (global account)
-        run: scripts/testing/assert_runtime_count.sh azure-cluster 1 http://localhost:8080 update
+      - name: Assert update totalCount is 2
+        run: scripts/testing/assert_runtime_count.sh azure-cluster 2 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after global account ID update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
