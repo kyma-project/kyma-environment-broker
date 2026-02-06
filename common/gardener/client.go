@@ -190,7 +190,7 @@ func NewCredentialsBinding(u unstructured.Unstructured) *CredentialsBinding {
 }
 
 func (b *CredentialsBinding) GetSecretRefName() string {
-	str, _, err := unstructured.NestedString(b.Object, "credentialsRef", "name")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "credentialsRef", "name")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("CredentialsBinding missing field '.secretRef.name': %v", err))
@@ -199,7 +199,7 @@ func (b *CredentialsBinding) GetSecretRefName() string {
 }
 
 func (b *CredentialsBinding) GetSecretRefNamespace() string {
-	str, _, err := unstructured.NestedString(b.Object, "credentialsRef", "namespace")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "credentialsRef", "namespace")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("CredentialsBinding missing field '.secretRef.namespace': %v", err))
@@ -208,11 +208,11 @@ func (b *CredentialsBinding) GetSecretRefNamespace() string {
 }
 
 func (b *CredentialsBinding) SetSecretRefName(val string) {
-	_ = unstructured.SetNestedField(b.Object, val, "credentialsRef", "name")
+	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "credentialsRef", "name")
 }
 
 func (b *CredentialsBinding) SetSecretRefNamespace(val string) {
-	_ = unstructured.SetNestedField(b.Object, val, "credentialsRef", "namespace")
+	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "credentialsRef", "namespace")
 }
 
 type SecretBinding struct {
@@ -224,7 +224,7 @@ func NewSecretBinding(u unstructured.Unstructured) *SecretBinding {
 }
 
 func (b *SecretBinding) GetSecretRefName() string {
-	str, _, err := unstructured.NestedString(b.Object, "secretRef", "name")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "secretRef", "name")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("SecretBinding missing field '.secretRef.name': %v", err))
@@ -233,7 +233,7 @@ func (b *SecretBinding) GetSecretRefName() string {
 }
 
 func (b *SecretBinding) GetSecretRefNamespace() string {
-	str, _, err := unstructured.NestedString(b.Object, "secretRef", "namespace")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "secretRef", "namespace")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("SecretBinding missing field '.secretRef.namespace': %v", err))
@@ -242,11 +242,11 @@ func (b *SecretBinding) GetSecretRefNamespace() string {
 }
 
 func (b *SecretBinding) SetSecretRefName(val string) {
-	_ = unstructured.SetNestedField(b.Object, val, "secretRef", "name")
+	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "secretRef", "name")
 }
 
 func (b *SecretBinding) SetSecretRefNamespace(val string) {
-	_ = unstructured.SetNestedField(b.Object, val, "secretRef", "namespace")
+	_ = unstructured.SetNestedField(b.Unstructured.Object, val, "secretRef", "namespace")
 }
 
 type Shoot struct {
@@ -254,7 +254,7 @@ type Shoot struct {
 }
 
 func (b Shoot) GetSpecSecretBindingName() string {
-	str, _, err := unstructured.NestedString(b.Object, "spec", "secretBindingName")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "spec", "secretBindingName")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("Shoot missing field '.spec.secretBindingName': %v", err))
@@ -263,7 +263,7 @@ func (b Shoot) GetSpecSecretBindingName() string {
 }
 
 func (b Shoot) GetSpecCredentialsBindingName() string {
-	str, _, err := unstructured.NestedString(b.Object, "spec", "credentialsBindingName")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "spec", "credentialsBindingName")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("Shoot missing field '.spec.credentialsBindingName': %v", err))
@@ -272,7 +272,7 @@ func (b Shoot) GetSpecCredentialsBindingName() string {
 }
 
 func (b Shoot) GetSpecMaintenanceTimeWindowBegin() string {
-	str, _, err := unstructured.NestedString(b.Object, "spec", "maintenance", "timeWindow", "begin")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "spec", "maintenance", "timeWindow", "begin")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("Shoot missing field '.spec.maintenance.timeWindow.begin': %v", err))
@@ -281,7 +281,7 @@ func (b Shoot) GetSpecMaintenanceTimeWindowBegin() string {
 }
 
 func (b Shoot) GetSpecMaintenanceTimeWindowEnd() string {
-	str, _, err := unstructured.NestedString(b.Object, "spec", "maintenance", "timeWindow", "end")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "spec", "maintenance", "timeWindow", "end")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("Shoot missing field '.spec.maintenance.timeWindow.end': %v", err))
@@ -290,7 +290,7 @@ func (b Shoot) GetSpecMaintenanceTimeWindowEnd() string {
 }
 
 func (b Shoot) GetSpecRegion() string {
-	str, _, err := unstructured.NestedString(b.Object, "spec", "region")
+	str, _, err := unstructured.NestedString(b.Unstructured.Object, "spec", "region")
 	if err != nil {
 		// NOTE this is a safety net, gardener v1beta1 API would need to break the contract for this to panic
 		panic(fmt.Sprintf("Shoot missing field '.spec.region': %v", err))

@@ -356,7 +356,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
 
-	if err := operation.ProvisioningParameters.Parameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
+	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
@@ -450,7 +450,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	operation.ProviderValues = &providerValues
 
 	if params.OIDC.IsProvided() {
-		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.IsEmpty()) {
+		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
 			instance.Parameters.Parameters.OIDC = params.OIDC
 			updateStorage = append(updateStorage, "OIDC")
 		}

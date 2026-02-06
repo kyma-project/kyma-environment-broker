@@ -203,21 +203,21 @@ func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, 
 	if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
 		return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
 	}
-	if o.IsEmpty() {
+	if o.OIDCConfigDTO.IsEmpty() {
 		return nil
 	}
-	if len(o.ClientID) == 0 {
+	if len(o.OIDCConfigDTO.ClientID) == 0 {
 		*errs = append(*errs, "clientID must not be empty")
 	}
-	if len(o.IssuerURL) == 0 {
+	if len(o.OIDCConfigDTO.IssuerURL) == 0 {
 		*errs = append(*errs, "issuerURL must not be empty")
 	} else {
-		o.validateIssuerURL(o.IssuerURL, nil, errs)
+		o.validateIssuerURL(o.OIDCConfigDTO.IssuerURL, nil, errs)
 	}
-	o.validateSigningAlgs(o.SigningAlgs, nil, errs)
-	o.validateRequiredClaims(o.RequiredClaims, nil, errs)
-	if o.EncodedJwksArray != "" && o.EncodedJwksArray != "-" {
-		if _, err := base64.StdEncoding.DecodeString(o.EncodedJwksArray); err != nil {
+	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
+	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
+	if o.OIDCConfigDTO.EncodedJwksArray != "" && o.OIDCConfigDTO.EncodedJwksArray != "-" {
+		if _, err := base64.StdEncoding.DecodeString(o.OIDCConfigDTO.EncodedJwksArray); err != nil {
 			*errs = append(*errs, "encodedJwksArray must be a valid base64-encoded value or set to '-' to disable it if it was used previously")
 		}
 	}

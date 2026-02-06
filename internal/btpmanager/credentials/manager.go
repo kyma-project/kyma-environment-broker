@@ -335,8 +335,8 @@ func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secre
 		}
 
 		currentSecret.Data = futureSecret.Data
-		currentSecret.Labels = futureSecret.Labels
-		currentSecret.Annotations = futureSecret.Annotations
+		currentSecret.ObjectMeta.Labels = futureSecret.ObjectMeta.Labels
+		currentSecret.ObjectMeta.Annotations = futureSecret.ObjectMeta.Annotations
 		updateErr := k8sClient.Update(context.Background(), &currentSecret)
 		if updateErr != nil {
 			return fmt.Errorf("failed to update the secret for BTP Manager: %s", updateErr)

@@ -22,7 +22,7 @@ func NewBinding(sess postsql.Factory, cipher Cipher) *Binding {
 }
 
 func (s *Binding) Get(instanceID string, bindingID string) (*internal.Binding, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	bindingDTO, dbErr := sess.GetBinding(instanceID, bindingID)
 	if dbErr != nil {
 		if dberr.IsNotFound(dbErr) {
@@ -46,7 +46,7 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 		return err
 	}
 
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	err = sess.InsertBinding(dto)
 
 	switch {
@@ -65,7 +65,7 @@ func (s *Binding) Update(binding *internal.Binding) error {
 		return err
 	}
 
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	err = sess.UpdateBinding(dto)
 
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *Binding) Update(binding *internal.Binding) error {
 }
 
 func (s *Binding) Delete(instanceID, bindingID string) error {
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return sess.DeleteBinding(instanceID, bindingID)
 }
 
@@ -115,7 +115,7 @@ func (s *Binding) ListExpired() ([]internal.Binding, error) {
 }
 
 func (s *Binding) GetStatistics() (internal.BindingStats, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	dto, err := sess.GetBindingsStatistics()
 	if err != nil {
 		return internal.BindingStats{}, err
