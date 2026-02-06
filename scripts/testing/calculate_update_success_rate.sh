@@ -15,10 +15,14 @@ BASE_URL=${2:-http://localhost:30080}
 sleep 15
 
 METRICS=$(curl -s "${BASE_URL}/metrics")
+
+set +o pipefail
 SUCCEEDED_TOTAL=$(echo "$METRICS" | grep "kcp_keb_v2_operation_result.*plan_id=\"${PLAN_ID}\".*state=\"succeeded\".*type=\"update\"" | wc -l | xargs)
 SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
 FAILED_TOTAL=$(echo "$METRICS" | grep "kcp_keb_v2_operation_result.*plan_id=\"${PLAN_ID}\".*state=\"failed\".*type=\"update\"" | wc -l | xargs)
 FAILED_TOTAL=${FAILED_TOTAL:-0}
+set -o pipefail
+
 TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
 
 echo "DEBUG: SUCCEEDED_TOTAL=$SUCCEEDED_TOTAL, FAILED_TOTAL=$FAILED_TOTAL, TOTAL=$TOTAL"
