@@ -38,6 +38,10 @@ func HaltCloudSqlProxy() error {
 
 		target, err := os.ReadFile(file)
 		if err != nil {
+			// Process may have exited between Glob and ReadFile - this is normal in /proc
+			if os.IsNotExist(err) {
+				continue
+			}
 			return fmt.Errorf("while reading process file: %s", err)
 		}
 
