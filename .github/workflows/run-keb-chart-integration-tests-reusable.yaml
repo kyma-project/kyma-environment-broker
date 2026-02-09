@@ -149,7 +149,7 @@ jobs:
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
 
       - name: Wait for provisioning to finish
-        run: ./scripts/testing/wait_for_provisioning.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
       - name: Set Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
 
@@ -165,7 +165,7 @@ jobs:
         run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{"machineType":"Standard_D4s_v5"}' http://localhost:8080
 
       - name: Wait for updating to finish
-        run: ./scripts/testing/wait_for_update.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
       - name: Assert update totalCount is 1
         run: scripts/testing/assert_runtime_count.sh azure-cluster 1 http://localhost:8080 update
 
@@ -180,7 +180,7 @@ jobs:
         run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{}' http://localhost:8080
 
       - name: Wait for global account ID update to finish
-        run: ./scripts/testing/wait_for_update.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
       - name: Assert update totalCount is 2
         run: scripts/testing/assert_runtime_count.sh azure-cluster 2 http://localhost:8080 update
 

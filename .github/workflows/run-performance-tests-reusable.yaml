@@ -321,40 +321,13 @@ jobs:
           KIM_DELAY_SECONDS: 0
         run: |
           scripts/simulate_kim.sh
-          
-          # Wait for provisioning to complete (reusing wait_for_provisioning for state check)
-          #scripts/testing/wait_for_provisioning.sh azure-cluster http://localhost:30080
-          INSTANCE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          INSTANCE_STATE=$(echo "$INSTANCE_JSON" | jq '.data[0].status.state')
-
-          if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-            echo "Assertion passed: state is $INSTANCE_STATE"
-          else
-            echo "Assertion failed: state is not 'succeeded'. Actual value: $INSTANCE_STATE"
-            exit 1
-          fi
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
       - name: Update the instance
         timeout-minutes: 60
         run: |
           scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
-          #scripts/testing/wait_for_update.sh azure-cluster http://localhost:30080
-          while true; do
-            INSTANCE_STATE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
-
-            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-              echo "Instance is updated. Done."
-              break
-            fi
-
-            sleep 10
-          done
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
       - name: Fetch metrics
         run: |
@@ -394,20 +367,7 @@ jobs:
         timeout-minutes: 60
         run: |
           scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
-          #scripts/testing/wait_for_update.sh azure-cluster http://localhost:30080
-          while true; do
-            INSTANCE_STATE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
-
-            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-              echo "Instance is updated. Done."
-              break
-            fi
-
-            sleep 10
-          done
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
