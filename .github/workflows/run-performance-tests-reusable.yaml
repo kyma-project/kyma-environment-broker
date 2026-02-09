@@ -520,19 +520,6 @@ jobs:
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
-        
-      - name: Fetch metrics
-        run: |
-          sleep 15
-          
-          echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
-          scripts/testing/collect_provisioning_metrics.sh ca6e5357-707f-4565-bbbd-b3ab732597c6
-          
-          echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
-          scripts/testing/calculate_update_success_rate.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 http://localhost:30080
-          
-          echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
-          scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -568,6 +555,19 @@ jobs:
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
+      - name: Fetch metrics
+        run: |
+          sleep 15
+          
+          echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/collect_provisioning_metrics.sh ca6e5357-707f-4565-bbbd-b3ab732597c6
+          
+          echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/calculate_update_success_rate.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 http://localhost:30080
+          
+          echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
+          
       - name: Generate charts
         run: scripts/generate_charts.sh
 
