@@ -22,9 +22,7 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Use(middlewares ...middleware.MiddlewareFunc) {
-	for _, m := range middlewares {
-		r.middlewares = append(r.middlewares, m)
-	}
+	r.middlewares = append(r.middlewares, middlewares...)
 }
 
 func (r *Router) Handle(pattern string, handler http.Handler) {

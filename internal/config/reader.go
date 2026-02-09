@@ -45,7 +45,7 @@ func (r *ConfigMapReader) Read(objectName, configKey string) (string, error) {
 	}
 
 	// a workaround for the issue with the ArgoCD, see https://github.com/argoproj/argo-cd/pull/4729/files
-	cfgString = strings.Replace(cfgString, "Kind:", "kind:", -1)
+	cfgString = strings.ReplaceAll(cfgString, "Kind:", "kind:")
 
 	return cfgString, nil
 }

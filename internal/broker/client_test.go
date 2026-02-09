@@ -214,7 +214,7 @@ func (c *ClientTest) expiration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	_, err := w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, err := fmt.Fprintf(w, `{"operation": "%s"}`, fixOpID)
 	assert.NoError(c.t, err)
 }
 
@@ -232,7 +232,7 @@ func (c *ClientTest) deprovision(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	_, err := w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, err := fmt.Fprintf(w, `{"operation": "%s"}`, fixOpID)
 	assert.NoError(c.t, err)
 }
 
@@ -249,7 +249,7 @@ func (c *ClientTest) getInstance(w http.ResponseWriter, r *http.Request) {
 	if instance == "non-existent" {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		_, err := w.Write([]byte(fmt.Sprintf(`{"instanceID": "%s"}`, instance)))
+		_, err := fmt.Fprintf(w, `{"instanceID": "%s"}`, instance)
 		assert.NoError(c.t, err)
 		w.WriteHeader(http.StatusOK)
 	}

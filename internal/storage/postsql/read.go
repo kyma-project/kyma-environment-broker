@@ -639,8 +639,7 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 		Total int
 	}
 
-	var stmt *dbr.SelectStmt
-	stmt = r.session.
+	var stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName))
@@ -660,9 +659,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 	var res struct {
 		Total int
 	}
-	var stmt *dbr.SelectStmt
-
-	stmt = r.session.
+	var stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).

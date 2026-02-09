@@ -262,11 +262,11 @@ func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
 }
 
 func (s *server) writeRateLimitingResponse(w http.ResponseWriter) {
-	response := fmt.Sprint(`{
+	response := `{
 		"error": {
 			"message": "Request rate limit exceeded"
 		}
-	}`)
+	}`
 	w.WriteHeader(http.StatusTooManyRequests)
 	_, err := w.Write([]byte(response))
 	if err != nil {

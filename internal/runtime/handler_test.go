@@ -92,7 +92,7 @@ func TestRuntimeHandler(t *testing.T) {
 		assert.Equal(t, testID1, out.Data[0].InstanceID)
 
 		// given
-		urlPath := fmt.Sprintf("/runtimes?page=2&page_size=1")
+		urlPath := "/runtimes?page=2&page_size=1"
 		req, err = http.NewRequest(http.MethodGet, urlPath, nil)
 		require.NoError(t, err)
 		rr = httptest.NewRecorder()

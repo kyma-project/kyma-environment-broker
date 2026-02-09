@@ -321,7 +321,7 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 				return true
 			}
 		case dbmodel.InstanceNotDeprovisioned:
-			if !(op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision) {
+			if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
 				return true
 			}
 		}

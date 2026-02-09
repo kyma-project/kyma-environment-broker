@@ -86,7 +86,7 @@ func reverseMap(initialMap map[PlanNameType]PlanIDType) map[PlanIDType]PlanNameT
 }
 
 func (ap AvailablePlansType) GetPlanNameOrEmpty(planID PlanIDType) string {
-	planName, _ := ap.idToName[planID]
+	planName := ap.idToName[planID]
 	return string(planName)
 }
 

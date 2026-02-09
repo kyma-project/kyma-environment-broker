@@ -2,7 +2,6 @@ package broker
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 )
 
@@ -58,7 +57,7 @@ func hideSensitiveDataFromContext(input map[string]interface{}) map[string]inter
 func marshallRawContext(d map[string]interface{}) string {
 	b, err := json.Marshal(d)
 	if err != nil {
-		return fmt.Sprintf("unable to marshal context data")
+		return "unable to marshal context data"
 	}
 	return string(b)
 }

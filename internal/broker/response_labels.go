@@ -73,10 +73,10 @@ func ResponseLabelsWithExpirationInfo(
 			hoursLeft = 0
 		}
 		daysLeft := math.Round(hoursLeft / 24)
-		switch {
-		case daysLeft == 0:
+		switch daysLeft {
+		case 0:
 			labels[expiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "today")
-		case daysLeft == 1:
+		case 1:
 			labels[expiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "tomorrow")
 		default:
 			daysLeftNotice := fmt.Sprintf("in %2.f days", daysLeft)

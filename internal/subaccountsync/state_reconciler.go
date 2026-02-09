@@ -214,7 +214,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	}
 
 	_, err = s.Every(cfg.StorageSyncInterval).Do(func() {
-		logs.Info(fmt.Sprintf("Running state storage synchronization"))
+		logs.Info("Running state storage synchronization")
 		reconciler.storeStateInDb()
 	})
 	if err != nil {
@@ -362,7 +362,7 @@ func (reconciler *stateReconcilerType) storeStateInDb() {
 	var upsertCnt, deleteCnt, failureCnt int
 	logs := reconciler.logger
 
-	logs.Info(fmt.Sprintf("Syncing state to persistent storage"))
+	logs.Info("Syncing state to persistent storage")
 
 	for subaccount, state := range reconciler.inMemoryState {
 		if state.pendingDelete { // no runtimes left, we can delete the state from the storage

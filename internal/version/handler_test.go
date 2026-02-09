@@ -26,5 +26,5 @@ func TestHandler(t *testing.T) {
 
 	// then
 	require.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "{\"version\":\"1.25.18\"}", string(rr.Body.Bytes()))
+	assert.Equal(t, "{\"version\":\"1.25.18\"}", rr.Body.String())
 }

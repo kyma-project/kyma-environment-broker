@@ -51,9 +51,6 @@ func NewUpdater(k8sClient dynamic.Interface,
 }
 
 func (u *Updater) Run() error {
-	ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
-	defer cancel()
-
 	for {
 		item, ok := u.queue.Extract()
 		if !ok {
@@ -61,6 +58,9 @@ func (u *Updater) Run() error {
 			continue
 		}
 		u.logger.Debug(fmt.Sprintf("Item dequeued - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
+
+		ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
+		defer cancel()
 
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(ctxWithTimeout, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),

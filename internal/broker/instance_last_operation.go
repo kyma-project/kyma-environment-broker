@@ -50,7 +50,7 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 			}
 			logger.Error(fmt.Sprintf("cannot get operation from storage: %s", err))
 			return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
-				fmt.Sprintf("while getting last operation from storage"))
+				"while getting last operation from storage")
 		}
 		return domain.LastOperation{
 			State:       mapStateToOSBCompliantState(lastOp.State),
@@ -66,12 +66,12 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 		}
 		logger.Error(fmt.Sprintf("cannot get operation from storage: %s", err))
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
-			fmt.Sprintf("while getting operation from storage"))
+			"while getting operation from storage")
 	}
 
 	if operation.InstanceID != instanceID {
 		err := fmt.Errorf("operation exists, but instanceID is invalid")
-		logger.Error(fmt.Sprintf("%s", err.Error()))
+		logger.Error(err.Error())
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -99,10 +99,10 @@ func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, 
 }
 
 func mapStateToOSBCompliantState(opState domain.LastOperationState) domain.LastOperationState {
-	switch {
-	case opState == internal.OperationStatePending || opState == internal.OperationStateRetrying:
+	switch opState {
+	case internal.OperationStatePending, internal.OperationStateRetrying:
 		return domain.InProgress
-	case opState == internal.OperationStateCanceled || opState == internal.OperationStateCanceling:
+	case internal.OperationStateCanceled, internal.OperationStateCanceling:
 		return domain.Succeeded
 	default:
 		return opState

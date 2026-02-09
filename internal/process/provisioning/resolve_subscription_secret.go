@@ -50,7 +50,7 @@ func (step *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log
 	}
 	targetSecretName, err := step.resolveSecretName(operation, log)
 	if err != nil {
-		msg := fmt.Sprintf("resolving secret name")
+		msg := "resolving secret name"
 		return step.operationManager.RetryOperation(operation, msg, err, step.stepRetryTuple.Interval, step.stepRetryTuple.Timeout, log)
 	}
 

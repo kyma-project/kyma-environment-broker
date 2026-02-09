@@ -1121,7 +1121,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 	_ = instanceStorage.UpdateInstanceLastOperation(instance0.InstanceID, operation0_1.ID)
 
 	// second instance, one provisioning, 1 update
-	instance1 := fixInstance(instanceData{val: fmt.Sprintf("inst2")})
+	instance1 := fixInstance(instanceData{val: "inst2"})
 	_ = instanceStorage.Insert(*instance1)
 
 	operation1_0 := fixProvisionOperation(instance1.InstanceID)

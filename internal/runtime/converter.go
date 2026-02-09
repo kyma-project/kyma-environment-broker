@@ -55,7 +55,7 @@ func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *intern
 
 func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation) {
 	if dOpr != nil {
-		if dOpr.Operation.State == internal.OperationStatePending {
+		if dOpr.State == internal.OperationStatePending {
 			return
 		}
 		dto.Status.Deprovisioning = &pkg.Operation{}
@@ -148,7 +148,7 @@ func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []intern
 	suspension.Data = make([]pkg.Operation, 0)
 
 	for _, o := range oprs {
-		if !o.Temporary || o.Operation.State == internal.OperationStatePending {
+		if !o.Temporary || o.State == internal.OperationStatePending {
 			continue
 		}
 		op := pkg.Operation{}

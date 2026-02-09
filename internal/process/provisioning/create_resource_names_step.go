@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -31,7 +30,7 @@ func (s *CreateResourceNamesStep) Name() string {
 // The runtimeID could be generated and set in two different steps so we separated the logic to generate the Kyma name in this step
 func (s *CreateResourceNamesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
-		return s.operationManager.OperationFailed(operation, fmt.Sprint("RuntimeID not set, cannot create Kyma resource name and Runtime resource name"), nil, log)
+		return s.operationManager.OperationFailed(operation, "RuntimeID not set, cannot create Kyma resource name and Runtime resource name", nil, log)
 	}
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceName = steps.CreateKymaNameFromOperation(operation)

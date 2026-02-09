@@ -89,12 +89,13 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 	}
 
 	discoveredZones := make(map[string][]string)
-	if operation.Type == internal.OperationTypeProvision {
+	switch operation.Type {
+	case internal.OperationTypeProvision:
 		discoveredZones[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = []string{}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 			discoveredZones[pool.MachineType] = []string{}
 		}
-	} else if operation.Type == internal.OperationTypeUpdate {
+	case internal.OperationTypeUpdate:
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
 			discoveredZones[pool.MachineType] = []string{}
 		}

@@ -85,6 +85,9 @@ type DecryptFunc func(data []byte) ([]byte, error)
 
 func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {
 	ciphertext, err := base64.StdEncoding.DecodeString(string(ciphertext))
+	if err != nil {
+		return nil, err
+	}
 	aes, err := aes.NewCipher(e.key)
 	if err != nil {
 		return nil, err
