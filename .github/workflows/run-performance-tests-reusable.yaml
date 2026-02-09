@@ -324,26 +324,8 @@ jobs:
           scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
       - name: Fetch metrics
-        run: |
-          sleep 15
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
@@ -543,89 +525,14 @@ jobs:
         run: |
           sleep 15
           
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          
-          # Provisioning metrics
-
           echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            PROVISIONING_SUCCESS_RATE=0
-          else
-            PROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of provisioning requests: $PROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-
-          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
-          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
-          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
-            AVG_PROVISIONING_DURATION=0
-          else
-            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
-          # Update metrics
+          scripts/testing/collect_provisioning_metrics.sh ca6e5357-707f-4565-bbbd-b3ab732597c6
           
           echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="8cb22518-aa26-44c5-91a0-e669ec9bf443".*state="succeeded".*type="update"' | wc -l | xargs)
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="8cb22518-aa26-44c5-91a0-e669ec9bf443".*state="failed".*type="update"' | wc -l | xargs)
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            UPDATE_SUCCESS_RATE=0
-          else
-            UPDATE_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of update requests: $UPDATE_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          # Deprovisioning metrics
+          scripts/testing/calculate_update_success_rate.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 http://localhost:30080
           
           echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            DEPROVISIONING_SUCCESS_RATE=0
-          else
-            DEPROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of deprovisioning requests: $DEPROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          DEPROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_DURATION=${DEPROVISIONING_DURATION:-0}
-          DEPROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_COUNT=${DEPROVISIONING_COUNT:-0}
-          if [ "$DEPROVISIONING_COUNT" -eq 0 ]; then
-            AVG_DEPROVISIONING_DURATION=0
-          else
-            AVG_DEPROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($DEPROVISIONING_DURATION / $DEPROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "$PROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: PROVISIONING_SUCCESS_RATE is $PROVISIONING_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
-          
-          if [[ "$UPDATE_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: UPDATE_SUCCESS_RATE is $UPDATE_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
-          
-          if [[ "$DEPROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: DEPROVISIONING_SUCCESS_RATE is $DEPROVISIONING_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
+          scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
