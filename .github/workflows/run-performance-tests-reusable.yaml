@@ -394,34 +394,46 @@ jobs:
       - name: Start metrics collector
         run: scripts/testing/start_metrics_collector.sh
 
+      - name: Provision instances (preparation for two deprovisioning rounds)
+        run: |
+          TOTAL_INSTANCES=$((${{ inputs.instances-number }} * 2))
+          scripts/testing/provision_instances.sh $TOTAL_INSTANCES 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh $TOTAL_INSTANCES azure http://localhost:30080
+
+      - name: Simulate KIM
+        timeout-minutes: 60
+        run: scripts/testing/simulate_kim_with_assertions.sh azure $((${{ inputs.instances-number }} * 2)) http://localhost:30080 0
+
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
           scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
           scripts/testing/metrics_baseline_marker.sh
 
-      - name: Provision instances
-        run: |
-          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
-          scripts/testing/assert_total_count.sh ${{ inputs.instances-number }} azure http://localhost:30080
-
-      - name: Simulate KIM
+      - name: Deprovision first half of instances (first round)
         timeout-minutes: 60
-        run: scripts/testing/simulate_kim_with_assertions.sh azure ${{ inputs.instances-number }} http://localhost:30080 0
+        run: |
+          scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080 count ${{ inputs.instances-number }}
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} deprovisioning http://localhost:30080
 
-      - name: Deprovision instances
+      - name: Post-test monitoring period (first round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
+
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/metrics_baseline_marker.sh
+
+      - name: Deprovision remaining instances (second round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         timeout-minutes: 60
         run: |
           scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080
           scripts/testing/wait_for_all_operations.sh azure 0 deprovisioning http://localhost:30080
 
-      - name: Mark baseline for leak detection
+      - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: scripts/testing/metrics_baseline_marker.sh
-
-      - name: Post-test monitoring period
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Fetch metrics
         run: scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
