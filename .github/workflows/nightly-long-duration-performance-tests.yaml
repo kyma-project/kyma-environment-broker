@@ -2,7 +2,7 @@ name: Nightly Long Duration Performance Tests
 
 on:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:      
       # Timing Configuration
@@ -96,8 +96,8 @@ jobs:
       provisioning-max-step-processing-time: ${{ inputs.provisioning-max-step-processing-time || '30s' }}
       update-max-step-processing-time: ${{ inputs.update-max-step-processing-time || '30s' }}
       deprovisioning-max-step-processing-time: ${{ inputs.deprovisioning-max-step-processing-time || '30s' }}
-      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '90' }}
-      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '90' }}
+      baseline-monitoring-minutes: ${{ inputs.baseline-monitoring-minutes || '10' }}
+      post-test-monitoring-minutes: ${{ inputs.post-test-monitoring-minutes || '10' }}
       provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
       update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}

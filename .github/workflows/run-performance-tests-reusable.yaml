@@ -394,7 +394,20 @@ jobs:
         timeout-minutes: 60
         run: |
           scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
-          scripts/testing/wait_for_update.sh azure-cluster http://localhost:30080
+          #scripts/testing/wait_for_update.sh azure-cluster http://localhost:30080
+          while true; do
+            INSTANCE_STATE=$(curl --request GET \
+              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
+
+            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
+              echo "Instance is updated. Done."
+              break
+            fi
+
+            sleep 10
+          done
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -683,10 +696,7 @@ jobs:
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
           # Provisioning requests
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            scripts/testing/provision_instances.sh single $uid ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
-          done
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
 
           scripts/testing/assert_runtime_count.sh gcp $((2 * ${{ inputs.instances-number }})) http://localhost:30080
           
