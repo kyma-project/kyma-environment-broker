@@ -241,10 +241,7 @@ jobs:
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -260,10 +257,7 @@ jobs:
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -352,10 +346,7 @@ jobs:
           fi
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -371,10 +362,7 @@ jobs:
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -509,9 +497,8 @@ jobs:
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision instances
         run: |
@@ -642,10 +629,7 @@ jobs:
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -675,10 +659,7 @@ jobs:
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -803,10 +784,7 @@ jobs:
 
       - name: Post-test monitoring period
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test"
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -840,9 +818,7 @@ jobs:
           if [ "$DURATION" -eq 0 ]; then
             DURATION=5
           fi
-          echo "First monitoring period: $DURATION minutes..."
-          sleep $(($DURATION * 60))
-          echo "First monitoring period completed"
+          scripts/testing/monitoring_period.sh $DURATION "First monitoring period (baseline)"
 
       - name: Second monitoring period (post-test)
         run: |
@@ -850,9 +826,7 @@ jobs:
           if [ "$DURATION" -eq 0 ]; then
             DURATION=5
           fi
-          echo "Second monitoring period: $DURATION minutes..."
-          sleep $(($DURATION * 60))
-          echo "Second monitoring period completed"
+          scripts/testing/monitoring_period.sh $DURATION "Second monitoring period (post-test)"
 
       - name: Generate charts
         run: |
