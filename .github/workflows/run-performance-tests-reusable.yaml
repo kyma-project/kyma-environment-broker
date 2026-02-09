@@ -236,8 +236,6 @@ jobs:
         run: |
           scripts/testing/update_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure autoScalerMax 15 http://localhost:30080
           scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} update http://localhost:30080
-      - name: Fetch metrics
-        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -259,9 +257,11 @@ jobs:
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
+      - name: Fetch metrics
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
+
       - name: Generate charts
         run: scripts/generate_charts.sh
-
 
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -323,9 +323,6 @@ jobs:
           scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
           scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
-      - name: Fetch metrics
-        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
-
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
@@ -345,6 +342,9 @@ jobs:
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
+
+      - name: Fetch metrics
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -415,9 +415,6 @@ jobs:
           scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080
           scripts/testing/wait_for_all_operations.sh azure 0 deprovisioning http://localhost:30080
 
-      - name: Fetch metrics
-        run: scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
-
       - name: Mark baseline for leak detection
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/metrics_baseline_marker.sh
@@ -425,6 +422,9 @@ jobs:
       - name: Post-test monitoring period
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test"
+
+      - name: Fetch metrics
+        run: scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Generate charts
         run: scripts/generate_charts.sh
@@ -567,7 +567,7 @@ jobs:
           
           echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
           scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
-          
+
       - name: Generate charts
         run: scripts/generate_charts.sh
 
