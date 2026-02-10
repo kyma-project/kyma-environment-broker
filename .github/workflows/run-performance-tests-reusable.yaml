@@ -139,7 +139,9 @@ jobs:
         timeout-minutes: 60
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
-        run: scripts/simulate_kim.sh
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} provisioning http://localhost:30080
         
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -160,7 +162,9 @@ jobs:
         timeout-minutes: 60
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
-        run: scripts/simulate_kim.sh
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure $((2 * ${{ inputs.instances-number }})) provisioning http://localhost:30080
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -229,7 +233,9 @@ jobs:
 
       - name: Simulate KIM
         timeout-minutes: 60
-        run: scripts/testing/simulate_kim_with_assertions.sh azure ${{ inputs.instances-number }} http://localhost:30080 0
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} provisioning http://localhost:30080
         
       - name: Update instances
         timeout-minutes: 60
@@ -404,7 +410,9 @@ jobs:
 
       - name: Simulate KIM
         timeout-minutes: 60
-        run: scripts/testing/simulate_kim_with_assertions.sh azure $((${{ inputs.instances-number }} * 2)) http://localhost:30080 0
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure $((${{ inputs.instances-number }} * 2)) provisioning http://localhost:30080
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
