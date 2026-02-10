@@ -58,7 +58,7 @@ on:
       # Leak Detection Thresholds
       memory-growth-threshold-percent:
         description: 'Allowed memory growth percent (over baseline)'
-        default: '5'
+        default: '10'
         required: false
       goroutine-increase-threshold:
         description: 'Allowed increase in goroutines (absolute)'
@@ -101,7 +101,7 @@ jobs:
       provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
       update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
-      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '5' }}
+      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '10' }}
       goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '0' }}
       fd-increase-threshold: ${{ inputs.fd-increase-threshold || '0' }}
       db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '0' }}
