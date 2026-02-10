@@ -68,10 +68,12 @@ func (u *Updater) Run() error {
 		if err != nil {
 			u.logger.Warn("while listing Kyma CRs: " + err.Error() + " requeue item")
 			u.queue.Insert(item)
+			cancel()
 			continue
 		}
 		if len(unstructuredList.Items) == 0 {
 			u.logger.Info("no Kyma CRs found for subaccount" + item.SubaccountID)
+			cancel()
 			continue
 		}
 		retryRequired := false
