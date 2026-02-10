@@ -341,12 +341,12 @@ jobs:
           scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
           scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
+      - name: Fetch metrics
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
+
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
-
-      - name: Fetch metrics
-        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Generate charts
         run: scripts/generate_charts.sh
