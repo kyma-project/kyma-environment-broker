@@ -973,6 +973,19 @@ func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtim
 	return runtimes.Items[0]
 }
 
+func (s *BrokerSuiteTest) SetRuntimeResourceStateByInstanceId(iid string, state imv1.State) {
+	var runtimes imv1.RuntimeList
+	err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+	require.NoError(s.t, err)
+	require.NotZerof(s.t, len(runtimes.Items), "no runtime resource found for instance id %s", iid)
+
+	runtime := runtimes.Items[0]
+	runtime.Status.State = state
+
+	err = s.k8sKcp.Update(context.Background(), &runtime)
+	require.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []string) {
 	runtime := s.GetRuntimeResourceByInstanceID(id)
 	assert.Equal(s.t, admins, runtime.Spec.Security.Administrators)

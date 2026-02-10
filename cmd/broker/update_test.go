@@ -3,9 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
-	"testing"
-
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -16,6 +13,9 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"testing"
+	"time"
 )
 
 const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
@@ -305,6 +305,233 @@ func TestUpdateFailedInstance(t *testing.T) {
 	errResponse := suite.DecodeErrorResponse(resp)
 
 	assert.Equal(t, "Unable to process an update of a failed instance", errResponse.Description)
+}
+
+func TestSyncUpdates(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster"
+						
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	// OSB update:
+	resp1 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+		}
+   }`)
+	defer func() { _ = resp1.Body.Close() }()
+
+	// then
+	assert.Equal(t, http.StatusOK, resp1.StatusCode)
+
+	// when
+	// OSB update, OIDC is being changed
+	resp2 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+            "oidc": {
+				"clientID": "id-ooo",
+				"signingAlgs": ["RS256"],
+                "issuerURL": "https://issuer.url.com"
+			}
+		}
+   }`)
+	defer func() { _ = resp2.Body.Close() }()
+
+	assert.Equal(t, http.StatusAccepted, resp2.StatusCode)
+
+	// second update when the previous did not finish yet
+	// when
+	// OSB update, OIDC is being changed
+	resp3 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+            "oidc": {
+				"clientID": "id-ooo-changed",
+				"signingAlgs": ["RS256"],
+                "issuerURL": "https://issuer.url.com"
+			}
+		}
+   }`)
+	defer func() { _ = resp3.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp3.StatusCode)
+	// assert operation IDs
+}
+
+// squeeze scenario
+func TestMultipleUpdates(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+                        "machineType":"m6i.large",
+                        "region":"us-east-1"
+                    }
+						
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	// OSB update:
+	resp1 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+		}
+   }`)
+	defer func() { _ = resp1.Body.Close() }()
+
+	// then
+	assert.Equal(t, http.StatusOK, resp1.StatusCode)
+
+	// set runtime state to Pending to simulate the situation when the previous update did not finish yet
+	suite.SetRuntimeResourceStateByInstanceId(iid, imv1.RuntimeStatePending)
+
+	//time.Sleep(time.Millisecond)
+
+	// when
+	// OSB update, machine type is changed
+	resp2 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context":{},
+		"parameters": {
+            "machineType":"m6i.xlarge"
+		}
+   }`)
+	defer func() { _ = resp2.Body.Close() }()
+	op2ID := suite.DecodeOperationID(resp2)
+	assert.Equal(t, http.StatusAccepted, resp2.StatusCode)
+
+	//time.Sleep(2 * time.Millisecond)
+
+	// second update when the previous did not finish yet
+	// when
+	resp3 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context":{},
+		"parameters": {
+            "machineType":"m6i.xlarge"
+		}
+   }`)
+	defer func() { _ = resp3.Body.Close() }()
+	op3ID := suite.DecodeOperationID(resp3)
+	assert.Equal(t, http.StatusAccepted, resp3.StatusCode)
+	assert.Equal(t, op2ID, op3ID, fmt.Sprintf("expected %s but was one of previous operation IDs: %s", op2ID, opID))
+
+	time.Sleep(time.Millisecond)
+
+	// third update when the previous did not finish yet, this update changes some parameters
+	// when
+	// OSB update, OIDC is being changed
+	resp4 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context":{},
+		"parameters": {
+            "machineType":"m6i.2xlarge"
+		}
+    }`)
+	defer func() { _ = resp4.Body.Close() }()
+	op4ID := suite.DecodeOperationID(resp4)
+	assert.Equal(t, http.StatusAccepted, resp4.StatusCode)
+	assert.NotEqual(t, op2ID, op4ID)
+
+	time.Sleep(time.Millisecond)
+
+	// last update when the previous did not finish yet
+	// when
+	// OSB update, no changes
+	resp5 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context":{},
+		"parameters": {
+            "machineType":"m6i.2xlarge"
+		}
+    }`)
+	defer func() { _ = resp4.Body.Close() }()
+	op5ID := suite.DecodeOperationID(resp5)
+	assert.Equal(t, http.StatusAccepted, resp5.StatusCode)
+	assert.Equal(t, op4ID, op5ID)
+
+	suite.SetRuntimeResourceStateByInstanceId(iid, imv1.RuntimeStateReady)
 }
 
 func TestUpdate_SapConvergedCloud(t *testing.T) {

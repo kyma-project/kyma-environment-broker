@@ -226,7 +226,7 @@ func TestUpgradePlan(t *testing.T) {
 		require.NotNil(t, err)
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
+		assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 
 	})
