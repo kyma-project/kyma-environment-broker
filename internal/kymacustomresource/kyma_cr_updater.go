@@ -51,6 +51,7 @@ func NewUpdater(k8sClient dynamic.Interface,
 }
 
 func (u *Updater) Run() error {
+
 	for {
 		item, ok := u.queue.Extract()
 		if !ok {
@@ -60,7 +61,6 @@ func (u *Updater) Run() error {
 		u.logger.Debug(fmt.Sprintf("Item dequeued - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 
 		ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
-		defer cancel()
 
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(ctxWithTimeout, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
@@ -68,10 +68,12 @@ func (u *Updater) Run() error {
 		if err != nil {
 			u.logger.Warn("while listing Kyma CRs: " + err.Error() + " requeue item")
 			u.queue.Insert(item)
+			cancel()
 			continue
 		}
 		if len(unstructuredList.Items) == 0 {
 			u.logger.Info("no Kyma CRs found for subaccount" + item.SubaccountID)
+			cancel()
 			continue
 		}
 		retryRequired := false
@@ -82,6 +84,7 @@ func (u *Updater) Run() error {
 				retryRequired = true
 			}
 		}
+		cancel()
 		if retryRequired {
 			u.logger.Debug(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
 			u.queue.Insert(item)
