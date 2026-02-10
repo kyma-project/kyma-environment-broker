@@ -58,37 +58,38 @@ func (u *Updater) Run() error {
 			time.Sleep(u.sleepDuration)
 			continue
 		}
-		u.logger.Debug(fmt.Sprintf("Item dequeued - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 
-		ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
+		func() {
+			ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
+			defer cancel()
 
-		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(ctxWithTimeout, metav1.ListOptions{
-			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
-		})
-		if err != nil {
-			u.logger.Warn("while listing Kyma CRs: " + err.Error() + " requeue item")
-			u.queue.Insert(item)
-			cancel()
-			continue
-		}
-		if len(unstructuredList.Items) == 0 {
-			u.logger.Info("no Kyma CRs found for subaccount" + item.SubaccountID)
-			cancel()
-			continue
-		}
-		retryRequired := false
-		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount ", len(unstructuredList.Items)))
-		for _, kymaCrUnstructured := range unstructuredList.Items {
-			if err := u.updateLabels(kymaCrUnstructured, item.BetaEnabled, item.UsedForProduction, ctxWithTimeout); err != nil {
-				u.logger.Warn("while updating Kyma CR: " + err.Error() + " item will be added back to the queue")
-				retryRequired = true
+			u.logger.Debug(fmt.Sprintf("Item dequeued - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
+
+			unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(ctxWithTimeout, metav1.ListOptions{
+				LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
+			})
+			if err != nil {
+				u.logger.Warn("while listing Kyma CRs: " + err.Error() + " requeue item")
+				u.queue.Insert(item)
+				return
 			}
-		}
-		cancel()
-		if retryRequired {
-			u.logger.Debug(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
-			u.queue.Insert(item)
-		}
+			if len(unstructuredList.Items) == 0 {
+				u.logger.Info("no Kyma CRs found for subaccount" + item.SubaccountID)
+				return
+			}
+			retryRequired := false
+			u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount ", len(unstructuredList.Items)))
+			for _, kymaCrUnstructured := range unstructuredList.Items {
+				if err := u.updateLabels(kymaCrUnstructured, item.BetaEnabled, item.UsedForProduction, ctxWithTimeout); err != nil {
+					u.logger.Warn("while updating Kyma CR: " + err.Error() + " item will be added back to the queue")
+					retryRequired = true
+				}
+			}
+			if retryRequired {
+				u.logger.Debug(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
+				u.queue.Insert(item)
+			}
+		}()
 	}
 }
 
