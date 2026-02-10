@@ -111,161 +111,67 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
         
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Populate database
-        run: |
-          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
-          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
-          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
-          
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          PORT_FORWARD_PID=$!
-          echo $PORT_FORWARD_PID
-          sleep 5
-          
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-          
-          kill $PORT_FORWARD_PID
+        run: scripts/testing/populate_performance_db.sh
           
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision instances
         run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh ${{ inputs.instances-number }} azure http://localhost:30080
       
       - name: Simulate KIM
         timeout-minutes: 60
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
-        run: scripts/simulate_kim.sh
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} provisioning http://localhost:30080
         
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+        run: scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision instances (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "$((2 * ${{ inputs.instances-number }}))" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not $((2 * ${{ inputs.instances-number }})). Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh $((2 * ${{ inputs.instances-number }})) azure http://localhost:30080
       
       - name: Simulate KIM (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         timeout-minutes: 60
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
-        run: scripts/simulate_kim.sh
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure $((2 * ${{ inputs.instances-number }})) provisioning http://localhost:30080
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Fetch metrics
-        run: |          
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
-          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
-          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
-            AVG_PROVISIONING_DURATION=0
-          else
-            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
+        run: |
+          scripts/testing/collect_provisioning_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c
           scripts/generate_charts.sh
-          
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -297,225 +203,67 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Populate database
-        run: |
-          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
-          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
-          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
-
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          PORT_FORWARD_PID=$!
-          echo $PORT_FORWARD_PID
-          sleep 5
-
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-
-          kill $PORT_FORWARD_PID
+        run: scripts/testing/populate_performance_db.sh
           
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision instances
         run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh ${{ inputs.instances-number }} azure http://localhost:30080
 
       - name: Simulate KIM
         timeout-minutes: 60
-        env:
-          KIM_DELAY_SECONDS: 0
         run: |
           scripts/simulate_kim.sh
-          
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} provisioning http://localhost:30080
         
       - name: Update instances
         timeout-minutes: 60
         run: |
-          PAGE=1
-          
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-          
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
-          
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request PATCH \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
-            done
-          
-            PAGE=$((PAGE + 1))
-          done
-          
-          while true; do
-            UPDATED_COUNT=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&state=succeeded,failed" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-          
-            if [ "$UPDATED_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-              echo "All instances are updated. Done."
-              break
-            fi
-          
-            sleep 10
-          done
+          scripts/testing/update_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure autoScalerMax 15 http://localhost:30080
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} update http://localhost:30080
+
       - name: Fetch metrics
-        run: |
-          sleep 15
-          
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Update instances (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         timeout-minutes: 60
         run: |
-          PAGE=1
-          
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?page=${PAGE}&pageSize=100&operationDetail=true&plan=azure&state=succeeded" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-            
-            INSTANCES=$(echo "$RESPONSE" | jq '.data')
-            if [ "$INSTANCES" = "[]" ]; then
-              echo "No more instances to update on page $PAGE"
-              break
-            fi
-            
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request PATCH \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":16}}'
-            done
-          
-            PAGE=$((PAGE + 1))
-          done
-          
-          while true; do
-            UPDATED_COUNT=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&state=succeeded,failed" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-          
-            if [ "$UPDATED_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-              echo "All instances are updated. Done."
-              break
-            fi
-          
-            sleep 10
-          done
+          scripts/testing/update_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure autoScalerMax 16 http://localhost:30080
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} update http://localhost:30080
+      
+      - name: Fetch metrics
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
-
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
       - name: Generate charts
-        run: |
-          sleep 15
-
-          scripts/generate_charts.sh
-
+        run: scripts/generate_charts.sh
 
       - name: Analyze metrics for leaks
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -541,52 +289,25 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "" "" "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Populate database
-        run: |
-          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
-          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
-          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
-
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          PORT_FORWARD_PID=$!
-          echo $PORT_FORWARD_PID
-          sleep 5
-
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-
-          kill $PORT_FORWARD_PID
+        run: scripts/testing/populate_performance_db.sh
           
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision the instance
-        run: |
-          curl --request PUT \
-            --url http://localhost:30080/oauth/v2/service_instances/azure-cluster \
-            --header "Content-Type: application/json" \
-            --header "X-Broker-API-Version: 2.16" \
-            --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
+        run: scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
 
       - name: Simulate KIM
         timeout-minutes: 60
@@ -594,129 +315,39 @@ jobs:
           KIM_DELAY_SECONDS: 0
         run: |
           scripts/simulate_kim.sh
-
-          INSTANCE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          INSTANCE_STATE=$(echo "$INSTANCE_JSON" | jq '.data[0].status.state')
-
-          if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-            echo "Assertion passed: state is $INSTANCE_STATE"
-          else
-            echo "Assertion failed: state is not 'succeeded'. Actual value: $INSTANCE_STATE"
-            exit 1
-          fi
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
       - name: Update the instance
         timeout-minutes: 60
         run: |
-          max=5
-          for i in $(seq 1 ${{ inputs.updates-number }}); do
-            curl --request PATCH \
-              --url "http://localhost:30080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}"
-    
-            max=$((max + 1))
-            if [ "$max" -gt 100 ]; then
-              max=5
-            fi
-          done
-          
-          while true; do
-            INSTANCE_STATE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
+          scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
-            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-              echo "Instance is updated. Done."
-              break
-            fi
-
-            sleep 10
-          done
-
-      - name: Fetch metrics
-        run: |
-          sleep 15
-
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Update the instance (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         timeout-minutes: 60
         run: |
-          max=5
-          for i in $(seq 1 ${{ inputs.updates-number }}); do
-            curl --request PATCH \
-              --url "http://localhost:30080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}"
-    
-            max=$((max + 1))
-            if [ "$max" -gt 100 ]; then
-              max=5
-            fi
-          done
-          
-          while true; do
-            INSTANCE_STATE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
+          scripts/testing/update_instance_multiple_times.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c ${{ inputs.updates-number }} http://localhost:30080
+          scripts/testing/wait_for_instance_state.sh azure-cluster http://localhost:30080
 
-            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
-              echo "Instance is updated. Done."
-              break
-            fi
-
-            sleep 10
-          done
+      - name: Fetch metrics
+        run: scripts/testing/calculate_update_success_rate.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Post-test monitoring period (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Generate charts
-        run: |
-          sleep 15
-
-          scripts/generate_charts.sh
+        run: scripts/generate_charts.sh
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -748,186 +379,65 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "" "" "${{ inputs.deprovisioning-max-step-processing-time }}" ${{ inputs.deprovisioning-workers-amount }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Populate database
-        run: |
-          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
-          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
-          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
-
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          PORT_FORWARD_PID=$!
-          echo $PORT_FORWARD_PID
-          sleep 5
-
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-
-          kill $PORT_FORWARD_PID
+        run: scripts/testing/populate_performance_db.sh
           
       - name: Start metrics collector
+        run: scripts/testing/start_metrics_collector.sh
+
+      - name: Provision instances (preparation for two deprovisioning rounds)
         run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+          TOTAL_INSTANCES=$((${{ inputs.instances-number }} * 2))
+          scripts/testing/provision_instances.sh $TOTAL_INSTANCES 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh $TOTAL_INSTANCES azure http://localhost:30080
+
+      - name: Simulate KIM
+        timeout-minutes: 60
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure $((${{ inputs.instances-number }} * 2)) provisioning http://localhost:30080
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
-          
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
-      - name: Provision instances
-        run: |
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
-
-      - name: Simulate KIM
-        timeout-minutes: 60
-        env:
-          KIM_DELAY_SECONDS: 0
-        run: |
-          scripts/simulate_kim.sh
-
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
-            exit 1
-          fi
-
-      - name: Deprovision instances
+      - name: Deprovision first half of instances (first round)
         timeout-minutes: 60
         run: |
-          PAGE=1
+          scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080 count ${{ inputs.instances-number }}
+          scripts/testing/wait_for_all_operations.sh azure ${{ inputs.instances-number }} deprovisioning http://localhost:30080
 
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
+      - name: Post-test monitoring period (first round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
+      - name: Mark baseline for leak detection before second round
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/metrics_baseline_marker.sh
 
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request DELETE \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
-            done
+      - name: Deprovision remaining instances (second round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        timeout-minutes: 60
+        run: |
+          scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080
+          scripts/testing/wait_for_all_operations.sh azure 0 deprovisioning http://localhost:30080
 
-            PAGE=$((PAGE + 1))
-          done
-
-          while true; do
-            DEPROVISIONING_COUNT=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&state=deprovisioning" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-            if [ "$DEPROVISIONING_COUNT" -eq 0 ]; then
-              echo "All instances are deprovisioned. Done."
-              break
-            fi
-
-            sleep 10
-          done
+      - name: Post-test monitoring period (second round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
 
       - name: Fetch metrics
-        run: |
-          sleep 15
-          
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of deprovisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          DEPROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_DURATION=${DEPROVISIONING_DURATION:-0}
-          DEPROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_COUNT=${DEPROVISIONING_COUNT:-0}
-          if [ "$DEPROVISIONING_COUNT" -eq 0 ]; then
-            AVG_DEPROVISIONING_DURATION=0
-          else
-            AVG_DEPROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($DEPROVISIONING_DURATION / $DEPROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
-
-      - name: Mark baseline for leak detection
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
-
-      - name: Post-test monitoring period
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
       - name: Generate charts
-        run: |
-          sleep 15
-
-          scripts/generate_charts.sh
+        run: scripts/generate_charts.sh
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -959,94 +469,29 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }} "${{ inputs.deprovisioning-max-step-processing-time }}" ${{ inputs.deprovisioning-workers-amount }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Populate database
-        run: |
-          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
-          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
-          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
-
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          PORT_FORWARD_PID=$!
-          echo $PORT_FORWARD_PID
-          sleep 5
-
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-
-          kill $PORT_FORWARD_PID
+        run: scripts/testing/populate_performance_db.sh
           
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Provision instances
         run: |
-          # Instances for update
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url "http://localhost:30080/oauth/v2/service_instances/$uid" \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"8cb22518-aa26-44c5-91a0-e669ec9bf443\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-lite-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure_lite \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
-          
-          # Instances for deprovisioning
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 8cb22518-aa26-44c5-91a0-e669ec9bf443 azure-lite-cluster northeurope http://localhost:30080
+          scripts/testing/assert_runtime_count.sh azure_lite ${{ inputs.instances-number }} http://localhost:30080
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_runtime_count.sh azure ${{ inputs.instances-number }} http://localhost:30080
           
       - name: Simulate KIM
         timeout-minutes: 60
@@ -1057,283 +502,51 @@ jobs:
 
           sleep 15
           
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?plan=azure_lite&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
-            exit 1
-          fi
-          
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/assert_runtime_count.sh azure_lite ${{ inputs.instances-number }} http://localhost:30080
+          scripts/testing/assert_runtime_count.sh azure ${{ inputs.instances-number }} http://localhost:30080
 
       - name: Run mixed operations
         run: |
           # Provisioning requests
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}"
-          done
 
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=gcp \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
 
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/assert_runtime_count.sh gcp ${{ inputs.instances-number }} http://localhost:30080
           
           # Update requests
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure_lite&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
-
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request PATCH \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
-            done
-
-            PAGE=$((PAGE + 1))
-          done
+          scripts/testing/update_instances.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 azure_lite autoScalerMax 15 http://localhost:30080
           
           # Deprovisioning requests
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
-
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request DELETE \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
-            done
-
-            PAGE=$((PAGE + 1))
-          done
+          scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080
           
       - name: Simulate KIM
         timeout-minutes: 60
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
-        
-      - name: Fetch metrics
-        run: |
-          sleep 15
-          
-          METRICS=$(curl -s http://localhost:30080/metrics)
-          
-          # Provisioning metrics
-
-          echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            PROVISIONING_SUCCESS_RATE=0
-          else
-            PROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of provisioning requests: $PROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-
-          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
-          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
-          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
-            AVG_PROVISIONING_DURATION=0
-          else
-            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
-          # Update metrics
-          
-          echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="8cb22518-aa26-44c5-91a0-e669ec9bf443".*state="succeeded".*type="update"' | wc -l | xargs)
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="8cb22518-aa26-44c5-91a0-e669ec9bf443".*state="failed".*type="update"' | wc -l | xargs)
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            UPDATE_SUCCESS_RATE=0
-          else
-            UPDATE_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of update requests: $UPDATE_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          # Deprovisioning metrics
-          
-          echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            DEPROVISIONING_SUCCESS_RATE=0
-          else
-            DEPROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of deprovisioning requests: $DEPROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
-          DEPROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_DURATION=${DEPROVISIONING_DURATION:-0}
-          DEPROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          DEPROVISIONING_COUNT=${DEPROVISIONING_COUNT:-0}
-          if [ "$DEPROVISIONING_COUNT" -eq 0 ]; then
-            AVG_DEPROVISIONING_DURATION=0
-          else
-            AVG_DEPROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($DEPROVISIONING_DURATION / $DEPROVISIONING_COUNT)}")
-          fi
-          echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "$PROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: PROVISIONING_SUCCESS_RATE is $PROVISIONING_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
-          
-          if [[ "$UPDATE_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: UPDATE_SUCCESS_RATE is $UPDATE_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
-          
-          if [[ "$DEPROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
-            echo "Error: DEPROVISIONING_SUCCESS_RATE is $DEPROVISIONING_SUCCESS_RATE, expected 100.00"
-            exit 1
-          fi
 
       - name: Post-test monitoring period (first round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (first round)"
 
       - name: Mark baseline for leak detection before second round
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-          echo "Baseline marker set at $(cat /tmp/baseline_samples_count) samples"
+          scripts/testing/metrics_baseline_marker.sh
 
       - name: Run mixed operations (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
         run: |
           # Provisioning requests
-          for i in $(seq 1 ${{ inputs.instances-number }}); do
-            uid=$(uuidgen)
-            curl --request PUT \
-              --url http://localhost:30080/oauth/v2/service_instances/$uid \
-              --header "Content-Type: application/json" \
-              --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}"
-          done
+          scripts/testing/provision_instances.sh ${{ inputs.instances-number }} ca6e5357-707f-4565-bbbd-b3ab732597c6 gcp-cluster europe-west3 http://localhost:30080
 
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:30080/runtimes?plan=gcp \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
-
-          if [ "$TOTAL_COUNT" -eq "$((2 * ${{ inputs.instances-number }}))" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
-          else
-            echo "Assertion failed: totalCount is not $((2 * ${{ inputs.instances-number }})). Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+          scripts/testing/assert_runtime_count.sh gcp $((2 * ${{ inputs.instances-number }})) http://localhost:30080
           
           # Update requests
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure_lite&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
-
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request PATCH \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":16}}'
-            done
-
-            PAGE=$((PAGE + 1))
-          done
+          scripts/testing/update_instances.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 azure_lite autoScalerMax 16 http://localhost:30080
           
           # Deprovisioning requests
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl --request GET \
-              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-
-            COUNT=$(echo "$RESPONSE" | jq '.count')
-            if [ "$COUNT" -eq 0 ]; then
-              break
-            fi
-
-            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --request DELETE \
-                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
-                --header "Content-Type: application/json" \
-                --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
-            done
-
-            PAGE=$((PAGE + 1))
-          done
+          scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure http://localhost:30080
           
       - name: Simulate KIM (second round)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -1342,18 +555,25 @@ jobs:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
 
-      - name: Post-test monitoring period (second round)
-        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring (second round) for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring (second round) completed"
-
-      - name: Generate charts
+      - name: Fetch metrics
         run: |
           sleep 15
+          
+          echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/collect_provisioning_metrics.sh ca6e5357-707f-4565-bbbd-b3ab732597c6
+          
+          echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/calculate_update_success_rate.sh 8cb22518-aa26-44c5-91a0-e669ec9bf443 http://localhost:30080
+          
+          echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
+          scripts/testing/calculate_deprovision_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c http://localhost:30080
 
-          scripts/generate_charts.sh
+      - name: Post-test monitoring period (second round)
+        if: ${{ inputs.post-test-monitoring-minutes > 0 }}
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test (second round)"
+
+      - name: Generate charts
+        run: scripts/generate_charts.sh
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -1385,28 +605,16 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
           
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: Baseline monitoring period
         if: ${{ inputs.baseline-monitoring-minutes > 0 }}
         run: |
-          echo "Collecting baseline metrics for ${{ inputs.baseline-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.baseline-monitoring-minutes }} * 60))
-          echo "Baseline monitoring completed"
-
-          # Mark the end of baseline period
-          wc -l < /tmp/keb_metrics.jsonl > /tmp/baseline_samples_count
-
+          scripts/testing/monitoring_period.sh ${{ inputs.baseline-monitoring-minutes }} "Baseline"
+          scripts/testing/metrics_baseline_marker.sh
       - name: Fetch runtimes using GET endpoint
         run: |
           kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
@@ -1487,16 +695,10 @@ jobs:
 
       - name: Post-test monitoring period
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        run: |
-          echo "Post-test monitoring for ${{ inputs.post-test-monitoring-minutes }} minutes..."
-          sleep $((${{ inputs.post-test-monitoring-minutes }} * 60))
-          echo "Post-test monitoring completed"
+        run: scripts/testing/monitoring_period.sh ${{ inputs.post-test-monitoring-minutes }} "Post-test"
 
       - name: Generate charts
-        run: |
-          sleep 15
-
-          scripts/generate_charts.sh
+        run: scripts/generate_charts.sh
 
       - name: Analyze metrics for leaks (disabled)
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
@@ -1516,17 +718,10 @@ jobs:
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }}
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Start metrics collector
-        run: |
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
+        run: scripts/testing/start_metrics_collector.sh
 
       - name: First monitoring period (baseline)
         run: |
@@ -1534,9 +729,7 @@ jobs:
           if [ "$DURATION" -eq 0 ]; then
             DURATION=5
           fi
-          echo "First monitoring period: $DURATION minutes..."
-          sleep $(($DURATION * 60))
-          echo "First monitoring period completed"
+          scripts/testing/monitoring_period.sh $DURATION "First monitoring period (baseline)"
 
       - name: Second monitoring period (post-test)
         run: |
@@ -1544,9 +737,7 @@ jobs:
           if [ "$DURATION" -eq 0 ]; then
             DURATION=5
           fi
-          echo "Second monitoring period: $DURATION minutes..."
-          sleep $(($DURATION * 60))
-          echo "Second monitoring period completed"
+          scripts/testing/monitoring_period.sh $DURATION "Second monitoring period (post-test)"
 
       - name: Generate charts
         run: |

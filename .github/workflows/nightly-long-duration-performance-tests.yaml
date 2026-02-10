@@ -58,19 +58,19 @@ on:
       # Leak Detection Thresholds
       memory-growth-threshold-percent:
         description: 'Allowed memory growth percent (over baseline)'
-        default: '70'
+        default: '10'
         required: false
       goroutine-increase-threshold:
         description: 'Allowed increase in goroutines (absolute)'
-        default: '50'
+        default: '0'
         required: false
       fd-increase-threshold:
         description: 'Allowed increase in open file descriptors (absolute)'
-        default: '10'
+        default: '0'
         required: false
       db-conn-increase-threshold:
         description: 'Allowed increase in DB connections (absolute)'
-        default: '5'
+        default: '0'
         required: false
 
       # Release Configuration
@@ -101,13 +101,14 @@ jobs:
       provisioning-workers-amount: ${{ inputs.provisioning-workers-amount || '25' }}
       update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
-      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '70' }}
-      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '50' }}
-      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '10' }}
-      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '5' }}
+      memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '10' }}
+      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '0' }}
+      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '0' }}
+      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '0' }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
+    if: ${{ !success() }}
     needs: run-performance-tests
     runs-on: ubuntu-latest
     steps:
@@ -115,7 +116,6 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Notify MS Teams on failure
-        if: ${{ !success() }}
         env:
           MS_TEAMS_TOKEN_URL: ${{ secrets.MS_TEAMS_TOKEN_URL }}
           MS_TEAMS_CLIENT_ID: ${{ secrets.MS_TEAMS_CLIENT_ID }}
@@ -131,7 +131,6 @@ jobs:
           ./scripts/notify_teams.sh "$MESSAGE"
 
       - name: Notify slack channel about failure
-        if: ${{ !success() }}
         uses: slackapi/slack-github-action@v2.1.1
         with:
           method: chat.postMessage

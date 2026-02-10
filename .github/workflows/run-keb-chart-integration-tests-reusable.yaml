@@ -6,7 +6,7 @@ on:
       last-k3s-versions:
         description: number of the most recent K3s versions to be used
         required: false
-        default: 1
+        default: '1'
         type: string
       release:
         description: 'Determines if the workflow is called from release'
@@ -109,40 +109,13 @@ jobs:
           echo "GLOBAL_ACCOUNT_ID=2f5011af-2fd3-44ba-ac60-eeb1148c2995" >> $GITHUB_ENV
 
       - name: Install KEB chart
-        run: |
-          if [ "${{ inputs.release }}" == "true" ]; then
-            make install VERSION=${{ inputs.version }}
-          else
-            make install VERSION=PR-${{ inputs.version }} LOCAL_REGISTRY=true
-          fi
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
 
       - name: Provision an instance
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
-          curl --request PUT \
-          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
-          --header 'Content-Type: application/json' \
-          --header 'X-Broker-API-Version: 2.16' \
-          --data '{
-            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-            "context": {
-              "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
-              "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-              "user_id": "user@email.com",
-              "sm_operator_credentials": {
-                "clientid": "cid",
-                "clientsecret": "cs",
-                "url": "url",
-                "sm_url": "sm_url"
-              }
-            },
-            "parameters": {
-              "name": "azure-cluster",
-              "region": "northeurope"
-            }
-          }'
+          scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:8080
 
       - name: Get RuntimeID
         run: |
@@ -176,24 +149,10 @@ jobs:
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
 
       - name: Wait for provisioning to finish
-        run: |
-          while true; do
-            STATUS=$(curl --request GET \
-              --url http://localhost:8080/runtimes \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.provisioning.state')
-
-            echo "Current provisioning status: $STATUS"
-            if [ "$STATUS" == "succeeded" ]; then
-              echo "Provisioning succeeded."
-              break
-            elif [ "$STATUS" == "failed" ]; then
-              echo "Provisioning failed."
-              exit 1
-            fi
-            sleep 5
-          done
-          make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+        
+      - name: Set Kyma state to Ready
+        run: make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
 
       - name: Set KEB pod name as global env
         run: |
@@ -204,54 +163,12 @@ jobs:
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
 
       - name: Update the instance
-        run: |
-          curl --request PATCH \
-          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
-          --header 'Content-Type: application/json' \
-          --header 'X-Broker-API-Version: 2.16' \
-          --data '{
-            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-            "context": {
-                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
-                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-                "user_id": "user@email.com"
-            },
-            "parameters": {
-                "machineType": "Standard_D4s_v5"
-            }
-          }'
+        run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{"machineType":"Standard_D4s_v5"}' http://localhost:8080
 
       - name: Wait for updating to finish
-        run: |
-          while true; do
-            STATUS=$(curl --request GET \
-              --url http://localhost:8080/runtimes \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
-
-            echo "Current updating status: $STATUS"
-            if [ "$STATUS" == "succeeded" ]; then
-              echo "Updating succeeded."
-              break
-            elif [ "$STATUS" == "failed" ]; then
-              echo "Updating failed."
-              exit 1
-            fi
-            sleep 5
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
-
-          if [ "$TOTAL_COUNT" -eq 1 ]; then
-            echo "Assertion passed: totalCount is 1."
-          else
-            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+      - name: Assert update totalCount is 1
+        run: scripts/testing/assert_runtime_count.sh azure-cluster 1 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
@@ -261,49 +178,12 @@ jobs:
           echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
 
       - name: Update the instance with new global account ID
-        run: |
-          curl --request PATCH \
-          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
-          --header 'Content-Type: application/json' \
-          --header 'X-Broker-API-Version: 2.16' \
-          --data '{
-            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-            "context": {
-                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'"
-            }
-          }'
+        run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{}' http://localhost:8080
 
       - name: Wait for global account ID update to finish
-        run: |
-          while true; do
-            STATUS=$(curl --request GET \
-              --url http://localhost:8080/runtimes \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
-
-            echo "Current updating status: $STATUS"
-            if [ "$STATUS" == "succeeded" ]; then
-              echo "Global account ID update succeeded."
-              break
-            elif [ "$STATUS" == "failed" ]; then
-              echo "Global account ID update failed."
-              exit 1
-            fi
-            sleep 5
-          done
-
-          TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
-
-          if [ "$TOTAL_COUNT" -eq 1 ]; then
-            echo "Assertion passed: totalCount is 1."
-          else
-            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
-            exit 1
-          fi
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+      - name: Assert update totalCount is 2
+        run: scripts/testing/assert_runtime_count.sh azure-cluster 2 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after global account ID update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
@@ -345,42 +225,10 @@ jobs:
           echo "GardenerCluster CR label verification passed"
 
       - name: Deprovision the instance
-        run: |
-          curl --request DELETE \
-          --url 'http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c' \
-          --header 'Content-Type: application/json' \
-          --header 'X-Broker-API-Version: 2.16' \
-          --data '{
-            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-            "context": {
-                "globalaccount_id": "'"$GLOBAL_ACCOUNT_ID"'",
-                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
-                "user_id": "user@email.com"
-            }
-          }'
+        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster http://localhost:8080 single
       
       - name: Wait for deprovisioning to finish
-        run: |
-          while true; do
-            RESULT=$(curl --request GET \
-              --url http://localhost:8080/runtimes \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]')
-
-            if [ -z "$RESULT" ]; then
-              echo "Deprovisioning succeeded."
-              break
-            fi
-            sleep 5
-          done
-          
-          echo "Checking if RuntimeCR was removed"
-          RUNTIME_COUNT=$(kubectl get runtimes -n kcp-system | wc -l)
-          if [ "$RUNTIME_COUNT" -ne 0 ]; then
-            echo "RuntimeCR still exists."
-            exit 1
-          fi
+        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster
 
       - name: Check for errors and warnings in KEB logs after deprovisioning
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
