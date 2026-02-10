@@ -111,9 +111,7 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
         
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }}
 
       - name: Install KEB chart
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
@@ -205,11 +203,7 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }}
 
       - name: Install KEB chart
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
@@ -295,9 +289,7 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "" "" "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }}
 
       - name: Install KEB chart
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
@@ -387,11 +379,7 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "" "" "${{ inputs.deprovisioning-max-step-processing-time }}" ${{ inputs.deprovisioning-workers-amount }}
 
       - name: Install KEB chart
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
@@ -481,13 +469,7 @@ jobs:
         run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
 
       - name: Prepare values.yaml
-        run: |
-          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
-          yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
-          yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
+        run: scripts/testing/configure_keb_values.sh "${{ inputs.provisioning-max-step-processing-time }}" ${{ inputs.provisioning-workers-amount }} "${{ inputs.update-max-step-processing-time }}" ${{ inputs.update-workers-amount }} "${{ inputs.deprovisioning-max-step-processing-time }}" ${{ inputs.deprovisioning-workers-amount }}
 
       - name: Install KEB chart
         run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
