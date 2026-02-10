@@ -150,6 +150,7 @@ jobs:
 
       - name: Wait for provisioning to finish
         run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+        
       - name: Set Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
 
