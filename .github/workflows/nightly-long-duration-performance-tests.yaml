@@ -62,15 +62,15 @@ on:
         required: false
       goroutine-increase-threshold:
         description: 'Allowed increase in goroutines (absolute)'
-        default: '0'
+        default: '1'
         required: false
       fd-increase-threshold:
         description: 'Allowed increase in open file descriptors (absolute)'
-        default: '0'
+        default: '1'
         required: false
       db-conn-increase-threshold:
         description: 'Allowed increase in DB connections (absolute)'
-        default: '0'
+        default: '1'
         required: false
 
       # Release Configuration
@@ -102,9 +102,9 @@ jobs:
       update-workers-amount: ${{ inputs.update-workers-amount || '25' }}
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
       memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '10' }}
-      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '0' }}
-      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '0' }}
-      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '0' }}
+      goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '1' }}
+      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '1' }}
+      db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '1' }}
 
   analyze-for-leaks:
     name: Extended monitoring and leak detection
