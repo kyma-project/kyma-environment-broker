@@ -579,6 +579,11 @@ func TestRuntimeHandler(t *testing.T) {
 		assert.Nil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		// check if there is no emptyUpdate on root level
+		assert.Nil(t, out.Data[0].EmptyUpdates)
+		// but there should be emptyUpdate count on update details
+		assert.Equal(t, 0, out.Data[0].Status.Update.EmptyUpdatesCount)
 	})
 
 }
