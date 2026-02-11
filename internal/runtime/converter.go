@@ -191,7 +191,7 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 	dto.Status.Update.Count = len(oprs)
 	dto.Status.Update.TotalCount = totalCount
 	if dto.EmptyUpdates != nil {
-		dto.Status.Update.EmptyCount = *dto.EmptyUpdates
+		dto.Status.Update.EmptyUpdatesCount = *dto.EmptyUpdates
 	}
 	for _, o := range oprs {
 		op := pkg.Operation{}

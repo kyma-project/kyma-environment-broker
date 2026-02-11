@@ -402,10 +402,10 @@ type OperationsData struct {
 }
 
 type UpdateOperationsData struct {
-	Data       []Operation `json:"data"`
-	TotalCount int         `json:"totalCount"`
-	EmptyCount int         `json:"emptyCount"`
-	Count      int         `json:"count"`
+	Data              []Operation `json:"data"`
+	TotalCount        int         `json:"totalCount"`
+	EmptyUpdatesCount int         `json:"emptyUpdatesCount,omitempty"`
+	Count             int         `json:"count"`
 }
 
 type Operation struct {
