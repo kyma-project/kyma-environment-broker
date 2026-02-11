@@ -19,3 +19,4 @@
   - free                            # pool: hyperscalerType: aws
                                     # pool: hyperscalerType: azure
   - alicloud                        # pool: hyperscalerType: alicloud
+  - build-runtime-alicloud          # pool: hyperscalerType: alicloud

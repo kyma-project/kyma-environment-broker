@@ -9,45 +9,48 @@ import (
 )
 
 const (
-	GCPPlanID                 = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
-	GCPPlanName               = "gcp"
-	AWSPlanID                 = "361c511f-f939-4621-b228-d0fb79a1fe15"
-	AWSPlanName               = "aws"
-	AzurePlanID               = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
-	AzurePlanName             = "azure"
-	AzureLitePlanID           = "8cb22518-aa26-44c5-91a0-e669ec9bf443"
-	AzureLitePlanName         = "azure_lite"
-	TrialPlanID               = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
-	TrialPlanName             = "trial"
-	SapConvergedCloudPlanID   = "03b812ac-c991-4528-b5bd-08b303523a63"
-	SapConvergedCloudPlanName = "sap-converged-cloud"
-	FreemiumPlanID            = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
-	FreemiumPlanName          = "free"
-	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
-	PreviewPlanName           = "preview"
-	BuildRuntimeAWSPlanID     = "6aae0ff3-89f7-4f12-86de-51466145422e"
-	BuildRuntimeAWSPlanName   = "build-runtime-aws"
-	BuildRuntimeGCPPlanID     = "a310cd6b-6452-45a0-935d-d24ab53f9eba"
-	BuildRuntimeGCPPlanName   = "build-runtime-gcp"
-	BuildRuntimeAzurePlanID   = "499244b4-1bef-48c9-be68-495269899f8e"
-	BuildRuntimeAzurePlanName = "build-runtime-azure"
-	AlicloudPlanID            = "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-	AlicloudPlanName          = "alicloud"
+	GCPPlanID                    = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+	GCPPlanName                  = "gcp"
+	AWSPlanID                    = "361c511f-f939-4621-b228-d0fb79a1fe15"
+	AWSPlanName                  = "aws"
+	AzurePlanID                  = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	AzurePlanName                = "azure"
+	AzureLitePlanID              = "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+	AzureLitePlanName            = "azure_lite"
+	TrialPlanID                  = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	TrialPlanName                = "trial"
+	SapConvergedCloudPlanID      = "03b812ac-c991-4528-b5bd-08b303523a63"
+	SapConvergedCloudPlanName    = "sap-converged-cloud"
+	FreemiumPlanID               = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+	FreemiumPlanName             = "free"
+	PreviewPlanID                = "5cb3d976-b85c-42ea-a636-79cadda109a9"
+	PreviewPlanName              = "preview"
+	BuildRuntimeAWSPlanID        = "6aae0ff3-89f7-4f12-86de-51466145422e"
+	BuildRuntimeAWSPlanName      = "build-runtime-aws"
+	BuildRuntimeGCPPlanID        = "a310cd6b-6452-45a0-935d-d24ab53f9eba"
+	BuildRuntimeGCPPlanName      = "build-runtime-gcp"
+	BuildRuntimeAzurePlanID      = "499244b4-1bef-48c9-be68-495269899f8e"
+	BuildRuntimeAzurePlanName    = "build-runtime-azure"
+	AlicloudPlanID               = "9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+	AlicloudPlanName             = "alicloud"
+	BuildRuntimeAlicloudPlanID   = "72efa867-7b54-4d59-8df7-68f4759ff271"
+	BuildRuntimeAlicloudPlanName = "build-runtime-alicloud"
 )
 
 var PlanIDsMapping = map[PlanNameType]PlanIDType{
-	AzurePlanName:             AzurePlanID,
-	AWSPlanName:               AWSPlanID,
-	AzureLitePlanName:         AzureLitePlanID,
-	GCPPlanName:               GCPPlanID,
-	TrialPlanName:             TrialPlanID,
-	SapConvergedCloudPlanName: SapConvergedCloudPlanID,
-	FreemiumPlanName:          FreemiumPlanID,
-	PreviewPlanName:           PreviewPlanID,
-	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
-	BuildRuntimeGCPPlanName:   BuildRuntimeGCPPlanID,
-	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
-	AlicloudPlanName:          AlicloudPlanID,
+	AzurePlanName:                AzurePlanID,
+	AWSPlanName:                  AWSPlanID,
+	AzureLitePlanName:            AzureLitePlanID,
+	GCPPlanName:                  GCPPlanID,
+	TrialPlanName:                TrialPlanID,
+	SapConvergedCloudPlanName:    SapConvergedCloudPlanID,
+	FreemiumPlanName:             FreemiumPlanID,
+	PreviewPlanName:              PreviewPlanID,
+	BuildRuntimeAWSPlanName:      BuildRuntimeAWSPlanID,
+	BuildRuntimeGCPPlanName:      BuildRuntimeGCPPlanID,
+	BuildRuntimeAzurePlanName:    BuildRuntimeAzurePlanID,
+	AlicloudPlanName:             AlicloudPlanID,
+	BuildRuntimeAlicloudPlanName: BuildRuntimeAlicloudPlanID,
 }
 
 type PlanIDType string

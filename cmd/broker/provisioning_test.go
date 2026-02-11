@@ -2799,6 +2799,35 @@ func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		suite.AssertRuntimeResourceLabels(opID)
 	})
+
+	t.Run("should provision instance with build-runtime-alicloud plan", func(t *testing.T) {
+		// given
+		instanceID := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "72efa867-7b54-4d59-8df7-68f4759ff271",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "build-runtime-alicloud-1",
+						"region": "ap-southeast-1"
+					}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		suite.AssertRuntimeResourceLabels(opID)
+	})
 }
 
 func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
