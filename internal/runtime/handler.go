@@ -84,8 +84,8 @@ func unionInstances(sets ...[]pkg.RuntimeDTO) (union []pkg.RuntimeDTO) {
 
 func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO, int, int, error) {
 	if slices.Contains(filter.States, dbmodel.InstanceDeprovisioned) {
-		// try to list instances where deletion didn't finish successfully
-		// entry in the Instances table still exists but has deletion timestamp and contains list of incomplete steps
+		// try to list instances where deletion didn't successfully finish
+		// entry in the Instances table still exists but has deletion timestamp and contains a list of incomplete steps
 		deletionAttempted := true
 		filter.DeletionAttempted = &deletionAttempted
 		instances, instancesCount, instancesTotalCount, _ := h.instancesDb.List(filter)
@@ -130,7 +130,7 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
-	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter) // TODO remove conditional after migration
+	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter)
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
 	}
@@ -204,10 +204,13 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 
 		switch opDetail {
 		case pkg.AllOperation:
-			err = h.setRuntimeAllOperations(&dto)
-		case pkg.LastOperation:
-			err = h.setRuntimeLastOperation(&dto)
+			err = h.addAllOperationsToRuntime(&dto)
+		case
+			pkg.LastOperation:
+			err = h.addLastOperationToRuntime(&dto)
 		}
+		// remove emptyUpdates from the root - it is already moved to operations/updates
+		dto.EmptyUpdates = nil
 		if err != nil {
 			h.logger.Warn(fmt.Sprintf("unable to set operations: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
@@ -318,7 +321,7 @@ func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
+func (h *Handler) addAllOperationsToRuntime(dto *pkg.RuntimeDTO) error {
 	operationsGroup, err := h.operationsDb.ListOperationsByInstanceIDGroupByType(dto.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
 		return fmt.Errorf("while fetching operations for instance %s: %w", dto.InstanceID, err)
@@ -360,7 +363,7 @@ func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
+func (h *Handler) addLastOperationToRuntime(dto *pkg.RuntimeDTO) error {
 	lastOp, err := h.operationsDb.GetLastOperation(dto.InstanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {

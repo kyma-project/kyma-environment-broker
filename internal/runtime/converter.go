@@ -108,7 +108,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		Parameters:      instance.Parameters.Parameters,
 		LicenseType:     instance.Parameters.ErsContext.LicenseType,
 		CommercialModel: instance.Parameters.ErsContext.CommercialModel,
-		EmptyUpdates:    instance.EmptyUpdates,
+		EmptyUpdates:    &instance.EmptyUpdates,
 	}
 
 	toReturn.SubscriptionSecretName = &instance.SubscriptionSecretName
@@ -186,10 +186,13 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 		return
 	}
 
-	dto.Status.Update = &pkg.OperationsData{}
+	dto.Status.Update = &pkg.UpdateOperationsData{}
 	dto.Status.Update.Data = make([]pkg.Operation, 0)
 	dto.Status.Update.Count = len(oprs)
 	dto.Status.Update.TotalCount = totalCount
+	if dto.EmptyUpdates != nil {
+		dto.Status.Update.EmptyCount = *dto.EmptyUpdates
+	}
 	for _, o := range oprs {
 		op := pkg.Operation{}
 		c.applyOperation(&o.Operation, &op)

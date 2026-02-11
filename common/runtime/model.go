@@ -64,7 +64,7 @@ type RuntimeDTO struct {
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
 	Actions                     []Action                  `json:"actions,omitempty"`
-	EmptyUpdates                int                       `json:"emptyUpdates,omitempty"`
+	EmptyUpdates                *int                      `json:"emptyUpdates,omitempty"`
 }
 
 type CloudProvider string
@@ -371,17 +371,17 @@ type Action struct {
 }
 
 type RuntimeStatus struct {
-	CreatedAt        time.Time       `json:"createdAt"`
-	ModifiedAt       time.Time       `json:"modifiedAt"`
-	ExpiredAt        *time.Time      `json:"expiredAt,omitempty"`
-	DeletedAt        *time.Time      `json:"deletedAt,omitempty"`
-	State            State           `json:"state"`
-	Provisioning     *Operation      `json:"provisioning,omitempty"`
-	Deprovisioning   *Operation      `json:"deprovisioning,omitempty"`
-	UpgradingCluster *OperationsData `json:"upgradingCluster,omitempty"`
-	Update           *OperationsData `json:"update,omitempty"`
-	Suspension       *OperationsData `json:"suspension,omitempty"`
-	Unsuspension     *OperationsData `json:"unsuspension,omitempty"`
+	CreatedAt        time.Time             `json:"createdAt"`
+	ModifiedAt       time.Time             `json:"modifiedAt"`
+	ExpiredAt        *time.Time            `json:"expiredAt,omitempty"`
+	DeletedAt        *time.Time            `json:"deletedAt,omitempty"`
+	State            State                 `json:"state"`
+	Provisioning     *Operation            `json:"provisioning,omitempty"`
+	Deprovisioning   *Operation            `json:"deprovisioning,omitempty"`
+	UpgradingCluster *OperationsData       `json:"upgradingCluster,omitempty"`
+	Update           *UpdateOperationsData `json:"update,omitempty"`
+	Suspension       *OperationsData       `json:"suspension,omitempty"`
+	Unsuspension     *OperationsData       `json:"unsuspension,omitempty"`
 }
 
 type OperationType string
@@ -398,6 +398,13 @@ const (
 type OperationsData struct {
 	Data       []Operation `json:"data"`
 	TotalCount int         `json:"totalCount"`
+	Count      int         `json:"count"`
+}
+
+type UpdateOperationsData struct {
+	Data       []Operation `json:"data"`
+	TotalCount int         `json:"totalCount"`
+	EmptyCount int         `json:"emptyCount"`
 	Count      int         `json:"count"`
 }
 
