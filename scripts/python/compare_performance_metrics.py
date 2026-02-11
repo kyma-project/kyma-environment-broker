@@ -130,13 +130,13 @@ def analyze_leaks(baseline: MetricSnapshot, post_test: MetricSnapshot,
     # Goroutine Analysis
     goroutine_diff = post_test.goroutines - baseline.goroutines
     print("\n🧵 Goroutine Analysis:")
-    print(f"  Baseline:  {baseline.goroutines:.0f}")
-    print(f"  Post-test: {post_test.goroutines:.0f}")
-    print(f"  Difference: {goroutine_diff:.0f}")
+    print(f"  Baseline (avg):  {baseline.goroutines:.1f}")
+    print(f"  Post-test (avg): {post_test.goroutines:.1f}")
+    print(f"  Difference: {goroutine_diff:.1f}")
     
     if goroutine_diff > thresholds.goroutine_increase:
         print(f"  {Colors.RED}❌ GOROUTINE LEAK DETECTED!{Colors.NC}")
-        print(f"  Post-test goroutines increased by {goroutine_diff:.0f} (threshold: {thresholds.goroutine_increase})")
+        print(f"  Post-test goroutines increased by {goroutine_diff:.1f} (threshold: {thresholds.goroutine_increase})")
         leak_detected = True
     else:
         print(f"  {Colors.GREEN}✅ No goroutine leak detected{Colors.NC}")
@@ -175,13 +175,13 @@ def analyze_leaks(baseline: MetricSnapshot, post_test: MetricSnapshot,
     # File Descriptor Analysis
     fd_diff = post_test.open_fds - baseline.open_fds
     print("\n📁 File Descriptor Analysis:")
-    print(f"  Baseline:  {baseline.open_fds:.0f}")
-    print(f"  Post-test: {post_test.open_fds:.0f}")
-    print(f"  Difference: {fd_diff:.0f}")
+    print(f"  Baseline (avg):  {baseline.open_fds:.1f}")
+    print(f"  Post-test (avg): {post_test.open_fds:.1f}")
+    print(f"  Difference: {fd_diff:.1f}")
     
     if fd_diff > thresholds.fd_increase:
         print(f"  {Colors.RED}❌ FILE DESCRIPTOR LEAK DETECTED!{Colors.NC}")
-        print(f"  Open FDs increased by {fd_diff:.0f} (threshold: {thresholds.fd_increase})")
+        print(f"  Open FDs increased by {fd_diff:.1f} (threshold: {thresholds.fd_increase})")
         leak_detected = True
     else:
         print(f"  {Colors.GREEN}✅ No file descriptor leak detected{Colors.NC}")
@@ -189,13 +189,13 @@ def analyze_leaks(baseline: MetricSnapshot, post_test: MetricSnapshot,
     # Database Connection Analysis
     db_diff = post_test.db_in_use - baseline.db_in_use
     print("\n🗄️  Database Connection Analysis:")
-    print(f"  Baseline (In Use):  {baseline.db_in_use:.0f}")
-    print(f"  Post-test (In Use): {post_test.db_in_use:.0f}")
-    print(f"  Difference: {db_diff:.0f}")
+    print(f"  Baseline (avg, in use):  {baseline.db_in_use:.1f}")
+    print(f"  Post-test (avg, in use): {post_test.db_in_use:.1f}")
+    print(f"  Difference: {db_diff:.1f}")
     
     if db_diff > thresholds.db_conn_increase:
         print(f"  {Colors.RED}❌ DATABASE CONNECTION LEAK DETECTED!{Colors.NC}")
-        print(f"  Active DB connections increased by {db_diff:.0f} (threshold: {thresholds.db_conn_increase})")
+        print(f"  Active DB connections increased by {db_diff:.1f} (threshold: {thresholds.db_conn_increase})")
         leak_detected = True
     else:
         print(f"  {Colors.GREEN}✅ No database connection leak detected{Colors.NC}")
