@@ -88,7 +88,7 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 		outputPlans[BuildRuntimeAzurePlanID] = s.defaultServicePlan(BuildRuntimeAzurePlanID, BuildRuntimeAzurePlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.BuildRuntimeAlicloudSchemas(platformRegion); available {
-		outputPlans[BuildRuntimeAlicloudPlanID] = s.defaultServicePlan(BuildRuntimeAlicloudPlanID, BuildRuntimeAWSPlanName, plans, createSchema, updateSchema)
+		outputPlans[BuildRuntimeAlicloudPlanID] = s.defaultServicePlan(BuildRuntimeAlicloudPlanID, BuildRuntimeAlicloudPlanName, plans, createSchema, updateSchema)
 	}
 	if azureLiteCreateSchema, azureLiteUpdateSchema, available := s.AzureLiteSchemas(platformRegion); available {
 		outputPlans[AzureLitePlanID] = s.defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteCreateSchema, azureLiteUpdateSchema)
