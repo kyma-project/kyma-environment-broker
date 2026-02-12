@@ -447,6 +447,10 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 					Description: broker.AlicloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
+				broker.BuildRuntimeAlicloudPlanID: {
+					Description: broker.BuildRuntimeAlicloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
 			},
 		},
 	}
