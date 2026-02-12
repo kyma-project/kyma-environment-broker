@@ -209,8 +209,6 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 			pkg.LastOperation:
 			err = h.addLastOperationToRuntime(&dto)
 		}
-		// remove emptyUpdates from the root - it is already moved to operations/updates
-		dto.EmptyUpdates = nil
 		if err != nil {
 			h.logger.Warn(fmt.Sprintf("unable to set operations: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)

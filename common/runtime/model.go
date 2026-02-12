@@ -64,7 +64,6 @@ type RuntimeDTO struct {
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
 	Actions                     []Action                  `json:"actions,omitempty"`
-	EmptyUpdates                *int                      `json:"emptyUpdates,omitempty"`
 }
 
 type CloudProvider string
