@@ -28,11 +28,12 @@ There is also an experimental `preview` plan:
 > ### Caution:
 > The experimental plan may fail to work or be removed.
 
-The `alicloud` plan is disabled by default and is not intended for use.
+The `alicloud` and `build-runtime-alicloud` plans are disabled by default and are not intended for use.
 
-| Plan name | Plan ID                                | Description                                    |
-|-----------|----------------------------------------|------------------------------------------------|
-| `alicloud`| `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster. |
+| Plan name                | Plan ID                                | Description                                    |
+|--------------------------|----------------------------------------|------------------------------------------------|
+| `alicloud`               | `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alicloud cluster. |
+| `build-runtime-alicloud` | `72efa867-7b54-4d59-8df7-68f4759ff271` | Installs Kyma runtime in the Alicloud cluster. |
 
 ## Provisioning Parameters
 
