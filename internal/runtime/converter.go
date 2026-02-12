@@ -120,8 +120,10 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 
 	c.setRegionOrDefault(instance, &toReturn)
 
-	toReturn.Status.Update = &pkg.UpdateOperationsData{
-		EmptyUpdatesCount: instance.EmptyUpdates,
+	if instance.EmptyUpdates > 0 {
+		toReturn.Status.Update = &pkg.UpdateOperationsData{
+			EmptyUpdatesCount: instance.EmptyUpdates,
+		}
 	}
 
 	return toReturn, nil
@@ -189,7 +191,10 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 		return
 	}
 
-	// dtp.Status.Update is initialized in NewDTO, so it cannot be nil here
+	// dtp.Status.Update could have been initialized in NewDTO if there were empty updates
+	if dto.Status.Update == nil {
+		dto.Status.Update = &pkg.UpdateOperationsData{}
+	}
 	dto.Status.Update.Data = make([]pkg.Operation, 0)
 	dto.Status.Update.Count = len(oprs)
 	dto.Status.Update.TotalCount = totalCount
