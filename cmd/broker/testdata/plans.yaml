@@ -156,7 +156,9 @@ azure_lite:
     - "Standard_D4_v3"
   regions: *azure_regions
 
-alicloud:
+alicloud,build-runtime-alicloud:
+  upgradableToPlans:
+    - build-runtime-alicloud
   volumeSizeGb: 80
   regularMachines:
     - "ecs.g9i.large"
