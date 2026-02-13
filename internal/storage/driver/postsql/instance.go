@@ -144,7 +144,7 @@ func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 		return nil, err
 	}
 
-	lastOp, err := s.operations.GetLastOperation(instanceID)
+	lastOp, err := s.operations.GetLastOperationWithAllStates(instanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
 			return &instance, nil

@@ -211,6 +211,20 @@ func (r readSession) GetLastOperation(instanceID string, types []internal.Operat
 	return operation, nil
 }
 
+func (r readSession) GetLastOperationWithAllStates(instanceID string) (dbmodel.OperationDTO, dberr.Error) {
+	condition := dbr.Eq("instance_id", instanceID)
+	operation, err := r.getLastOperation(condition)
+	if err != nil {
+		switch {
+		case dberr.IsNotFound(err):
+			return dbmodel.OperationDTO{}, dberr.NotFound("for instance ID: %s %s", instanceID, err)
+		default:
+			return dbmodel.OperationDTO{}, err
+		}
+	}
+	return operation, nil
+}
+
 func (r readSession) GetOperationByInstanceID(instanceId string) (dbmodel.OperationDTO, dberr.Error) {
 	condition := dbr.Eq("instance_id", instanceId)
 	operation, err := r.getOperation(condition)
