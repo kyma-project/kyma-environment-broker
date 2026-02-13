@@ -18,7 +18,7 @@ type Executor interface {
 }
 
 type Queue struct {
-	queue     workqueue.RateLimitingInterface
+	queue     workqueue.TypedRateLimitingInterface[string]
 	executor  Executor
 	waitGroup sync.WaitGroup
 	log       *slog.Logger
@@ -38,7 +38,7 @@ var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
-		queue:             workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
+		queue:             workqueue.NewTypedRateLimitingQueueWithConfig(workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedRateLimitingQueueConfig[string]{Name: "operations"}),
 		executor:          executor,
 		waitGroup:         sync.WaitGroup{},
 		log:               log.With("queueName", name),
@@ -81,14 +81,14 @@ func (q *Queue) SpeedUp(speedFactor int64) {
 	q.log.Info(fmt.Sprintf("queue speed factor set to %d", speedFactor))
 }
 
-func (q *Queue) createWorker(queue workqueue.RateLimitingInterface, process func(id string) (time.Duration, error), stopCh <-chan struct{}, waitGroup *sync.WaitGroup, log *slog.Logger, nameId string) {
+func (q *Queue) createWorker(queue workqueue.TypedRateLimitingInterface[string], process func(id string) (time.Duration, error), stopCh <-chan struct{}, waitGroup *sync.WaitGroup, log *slog.Logger, nameId string) {
 	go func() {
 		wait.Until(q.worker(queue, process, log, nameId), time.Second, stopCh)
 		waitGroup.Done()
 	}()
 }
 
-func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key string) (time.Duration, error), log *slog.Logger, workerNameId string) func() {
+func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], process func(key string) (time.Duration, error), log *slog.Logger, workerNameId string) func() {
 	return func() {
 		exit := false
 		for !exit {
@@ -100,7 +100,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 				}
 
 				q.workersInUseGauge.Inc()
-				id := key.(string)
+				id := key
 				workerLogger := log.With("operationID", id)
 				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
 
