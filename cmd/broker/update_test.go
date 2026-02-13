@@ -3,6 +3,10 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -13,9 +17,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
-	"time"
 )
 
 const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
