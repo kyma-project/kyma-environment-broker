@@ -227,7 +227,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 2, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
 		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
