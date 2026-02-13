@@ -3,10 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"net/http"
-	"testing"
-	"time"
-
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -17,6 +13,8 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"testing"
 )
 
 const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
@@ -459,8 +457,6 @@ func TestMultipleUpdates(t *testing.T) {
 	// set runtime state to Pending to simulate the situation when the previous update did not finish yet
 	suite.SetRuntimeResourceStateByInstanceId(iid, imv1.RuntimeStatePending)
 
-	//time.Sleep(time.Millisecond)
-
 	// when
 	// OSB update, machine type is changed
 	resp2 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -494,8 +490,6 @@ func TestMultipleUpdates(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp3.StatusCode)
 	assert.Equal(t, op2ID, op3ID, fmt.Sprintf("expected %s but was one of previous operation IDs: %s", op2ID, opID))
 
-	time.Sleep(time.Millisecond)
-
 	// third update when the previous did not finish yet, this update changes some parameters
 	// when
 	// OSB update, OIDC is being changed
@@ -513,8 +507,6 @@ func TestMultipleUpdates(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp4.StatusCode)
 	assert.NotEqual(t, op2ID, op4ID)
 
-	time.Sleep(time.Millisecond)
-
 	// last update when the previous did not finish yet
 	// when
 	// OSB update, no changes
@@ -527,7 +519,7 @@ func TestMultipleUpdates(t *testing.T) {
             "machineType":"m6i.2xlarge"
 		}
     }`)
-	defer func() { _ = resp4.Body.Close() }()
+	defer func() { _ = resp5.Body.Close() }()
 	op5ID := suite.DecodeOperationID(resp5)
 	assert.Equal(t, http.StatusAccepted, resp5.StatusCode)
 	assert.Equal(t, op4ID, op5ID)
