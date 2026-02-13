@@ -6,13 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
-	"net/http"
-	"path/filepath"
-	"reflect"
-	"strings"
-	"time"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -27,13 +20,17 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+	"log/slog"
+	"net/http"
+	"path/filepath"
+	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"golang.org/x/exp/slices"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -146,11 +143,13 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 
 	response, err := b.update(ctx, instanceID, details, asyncAllowed)
 	if dberr.IsConflict(err) {
+		logger.Warn("Update conflict, retrying")
 		response, err = b.update(ctx, instanceID, details, asyncAllowed)
 	}
 
 	return response, err
 }
+
 func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
 	instance, err := b.instanceStorage.GetByID(instanceID)
@@ -430,38 +429,31 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
-		updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
-		if err != nil {
-			return false, err
-		}
-		if len(updateStorage) > 0 {
-			instance, err = b.instanceStorage.Update(*instance)
-			if err != nil {
-				params := strings.Join(updateStorage, ", ")
-				logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s), retrying", params, err.Error()))
-				return false, nil
-			}
-			if slices.Contains(updateStorage, planChangeMessage) {
-				oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
-				newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-				message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
-				if err := b.actionStorage.InsertAction(
-					pkg.PlanUpdateActionType,
-					instance.InstanceID,
-					message,
-					previousInstance.ServicePlanID,
-					details.PlanID,
-				); err != nil {
-					logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
-				}
-			}
-			return true, nil
-		}
-
-		return true, nil
-	}); err != nil {
+	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
+	if err != nil {
 		return domain.UpdateServiceSpec{}, err
+	}
+	if len(updateStorage) > 0 {
+		instance, err = b.instanceStorage.Update(*instance)
+		if err != nil {
+			params := strings.Join(updateStorage, ", ")
+			logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s)", params, err.Error()))
+			return domain.UpdateServiceSpec{}, err
+		}
+		if slices.Contains(updateStorage, planChangeMessage) {
+			oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
+			newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
+			if err := b.actionStorage.InsertAction(
+				pkg.PlanUpdateActionType,
+				instance.InstanceID,
+				message,
+				previousInstance.ServicePlanID,
+				details.PlanID,
+			); err != nil {
+				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
+			}
+		}
 	}
 
 	if skipProcessing, lastOperation := b.shouldSkipNewOperation(previousInstance, instance, logger); skipProcessing {
