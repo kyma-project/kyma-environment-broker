@@ -485,23 +485,34 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	// do not compare "Active" field
 	previousInstance.Parameters.ErsContext.Active = currentInstance.Parameters.ErsContext.Active
 	if !reflect.DeepEqual(previousInstance.Parameters, currentInstance.Parameters) {
+		logger.Info("Parameters changed, cannot skip new operation")
+
+		if !reflect.DeepEqual(previousInstance.Parameters.ErsContext, currentInstance.Parameters.ErsContext) {
+			logger.Info("Context changed")
+		}
+		if !reflect.DeepEqual(previousInstance.Parameters.Parameters, currentInstance.Parameters.Parameters) {
+			logger.Info("Parameters changed")
+		}
 		return false, nil
 	}
 	if previousInstance.ServicePlanID != currentInstance.ServicePlanID {
+		logger.Info("Plan changed, cannot skip new operation")
 		return false, nil
 	}
 	if previousInstance.GlobalAccountID != currentInstance.GlobalAccountID {
+		logger.Info("GlobalAccountID changed, cannot skip new operation")
 		return false, nil
 	}
 	lastOperation, err := b.operationStorage.GetLastOperationWithAllStates(currentInstance.InstanceID)
 	if err != nil {
+		logger.Error(fmt.Sprintf("unable to get last operation: %s, cannot skip new operation", err.Error()))
 		return false, nil
 	}
 
 	// if the last operation did not succeed, we cannot respond synchronously
 	// Last change could fail, we cannot accept and response OK for next update which do the same.
 	if lastOperation.State == domain.Failed {
-		logger.Info(fmt.Sprintf("Last operation %s %s failed, cannot respond synchronously", lastOperation.Type, lastOperation.ID))
+		logger.Info(fmt.Sprintf("Last operation %s %s failed, cannot skip new operation", lastOperation.Type, lastOperation.ID))
 		return false, lastOperation
 	}
 
