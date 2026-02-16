@@ -34,3 +34,15 @@ PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 ```
 
 When the plan update is not allowed, the response is `HTTP 400 Bad Request`.
+
+## Supported Plan Updates
+
+You can switch from standard enterprise plans to build runtime plans within the same cloud provider. Options include:
+
+- `aws` → `build-runtime-aws`
+- `gcp` → `build-runtime-gcp`
+- `azure` → `build-runtime-azure`
+- `alicloud` → `build-runtime-alicloud`
+
+> ### Note:
+> You can't switch from build runtime plans to standard ones.
