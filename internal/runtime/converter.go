@@ -108,7 +108,6 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		Parameters:      instance.Parameters.Parameters,
 		LicenseType:     instance.Parameters.ErsContext.LicenseType,
 		CommercialModel: instance.Parameters.ErsContext.CommercialModel,
-		EmptyUpdates:    instance.EmptyUpdates,
 	}
 
 	toReturn.SubscriptionSecretName = &instance.SubscriptionSecretName
@@ -120,6 +119,12 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 	}
 
 	c.setRegionOrDefault(instance, &toReturn)
+
+	if instance.EmptyUpdates > 0 {
+		toReturn.Status.Update = &pkg.UpdateOperationsData{
+			EmptyUpdatesCount: instance.EmptyUpdates,
+		}
+	}
 
 	return toReturn, nil
 }
@@ -186,7 +191,10 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 		return
 	}
 
-	dto.Status.Update = &pkg.OperationsData{}
+	// dtp.Status.Update could have been initialized in NewDTO if there were empty updates
+	if dto.Status.Update == nil {
+		dto.Status.Update = &pkg.UpdateOperationsData{}
+	}
 	dto.Status.Update.Data = make([]pkg.Operation, 0)
 	dto.Status.Update.Count = len(oprs)
 	dto.Status.Update.TotalCount = totalCount

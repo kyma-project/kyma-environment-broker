@@ -581,6 +581,135 @@ func TestRuntimeHandler(t *testing.T) {
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
 	})
 
+	t.Run("test empty updates counter - no empty updates", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		testTime := time.Now()
+		testInstance := fixInstance(testID1, testTime)
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+
+		rr := httptest.NewRecorder()
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.AllOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		assert.Nil(t, out.Data[0].Status.Update)
+
+		// when
+		rr = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.LastOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		out = pkg.RuntimesPage{}
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		assert.Nil(t, out.Data[0].Status.Update)
+
+	})
+
+	t.Run("test empty updates counter - empty updates", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		testTime := time.Now()
+		testInstance := fixInstance(testID1, testTime)
+		testInstance.EmptyUpdates = 4
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID1)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+
+		rr := httptest.NewRecorder()
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.AllOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		assert.NotNil(t, out.Data[0].Status.Update)
+		assert.Equal(t, 4, out.Data[0].Status.Update.EmptyUpdatesCount)
+
+		// when
+		rr = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.LastOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		out = pkg.RuntimesPage{}
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID1, out.Data[0].InstanceID)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		assert.NotNil(t, out.Data[0].Status.Update)
+		assert.Equal(t, 4, out.Data[0].Status.Update.EmptyUpdatesCount)
+
+	})
+
 }
 
 func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {

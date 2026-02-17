@@ -226,7 +226,7 @@ func TestUpgradePlan(t *testing.T) {
 		require.NotNil(t, err)
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
+		assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 
 	})
@@ -2441,6 +2441,44 @@ func TestUpdateWithoutOperation(t *testing.T) {
 			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1"}`,
 			updateParameters:  `{"machineType":"m5.xlarge", "foo":"bar"}`,
 			expectedSync:      true,
+		},
+		"Update with additional worker node pool change": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "additionalWorkerNodePools": []}`,
+			updateParameters:  `{                                                "additionalWorkerNodePools": []}`,
+			expectedSync:      true,
+		},
+		"Update with oidc": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			updateParameters: `{                                                "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			expectedSync: true,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

@@ -271,6 +271,8 @@ func main() {
 		log.Info("FIPS mode is disabled")
 	}
 
+	log.Info(fmt.Sprintf("Synchronous update response enabled: %v", cfg.Broker.SyncEmptyUpdateResponseEnabled))
+
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, log)

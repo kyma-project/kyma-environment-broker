@@ -48,31 +48,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.25.39
+      version: 1.25.45
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_expirator_job:
       dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.25.39"
-    kyma_environment_globalaccounts:
-      dir:
-      version: "1.25.39"
+      version: "1.25.45"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.25.39
+      version: 1.25.45
   ingress:
     domainName: localhost
   istio:
@@ -503,20 +500,6 @@ freeCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
-# =================================================
-
-
-
-# =================================================
-# Global Accounts Deployment Settings
-# =================================================
-globalaccounts:
-  # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
-  dryRun: false
-  # If true, enables the global accounts synchronization job.
-  enabled: false
-  # Name of the global accounts synchronization job or deployment.
-  name: "kyma-environment-globalaccounts"
 # =================================================
 
 

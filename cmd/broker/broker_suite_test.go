@@ -447,6 +447,10 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 					Description: broker.AlicloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
+				broker.BuildRuntimeAlicloudPlanID: {
+					Description: broker.BuildRuntimeAlicloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
 			},
 		},
 	}
@@ -967,6 +971,19 @@ func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtim
 	require.NoError(s.t, err)
 	require.Equal(s.t, 1, len(runtimes.Items))
 	return runtimes.Items[0]
+}
+
+func (s *BrokerSuiteTest) SetRuntimeResourceStateByInstanceId(iid string, state imv1.State) {
+	var runtimes imv1.RuntimeList
+	err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+	require.NoError(s.t, err)
+	require.NotZerof(s.t, len(runtimes.Items), "no runtime resource found for instance id %s", iid)
+
+	runtime := runtimes.Items[0]
+	runtime.Status.State = state
+
+	err = s.k8sKcp.Update(context.Background(), &runtime)
+	require.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []string) {
