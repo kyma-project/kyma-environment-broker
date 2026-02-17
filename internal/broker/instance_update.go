@@ -484,7 +484,8 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	}
 	// do not compare "Active" field
 	previousInstance.Parameters.ErsContext.Active = currentInstance.Parameters.ErsContext.Active
-	if !reflect.DeepEqual(previousInstance.Parameters, currentInstance.Parameters) {
+
+	if !previousInstance.Parameters.IsEqual(currentInstance.Parameters) {
 		logger.Info("Parameters changed, cannot skip new operation")
 
 		if !reflect.DeepEqual(previousInstance.Parameters.ErsContext, currentInstance.Parameters.ErsContext) {

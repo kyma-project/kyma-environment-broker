@@ -2442,6 +2442,16 @@ func TestUpdateWithoutOperation(t *testing.T) {
 			updateParameters:  `{"machineType":"m5.xlarge", "foo":"bar"}`,
 			expectedSync:      true,
 		},
+		"Update with additional worker node pool change": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "additionalWorkerNodePools": []}`,
+			updateParameters:  `{                                                "additionalWorkerNodePools": []}`,
+			expectedSync:      true,
+		},
+		"Update with oidc": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "oidc.list": []}`,
+			updateParameters:  `{                                                "oidc.list": []}`,
+			expectedSync:      true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			initialParams := pkg.ProvisioningParametersDTO{}

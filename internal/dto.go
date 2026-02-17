@@ -34,6 +34,11 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 		return false
 	}
 
+	// empty list and nil does not make any difference
+	if (p.Parameters.AdditionalWorkerNodePools == nil && len(input.Parameters.AdditionalWorkerNodePools) == 0) ||
+		(input.Parameters.AdditionalWorkerNodePools == nil && len(p.Parameters.AdditionalWorkerNodePools) == 0) {
+		p.Parameters.AdditionalWorkerNodePools = input.Parameters.AdditionalWorkerNodePools
+	}
 	p.Parameters.TargetSecret = nil
 
 	if !reflect.DeepEqual(p.Parameters, input.Parameters) {
