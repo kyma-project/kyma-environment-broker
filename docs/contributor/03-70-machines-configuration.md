@@ -1,10 +1,10 @@
 # Machine Types Configuration
 
-Most Kyma plans require specifying a machine type in the request body as one of the provisioning parameters. The machine types configuration allows you to control which machine types are available for a Kyma plan and how they are displayed in the UI.
+Most Kyma plans require specifying a machine type in the request body as one of the provisioning parameters. By configuring the machine types, you can control which machine types are available for a Kyma plan and how they are displayed in the UI.
 
 ## Allowed Machine Types
 
-The `plansConfiguration` property contains a list of plans. Every plan has a machine types configuration. Each plan has a **regularMachines** list containing a list of available values for the **machineType** parameter. The first machine in the **regularMachines** list is the default machine for the plan. The **additionalMachines** list contains machines which are available only in additional worker node pools, for example:
+The `plansConfiguration` property contains a list of plans. Every plan has a machine types configuration. Each plan has a **regularMachines** list containing a list of available values for the **machineType** parameter. The first machine in the **regularMachines** list is the default machine for the plan. The **additionalMachines** list contains machines which are available only in additional worker node pools. For example:
 
 ```yaml
 plansConfiguration:
@@ -24,7 +24,7 @@ The above configuration means that the `Standard_D2s_v5` and `Standard_D4s_v5` m
 
 ## Display Names
 
-The catalog endpoint provides display names for machine types. The display names are defined in the `providersConfiguration` section of the `values.yaml` file, for example:
+The catalog endpoint provides display names for machine types. The display names are defined in the `providersConfiguration` section of the `values.yaml` file. For example:
 
 ```yaml
 providersConfiguration:

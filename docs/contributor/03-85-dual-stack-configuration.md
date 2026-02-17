@@ -1,6 +1,6 @@
 # Dual-Stack Networking Configuration
 
-The dual-stack networking configuration allows you to provision Kyma instances with both IPv4 and IPv6 protocols simultaneously. You must explicitly enable this feature at the provider level to make the option available during provisioning.
+The dual-stack networking configuration enables you to provision Kyma instances with both IPv4 and IPv6 protocols simultaneously. You must explicitly enable this feature at the provider level to make the option available during provisioning.
 
 ## Provider Configuration
 
