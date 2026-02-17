@@ -1,7 +1,7 @@
 # Restricted Global Accounts
 ## Overview
 
-The Kyma Environment Broker configuration enables you to restrict the provisioning for a defined set of global accounts.
+You can configure Kyma Environment Broker (KEB) to restrict the provisioning for a defined set of global accounts.
 Each provisioning request contains a global account ID as part of the context (the **globalaccount_id** field), for example:
 
 ```json
@@ -20,6 +20,7 @@ Each provisioning request contains a global account ID as part of the context (t
 ```
 
 ## Configuration
+
 To enable the restriction, set the following properties:
 
 - **allowedGlobalAccountIDs** - a comma-separated list of allowed global account IDs.
