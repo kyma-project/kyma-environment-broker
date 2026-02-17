@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -478,6 +479,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}, nil
 }
 
+type t struct{}
+
+func (t) Errorf(format string, args ...interface{}) {
+	fmt.Printf(format, args...)
+}
+
 func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstance *internal.Instance, logger *slog.Logger) (bool, *internal.Operation) {
 	if !b.syncEmptyUpdateResponseEnabled {
 		return false, nil
@@ -488,6 +495,7 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	if !previousInstance.Parameters.IsEqual(currentInstance.Parameters) {
 		logger.Info("Parameters changed, cannot skip new operation")
 
+		assert.Equal(t{}, previousInstance.Parameters, currentInstance.Parameters, "Parameters changed, cannot skip new operation")
 		if !reflect.DeepEqual(previousInstance.Parameters.ErsContext, currentInstance.Parameters.ErsContext) {
 			logger.Info("Context changed")
 		}

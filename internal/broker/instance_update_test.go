@@ -2448,9 +2448,37 @@ func TestUpdateWithoutOperation(t *testing.T) {
 			expectedSync:      true,
 		},
 		"Update with oidc": {
-			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "oidc.list": []}`,
-			updateParameters:  `{                                                "oidc.list": []}`,
-			expectedSync:      true,
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			updateParameters: `{                                                "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			expectedSync: true,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

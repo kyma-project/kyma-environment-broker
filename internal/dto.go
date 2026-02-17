@@ -39,6 +39,15 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 		(input.Parameters.AdditionalWorkerNodePools == nil && len(p.Parameters.AdditionalWorkerNodePools) == 0) {
 		p.Parameters.AdditionalWorkerNodePools = input.Parameters.AdditionalWorkerNodePools
 	}
+
+	if p.Parameters.OIDC != nil && input.Parameters.OIDC != nil && len(p.Parameters.OIDC.List) == len(input.Parameters.OIDC.List) {
+		for i, oidc := range p.Parameters.OIDC.List {
+			if oidc.RequiredClaims == nil && len(input.Parameters.OIDC.List[i].RequiredClaims) == 0 {
+				p.Parameters.OIDC.List[i].RequiredClaims = input.Parameters.OIDC.List[i].RequiredClaims
+			}
+		}
+
+	}
 	p.Parameters.TargetSecret = nil
 
 	if !reflect.DeepEqual(p.Parameters, input.Parameters) {
