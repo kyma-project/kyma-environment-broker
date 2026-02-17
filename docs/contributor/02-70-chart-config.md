@@ -33,8 +33,6 @@
 | global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.44` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
 | global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.44` |
-| global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.44` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.44` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -186,9 +184,6 @@
 | freeCleanup.schedule | - | `0,15,30,45 * * * *` |
 | freeCleanup.testRun | If true, runs the job in test mode (no real deletions, for testing purposes). | `False` |
 | freeCleanup.<br>testSubaccountID | Subaccount ID used for test runs. | `prow-keb-trial-suspension` |
-| globalaccounts.<br>dryRun | If true, runs the global accounts synchronization job in dry-run mode (no changes are made). | `False` |
-| globalaccounts.<br>enabled | If true, enables the global accounts synchronization job. | `False` |
-| globalaccounts.name | Name of the global accounts synchronization job or deployment. | `kyma-environment-globalaccounts` |
 | migratorJobs.argosync.<br>enabled | If true, enables the ArgoCD sync job for schema migration. | `False` |
 | migratorJobs.argosync.<br>syncwave | The sync wave value for ArgoCD hooks. | `0` |
 | migratorJobs.<br>direction | Defines the direction of the schema migration, either "up" or "down". | `up` |
