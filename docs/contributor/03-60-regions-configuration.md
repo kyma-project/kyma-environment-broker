@@ -1,7 +1,7 @@
 # Regions and Zones Configuration
 
-Most Kyma plans require specifying a region in the request body as one of the provisioning parameters. The regions' configuration allows you to control which regions are available for a Kyma plan and the platform region. Additionally, every region has a different set of zones.
-The regions' configuration is used to validate the region specified in the request body, and is also used to generate schemas for the catalog endpoint.
+Most Kyma plans require specifying a region in the request body as one of the provisioning parameters. You can configure regions to control which of them are available for a specific Kyma plan and platform region. Additionally, every region has a different set of zones.
+The regions' configuration is used to validate the region specified in the request body, and to generate schemas for the catalog endpoint.
 
 ## Allowed Regions
 

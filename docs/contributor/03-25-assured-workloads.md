@@ -1,7 +1,5 @@
 # Assured Workloads
 
-## Overview
-
 SAP BTP, Kyma runtime instances provisioned in the Google Cloud `cf-sa30` subaccount region require the Assured Workloads Kingdom of Saudi Arabia (KSA) control package.
 
 Kyma runtime supports the BTP `cf-sa30` Google Cloud subaccount region, which is called the KSA BTP subaccount region.
