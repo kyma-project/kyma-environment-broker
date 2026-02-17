@@ -8,7 +8,6 @@ bdba:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.25.44
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.25.44
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.25.44
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.25.44
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.25.44
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.25.44
 mend:

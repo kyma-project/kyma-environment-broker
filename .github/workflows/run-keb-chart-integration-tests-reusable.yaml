@@ -55,9 +55,6 @@ jobs:
     - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
       run: scripts/check_env_alphabetical_order.sh resources/keb/templates/service-binding-cleanup-job.yaml service_binding_cleanup
 
-    - name: Enforce env alphabetical order in globalaccounts.yaml
-      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/globalaccounts.yaml globalaccounts
-
     - name: Enforce env alphabetical order in subaccount-sync-deployment.yaml
       run: scripts/check_env_alphabetical_order.sh resources/keb/templates/subaccount-sync-deployment.yaml subaccount_sync
       
