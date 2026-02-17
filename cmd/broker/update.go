@@ -30,8 +30,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		fatalOnError(err, logs)
 	}
 
-	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
+	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, trialRegionsMapping, schemaService, planSpec)
 
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
 

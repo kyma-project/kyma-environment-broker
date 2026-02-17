@@ -70,7 +70,7 @@ func TestParser(t *testing.T) {
 			cmd.SetOut(b)
 
 			cmd.SetArgs([]string{"-e", entries})
-			err := cmd.Execute()
+			_ = cmd.Execute() // Some test cases expect errors, output is checked below
 
 			out, err := io.ReadAll(b)
 			if err != nil {
