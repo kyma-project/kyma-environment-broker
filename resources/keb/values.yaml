@@ -67,9 +67,6 @@ global:
     kyma_environment_subaccount_sync:
       dir:
       version: "1.25.44"
-    kyma_environment_globalaccounts:
-      dir:
-      version: "1.25.44"
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.25.44
@@ -503,20 +500,6 @@ freeCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
-# =================================================
-
-
-
-# =================================================
-# Global Accounts Deployment Settings
-# =================================================
-globalaccounts:
-  # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
-  dryRun: false
-  # If true, enables the global accounts synchronization job.
-  enabled: false
-  # Name of the global accounts synchronization job or deployment.
-  name: "kyma-environment-globalaccounts"
 # =================================================
 
 

@@ -23,7 +23,6 @@ declare -a IMAGES=(
     "kyma-environment-runtime-reconciler:Dockerfile.runtimereconciler:BIN=runtime-reconciler"
     "kyma-environment-subaccount-cleanup-job:Dockerfile.job:BIN=accountcleanup"
     "kyma-environment-subaccount-sync:Dockerfile.subaccountsync:BIN=subaccount-sync"
-    "kyma-environment-globalaccounts:Dockerfile.globalaccounts:BIN=globalaccounts"
     "kyma-environment-broker-schema-migrator:Dockerfile.schemamigrator:"
     "kyma-environment-service-binding-cleanup-job:Dockerfile.job:BIN=servicebindingcleanup"
 )
