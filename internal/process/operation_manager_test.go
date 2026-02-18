@@ -87,7 +87,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		op, _, _ = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
 		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
@@ -101,7 +101,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
+		op, _, _ = opManager.OperationFailed(op, "friendly message", fmt.Errorf("technical err"), fixLogger())
 		assert.EqualValues(t, "db - keb", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
@@ -115,7 +115,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
+		op, _, _ = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
 		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
@@ -129,7 +129,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
+		op, _, _ = opManager.OperationFailed(op, "", fmt.Errorf("technical err"), fixLogger())
 		assert.EqualValues(t, "infrastructure-manager", op.LastError.GetComponent())
 		assert.EqualValues(t, "technical err", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
@@ -143,7 +143,7 @@ func Test_OperationManager_LastError(t *testing.T) {
 		op := internal.Operation{}
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
-		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
+		op, _, _ = opManager.OperationFailed(op, "", nil, fixLogger())
 		assert.EqualValues(t, "reconciler", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())

@@ -99,8 +99,14 @@ func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	// when stored in memory db. Marshaling in the current contenxt allows for
 	// memory db to behave similarly to production env.
 	marshaled, err := json.Marshal(inst)
+	if err != nil {
+		return nil, fmt.Errorf("while marshaling instance with id %s: %w", instanceID, err)
+	}
 	unmarshaledInstance := internal.Instance{}
 	err = json.Unmarshal(marshaled, &unmarshaledInstance)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshaling instance with id %s: %w", instanceID, err)
+	}
 
 	op, err := s.operationsStorage.GetLastOperation(instanceID)
 	if err != nil {
@@ -111,8 +117,14 @@ func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	}
 
 	detailsMarshaled, err := json.Marshal(op.InstanceDetails)
+	if err != nil {
+		return nil, fmt.Errorf("while marshaling instance details for instance with id %s: %w", instanceID, err)
+	}
 	detailsUnmarshaled := internal.InstanceDetails{}
 	err = json.Unmarshal(detailsMarshaled, &detailsUnmarshaled)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshaling instance details for instance with id %s: %w", instanceID, err)
+	}
 	unmarshaledInstance.InstanceDetails = detailsUnmarshaled
 
 	return &unmarshaledInstance, nil
