@@ -18,7 +18,7 @@ In that mode, the Job only logs the information about the number of expired serv
 
 ## Configuration
 
-The Job is a CronJob with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/mmitoraj-patch-1/resources/keb/values.yaml) file for the chart.
+The Job is a CronJob with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/values.yaml) file for the chart.
 By default, the CronJob is set according to the following schedule:
 ```yaml  
 kyma-environment-broker.serviceBindingCleanup.schedule: "0 2,14 * * *"
