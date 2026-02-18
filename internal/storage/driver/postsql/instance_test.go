@@ -245,13 +245,13 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 
 		// populate database with samples
 		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "A1", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID1"}),
-			*fixInstance(instanceData{val: "A2", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID2"}),
-			*fixInstance(instanceData{val: "A3", globalAccountID: "ga1", subAccountID: "sa2", runtimeID: "runtimeID3"}),
-			*fixInstance(instanceData{val: "A4", globalAccountID: "ga2", subAccountID: "sa3", runtimeID: "runtimeID4"}),
-			*fixInstance(instanceData{val: "A5", globalAccountID: "ga2", subAccountID: "sa4", runtimeID: "runtimeID5"}),
-			*fixInstance(instanceData{val: "A6", globalAccountID: "ga2", subAccountID: "sa5", runtimeID: ""}),
-			*fixInstance(instanceData{val: "A7", globalAccountID: "ga2", subAccountID: "sa6", runtimeID: "runtimeID7"}),
+			*fixInstance(instanceData{val: "A1", globalAccountID: "ga1", subAccountID: "sa1"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "ga1", subAccountID: "sa1"}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "ga1", subAccountID: "sa2"}),
+			*fixInstance(instanceData{val: "A4", globalAccountID: "ga2", subAccountID: "sa3"}),
+			*fixInstance(instanceData{val: "A5", globalAccountID: "ga2", subAccountID: "sa4"}),
+			*fixInstance(instanceData{val: "A6", globalAccountID: "ga2", subAccountID: "sa5"}),
+			*fixInstance(instanceData{val: "A7", globalAccountID: "ga2", subAccountID: "sa6"}),
 		}
 
 		for _, i := range fixInstances {
@@ -1215,7 +1215,6 @@ type instanceData struct {
 	val             string
 	globalAccountID string
 	subAccountID    string
-	runtimeID       string
 	expired         bool
 	trial           bool
 	deletedAt       time.Time

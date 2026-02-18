@@ -57,7 +57,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -71,7 +70,6 @@ const (
 type BrokerSuiteTest struct {
 	db             storage.BrokerStorage
 	storageCleanup func() error
-	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -221,7 +219,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts := &BrokerSuiteTest{
 		db:             db,
 		storageCleanup: storageCleanup,
-		gardenerClient: gardenerClient,
 		router:         httputil.NewRouter(),
 		t:              t,
 		k8sKcp:         cli,
@@ -447,7 +444,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
 		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)

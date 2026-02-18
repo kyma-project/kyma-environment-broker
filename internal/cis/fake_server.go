@@ -28,8 +28,6 @@ const (
 
 type fakeServer struct {
 	*httptest.Server
-	subaccountsEndpoint *subaccountsEndpoint
-	eventsEndpoint      *eventsEndpoint
 }
 
 type subaccountsEndpoint struct {
@@ -67,9 +65,7 @@ func NewFakeServer() (*fakeServer, error) {
 	srv := httptest.NewServer(mux)
 
 	return &fakeServer{
-		Server:              srv,
-		subaccountsEndpoint: se,
-		eventsEndpoint:      ee,
+		Server: srv,
 	}, nil
 }
 
