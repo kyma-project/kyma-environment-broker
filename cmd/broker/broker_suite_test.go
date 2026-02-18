@@ -634,6 +634,11 @@ func (s *BrokerSuiteTest) GetInstance(iid string) *internal.Instance {
 	return inst
 }
 
+func (s *BrokerSuiteTest) UpdateInstance(instance internal.Instance) {
+	_, err := s.db.Instances().Update(instance)
+	require.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) processKIMProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 

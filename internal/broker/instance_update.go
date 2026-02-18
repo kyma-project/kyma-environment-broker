@@ -243,7 +243,11 @@ func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDe
 		if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
 			return fmt.Errorf("while unmarshaling raw parameters: %w", err)
 		}
-		if err = planValidator.Validate(rawParameters); err != nil {
+		params := rawParameters.(map[string]interface{})
+		if params["machineType"] == *instance.Parameters.Parameters.MachineType {
+			delete(params, "machineType")
+		}
+		if err = planValidator.Validate(params); err != nil {
 			return fmt.Errorf("while validating update parameters: %s", validator.FormatError(err))
 		}
 	}

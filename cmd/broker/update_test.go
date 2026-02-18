@@ -103,6 +103,71 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestUpdateMachine(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+                        "region": "eu-central-1",
+						"oidc": {
+							"clientID": "id-initial",
+							"signingAlgs": ["PS512"],
+                            "issuerURL": "https://issuer.url.com"
+						}
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	assert.Equal(t, opID, suite.LastOperation(iid).ID)
+
+	instance := suite.GetInstance(iid)
+	instance.Parameters.Parameters.MachineType = ptr.String("old-not-supported")
+	suite.UpdateInstance(*instance)
+
+	// when
+	// OSB update:
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+            "machineType": "old-not-supported",
+			"oidc": {
+				"clientID": "id-ooo",
+				"signingAlgs": ["RS256"],
+                "issuerURL": "https://issuer.url.com"
+			}
+		}
+   }`)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	upgradeOperationID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+}
+
 func TestUpdateWithKIM(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
