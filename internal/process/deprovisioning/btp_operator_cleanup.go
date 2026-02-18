@@ -192,10 +192,6 @@ func (s *BTPOperatorCleanupStep) deleteResource(k8sClient client.Client, namespa
 	return
 }
 
-func (s *BTPOperatorCleanupStep) isNotFoundErr(err error) bool {
-	return strings.Contains(err.Error(), "not found")
-}
-
 func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, kclient client.Client, err error, log *slog.Logger, msg string) (internal.Operation, time.Duration, error) {
 	if err != nil {
 		// handleError returns retry period if it's retriable error and it's within timeout

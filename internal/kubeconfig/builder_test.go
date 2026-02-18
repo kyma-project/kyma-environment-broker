@@ -333,30 +333,6 @@ users:
 	)
 }
 
-func adminKubeconfig() string {
-	return `
----
-apiVersion: v1
-kind: Config
-current-context: cluster-name
-clusters:
-- name: cluster-name
-  cluster:
-    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURUSUZJQ0FURS0tLS0tCg==
-    server: https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com
-contexts:
-- name: cluster-name
-  context:
-    cluster: cluster-name
-    user: cluster-name-token
-users:
-- name: cluster-name-token
-  user:
-    token: DKPAe2Lt06a8dlUlE81kaWdSSDVSSf38x5PIj6cwQkqHMrw4UldsUr1guD6Thayw
-
-`
-}
-
 func NewFakeKubeconfigProvider(content *string) *fakeKubeconfigProvider {
 	return &fakeKubeconfigProvider{
 		content: *content,

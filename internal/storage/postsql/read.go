@@ -669,29 +669,6 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 	return res.Total, err
 }
 
-func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
-	var res struct {
-		Total int
-	}
-	var stmt = r.session.
-		Select("count(*) as total").
-		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, internal.OperationStatePending, internal.OperationStateCanceled)).
-		Where("o2.created_at IS NULL").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", internal.OperationStatePending, internal.OperationStateCanceled))
-
-	if len(filter.States) > 0 || filter.Suspended != nil {
-		stateFilters := buildInstanceStateFilters("o1", filter)
-		stmt.Where(stateFilters)
-	}
-
-	addInstanceFilters(stmt, filter, "o1")
-	err := stmt.LoadOne(&res)
-
-	return res.Total, err
-}
-
 func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.Builder {
 	var exprs []dbr.Builder
 	for _, s := range filter.States {

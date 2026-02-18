@@ -32,7 +32,6 @@ const (
 
 func TestHappyPath(t *testing.T) {
 	// given
-	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
 	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
@@ -57,7 +56,6 @@ func TestHappyPath(t *testing.T) {
 
 func TestHappyPathWithStepCondition(t *testing.T) {
 	// given
-	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
 	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
@@ -86,7 +84,6 @@ func TestHappyPathWithStepCondition(t *testing.T) {
 
 func TestWithRetry(t *testing.T) {
 	// given
-	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
 	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
@@ -113,7 +110,6 @@ func TestWithRetry(t *testing.T) {
 
 func TestWithPanic(t *testing.T) {
 	// given
-	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
 	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
@@ -215,7 +211,6 @@ func (s *onceRetryingStep) Run(operation internal.Operation, logger *slog.Logger
 
 type panicStep struct {
 	name           string
-	processed      bool
 	eventPublisher event.Publisher
 }
 
@@ -351,7 +346,6 @@ func SetupStagedManager2(t *testing.T, op internal.Operation) (*process.StagedMa
 
 func TestOperationSucceededEvent(t *testing.T) {
 	// given
-	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
 	mgr, _, pubSub := SetupStagedManager2(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: pubSub}, nil)

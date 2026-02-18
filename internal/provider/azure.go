@@ -19,8 +19,6 @@ var europeAzure = "westeurope"
 var usAzure = "eastus"
 var asiaAzure = "southeastasia"
 
-var trialPurpose = "evaluation"
-
 var toAzureSpecific = map[string]*string{
 	string(broker.Europe): &europeAzure,
 	string(broker.Us):     &usAzure,
@@ -80,14 +78,6 @@ func (p *AzureInputProvider) zonesCount() int {
 		zonesCount = DefaultAzureMultiZoneCount
 	}
 	return zonesCount
-}
-
-func (p *AzureInputProvider) zones() []string {
-	return p.generateRandomAzureZones(p.zonesCount())
-}
-
-func (p *AzureInputProvider) generateRandomAzureZones(zonesCount int) []string {
-	return GenerateAzureZones(zonesCount)
 }
 
 func (p *AzureTrialInputProvider) Provide() internal.ProviderValues {
@@ -152,13 +142,6 @@ func (p *AzureLiteInputProvider) Provide() internal.ProviderValues {
 		VolumeSizeGb:         80,
 		FailureTolerance:     nil,
 	}
-}
-
-func (p *AzureLiteInputProvider) region() string {
-	if euaccess.IsEURestrictedAccess(p.ProvisioningParameters.PlatformRegion) {
-		return DefaultEuAccessAzureRegion
-	}
-	return DefaultAzureRegion
 }
 
 func (p *AzureFreemiumInputProvider) Provide() internal.ProviderValues {

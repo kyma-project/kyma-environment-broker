@@ -970,25 +970,6 @@ func (s *operations) insert(dto dbmodel.OperationDTO) error {
 	return lastErr
 }
 
-func (s *operations) getByInstanceID(id string) (*dbmodel.OperationDTO, error) {
-	session := s.Factory.NewReadSession()
-	operation := dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operation, lastErr = session.GetOperationByInstanceID(id)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("operation does not exist")
-				return false, lastErr
-			}
-			return false, nil
-		}
-		return true, nil
-	})
-
-	return &operation, err
-}
-
 func (s *operations) getByTypeAndInstanceID(id string, opType internal.OperationType) (*dbmodel.OperationDTO, error) {
 	session := s.Factory.NewReadSession()
 	operation := dbmodel.OperationDTO{}
