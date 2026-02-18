@@ -39,6 +39,16 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 		(input.Parameters.AdditionalWorkerNodePools == nil && len(p.Parameters.AdditionalWorkerNodePools) == 0) {
 		p.Parameters.AdditionalWorkerNodePools = input.Parameters.AdditionalWorkerNodePools
 	}
+
+	// empty list (RequiredClaims) and nil does not make any difference. Data read from DB can have nil even if it was empty when sent to DB, so we need to make sure that we compare them correctly.
+	if p.Parameters.OIDC != nil && input.Parameters.OIDC != nil && len(p.Parameters.OIDC.List) == len(input.Parameters.OIDC.List) {
+		for i, oidc := range p.Parameters.OIDC.List {
+			if oidc.RequiredClaims == nil && len(input.Parameters.OIDC.List[i].RequiredClaims) == 0 {
+				p.Parameters.OIDC.List[i].RequiredClaims = input.Parameters.OIDC.List[i].RequiredClaims
+			}
+		}
+
+	}
 	p.Parameters.TargetSecret = nil
 
 	if !reflect.DeepEqual(p.Parameters, input.Parameters) {

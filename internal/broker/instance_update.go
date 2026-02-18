@@ -485,7 +485,6 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 
 	if !previousInstance.Parameters.IsEqual(currentInstance.Parameters) {
 		logger.Info("Parameters changed, cannot skip new operation")
-
 		if !reflect.DeepEqual(previousInstance.Parameters.ErsContext, currentInstance.Parameters.ErsContext) {
 			logger.Info("Context changed")
 		}
