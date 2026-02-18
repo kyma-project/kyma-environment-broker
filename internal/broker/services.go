@@ -22,12 +22,11 @@ type ServicesEndpoint struct {
 	cfg            Config
 	servicesConfig ServicesConfig
 
-	enabledPlanIDs              map[string]struct{}
-	defaultOIDCConfig           *pkg.OIDCConfigDTO
-	useSmallerMachineTypes      bool
-	ingressFilteringFeatureFlag bool
-	ingressFilteringPlans       StringList
-	schemaService               *SchemaService
+	enabledPlanIDs         map[string]struct{}
+	defaultOIDCConfig      *pkg.OIDCConfigDTO
+	useSmallerMachineTypes bool
+	ingressFilteringPlans  StringList
+	schemaService          *SchemaService
 }
 
 func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig, log *slog.Logger, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {

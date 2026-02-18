@@ -3666,32 +3666,6 @@ func fixDNSProviders() gardener.DNSProvidersData {
 	}
 }
 
-func fixRegionsSupportingMachine() configuration.RegionsSupportingMachine {
-	return configuration.RegionsSupportingMachine{
-		"m8g": {
-			"ap-northeast-1": nil,
-			"ap-southeast-1": nil,
-			"ca-central-1":   nil,
-		},
-		"m7g": {
-			"us-west-2": nil,
-		},
-		"c2d-highmem": {
-			"us-central1":        nil,
-			"southamerica-east1": nil,
-		},
-		"Standard_D": {
-			"uksouth":     nil,
-			"brazilsouth": nil,
-		},
-		"g6": {
-			"us-east-1":    []string{"a"},
-			"westeurope":   []string{"b"},
-			"eu-central-1": nil,
-		},
-	}
-}
-
 func newSchemaService(t *testing.T) *broker.SchemaService {
 	plans := newPlanSpec(t)
 	provider := newProviderSpec(t)

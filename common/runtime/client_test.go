@@ -29,7 +29,6 @@ func (t FakeTokenSource) Token() (*oauth2.Token, error) {
 
 var runtime1 = fixRuntimeDTO("runtime1")
 var runtime2 = fixRuntimeDTO("runtime2")
-var runtime3 = fixRuntimeDTO("runtime3")
 
 func TestClient_ListRuntimes(t *testing.T) {
 	t.Run("test request URL and response are correct", func(t *testing.T) {
