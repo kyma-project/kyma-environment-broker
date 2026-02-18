@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -38,7 +37,6 @@ type (
 		usedForProduction string
 	}
 	subaccountRuntimesType map[runtimeIDType]runtimeStateType
-	statesFromCisType      map[subaccountIDType]CisStateType
 	subaccountsSetType     map[subaccountIDType]struct{}
 	subaccountStateType    struct {
 		cisState       CisStateType
@@ -51,7 +49,6 @@ type (
 		mutex            sync.Mutex
 		eventsClient     *RateLimitedCisClient
 		accountsClient   *RateLimitedCisClient
-		kcpK8sClient     *client.Client
 		dynamicK8sClient *dynamic.Interface
 		db               storage.BrokerStorage
 		syncQueue        queues.MultiConsumerPriorityQueue
