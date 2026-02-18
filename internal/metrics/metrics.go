@@ -49,7 +49,7 @@ type RegisterContainer struct {
 func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
 	logger = logger.With("from:", logPrefix)
 	logger.Info("Registering metrics")
-	opDurationCollector := NewOperationDurationCollector(logger)
+	opDurationCollector := NewOperationDurationCollector()
 	prometheus.MustRegister(opDurationCollector)
 
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
@@ -66,7 +66,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	bindingStats.MustRegister()
 	bindingStats.StartCollector(ctx)
 
-	bindDurationCollector := NewBindDurationCollector(logger)
+	bindDurationCollector := NewBindDurationCollector()
 	prometheus.MustRegister(bindDurationCollector)
 
 	bindCrestedCollector := NewBindingCreationCollector()

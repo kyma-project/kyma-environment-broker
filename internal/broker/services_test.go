@@ -2,8 +2,6 @@ package broker_test
 
 import (
 	"context"
-	"log/slog"
-	"os"
 	"strings"
 	"testing"
 
@@ -18,9 +16,6 @@ import (
 )
 
 func TestServices_Services(t *testing.T) {
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
 	imConfig := broker.InfrastructureManager{
 		IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
 		UseSmallerMachineTypes: false,
@@ -45,7 +40,7 @@ func TestServices_Services(t *testing.T) {
 			},
 		}
 		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
-		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -77,7 +72,7 @@ func TestServices_Services(t *testing.T) {
 			},
 		}
 		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
-		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -113,7 +108,7 @@ func TestServices_Services(t *testing.T) {
 			},
 		}
 		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
-		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -152,7 +147,7 @@ func TestServices_Services(t *testing.T) {
 			},
 		}
 		schemaService := createSchemaService(t, &pkg.OIDCConfigDTO{}, cfg, imConfig.IngressFilteringPlans)
-		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig, log, pkg.OIDCConfigDTO{}, imConfig)
+		servicesEndpoint := broker.NewServices(cfg, schemaService, servicesConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())

@@ -39,7 +39,6 @@ type Handler struct {
 	operationsDb        storage.Operations
 	bindingsDb          storage.Bindings
 	instancesArchivedDb storage.InstancesArchived
-	subaccountStatesDb  storage.SubaccountStates
 	actionsDb           storage.Actions
 	converter           Converter
 	defaultMaxPage      int
@@ -54,7 +53,6 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 		operationsDb:        storage.Operations(),
 		bindingsDb:          storage.Bindings(),
 		instancesArchivedDb: storage.InstancesArchived(),
-		subaccountStatesDb:  storage.SubaccountStates(),
 		actionsDb:           storage.Actions(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
