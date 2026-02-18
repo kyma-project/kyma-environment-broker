@@ -2,7 +2,6 @@ package broker_test
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -214,10 +213,4 @@ func assertPlanContainsPropertyInUpdateSchema(t *testing.T, plan domain.ServiceP
 	if _, exists := propertiesMap[property]; !exists {
 		t.Errorf("plan %s does not contain %s property in Update schema", plan.Name, property)
 	}
-}
-
-func configSource(t *testing.T, filename string) io.Reader {
-	plans, err := os.Open(filename)
-	require.NoError(t, err)
-	return plans
 }

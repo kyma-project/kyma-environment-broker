@@ -62,30 +62,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const fixedGardenerNamespace = "garden-test"
-
 const (
-	btpOperatorGroup           = "services.cloud.sap.com"
-	btpOperatorApiVer          = "v1"
-	btpOperatorServiceInstance = "ServiceInstance"
-	btpOperatorServiceBinding  = "ServiceBinding"
-	instanceName               = "my-service-instance"
-	bindingName                = "my-binding"
-	kymaNamespace              = "kyma-system"
-	testSuiteSpeedUpFactor     = 10000
-)
-
-var (
-	serviceBindingGvk = schema.GroupVersionKind{
-		Group:   btpOperatorGroup,
-		Version: btpOperatorApiVer,
-		Kind:    btpOperatorServiceBinding,
-	}
-	serviceInstanceGvk = schema.GroupVersionKind{
-		Group:   btpOperatorGroup,
-		Version: btpOperatorApiVer,
-		Kind:    btpOperatorServiceInstance,
-	}
+	testSuiteSpeedUpFactor = 10000
 )
 
 // BrokerSuiteTest is a helper which allows to write simple tests of any KEB processes (provisioning, deprovisioning, update).
@@ -677,38 +655,6 @@ func (s *BrokerSuiteTest) processKIMProvisioningByInstanceID(iid string) {
 	s.SetRuntimeResourceStateReady(runtimeID)
 }
 
-func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructured.Unstructured {
-	op, err := s.db.Operations().GetProvisioningOperationByID(opID)
-	require.NoError(s.t, err)
-
-	un := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      op.ShootName,
-				"namespace": fixedGardenerNamespace,
-				"labels": map[string]interface{}{
-					globalAccountLabel: op.ProvisioningParameters.ErsContext.GlobalAccountID,
-					subAccountLabel:    op.ProvisioningParameters.ErsContext.SubAccountID,
-				},
-				"annotations": map[string]interface{}{
-					runtimeIDAnnotation: op.RuntimeID,
-				},
-			},
-			"spec": map[string]interface{}{
-				"region": "eu",
-				"maintenance": map[string]interface{}{
-					"timeWindow": map[string]interface{}{
-						"begin": "030000+0000",
-						"end":   "040000+0000",
-					},
-				},
-			},
-		},
-	}
-	un.SetGroupVersionKind(shootGVK)
-	return &un
-}
-
 func (s *BrokerSuiteTest) AssertKymaResourceExists(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)
@@ -894,16 +840,6 @@ func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel
 	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
 }
 
-func (s *BrokerSuiteTest) fixServiceBindingAndInstances(t *testing.T) {
-	createResource(t, serviceInstanceGvk, s.k8sSKR, kymaNamespace, instanceName)
-	createResource(t, serviceBindingGvk, s.k8sSKR, kymaNamespace, bindingName)
-}
-
-func (s *BrokerSuiteTest) assertServiceBindingAndInstancesAreRemoved(t *testing.T) {
-	assertResourcesAreRemoved(t, serviceInstanceGvk, s.k8sSKR)
-	assertResourcesAreRemoved(t, serviceBindingGvk, s.k8sSKR)
-}
-
 func (s *BrokerSuiteTest) WaitForInstanceArchivedCreated(iid string) {
 
 	err := s.poller.Invoke(func() (bool, error) {
@@ -1029,23 +965,6 @@ func (s *BrokerSuiteTest) AssertBTPOperatorSecret() {
 	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: "kyma-installer", Name: "btp-operator"}, secret)
 	require.NoError(s.t, err)
 	assert.Equal(s.t, "btp-operator", secret.Name)
-}
-
-func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
-	list := &unstructured.UnstructuredList{}
-	list.SetGroupVersionKind(gvk)
-	err := k8sClient.List(context.TODO(), list)
-	assert.NoError(t, err)
-	assert.Zero(t, len(list.Items))
-}
-
-func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client, namespace string, name string) {
-	object := &unstructured.Unstructured{}
-	object.SetGroupVersionKind(gvk)
-	object.SetNamespace(namespace)
-	object.SetName(name)
-	err := k8sClient.Create(context.TODO(), object)
-	assert.NoError(t, err)
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider imv1.Provider, name, machineType string, autoScalerMin, autoScalerMax, zonesNumer int) {

@@ -29,7 +29,6 @@ type Config struct {
 
 type DeprovisionRetriggerService struct {
 	cfg             Config
-	filter          dbmodel.InstanceFilter
 	instanceStorage storage.Instances
 	brokerClient    BrokerClient
 }

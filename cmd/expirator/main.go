@@ -36,10 +36,8 @@ type Config struct {
 
 type CleanupService struct {
 	cfg             Config
-	filter          dbmodel.InstanceFilter
 	instanceStorage storage.Instances
 	brokerClient    BrokerClient
-	planID          string
 }
 
 func newCleanupService(cfg Config, brokerClient BrokerClient, instances storage.Instances) *CleanupService {

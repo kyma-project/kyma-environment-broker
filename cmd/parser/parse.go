@@ -19,13 +19,8 @@ var InvalidRuleError = errors.New("InvalidRuleError")
 type ParseCommand struct {
 	cobraCmd     *cobra.Command
 	rule         string
-	parser       rules.Parser
 	ruleFilePath string
-	sort         bool
-	unique       bool
 	match        string
-	signature    bool
-	noColor      bool
 }
 
 func NewParseCmd() *cobra.Command {

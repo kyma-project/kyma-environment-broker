@@ -40,7 +40,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -753,19 +752,6 @@ func checkAvailableZones(
 	message += " are not available in 3 zones. If you want to use this machine types, set HA to false."
 
 	return fmt.Errorf("%s", message)
-}
-
-// Rudimentary kubeconfig validation
-func validateKubeconfig(kubeconfig string) error {
-	config, err := clientcmd.Load([]byte(kubeconfig))
-	if err != nil {
-		return err
-	}
-	err = clientcmd.Validate(*config)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (b *ProvisionEndpoint) extractERSContext(details domain.ProvisionDetails) (internal.ERSContext, error) {
