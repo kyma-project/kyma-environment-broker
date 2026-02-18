@@ -61,8 +61,8 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		return nil, fmt.Errorf("while getting %s class data", KymaServiceName)
 	}
 
-	provider, ok := middleware.ProviderFromContext(ctx)
-	platformRegion, ok := middleware.RegionFromContext(ctx)
+	provider, _ := middleware.ProviderFromContext(ctx)
+	platformRegion, _ := middleware.RegionFromContext(ctx)
 
 	for _, plan := range se.schemaService.Plans(class.Plans, platformRegion, provider) {
 		// filter out not enabled plans
