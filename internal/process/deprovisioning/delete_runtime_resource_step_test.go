@@ -51,6 +51,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 
 	// when
@@ -72,6 +73,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	assert.NoError(t, err)
 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 	// when

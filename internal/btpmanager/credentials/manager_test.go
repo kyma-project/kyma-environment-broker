@@ -404,6 +404,7 @@ func TestManager(t *testing.T) {
 			URL:               "a",
 			XSAppName:         "a",
 		}, "a")
+		assert.NoError(t, err)
 
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.Nil(t, notMatchingKeys)
