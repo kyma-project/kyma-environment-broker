@@ -37,20 +37,6 @@ func (c *TestCases) loadCases() {
 	}
 }
 
-func (c *TestCases) writeCases() {
-	_ = os.Remove(RULES_TEST_CASES)
-
-	bytes, err := yaml.Marshal(c)
-	if err != nil {
-		log.Fatalf("Marshal: %v", err)
-	}
-
-	err = os.WriteFile(RULES_TEST_CASES, bytes, os.ModePerm)
-	if err != nil {
-		log.Printf("err while writing a file %v ", err)
-	}
-}
-
 func TestParser(t *testing.T) {
 
 	t.Run("should verify parser command", func(t *testing.T) {

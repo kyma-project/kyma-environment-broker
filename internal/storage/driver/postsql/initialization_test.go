@@ -8,10 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	maxTestDbAccessRetries = 20
-)
-
 func TestInitialization(t *testing.T) {
 
 	t.Run("Should initialize database when schema not applied", func(t *testing.T) {
