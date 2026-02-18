@@ -16,7 +16,8 @@ The Job iterates over the instances, and for each one with `deletedAt` appropria
 
 ## Configuration
 
-The Job is a CronJob with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/mmitoraj-patch-1/resources/keb/values.yaml) file for the chart.
+The Job is a CronJob with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/values.yaml) file for the chart.
+The Job is a CronJob with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](https://github.com/kyma-project/resources/keb/values.yaml) file for the chart.
 By default, the CronJob is set to run every day at 3:00 am:
 
 ```yaml  
