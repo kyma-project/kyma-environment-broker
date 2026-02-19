@@ -93,11 +93,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
 		if oidc.List != nil {
-			oidcConfigs := make([]imv1.OIDCConfig, 0)
-			for _, oidcConfig := range oidc.List {
-				oidcConfigs = append(oidcConfigs, s.getOIDCConfigObject(oidcConfig))
-			}
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = s.getOIDCConfigs(oidc)
 		} else if dto := oidc.OIDCConfigDTO; dto != nil {
 			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
@@ -158,6 +154,14 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	time.Sleep(s.delay)
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) getOIDCConfigs(oidc *pkg.OIDCConnectDTO) *[]imv1.OIDCConfig {
+	oidcConfigs := make([]imv1.OIDCConfig, 0)
+	for _, oidcConfig := range oidc.List {
+		oidcConfigs = append(oidcConfigs, s.getOIDCConfigObject(oidcConfig))
+	}
+	return &oidcConfigs
 }
 
 func (s *UpdateRuntimeStep) getCurrentAdditionalWorkers(runtime imv1.Runtime) map[string]gardener.Worker {
