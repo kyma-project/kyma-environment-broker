@@ -435,12 +435,11 @@ func TestBTPOperatorCleanupStep_ErrorCollection(t *testing.T) {
 }
 
 type fakeK8sClientWrapper struct {
-	fake                  client.Client
-	cleanupInstances      bool
-	cleanupBindings       bool
-	deleteAllOfError      error
-	listError             error
-	removeFinalizersError error
+	fake             client.Client
+	cleanupInstances bool
+	cleanupBindings  bool
+	deleteAllOfError error
+	listError        error
 }
 
 func (f *fakeK8sClientWrapper) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
