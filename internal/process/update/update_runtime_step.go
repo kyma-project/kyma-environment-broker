@@ -9,6 +9,7 @@ import (
 	"time"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -99,28 +100,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		if oidc.List != nil {
 			oidcConfigs := make([]imv1.OIDCConfig, 0)
 			for _, oidcConfig := range oidc.List {
-				requiredClaims := make(map[string]string)
-				for _, claim := range oidcConfig.RequiredClaims {
-					parts := strings.SplitN(claim, "=", 2)
-					if len(parts) == 2 {
-						requiredClaims[parts[0]] = parts[1]
-					}
-				}
-				oidcConfigObj := imv1.OIDCConfig{
-					OIDCConfig: gardener.OIDCConfig{
-						ClientID:       &oidcConfig.ClientID,
-						IssuerURL:      &oidcConfig.IssuerURL,
-						SigningAlgs:    oidcConfig.SigningAlgs,
-						GroupsClaim:    &oidcConfig.GroupsClaim,
-						UsernamePrefix: &oidcConfig.UsernamePrefix,
-						UsernameClaim:  &oidcConfig.UsernameClaim,
-						RequiredClaims: requiredClaims,
-						GroupsPrefix:   &oidcConfig.GroupsPrefix,
-					},
-				}
-				oidcConfigObj.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
-				oidcConfigs = append(oidcConfigs, oidcConfigObj)
-
+				oidcConfigs = append(oidcConfigs, s.getOIDCConfigObject(oidcConfig))
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
 		} else if dto := oidc.OIDCConfigDTO; dto != nil {
@@ -194,6 +174,30 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	time.Sleep(s.delay)
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) getOIDCConfigObject(oidcConfig pkg.OIDCConfigDTO) imv1.OIDCConfig {
+	requiredClaims := make(map[string]string)
+	for _, claim := range oidcConfig.RequiredClaims {
+		parts := strings.SplitN(claim, "=", 2)
+		if len(parts) == 2 {
+			requiredClaims[parts[0]] = parts[1]
+		}
+	}
+	oidcConfigObj := imv1.OIDCConfig{
+		OIDCConfig: gardener.OIDCConfig{
+			ClientID:       &oidcConfig.ClientID,
+			IssuerURL:      &oidcConfig.IssuerURL,
+			SigningAlgs:    oidcConfig.SigningAlgs,
+			GroupsClaim:    &oidcConfig.GroupsClaim,
+			UsernamePrefix: &oidcConfig.UsernamePrefix,
+			UsernameClaim:  &oidcConfig.UsernameClaim,
+			RequiredClaims: requiredClaims,
+			GroupsPrefix:   &oidcConfig.GroupsPrefix,
+		},
+	}
+	oidcConfigObj.JWKS, _ = base64.StdEncoding.DecodeString(oidcConfig.EncodedJwksArray)
+	return oidcConfigObj
 }
 
 func (s *UpdateRuntimeStep) getAdministrators(operation internal.Operation) []string {
