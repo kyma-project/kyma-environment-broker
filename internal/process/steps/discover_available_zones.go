@@ -20,7 +20,6 @@ import (
 
 type DiscoverAvailableZonesStep struct {
 	operationManager *process.OperationManager
-	operationStorage storage.Operations
 	instanceStorage  storage.Instances
 	providerSpec     *configuration.ProviderSpec
 	gardenerClient   *gardener.Client
@@ -29,7 +28,6 @@ type DiscoverAvailableZonesStep struct {
 
 func NewDiscoverAvailableZonesStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesStep {
 	step := &DiscoverAvailableZonesStep{
-		operationStorage: db.Operations(),
 		instanceStorage:  db.Instances(),
 		providerSpec:     providerSpec,
 		gardenerClient:   gardenerClient,

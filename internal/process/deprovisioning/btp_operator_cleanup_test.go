@@ -78,6 +78,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
 		fmt.Println(gvk)
@@ -125,6 +126,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
 		fmt.Println(gvk)
@@ -172,6 +174,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
 		fmt.Println(gvk)
@@ -249,6 +252,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
 		fmt.Println(gvk)
@@ -288,6 +292,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(sbCRD, nil, nil)
 		fmt.Println(gvk)

@@ -40,11 +40,6 @@ var (
 		internal.OperationTypeDeprovision,
 		internal.OperationTypeUpdate,
 	}
-	opStates = []domain.LastOperationState{
-		domain.Failed,
-		domain.InProgress,
-		domain.Succeeded,
-	}
 )
 
 type metricKey string

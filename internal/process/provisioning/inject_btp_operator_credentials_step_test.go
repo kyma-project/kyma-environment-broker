@@ -29,6 +29,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		assert.NoError(t, err)
 
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
@@ -93,6 +94,7 @@ func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
+		assert.NoError(t, err)
 
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 

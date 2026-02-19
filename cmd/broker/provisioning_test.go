@@ -2620,6 +2620,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	var runtimes pkg.RuntimesPage
 
 	err = json.Unmarshal(response, &runtimes)
+	assert.NoError(t, err)
 
 	assert.Len(t, runtimes.Data, 1)
 	config := runtimes.Data[0].RuntimeConfig

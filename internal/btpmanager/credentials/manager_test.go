@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	uuid2 "github.com/google/uuid"
@@ -54,7 +52,6 @@ type Environment struct {
 	brokerStorage storage.BrokerStorage
 	logs          *slog.Logger
 	manager       *Manager
-	job           *Job
 	t             *testing.T
 }
 
@@ -72,7 +69,6 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 
 	newEnvironment.createTestData()
 	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.brokerStorage.Instances(), logs, false)
-	newEnvironment.job = NewJob(newEnvironment.manager, logs, prometheus.NewRegistry(), "8081", "runtime-reconciler-test")
 	newEnvironment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 	return newEnvironment
 }
@@ -404,6 +400,7 @@ func TestManager(t *testing.T) {
 			URL:               "a",
 			XSAppName:         "a",
 		}, "a")
+		assert.NoError(t, err)
 
 		notMatchingKeys, err := manager.compareSecrets(current, expected)
 		assert.Nil(t, notMatchingKeys)
@@ -681,13 +678,6 @@ func (e *Environment) assertAllSecretsNotExists() {
 	}
 }
 
-func (e *Environment) assertAllSecretsExists() {
-	for _, skr := range e.skrs {
-		skrSecret := e.getSecretFromSkr(skr.Config)
-		require.NotNil(e.t, skrSecret)
-	}
-}
-
 func (e *Environment) assertAllSecretDataAreSet() {
 	for _, skr := range e.skrs {
 		skrSecret := e.getSecretFromSkr(skr.Config)
@@ -743,41 +733,6 @@ func (e *Environment) assureConsistencyExceptSkippedInstance(instanceID string) 
 			require.Equal(e.t, getString(skrSecret.Data, secretClusterId), instance.InstanceDetails.ServiceManagerClusterID)
 		}
 	}
-}
-
-func (e *Environment) assureThatClusterIsInIncorrectState() int {
-	instances, err := e.manager.GetReconcileCandidates()
-	require.NoError(e.t, err)
-	require.Equal(e.t, expectedInstancesCount, len(instances))
-
-	incorrectClusters := 0
-	for _, instance := range instances {
-		require.NoError(e.t, err)
-		skrK8sCfg, credentials := []byte(instance.Parameters.Parameters.Kubeconfig), instance.Parameters.ErsContext.SMOperatorCredentials
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig(skrK8sCfg)
-		require.NoError(e.t, err)
-		skrSecret := e.getSecretFromSkr(restCfg)
-		require.NotNil(e.t, skrSecret)
-
-		if getString(skrSecret.Data, secretClientSecret) != credentials.ClientSecret {
-			incorrectClusters++
-			continue
-		}
-		if getString(skrSecret.Data, secretClientId) != credentials.ClientID {
-			incorrectClusters++
-			continue
-		}
-		if getString(skrSecret.Data, secretTokenUrl) != credentials.URL {
-			incorrectClusters++
-			continue
-		}
-		if getString(skrSecret.Data, secretClusterId) != instance.InstanceDetails.ServiceManagerClusterID {
-			incorrectClusters++
-			continue
-		}
-	}
-
-	return incorrectClusters
 }
 
 func (e *Environment) assertNumberOfInstancesInDb(expectedInstancesInDbCount int) {

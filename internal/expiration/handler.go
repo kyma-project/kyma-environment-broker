@@ -90,7 +90,7 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instance, err = h.deactivateInstance(instance, logger)
+	_, err = h.deactivateInstance(instance, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to update the instance in the database after deactivating: %s", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)

@@ -48,6 +48,7 @@ func TestBinding(t *testing.T) {
 
 		// when
 		err = brokerStorage.Bindings().Delete(testInstanceID, testBindingId)
+		assert.NoError(t, err)
 
 		// then
 		nonExisting, err := brokerStorage.Bindings().Get("instance-"+testBindingId, testBindingId)

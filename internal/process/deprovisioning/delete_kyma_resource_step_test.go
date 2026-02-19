@@ -30,6 +30,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
+	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 }
 
@@ -56,5 +57,6 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
+	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 }

@@ -245,13 +245,13 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 
 		// populate database with samples
 		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "A1", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID1"}),
-			*fixInstance(instanceData{val: "A2", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID2"}),
-			*fixInstance(instanceData{val: "A3", globalAccountID: "ga1", subAccountID: "sa2", runtimeID: "runtimeID3"}),
-			*fixInstance(instanceData{val: "A4", globalAccountID: "ga2", subAccountID: "sa3", runtimeID: "runtimeID4"}),
-			*fixInstance(instanceData{val: "A5", globalAccountID: "ga2", subAccountID: "sa4", runtimeID: "runtimeID5"}),
-			*fixInstance(instanceData{val: "A6", globalAccountID: "ga2", subAccountID: "sa5", runtimeID: ""}),
-			*fixInstance(instanceData{val: "A7", globalAccountID: "ga2", subAccountID: "sa6", runtimeID: "runtimeID7"}),
+			*fixInstance(instanceData{val: "A1", globalAccountID: "ga1", subAccountID: "sa1"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "ga1", subAccountID: "sa1"}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "ga1", subAccountID: "sa2"}),
+			*fixInstance(instanceData{val: "A4", globalAccountID: "ga2", subAccountID: "sa3"}),
+			*fixInstance(instanceData{val: "A5", globalAccountID: "ga2", subAccountID: "sa4"}),
+			*fixInstance(instanceData{val: "A6", globalAccountID: "ga2", subAccountID: "sa5"}),
+			*fixInstance(instanceData{val: "A7", globalAccountID: "ga2", subAccountID: "sa6"}),
 		}
 
 		for _, i := range fixInstances {
@@ -494,11 +494,13 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 		require.Equal(t, 3, totalCount)
+		assert.Len(t, out, 3)
 
 		out, count, totalCount, err = brokerStorage.Instances().List(dbmodel.InstanceFilter{BindingExists: ptr.Bool(true)})
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 		require.Equal(t, 1, totalCount)
+		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
 
 	})
 
@@ -671,6 +673,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 4, count)
 		require.Equal(t, 4, totalCount)
+		assert.Len(t, out, 4)
 
 	})
 
@@ -791,6 +794,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 		require.Equal(t, 3, totalCount)
+		assert.Len(t, out, 3)
 
 	})
 
@@ -1156,6 +1160,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 10,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 2, len(got))
 
 	got, _, _, err = instanceStorage.ListWithSubaccountState(dbmodel.InstanceFilter{
@@ -1163,6 +1168,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 1,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(got))
 
 	// when
@@ -1171,6 +1177,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 10,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(got))
 	assert.Equal(t, instance2.InstanceID, got[0].InstanceID)
 
@@ -1215,7 +1222,6 @@ type instanceData struct {
 	val             string
 	globalAccountID string
 	subAccountID    string
-	runtimeID       string
 	expired         bool
 	trial           bool
 	deletedAt       time.Time

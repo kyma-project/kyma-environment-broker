@@ -16,22 +16,13 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
-	globalAccountLabel    = "account"
-	subAccountLabel       = "subaccount"
-	runtimeIDAnnotation   = "kcp.provisioner.kyma-project.io/runtime-id"
 	defaultKymaVer        = "2.4.0"
 	operationID           = "provisioning-op-id"
-	instanceID            = "instance-id"
 	dbSecretKey           = "1234567890123456"
 	gardenerKymaNamespace = "kyma"
-)
-
-var (
-	shootGVK = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
 )
 
 type RuntimeOptions struct {

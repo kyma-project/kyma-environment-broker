@@ -3,12 +3,10 @@ package broker
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sort"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
@@ -18,19 +16,14 @@ const (
 )
 
 type ServicesEndpoint struct {
-	log            *slog.Logger
 	cfg            Config
 	servicesConfig ServicesConfig
 
-	enabledPlanIDs              map[string]struct{}
-	defaultOIDCConfig           *pkg.OIDCConfigDTO
-	useSmallerMachineTypes      bool
-	ingressFilteringFeatureFlag bool
-	ingressFilteringPlans       StringList
-	schemaService               *SchemaService
+	enabledPlanIDs map[string]struct{}
+	schemaService  *SchemaService
 }
 
-func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig, log *slog.Logger, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
+func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id, _ := AvailablePlans.GetPlanIDByName(PlanNameType(planName))
@@ -38,14 +31,10 @@ func NewServices(cfg Config, schemaService *SchemaService, servicesConfig Servic
 	}
 
 	return &ServicesEndpoint{
-		log:                    log.With("service", "ServicesEndpoint"),
-		cfg:                    cfg,
-		servicesConfig:         servicesConfig,
-		enabledPlanIDs:         enabledPlanIDs,
-		defaultOIDCConfig:      &defaultOIDCConfig,
-		useSmallerMachineTypes: imConfig.UseSmallerMachineTypes,
-		ingressFilteringPlans:  imConfig.IngressFilteringPlans,
-		schemaService:          schemaService,
+		cfg:            cfg,
+		servicesConfig: servicesConfig,
+		enabledPlanIDs: enabledPlanIDs,
+		schemaService:  schemaService,
 	}
 }
 
@@ -61,8 +50,8 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		return nil, fmt.Errorf("while getting %s class data", KymaServiceName)
 	}
 
-	provider, ok := middleware.ProviderFromContext(ctx)
-	platformRegion, ok := middleware.RegionFromContext(ctx)
+	provider, _ := middleware.ProviderFromContext(ctx)
+	platformRegion, _ := middleware.RegionFromContext(ctx)
 
 	for _, plan := range se.schemaService.Plans(class.Plans, platformRegion, provider) {
 		// filter out not enabled plans

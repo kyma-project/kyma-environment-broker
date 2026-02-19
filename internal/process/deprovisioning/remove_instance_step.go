@@ -19,15 +19,13 @@ import (
 type RemoveInstanceStep struct {
 	operationManager *process.OperationManager
 	instanceStorage  storage.Instances
-	operationStorage storage.Operations
 }
 
 var _ process.Step = &RemoveInstanceStep{}
 
 func NewRemoveInstanceStep(db storage.BrokerStorage) *RemoveInstanceStep {
 	step := &RemoveInstanceStep{
-		instanceStorage:  db.Instances(),
-		operationStorage: db.Operations(),
+		instanceStorage: db.Instances(),
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step

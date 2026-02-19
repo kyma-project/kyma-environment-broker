@@ -1433,6 +1433,7 @@ func TestCreateRuntimeResourceStep_Free_ZonesDiscovery(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	instance, operation := fixInstanceAndOperation(broker.FreemiumPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
