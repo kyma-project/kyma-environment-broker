@@ -362,10 +362,85 @@ func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	assert.Zero(t, backoff)
 }
 
+func TestBTPOperatorCleanupStep_ErrorCollection(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("step", "TEST")
+
+	t.Run("should collect errors from DeleteAllOf", func(t *testing.T) {
+		// given
+		ms := storage.NewMemoryStorage()
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
+
+		scheme := internal.NewSchemeForTests(t)
+		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
+		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+		obj, _, err := decoder.Decode(siCRD, nil, nil)
+		require.NoError(t, err)
+
+		// fake client that returns error on DeleteAllOf
+		k8sCli := &fakeK8sClientWrapper{
+			fake:             fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build(),
+			deleteAllOfError: fmt.Errorf("simulated DeleteAllOf error"),
+		}
+
+		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.Temporary = true
+		op.ProvisioningParameters.PlanID = broker.TrialPlanID
+		op.UserAgent = broker.AccountCleanupJob
+		op.State = operationStateInProgress
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
+
+		// when
+		_, backoff, err := step.Run(op.Operation, log)
+
+		// then
+		// handleError consumes the error and returns backoff for retry instead
+		assert.NoError(t, err, "handleError returns nil error, only backoff")
+		assert.NotZero(t, backoff, "should return non-zero backoff for retry on temporary errors")
+		assert.True(t, k8sCli.cleanupInstances, "DeleteAllOf should have been called for ServiceInstances")
+	})
+
+	t.Run("should collect errors from List operation", func(t *testing.T) {
+		// given
+		ms := storage.NewMemoryStorage()
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
+
+		scheme := internal.NewSchemeForTests(t)
+		err := apiextensionsv1.AddToScheme(scheme)
+		require.NoError(t, err)
+
+		// fake client that returns error on List
+		k8sCli := &fakeK8sClientWrapper{
+			fake:      fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(ns).Build(),
+			listError: fmt.Errorf("simulated List error"),
+		}
+
+		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.Temporary = true
+		op.ProvisioningParameters.PlanID = broker.TrialPlanID
+		op.UserAgent = broker.AccountCleanupJob
+		op.State = operationStateInProgress
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
+
+		// when
+		_, backoff, err := step.Run(op.Operation, log)
+
+		// then
+		// handleError consumes the error and returns backoff for retry instead
+		assert.NoError(t, err, "handleError returns nil error, only backoff")
+		assert.NotZero(t, backoff, "should return non-zero backoff for retry on temporary errors")
+	})
+}
+
 type fakeK8sClientWrapper struct {
-	fake             client.Client
-	cleanupInstances bool
-	cleanupBindings  bool
+	fake                  client.Client
+	cleanupInstances      bool
+	cleanupBindings       bool
+	deleteAllOfError      error
+	listError             error
+	removeFinalizersError error
 }
 
 func (f *fakeK8sClientWrapper) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
@@ -377,6 +452,9 @@ func (f *fakeK8sClientWrapper) Get(ctx context.Context, key client.ObjectKey, ob
 }
 
 func (f *fakeK8sClientWrapper) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	if f.listError != nil {
+		return f.listError
+	}
 	if u, ok := list.(*unstructured.UnstructuredList); ok {
 		switch u.Object["kind"] {
 		case "ServiceBindingList":
@@ -409,9 +487,15 @@ func (f *fakeK8sClientWrapper) DeleteAllOf(ctx context.Context, obj client.Objec
 		switch u.Object["kind"] {
 		case "ServiceBinding":
 			f.cleanupBindings = true
+			if f.deleteAllOfError != nil {
+				return f.deleteAllOfError
+			}
 			return nil
 		case "ServiceInstance":
 			f.cleanupInstances = true
+			if f.deleteAllOfError != nil {
+				return f.deleteAllOfError
+			}
 			return nil
 		}
 	}
