@@ -250,7 +250,7 @@ func (s *BrokerSuiteTest) GetKcpClient() client.Client {
 
 func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
 	resource := gardener.SecretBindingResource
-	if strings.ToLower(bindingResource) == "credentialsbinding" {
+	if strings.ToLower(bindingResource) == credentialsBinding {
 		resource = gardener.CredentialsBindingResource
 	}
 
