@@ -270,6 +270,9 @@ func (r readSession) ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.O
 	addOperationFilters(stmt, filter)
 
 	_, err := stmt.Load(&operations)
+	if err != nil {
+		return nil, -1, -1, err
+	}
 
 	totalCount, err := r.getOperationCount(filter)
 	if err != nil {
@@ -889,6 +892,9 @@ func (r readSession) ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbm
 	addInstanceArchivedFilter(stmt, filter)
 
 	_, err := stmt.Load(&instancesArchived)
+	if err != nil {
+		return []dbmodel.InstanceArchivedDTO{}, -1, -1, err
+	}
 
 	totalCount, err := r.getInstanceArchivedCount(filter)
 	if err != nil {

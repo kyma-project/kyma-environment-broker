@@ -131,6 +131,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	assert.Len(t, response.Metadata.Labels, 1)
 
 	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
 	assert.False(t, *inst.Parameters.ErsContext.Active)
 }
 
@@ -244,6 +245,7 @@ func TestUpgradePlan(t *testing.T) {
 		require.NoError(t, err)
 
 		ops, err := st.Operations().ListOperationsByInstanceID(instanceID)
+		require.NoError(t, err)
 		var updateOperation internal.Operation
 		for _, o := range ops {
 			if o.Type == internal.OperationTypeUpdate {
@@ -607,6 +609,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -634,6 +637,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -659,6 +663,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -757,6 +762,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then

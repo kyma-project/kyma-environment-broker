@@ -204,10 +204,8 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		}
 	}
 
-	dashboardURL := instance.DashboardURL
 	if b.dashboardConfig.LandscapeURL != "" {
-		dashboardURL = fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
-		instance.DashboardURL = dashboardURL
+		instance.DashboardURL = fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
 	}
 
 	if b.processingEnabled {

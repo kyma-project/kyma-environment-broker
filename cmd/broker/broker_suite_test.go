@@ -799,7 +799,7 @@ func (s *BrokerSuiteTest) AssertKymaAnnotationExists(opId, annotationName string
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.Contains(s.t, obj.GetAnnotations(), annotationName)
 }
 
@@ -816,7 +816,7 @@ func (s *BrokerSuiteTest) AssertKymaLabelsExist(opId string, expectedLabels map[
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.Subset(s.t, obj.GetLabels(), expectedLabels)
 }
 
@@ -833,7 +833,7 @@ func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
 }
 
@@ -943,6 +943,7 @@ func (s *BrokerSuiteTest) failRuntimeByKIM(iid string) {
 		runtime.Status.State = imv1.RuntimeStateFailed
 
 		err = s.k8sKcp.Update(context.Background(), &runtime)
+		assert.NoError(s.t, err)
 		return true, nil
 	})
 	require.NoError(s.t, err)

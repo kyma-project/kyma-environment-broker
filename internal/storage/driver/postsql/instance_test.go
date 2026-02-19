@@ -494,11 +494,13 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 		require.Equal(t, 3, totalCount)
+		assert.Len(t, out, 3)
 
 		out, count, totalCount, err = brokerStorage.Instances().List(dbmodel.InstanceFilter{BindingExists: ptr.Bool(true)})
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 		require.Equal(t, 1, totalCount)
+		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
 
 	})
 
@@ -671,6 +673,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 4, count)
 		require.Equal(t, 4, totalCount)
+		assert.Len(t, out, 4)
 
 	})
 
@@ -791,6 +794,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 		require.Equal(t, 3, totalCount)
+		assert.Len(t, out, 3)
 
 	})
 
@@ -1156,6 +1160,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 10,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 2, len(got))
 
 	got, _, _, err = instanceStorage.ListWithSubaccountState(dbmodel.InstanceFilter{
@@ -1163,6 +1168,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 1,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(got))
 
 	// when
@@ -1171,6 +1177,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 		PageSize: 10,
 		Page:     1,
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, 1, len(got))
 	assert.Equal(t, instance2.InstanceID, got[0].InstanceID)
 

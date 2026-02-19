@@ -144,6 +144,7 @@ func TestProvision_Provision(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(fixExistOperation())
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(fixInstance())
+		assert.NoError(t, err)
 
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
@@ -1190,6 +1191,7 @@ func TestProvision_Provision(t *testing.T) {
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 		}, true)
+		require.NoError(t, err)
 
 		// then
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
@@ -3225,7 +3227,7 @@ func TestRestrictGA(t *testing.T) {
 	assert.NotNil(t, response)
 
 	// when
-	response, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+	_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 		ServiceID:     serviceID,
 		PlanID:        planID,
 		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
