@@ -2,8 +2,8 @@
 
 ## Overview
 
-The Zones Discovery feature extends Kyma Environment Broker (KEB) to dynamically determine availability zones for Kyma and additional worker node pools during provisioning and updates.
-Operators can configure worker node pools to use either static zone assignments (predefined in configuration) or dynamic zone assignments (queried live from the hyperscaler).
+The Zones Discovery feature extends Kyma Environment Broker (KEB) to dynamically determine availability zones for both the Kyma worker node pool and additional worker node pools during provisioning and updates.
+Operators can configure worker node pools to use either static zone assignments (predefined in the configuration) or dynamic zone assignments (queried live from the hyperscaler).
 
 > ### Note:
 > This feature is currently supported only on AWS.
@@ -27,9 +27,9 @@ Example log entries:
 
 ## Validation
 
-During provisioning and updates, KEB validates worker node pool configuration by retrieving a random hyperscaler subscription secret from Gardener and using it to query the available zones for the specified machine type.
+During provisioning and updates, KEB validates the worker node pool configuration by retrieving a random hyperscaler subscription secret from Gardener and using it to query the available zones for the specified machine type.
 - The Kyma worker node pool must support at least three zones.
-- Additional worker pools must support three zones if configured for high availability, or at least one zone otherwise.
+- Additional worker node pools must support three zones if configured for high availability, or at least one zone otherwise.
 
 To optimize performance, if the same machine type is used in multiple worker node pools, KEB queries the hyperscaler only once per unique machine type and reuses the result across all occurrences. This solution eliminates unnecessary duplicate calls.
 The subscription secret is used only for validation. Its name is logged to support traceability in case of validation failures.
