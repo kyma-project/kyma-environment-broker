@@ -40,10 +40,10 @@ Since this is an augmented queue with one entry for each subaccount, the length 
 
 ### Resources
 
-* Subaccount-sync deployment defined in [subaccount-sync-deployment.yaml](../../resources/keb/templates/subaccount-sync-deployment.yaml) - deployment configuration
-* Subaccount-sync service defined in [service.yaml](../../resources/keb/templates/service.yaml) - service configuration, required for metrics scraping
-* Subaccount-sync VMServiceScrape defined in [service-monitor.yaml](../../resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service required for metrics scraping
-* Subaccount-sync PeerAuthentication defined in [policy.yaml](../../resources/keb/templates/policy.yaml) - PeerAuthentication configuration required for metrics scraping
+* Subaccount-sync deployment defined in [subaccount-sync-deployment.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/templates/subaccount-sync-deployment.yaml) - deployment configuration
+* Subaccount-sync service defined in [service.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/templates/service.yaml) - service configuration, required for metrics scraping
+* Subaccount-sync VMServiceScrape defined in [service-monitor.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service required for metrics scraping
+* Subaccount-sync PeerAuthentication defined in [policy.yaml](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/templates/policy.yaml) - PeerAuthentication configuration required for metrics scraping
 
 ## Configuration
 

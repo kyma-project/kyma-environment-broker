@@ -81,7 +81,6 @@ type ProvisionEndpoint struct {
 	plansConfig             PlansConfig
 
 	shootDomain       string
-	shootProject      string
 	shootDnsProviders gardener.DNSProvidersData
 
 	dashboardConfig dashboard.Config
@@ -91,7 +90,6 @@ type ProvisionEndpoint struct {
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
-	useSmallerMachineTypes bool
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           ConfigurationProvider
@@ -126,7 +124,6 @@ func NewProvision(brokerConfig Config,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
 	valuesProvider ValuesProvider,
-	useSmallerMachineTypes bool,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
@@ -152,14 +149,12 @@ func NewProvision(brokerConfig Config,
 		enabledPlanIDs:                       enabledPlanIDs,
 		plansConfig:                          plansConfig,
 		shootDomain:                          gardenerConfig.ShootDomain,
-		shootProject:                         gardenerConfig.Project,
 		shootDnsProviders:                    gardenerConfig.DNSProviders,
 		dashboardConfig:                      dashboardConfig,
 		freemiumWhiteList:                    freemiumWhitelist,
 		kcBuilder:                            kcBuilder,
 		providerSpec:                         providerSpec,
 		valuesProvider:                       valuesProvider,
-		useSmallerMachineTypes:               useSmallerMachineTypes,
 		schemaService:                        schemaService,
 		providerConfigProvider:               providerConfigProvider,
 		quotaClient:                          quotaClient,
