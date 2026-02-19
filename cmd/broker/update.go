@@ -26,7 +26,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *process.Queue {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-  	if err != nil {
+	if err != nil {
 		fatalOnError(err, logs)
 	}
 	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
