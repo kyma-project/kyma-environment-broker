@@ -96,7 +96,13 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
-	s.setOIDC(operation, runtime)
+	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
+		if oidc.List != nil {
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = s.getOIDCConfigs(oidc)
+		} else if dto := oidc.OIDCConfigDTO; dto != nil {
+			s.setConfigInArray(&runtime, dto)
+		}
+	}
 
 	s.setAdministrators(operation, runtime)
 
@@ -123,6 +129,15 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	return operation, 0, nil
 }
 
+func (s *UpdateRuntimeStep) getOIDCConfigs(oidc *pkg.OIDCConnectDTO) *[]imv1.OIDCConfig {
+	oidcConfigs := make([]imv1.OIDCConfig, 0)
+	for _, oidcConfig := range oidc.List {
+		oidcConfigObj := s.prepareOIDCConfigObject(oidcConfig)
+		oidcConfigs = append(oidcConfigs, oidcConfigObj)
+	}
+	return &oidcConfigs
+}
+
 func (s *UpdateRuntimeStep) setAdministrators(operation internal.Operation, runtime imv1.Runtime) {
 	// operation.ProvisioningParameters were calculated and joined across provisioning and all update operations
 	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) != 0 {
@@ -143,21 +158,6 @@ func (s *UpdateRuntimeStep) setAdministrators(operation internal.Operation, runt
 }
 
 func (s *UpdateRuntimeStep) setOIDC(operation internal.Operation, runtime imv1.Runtime) {
-	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
-		if oidc.List != nil {
-			oidcConfigs := make([]imv1.OIDCConfig, 0)
-			for _, oidcConfig := range oidc.List {
-				oidcConfigObj := s.prepareOIDCConfigObject(oidcConfig)
-				oidcConfigs = append(oidcConfigs, oidcConfigObj)
-			}
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
-		} else if dto := oidc.OIDCConfigDTO; dto != nil {
-			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
-			}
-			s.setConfig(runtime, dto)
-		}
-	}
 }
 
 func (s *UpdateRuntimeStep) prepareOIDCConfigObject(oidcConfig pkg.OIDCConfigDTO) imv1.OIDCConfig {
@@ -184,33 +184,34 @@ func (s *UpdateRuntimeStep) prepareOIDCConfigObject(oidcConfig pkg.OIDCConfigDTO
 	return oidcConfigObj
 }
 
-func (s *UpdateRuntimeStep) setConfig(runtime imv1.Runtime, dto *pkg.OIDCConfigDTO) {
+func (s *UpdateRuntimeStep) setConfigInArray(runtime *imv1.Runtime, dto *pkg.OIDCConfigDTO) {
+	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
+	}
+
 	config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
-	if len(dto.SigningAlgs) > 0 {
-		config.SigningAlgs = dto.SigningAlgs
+	assignIfNotEmpty := func(target **string, value string) {
+		if value != "" {
+			*target = &value
+		}
 	}
-	if dto.ClientID != "" {
-		config.ClientID = &dto.ClientID
-	}
-	if dto.IssuerURL != "" {
-		config.IssuerURL = &dto.IssuerURL
-	}
-	if dto.GroupsClaim != "" {
-		config.GroupsClaim = &dto.GroupsClaim
-	}
-	if dto.UsernamePrefix != "" {
-		config.UsernamePrefix = &dto.UsernamePrefix
-	}
-	if dto.UsernameClaim != "" {
-		config.UsernameClaim = &dto.UsernameClaim
-	}
-	if dto.GroupsPrefix != "" {
-		config.GroupsPrefix = &dto.GroupsPrefix
-	}
+
+	config.SigningAlgs = dto.SigningAlgs
+	assignIfNotEmpty(&config.ClientID, dto.ClientID)
+	assignIfNotEmpty(&config.IssuerURL, dto.IssuerURL)
+	assignIfNotEmpty(&config.GroupsClaim, dto.GroupsClaim)
+	assignIfNotEmpty(&config.UsernamePrefix, dto.UsernamePrefix)
+	assignIfNotEmpty(&config.UsernameClaim, dto.UsernameClaim)
+	assignIfNotEmpty(&config.GroupsPrefix, dto.GroupsPrefix)
+
 	s.setRequiredClaims(dto, config)
-	if dto.EncodedJwksArray == "-" {
+
+	switch dto.EncodedJwksArray {
+	case "-":
 		config.JWKS = nil
-	} else if dto.EncodedJwksArray != "" {
+	case "":
+		// Do nothing
+	default:
 		config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
 	}
 }
