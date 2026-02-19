@@ -157,9 +157,6 @@ func (s *UpdateRuntimeStep) setAdministrators(operation internal.Operation, runt
 	}
 }
 
-func (s *UpdateRuntimeStep) setOIDC(operation internal.Operation, runtime imv1.Runtime) {
-}
-
 func (s *UpdateRuntimeStep) prepareOIDCConfigObject(oidcConfig pkg.OIDCConfigDTO) imv1.OIDCConfig {
 	requiredClaims := make(map[string]string)
 	for _, claim := range oidcConfig.RequiredClaims {
@@ -206,12 +203,9 @@ func (s *UpdateRuntimeStep) setConfigInArray(runtime *imv1.Runtime, dto *pkg.OID
 
 	s.setRequiredClaims(dto, config)
 
-	switch dto.EncodedJwksArray {
-	case "-":
+	if dto.EncodedJwksArray == "-" {
 		config.JWKS = nil
-	case "":
-		// Do nothing
-	default:
+	} else if dto.EncodedJwksArray != "" {
 		config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
 	}
 }
