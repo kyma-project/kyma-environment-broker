@@ -130,18 +130,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				config.GroupsPrefix = &dto.GroupsPrefix
 			}
 			if len(dto.RequiredClaims) > 0 {
-				if len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-" {
-					config.RequiredClaims = map[string]string{}
-				} else {
-					requiredClaims := make(map[string]string)
-					for _, claim := range dto.RequiredClaims {
-						parts := strings.SplitN(claim, "=", 2)
-						if len(parts) == 2 {
-							requiredClaims[parts[0]] = parts[1]
-						}
-					}
-					config.RequiredClaims = requiredClaims
-				}
+				config.RequiredClaims = s.getRequiredClaims(dto)
 			}
 			if dto.EncodedJwksArray == "-" {
 				config.JWKS = nil
@@ -174,6 +163,19 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	time.Sleep(s.delay)
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) getRequiredClaims(dto *pkg.OIDCConfigDTO) map[string]string {
+	requiredClaims := make(map[string]string)
+	if !(len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-") {
+		for _, claim := range dto.RequiredClaims {
+			parts := strings.SplitN(claim, "=", 2)
+			if len(parts) == 2 {
+				requiredClaims[parts[0]] = parts[1]
+			}
+		}
+	}
+	return requiredClaims
 }
 
 func (s *UpdateRuntimeStep) getOIDCConfigObject(oidcConfig pkg.OIDCConfigDTO) imv1.OIDCConfig {
