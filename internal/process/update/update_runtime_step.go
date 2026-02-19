@@ -81,12 +81,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}
 
-		currentAdditionalWorkers := make(map[string]gardener.Worker)
-		if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
-			for _, worker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
-				currentAdditionalWorkers[worker.Name] = worker
-			}
-		}
+		currentAdditionalWorkers := s.getCurrentAdditionalWorkers(runtime)
 
 		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
 			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, log)
@@ -163,6 +158,16 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	time.Sleep(s.delay)
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) getCurrentAdditionalWorkers(runtime imv1.Runtime) map[string]gardener.Worker {
+	currentAdditionalWorkers := make(map[string]gardener.Worker)
+	if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
+		for _, worker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			currentAdditionalWorkers[worker.Name] = worker
+		}
+	}
+	return currentAdditionalWorkers
 }
 
 func (s *UpdateRuntimeStep) getRequiredClaims(dto *pkg.OIDCConfigDTO) map[string]string {
