@@ -20,7 +20,6 @@ import (
 type ResolveCredentialsBindingStep struct {
 	operationManager *process.OperationManager
 	gardenerClient   *gardener.Client
-	opStorage        storage.Operations
 	instanceStorage  storage.Instances
 	rulesService     *rules.RulesService
 	stepRetryTuple   internal.RetryTuple
@@ -29,7 +28,6 @@ type ResolveCredentialsBindingStep struct {
 
 func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveCredentialsBindingStep {
 	step := &ResolveCredentialsBindingStep{
-		opStorage:       brokerStorage.Operations(),
 		instanceStorage: brokerStorage.Instances(),
 		gardenerClient:  gardenerClient,
 		rulesService:    rulesService,

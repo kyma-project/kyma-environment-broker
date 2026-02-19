@@ -45,17 +45,16 @@ type (
 	}
 	inMemoryStateType   map[subaccountIDType]subaccountStateType
 	stateReconcilerType struct {
-		inMemoryState    inMemoryStateType
-		mutex            sync.Mutex
-		eventsClient     *RateLimitedCisClient
-		accountsClient   *RateLimitedCisClient
-		dynamicK8sClient *dynamic.Interface
-		db               storage.BrokerStorage
-		syncQueue        queues.MultiConsumerPriorityQueue
-		logger           *slog.Logger
-		updater          *kymacustomresource.Updater
-		metrics          *Metrics
-		eventWindow      *EventWindow
+		inMemoryState  inMemoryStateType
+		mutex          sync.Mutex
+		eventsClient   *RateLimitedCisClient
+		accountsClient *RateLimitedCisClient
+		db             storage.BrokerStorage
+		syncQueue      queues.MultiConsumerPriorityQueue
+		logger         *slog.Logger
+		updater        *kymacustomresource.Updater
+		metrics        *Metrics
+		eventWindow    *EventWindow
 	}
 )
 
@@ -140,17 +139,16 @@ func (s *SyncService) Run() {
 
 	// create state reconciler
 	stateReconciler := stateReconcilerType{
-		inMemoryState:    make(inMemoryStateType),
-		mutex:            sync.Mutex{},
-		eventsClient:     eventsClient,
-		accountsClient:   accountsClient,
-		dynamicK8sClient: &s.k8sClient,
-		logger:           logger.With("component", "state-reconciler"),
-		db:               s.db,
-		updater:          updater,
-		syncQueue:        priorityQueue,
-		metrics:          metrics,
-		eventWindow:      NewEventWindow(s.cfg.EventsWindowSize.Milliseconds(), epochInMillis),
+		inMemoryState:  make(inMemoryStateType),
+		mutex:          sync.Mutex{},
+		eventsClient:   eventsClient,
+		accountsClient: accountsClient,
+		logger:         logger.With("component", "state-reconciler"),
+		db:             s.db,
+		updater:        updater,
+		syncQueue:      priorityQueue,
+		metrics:        metrics,
+		eventWindow:    NewEventWindow(s.cfg.EventsWindowSize.Milliseconds(), epochInMillis),
 	}
 
 	stateReconciler.recreateStateFromDB()

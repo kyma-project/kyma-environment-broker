@@ -27,26 +27,22 @@ import (
 )
 
 type UpdateRuntimeStep struct {
-	operationManager           *process.OperationManager
-	k8sClient                  client.Client
-	delay                      time.Duration
-	config                     broker.InfrastructureManager
-	useSmallerMachineTypes     bool
-	trialPlatformRegionMapping map[string]string
-	workersProvider            *workers.Provider
-	valuesProvider             broker.ValuesProvider
+	operationManager *process.OperationManager
+	k8sClient        client.Client
+	delay            time.Duration
+	config           broker.InfrastructureManager
+	workersProvider  *workers.Provider
+	valuesProvider   broker.ValuesProvider
 }
 
-func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string,
+func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
 	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
-		k8sClient:                  k8sClient,
-		delay:                      delay,
-		config:                     infrastructureManagerConfig,
-		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
-		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		workersProvider:            workersProvider,
-		valuesProvider:             valuesProvider,
+		k8sClient:       k8sClient,
+		delay:           delay,
+		config:          infrastructureManagerConfig,
+		workersProvider: workersProvider,
+		valuesProvider:  valuesProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step

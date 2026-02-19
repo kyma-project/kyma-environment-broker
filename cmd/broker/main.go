@@ -14,7 +14,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -385,7 +384,7 @@ func main() {
 	router.Use(httputil.PanicRecoveryMiddleware(log))
 
 	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues,
+		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker,
 		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, awsClientFactory)
 
 	// create metrics endpoint
@@ -472,7 +471,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
-	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO,
+	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher,
 	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
 	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
 
@@ -518,10 +517,10 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
-		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig, logs, oidcDefaultValues, cfg.InfrastructureManager),
+		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
-			schemaService, providerSpec, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
+			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
 			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),

@@ -18,10 +18,9 @@ import (
 type BindDurationCollector struct {
 	bindHistogram   *prometheus.HistogramVec
 	unbindHistogram *prometheus.HistogramVec
-	logger          *slog.Logger
 }
 
-func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
+func NewBindDurationCollector() *BindDurationCollector {
 	return &BindDurationCollector{
 		bindHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespaceV2,
@@ -37,7 +36,6 @@ func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 			Help:      "The time of the unbind request",
 			Buckets:   prometheus.LinearBuckets(50, 200, 15),
 		}, []string{}),
-		logger: logger,
 	}
 }
 
