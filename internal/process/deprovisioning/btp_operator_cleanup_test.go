@@ -409,8 +409,10 @@ func (f *fakeK8sClientWrapper) DeleteAllOf(ctx context.Context, obj client.Objec
 		switch u.Object["kind"] {
 		case "ServiceBinding":
 			f.cleanupBindings = true
+			return nil
 		case "ServiceInstance":
 			f.cleanupInstances = true
+			return nil
 		}
 	}
 	return f.fake.DeleteAllOf(ctx, obj, opts...)
