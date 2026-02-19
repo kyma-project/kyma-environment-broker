@@ -84,6 +84,7 @@ type BrokerSuiteTest struct {
 	eventBroker              *event.PubSub
 	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
+	gardenerClient           *dynamicFake.FakeDynamicClient
 }
 
 func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
@@ -226,6 +227,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		eventBroker:    eventBroker,
 
 		k8sDeletionObjectTracker: ot,
+		gardenerClient:           gardenerClient,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
