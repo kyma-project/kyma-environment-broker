@@ -171,22 +171,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		}
 	}
 
-	// operation.ProvisioningParameters were calculated and joined across provisioning and all update operations
-	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) != 0 {
-		// prepare new admins list for existing runtime
-		newAdministrators := make([]string, 0, len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators))
-		newAdministrators = append(newAdministrators, operation.ProvisioningParameters.Parameters.RuntimeAdministrators...)
-
-		runtime.Spec.Security.Administrators = newAdministrators
-	} else {
-		if operation.ProvisioningParameters.ErsContext.UserID != "" {
-			// get default admin (user_id from provisioning operation)
-			runtime.Spec.Security.Administrators = []string{operation.ProvisioningParameters.ErsContext.UserID}
-		} else {
-			// some old clusters does not have a user_id
-			runtime.Spec.Security.Administrators = []string{}
-		}
-	}
+	runtime.Spec.Security.Administrators = s.getAdministrators(operation)
 
 	external := broker.IsExternalLicenseType(operation.ProvisioningParameters.ErsContext)
 	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
@@ -209,4 +194,23 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	time.Sleep(s.delay)
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) getAdministrators(operation internal.Operation) []string {
+	// operation.ProvisioningParameters were calculated and joined across provisioning and all update operations
+	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) != 0 {
+		// prepare new admins list for existing runtime
+		newAdministrators := make([]string, 0, len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators))
+		newAdministrators = append(newAdministrators, operation.ProvisioningParameters.Parameters.RuntimeAdministrators...)
+
+		return newAdministrators
+	} else {
+		if operation.ProvisioningParameters.ErsContext.UserID != "" {
+			// get default admin (user_id from provisioning operation)
+			return []string{operation.ProvisioningParameters.ErsContext.UserID}
+		} else {
+			// some old clusters does not have a user_id
+			return []string{}
+		}
+	}
 }
