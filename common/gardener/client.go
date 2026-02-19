@@ -327,3 +327,58 @@ func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error)
 func RESTConfig(kubeconfig []byte) (*restclient.Config, error) {
 	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 }
+
+func (c *Client) GetShootCountPerCredentialsBinding() (map[string]int, error) {
+	shoots, err := c.GetShoots()
+	if err != nil {
+		return nil, fmt.Errorf("while listing shoots: %w", err)
+	}
+
+	shootCount := make(map[string]int)
+	if shoots == nil || len(shoots.Items) == 0 {
+		return shootCount, nil
+	}
+
+	for _, shoot := range shoots.Items {
+		s := Shoot{Unstructured: shoot}
+		bindingName := s.GetSpecCredentialsBindingName()
+		if bindingName != "" {
+			shootCount[bindingName]++
+		}
+	}
+
+	return shootCount, nil
+}
+
+func (c *Client) GetMostPopulatedCredentialsBindingBelowLimit(credentialsBindings []unstructured.Unstructured, hyperscalerAccountLimit int) (*CredentialsBinding, error) {
+	if len(credentialsBindings) == 0 {
+		return nil, fmt.Errorf("no credentials bindings provided")
+	}
+
+	shootCount, err := c.GetShootCountPerCredentialsBinding()
+	if err != nil {
+		return nil, fmt.Errorf("while getting shoot count: %w", err)
+	}
+
+	var bestBinding *unstructured.Unstructured
+	maxCount := -1
+
+	for i := range credentialsBindings {
+		cb := &credentialsBindings[i]
+		count := shootCount[cb.GetName()]
+
+		if count < hyperscalerAccountLimit {
+			// Select the one with most clusters (fill-most-populated strategy)
+			if count > maxCount {
+				maxCount = count
+				bestBinding = cb
+			}
+		}
+	}
+
+	if bestBinding == nil {
+		return nil, nil
+	}
+
+	return NewCredentialsBinding(*bestBinding), nil
+}

@@ -114,6 +114,13 @@
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |
 | gardener.shootDomain | Default domain for shoots (clusters) created by Gardener. | `kyma-dev.shoot.canary.k8s-hana.ondemand.com` |
 | hap.rule | Rules for mapping plans and regions to hyperscaler account pools. | `- aws  - aws(PR=cf-eu11) -> EU  - azure  - azure(PR=cf-ch20) -> EU  - gcp  - gcp(PR=cf-sa30) -> PR  - trial -> S  - sap-converged-cloud(HR=*) -> S  - azure_lite  - preview  - free` |
+| hap.multiHyperscalerAccountSupport.<br>allowedGlobalAccounts | assigning multiple hyperscaler accounts per Global Account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed Global Accounts - ["*"] = enabled for all Global Accounts | `[]` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>default | - | `1000` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>aws | - | `180` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>gcp | - | `135` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>azure | - | `135` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>openstack | - | `100` |
+| hap.multiHyperscalerAccountSupport.<br>hyperscalerAccountLimits.<br>alicloud | - | `100` |
 | infrastructureManager.<br>controlPlaneFailureTolerance | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". | `` |
 | infrastructureManager.<br>defaultShootPurpose | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. | `development` |
 | infrastructureManager.<br>defaultTrialProvider | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS. | `Azure` |

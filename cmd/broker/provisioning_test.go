@@ -3439,3 +3439,178 @@ kyma-template: |-
 		assert.Equal(t, "fast", channelValue, "User selection should override plan default")
 	})
 }
+
+func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
+	t.Run("disabled feature uses single-account behavior", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.SubscriptionGardenerResource = "credentialsbinding"
+		cfg.HapMultiAccountAllowedGlobalAccounts = []string{}
+		cfg.HapMultiAccountLimits.Default = 100
+		cfg.HapMultiAccountLimits.AWS = 2
+		cfg.HapMultiAccountLimits.Azure = 2
+		cfg.HapMultiAccountLimits.GCP = 2
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// Create 3 instances for same GA to verify they all use the same binding
+		instanceIDs := []string{
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+		}
+
+		// when - provision 3 instances for the same global account
+		suite.provisionMultipleInstances(t, instanceIDs, "test-ga-001")
+
+		// then - verify all instances use the SAME credentials binding (single-account behavior)
+		suite.verifySingleAccountBehavior(t, instanceIDs)
+	})
+
+	t.Run("GA not in allowed global accounts uses single-account behavior", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.SubscriptionGardenerResource = "credentialsbinding"
+		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"whitelisted-ga-001"}
+		cfg.HapMultiAccountLimits.Default = 100
+		cfg.HapMultiAccountLimits.AWS = 2
+		cfg.HapMultiAccountLimits.Azure = 2
+		cfg.HapMultiAccountLimits.GCP = 2
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// Create 3 instances for same GA (not in allowed global accounts) to verify they all use the same binding
+		instanceIDs := []string{
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+		}
+
+		// when - provision 3 instances for GA that's NOT in allowed global accounts
+		suite.provisionMultipleInstances(t, instanceIDs, "not-whitelisted-ga")
+
+		// then - verify all instances use the SAME credentials binding (single-account behavior even with multi-account enabled)
+		suite.verifySingleAccountBehavior(t, instanceIDs)
+	})
+
+	t.Run("enabled for specific GA selects most populated account below limit", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.SubscriptionGardenerResource = "credentialsbinding"
+		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"multi-account-ga-001"}
+		// Set low limit to force rotation to multiple bindings
+		cfg.HapMultiAccountLimits.Default = 100
+		cfg.HapMultiAccountLimits.AWS = 2
+		cfg.HapMultiAccountLimits.Azure = 2
+		cfg.HapMultiAccountLimits.GCP = 2
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// Create additional AWS bindings for multi-account test
+		// We need at least 3 bindings to accommodate 5 instances with limit of 2
+		suite.CreateAdditionalCredentialsBinding("sb-aws-2", "aws")
+		suite.CreateAdditionalCredentialsBinding("sb-aws-3", "aws")
+
+		// Create 5 instances for same GA - should use at least 3 different bindings (2+2+1)
+		instanceIDs := []string{
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+		}
+
+		// when - provision 5 instances to trigger multi-account rotation
+		suite.provisionMultipleInstances(t, instanceIDs, "multi-account-ga-001")
+
+		// then - verify instances are distributed across multiple bindings
+		suite.verifyMultiAccountBehavior(t, instanceIDs, 3,
+			"Should use at least 3 bindings for 5 instances with limit=2")
+	})
+
+	t.Run("wildcard allowed global accounts enables feature for all GAs", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.SubscriptionGardenerResource = "credentialsbinding"
+		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"*"}
+		cfg.HapMultiAccountLimits.Default = 100
+		cfg.HapMultiAccountLimits.AWS = 2
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+
+		// Create additional AWS bindings
+		suite.CreateAdditionalCredentialsBinding("sb-aws-wildcard-2", "aws")
+
+		// Provision 3 instances with random GA ID to verify wildcard enables multi-account
+		instanceIDs := []string{
+			uuid.New().String(),
+			uuid.New().String(),
+			uuid.New().String(),
+		}
+
+		// when - provision with random GA ID (wildcard should enable multi-account for any GA)
+		suite.provisionMultipleInstances(t, instanceIDs, "any-random-ga-id")
+
+		// then - verify multi-account logic was applied (should use at least 2 different bindings with limit=2)
+		suite.verifyMultiAccountBehavior(t, instanceIDs, 2,
+			"Wildcard allowed global accounts should enable multi-account for any GA - expected at least 2 bindings with limit=2")
+	})
+}
+
+func (s *BrokerSuiteTest) provisionMultipleInstances(t *testing.T, instanceIDs []string, globalAccountID string) {
+	const (
+		serviceID         = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+		planID            = "361c511f-f939-4621-b228-d0fb79a1fe15"
+		clusterNamePrefix = "test-cluster"
+		region            = "eu-central-1"
+	)
+
+	for idx, iid := range instanceIDs {
+		resp := s.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			fmt.Sprintf(`{
+				"service_id": "%s",
+				"plan_id": "%s",
+				"context": {
+					"globalaccount_id": "%s",
+					"subaccount_id": "sub-id-%d",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "%s-%d",
+					"region": "%s"
+				}
+		}`, serviceID, planID, globalAccountID, idx, clusterNamePrefix, idx, region))
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := s.DecodeOperationID(resp)
+		s.processKIMProvisioningByOperationID(opID)
+		s.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := s.GetRuntimeResourceByInstanceID(iid)
+		s.CreateTestShoot(fmt.Sprintf("%s-%d", clusterNamePrefix, idx), runtime.Spec.Shoot.SecretBindingName)
+	}
+}
+
+func (s *BrokerSuiteTest) verifySingleAccountBehavior(t *testing.T, instanceIDs []string) {
+	var bindingName string
+	for idx, iid := range instanceIDs {
+		runtime := s.GetRuntimeResourceByInstanceID(iid)
+		if idx == 0 {
+			bindingName = runtime.Spec.Shoot.SecretBindingName
+			assert.NotEmpty(t, bindingName, "First instance should have a binding")
+		} else {
+			assert.Equal(t, bindingName, runtime.Spec.Shoot.SecretBindingName,
+				"Instance %d should use the same binding as instance 0 (single-account behavior)", idx)
+		}
+	}
+}
+
+func (s *BrokerSuiteTest) verifyMultiAccountBehavior(t *testing.T, instanceIDs []string, minExpectedBindings int, testDescription string) {
+	uniqueBindings := make(map[string]bool)
+	for _, iid := range instanceIDs {
+		runtime := s.GetRuntimeResourceByInstanceID(iid)
+		assert.NotEmpty(t, runtime.Spec.Shoot.SecretBindingName)
+		uniqueBindings[runtime.Spec.Shoot.SecretBindingName] = true
+	}
+	assert.GreaterOrEqual(t, len(uniqueBindings), minExpectedBindings, testDescription)
+}

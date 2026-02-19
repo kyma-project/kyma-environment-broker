@@ -9,7 +9,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	runtimepkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -18,22 +20,24 @@ import (
 )
 
 type ResolveCredentialsBindingStep struct {
-	operationManager *process.OperationManager
-	gardenerClient   *gardener.Client
-	opStorage        storage.Operations
-	instanceStorage  storage.Instances
-	rulesService     *rules.RulesService
-	stepRetryTuple   internal.RetryTuple
-	mu               sync.Mutex
+	operationManager   *process.OperationManager
+	gardenerClient     *gardener.Client
+	opStorage          storage.Operations
+	instanceStorage    storage.Instances
+	rulesService       *rules.RulesService
+	stepRetryTuple     internal.RetryTuple
+	mu                 sync.Mutex
+	multiAccountConfig *multiaccount.MultiAccountConfig
 }
 
-func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveCredentialsBindingStep {
+func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple, multiAccountConfig *multiaccount.MultiAccountConfig) *ResolveCredentialsBindingStep {
 	step := &ResolveCredentialsBindingStep{
-		opStorage:       brokerStorage.Operations(),
-		instanceStorage: brokerStorage.Instances(),
-		gardenerClient:  gardenerClient,
-		rulesService:    rulesService,
-		stepRetryTuple:  stepRetryTuple,
+		opStorage:          brokerStorage.Operations(),
+		instanceStorage:    brokerStorage.Instances(),
+		gardenerClient:     gardenerClient,
+		rulesService:       rulesService,
+		stepRetryTuple:     stepRetryTuple,
+		multiAccountConfig: multiAccountConfig,
 	}
 	step.operationManager = process.NewOperationManager(brokerStorage.Operations(), step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -89,6 +93,12 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 		return s.getSharedSecretName(selectorForExistingSubscription)
 	}
 
+	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
+	if isGlobalAccountAllowed(s.multiAccountConfig, globalAccountID) {
+		log.Info(fmt.Sprintf("multi-account support enabled for GA: %s", globalAccountID))
+		return s.resolveWithMultiAccountSupport(operation, selectorForExistingSubscription, labelSelectorBuilder, log)
+	}
+
 	credentialsBinding, err := s.getCredentialsBinding(selectorForExistingSubscription)
 	if err != nil && !kebError.IsNotFoundError(err) {
 		return "", err
@@ -98,29 +108,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 		return credentialsBinding.GetName(), nil
 	}
 
-	log.Info(fmt.Sprintf("no credentials binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
-
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
-	credentialsBinding, err = s.getCredentialsBinding(selectorForSBClaim)
-	if err != nil {
-		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
-		}
-		return "", err
-	}
-
-	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
-	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
-	if err != nil {
-		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
-	}
-
-	return credentialsBinding.GetName(), nil
+	return s.claimNewCredentialsBinding(operation.ProvisioningParameters.ErsContext.GlobalAccountID, labelSelectorBuilder, log)
 }
 
 func (s *ResolveCredentialsBindingStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -192,4 +180,104 @@ func (step *ResolveCredentialsBindingStep) updateInstance(id, subscriptionSecret
 	instance.SubscriptionSecretName = subscriptionSecretName
 	_, err = step.instanceStorage.Update(*instance)
 	return err
+}
+
+func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation internal.Operation, selectorForExistingSubscription string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
+	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
+
+	allBindings, err := s.gardenerClient.GetCredentialsBindings(selectorForExistingSubscription)
+	if err != nil {
+		return "", fmt.Errorf("while getting credentials bindings for tenant %s: %w", globalAccountID, err)
+	}
+	hyperscalerAccountLimit := getLimitForProvider(s.multiAccountConfig, operation.ProviderValues.ProviderType)
+	log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
+
+	if allBindings != nil && len(allBindings.Items) > 0 {
+		credentialsBinding, err := s.gardenerClient.GetMostPopulatedCredentialsBindingBelowLimit(allBindings.Items, hyperscalerAccountLimit)
+		if err != nil {
+			return "", fmt.Errorf("while selecting credentials binding: %w", err)
+		}
+
+		if credentialsBinding != nil {
+			log.Info(fmt.Sprintf("selected credentials binding %s (below limit %d)", credentialsBinding.GetName(), hyperscalerAccountLimit))
+			return credentialsBinding.GetName(), nil
+		}
+
+		log.Info(fmt.Sprintf("all %d credentials bindings for GA %s are at or above limit %d, will claim new one", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
+	}
+
+	return s.claimNewCredentialsBinding(globalAccountID, labelSelectorBuilder, log)
+}
+
+func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccountID string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
+	log.Info(fmt.Sprintf("no credentials binding found for tenant: %q", globalAccountID))
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
+
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
+	credentialsBinding, err := s.getCredentialsBinding(selectorForSBClaim)
+	if err != nil {
+		if kebError.IsNotFoundError(err) {
+			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
+		}
+		return "", err
+	}
+
+	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", globalAccountID))
+	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, globalAccountID)
+	if err != nil {
+		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", globalAccountID, err)
+	}
+
+	return credentialsBinding.GetName(), nil
+}
+
+func isMultiAccountEnabled(config *multiaccount.MultiAccountConfig) bool {
+	return config != nil && len(config.AllowedGlobalAccounts) > 0
+}
+
+func isGlobalAccountAllowed(config *multiaccount.MultiAccountConfig, globalAccountID string) bool {
+	if !isMultiAccountEnabled(config) {
+		return false
+	}
+
+	for _, ga := range config.AllowedGlobalAccounts {
+		if ga == "*" || ga == globalAccountID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getLimitForProvider(config *multiaccount.MultiAccountConfig, providerType string) int {
+	if config == nil {
+		return 0
+	}
+	cp := runtimepkg.CloudProviderFromString(providerType)
+
+	var limit int
+	switch cp {
+	case runtimepkg.AWS:
+		limit = config.HyperscalerAccountLimits.AWS
+	case runtimepkg.GCP:
+		limit = config.HyperscalerAccountLimits.GCP
+	case runtimepkg.Azure:
+		limit = config.HyperscalerAccountLimits.Azure
+	case runtimepkg.SapConvergedCloud:
+		limit = config.HyperscalerAccountLimits.OpenStack
+	case runtimepkg.Alicloud:
+		limit = config.HyperscalerAccountLimits.AliCloud
+	default:
+		limit = 0
+	}
+
+	if limit == 0 {
+		return config.HyperscalerAccountLimits.Default
+	}
+
+	return limit
 }

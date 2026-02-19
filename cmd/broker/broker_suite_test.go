@@ -1108,3 +1108,41 @@ func fixDiscoveredZones() map[string][]string {
 		"c7i.large": {"zone-l", "zone-m"},
 	}
 }
+
+func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName string) {
+	shoot := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "core.gardener.cloud/v1beta1",
+			"kind":       "Shoot",
+			"metadata": map[string]interface{}{
+				"name":      shootName,
+				"namespace": gardenerKymaNamespace,
+			},
+			"spec": map[string]interface{}{
+				"credentialsBindingName": credentialsBindingName,
+			},
+		},
+	}
+
+	_, err := s.gardenerClient.Resource(schema.GroupVersionResource{
+		Group:    "core.gardener.cloud",
+		Version:  "v1beta1",
+		Resource: "shoots",
+	}).Namespace(gardenerKymaNamespace).Create(context.Background(), shoot, metav1.CreateOptions{})
+
+	require.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) CreateAdditionalCredentialsBinding(name, hyperscalerType string) {
+	cb := &gardener.CredentialsBinding{}
+	cb.SetName(name)
+	cb.SetNamespace(gardenerKymaNamespace)
+	cb.SetLabels(map[string]string{
+		"hyperscalerType": hyperscalerType,
+	})
+	cb.SetSecretRefName(name)
+	cb.SetSecretRefNamespace(gardenerKymaNamespace)
+
+	_, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &cb.Unstructured, metav1.CreateOptions{})
+	require.NoError(s.t, err)
+}
