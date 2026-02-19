@@ -1,10 +1,10 @@
 # Kyma Custom Resource Template Configuration
 
-Kyma Environment Broker (KEB) provisioning process creates a Kyma custom resource (CR) based on the configured template. KEB needs a ConfigMap with the configuration.
+Kyma Environment Broker (KEB) provisioning process creates a Kyma custom resource (CR) based on the configured template. KEB requires a ConfigMap with the configuration.
 
 ## ConfigMap  
 
-The appropriate ConfigMap is selected by filtering the resources using labels. KEB recognizes the ConfigMaps with configurations when they contain the following label:
+The appropriate ConfigMap is selected by filtering resources using labels. KEB recognizes the ConfigMaps with configurations when they contain the following label:
 
 ```yaml
 keb-config: "true"
@@ -13,7 +13,7 @@ keb-config: "true"
 > ### Note:
 > Each ConfigMap that defines the configuration must have this label assigned.
 
-The actual configuration is stored in ConfigMap's `data` object. Add the `default` key under the `data` object:
+The actual configuration is stored in the ConfigMap's `data` object. Add the **default** key under the `data` object:
 
 ```yaml
 data:
@@ -34,12 +34,12 @@ data:
         - name: module2
 ```
 
-You must define the default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of the `kyma-template.metadata.name` field because KEB generates the name for the Kyma CR during the provisioning operation.
+You must define the default configuration, which is selected when the supported plan key is missing. For example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change the `tbd` value of the **kyma-template.metadata.name** field because KEB generates the name for the Kyma CR during the provisioning operation.
 
 > ### Note:
 > The `kyma-template` configuration is required.
 
-See an example of a ConfigMap with the default configuration for Kyma and specific configurations for `plan1`, `plan2`, and `trial`:
+See the following example of a ConfigMap with the default configuration for Kyma and specific configurations for `plan1`, `plan2`, and `trial`:
 
 ```yaml
 # keb-config.yaml
@@ -114,4 +114,4 @@ data:
         modules: []
 ```
 
-The content of the ConfigMap is stored in `values.yaml` as `runtimeConfiguration`. For more details about Kyma CR, see [the Kyma CR documentation](https://github.com/kyma-project/lifecycle-manager/blob/main/docs/contributor/resources/01-kyma.md).
+The content of the ConfigMap is stored in `values.yaml` as `runtimeConfiguration`. For more details about the Kyma CR, see [the Kyma CR documentation](https://github.com/kyma-project/lifecycle-manager/blob/main/docs/contributor/resources/01-kyma.md).
