@@ -194,22 +194,22 @@ spec:
               value: {{ .Values.gardener.project }}
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
-            - name: APP_HAP_RULE_FILE_PATH
-              value: {{ .Values.configPaths.hapRule }}
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ join "," .Values.hap.multiHyperscalerAccountSupport.allowedGlobalAccounts }}"
-            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_DEFAULT
-              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.default }}"
-            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_AWS
-              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.aws }}"
-            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_GCP
-              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.gcp }}"
-            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_AZURE
-              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.azure }}"
-            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_OPENSTACK
-              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.openstack }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_ALICLOUD
               value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.alicloud }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_AWS
+              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.aws }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_AZURE
+              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.azure }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_DEFAULT
+              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.default }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_GCP
+              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.gcp }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_SUPPORT_HYPERSCALER_ACCOUNT_LIMIT_OPENSTACK
+              value: "{{ .Values.hap.multiHyperscalerAccountSupport.hyperscalerAccountLimits.openstack }}"
+            - name: APP_HAP_RULE_FILE_PATH
+              value: {{ .Values.configPaths.hapRule }}
             - name: APP_HOLD_HAP_STEPS
               value: "{{ .Values.holdHAPSteps }}"
             - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE

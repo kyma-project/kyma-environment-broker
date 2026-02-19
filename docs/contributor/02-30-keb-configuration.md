@@ -52,14 +52,14 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster. |
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup. |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener. |
-| **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | - |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_&#x200b;DEFAULT** | <code>1000</code> | - |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_AWS** | <code>180</code> | - |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_GCP** | <code>135</code> | - |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_AZURE** | <code>135</code> | - |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_&#x200b;OPENSTACK** | <code>100</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | <code>[]</code> | assigning multiple hyperscaler accounts per Global Account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed Global Accounts - ["*"] = enabled for all Global Accounts |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_&#x200b;ALICLOUD** | <code>100</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_AWS** | <code>180</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_AZURE** | <code>135</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_&#x200b;DEFAULT** | <code>1000</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_GCP** | <code>135</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;SUPPORT_HYPERSCALER_&#x200b;ACCOUNT_LIMIT_&#x200b;OPENSTACK** | <code>100</code> | - |
+| **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |
 | **APP_HOLD_HAP_STEPS** | <code>false</code> | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;GARDENER_SHOOT_&#x200b;PURPOSE** | <code>development</code> | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. |
