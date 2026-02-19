@@ -99,33 +99,30 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
 			}
 			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
-			if len(dto.SigningAlgs) > 0 {
-				config.SigningAlgs = dto.SigningAlgs
+			assignIfNotEmpty := func(target **string, value string) {
+				if value != "" {
+					*target = &value
+				}
 			}
-			if dto.ClientID != "" {
-				config.ClientID = &dto.ClientID
-			}
-			if dto.IssuerURL != "" {
-				config.IssuerURL = &dto.IssuerURL
-			}
-			if dto.GroupsClaim != "" {
-				config.GroupsClaim = &dto.GroupsClaim
-			}
-			if dto.UsernamePrefix != "" {
-				config.UsernamePrefix = &dto.UsernamePrefix
-			}
-			if dto.UsernameClaim != "" {
-				config.UsernameClaim = &dto.UsernameClaim
-			}
-			if dto.GroupsPrefix != "" {
-				config.GroupsPrefix = &dto.GroupsPrefix
-			}
+
+			config.SigningAlgs = dto.SigningAlgs
+			assignIfNotEmpty(&config.ClientID, dto.ClientID)
+			assignIfNotEmpty(&config.IssuerURL, dto.IssuerURL)
+			assignIfNotEmpty(&config.GroupsClaim, dto.GroupsClaim)
+			assignIfNotEmpty(&config.UsernamePrefix, dto.UsernamePrefix)
+			assignIfNotEmpty(&config.UsernameClaim, dto.UsernameClaim)
+			assignIfNotEmpty(&config.GroupsPrefix, dto.GroupsPrefix)
+
 			if len(dto.RequiredClaims) > 0 {
 				config.RequiredClaims = s.getRequiredClaims(dto)
 			}
-			if dto.EncodedJwksArray == "-" {
+
+			switch dto.EncodedJwksArray {
+			case "-":
 				config.JWKS = nil
-			} else if dto.EncodedJwksArray != "" {
+			case "":
+				// Do nothing
+			default:
 				config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
 			}
 		}
