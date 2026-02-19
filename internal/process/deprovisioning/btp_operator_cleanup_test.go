@@ -240,6 +240,14 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 	t.Run("should delete SI and skip SB deletion ", func(t *testing.T) {
 		ms := storage.NewMemoryStorage()
+		si := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "apiextensions.k8s.io/v1",
+			"kind":       "ServiceInstance",
+			"metadata": map[string]interface{}{
+				"name":      "test-instance",
+				"namespace": "kyma-system",
+			},
+		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
 		scheme := internal.NewSchemeForTests(t)
@@ -250,16 +258,9 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		fmt.Println(gvk)
 		require.NoError(t, err)
 
-		si := &unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": "services.cloud.sap.com/v1",
-			"kind":       "ServiceInstance",
-			"metadata": map[string]interface{}{
-				"name":      "test-instance",
-				"namespace": "kyma-system",
-			},
-		}}
-
-		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns, si).Build()}
+		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build()}
+		err = k8sCli.Create(context.TODO(), si)
+		require.NoError(t, err)
 
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.Temporary = true
@@ -279,6 +280,14 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 
 	t.Run("should delete SB and skip SI deletion ", func(t *testing.T) {
 		ms := storage.NewMemoryStorage()
+		sb := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "apiextensions.k8s.io/v1",
+			"kind":       "ServiceBinding",
+			"metadata": map[string]interface{}{
+				"name":      "test-binding",
+				"namespace": "kyma-system",
+			},
+		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
 		scheme := internal.NewSchemeForTests(t)
@@ -289,16 +298,9 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		fmt.Println(gvk)
 		require.NoError(t, err)
 
-		sb := &unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": "services.cloud.sap.com/v1",
-			"kind":       "ServiceBinding",
-			"metadata": map[string]interface{}{
-				"name":      "test-binding",
-				"namespace": "kyma-system",
-			},
-		}}
-
-		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns, sb).Build()}
+		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build()}
+		err = k8sCli.Create(context.TODO(), sb)
+		require.NoError(t, err)
 
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
@@ -379,10 +381,8 @@ func (f *fakeK8sClientWrapper) List(ctx context.Context, list client.ObjectList,
 		switch u.Object["kind"] {
 		case "ServiceBindingList":
 			f.cleanupBindings = true
-			return nil // Don't delegate to fake client - it doesn't have the types registered
 		case "ServiceInstanceList":
 			f.cleanupInstances = true
-			return nil // Don't delegate to fake client - it doesn't have the types registered
 		}
 	}
 	return f.fake.List(ctx, list, opts...)
@@ -409,10 +409,8 @@ func (f *fakeK8sClientWrapper) DeleteAllOf(ctx context.Context, obj client.Objec
 		switch u.Object["kind"] {
 		case "ServiceBinding":
 			f.cleanupBindings = true
-			return nil // Don't delegate to fake client - it doesn't have the types registered
 		case "ServiceInstance":
 			f.cleanupInstances = true
-			return nil // Don't delegate to fake client - it doesn't have the types registered
 		}
 	}
 	return f.fake.DeleteAllOf(ctx, obj, opts...)

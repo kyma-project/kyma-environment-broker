@@ -65,7 +65,7 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sCli
 		return operation, 0, err
 	}
 	if SBCrdExists {
-		errors = s.removeResources(k8sClient, gvk, namespaces, errors)
+		s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	gvk.Kind = btpOperatorServiceInstance
@@ -74,7 +74,7 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sCli
 		return operation, 0, err
 	}
 	if SICrdExists {
-		errors = s.removeResources(k8sClient, gvk, namespaces, errors)
+		s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	if len(errors) != 0 {
@@ -235,7 +235,7 @@ func (s *BTPOperatorCleanupStep) checkCRDExistence(k8sClient client.Client, gvk 
 	return true, nil
 }
 
-func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk schema.GroupVersionKind, namespaces corev1.NamespaceList, errors []string) []string {
+func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk schema.GroupVersionKind, namespaces corev1.NamespaceList, errors []string) {
 	for _, ns := range namespaces.Items {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(gvk)
@@ -246,5 +246,4 @@ func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk sc
 	if err := s.removeFinalizers(k8sClient, namespaces, gvk); err != nil {
 		errors = append(errors, err.Error())
 	}
-	return errors
 }
