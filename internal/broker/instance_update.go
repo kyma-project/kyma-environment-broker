@@ -308,18 +308,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-	}
-	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
-		message := fmt.Sprintf(
-			"In the region %s, the machine type %s is not available, it is supported in the %v",
-			valueOfPtr(instance.Parameters.Parameters.Region),
-			valueOfPtr(params.MachineType),
-			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
-		)
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	regionsSupportingMachine, err2 := b.isMachineSupported(err, providerValues, instance, params)
+	if err2 != nil {
+		return domain.UpdateServiceSpec{}, err2
 	}
 
 	discoveredZones, err := b.getDiscoveredZones(ctx, providerValues, params, logger, instance)
@@ -381,6 +372,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
+
 	logger.Debug("Adding update operation to the processing queue")
 	b.updatingQueue.Add(operationID)
 
@@ -392,6 +384,23 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) isMachineSupported(err error, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
+	if err != nil {
+		return nil, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+		message := fmt.Sprintf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(instance.Parameters.Parameters.Region),
+			valueOfPtr(params.MachineType),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
+		)
+		return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+	return regionsSupportingMachine, nil
 }
 
 func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
@@ -709,29 +718,22 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	var updateStorage []string
 	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
-		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)), AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))) {
-			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
-				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
-					return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
-			}
-			logger.Info("Plan change accepted.")
-			operation.UpdatedPlanID = details.PlanID
-			operation.ProvisioningParameters.PlanID = details.PlanID
-			instance.Parameters.PlanID = details.PlanID
-			instance.ServicePlanID = details.PlanID
-			instance.ServicePlanName = AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			updateStorage = append(updateStorage, planChangeMessage)
-		} else {
-			logger.Info("Plan change not allowed.")
-			sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-			targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			return nil, apiresponses.NewFailureResponse(
-				fmt.Errorf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
-				http.StatusBadRequest,
-				fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
-			)
+
+		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+
+		err := b.isPlanChangePossible(instance, sourcePlanName, targetPlanName, logger, details, ersContext)
+		if err != nil {
+			return nil, err
 		}
+
+		logger.Info("Plan change accepted.")
+		operation.UpdatedPlanID = details.PlanID
+		operation.ProvisioningParameters.PlanID = details.PlanID
+		instance.Parameters.PlanID = details.PlanID
+		instance.ServicePlanID = details.PlanID
+		instance.ServicePlanName = targetPlanName
+		updateStorage = append(updateStorage, planChangeMessage)
 	}
 
 	if params.OIDC.IsProvided() && (params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty())) {
@@ -768,6 +770,21 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	return updateStorage, nil
+}
+
+func (b *UpdateEndpoint) isPlanChangePossible(instance *internal.Instance, sourcePlanName string, targetPlanName string, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	if !b.config.EnablePlanUpgrades || !b.planSpec.IsUpgradableBetween(sourcePlanName, targetPlanName) {
+		logger.Info("Plan change not allowed.")
+		errMsg := fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", errMsg), http.StatusBadRequest, errMsg)
+	}
+
+	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
 }
 
 func (b *UpdateEndpoint) collectAdministrators(params *internal.UpdatingParametersDTO) []string {
