@@ -182,26 +182,9 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 	}
 
-	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+	lastProvisioningOperation, err := b.validateInstanceState(instance, ersContext, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
-	}
-	if lastProvisioningOperation.State == domain.Failed {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
-	}
-
-	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
-	if err != nil && !dberr.IsNotFound(err) {
-		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
-	}
-	if err == nil {
-		if !lastDeprovisioningOperation.Temporary {
-			// it is not a suspension, but real deprovisioning
-			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
-		}
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	if b.dashboardConfig.LandscapeURL != "" {
@@ -230,6 +213,30 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) validateInstanceState(instance *internal.Instance, ersContext internal.ERSContext, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
+
+	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
+		return nil, fmt.Errorf("unable to process the update")
+	}
+	if lastProvisioningOperation.State == domain.Failed {
+		return nil, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
+	}
+
+	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	if err != nil && !dberr.IsNotFound(err) {
+		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
+		return nil, fmt.Errorf("unable to process the update")
+	}
+	if err == nil && !lastDeprovisioningOperation.Temporary {
+		// it is not a suspension, but real deprovisioning
+		logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
+		return nil, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
+	}
+	return lastProvisioningOperation, nil
 }
 
 func (b *UpdateEndpoint) handleGetInstanceError(err error, logger *slog.Logger, instanceID string) error {
@@ -286,17 +293,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if !asyncAllowed {
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
-	var params internal.UpdatingParametersDTO
-	if len(details.RawParameters) != 0 {
-		err := json.Unmarshal(details.RawParameters, &params)
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
-		}
-		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+
+	params, err := b.unmarshalParameters(details, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
+
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
-	b.nilFieldsForTrial(details, params)
+	b.zeroFieldsForTrial(details, params)
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -314,11 +318,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	if params.OIDC.IsProvided() {
-		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
-			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	err = b.validateOIDCParams(params, instance, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	operationID := uuid.New().String()
@@ -328,18 +330,18 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	operation := internal.NewUpdateOperation(operationID, instance, params)
 	operation.ProviderValues = &providerValues
 
-	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
+	if err = operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, err
+	if params.AdditionalWorkerNodePools == nil {
+		if err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+			return domain.UpdateServiceSpec{}, err
+		}
 	}
 
-	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
-	if err != nil {
+	if err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -363,8 +365,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	logger.Debug("Creating update operation in the database")
-	err = b.operationStorage.InsertOperation(operation)
-	if err != nil {
+	if err = b.operationStorage.InsertOperation(operation); err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
@@ -381,7 +382,30 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}, nil
 }
 
-func (b *UpdateEndpoint) nilFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
+func (b *UpdateEndpoint) validateOIDCParams(params internal.UpdatingParametersDTO, instance *internal.Instance, logger *slog.Logger) error {
+	if params.OIDC.IsProvided() {
+		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
+			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) unmarshalParameters(details domain.UpdateDetails, logger *slog.Logger) (internal.UpdatingParametersDTO, error) {
+	var params internal.UpdatingParametersDTO
+	if len(details.RawParameters) != 0 {
+		err := json.Unmarshal(details.RawParameters, &params)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
+			return internal.UpdatingParametersDTO{}, fmt.Errorf("unable to unmarshal parameters")
+		}
+		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+	}
+	return params, nil
+}
+
+func (b *UpdateEndpoint) zeroFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
 	if details.PlanID == TrialPlanID {
 		params.MachineType = nil
 		params.AutoScalerMin = nil
@@ -407,9 +431,7 @@ func (b *UpdateEndpoint) isMachineSupported(providerValues internal.ProviderValu
 }
 
 func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
-	if params.AdditionalWorkerNodePools == nil {
-		return nil
-	}
+
 	if !supportsAdditionalWorkerNodePools(details.PlanID) {
 		message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
@@ -728,8 +750,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 
-		err := b.isPlanChangePossible(instance, sourcePlanName, targetPlanName, logger, details, ersContext)
-		if err != nil {
+		if err := b.isPlanChangePossible(instance, sourcePlanName, targetPlanName, logger, details, ersContext); err != nil {
 			return nil, err
 		}
 
