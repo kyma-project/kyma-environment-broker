@@ -126,8 +126,7 @@ type Config struct {
 
 	HapRuleFilePath string
 
-	HapMultiAccountAllowedGlobalAccounts []string                              `envconfig:"optional"`
-	HapMultiAccountLimits                multiaccount.HyperscalerAccountLimits `envconfig:"optional"`
+	HapMultiHyperscalerAccount multiaccount.MultiAccountConfig `envconfig:"optional"`
 
 	ProvidersConfigurationFilePath string
 

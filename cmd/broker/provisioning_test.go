@@ -3446,11 +3446,11 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		// given
 		cfg := fixConfig()
 		cfg.SubscriptionGardenerResource = credentialsBinding
-		cfg.HapMultiAccountAllowedGlobalAccounts = []string{}
-		cfg.HapMultiAccountLimits.Default = 100
-		cfg.HapMultiAccountLimits.AWS = 2
-		cfg.HapMultiAccountLimits.Azure = 2
-		cfg.HapMultiAccountLimits.GCP = 2
+		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{}
+		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
+		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
+		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
+		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 
@@ -3472,11 +3472,11 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		// given
 		cfg := fixConfig()
 		cfg.SubscriptionGardenerResource = credentialsBinding
-		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"whitelisted-ga-001"}
-		cfg.HapMultiAccountLimits.Default = 100
-		cfg.HapMultiAccountLimits.AWS = 2
-		cfg.HapMultiAccountLimits.Azure = 2
-		cfg.HapMultiAccountLimits.GCP = 2
+		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"whitelisted-ga-001"}
+		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
+		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
+		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
+		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 
@@ -3498,12 +3498,12 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		// given
 		cfg := fixConfig()
 		cfg.SubscriptionGardenerResource = credentialsBinding
-		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"multi-account-ga-001"}
+		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"multi-account-ga-001"}
 		// Set low limit to force rotation to multiple bindings
-		cfg.HapMultiAccountLimits.Default = 100
-		cfg.HapMultiAccountLimits.AWS = 2
-		cfg.HapMultiAccountLimits.Azure = 2
-		cfg.HapMultiAccountLimits.GCP = 2
+		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
+		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
+		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
+		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 
@@ -3533,9 +3533,9 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		// given
 		cfg := fixConfig()
 		cfg.SubscriptionGardenerResource = credentialsBinding
-		cfg.HapMultiAccountAllowedGlobalAccounts = []string{"*"}
-		cfg.HapMultiAccountLimits.Default = 100
-		cfg.HapMultiAccountLimits.AWS = 2
+		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"*"}
+		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
+		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 

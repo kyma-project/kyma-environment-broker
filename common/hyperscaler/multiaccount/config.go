@@ -1,8 +1,8 @@
 package multiaccount
 
 type MultiAccountConfig struct {
-	AllowedGlobalAccounts    []string
-	HyperscalerAccountLimits HyperscalerAccountLimits
+	AllowedGlobalAccounts []string
+	Limits                HyperscalerAccountLimits
 }
 
 type HyperscalerAccountLimits struct {

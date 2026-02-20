@@ -260,21 +260,21 @@ func getLimitForProvider(config *multiaccount.MultiAccountConfig, providerType s
 	var limit int
 	switch cp {
 	case runtimepkg.AWS:
-		limit = config.HyperscalerAccountLimits.AWS
+		limit = config.Limits.AWS
 	case runtimepkg.GCP:
-		limit = config.HyperscalerAccountLimits.GCP
+		limit = config.Limits.GCP
 	case runtimepkg.Azure:
-		limit = config.HyperscalerAccountLimits.Azure
+		limit = config.Limits.Azure
 	case runtimepkg.SapConvergedCloud:
-		limit = config.HyperscalerAccountLimits.OpenStack
+		limit = config.Limits.OpenStack
 	case runtimepkg.Alicloud:
-		limit = config.HyperscalerAccountLimits.AliCloud
+		limit = config.Limits.AliCloud
 	default:
 		limit = 0
 	}
 
 	if limit == 0 {
-		return config.HyperscalerAccountLimits.Default
+		return config.Limits.Default
 	}
 
 	return limit

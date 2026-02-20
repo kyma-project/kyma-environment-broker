@@ -318,7 +318,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 func TestGetLimitForProvider(t *testing.T) {
 	t.Run("should return provider-specific limit when set", func(t *testing.T) {
 		config := &multiaccount.MultiAccountConfig{
-			HyperscalerAccountLimits: multiaccount.HyperscalerAccountLimits{
+			Limits: multiaccount.HyperscalerAccountLimits{
 				Default:   100,
 				AWS:       180,
 				GCP:       135,
@@ -337,7 +337,7 @@ func TestGetLimitForProvider(t *testing.T) {
 
 	t.Run("should return default limit for unknown provider", func(t *testing.T) {
 		config := &multiaccount.MultiAccountConfig{
-			HyperscalerAccountLimits: multiaccount.HyperscalerAccountLimits{
+			Limits: multiaccount.HyperscalerAccountLimits{
 				Default:   250,
 				AWS:       180,
 				GCP:       135,
@@ -353,7 +353,7 @@ func TestGetLimitForProvider(t *testing.T) {
 
 	t.Run("should return default limit when provider-specific limit is zero", func(t *testing.T) {
 		config := &multiaccount.MultiAccountConfig{
-			HyperscalerAccountLimits: multiaccount.HyperscalerAccountLimits{
+			Limits: multiaccount.HyperscalerAccountLimits{
 				Default:   150,
 				AWS:       0,
 				GCP:       135,
@@ -376,7 +376,7 @@ func TestGetLimitForProvider(t *testing.T) {
 
 	t.Run("should handle openstack provider name variants", func(t *testing.T) {
 		config := &multiaccount.MultiAccountConfig{
-			HyperscalerAccountLimits: multiaccount.HyperscalerAccountLimits{
+			Limits: multiaccount.HyperscalerAccountLimits{
 				Default:   100,
 				OpenStack: 75,
 			},
@@ -390,7 +390,7 @@ func TestGetLimitForProvider(t *testing.T) {
 
 	t.Run("should use default when OpenStack limit is not set", func(t *testing.T) {
 		config := &multiaccount.MultiAccountConfig{
-			HyperscalerAccountLimits: multiaccount.HyperscalerAccountLimits{
+			Limits: multiaccount.HyperscalerAccountLimits{
 				Default:   200,
 				OpenStack: 0,
 			},

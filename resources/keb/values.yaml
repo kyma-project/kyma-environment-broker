@@ -276,7 +276,7 @@ hap:
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
 
-  multiHyperscalerAccountSupport:
+  multiHyperscalerAccount:
     # assigning multiple hyperscaler accounts per Global Account when capacity limits are reached
     # - Empty array [] = feature disabled
     # - Specific GAs = enabled only for listed Global Accounts
@@ -284,7 +284,7 @@ hap:
     allowedGlobalAccounts: []
     # Maximum clusters per hyperscaler account (applies only when allowedGlobalAccounts is not empty)
     # When a CredentialsBinding reaches this limit, new clusters use a different account
-    hyperscalerAccountLimits:
+    limits:
       default: 1000
       aws: 180
       gcp: 135

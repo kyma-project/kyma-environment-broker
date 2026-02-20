@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -58,10 +57,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &multiaccount.MultiAccountConfig{
-					AllowedGlobalAccounts:    cfg.HapMultiAccountAllowedGlobalAccounts,
-					HyperscalerAccountLimits: cfg.HapMultiAccountLimits,
-				})),
+				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount)),
 			disabled: !useCredentialsBinding,
 		},
 		{
