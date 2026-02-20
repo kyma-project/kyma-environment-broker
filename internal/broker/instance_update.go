@@ -197,12 +197,10 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
-	if err == nil {
-		if !lastDeprovisioningOperation.Temporary {
-			// it is not a suspension, but real deprovisioning
-			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
-		}
+	if err == nil && !lastDeprovisioningOperation.Temporary {
+		// deprovisioning found, and it is not a suspension, but real deprovisioning
+		logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
 	}
 
 	if b.dashboardConfig.LandscapeURL != "" {
@@ -287,17 +285,13 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if !asyncAllowed {
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
-	var params internal.UpdatingParametersDTO
-	if len(details.RawParameters) != 0 {
-		err := json.Unmarshal(details.RawParameters, &params)
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
-		}
-		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+	params, err := b.unmarshalParams(details, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
+
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
-	b.nilFieldsForTrial(details, params)
+	b.zeroFieldsForTrial(details, params)
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -382,7 +376,20 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}, nil
 }
 
-func (b *UpdateEndpoint) nilFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
+func (b *UpdateEndpoint) unmarshalParams(details domain.UpdateDetails, logger *slog.Logger) (internal.UpdatingParametersDTO, error) {
+	var params internal.UpdatingParametersDTO
+	if len(details.RawParameters) != 0 {
+		err := json.Unmarshal(details.RawParameters, &params)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
+			return internal.UpdatingParametersDTO{}, fmt.Errorf("unable to unmarshal parameters")
+		}
+		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+	}
+	return params, nil
+}
+
+func (b *UpdateEndpoint) zeroFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
 	if details.PlanID == TrialPlanID {
 		params.MachineType = nil
 		params.AutoScalerMin = nil
