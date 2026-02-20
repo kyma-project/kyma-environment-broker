@@ -88,7 +88,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 
 	log.Info(fmt.Sprintf("getting credentials binding with selector %q", selectorForExistingSubscription))
 	if parsedRule.IsShared() {
-		return s.getSharedSecretName(selectorForExistingSubscription)
+		return s.getSharedCredentialsName(selectorForExistingSubscription)
 	}
 
 	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
@@ -126,13 +126,13 @@ func (s *ResolveCredentialsBindingStep) matchProvisioningAttributesToRule(attr *
 	return result, nil
 }
 
-func (s *ResolveCredentialsBindingStep) getSharedSecretName(labelSelector string) (string, error) {
-	secretBinding, err := s.getSharedCredentialsBinding(labelSelector)
+func (s *ResolveCredentialsBindingStep) getSharedCredentialsName(labelSelector string) (string, error) {
+	credentialsBinding, err := s.getSharedCredentialsBinding(labelSelector)
 	if err != nil {
-		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
+		return "", fmt.Errorf("while getting credentials binding with selector %q: %w", labelSelector, err)
 	}
 
-	return secretBinding.GetName(), nil
+	return credentialsBinding.GetName(), nil
 }
 
 func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {
@@ -145,21 +145,21 @@ func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelecto
 	}
 	credentialsBinding, err := s.gardenerClient.GetLeastUsedCredentialsBindingFromSecretBindings(credentialsBindings.Items)
 	if err != nil {
-		return nil, fmt.Errorf("while getting least used secret binding: %w", err)
+		return nil, fmt.Errorf("while getting least used credentials binding: %w", err)
 	}
 
 	return credentialsBinding, nil
 }
 
 func (s *ResolveCredentialsBindingStep) getCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {
-	secretBindings, err := s.gardenerClient.GetCredentialsBindings(labelSelector)
+	credentialsBindings, err := s.gardenerClient.GetCredentialsBindings(labelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
-	if secretBindings == nil || len(secretBindings.Items) == 0 {
+	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
 		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-	return gardener.NewCredentialsBinding(secretBindings.Items[0]), nil
+	return gardener.NewCredentialsBinding(credentialsBindings.Items[0]), nil
 }
 
 func (s *ResolveCredentialsBindingStep) claimCredentialsBinding(credentialsBinding *gardener.CredentialsBinding, tenantName string) (*gardener.CredentialsBinding, error) {
@@ -215,11 +215,11 @@ func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccount
 
 	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
 
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
+	log.Info(fmt.Sprintf("getting credentials binding with selector %q", selectorForSBClaim))
 	credentialsBinding, err := s.getCredentialsBinding(selectorForSBClaim)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
+			return "", fmt.Errorf("failed to find unassigned credentials binding with selector %q", selectorForSBClaim)
 		}
 		return "", err
 	}
@@ -227,7 +227,7 @@ func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccount
 	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", globalAccountID))
 	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, globalAccountID)
 	if err != nil {
-		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", globalAccountID, err)
+		return "", fmt.Errorf("while claiming credentials binding for tenant: %s: %w", globalAccountID, err)
 	}
 
 	return credentialsBinding.GetName(), nil
