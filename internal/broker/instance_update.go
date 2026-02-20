@@ -176,10 +176,11 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}
 
 	if instance.IsExpired() {
-		if ersContext.GlobalAccountID != "" {
-			return domain.UpdateServiceSpec{}, nil
+		var expirationErr error
+		if ersContext.GlobalAccountID == "" {
+			expirationErr = apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 		}
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
+		return domain.UpdateServiceSpec{}, expirationErr
 	}
 
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
@@ -339,8 +340,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		}
 	}
 
-	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
-	if err != nil {
+	if err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
