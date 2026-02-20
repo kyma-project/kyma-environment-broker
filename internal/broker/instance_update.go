@@ -296,11 +296,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
-	if details.PlanID == TrialPlanID {
-		params.MachineType = nil
-		params.AutoScalerMin = nil
-		params.AutoScalerMax = nil
-	}
+	b.nilFieldsForTrial(details, params)
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -308,9 +304,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 
-	regionsSupportingMachine, err2 := b.isMachineSupported(err, providerValues, instance, params)
-	if err2 != nil {
-		return domain.UpdateServiceSpec{}, err2
+	regionsSupportingMachine, err := b.isMachineSupported(providerValues, instance, params)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	discoveredZones, err := b.getDiscoveredZones(ctx, providerValues, params, logger, instance)
@@ -337,11 +333,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if params.AdditionalWorkerNodePools != nil {
-		err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones)
-		if err != nil {
-			return domain.UpdateServiceSpec{}, err
-		}
+	err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
@@ -353,6 +347,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
+
 	if len(updateStorage) > 0 {
 		instance, err = b.instanceStorage.Update(*instance)
 		if err != nil {
@@ -386,7 +381,15 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}, nil
 }
 
-func (b *UpdateEndpoint) isMachineSupported(err error, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
+func (b *UpdateEndpoint) nilFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
+	if details.PlanID == TrialPlanID {
+		params.MachineType = nil
+		params.AutoScalerMin = nil
+		params.AutoScalerMax = nil
+	}
+}
+
+func (b *UpdateEndpoint) isMachineSupported(providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
 	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
 	if err != nil {
 		return nil, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
@@ -404,6 +407,9 @@ func (b *UpdateEndpoint) isMachineSupported(err error, providerValues internal.P
 }
 
 func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
+	if params.AdditionalWorkerNodePools == nil {
+		return nil
+	}
 	if !supportsAdditionalWorkerNodePools(details.PlanID) {
 		message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
