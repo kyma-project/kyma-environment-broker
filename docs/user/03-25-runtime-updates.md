@@ -5,6 +5,14 @@
 According to [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance), Kyma Runtime update reqeust could be processed synchronously or asynchronously. The asynchronous process is the default one, and it is triggered when the update request contains changes in parameters.
 The synchronous processing could happen, when there is no need to run updating operation. This optimization prevents from creating and processing multiple operations.
 
+## Configuration
+
+To enable synchronous processing of update requests, set the following configuration in the Kyma Environment Broker:
+```yaml
+  broker:
+    syncEmptyUpdateResponseEnabled: true
+```
+
 ## Identical updates
 
 If an update request does not modify any parameters of the runtime and the last operation has succeeded, Kyma Environment Broker does not need to perform any action and could response synchronously with HTTP 200 status code. For example:
