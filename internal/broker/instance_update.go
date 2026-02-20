@@ -285,6 +285,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if !asyncAllowed {
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
+
 	params, err := b.unmarshalParams(details, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -299,7 +300,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 
-	regionsSupportingMachine, err := b.isMachineSupported(providerValues, instance, params)
+	regionsSupportingMachine, err := b.getRegionsForMachineType(providerValues, instance, params)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
@@ -329,12 +330,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if params.AdditionalWorkerNodePools != nil {
-		if err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+		if err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
 			return domain.UpdateServiceSpec{}, err
 		}
 	}
 
-	if err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
+	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -344,7 +345,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if len(updateStorage) > 0 {
-		instance, err = b.instanceStorage.Update(*instance)
+		instance, err := b.instanceStorage.Update(*instance)
 		if err != nil {
 			params := strings.Join(updateStorage, ", ")
 			logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s)", params, err.Error()))
@@ -397,7 +398,7 @@ func (b *UpdateEndpoint) zeroFieldsForTrial(details domain.UpdateDetails, params
 	}
 }
 
-func (b *UpdateEndpoint) isMachineSupported(providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
+func (b *UpdateEndpoint) getRegionsForMachineType(providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
 	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
 	if err != nil {
 		return nil, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
