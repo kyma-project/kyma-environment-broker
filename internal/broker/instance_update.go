@@ -183,13 +183,9 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		return domain.UpdateServiceSpec{}, expirationErr
 	}
 
-	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+	lastProvisioningOperation, err := b.checkProvisioningState(err, instance, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
-	}
-	if lastProvisioningOperation.State == domain.Failed {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
@@ -231,6 +227,18 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}, nil
 }
 
+func (b *UpdateEndpoint) checkProvisioningState(err error, instance *internal.Instance, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
+	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
+		return nil, fmt.Errorf("unable to process the update")
+	}
+	if lastProvisioningOperation.State == domain.Failed {
+		return nil, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
+	}
+	return lastProvisioningOperation, nil
+}
+
 func (b *UpdateEndpoint) handleGetInstanceError(err error, logger *slog.Logger, instanceID string) error {
 	if err != nil && dberr.IsNotFound(err) {
 		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
@@ -260,13 +268,9 @@ func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDe
 }
 
 func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ersContext internal.ERSContext) bool {
-	if len(details.RawParameters) != 0 {
-		return true
-	}
-	if details.PlanID != instance.ServicePlanID {
-		return true
-	}
-	return ersContext.ERSUpdate()
+	return len(details.RawParameters) != 0 ||
+		details.PlanID != instance.ServicePlanID ||
+		ersContext.ERSUpdate()
 }
 
 func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousInstance, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
@@ -525,11 +529,9 @@ func (b *UpdateEndpoint) getDiscoveredZones(ctx context.Context, providerValues 
 			discoveredZones[machineType] = zonesCount
 		}
 
-		if params.MachineType != nil {
-			if discoveredZones[*params.MachineType] < providerValues.ZonesCount {
-				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
-				return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
-			}
+		if params.MachineType != nil && discoveredZones[*params.MachineType] < providerValues.ZonesCount {
+			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
+			return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
 	return discoveredZones, nil
@@ -672,7 +674,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 		b.log.Error(fmt.Sprintf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error()))
 		return nil, dErr
 	}
-	// there was no any deprovisioning in the past (any suspension)
+	// there was no deprovisioning in the past (any suspension)
 	if deprovisioning == nil {
 		return ptr.Bool(true), nil
 	}
@@ -766,6 +768,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	if params.UpdateAutoScaler(&instance.Parameters.Parameters) {
 		updateStorage = append(updateStorage, "Auto Scaler parameters")
 	}
+
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 		updateStorage = append(updateStorage, "Machine type")
