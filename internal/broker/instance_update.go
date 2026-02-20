@@ -310,43 +310,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
 
-	discoveredZones := make(map[string]int)
-	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
-		if params.MachineType != nil {
-			discoveredZones[*params.MachineType] = 0
-		}
-
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			discoveredZones[additionalWorkerNodePool.MachineType] = 0
-		}
-
-		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-		var awsClient aws.Client
-		if b.useCredentialsBindings {
-			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		} else {
-			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		}
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-		}
-
-		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
-			if err != nil {
-				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-			}
-			discoveredZones[machineType] = zonesCount
-		}
-
-		if params.MachineType != nil {
-			if discoveredZones[*params.MachineType] < providerValues.ZonesCount {
-				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
-			}
-		}
+	discoveredZones, err := b.getDiscoveredZones(ctx, providerValues, params, logger, instance)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	if params.OIDC.IsProvided() {
@@ -472,6 +438,50 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) getDiscoveredZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
+	var err error
+	discoveredZones := make(map[string]int)
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
+		if params.MachineType != nil {
+			discoveredZones[*params.MachineType] = 0
+		}
+
+		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+			discoveredZones[additionalWorkerNodePool.MachineType] = 0
+		}
+
+		// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
+		var awsClient aws.Client
+		if b.useCredentialsBindings {
+			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		} else {
+			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+		}
+
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+		}
+
+		for machineType := range discoveredZones {
+			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			if err != nil {
+				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
+				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+			}
+			discoveredZones[machineType] = zonesCount
+		}
+
+		if params.MachineType != nil {
+			if discoveredZones[*params.MachineType] < providerValues.ZonesCount {
+				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
+				return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+			}
+		}
+	}
+	return discoveredZones, nil
 }
 
 func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstance *internal.Instance, logger *slog.Logger) (bool, *internal.Operation) {
