@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -51,14 +49,36 @@ func TestCleanup(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		modifyInstance func(*internal.Instance)
 		config         Config
-		expectedLog    string
+		expectedResult Result
 	}{
 		"should expire instance": {
 			modifyInstance: func(i *internal.Instance) {},
 			config: Config{
 				PlanID: broker.TrialPlanID,
 			},
-			expectedLog: "Instances: 1, to expire: 1, left non-expired: 0, suspension under way: 0, just marked expired: 1, failures: 0",
+			expectedResult: Result{
+				count:                    1,
+				instancesToExpireCount:   1,
+				instancesToBeLeftCount:   0,
+				suspensionsAcceptedCount: 0,
+				onlyMarkedAsExpiredCount: 1,
+				failuresCount:            0,
+			},
+		},
+		"should not expire instance in dry run mode": {
+			modifyInstance: func(i *internal.Instance) {},
+			config: Config{
+				PlanID: broker.TrialPlanID,
+				DryRun: true,
+			},
+			expectedResult: Result{
+				count:                    1,
+				instancesToExpireCount:   1,
+				instancesToBeLeftCount:   0,
+				suspensionsAcceptedCount: 0,
+				onlyMarkedAsExpiredCount: 0,
+				failuresCount:            0,
+			},
 		},
 		"should not expire already expired instance": {
 			modifyInstance: func(i *internal.Instance) {
@@ -67,7 +87,14 @@ func TestCleanup(t *testing.T) {
 			config: Config{
 				PlanID: broker.TrialPlanID,
 			},
-			expectedLog: "Instances: 0, to expire: 0, left non-expired: 0, suspension under way: 0, just marked expired: 0, failures: 0",
+			expectedResult: Result{
+				count:                    0,
+				instancesToExpireCount:   0,
+				instancesToBeLeftCount:   0,
+				suspensionsAcceptedCount: 0,
+				onlyMarkedAsExpiredCount: 0,
+				failuresCount:            0,
+			},
 		},
 		"should not expire instance before expiration period": {
 			modifyInstance: func(i *internal.Instance) {},
@@ -75,15 +102,17 @@ func TestCleanup(t *testing.T) {
 				PlanID:           broker.TrialPlanID,
 				ExpirationPeriod: 1 * time.Hour,
 			},
-			expectedLog: "Instances: 1, to expire: 0, left non-expired: 1, suspension under way: 0, just marked expired: 0, failures: 0",
+			expectedResult: Result{
+				count:                    1,
+				instancesToExpireCount:   0,
+				instancesToBeLeftCount:   1,
+				suspensionsAcceptedCount: 0,
+				onlyMarkedAsExpiredCount: 0,
+				failuresCount:            0,
+			},
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
-			cw := &captureWriter{buf: &bytes.Buffer{}}
-			handler := slog.NewTextHandler(cw, nil)
-			logger := slog.New(handler)
-			slog.SetDefault(logger)
-
 			storageCleanup, db, err := storage.GetStorageForTests(expiratorTestConfig())
 			require.NoError(t, err)
 			defer func() {
@@ -109,10 +138,9 @@ func TestCleanup(t *testing.T) {
 				db.Instances(),
 			)
 
-			err = svc.PerformCleanup()
+			result, err := svc.PerformCleanup()
 			assert.NoError(t, err)
-
-			assert.Contains(t, cw.buf.String(), tc.expectedLog)
+			assert.Equal(t, tc.expectedResult, result)
 		})
 	}
 }
@@ -136,12 +164,4 @@ type mockBrokerClient struct{}
 
 func (m *mockBrokerClient) SendExpirationRequest(_ internal.Instance) (bool, error) {
 	return false, nil
-}
-
-type captureWriter struct {
-	buf *bytes.Buffer
-}
-
-func (c *captureWriter) Write(p []byte) (n int, err error) {
-	return c.buf.Write(p)
 }
