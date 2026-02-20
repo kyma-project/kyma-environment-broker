@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
@@ -124,6 +125,8 @@ type Config struct {
 	RegionsSupportingMachineFilePath string
 
 	HapRuleFilePath string
+
+	HapMultiHyperscalerAccount multiaccount.MultiAccountConfig `envconfig:"optional"`
 
 	ProvidersConfigurationFilePath string
 
