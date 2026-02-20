@@ -150,7 +150,7 @@ func expiratorTestConfig() storage.Config {
 		Host:            "localhost",
 		User:            "test",
 		Password:        "FIPS-compl1antPwd!",
-		Port:            "5431",
+		Port:            "5433",
 		Name:            "test-expirator",
 		SSLMode:         "disable",
 		SecretKey:       "################################",
