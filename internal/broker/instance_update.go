@@ -318,7 +318,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	if err = b.validateOIDCParams(params, instance, logger); err != nil {
+	err = b.validateOIDCParams(params, instance, logger)
+	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
@@ -329,9 +330,19 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	operation := internal.NewUpdateOperation(operationID, instance, params)
 	operation.ProviderValues = &providerValues
 
-	err = b.validate(operation, providerValues, logger, params, details, ersContext, regionsSupportingMachine, instance, discoveredZones)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, err
+	if err = operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
+		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if params.AdditionalWorkerNodePools == nil {
+		if err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+			return domain.UpdateServiceSpec{}, err
+		}
+	}
+
+	if err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
@@ -369,25 +380,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
-}
-
-func (b *UpdateEndpoint) validate(operation internal.Operation, providerValues internal.ProviderValues, logger *slog.Logger, params internal.UpdatingParametersDTO, details domain.UpdateDetails, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, discoveredZones map[string]int) error {
-	var err error
-	if err = operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
-		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
-
-	if params.AdditionalWorkerNodePools == nil {
-		if err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
-			return err
-		}
-	}
-
-	if err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
-	return nil
 }
 
 func (b *UpdateEndpoint) validateOIDCParams(params internal.UpdatingParametersDTO, instance *internal.Instance, logger *slog.Logger) error {
