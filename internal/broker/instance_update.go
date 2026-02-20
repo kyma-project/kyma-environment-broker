@@ -600,25 +600,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	needUpdateCustomResources := false
-	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
-		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
-		if err := b.actionStorage.InsertAction(
-			pkg.SubaccountMovementActionType,
-			instance.InstanceID,
-			message,
-			instance.GlobalAccountID,
-			ersContext.GlobalAccountID,
-		); err != nil {
-			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
-		}
-		if instance.SubscriptionGlobalAccountID == "" {
-			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
-		}
-		instance.GlobalAccountID = ersContext.GlobalAccountID
-		needUpdateCustomResources = true
-		logger.Info(fmt.Sprintf("Global account ID changed to: %s. need update labels", instance.GlobalAccountID))
-	}
+	needUpdateCustomResources := b.handleSubaccountMoveRequest(instance, ersContext, logger)
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
@@ -638,6 +620,29 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	}
 
 	return newInstance, changed, nil
+}
+
+func (b *UpdateEndpoint) handleSubaccountMoveRequest(instance *internal.Instance, ersContext internal.ERSContext, logger *slog.Logger) bool {
+	needUpdateCustomResources := false
+	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
+		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
+		if err := b.actionStorage.InsertAction(
+			pkg.SubaccountMovementActionType,
+			instance.InstanceID,
+			message,
+			instance.GlobalAccountID,
+			ersContext.GlobalAccountID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
+		}
+		if instance.SubscriptionGlobalAccountID == "" {
+			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
+		}
+		instance.GlobalAccountID = ersContext.GlobalAccountID
+		needUpdateCustomResources = true
+		logger.Info(fmt.Sprintf("Global account ID changed to: %s. need update labels", instance.GlobalAccountID))
+	}
+	return needUpdateCustomResources
 }
 
 func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.ProvisioningOperation) (*bool, error) {
@@ -729,11 +734,9 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		}
 	}
 
-	if params.OIDC.IsProvided() {
-		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
-			instance.Parameters.Parameters.OIDC = params.OIDC
-			updateStorage = append(updateStorage, "OIDC")
-		}
+	if params.OIDC.IsProvided() && (params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty())) {
+		instance.Parameters.Parameters.OIDC = params.OIDC
+		updateStorage = append(updateStorage, "OIDC")
 	}
 
 	if params.IngressFiltering != nil {
@@ -742,9 +745,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	if len(params.RuntimeAdministrators) != 0 {
-		newAdministrators := make([]string, 0, len(params.RuntimeAdministrators))
-		newAdministrators = append(newAdministrators, params.RuntimeAdministrators...)
-		instance.Parameters.Parameters.RuntimeAdministrators = newAdministrators
+		instance.Parameters.Parameters.RuntimeAdministrators = b.collectAdministrators(params)
 		updateStorage = append(updateStorage, "Runtime Administrators")
 	}
 
@@ -757,9 +758,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
-		newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
-		newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
-		instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = b.collectAdditionalWorkerPools(params)
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
 	}
 
@@ -769,6 +768,18 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	return updateStorage, nil
+}
+
+func (b *UpdateEndpoint) collectAdministrators(params *internal.UpdatingParametersDTO) []string {
+	newAdministrators := make([]string, 0, len(params.RuntimeAdministrators))
+	newAdministrators = append(newAdministrators, params.RuntimeAdministrators...)
+	return newAdministrators
+}
+
+func (b *UpdateEndpoint) collectAdditionalWorkerPools(params *internal.UpdatingParametersDTO) []pkg.AdditionalWorkerNodePool {
+	newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
+	newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
+	return newAdditionalWorkerNodePools
 }
 
 func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
