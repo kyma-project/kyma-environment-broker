@@ -314,11 +314,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	if params.OIDC.IsProvided() {
-		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
-			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	err = b.validateOIDC(params, instance, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	operationID := uuid.New().String()
@@ -363,8 +361,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	logger.Debug("Creating update operation in the database")
-	err = b.operationStorage.InsertOperation(operation)
-	if err != nil {
+	if err = b.operationStorage.InsertOperation(operation); err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
@@ -379,6 +376,16 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, instance *internal.Instance, logger *slog.Logger) error {
+	if params.OIDC.IsProvided() {
+		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
+			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
 }
 
 func (b *UpdateEndpoint) unmarshalParams(details domain.UpdateDetails, logger *slog.Logger) (internal.UpdatingParametersDTO, error) {
