@@ -375,13 +375,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
-		multiError := pkg.MachineTypeMultiError{}
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(planName)); err != nil {
-				multiError.Append(err)
-			}
-		}
+		multiError := b.validateMachineTypeChange(params, details, instance)
 		if multiError.IsError() {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(&multiError, http.StatusBadRequest, multiError.Error())
 		}
@@ -403,20 +397,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s)", params, err.Error()))
 			return domain.UpdateServiceSpec{}, err
 		}
-		if slices.Contains(updateStorage, planChangeMessage) {
-			oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
-			newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
-			if err := b.actionStorage.InsertAction(
-				pkg.PlanUpdateActionType,
-				instance.InstanceID,
-				message,
-				previousInstance.ServicePlanID,
-				details.PlanID,
-			); err != nil {
-				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
-			}
-		}
+		b.insertActionForPlanUpgrade(updateStorage, previousInstance, details, instance, logger)
 	}
 
 	if skipProcessing, lastOperation := b.shouldSkipNewOperation(previousInstance, instance, logger); skipProcessing {
@@ -438,6 +419,34 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) validateMachineTypeChange(params internal.UpdatingParametersDTO, details domain.UpdateDetails, instance *internal.Instance) pkg.MachineTypeMultiError {
+	multiError := pkg.MachineTypeMultiError{}
+	for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(planName)); err != nil {
+			multiError.Append(err)
+		}
+	}
+	return multiError
+}
+
+func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, previousInstance *internal.Instance, details domain.UpdateDetails, instance *internal.Instance, logger *slog.Logger) {
+	if slices.Contains(updateStorage, planChangeMessage) {
+		oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
+		newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
+		if err := b.actionStorage.InsertAction(
+			pkg.PlanUpdateActionType,
+			instance.InstanceID,
+			message,
+			previousInstance.ServicePlanID,
+			details.PlanID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
+		}
+	}
 }
 
 func (b *UpdateEndpoint) getDiscoveredZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
