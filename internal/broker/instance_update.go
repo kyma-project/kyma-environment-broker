@@ -333,9 +333,10 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, err
+	if params.AdditionalWorkerNodePools != nil {
+		if err = b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+			return domain.UpdateServiceSpec{}, err
+		}
 	}
 
 	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
@@ -407,9 +408,6 @@ func (b *UpdateEndpoint) isMachineSupported(providerValues internal.ProviderValu
 }
 
 func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
-	if params.AdditionalWorkerNodePools == nil {
-		return nil
-	}
 	if !supportsAdditionalWorkerNodePools(details.PlanID) {
 		message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
