@@ -151,14 +151,13 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 
 func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
+
 	instance, err := b.instanceStorage.GetByID(instanceID)
-	if err != nil && dberr.IsNotFound(err) {
-		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusNotFound, fmt.Sprintf("could not execute update for instanceID %s", instanceID))
-	} else if err != nil {
-		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to get instance")
+	err = b.handleGetInstanceError(err, logger, instanceID)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
+
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
@@ -182,6 +181,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		}
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 	}
+
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
@@ -221,6 +221,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 			return b.processUpdateParameters(ctx, &previousInstance, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
+
 	return domain.UpdateServiceSpec{
 		IsAsync:       false,
 		DashboardURL:  dashboard.ProvideURL(instance, lastProvisioningOperation),
@@ -229,6 +230,17 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) handleGetInstanceError(err error, logger *slog.Logger, instanceID string) error {
+	if err != nil && dberr.IsNotFound(err) {
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
+		return apiresponses.NewFailureResponse(err, http.StatusNotFound, fmt.Sprintf("could not execute update for instanceID %s", instanceID))
+	} else if err != nil {
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
+		return fmt.Errorf("unable to get instance")
+	}
+	return nil
 }
 
 func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDetails, instance *internal.Instance) error {
@@ -335,49 +347,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if params.AdditionalWorkerNodePools != nil {
-		if !supportsAdditionalWorkerNodePools(details.PlanID) {
-			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
-		}
-
-		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
-			message := "names of additional worker node pools must be unique"
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
-		}
-
-		if IsExternalLicenseType(ersContext) {
-			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-		}
-
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkAutoScalerConfiguration(params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkAvailableZones(
-			logger,
-			regionsSupportingMachine,
-			params.AdditionalWorkerNodePools,
-			providerValues.Region,
-			details.PlanID,
-			b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
-			discoveredZones,
-		); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		multiError := b.validateMachineTypeChange(params, details, instance)
-		if multiError.IsError() {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(&multiError, http.StatusBadRequest, multiError.Error())
+		err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones)
+		if err != nil {
+			return domain.UpdateServiceSpec{}, err
 		}
 	}
 
@@ -403,6 +375,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if skipProcessing, lastOperation := b.shouldSkipNewOperation(previousInstance, instance, logger); skipProcessing {
 		return b.responseWithoutNewOperation(instance, lastOperation, logger)
 	}
+
 	logger.Debug("Creating update operation in the database")
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
@@ -419,6 +392,54 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
+	if !supportsAdditionalWorkerNodePools(details.PlanID) {
+		message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+
+	if !AreNamesUnique(params.AdditionalWorkerNodePools) {
+		message := "names of additional worker node pools must be unique"
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+
+	if IsExternalLicenseType(ersContext) {
+		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
+	if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkAutoScalerConfiguration(params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkAvailableZones(
+		logger,
+		regionsSupportingMachine,
+		params.AdditionalWorkerNodePools,
+		providerValues.Region,
+		details.PlanID,
+		b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
+		discoveredZones,
+	); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	multiError := b.validateMachineTypeChange(params, details, instance)
+	if multiError.IsError() {
+		return apiresponses.NewFailureResponse(&multiError, http.StatusBadRequest, multiError.Error())
+	}
+	return nil
 }
 
 func (b *UpdateEndpoint) validateMachineTypeChange(params internal.UpdatingParametersDTO, details domain.UpdateDetails, instance *internal.Instance) pkg.MachineTypeMultiError {
