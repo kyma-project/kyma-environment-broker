@@ -203,7 +203,7 @@ jobs:
 
       - name: Verify second instance got a credentials binding
         run: |
-          BINDING_NAME_2=$(kubectl get runtime $RUNTIME_ID_2 -n kcp-system -o jsonpath='{.spec.shoot.credentialsBindingName}')
+          BINDING_NAME_2=$(kubectl get runtime $RUNTIME_ID_2 -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           echo "Second instance assigned binding: $BINDING_NAME_2"
           if [ -z "$BINDING_NAME_2" ]; then
             echo "Error: Second instance has no credentials binding assigned"
@@ -247,7 +247,7 @@ jobs:
 
       - name: Verify third instance got a different credentials binding
         run: |
-          BINDING_NAME_3=$(kubectl get runtime $RUNTIME_ID_3 -n kcp-system -o jsonpath='{.spec.shoot.credentialsBindingName}')
+          BINDING_NAME_3=$(kubectl get runtime $RUNTIME_ID_3 -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           echo "Third instance assigned binding: $BINDING_NAME_3"
           if [ -z "$BINDING_NAME_3" ]; then
             echo "Error: Third instance has no credentials binding assigned"
