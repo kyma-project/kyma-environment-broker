@@ -316,7 +316,7 @@ jobs:
         run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster http://localhost:8080 single
       
       - name: Wait for deprovisioning to finish
-        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster
+        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster $RUNTIME_ID
 
       - name: Check for errors and warnings in KEB logs after deprovisioning
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
