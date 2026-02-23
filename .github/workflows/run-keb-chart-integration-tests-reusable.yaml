@@ -261,20 +261,6 @@ jobs:
       - name: Set third Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID_3 STATE=Ready
 
-      - name: Deprovision second instance
-        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-2 http://localhost:8080 single
-
-      - name: Wait for second instance deprovisioning
-        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster-2
-
-      - name: Deprovision third instance
-        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-3 http://localhost:8080 single
-
-      - name: Wait for third instance deprovisioning
-        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster-3
-
-        
-
       - name: Update global account ID
         run: |
           echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
