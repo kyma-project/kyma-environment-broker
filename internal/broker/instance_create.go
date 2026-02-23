@@ -352,8 +352,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
-	err = b.isSapConvergeCloudSupported(details, provisioningParameters, values)
-	if err != nil {
+	if err = b.isSapConvergeCloudSupported(details, provisioningParameters, values); err != nil {
 		return err
 	}
 
@@ -363,13 +362,11 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	err = b.validateColocate(ctx, details, parameters, values, logger)
-	if err != nil {
+	if err := b.validateColocate(ctx, details, parameters, values, logger); err != nil {
 		return err
 	}
 
-	err = b.validateZonesAndSupportedMachines(ctx, details, provisioningParameters, logger, values, parameters)
-	if err != nil {
+	if err := b.validateZonesAndSupportedMachines(ctx, details, provisioningParameters, logger, values, parameters); err != nil {
 		return err
 	}
 
@@ -387,8 +384,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	err = validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, logger)
-	if err != nil {
+	if err := validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, logger); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -411,13 +407,11 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		logger.Info("EU Access restricted instance creation")
 	}
 
-	err = b.validateTrialPlanContraints(details, parameters, provisioningParameters, logger)
-	if err != nil {
+	if err = b.validateTrialPlanContraints(details, parameters, provisioningParameters, logger); err != nil {
 		return err
 	}
 
-	err = b.validateFreePlanConstraints(details, provisioningParameters, logger)
-	if err != nil {
+	if err = b.validateFreePlanConstraints(details, provisioningParameters, logger); err != nil {
 		return err
 	}
 
@@ -425,7 +419,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 }
 
 func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) error {
-	regionsSupportingMachine, err := b.ifRegionsSupportsMachines(values, parameters)
+	regionsSupportingMachine, err := b.regionsSupportingMachine(values, parameters)
 	if err != nil {
 		return err
 	}
@@ -435,8 +429,7 @@ func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Contex
 		return err
 	}
 
-	err = b.validateAddtionalWorkerNodePools(parameters, details, provisioningParameters, regionsSupportingMachine, logger, values, discoveredZones)
-	if err != nil {
+	if err = b.validateAddtionalWorkerNodePools(parameters, details, provisioningParameters, regionsSupportingMachine, logger, values, discoveredZones); err != nil {
 		return err
 	}
 	return nil
@@ -454,7 +447,7 @@ func (b *ProvisionEndpoint) validateColocate(ctx context.Context, details domain
 	return nil
 }
 
-func (b *ProvisionEndpoint) ifRegionsSupportsMachines(values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) (internal.RegionsSupporter, error) {
+func (b *ProvisionEndpoint) regionsSupportingMachine(values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) (internal.RegionsSupporter, error) {
 	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
 	if err != nil {
 		return nil, fmt.Errorf("while obtaining regions supporting machine: %w", err)
@@ -933,9 +926,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 		return err
 	}
 
-	err = b.validateOverlappingWithSeeds(nodes, services, pods, err)
-
-	if err != nil {
+	if err = b.validateOverlappingWithSeeds(nodes, services, pods, err); err != nil {
 		return err
 	}
 
