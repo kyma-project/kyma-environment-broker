@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/aws/aws-sdk-go-v2 v1.41.1
-	github.com/aws/aws-sdk-go-v2/config v1.32.7
+	github.com/aws/aws-sdk-go-v2/config v1.32.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.9
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.290.0
 	github.com/dlclark/regexp2 v1.11.5
