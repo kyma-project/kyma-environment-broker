@@ -296,7 +296,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
-	b.zeroFieldsForTrial(details, params)
+	b.ZeroFieldsForTrialPlan(details, &params)
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -304,12 +304,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 
-	regionsSupportingMachine, err := b.getRegionsForMachineType(providerValues, instance, params)
-	if err != nil {
-		return domain.UpdateServiceSpec{}, err
-	}
-
-	discoveredZones, err := b.getDiscoveredZones(ctx, providerValues, params, logger, instance)
+	err = b.validateMachineType(ctx, providerValues, instance, params, logger, details, ersContext)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
@@ -329,12 +324,6 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
-
-	if params.AdditionalWorkerNodePools != nil {
-		if err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
-			return domain.UpdateServiceSpec{}, err
-		}
 	}
 
 	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
@@ -378,6 +367,41 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}, nil
 }
 
+func (b *UpdateEndpoint) validateMachineType(ctx context.Context, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
+	if err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := b.validateMachineTypeSupportedInRegion(regionsSupportingMachine, providerValues, instance, params); err != nil {
+		return err
+	}
+
+	discoveredZones := map[string]int{}
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
+		discoveredZones, err = b.discoverZones(ctx, providerValues, params, logger, instance)
+		if err != nil {
+			return err
+		}
+
+		if params.MachineType != nil && discoveredZones[*params.MachineType] < providerValues.ZonesCount {
+			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
+			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if params.AdditionalWorkerNodePools != nil {
+		if err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, instance *internal.Instance, logger *slog.Logger) error {
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
@@ -400,8 +424,7 @@ func (b *UpdateEndpoint) unmarshalParams(details domain.UpdateDetails, logger *s
 	}
 	return params, nil
 }
-
-func (b *UpdateEndpoint) zeroFieldsForTrial(details domain.UpdateDetails, params internal.UpdatingParametersDTO) {
+func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, params *internal.UpdatingParametersDTO) {
 	if details.PlanID == TrialPlanID {
 		params.MachineType = nil
 		params.AutoScalerMin = nil
@@ -409,11 +432,8 @@ func (b *UpdateEndpoint) zeroFieldsForTrial(details domain.UpdateDetails, params
 	}
 }
 
-func (b *UpdateEndpoint) getRegionsForMachineType(providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) (internal.RegionsSupporter, error) {
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
-	if err != nil {
-		return nil, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-	}
+func (b *UpdateEndpoint) validateMachineTypeSupportedInRegion(regionsSupportingMachine internal.RegionsSupporter, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) error {
+
 	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
@@ -421,9 +441,9 @@ func (b *UpdateEndpoint) getRegionsForMachineType(providerValues internal.Provid
 			valueOfPtr(params.MachineType),
 			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
 		)
-		return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
-	return regionsSupportingMachine, nil
+	return nil
 }
 
 func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
@@ -502,44 +522,37 @@ func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, prev
 	}
 }
 
-func (b *UpdateEndpoint) getDiscoveredZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
+func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
 	var err error
 	discoveredZones := make(map[string]int)
-	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
-		if params.MachineType != nil {
-			discoveredZones[*params.MachineType] = 0
-		}
+	if params.MachineType != nil {
+		discoveredZones[*params.MachineType] = 0
+	}
 
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			discoveredZones[additionalWorkerNodePool.MachineType] = 0
-		}
+	for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+		discoveredZones[additionalWorkerNodePool.MachineType] = 0
+	}
 
-		// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-		var awsClient aws.Client
-		if b.useCredentialsBindings {
-			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		} else {
-			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		}
+	// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
+	var awsClient aws.Client
+	if b.useCredentialsBindings {
+		awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	} else {
+		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	}
 
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+		return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+	}
+
+	for machineType := range discoveredZones {
+		zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
 		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 		}
-
-		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
-			if err != nil {
-				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-			}
-			discoveredZones[machineType] = zonesCount
-		}
-
-		if params.MachineType != nil && discoveredZones[*params.MachineType] < providerValues.ZonesCount {
-			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
-			return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
-		}
+		discoveredZones[machineType] = zonesCount
 	}
 	return discoveredZones, nil
 }
