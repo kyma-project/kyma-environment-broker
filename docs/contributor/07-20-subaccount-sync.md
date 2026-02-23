@@ -6,10 +6,10 @@ resource (CR) labels with subaccount attributes.
 ## Details
 
 The `operator.kyma-project.io/beta` and `operator.kyma-project.io/used-for-production` labels of all Kyma CRs for a given subaccount are synchronized 
-with the `Enable beta features` and `Used for Production` attributes accordingly.
+with the `Enable beta features` and `Used for Production` attributes respectively.
 The current state of the attributes is persisted in the `subaccount_states` database table.
 
-The table structure:
+See the table structure:
 
 | Column name             | Type         | Description                                               |
 |-------------------------|--------------|-----------------------------------------------------------|
@@ -18,25 +18,26 @@ The table structure:
 | **used_for_production** | VARCHAR(255) | Used for production                                       |
 | **modified_at**         | BIGINT       | Last modification timestamp as Unix epoch in milliseconds |
 
-The application periodically:
+The application periodically performs the following actions:
 
 * Fetches data for selected subaccounts from CIS Account service
 * Fetches events from CIS Event service for configurable time window
-* Monitors Kyma CRs using informer and detects changes in the labels
+* Monitors Kyma CRs using an informer and detects changes in the labels
 * Persists the desired (set in CIS) state of the attributes in the database
 * Updates the labels of the Kyma CRs if the state of the attributes has changed
 
 ## Prerequisites
 
-* The KEB Go packages so that Subaccount Sync can reuse them
-* The KEB database for storing current state of selected attributes
-### Dry Run Mode
+* The KEB Go packages for Subaccount Sync to reuse
+* The KEB database for storing the current state of selected attributes
 
-The dry run mode does not perform any changes on the control plane. Setting **SUBACCOUNT_SYNC_UPDATE_RESOURCES** to `false` runs the application in dry run mode.
-Updater is not created and no changes are made to the Kyma CRs. The application only fetches
+### Dry-Run Mode
+
+Dry-run mode does not perform any changes on the control plane. Setting **SUBACCOUNT_SYNC_UPDATE_RESOURCES** to `false` runs the application in dry run mode.
+The updater is not created and no changes are made to the Kyma CRs. The application only fetches
 data from CIS and updates the database.
 Differences between the desired and current state of the attributes cause that the queue is filled with entries.
-Since this is an augmented queue with one entry for each subaccount, the length does not exceed the number of subaccounts.
+Since this is an augmented queue with one entry per subaccount, its length does not exceed the number of subaccounts.
 
 ### Resources
 
@@ -54,7 +55,7 @@ Use the following environment variables to configure the application:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **SUBACCOUNT_SYNC_&#x200b;ACCOUNTS_SYNC_&#x200b;INTERVAL** | <code>24h</code> | Interval between full account synchronization runs. |
-| **SUBACCOUNT_SYNC_&#x200b;ALWAYS_SUBACCOUNT_&#x200b;FROM_DATABASE** | <code>false</code> | If true, fetches subaccountID from the database only when the subaccount is empty. |
+| **SUBACCOUNT_SYNC_&#x200b;ALWAYS_SUBACCOUNT_&#x200b;FROM_DATABASE** | <code>false</code> | If <code>true</code>, fetches subaccountID from the database only when the subaccount is empty. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_CLIENT_ID** | None | Specifies the **CLIENT_ID** for the client accessing accounts. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_CLIENT_&#x200b;SECRET** | None | Specifies the **CLIENT_SECRET** for the client accessing accounts. |
@@ -82,4 +83,4 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_&#x200b;QUEUE_SLEEP_INTERVAL** | <code>30s</code> | Interval between queue processing cycles. |
 | **SUBACCOUNT_SYNC_&#x200b;RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template. |
 | **SUBACCOUNT_SYNC_&#x200b;STORAGE_SYNC_&#x200b;INTERVAL** | <code>5m</code> | Interval between storage synchronization. |
-| **SUBACCOUNT_SYNC_&#x200b;UPDATE_RESOURCES** | <code>false</code> | If true, enables updating resources during subaccount sync. |
+| **SUBACCOUNT_SYNC_&#x200b;UPDATE_RESOURCES** | <code>false</code> | If <code>true</code>, enables updating resources during subaccount sync. |
