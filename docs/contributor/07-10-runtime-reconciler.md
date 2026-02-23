@@ -4,17 +4,17 @@ Runtime Reconciler is an application that performs reconciliation tasks on SAP B
 
 ## Details
 
-Runtime Reconciler reconciles BTP Manager Secrets on Kyma runtimes with a job, 
+Runtime Reconciler reconciles BTP Manager Secrets on Kyma runtimes with a Job, 
 which periodically loops over all instances from the KEB database. Each instance has an existing assigned Runtime ID. 
-The job checks if the Secret on the Kyma runtime matches the credentials from the KEB database.
+The Job checks if the Secret on the Kyma runtime matches the credentials from the KEB database.
 
 > ### Note:
-> If you modify or delete the `sap-btp-manager` Secret, it is modified back to its previous settings or regenerated within up to 24 hours. However, if the Secret is labeled with `kyma-project.io/skip-reconciliation: "true"`, the job skips the reconciliation for this Secret.
+> If you modify or delete the `sap-btp-manager` Secret, it is reverted to its previous settings or regenerated within 24 hours. However, if the Secret is labeled with `kyma-project.io/skip-reconciliation: "true"`, the Job skips reconciliation for this Secret.
 > To revert the Secret to its default state (stored in the KEB database), restart Runtime Reconciler, for example, by scaling down the deployment to `0` and then back to `1`.
 
 ## Prerequisites
 
-* The KEB Go packages so that Runtime Reconciler can reuse them
+* The KEB Go packages for Runtime Reconciler to reuse
 * The KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
 
 ## Configuration
@@ -33,8 +33,8 @@ Use the following environment variables to configure the application:
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
 | **RUNTIME_RECONCILER_&#x200b;DATABASE_USER** | None | Specifies the username for the database. |
-| **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>false</code> | If true, runs the reconciler in dry-run mode (no changes are made, only logs actions). |
-| **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>true</code> | If true, enables the periodic reconciliation job. |
+| **RUNTIME_RECONCILER_&#x200b;DRY_RUN** | <code>false</code> | If <code>true</code>, runs the reconciler in dry-run mode (no changes are made, only logs actions). |
+| **RUNTIME_RECONCILER_&#x200b;JOB_ENABLED** | <code>true</code> | If <code>true</code>, enables the periodic reconciliation job. |
 | **RUNTIME_RECONCILER_&#x200b;JOB_INTERVAL** | <code>1440</code> | Interval (in minutes) between reconciliation job runs. |
 | **RUNTIME_RECONCILER_&#x200b;JOB_RECONCILIATION_&#x200b;DELAY** | <code>1s</code> | Delay before starting reconciliation after job trigger. |
 | **RUNTIME_RECONCILER_&#x200b;METRICS_PORT** | <code>8081</code> | Port on which the reconciler exposes Prometheus metrics. |
