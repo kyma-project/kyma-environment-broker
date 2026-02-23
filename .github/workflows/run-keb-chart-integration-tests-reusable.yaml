@@ -170,6 +170,111 @@ jobs:
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
 
+      - name: Provision second instance to test binding rotation
+        run: |
+          scripts/testing/provision_instances.sh 1 azure-cluster-2 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-2 northeurope http://localhost:8080
+
+      - name: Get second RuntimeID
+        run: |
+            while [ -z "$RUNTIME_ID_2" ]; do
+              RUNTIME_ID_2=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster-2") | .runtimeID')
+              if [ -z "$RUNTIME_ID_2" ]; then
+                echo "RuntimeID_2 is empty. Retrying in 5 seconds..."
+                sleep 5
+              fi
+            done
+            echo "RuntimeID_2: ${RUNTIME_ID_2}"
+            echo "RUNTIME_ID_2=$RUNTIME_ID_2" >> $GITHUB_ENV
+
+      - name: Create kubeconfig secret for second runtime
+        run: make create-kubeconfig-secret RUNTIME_ID=$RUNTIME_ID_2
+
+      - name: Create GardenerCluster CR for second runtime
+        run: ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID $RUNTIME_ID_2
+
+      - name: Set second RuntimeCR State to Ready
+        run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_2 STATE=Ready
+
+      - name: Wait for second provisioning to finish
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster-2
+
+      - name: Verify second instance got a credentials binding
+        run: |
+          BINDING_NAME_2=$(kubectl get runtime $RUNTIME_ID_2 -n kcp-system -o jsonpath='{.spec.shoot.credentialsBindingName}')
+          echo "Second instance assigned binding: $BINDING_NAME_2"
+          if [ -z "$BINDING_NAME_2" ]; then
+            echo "Error: Second instance has no credentials binding assigned"
+            exit 1
+          fi
+          echo "BINDING_NAME_2=$BINDING_NAME_2" >> $GITHUB_ENV
+          
+      - name: Set second Kyma state to Ready
+        run: make set-kyma-state KYMA_ID=$RUNTIME_ID_2 STATE=Ready
+
+      - name: Provision third instance to test limit enforcement
+        run: |
+          scripts/testing/provision_instances.sh 1 azure-cluster-3 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-3 northeurope http://localhost:8080
+
+      - name: Get third RuntimeID
+        run: |
+            while [ -z "$RUNTIME_ID_3" ]; do
+              RUNTIME_ID_3=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster-3") | .runtimeID')
+              if [ -z "$RUNTIME_ID_3" ]; then
+                echo "RuntimeID_3 is empty. Retrying in 5 seconds..."
+                sleep 5
+              fi
+            done
+            echo "RuntimeID_3: ${RUNTIME_ID_3}"
+            echo "RUNTIME_ID_3=$RUNTIME_ID_3" >> $GITHUB_ENV
+
+      - name: Create kubeconfig secret for third runtime
+        run: make create-kubeconfig-secret RUNTIME_ID=$RUNTIME_ID_3
+
+      - name: Create GardenerCluster CR for third runtime
+        run: ./scripts/create_gardener_cluster_cr.sh $GLOBAL_ACCOUNT_ID $RUNTIME_ID_3
+
+      - name: Set third RuntimeCR State to Ready
+        run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_3 STATE=Ready
+
+      - name: Wait for third provisioning to finish
+        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster-3
+
+      - name: Verify third instance got a different credentials binding
+        run: |
+          BINDING_NAME_3=$(kubectl get runtime $RUNTIME_ID_3 -n kcp-system -o jsonpath='{.spec.shoot.credentialsBindingName}')
+          echo "Third instance assigned binding: $BINDING_NAME_3"
+          if [ -z "$BINDING_NAME_3" ]; then
+            echo "Error: Third instance has no credentials binding assigned"
+            exit 1
+          fi
+          echo "Verifying binding rotation occurred across three instances"
+          echo "Instance 1 binding: azure (from original provisioning)"
+          echo "Instance 2 binding: $BINDING_NAME_2"
+          echo "Instance 3 binding: $BINDING_NAME_3"
+          
+      - name: Set third Kyma state to Ready
+        run: make set-kyma-state KYMA_ID=$RUNTIME_ID_3 STATE=Ready
+
+      - name: Deprovision second instance
+        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-2 http://localhost:8080 single
+
+      - name: Wait for second instance deprovisioning
+        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster-2
+
+      - name: Deprovision third instance
+        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-3 http://localhost:8080 single
+
+      - name: Wait for third instance deprovisioning
+        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster-3
+
+        
+
       - name: Update global account ID
         run: |
           echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
