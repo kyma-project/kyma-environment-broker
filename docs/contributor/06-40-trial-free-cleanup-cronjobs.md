@@ -77,3 +77,4 @@ Use the following environment variables to configure the Jobs:
 | **APP_TEST_RUN** | <code>false</code> | If true, runs the job in test mode (no real deletions, for testing purposes). |
 | **APP_TEST_SUBACCOUNT_&#x200b;ID** | <code>prow-keb-trial-suspension</code> | Subaccount ID used for test runs. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
+
