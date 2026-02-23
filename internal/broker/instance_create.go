@@ -332,13 +332,11 @@ func valueOfBoolPtr(ptr *bool) bool {
 	return *ptr
 }
 
-func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, l *slog.Logger) error {
-	if b.config.RestrictToAllowedGlobalAccounts {
-		if !b.config.AllowedGlobalAccounts.Contains(provisioningParameters.ErsContext.GlobalAccountID) {
-			message := fmt.Sprintf("The Global Account %s is not allowed to provision a Kyma runtime", provisioningParameters.ErsContext.GlobalAccountID)
-			l.Info(message)
-			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
-		}
+func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
+	if b.config.RestrictToAllowedGlobalAccounts && !b.config.AllowedGlobalAccounts.Contains(provisioningParameters.ErsContext.GlobalAccountID) {
+		message := fmt.Sprintf("The Global Account %s is not allowed to provision a Kyma runtime", provisioningParameters.ErsContext.GlobalAccountID)
+		logger.Info(message)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
 
 	parameters := provisioningParameters.Parameters
@@ -354,6 +352,175 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
+	err = b.isSapConvergeCloudSupported(details, provisioningParameters, values)
+	if err != nil {
+		return err
+	}
+
+	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
+			return err
+		}
+	}
+
+	err = b.validateColocate(ctx, details, parameters, values, logger)
+	if err != nil {
+		return err
+	}
+
+	err = b.validateZonesAndSupportedMachines(ctx, details, provisioningParameters, logger, values, parameters)
+	if err != nil {
+		return err
+	}
+
+	if err := b.validateNetworking(parameters); err != nil {
+		return err
+	}
+
+	if err := parameters.Validate(values.DefaultAutoScalerMin, values.DefaultAutoScalerMax); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if parameters.OIDC.IsProvided() {
+		if err := parameters.OIDC.Validate(nil); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		}
+	}
+
+	err = validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, logger)
+	if err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
+	if err != nil {
+		return fmt.Errorf("while creating plan validator: %w", err)
+	}
+
+	var rawParameters any
+	if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
+		return fmt.Errorf("while unmarshaling raw parameters: %w", err)
+	}
+
+	if err = planValidator.Validate(rawParameters); err != nil {
+		return fmt.Errorf("while validating input parameters: %s", validator.FormatError(err))
+	}
+
+	// EU Access
+	if isEuRestrictedAccess(ctx) {
+		logger.Info("EU Access restricted instance creation")
+	}
+
+	err = b.validateTrialPlanContraints(details, parameters, provisioningParameters, logger)
+	if err != nil {
+		return err
+	}
+
+	err = b.validateFreePlanConstraints(details, provisioningParameters, logger)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) error {
+	regionsSupportingMachine, err := b.ifRegionsSupportsMachines(values, parameters)
+	if err != nil {
+		return err
+	}
+
+	discoveredZones, err := b.getDiscoveredZones(ctx, values, parameters, logger, provisioningParameters)
+	if err != nil {
+		return err
+	}
+
+	err = b.validateAddtionalWorkerNodePools(parameters, details, provisioningParameters, regionsSupportingMachine, logger, values, discoveredZones)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateColocate(ctx context.Context, details domain.ProvisionDetails, parameters pkg.ProvisioningParametersDTO, values internal.ProviderValues, logger *slog.Logger) error {
+	colocateControlPlane := valueOfBoolPtr(parameters.ColocateControlPlane)
+	if colocateControlPlane {
+		platformRegion, _ := middleware.RegionFromContext(ctx)
+		supportedRegions := b.schemaService.PlanRegions(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID)), platformRegion)
+		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, logger); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) ifRegionsSupportsMachines(values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) (internal.RegionsSupporter, error) {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
+	if err != nil {
+		return nil, fmt.Errorf("while obtaining regions supporting machine: %w", err)
+	}
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+		return nil, fmt.Errorf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(parameters.Region),
+			valueOfPtr(parameters.MachineType),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
+		)
+	}
+	return regionsSupportingMachine, nil
+}
+
+func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.ProvisionDetails, parameters pkg.ProvisioningParametersDTO, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
+	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
+		_, valid := validRegionsForTrial[TrialCloudRegion(*parameters.Region)]
+		if !valid {
+			return fmt.Errorf("invalid region specified in request for trial")
+		}
+	}
+
+	if IsTrialPlan(details.PlanID) && b.config.OnlySingleTrialPerGA {
+		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID)
+		if err != nil {
+			return fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
+		}
+
+		if count > 0 {
+			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
+			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateFreePlanConstraints(details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.GlobalAccountID, b.freemiumWhiteList) {
+		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID, FreemiumPlanID)
+		if err != nil {
+			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+		}
+
+		instanceFilter := dbmodel.InstanceFilter{
+			GlobalAccountIDs: []string{provisioningParameters.ErsContext.GlobalAccountID},
+			PlanIDs:          []string{FreemiumPlanID},
+			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
+		}
+		_, _, count, err = b.instanceStorage.List(instanceFilter)
+		if err != nil {
+			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) isSapConvergeCloudSupported(details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, values internal.ProviderValues) error {
 	if details.PlanID == SapConvergedCloudPlanID {
 		newPlatformRegion, exists := b.btpRegionsMigrationSapConvergedCloud[provisioningParameters.PlatformRegion]
 		if exists {
@@ -366,35 +533,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
+	return nil
+}
 
-	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
-		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
-			return err
-		}
-	}
-
-	colocateControlPlane := valueOfBoolPtr(parameters.ColocateControlPlane)
-	if colocateControlPlane {
-		platformRegion, _ := middleware.RegionFromContext(ctx)
-		supportedRegions := b.schemaService.PlanRegions(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID)), platformRegion)
-		if err := b.validateColocationRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), supportedRegions, l); err != nil {
-			return err
-		}
-	}
-
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
-	if err != nil {
-		return fmt.Errorf("while obtaining regions supporting machine: %w", err)
-	}
-	if !regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
-		return fmt.Errorf(
-			"In the region %s, the machine type %s is not available, it is supported in the %v",
-			valueOfPtr(parameters.Region),
-			valueOfPtr(parameters.MachineType),
-			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
-		)
-	}
-
+func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO, logger *slog.Logger, provisioningParameters internal.ProvisioningParameters) (map[string]int, error) {
 	discoveredZones := make(map[string]int)
 	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)) {
 		kymaMachineType := values.DefaultMachineType
@@ -409,44 +551,35 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 
 		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
 		var awsClient aws.Client
+		var err error
 		if b.useCredentialsBindings {
-			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
 		} else {
-			awsClient, err = newAWSClient(ctx, l, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
 		}
 		if err != nil {
-			l.Error(fmt.Sprintf("unable to create AWS client: %s", err))
-			return apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
 			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
 			if err != nil {
-				l.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
+				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
+				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 			}
 			discoveredZones[machineType] = zonesCount
 		}
 
 		if discoveredZones[kymaMachineType] < values.ZonesCount {
 			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", values.Region, kymaMachineType, values.ZonesCount)
-			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+			return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
+	return discoveredZones, nil
+}
 
-	if err := b.validateNetworking(parameters); err != nil {
-		return err
-	}
-
-	if err := parameters.Validate(values.DefaultAutoScalerMin, values.DefaultAutoScalerMax); err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-	}
-	if parameters.OIDC.IsProvided() {
-		if err := parameters.OIDC.Validate(nil); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-		}
-	}
-
+func (b *ProvisionEndpoint) validateAddtionalWorkerNodePools(parameters pkg.ProvisioningParametersDTO, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, regionsSupportingMachine internal.RegionsSupporter, l *slog.Logger, values internal.ProviderValues, discoveredZones map[string]int) error {
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
@@ -484,75 +617,6 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
-
-	err = validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, l)
-	if err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
-
-	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
-	if err != nil {
-		return fmt.Errorf("while creating plan validator: %w", err)
-	}
-
-	var rawParameters any
-	if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
-		return fmt.Errorf("while unmarshaling raw parameters: %w", err)
-	}
-
-	if err = planValidator.Validate(rawParameters); err != nil {
-		return fmt.Errorf("while validating input parameters: %s", validator.FormatError(err))
-	}
-
-	// EU Access
-	if isEuRestrictedAccess(ctx) {
-		l.Info("EU Access restricted instance creation")
-	}
-
-	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
-		_, valid := validRegionsForTrial[TrialCloudRegion(*parameters.Region)]
-		if !valid {
-			return fmt.Errorf("invalid region specified in request for trial")
-		}
-	}
-
-	if IsTrialPlan(details.PlanID) && b.config.OnlySingleTrialPerGA {
-		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID)
-		if err != nil {
-			return fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
-		}
-
-		if count > 0 {
-			l.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
-			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
-		}
-	}
-
-	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.GlobalAccountID, b.freemiumWhiteList) {
-		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID, FreemiumPlanID)
-		if err != nil {
-			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
-		}
-		if count > 0 {
-			l.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
-		}
-
-		instanceFilter := dbmodel.InstanceFilter{
-			GlobalAccountIDs: []string{provisioningParameters.ErsContext.GlobalAccountID},
-			PlanIDs:          []string{FreemiumPlanID},
-			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
-		}
-		_, _, count, err = b.instanceStorage.List(instanceFilter)
-		if err != nil {
-			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
-		}
-		if count > 0 {
-			l.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
-		}
-	}
-
 	return nil
 }
 
@@ -869,18 +933,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 		return err
 	}
 
-	for _, seed := range networking.GardenerSeedCIDRs {
-		_, seedCidr, _ := net.ParseCIDR(seed)
-		if e := validateOverlapping(*nodes, *seedCidr); e != nil {
-			err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", seed))
-		}
-		if e := validateOverlapping(*services, *seedCidr); e != nil {
-			err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap %s", seed))
-		}
-		if e := validateOverlapping(*pods, *seedCidr); e != nil {
-			err = multierror.Append(err, fmt.Errorf("pods CIDR must not overlap %s", seed))
-		}
-	}
+	err = b.validateOverlappingWithSeeds(nodes, services, pods, err)
 
 	if err != nil {
 		return err
@@ -896,6 +949,22 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 		err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap pods CIDR"))
 	}
 
+	return err
+}
+
+func (b *ProvisionEndpoint) validateOverlappingWithSeeds(nodes, services, pods *net.IPNet, err error) error {
+	for _, seed := range networking.GardenerSeedCIDRs {
+		_, seedCidr, _ := net.ParseCIDR(seed)
+		if e := validateOverlapping(*nodes, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", seed))
+		}
+		if e := validateOverlapping(*services, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap %s", seed))
+		}
+		if e := validateOverlapping(*pods, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("pods CIDR must not overlap %s", seed))
+		}
+	}
 	return err
 }
 
