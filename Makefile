@@ -93,6 +93,33 @@ set-kyma-state:
 create-gardener-cluster:
 	./scripts/create_gardener_cluster_cr.sh $(GLOBAL_ACCOUNT_ID)
 
+##@ Creating Shoot resource
+
+.PHONY: create-shoot
+create-shoot:
+	./scripts/create_shoot.sh $(RUNTIME_ID)
+
+##@ Running provisioning flow
+
+.PHONY: run-provisioning-flow
+run-provisioning-flow:
+	@if [ -z "$(RUNTIME_ID)" ]; then \
+		echo "Error: RUNTIME_ID is required"; exit 1; \
+	fi
+	$(MAKE) create-shoot RUNTIME_ID=$(RUNTIME_ID)
+	sleep 1
+	$(MAKE) create-kubeconfig-secret RUNTIME_ID=$(RUNTIME_ID)
+	sleep 1
+	$(MAKE) set-runtime-state RUNTIME_ID=$(RUNTIME_ID) STATE=Ready
+	sleep 11
+	$(MAKE) set-kyma-state KYMA_ID=$(RUNTIME_ID) STATE=Ready
+
+##@ Deleting Shoot resource
+
+.PHONY: delete-shoot
+delete-shoot:
+	./scripts/delete_shoot.sh $(RUNTIME_ID)
+
 .PHONY: generate-env-docs
 generate-env-docs:
 	pip install -r scripts/python/requirements.txt
