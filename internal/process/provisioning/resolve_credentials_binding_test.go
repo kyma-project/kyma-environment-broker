@@ -272,7 +272,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		// then
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
-		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned secret binding with selector"))
+		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned credentials binding with selector"))
 
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
