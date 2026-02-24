@@ -173,7 +173,7 @@ func (s *UpdateRuntimeStep) getCurrentAdditionalWorkers(runtime imv1.Runtime) ma
 
 func (s *UpdateRuntimeStep) getRequiredClaims(dto *pkg.OIDCConfigDTO) map[string]string {
 	requiredClaims := make(map[string]string)
-	if !(len(dto.RequiredClaims) == 1 && dto.RequiredClaims[0] == "-") {
+	if len(dto.RequiredClaims) != 1 || dto.RequiredClaims[0] != "-" {
 		for _, claim := range dto.RequiredClaims {
 			parts := strings.SplitN(claim, "=", 2)
 			if len(parts) == 2 {

@@ -20,7 +20,7 @@ type ErrorReporter interface {
 	GetComponent() Component
 }
 
-// error reporter
+// LastError holds information about the most recent error.
 type LastError struct {
 	Message   string    `json:"message,omitempty"`
 	Reason    Reason    `json:"reason,omitempty"`

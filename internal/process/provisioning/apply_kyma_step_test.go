@@ -347,11 +347,6 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 }
 
 func assertLabelsExists(t *testing.T, expectedLabels map[string]string, obj unstructured.Unstructured) {
-	keys := make([]string, 0, len(obj.GetLabels()))
-	for k := range obj.GetLabels() {
-		keys = append(keys, k)
-	}
-
 	if !assert.Subset(t, obj.GetLabels(), expectedLabels) {
 		t.Logf("Expected labels: %v", expectedLabels)
 		t.Logf("Actual labels:   %v", obj.GetLabels())

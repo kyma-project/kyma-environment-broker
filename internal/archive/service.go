@@ -31,13 +31,13 @@ func NewService(db storage.BrokerStorage, dryRun bool, performDeletion bool, bat
 	}
 }
 
-func (s *Service) Run() (error, int, int) {
+func (s *Service) Run() (int, int, error) {
 	l := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	instanceIDs, err := s.instances.ListDeletedInstanceIDs(s.batchSize)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Unable to get instance IDs: %s", err.Error()))
-		return err, 0, 0
+		return 0, 0, err
 	}
 	l.Info(fmt.Sprintf("Got %d instance IDs to process", len(instanceIDs)))
 
@@ -51,10 +51,10 @@ func (s *Service) Run() (error, int, int) {
 		if errInstance == nil {
 			logger.Error(fmt.Sprintf("the instance (createdAt: %s, planName: %s) still exists, aborting the process",
 				instance.InstanceID, instance.CreatedAt))
-			return fmt.Errorf("instance exists"), numberOfInstancesProcessed, numberOfOperationsDeleted
+			return numberOfInstancesProcessed, numberOfOperationsDeleted, fmt.Errorf("instance exists")
 		}
 		if !dberr.IsNotFound(errInstance) {
-			return errInstance, numberOfInstancesProcessed, numberOfOperationsDeleted
+			return numberOfInstancesProcessed, numberOfOperationsDeleted, errInstance
 		}
 
 		operations, err := s.operations.ListOperationsByInstanceID(instanceId)
@@ -110,5 +110,5 @@ func (s *Service) Run() (error, int, int) {
 		numberOfInstancesProcessed++
 	}
 
-	return nil, numberOfInstancesProcessed, numberOfOperationsDeleted
+	return numberOfInstancesProcessed, numberOfOperationsDeleted, nil
 }
