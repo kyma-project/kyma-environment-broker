@@ -270,11 +270,16 @@ func getLimitForProvider(config *multiaccount.MultiAccountConfig, providerType s
 	case runtimepkg.Alicloud:
 		limit = config.Limits.AliCloud
 	default:
-		limit = 0
+		limit = config.Limits.Default
 	}
 
 	if limit == 0 {
-		return config.Limits.Default
+		limit = config.Limits.Default
+	}
+
+	// 0 means no limit (unlimited)
+	if limit == 0 {
+		return 999999
 	}
 
 	return limit

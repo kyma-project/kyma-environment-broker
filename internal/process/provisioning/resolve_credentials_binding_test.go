@@ -369,6 +369,21 @@ func TestGetLimitForProvider(t *testing.T) {
 		assert.Equal(t, 150, getLimitForProvider(config, "alicloud"))
 	})
 
+	t.Run("should return 999999 when default is zero", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default: 0,
+				AWS:     0,
+				GCP:     0,
+			},
+		}
+
+		assert.Equal(t, 999999, getLimitForProvider(config, "aws"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "gcp"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "azure"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "unknown"))
+	})
+
 	t.Run("should return 0 when config is nil", func(t *testing.T) {
 		assert.Equal(t, 0, getLimitForProvider(nil, "aws"))
 		assert.Equal(t, 0, getLimitForProvider(nil, "unknown"))
