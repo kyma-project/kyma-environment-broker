@@ -145,6 +145,10 @@ jobs:
         run: |
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
 
+      - name: Create Shoot for first instance
+        run: |
+          make create-shoot RUNTIME_ID=$RUNTIME_ID
+
       - name: Wait for provisioning to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
         
@@ -198,6 +202,10 @@ jobs:
       - name: Set second RuntimeCR State to Ready
         run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_2 STATE=Ready
 
+      - name: Create Shoot for second instance
+        run: |
+          make create-shoot RUNTIME_ID=$RUNTIME_ID_2
+
       - name: Wait for second provisioning to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster-2
 
@@ -242,6 +250,10 @@ jobs:
       - name: Set third RuntimeCR State to Ready
         run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_3 STATE=Ready
 
+      - name: Create Shoot for third instance
+        run: |
+          make create-shoot RUNTIME_ID=$RUNTIME_ID_3
+
       - name: Wait for third provisioning to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster-3
 
@@ -258,6 +270,24 @@ jobs:
           echo "Instance 1 binding: $BINDING_NAME_1"
           echo "Instance 2 binding: $BINDING_NAME_2"
           echo "Instance 3 binding: $BINDING_NAME_3"
+          
+          # Verify first two instances share the same binding
+          if [ "$BINDING_NAME_1" != "$BINDING_NAME_2" ]; then
+            echo "Error: First two instances should share the same binding (below limit)"
+            echo "Instance 1: $BINDING_NAME_1"
+            echo "Instance 2: $BINDING_NAME_2"
+            exit 1
+          fi
+          
+          # Verify third instance has a different binding (rotation occurred)
+          if [ "$BINDING_NAME_3" == "$BINDING_NAME_1" ]; then
+            echo "Error: Third instance should have a different binding (limit reached)"
+            echo "All three instances using: $BINDING_NAME_3"
+            exit 1
+          fi
+          
+          echo "Instances 1-2 share binding: $BINDING_NAME_1"
+          echo "Instance 3 uses different binding: $BINDING_NAME_3"
           
       - name: Set third Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID_3 STATE=Ready
