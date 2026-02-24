@@ -466,7 +466,7 @@ hap:
   multiHyperscalerAccount:
     allowedGlobalAccounts: ["*"]
     limits:
-      default: 10000000000
+      default: 1000
       aws: 2
 
 subscriptionGardenerResource: CredentialsBinding
