@@ -24,10 +24,13 @@ linters:
     - goconst     # Find repeated strings that could be replaced by a constant
     - unconvert   # Detect redundant type conversions
     - unused      # Detect unused constants, variables, functions and types
+    - cyclop      # Check code complexity
   settings:
     unused:
       # Mark all struct fields that have been written to as used.
       field-writes-are-uses: false
+    cyclop:
+      max-complexity: 30
 formatters:
   enable:
     - goimports

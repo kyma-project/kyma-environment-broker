@@ -298,47 +298,54 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 		return true
 	}
 
-	for _, s := range states {
-		switch s {
-		case dbmodel.InstanceSucceeded:
-			if op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceFailed:
-			if op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision) {
-				return true
-			}
-		case dbmodel.InstanceError:
-			if op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceProvisioning:
-			if op.Type == internal.OperationTypeProvision && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceDeprovisioning:
-			if op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceUpgrading:
-			if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceUpdating:
-			if op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceDeprovisioned:
-			if op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceNotDeprovisioned:
-			if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
+	for _, state := range states {
+		if matched := s.matchState(state, op); matched {
+			return matched
 		}
 	}
 
+	return false
+}
+
+func (s *instances) matchState(state dbmodel.InstanceState, op *internal.Operation) bool {
+	switch state {
+	case dbmodel.InstanceSucceeded:
+		if op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceFailed:
+		if op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision) {
+			return true
+		}
+	case dbmodel.InstanceError:
+		if op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceProvisioning:
+		if op.Type == internal.OperationTypeProvision && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceDeprovisioning:
+		if op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceUpgrading:
+		if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceUpdating:
+		if op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceDeprovisioned:
+		if op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceNotDeprovisioned:
+		if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	}
 	return false
 }
 
