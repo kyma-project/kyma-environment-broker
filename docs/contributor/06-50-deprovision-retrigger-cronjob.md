@@ -40,5 +40,5 @@ Use the following environment variables to configure the Job:
 | **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
 | **APP_DATABASE_USER** | None | Specifies the username for the database. |
-| **APP_DRY_RUN** | <code>false</code> | If <code>true</code>, the Job runs in dry-run mode and does not actually retrigger deprovisioning. |
+| **APP_DRY_RUN** | <code>false</code> | If true, the Job runs in dry-run mode and does not actually retrigger deprovisioning. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |

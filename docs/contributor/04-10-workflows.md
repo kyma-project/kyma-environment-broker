@@ -23,15 +23,18 @@ The [create-and-promote-release](/.github/workflows/create-and-promote-release.y
 
 The [`label-validator`](/.github/workflows/label-validator.yml) workflow is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed in the [`release.yml`](/.github/release.yml) file.
 
-## Verify KEB Workflow
+## Verify KEB - Go Workflow
 
-The [`run-verify`](/.github/workflows/run-verify.yaml) workflow calls the reusable [`run-unit-tests-reusable`](/.github/workflows/run-unit-tests-reusable.yaml) workflow with unit tests, executes Go-related checks (such as dependency and formatting checks), runs the Go linter, and verifies that the documentation describing environment variables is up to date.
+The [`run-verify-go`](/.github/workflows/run-verify-go.yaml) workflow calls the reusable [`run-unit-tests-reusable`](/.github/workflows/run-unit-tests-reusable.yaml) workflow with unit tests, executes Go-related checks (such as dependency and formatting checks) and runs the Go linter. 
 
-The documentation check uses the [`scripts/python/generate_env_docs.py`](../../scripts/python/generate_env_docs.py) script to ensure that environment variable tables in the documentation are up to date with the Helm chart and the `values.yaml` file. The script extracts environment variables from templates, matches them with descriptions and defaults from `values.yaml`, and based on these, updates the relevant Markdown files.
+## Verify KEB - Docs Workflow
+
+The [`run-verify-docs`](/.github/workflows/run-verify-docs.yaml) workflow verifies that the documentation describing environment variables is up to date.
+It uses the [`scripts/python/generate_env_docs.py`](../../scripts/python/generate_env_docs.py) script to ensure that environment variable tables in the documentation are up to date with the Helm chart and the `values.yaml` file. The script extracts environment variables from templates, matches them with descriptions and defaults from `values.yaml`, and based on these, updates the relevant Markdown files.
 
 ### Add New Files to the Documentation Check
 
-To add a new documentation file to the `run-verify` check, perform the following steps:
+To add a new documentation file to the `run-verify-docs` check, perform the following steps:
 
 1. Add the template and the corresponding Markdown file to the `SINGLE_JOBS`, `MULTI_JOBS_IN_ONE_TEMPLATE`, or `COMBINED_JOBS_IN_ONE_MD` lists in `generate_env_docs.py`.
 2. Ensure the Markdown file contains a table for environment variables, or a section header where the table should be inserted.

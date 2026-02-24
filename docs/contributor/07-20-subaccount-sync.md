@@ -55,7 +55,7 @@ Use the following environment variables to configure the application:
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **SUBACCOUNT_SYNC_&#x200b;ACCOUNTS_SYNC_&#x200b;INTERVAL** | <code>24h</code> | Interval between full account synchronization runs. |
-| **SUBACCOUNT_SYNC_&#x200b;ALWAYS_SUBACCOUNT_&#x200b;FROM_DATABASE** | <code>false</code> | If <code>true</code>, fetches subaccountID from the database only when the subaccount is empty. |
+| **SUBACCOUNT_SYNC_&#x200b;ALWAYS_SUBACCOUNT_&#x200b;FROM_DATABASE** | <code>false</code> | If true, fetches subaccountID from the database only when the subaccount is empty. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_AUTH_URL** | <code>TBD</code> | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_CLIENT_ID** | None | Specifies the **CLIENT_ID** for the client accessing accounts. |
 | **SUBACCOUNT_SYNC_CIS_&#x200b;ACCOUNTS_CLIENT_&#x200b;SECRET** | None | Specifies the **CLIENT_SECRET** for the client accessing accounts. |
@@ -83,4 +83,4 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_&#x200b;QUEUE_SLEEP_INTERVAL** | <code>30s</code> | Interval between queue processing cycles. |
 | **SUBACCOUNT_SYNC_&#x200b;RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template. |
 | **SUBACCOUNT_SYNC_&#x200b;STORAGE_SYNC_&#x200b;INTERVAL** | <code>5m</code> | Interval between storage synchronization. |
-| **SUBACCOUNT_SYNC_&#x200b;UPDATE_RESOURCES** | <code>false</code> | If <code>true</code>, enables updating resources during subaccount sync. |
+| **SUBACCOUNT_SYNC_&#x200b;UPDATE_RESOURCES** | <code>false</code> | If true, enables updating resources during subaccount sync. |

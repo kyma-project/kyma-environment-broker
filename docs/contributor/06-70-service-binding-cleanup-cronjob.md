@@ -38,7 +38,7 @@ Use the following environment variables to configure the Job:
 | **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
 | **APP_DATABASE_USER** | None | Specifies the username for the database. |
-| **APP_JOB_DRY_RUN** | <code>false</code> | If <code>true</code>, the Job only logs what would be deleted without actually removing any bindings. |
+| **APP_JOB_DRY_RUN** | <code>false</code> | If true, the Job only logs what would be deleted without actually removing any bindings. |
 | **APP_JOB_REQUEST_&#x200b;RETRIES** | <code>2</code> | Number of times to retry a failed DELETE request for a binding. |
 | **APP_JOB_REQUEST_&#x200b;TIMEOUT** | <code>2s</code> | Timeout for each DELETE request to the broker. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
