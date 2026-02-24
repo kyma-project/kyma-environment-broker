@@ -112,7 +112,7 @@ jobs:
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
-          scripts/testing/provision_instances.sh 1 azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:8080
+          scripts/testing/provision_instances.sh 1 aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 aws-cluster us-east-1 http://localhost:8080
 
       - name: Get RuntimeID
         run: |
@@ -120,7 +120,7 @@ jobs:
               RUNTIME_ID=$(curl --request GET \
               --url http://localhost:8080/runtimes \
               --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="aws-cluster") | .runtimeID')
               if [ -z "$RUNTIME_ID" ]; then
                 echo "RuntimeID is empty. Retrying in 5 seconds..."
                 curl --request GET \
@@ -146,7 +146,7 @@ jobs:
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
 
       - name: Wait for provisioning to finish
-        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
         
       - name: Set Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
@@ -160,19 +160,19 @@ jobs:
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
 
       - name: Update the instance
-        run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{"machineType":"Standard_D4s_v5"}' http://localhost:8080
+        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m5.xlarge"}' http://localhost:8080
 
       - name: Wait for updating to finish
-        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
       - name: Assert update totalCount is 1
-        run: scripts/testing/assert_runtime_count.sh azure-cluster 1 http://localhost:8080 update
+        run: scripts/testing/assert_runtime_count.sh aws-cluster 1 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
 
       - name: Provision second instance to test binding rotation
         run: |
-          scripts/testing/provision_instances.sh 1 azure-cluster-2 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-2 northeurope http://localhost:8080
+          scripts/testing/provision_instances.sh 1 aws-cluster-2 361c511f-f939-4621-b228-d0fb79a1fe15 aws-cluster-2 us-east-1 http://localhost:8080
 
       - name: Get second RuntimeID
         run: |
@@ -180,7 +180,7 @@ jobs:
               RUNTIME_ID_2=$(curl --request GET \
               --url http://localhost:8080/runtimes \
               --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster-2") | .runtimeID')
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="aws-cluster-2") | .runtimeID')
               if [ -z "$RUNTIME_ID_2" ]; then
                 echo "RuntimeID_2 is empty. Retrying in 5 seconds..."
                 sleep 5
@@ -199,7 +199,7 @@ jobs:
         run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_2 STATE=Ready
 
       - name: Wait for second provisioning to finish
-        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster-2
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster-2
 
       - name: Verify second instance got a credentials binding
         run: |
@@ -216,7 +216,7 @@ jobs:
 
       - name: Provision third instance to test limit enforcement
         run: |
-          scripts/testing/provision_instances.sh 1 azure-cluster-3 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster-3 northeurope http://localhost:8080
+          scripts/testing/provision_instances.sh 1 aws-cluster-3 361c511f-f939-4621-b228-d0fb79a1fe15 aws-cluster-3 us-east-1 http://localhost:8080
 
       - name: Get third RuntimeID
         run: |
@@ -224,7 +224,7 @@ jobs:
               RUNTIME_ID_3=$(curl --request GET \
               --url http://localhost:8080/runtimes \
               --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster-3") | .runtimeID')
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="aws-cluster-3") | .runtimeID')
               if [ -z "$RUNTIME_ID_3" ]; then
                 echo "RuntimeID_3 is empty. Retrying in 5 seconds..."
                 sleep 5
@@ -243,7 +243,7 @@ jobs:
         run: make set-runtime-state RUNTIME_ID=$RUNTIME_ID_3 STATE=Ready
 
       - name: Wait for third provisioning to finish
-        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster-3
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster-3
 
       - name: Verify third instance got a different credentials binding
         run: |
@@ -253,8 +253,9 @@ jobs:
             echo "Error: Third instance has no credentials binding assigned"
             exit 1
           fi
+          BINDING_NAME_1=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           echo "Verifying binding rotation occurred across three instances"
-          echo "Instance 1 binding: azure (from original provisioning)"
+          echo "Instance 1 binding: $BINDING_NAME_1"
           echo "Instance 2 binding: $BINDING_NAME_2"
           echo "Instance 3 binding: $BINDING_NAME_3"
           
@@ -266,12 +267,12 @@ jobs:
           echo "GLOBAL_ACCOUNT_ID=new-globalaccount-id" >> $GITHUB_ENV
 
       - name: Update the instance with new global account ID
-        run: scripts/testing/update_instance.sh azure-cluster 4deee563-e5ec-4731-b9b1-53b42d855f0c '{}' http://localhost:8080
+        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{}' http://localhost:8080
 
       - name: Wait for global account ID update to finish
-        run: ./scripts/testing/wait_for_instance_state.sh azure-cluster
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
       - name: Assert update totalCount is 2
-        run: scripts/testing/assert_runtime_count.sh azure-cluster 2 http://localhost:8080 update
+        run: scripts/testing/assert_runtime_count.sh aws-cluster 2 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after global account ID update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
@@ -313,10 +314,10 @@ jobs:
           echo "GardenerCluster CR label verification passed"
 
       - name: Deprovision the instance
-        run: scripts/testing/deprovision_instances.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster http://localhost:8080 single
+        run: scripts/testing/deprovision_instances.sh 361c511f-f939-4621-b228-d0fb79a1fe15 aws-cluster http://localhost:8080 single
       
       - name: Wait for deprovisioning to finish
-        run: ./scripts/testing/wait_for_deprovisioning.sh azure-cluster $RUNTIME_ID
+        run: ./scripts/testing/wait_for_deprovisioning.sh aws-cluster $RUNTIME_ID
 
       - name: Check for errors and warnings in KEB logs after deprovisioning
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
