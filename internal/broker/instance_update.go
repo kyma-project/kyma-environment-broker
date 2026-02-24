@@ -151,14 +151,13 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 
 func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
+
 	instance, err := b.instanceStorage.GetByID(instanceID)
-	if err != nil && dberr.IsNotFound(err) {
-		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusNotFound, fmt.Sprintf("could not execute update for instanceID %s", instanceID))
-	} else if err != nil {
-		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to get instance")
+	err = b.handleGetInstanceError(err, logger, instanceID)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
+
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
@@ -177,18 +176,16 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}
 
 	if instance.IsExpired() {
-		if ersContext.GlobalAccountID != "" {
-			return domain.UpdateServiceSpec{}, nil
+		var expirationErr error
+		if ersContext.GlobalAccountID == "" {
+			expirationErr = apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 		}
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
+		return domain.UpdateServiceSpec{}, expirationErr
 	}
-	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+
+	lastProvisioningOperation, err := b.checkProvisioningState(err, instance, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
-	}
-	if lastProvisioningOperation.State == domain.Failed {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
@@ -196,12 +193,10 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
-	if err == nil {
-		if !lastDeprovisioningOperation.Temporary {
-			// it is not a suspension, but real deprovisioning
-			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
-		}
+	if err == nil && !lastDeprovisioningOperation.Temporary {
+		// deprovisioning found, and it is not a suspension, but real deprovisioning
+		logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.ID))
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
 	}
 
 	if b.dashboardConfig.LandscapeURL != "" {
@@ -221,6 +216,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 			return b.processUpdateParameters(ctx, &previousInstance, instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
+
 	return domain.UpdateServiceSpec{
 		IsAsync:       false,
 		DashboardURL:  dashboard.ProvideURL(instance, lastProvisioningOperation),
@@ -229,6 +225,29 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) checkProvisioningState(err error, instance *internal.Instance, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
+	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
+		return nil, fmt.Errorf("unable to process the update")
+	}
+	if lastProvisioningOperation.State == domain.Failed {
+		return nil, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
+	}
+	return lastProvisioningOperation, nil
+}
+
+func (b *UpdateEndpoint) handleGetInstanceError(err error, logger *slog.Logger, instanceID string) error {
+	if err != nil && dberr.IsNotFound(err) {
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
+		return apiresponses.NewFailureResponse(err, http.StatusNotFound, fmt.Sprintf("could not execute update for instanceID %s", instanceID))
+	} else if err != nil {
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
+		return fmt.Errorf("unable to get instance")
+	}
+	return nil
 }
 
 func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDetails, instance *internal.Instance) error {
@@ -249,13 +268,9 @@ func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDe
 }
 
 func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ersContext internal.ERSContext) bool {
-	if len(details.RawParameters) != 0 {
-		return true
-	}
-	if details.PlanID != instance.ServicePlanID {
-		return true
-	}
-	return ersContext.ERSUpdate()
+	return len(details.RawParameters) != 0 ||
+		details.PlanID != instance.ServicePlanID ||
+		ersContext.ERSUpdate()
 }
 
 func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousInstance, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
@@ -274,21 +289,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if !asyncAllowed {
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
-	var params internal.UpdatingParametersDTO
-	if len(details.RawParameters) != 0 {
-		err := json.Unmarshal(details.RawParameters, &params)
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
-		}
-		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+
+	params, err := b.unmarshalParams(details, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
+
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
-	if details.PlanID == TrialPlanID {
-		params.MachineType = nil
-		params.AutoScalerMin = nil
-		params.AutoScalerMax = nil
-	}
+	b.ZeroFieldsForTrialPlan(details, &params)
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
@@ -296,64 +304,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
+	err = b.validateMachineType(ctx, providerValues, instance, params, logger, details, ersContext)
 	if err != nil {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-	}
-	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
-		message := fmt.Sprintf(
-			"In the region %s, the machine type %s is not available, it is supported in the %v",
-			valueOfPtr(instance.Parameters.Parameters.Region),
-			valueOfPtr(params.MachineType),
-			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
-		)
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+		return domain.UpdateServiceSpec{}, err
 	}
 
-	discoveredZones := make(map[string]int)
-	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
-		if params.MachineType != nil {
-			discoveredZones[*params.MachineType] = 0
-		}
-
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			discoveredZones[additionalWorkerNodePool.MachineType] = 0
-		}
-
-		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-		var awsClient aws.Client
-		if b.useCredentialsBindings {
-			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		} else {
-			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-		}
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-		}
-
-		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
-			if err != nil {
-				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-			}
-			discoveredZones[machineType] = zonesCount
-		}
-
-		if params.MachineType != nil {
-			if discoveredZones[*params.MachineType] < providerValues.ZonesCount {
-				message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
-			}
-		}
-	}
-
-	if params.OIDC.IsProvided() {
-		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
-			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	err = b.validateOIDC(params, instance, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
 	}
 
 	operationID := uuid.New().String()
@@ -368,61 +326,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if params.AdditionalWorkerNodePools != nil {
-		if !supportsAdditionalWorkerNodePools(details.PlanID) {
-			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
-		}
-
-		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
-			message := "names of additional worker node pools must be unique"
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
-		}
-
-		if IsExternalLicenseType(ersContext) {
-			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-		}
-
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkAutoScalerConfiguration(params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkAvailableZones(
-			logger,
-			regionsSupportingMachine,
-			params.AdditionalWorkerNodePools,
-			providerValues.Region,
-			details.PlanID,
-			b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
-			discoveredZones,
-		); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		multiError := pkg.MachineTypeMultiError{}
-		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-			planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(planName)); err != nil {
-				multiError.Append(err)
-			}
-		}
-		if multiError.IsError() {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(&multiError, http.StatusBadRequest, multiError.Error())
-		}
-	}
-
-	err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
-	if err != nil {
+	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -430,37 +334,26 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
+
 	if len(updateStorage) > 0 {
-		instance, err = b.instanceStorage.Update(*instance)
+		instance, err := b.instanceStorage.Update(*instance)
 		if err != nil {
 			params := strings.Join(updateStorage, ", ")
 			logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s)", params, err.Error()))
 			return domain.UpdateServiceSpec{}, err
 		}
-		if slices.Contains(updateStorage, planChangeMessage) {
-			oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
-			newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
-			if err := b.actionStorage.InsertAction(
-				pkg.PlanUpdateActionType,
-				instance.InstanceID,
-				message,
-				previousInstance.ServicePlanID,
-				details.PlanID,
-			); err != nil {
-				logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
-			}
-		}
+		b.insertActionForPlanUpgrade(updateStorage, previousInstance, details, instance, logger)
 	}
 
 	if skipProcessing, lastOperation := b.shouldSkipNewOperation(previousInstance, instance, logger); skipProcessing {
 		return b.responseWithoutNewOperation(instance, lastOperation, logger)
 	}
+
 	logger.Debug("Creating update operation in the database")
-	err = b.operationStorage.InsertOperation(operation)
-	if err != nil {
+	if err = b.operationStorage.InsertOperation(operation); err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
+
 	logger.Debug("Adding update operation to the processing queue")
 	b.updatingQueue.Add(operationID)
 
@@ -472,6 +365,192 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 			Labels: ResponseLabels(*instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
+}
+
+func (b *UpdateEndpoint) validateMachineType(ctx context.Context, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(providerValues.ProviderType)
+	if err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if err := b.validateMachineTypeSupportedInRegion(regionsSupportingMachine, providerValues, instance, params); err != nil {
+		return err
+	}
+
+	discoveredZones := map[string]int{}
+	if b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)) {
+		discoveredZones, err = b.discoverZones(ctx, providerValues, params, logger, instance)
+		if err != nil {
+			return err
+		}
+
+		if params.MachineType != nil && discoveredZones[*params.MachineType] < providerValues.ZonesCount {
+			message := fmt.Sprintf("In the %s, the %s machine type is not available in %v zones.", providerValues.Region, *params.MachineType, providerValues.ZonesCount)
+			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+		}
+	}
+
+	if params.AdditionalWorkerNodePools != nil {
+		if err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, instance *internal.Instance, logger *slog.Logger) error {
+	if params.OIDC.IsProvided() {
+		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
+			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) unmarshalParams(details domain.UpdateDetails, logger *slog.Logger) (internal.UpdatingParametersDTO, error) {
+	var params internal.UpdatingParametersDTO
+	if len(details.RawParameters) != 0 {
+		err := json.Unmarshal(details.RawParameters, &params)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
+			return internal.UpdatingParametersDTO{}, fmt.Errorf("unable to unmarshal parameters")
+		}
+		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
+	}
+	return params, nil
+}
+func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, params *internal.UpdatingParametersDTO) {
+	if details.PlanID == TrialPlanID {
+		params.MachineType = nil
+		params.AutoScalerMin = nil
+		params.AutoScalerMax = nil
+	}
+}
+
+func (b *UpdateEndpoint) validateMachineTypeSupportedInRegion(regionsSupportingMachine internal.RegionsSupporter, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) error {
+
+	if !regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+		message := fmt.Sprintf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(instance.Parameters.Parameters.Region),
+			valueOfPtr(params.MachineType),
+			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
+		)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.UpdateDetails, params internal.UpdatingParametersDTO, ersContext internal.ERSContext, regionsSupportingMachine internal.RegionsSupporter, instance *internal.Instance, logger *slog.Logger, providerValues internal.ProviderValues, discoveredZones map[string]int) error {
+	if !supportsAdditionalWorkerNodePools(details.PlanID) {
+		message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+
+	if !AreNamesUnique(params.AdditionalWorkerNodePools) {
+		message := "names of additional worker node pools must be unique"
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
+	}
+
+	if IsExternalLicenseType(ersContext) {
+		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
+	if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkAutoScalerConfiguration(params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkAvailableZones(
+		logger,
+		regionsSupportingMachine,
+		params.AdditionalWorkerNodePools,
+		providerValues.Region,
+		details.PlanID,
+		b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(providerValues.ProviderType)),
+		discoveredZones,
+	); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	multiError := b.validateMachineTypeChange(params, details, instance)
+	if multiError.IsError() {
+		return apiresponses.NewFailureResponse(&multiError, http.StatusBadRequest, multiError.Error())
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) validateMachineTypeChange(params internal.UpdatingParametersDTO, details domain.UpdateDetails, instance *internal.Instance) pkg.MachineTypeMultiError {
+	multiError := pkg.MachineTypeMultiError{}
+	for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if err := additionalWorkerNodePool.ValidateMachineTypeChange(instance.Parameters.Parameters.AdditionalWorkerNodePools, b.planSpec.RegularMachines(planName)); err != nil {
+			multiError.Append(err)
+		}
+	}
+	return multiError
+}
+
+func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, previousInstance *internal.Instance, details domain.UpdateDetails, instance *internal.Instance, logger *slog.Logger) {
+	if slices.Contains(updateStorage, planChangeMessage) {
+		oldPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(previousInstance.ServicePlanID))
+		newPlan := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		message := fmt.Sprintf("Plan updated from %s (PlanID: %s) to %s (PlanID: %s).", oldPlan, previousInstance.ServicePlanID, newPlan, details.PlanID)
+		if err := b.actionStorage.InsertAction(
+			pkg.PlanUpdateActionType,
+			instance.InstanceID,
+			message,
+			previousInstance.ServicePlanID,
+			details.PlanID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.PlanUpdateActionType, message, instance.InstanceID, err))
+		}
+	}
+}
+
+func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
+	var err error
+	discoveredZones := make(map[string]int)
+	if params.MachineType != nil {
+		discoveredZones[*params.MachineType] = 0
+	}
+
+	for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+		discoveredZones[additionalWorkerNodePool.MachineType] = 0
+	}
+
+	// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
+	var awsClient aws.Client
+	if b.useCredentialsBindings {
+		awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	} else {
+		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	}
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+		return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+	}
+
+	for machineType := range discoveredZones {
+		zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
+			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
+		}
+		discoveredZones[machineType] = zonesCount
+	}
+	return discoveredZones, nil
 }
 
 func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstance *internal.Instance, logger *slog.Logger) (bool, *internal.Operation) {
@@ -560,25 +639,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		instance.Parameters.ErsContext.Active = ersContext.Active
 	}
 
-	needUpdateCustomResources := false
-	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
-		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
-		if err := b.actionStorage.InsertAction(
-			pkg.SubaccountMovementActionType,
-			instance.InstanceID,
-			message,
-			instance.GlobalAccountID,
-			ersContext.GlobalAccountID,
-		); err != nil {
-			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
-		}
-		if instance.SubscriptionGlobalAccountID == "" {
-			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
-		}
-		instance.GlobalAccountID = ersContext.GlobalAccountID
-		needUpdateCustomResources = true
-		logger.Info(fmt.Sprintf("Global account ID changed to: %s. need update labels", instance.GlobalAccountID))
-	}
+	needUpdateCustomResources := b.handleSubaccountMoveRequest(instance, ersContext, logger)
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
@@ -600,13 +661,36 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	return newInstance, changed, nil
 }
 
+func (b *UpdateEndpoint) handleSubaccountMoveRequest(instance *internal.Instance, ersContext internal.ERSContext, logger *slog.Logger) bool {
+	needUpdateCustomResources := false
+	if b.subaccountMovementEnabled && (instance.GlobalAccountID != ersContext.GlobalAccountID && ersContext.GlobalAccountID != "") {
+		message := fmt.Sprintf("Subaccount %s moved from Global Account %s to %s.", ersContext.SubAccountID, instance.GlobalAccountID, ersContext.GlobalAccountID)
+		if err := b.actionStorage.InsertAction(
+			pkg.SubaccountMovementActionType,
+			instance.InstanceID,
+			message,
+			instance.GlobalAccountID,
+			ersContext.GlobalAccountID,
+		); err != nil {
+			logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SubaccountMovementActionType, message, instance.InstanceID, err))
+		}
+		if instance.SubscriptionGlobalAccountID == "" {
+			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
+		}
+		instance.GlobalAccountID = ersContext.GlobalAccountID
+		needUpdateCustomResources = true
+		logger.Info(fmt.Sprintf("Global account ID changed to: %s. need update labels", instance.GlobalAccountID))
+	}
+	return needUpdateCustomResources
+}
+
 func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.ProvisioningOperation) (*bool, error) {
 	deprovisioning, dErr := b.operationStorage.GetDeprovisioningOperationByInstanceID(id)
 	if dErr != nil && !dberr.IsNotFound(dErr) {
 		b.log.Error(fmt.Sprintf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error()))
 		return nil, dErr
 	}
-	// there was no any deprovisioning in the past (any suspension)
+	// there was no deprovisioning in the past (any suspension)
 	if deprovisioning == nil {
 		return ptr.Bool(true), nil
 	}
@@ -664,36 +748,27 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	var updateStorage []string
 	if details.PlanID != "" && details.PlanID != instance.ServicePlanID {
 		logger.Info(fmt.Sprintf("Plan change requested: %s -> %s", instance.ServicePlanID, details.PlanID))
-		if b.config.EnablePlanUpgrades && b.planSpec.IsUpgradableBetween(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)), AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))) {
-			if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
-				if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
-					return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
-			}
-			logger.Info("Plan change accepted.")
-			operation.UpdatedPlanID = details.PlanID
-			operation.ProvisioningParameters.PlanID = details.PlanID
-			instance.Parameters.PlanID = details.PlanID
-			instance.ServicePlanID = details.PlanID
-			instance.ServicePlanName = AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			updateStorage = append(updateStorage, planChangeMessage)
-		} else {
-			logger.Info("Plan change not allowed.")
-			sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-			targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-			return nil, apiresponses.NewFailureResponse(
-				fmt.Errorf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
-				http.StatusBadRequest,
-				fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID),
-			)
+
+		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+
+		err := b.isPlanChangePossible(instance, sourcePlanName, targetPlanName, logger, details, ersContext)
+		if err != nil {
+			return nil, err
 		}
+
+		logger.Info("Plan change accepted.")
+		operation.UpdatedPlanID = details.PlanID
+		operation.ProvisioningParameters.PlanID = details.PlanID
+		instance.Parameters.PlanID = details.PlanID
+		instance.ServicePlanID = details.PlanID
+		instance.ServicePlanName = targetPlanName
+		updateStorage = append(updateStorage, planChangeMessage)
 	}
 
-	if params.OIDC.IsProvided() {
-		if params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty()) {
-			instance.Parameters.Parameters.OIDC = params.OIDC
-			updateStorage = append(updateStorage, "OIDC")
-		}
+	if params.OIDC.IsProvided() && (params.OIDC.List != nil || (params.OIDC.OIDCConfigDTO != nil && !params.OIDC.OIDCConfigDTO.IsEmpty())) {
+		instance.Parameters.Parameters.OIDC = params.OIDC
+		updateStorage = append(updateStorage, "OIDC")
 	}
 
 	if params.IngressFiltering != nil {
@@ -702,24 +777,21 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	if len(params.RuntimeAdministrators) != 0 {
-		newAdministrators := make([]string, 0, len(params.RuntimeAdministrators))
-		newAdministrators = append(newAdministrators, params.RuntimeAdministrators...)
-		instance.Parameters.Parameters.RuntimeAdministrators = newAdministrators
+		instance.Parameters.Parameters.RuntimeAdministrators = b.collectAdministrators(params)
 		updateStorage = append(updateStorage, "Runtime Administrators")
 	}
 
 	if params.UpdateAutoScaler(&instance.Parameters.Parameters) {
 		updateStorage = append(updateStorage, "Auto Scaler parameters")
 	}
+
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 		updateStorage = append(updateStorage, "Machine type")
 	}
 
 	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
-		newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
-		newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
-		instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = b.collectAdditionalWorkerPools(params)
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
 	}
 
@@ -729,6 +801,33 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	return updateStorage, nil
+}
+
+func (b *UpdateEndpoint) isPlanChangePossible(instance *internal.Instance, sourcePlanName string, targetPlanName string, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	if !b.config.EnablePlanUpgrades || !b.planSpec.IsUpgradableBetween(sourcePlanName, targetPlanName) {
+		logger.Info("Plan change not allowed.")
+		errMsg := fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID)
+		return apiresponses.NewFailureResponse(fmt.Errorf("%s", errMsg), http.StatusBadRequest, errMsg)
+	}
+
+	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(ersContext.SubAccountID, b.quotaWhitelist) {
+		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, ersContext.SubAccountID, details.PlanID, true); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) collectAdministrators(params *internal.UpdatingParametersDTO) []string {
+	newAdministrators := make([]string, 0, len(params.RuntimeAdministrators))
+	newAdministrators = append(newAdministrators, params.RuntimeAdministrators...)
+	return newAdministrators
+}
+
+func (b *UpdateEndpoint) collectAdditionalWorkerPools(params *internal.UpdatingParametersDTO) []pkg.AdditionalWorkerNodePool {
+	newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
+	newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
+	return newAdditionalWorkerNodePools
 }
 
 func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {

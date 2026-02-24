@@ -2596,6 +2596,70 @@ func TestUpdateWithoutOperationDependsOnLastOperation(t *testing.T) {
 	}
 }
 
+func TestZeroFieldsForTrial(t *testing.T) {
+	t.Run("should zero out specific fields for trial plan", func(t *testing.T) {
+		// given
+		st := storage.NewMemoryStorage()
+		handler := &handler{}
+		q := &automock.Queue{}
+		kcBuilder := &kcMock.KcBuilder{}
+
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+		params := internal.UpdatingParametersDTO{
+			MachineType: ptr.String("m5.large"),
+		}
+		params.AutoScalerMin = ptr.Integer(5)
+		params.AutoScalerMax = ptr.Integer(10)
+
+		details := domain.UpdateDetails{
+			PlanID: broker.TrialPlanID,
+		}
+
+		// when
+		svc.ZeroFieldsForTrialPlan(details, &params)
+
+		// then
+		assert.Nil(t, params.AutoScalerMin)
+		assert.Nil(t, params.AutoScalerMax)
+		assert.Nil(t, params.MachineType)
+	})
+
+	t.Run("should not zero out fields for non-trial plan", func(t *testing.T) {
+		// given
+		st := storage.NewMemoryStorage()
+		handler := &handler{}
+		q := &automock.Queue{}
+		kcBuilder := &kcMock.KcBuilder{}
+
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+		expectedMin := ptr.Integer(5)
+		expectedMax := ptr.Integer(10)
+		expectedMachineType := ptr.String("m5.large")
+
+		params := internal.UpdatingParametersDTO{
+			MachineType: expectedMachineType,
+		}
+		params.AutoScalerMin = expectedMin
+		params.AutoScalerMax = expectedMax
+
+		details := domain.UpdateDetails{
+			PlanID: broker.AWSPlanID,
+		}
+
+		// when
+		svc.ZeroFieldsForTrialPlan(details, &params)
+
+		// then
+		assert.Equal(t, expectedMin, params.AutoScalerMin)
+		assert.Equal(t, expectedMax, params.AutoScalerMax)
+		assert.Equal(t, expectedMachineType, params.MachineType)
+	})
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec := newPlanSpec(t)
 	return provider.NewPlanSpecificValuesProvider(
