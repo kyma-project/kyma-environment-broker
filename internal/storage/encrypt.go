@@ -80,7 +80,7 @@ func (e *Encrypter) encryptGCM(data []byte) ([]byte, error) {
 	return []byte(base64.StdEncoding.EncodeToString(encoded)), nil
 }
 
-// Decryption
+// DecryptFunc decrypts a byte slice.
 type DecryptFunc func(data []byte) ([]byte, error)
 
 func (e *Encrypter) decryptGCM(ciphertext []byte) ([]byte, error) {

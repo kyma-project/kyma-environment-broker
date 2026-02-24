@@ -34,6 +34,5 @@ func (srv *Server) ServeAsync() {
 func livenessHandler() func(w http.ResponseWriter, _ *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		return
 	}
 }

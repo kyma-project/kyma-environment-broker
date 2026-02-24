@@ -8,12 +8,6 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
 
-output:
-  formats:
-    text:
-      print-issued-lines: true
-      print-linter-name: true
-
 linters:
   default: none
   enable:
@@ -25,12 +19,28 @@ linters:
     - unconvert   # Detect redundant type conversions
     - unused      # Detect unused constants, variables, functions and types
     - cyclop      # Check code complexity
+    - staticcheck # Check set of rules from staticcheck
   settings:
     unused:
-      # Mark all struct fields that have been written to as used.
-      field-writes-are-uses: false
+      field-writes-are-uses: false # Mark all struct fields that have been written to as used.
     cyclop:
       max-complexity: 30
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF1008" # Omit embedded fields from selector expression.
+        - "-ST1000" # Incorrect or missing package comment.
+        - "-SA4006" # A value assigned to a variable is never read before being overwritten.
+        - "-ST1005" # Incorrectly formatted error string.
+        - "-S1009"  # Omit redundant nil check on slices, maps, and channels.
+        - "-ST1019" # Importing the same package multiple times.
+        - "-SA4009" # # A function argument is overwritten before its first use.
+        - "-S1008"  # Simplify returning boolean expression.
+        - "-SA1029" # Inappropriate key in call to 'context.WithValue'.
+        - "-SA1019" # Using a deprecated function, variable, constant or field.
+        - "-ST1003" # Poorly chosen identifier.
+        - "-ST1020" # The documentation of an exported function should start with the function's name.
+        - "-ST1012" # Poorly chosen name for error variable.
 formatters:
   enable:
     - goimports
