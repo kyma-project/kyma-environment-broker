@@ -390,10 +390,6 @@ func (b *UpdateEndpoint) validateMachineType(ctx context.Context, providerValues
 		}
 	}
 
-	if err != nil {
-		return err
-	}
-
 	if params.AdditionalWorkerNodePools != nil {
 		if err := b.validateAdditionalWorkerPoolsParams(details, params, ersContext, regionsSupportingMachine, instance, logger, providerValues, discoveredZones); err != nil {
 			return err
