@@ -11,8 +11,8 @@ import (
 
 func TestCisFakeServer(t *testing.T) {
 	srv, err := NewFakeServer()
-	defer srv.Close()
 	require.NoError(t, err)
+	defer srv.Close()
 
 	client := srv.Client()
 

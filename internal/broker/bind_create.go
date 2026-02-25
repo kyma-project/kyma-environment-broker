@@ -62,7 +62,7 @@ func (b *BindingContext) CreatedBy() string {
 }
 
 type BindingParams struct {
-	ExpirationSeconds int `json:"expiration_seconds,omit"`
+	ExpirationSeconds int `json:"expiration_seconds,omitempty"`
 }
 
 type Credentials struct {

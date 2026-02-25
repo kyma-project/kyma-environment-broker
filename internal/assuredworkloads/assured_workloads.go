@@ -5,8 +5,5 @@ const (
 )
 
 func IsKSA(platformRegion string) bool {
-	if platformRegion == BTPRegionDammamGCP {
-		return true
-	}
-	return false
+	return platformRegion == BTPRegionDammamGCP
 }

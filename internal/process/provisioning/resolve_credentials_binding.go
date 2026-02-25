@@ -170,13 +170,13 @@ func (s *ResolveCredentialsBindingStep) claimCredentialsBinding(credentialsBindi
 	return s.gardenerClient.UpdateCredentialsBinding(credentialsBinding)
 }
 
-func (step *ResolveCredentialsBindingStep) updateInstance(id, subscriptionSecretName string) error {
-	instance, err := step.instanceStorage.GetByID(id)
+func (s *ResolveCredentialsBindingStep) updateInstance(id, subscriptionSecretName string) error {
+	instance, err := s.instanceStorage.GetByID(id)
 	if err != nil {
 		return err
 	}
 	instance.SubscriptionSecretName = subscriptionSecretName
-	_, err = step.instanceStorage.Update(*instance)
+	_, err = s.instanceStorage.Update(*instance)
 	return err
 }
 

@@ -641,7 +641,7 @@ func (e *Environment) updateSecretToSkr(restCfg *rest.Config, secret *apicorev1.
 
 func (e *Environment) getSkrsForSimulateChange(skrIndexes []int) []*envtest.Environment {
 	var result []*envtest.Environment
-	if skrIndexes == nil || len(skrIndexes) == 0 {
+	if len(skrIndexes) == 0 {
 		indexSet := map[int]struct{}{}
 		for len(indexSet) != changedInstancesCount {
 

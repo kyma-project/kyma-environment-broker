@@ -490,7 +490,7 @@ cis:
 # Deprovision Retrigger Job Settings
 # =================================================
 deprovisionRetrigger:
-  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
+  # If true, the Job runs in dry-run mode and does not actually retrigger deprovisioning.
   dryRun: false
   # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
@@ -582,7 +582,7 @@ runtimeReconciler:
 # Service Binding Cleanup Job Settings
 # =================================================
 serviceBindingCleanup:
-  # If true, the job only logs what would be deleted without actually removing any bindings.
+  # If true, the Job only logs what would be deleted without actually removing any bindings.
   dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
   enabled: true

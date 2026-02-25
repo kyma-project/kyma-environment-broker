@@ -181,7 +181,7 @@
 | cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | None |
 | cis.entitlements.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS Entitlements client ID. | `id` |
 | cis.entitlements.<br>secretKey | The key in the Kubernetes Secret that contains the CIS Entitlements client secret. | `secret` |
-| deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `False` |
+| deprovisionRetrigger.<br>dryRun | If true, the Job runs in dry-run mode and does not actually retrigger deprovisioning. | `False` |
 | deprovisionRetrigger.<br>enabled | If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted. | `True` |
 | deprovisionRetrigger.<br>schedule | - | `0 2 * * *` |
 | freeCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `False` |
@@ -210,7 +210,7 @@
 | runtimeReconciler.<br>jobInterval | Interval (in minutes) between reconciliation job runs. | `1440` |
 | runtimeReconciler.<br>jobReconciliationDelay | Delay before starting reconciliation after job trigger. | `1s` |
 | runtimeReconciler.<br>metricsPort | Port on which the reconciler exposes Prometheus metrics. | `8081` |
-| serviceBindingCleanup.<br>dryRun | If true, the job only logs what would be deleted without actually removing any bindings. | `False` |
+| serviceBindingCleanup.<br>dryRun | If true, the Job only logs what would be deleted without actually removing any bindings. | `False` |
 | serviceBindingCleanup.<br>enabled | If true, enables the Service Binding Cleanup CronJob. | `True` |
 | serviceBindingCleanup.<br>requestRetries | Number of times to retry a failed DELETE request for a binding. | `2` |
 | serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |

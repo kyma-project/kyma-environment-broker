@@ -4,17 +4,17 @@ Runtime Reconciler is an application that performs reconciliation tasks on SAP B
 
 ## Details
 
-Runtime Reconciler reconciles BTP Manager Secrets on Kyma runtimes with a job, 
+Runtime Reconciler reconciles BTP Manager Secrets on Kyma runtimes with a Job, 
 which periodically loops over all instances from the KEB database. Each instance has an existing assigned Runtime ID. 
-The job checks if the Secret on the Kyma runtime matches the credentials from the KEB database.
+The Job checks if the Secret on the Kyma runtime matches the credentials from the KEB database.
 
 > ### Note:
-> If you modify or delete the `sap-btp-manager` Secret, it is modified back to its previous settings or regenerated within up to 24 hours. However, if the Secret is labeled with `kyma-project.io/skip-reconciliation: "true"`, the job skips the reconciliation for this Secret.
+> If you modify or delete the `sap-btp-manager` Secret, it is reverted to its previous settings or regenerated within 24 hours. However, if the Secret is labeled with `kyma-project.io/skip-reconciliation: "true"`, the Job skips reconciliation for this Secret.
 > To revert the Secret to its default state (stored in the KEB database), restart Runtime Reconciler, for example, by scaling down the deployment to `0` and then back to `1`.
 
 ## Prerequisites
 
-* The KEB Go packages so that Runtime Reconciler can reuse them
+* The KEB Go packages for Runtime Reconciler to reuse
 * The KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
 
 ## Configuration

@@ -1,4 +1,4 @@
-name: Verify KEB
+name: Verify KEB - Docs
 
 on:
   pull_request:
@@ -9,48 +9,14 @@ on:
       - synchronize
       - ready_for_review
     paths-ignore:
-      - "**.md"
       - "sec-scanners-config.yaml"
-  
+
 permissions:
   contents: read
   pull-requests: read
   checks: write
 
 jobs:
-  run-go-tests:
-    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
-
-  run-go-linter:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Set up go environment
-      uses: actions/setup-go@v6
-      with:
-        go-version-file: 'go.mod'
-        
-    - name: Go linter
-      env:
-        GOLINT_TIMEOUT: ${{ vars.GOLINT_TIMEOUT }}
-      run: make go-lint
-
-  run-go-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up go environment
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-
-      - name: Run go checks
-        run: make checks
-
   verify-python-md-sync:
     runs-on: ubuntu-latest
     steps:
@@ -62,6 +28,7 @@ jobs:
         with:
           python-version: '3.9'
           cache: 'pip'
+          
       - name: Run env docs generator
         run: make generate-env-docs
 
@@ -72,6 +39,7 @@ jobs:
             git diff --color=always docs/contributor/02-30-keb-configuration.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/06-30-subaccount-cleanup-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-30-subaccount-cleanup-cronjob.md) ]]; then
@@ -79,6 +47,7 @@ jobs:
             git diff --color=always docs/contributor/06-30-subaccount-cleanup-cronjob.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/06-40-trial-free-cleanup-cronjobs.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-40-trial-free-cleanup-cronjobs.md) ]]; then
@@ -86,6 +55,7 @@ jobs:
             git diff --color=always docs/contributor/06-40-trial-free-cleanup-cronjobs.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/06-50-deprovision-retrigger-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-50-deprovision-retrigger-cronjob.md) ]]; then
@@ -93,6 +63,7 @@ jobs:
             git diff --color=always docs/contributor/06-50-deprovision-retrigger-cronjob.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/06-70-service-binding-cleanup-cronjob.md
         run: |
           if [[ $(git status --porcelain docs/contributor/06-70-service-binding-cleanup-cronjob.md) ]]; then
@@ -100,6 +71,7 @@ jobs:
             git diff --color=always docs/contributor/06-70-service-binding-cleanup-cronjob.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/07-10-runtime-reconciler.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-10-runtime-reconciler.md) ]]; then
@@ -107,6 +79,7 @@ jobs:
             git diff --color=always docs/contributor/07-10-runtime-reconciler.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/07-20-subaccount-sync.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-20-subaccount-sync.md) ]]; then
@@ -114,6 +87,7 @@ jobs:
             git diff --color=always docs/contributor/07-20-subaccount-sync.md
             exit 1
           fi
+          
       - name: Check for changes in docs/contributor/07-30-schema-migrator.md
         run: |
           if [[ $(git status --porcelain docs/contributor/07-30-schema-migrator.md) ]]; then

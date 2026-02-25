@@ -22,6 +22,9 @@ func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	h.handler(rw, r)
 }
 
+// AttachRoutes attaches all API routes for the service broker to the given router.
+// It sets up middlewares, API version validation, and route handlers for each prefix.
+//
 // copied from github.com/pivotal-cf/brokerapi/api.go
 func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, logger *slog.Logger, createBindingTimeout time.Duration, defaultRequestRegion string, prefixes []string) *httputil.Router {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)

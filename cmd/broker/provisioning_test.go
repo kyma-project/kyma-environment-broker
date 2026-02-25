@@ -11,24 +11,21 @@ import (
 	"os"
 	"testing"
 
-	"gopkg.in/yaml.v3"
-	coreV1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
-
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -3276,7 +3273,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		// The suite already has keb-runtime-config ConfigMap with "default" entry having "fast" channel
 		// Now add AWS-specific configuration with "regular" channel
 
-		configMapRef := &coreV1.ConfigMap{}
+		configMapRef := &v1.ConfigMap{}
 		fetchErr := suite.k8sKcp.Get(context.Background(),
 			client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
 			configMapRef)
@@ -3307,7 +3304,7 @@ kyma-template: |-
 
 		// Cleanup: Remove AWS config after test
 		defer func() {
-			configMapCleanup := &coreV1.ConfigMap{}
+			configMapCleanup := &v1.ConfigMap{}
 			if err := suite.k8sKcp.Get(context.Background(),
 				client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
 				configMapCleanup); err == nil {
@@ -3365,7 +3362,7 @@ kyma-template: |-
 		defer suite.TearDown()
 
 		// Setup: AWS plan configured with regular as default
-		configMapRef := &coreV1.ConfigMap{}
+		configMapRef := &v1.ConfigMap{}
 		fetchErr := suite.k8sKcp.Get(context.Background(),
 			client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
 			configMapRef)
@@ -3391,7 +3388,7 @@ kyma-template: |-
 
 		// Cleanup: Remove AWS config after test
 		defer func() {
-			configMapCleanup := &coreV1.ConfigMap{}
+			configMapCleanup := &v1.ConfigMap{}
 			if err := suite.k8sKcp.Get(context.Background(),
 				client.ObjectKey{Name: "keb-runtime-config", Namespace: "kcp-system"},
 				configMapCleanup); err == nil {
