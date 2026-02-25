@@ -107,7 +107,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 	credentialsBinding, err = s.getCredentialsBinding(selectorForSBClaim)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
+			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
 		}
 		return "", err
 	}
