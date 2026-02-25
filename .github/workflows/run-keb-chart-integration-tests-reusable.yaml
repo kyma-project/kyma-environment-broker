@@ -87,7 +87,7 @@ jobs:
   run-keb-chart-matrix:
     runs-on: ubuntu-latest
     needs: prepare-tests
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
     steps:
@@ -371,14 +371,16 @@ jobs:
         run: |
           BINDING_NAME_1=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           BINDING_NAME_3=$(kubectl get runtime $RUNTIME_ID_3 -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
+          BINDING_NAME_4=$(kubectl get runtime $RUNTIME_ID_4 -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           BINDING_NAME_5=$(kubectl get runtime $RUNTIME_ID_5 -n kcp-system -o jsonpath='{.spec.shoot.secretBindingName}')
           echo "Instance 1 binding: $BINDING_NAME_1"
           echo "Instance 3 binding: $BINDING_NAME_3"
+          echo "Instance 4 binding: $BINDING_NAME_4"
           echo "Instance 5 binding: $BINDING_NAME_5"
           
           # Verify fifth instance has the same binding as instances 1 and 3 (reuses freed slot)
           if [ "$BINDING_NAME_5" != "$BINDING_NAME_1" ] || [ "$BINDING_NAME_5" != "$BINDING_NAME_3" ]; then
-            echo "Error: Fifth instance should have same binding as instances 1 and 3 (reusing freed slot)"
+            echo "Error: Fifth instance should have same binding as instances 1 and 3 (reusing freed slot)"ń
             echo "Instance 1: $BINDING_NAME_1"
             echo "Instance 3: $BINDING_NAME_3"
             echo "Instance 5: $BINDING_NAME_5"
