@@ -51,11 +51,7 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 	}
 	p.Parameters.TargetSecret = nil
 
-	if !reflect.DeepEqual(p.Parameters, input.Parameters) {
-		return false
-	}
-
-	return true
+	return reflect.DeepEqual(p.Parameters, input.Parameters)
 }
 
 type UpdatingParametersDTO struct {

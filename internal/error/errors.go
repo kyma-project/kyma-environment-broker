@@ -96,7 +96,8 @@ func TimeoutError(msg, step string) LastError {
 	}
 }
 
-// resolve error component and reason
+// ReasonForError resolves the component and reason from the given error
+// and returns a populated LastError structure for the provided step.
 func ReasonForError(err error, step string) LastError {
 	if err == nil {
 		return LastError{}

@@ -21,7 +21,8 @@ func (e *Encrypter) Encrypt(data []byte) ([]byte, error) {
 	return e.encryptGCM(data)
 }
 
-// Encryption
+// EncryptSMCredentials encrypts the Service Manager operator credentials
+// in the provided provisioning parameters.
 func (e *Encrypter) EncryptSMCredentials(provisioningParameters *internal.ProvisioningParameters) error {
 	if provisioningParameters.ErsContext.SMOperatorCredentials == nil {
 		return nil
