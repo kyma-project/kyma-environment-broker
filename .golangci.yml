@@ -31,9 +31,6 @@ linters:
         - "-QF1008" # Omit embedded fields from selector expression.
         - "-ST1000" # Incorrect or missing package comment.
         - "-ST1005" # Incorrectly formatted error string.
-        - "-SA4009" # A function argument is overwritten before its first use.
-        - "-SA1029" # Inappropriate key in call to 'context.WithValue'.
-        - "-SA1019" # Using a deprecated function, variable, constant or field.
         - "-ST1003" # Poorly chosen identifier.
 formatters:
   enable:

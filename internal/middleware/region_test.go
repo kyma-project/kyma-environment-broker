@@ -13,11 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type ctxKey string
+
+const (
+	ctxParentKeyA   ctxKey = "key-A"
+	ctxParentValueA string = "value-A"
+)
+
 func TestRequestRegionKey(t *testing.T) {
 	// given
 	const (
-		ctxParentKeyA    = "key-A"
-		ctxParentValueA  = "value-A"
 		fixRequestRegion = "request-region-A"
 	)
 
@@ -51,8 +56,6 @@ func TestRequestRegionKey(t *testing.T) {
 func TestRequestRegionKeyDefault(t *testing.T) {
 	// given
 	const (
-		ctxParentKeyA    = "key-A"
-		ctxParentValueA  = "value-A"
 		fixDefaultRegion = "default-region"
 	)
 
