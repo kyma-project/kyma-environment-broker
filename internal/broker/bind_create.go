@@ -165,7 +165,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
 	}
 
-	binding, err := b.searchDbForBinding(err, instanceID, bindingID, expirationSeconds)
+	binding, err := b.searchDbForBinding(instanceID, bindingID, expirationSeconds)
 	if err != nil {
 		return domain.Binding{}, err
 	}
@@ -185,10 +185,10 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, err
 	}
 
-	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, err, instance)
+	return b.createNewBinding(ctx, instanceID, bindingID, expirationSeconds, bindingContext, instance)
 }
 
-func (b *BindEndpoint) searchDbForBinding(err error, instanceID string, bindingID string, expirationSeconds int) (*domain.Binding, error) {
+func (b *BindEndpoint) searchDbForBinding(instanceID string, bindingID string, expirationSeconds int) (*domain.Binding, error) {
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
@@ -244,7 +244,7 @@ func (b *BindEndpoint) checkAgainstLimit(bindingList []internal.Binding, instanc
 	return nil
 }
 
-func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, bindingID string, expirationSeconds int, bindingContext BindingContext, err error, instance *internal.Instance) (domain.Binding, error) {
+func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, bindingID string, expirationSeconds int, bindingContext BindingContext, instance *internal.Instance) (domain.Binding, error) {
 	var kubeconfig string
 	binding := &internal.Binding{
 		ID:         bindingID,
@@ -258,7 +258,7 @@ func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, 
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
 
-	err = b.bindingsStorage.Insert(binding)
+	err := b.bindingsStorage.Insert(binding)
 	switch {
 	case dberr.IsAlreadyExists(err):
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)

@@ -183,7 +183,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		return domain.UpdateServiceSpec{}, expirationErr
 	}
 
-	lastProvisioningOperation, err := b.checkProvisioningState(err, instance, logger)
+	lastProvisioningOperation, err := b.checkProvisioningState(instance, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
@@ -227,7 +227,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}, nil
 }
 
-func (b *UpdateEndpoint) checkProvisioningState(err error, instance *internal.Instance, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
+func (b *UpdateEndpoint) checkProvisioningState(instance *internal.Instance, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
