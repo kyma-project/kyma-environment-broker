@@ -28,7 +28,7 @@ func (s *CleanStep) Run(operation internal.Operation, log *slog.Logger) (interna
 		log.Info("suspension operation must not clean data")
 		return operation, 0, nil
 	}
-	if operation.ExcutedButNotCompleted != nil && len(operation.ExcutedButNotCompleted) > 0 {
+	if len(operation.ExcutedButNotCompleted) > 0 {
 		log.Info("There are steps, which needs retry, skipping")
 		return operation, 0, nil
 	}

@@ -121,11 +121,11 @@ func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string
 	return result, err
 }
 
-// TODO: Wrap retries in single method WithRetries
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 	sess := s.Factory.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}
 	var lastErr dberr.Error
+	// TODO: Wrap retries in single method WithRetries
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instanceDTO, lastErr = sess.GetInstanceByID(instanceID)
 		if lastErr != nil {

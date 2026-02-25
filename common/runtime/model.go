@@ -129,8 +129,6 @@ func CloudProviderFromString(provider string) CloudProvider {
 	}
 }
 
-// FIXME: this is a makeshift check until the provisioner is capable of returning error messages
-// https://github.com/kyma-project/control-plane/issues/946
 func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 	min, max := planMin, planMax
 	if p.AutoScalerMin != nil {
@@ -188,7 +186,7 @@ func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
 		if err := o.validateSingleOIDC(instanceOidcConfig, &errs); err != nil {
 			return err
 		}
-	} else if o.List != nil && len(o.List) > 0 {
+	} else if len(o.List) > 0 {
 		o.validateOIDCList(&errs)
 	}
 

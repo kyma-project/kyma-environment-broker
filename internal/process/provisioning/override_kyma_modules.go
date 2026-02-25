@@ -118,7 +118,7 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []pkg.Modul
 	}
 
 	overridedModules := make([]pkg.ModuleDTO, 0)
-	if customModuleList == nil || len(customModuleList) == 0 {
+	if len(customModuleList) == 0 {
 		k.logger.Info("empty (0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 		return overridedModules
 	}

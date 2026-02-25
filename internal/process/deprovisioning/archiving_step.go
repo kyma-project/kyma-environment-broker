@@ -38,7 +38,7 @@ func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (
 		logger.Info("suspension operation, skipping")
 		return operation, 0, nil
 	}
-	if operation.ExcutedButNotCompleted != nil && len(operation.ExcutedButNotCompleted) > 0 {
+	if len(operation.ExcutedButNotCompleted) > 0 {
 		logger.Info("operation needs a retrigger, skipping")
 		return operation, 0, nil
 	}
