@@ -14,6 +14,10 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/middlewares"
 )
 
+type contextKey string
+
+const userAgentKey contextKey = "User-Agent"
+
 type CreateBindingHandler struct {
 	handler func(w http.ResponseWriter, req *http.Request)
 }
@@ -29,7 +33,7 @@ func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, logger *slog.Logger, createBindingTimeout time.Duration, defaultRequestRegion string, prefixes []string) *httputil.Router {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	deprovision := func(w http.ResponseWriter, req *http.Request) {
-		req2 := req.WithContext(context.WithValue(req.Context(), "User-Agent", req.Header.Get("User-Agent")))
+		req2 := req.WithContext(context.WithValue(req.Context(), userAgentKey, req.Header.Get("User-Agent")))
 		apiHandler.Deprovision(w, req2)
 	}
 	router.Use(middlewares.AddCorrelationIDToContext)

@@ -290,7 +290,7 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 	}
 	mapper, err := apiutil.NewDynamicRESTMapper(cfg, httpClient)
 	if err != nil {
-		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, true, func(ctx context.Context) (bool, error) {
 			mapper, err = apiutil.NewDynamicRESTMapper(cfg, httpClient)
 			if err != nil {
 				return false, nil
