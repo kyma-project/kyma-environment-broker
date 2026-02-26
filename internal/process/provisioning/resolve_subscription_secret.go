@@ -141,6 +141,9 @@ func (step *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(att
 func (step *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string) (string, error) {
 	secretBinding, err := step.getSharedSecretBinding(labelSelector)
 	if err != nil {
+		if kebError.IsNotFoundError(err) {
+			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+		}
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
 	}
 
