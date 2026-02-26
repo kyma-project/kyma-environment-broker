@@ -6,7 +6,7 @@ type MultiAccountConfig struct {
 }
 
 type HyperscalerAccountLimits struct {
-	Default int `envconfig:"default=100"`
+	Default int `envconfig:"default=999999"`
 
 	AWS       int `envconfig:"optional"`
 	GCP       int `envconfig:"optional"`

@@ -285,12 +285,12 @@ hap:
     # Maximum clusters per hyperscaler account (applies only when allowedGlobalAccounts is not empty)
     # When a CredentialsBinding reaches this limit, new clusters use a different account
     limits:
-      default: 1000
-      aws: 180
-      gcp: 135
-      azure: 135
-      openstack: 100
-      alicloud: 100
+      default: 999999
+      aws: 999999
+      gcp: 999999
+      azure: 999999
+      openstack: 999999
+      alicloud: 999999
 
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.
