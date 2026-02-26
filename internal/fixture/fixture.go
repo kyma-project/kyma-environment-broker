@@ -33,6 +33,7 @@ const (
 	AWSTenantName                  = "aws-tenant-1"
 	AzureTenantName                = "azure-tenant-2"
 	AWSSecretName                  = "aws-secret"
+	AWSSecretName2                 = "aws-secret-2"
 	AWSEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
 	AzureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
 	AzureUnclaimedSecretName       = "azure-unclaimed"
@@ -264,6 +265,28 @@ func CreateGardenerClientWithCredentialsBindings() *gardener.Client {
 	shoot3 := createShoot("shoot-3", namespace, AWSLeastUsedSharedSecretName)
 
 	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, s4, s5, s6, s7, s8, sb1, sb2, sb3, sb4, sb5, sb6, sb7, sb8, shoot1, shoot2, shoot3)
+
+	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func CreateGardenerClientWithMultipleAWSBindings() *gardener.Client {
+	const (
+		namespace   = "test"
+		secretName1 = "secret-1"
+		secretName2 = "secret-2"
+	)
+	s1 := createSecret(secretName1, namespace)
+	s2 := createSecret(secretName2, namespace)
+	sb1 := createCredentialsBinding(AWSSecretName, namespace, secretName1, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb2 := createCredentialsBinding(AWSSecretName2, namespace, secretName2, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, sb1, sb2)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }

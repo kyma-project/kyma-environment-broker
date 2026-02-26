@@ -86,12 +86,6 @@ func (c *Client) GetShoots() (*unstructured.UnstructuredList, error) {
 	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{})
 }
 
-func (c *Client) GetShootsByLabel(labelSelector string) (*unstructured.UnstructuredList, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	defer cancel()
-	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
-}
-
 func (c *Client) GetLeastUsedSecretBindingFromSecretBindings(secretBindings []unstructured.Unstructured) (*SecretBinding, error) {
 	usageCount := make(map[string]int, len(secretBindings))
 	for _, s := range secretBindings {
@@ -333,59 +327,4 @@ func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error)
 
 func RESTConfig(kubeconfig []byte) (*restclient.Config, error) {
 	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-}
-
-func (c *Client) GetShootCountPerCredentialsBinding(globalAccountID string) (map[string]int, error) {
-	shoots, err := c.GetShootsByLabel(fmt.Sprintf("%s=%s", AccountLabelKey, globalAccountID))
-	if err != nil {
-		return nil, fmt.Errorf("while listing shoots: %w", err)
-	}
-
-	shootCount := make(map[string]int)
-	if shoots == nil || len(shoots.Items) == 0 {
-		return shootCount, nil
-	}
-
-	for _, shoot := range shoots.Items {
-		s := Shoot{Unstructured: shoot}
-		bindingName := s.GetSpecCredentialsBindingName()
-		if bindingName != "" {
-			shootCount[bindingName]++
-		}
-	}
-
-	return shootCount, nil
-}
-
-func (c *Client) GetMostPopulatedCredentialsBindingBelowLimit(credentialsBindings []unstructured.Unstructured, hyperscalerAccountLimit int, globalAccountID string) (*CredentialsBinding, error) {
-	if len(credentialsBindings) == 0 {
-		return nil, fmt.Errorf("no credentials bindings provided")
-	}
-
-	shootCount, err := c.GetShootCountPerCredentialsBinding(globalAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting shoot count: %w", err)
-	}
-
-	var bestBinding *unstructured.Unstructured
-	maxCount := -1
-
-	for i := range credentialsBindings {
-		cb := &credentialsBindings[i]
-		count := shootCount[cb.GetName()]
-
-		if count < hyperscalerAccountLimit {
-			// Select the one with most clusters (fill-most-populated strategy)
-			if count > maxCount {
-				maxCount = count
-				bestBinding = cb
-			}
-		}
-	}
-
-	if bestBinding == nil {
-		return nil, nil
-	}
-
-	return NewCredentialsBinding(*bestBinding), nil
 }

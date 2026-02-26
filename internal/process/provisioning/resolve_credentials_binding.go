@@ -6,6 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -191,7 +194,12 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 
 	if allBindings != nil && len(allBindings.Items) > 0 {
 		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
-		credentialsBinding, err := s.gardenerClient.GetMostPopulatedCredentialsBindingBelowLimit(allBindings.Items, hyperscalerAccountLimit, globalAccountID)
+		instanceCount, err := s.getInstanceCountPerCredentialsBinding(globalAccountID)
+		if err != nil {
+			return "", fmt.Errorf("while counting instances per credentials binding: %w", err)
+		}
+
+		credentialsBinding, err := s.selectMostPopulatedCredentialsBindingBelowLimit(allBindings.Items, instanceCount, hyperscalerAccountLimit, log)
 		if err != nil {
 			return "", fmt.Errorf("while selecting credentials binding: %w", err)
 		}
@@ -205,6 +213,52 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	}
 
 	return s.claimNewCredentialsBinding(globalAccountID, labelSelectorBuilder, log)
+}
+
+func (s *ResolveCredentialsBindingStep) getInstanceCountPerCredentialsBinding(globalAccountID string) (map[string]int, error) {
+	filter := dbmodel.InstanceFilter{GlobalAccountIDs: []string{globalAccountID}}
+	instances, _, _, err := s.instanceStorage.List(filter)
+	if err != nil {
+		return nil, fmt.Errorf("while listing instances for GA %s: %w", globalAccountID, err)
+	}
+
+	instanceCount := make(map[string]int)
+	for _, instance := range instances {
+		if instance.SubscriptionSecretName != "" {
+			instanceCount[instance.SubscriptionSecretName]++
+		}
+	}
+
+	return instanceCount, nil
+}
+
+func (s *ResolveCredentialsBindingStep) selectMostPopulatedCredentialsBindingBelowLimit(credentialsBindings []unstructured.Unstructured, instanceCount map[string]int, hyperscalerAccountLimit int, log *slog.Logger) (*gardener.CredentialsBinding, error) {
+	if len(credentialsBindings) == 0 {
+		return nil, fmt.Errorf("no credentials bindings provided")
+	}
+
+	var bestBinding *unstructured.Unstructured
+	maxCount := -1
+
+	for i := range credentialsBindings {
+		cb := &credentialsBindings[i]
+		count := instanceCount[cb.GetName()]
+
+		log.Info(fmt.Sprintf("credentials binding %s has %d instances", cb.GetName(), count))
+
+		if count < hyperscalerAccountLimit {
+			if count > maxCount {
+				maxCount = count
+				bestBinding = cb
+			}
+		}
+	}
+
+	if bestBinding == nil {
+		return nil, nil
+	}
+
+	return gardener.NewCredentialsBinding(*bestBinding), nil
 }
 
 func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccountID string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
