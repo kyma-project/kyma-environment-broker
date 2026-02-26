@@ -143,6 +143,7 @@ func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Opera
 	}
 
 	log.Error(fmt.Sprintf("Failing operation after %s of failing retries", maxTime.String()))
+	// TODO remove from map or do not keep createAt in map at all
 	op, retry, err := om.OperationFailed(operation, errorMessage, err, log)
 	if err == nil {
 		err = fmt.Errorf("too many retries")
