@@ -191,7 +191,7 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
 
 	if allBindings != nil && len(allBindings.Items) > 0 {
-		credentialsBinding, err := s.gardenerClient.GetMostPopulatedCredentialsBindingBelowLimit(allBindings.Items, hyperscalerAccountLimit)
+		credentialsBinding, err := s.gardenerClient.GetMostPopulatedCredentialsBindingBelowLimit(allBindings.Items, hyperscalerAccountLimit, globalAccountID)
 		if err != nil {
 			return "", fmt.Errorf("while selecting credentials binding: %w", err)
 		}

@@ -18,6 +18,7 @@ const requestTimeout = 10 * time.Second
 
 const (
 	TenantNameLabelKey      = "tenantName"
+	AccountLabelKey         = "account"
 	HyperscalerTypeLabelKey = "hyperscalerType"
 	DirtyLabelKey           = "dirty"
 	InternalLabelKey        = "internal"
@@ -83,6 +84,12 @@ func (c *Client) GetShoots() (*unstructured.UnstructuredList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{})
+}
+
+func (c *Client) GetShootsByLabel(labelSelector string) (*unstructured.UnstructuredList, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func (c *Client) GetLeastUsedSecretBindingFromSecretBindings(secretBindings []unstructured.Unstructured) (*SecretBinding, error) {
@@ -328,8 +335,8 @@ func RESTConfig(kubeconfig []byte) (*restclient.Config, error) {
 	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 }
 
-func (c *Client) GetShootCountPerCredentialsBinding() (map[string]int, error) {
-	shoots, err := c.GetShoots()
+func (c *Client) GetShootCountPerCredentialsBinding(globalAccountID string) (map[string]int, error) {
+	shoots, err := c.GetShootsByLabel(fmt.Sprintf("%s=%s", AccountLabelKey, globalAccountID))
 	if err != nil {
 		return nil, fmt.Errorf("while listing shoots: %w", err)
 	}
@@ -350,12 +357,12 @@ func (c *Client) GetShootCountPerCredentialsBinding() (map[string]int, error) {
 	return shootCount, nil
 }
 
-func (c *Client) GetMostPopulatedCredentialsBindingBelowLimit(credentialsBindings []unstructured.Unstructured, hyperscalerAccountLimit int) (*CredentialsBinding, error) {
+func (c *Client) GetMostPopulatedCredentialsBindingBelowLimit(credentialsBindings []unstructured.Unstructured, hyperscalerAccountLimit int, globalAccountID string) (*CredentialsBinding, error) {
 	if len(credentialsBindings) == 0 {
 		return nil, fmt.Errorf("no credentials bindings provided")
 	}
 
-	shootCount, err := c.GetShootCountPerCredentialsBinding()
+	shootCount, err := c.GetShootCountPerCredentialsBinding(globalAccountID)
 	if err != nil {
 		return nil, fmt.Errorf("while getting shoot count: %w", err)
 	}

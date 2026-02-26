@@ -3585,7 +3585,7 @@ func (s *BrokerSuiteTest) provisionMultipleInstances(t *testing.T, instanceIDs [
 		s.WaitForOperationState(opID, domain.Succeeded)
 
 		runtime := s.GetRuntimeResourceByInstanceID(iid)
-		s.CreateTestShoot(fmt.Sprintf("%s-%d", clusterNamePrefix, idx), runtime.Spec.Shoot.SecretBindingName)
+		s.CreateTestShoot(fmt.Sprintf("%s-%d", clusterNamePrefix, idx), runtime.Spec.Shoot.SecretBindingName, globalAccountID)
 	}
 }
 

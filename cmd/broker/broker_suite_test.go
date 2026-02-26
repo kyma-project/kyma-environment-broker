@@ -1028,7 +1028,7 @@ func fixDiscoveredZones() map[string][]string {
 	}
 }
 
-func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName string) {
+func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName, accountLabel string) {
 	shoot := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "core.gardener.cloud/v1beta1",
@@ -1036,6 +1036,9 @@ func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName stri
 			"metadata": map[string]interface{}{
 				"name":      shootName,
 				"namespace": gardenerKymaNamespace,
+				"labels": map[string]interface{}{
+					"account": accountLabel,
+				},
 			},
 			"spec": map[string]interface{}{
 				"credentialsBindingName": credentialsBindingName,
