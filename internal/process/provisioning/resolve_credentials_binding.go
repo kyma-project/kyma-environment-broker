@@ -49,6 +49,10 @@ func (s *ResolveCredentialsBindingStep) Run(operation internal.Operation, log *s
 	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
 		msg := "resolving secret name"
+		// Use error message directly if it's an account pool dependency error
+		if lastErr, ok := err.(kebError.LastError); ok && lastErr.Component == kebError.AccountPoolDependency {
+			msg = lastErr.Message
+		}
 		return s.operationManager.RetryOperation(operation, msg, err, s.stepRetryTuple.Interval, s.stepRetryTuple.Timeout, log)
 	}
 
@@ -103,12 +107,16 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 
 	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
 
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
+	log.Info(fmt.Sprintf("getting credentials binding with selector %q", selectorForSBClaim))
 	credentialsBinding, err = s.getCredentialsBinding(selectorForSBClaim)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
 			log.Error(fmt.Sprintf("failed to find unassigned credentials binding with selector %q", selectorForSBClaim))
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+			return "", kebError.LastError{
+				Message:   "Currently, no unassigned provider accounts are available. Please contact us for further assistance.",
+				Reason:    kebError.KEBInternalCode,
+				Component: kebError.AccountPoolDependency,
+			}
 		}
 		return "", err
 	}
@@ -140,16 +148,20 @@ func (s *ResolveCredentialsBindingStep) matchProvisioningAttributesToRule(attr *
 }
 
 func (s *ResolveCredentialsBindingStep) getSharedSecretName(labelSelector string, log *slog.Logger) (string, error) {
-	secretBinding, err := s.getSharedCredentialsBinding(labelSelector)
+	credBinding, err := s.getSharedCredentialsBinding(labelSelector)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
 			log.Error(fmt.Sprintf("failed to find unassigned credentials binding with selector %q", labelSelector))
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+			return "", kebError.LastError{
+				Message:   "Currently, no unassigned provider accounts are available. Please contact us for further assistance.",
+				Reason:    kebError.KEBInternalCode,
+				Component: kebError.AccountPoolDependency,
+			}
 		}
-		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
+		return "", fmt.Errorf("while getting credentials binding with selector %q: %w", labelSelector, err)
 	}
 
-	return secretBinding.GetName(), nil
+	return credBinding.GetName(), nil
 }
 
 func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {

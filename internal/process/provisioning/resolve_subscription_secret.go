@@ -49,6 +49,10 @@ func (step *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log
 	targetSecretName, err := step.resolveSecretName(operation, log)
 	if err != nil {
 		msg := "resolving secret name"
+		// Use error message directly if it's an account pool dependency error
+		if lastErr, ok := err.(kebError.LastError); ok && lastErr.Component == kebError.AccountPoolDependency {
+			msg = lastErr.Message
+		}
 		return step.operationManager.RetryOperation(operation, msg, err, step.stepRetryTuple.Interval, step.stepRetryTuple.Timeout, log)
 	}
 
@@ -108,7 +112,11 @@ func (step *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
 			log.Error(fmt.Sprintf("failed to find unassigned secret binding with selector %q", selectorForSBClaim))
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+			return "", kebError.LastError{
+				Message:   "Currently, no unassigned provider accounts are available. Please contact us for further assistance.",
+				Reason:    kebError.KEBInternalCode,
+				Component: kebError.AccountPoolDependency,
+			}
 		}
 		return "", err
 	}
@@ -144,7 +152,11 @@ func (step *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector str
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
 			log.Error(fmt.Sprintf("failed to find unassigned secret binding with selector %q", labelSelector))
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+			return "", kebError.LastError{
+				Message:   "Currently, no unassigned provider accounts are available. Please contact us for further assistance.",
+				Reason:    kebError.KEBInternalCode,
+				Component: kebError.AccountPoolDependency,
+			}
 		}
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
 	}
