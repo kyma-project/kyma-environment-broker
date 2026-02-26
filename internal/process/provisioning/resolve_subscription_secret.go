@@ -107,6 +107,7 @@ func (step *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.
 	secretBinding, err = step.getSecretBinding(selectorForSBClaim)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
+			log.Error(fmt.Sprintf("failed to find unassigned secret binding with selector %q", selectorForSBClaim))
 			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
 		}
 		return "", err
@@ -142,7 +143,7 @@ func (step *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector str
 	secretBinding, err := step.getSharedSecretBinding(labelSelector)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
+			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance. (selector: %s)", labelSelector)
 		}
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
 	}
