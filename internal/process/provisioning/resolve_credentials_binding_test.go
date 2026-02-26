@@ -204,11 +204,47 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		assert.Equal(t, fixture.AWSLeastUsedSharedSecretName, updatedInstance.SubscriptionSecretName)
 	})
 
-	t.Run("should return error on missing rule match for given provisioning attributes", func(t *testing.T) {
+	t.Run("should return error when no shared credentials bindings are available", func(t *testing.T) {
 		// given
 		const (
 			operationName  = "provisioning-operation-6"
 			instanceID     = "instance-6"
+			platformRegion = "cf-eu10"
+			providerType   = "azure"
+		)
+
+		// trial plan requires shared bindings (rule: trial -> S)
+		// but there are no Azure shared credentials bindings in the fixture
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.Azure)))
+		operation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
+
+		// when
+		_, backoff, err := step.Run(operation, log)
+
+		// then
+		assert.Error(t, err)
+		assert.Zero(t, backoff)
+		assert.True(t, strings.Contains(err.Error(), "Currently, no unassigned provider accounts are available. Please contact us for further assistance."))
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Empty(t, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should return error on missing rule match for given provisioning attributes", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-7"
+			instanceID     = "instance-7"
 			platformRegion = "non-existent-region"
 			providerType   = "openstack"
 		)
@@ -241,8 +277,8 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 	t.Run("should return error on missing secret binding for given selector", func(t *testing.T) {
 		// given
 		const (
-			operationName  = "provisioning-operation-7"
-			instanceID     = "instance-7"
+			operationName  = "provisioning-operation-8"
+			instanceID     = "instance-8"
 			platformRegion = "cf-ap11"
 			providerType   = "aws"
 		)
@@ -265,7 +301,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		// then
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
-		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned secret binding with selector"))
+		assert.True(t, strings.Contains(err.Error(), "Currently, no unassigned provider accounts are available. Please contact us for further assistance."))
 
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
@@ -275,8 +311,8 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
 		// given
 		const (
-			operationName  = "provisioning-operation-8"
-			instanceID     = "instance-8"
+			operationName  = "provisioning-operation-9"
+			instanceID     = "instance-9"
 			platformRegion = "cf-us30"
 			providerType   = "gcp"
 		)
