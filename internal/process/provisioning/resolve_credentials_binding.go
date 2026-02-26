@@ -117,8 +117,9 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 	if err != nil {
 		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 	}
+	return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 
-	return credentialsBinding.GetName(), nil
+	//return credentialsBinding.GetName(), nil
 }
 
 func (s *ResolveCredentialsBindingStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
