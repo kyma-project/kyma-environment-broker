@@ -84,7 +84,7 @@ func (step *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.
 
 	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForExistingSubscription))
 	if parsedRule.IsShared() {
-		return step.getSharedSecretName(selectorForExistingSubscription)
+		return step.getSharedSecretName(selectorForExistingSubscription, log)
 	}
 
 	secretBinding, err := step.getSecretBinding(selectorForExistingSubscription)
@@ -139,11 +139,12 @@ func (step *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(att
 	return result, nil
 }
 
-func (step *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string) (string, error) {
+func (step *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string, log *slog.Logger) (string, error) {
 	secretBinding, err := step.getSharedSecretBinding(labelSelector)
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance. (selector: %s)", labelSelector)
+			log.Error(fmt.Sprintf("failed to find unassigned secret binding with selector %q", labelSelector))
+			return "", fmt.Errorf("Currently, no unassigned provider accounts are available. Please contact us for further assistance.")
 		}
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
 	}
