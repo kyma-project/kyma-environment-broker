@@ -117,9 +117,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 	if err != nil {
 		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 	}
-	return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
-
-	//return credentialsBinding.GetName(), nil
+	return credentialsBinding.GetName(), nil
 }
 
 func (s *ResolveCredentialsBindingStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -172,7 +170,9 @@ func (s *ResolveCredentialsBindingStep) getCredentialsBinding(labelSelector stri
 	if secretBindings == nil || len(secretBindings.Items) == 0 {
 		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-	return gardener.NewCredentialsBinding(secretBindings.Items[0]), nil
+	return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
+
+	//return gardener.NewCredentialsBinding(secretBindings.Items[0]), nil
 }
 
 func (s *ResolveCredentialsBindingStep) claimCredentialsBinding(credentialsBinding *gardener.CredentialsBinding, tenantName string) (*gardener.CredentialsBinding, error) {
