@@ -119,17 +119,19 @@ The [`run-keb-chart-integration-tests-reusable`](/.github/workflows/run-keb-char
 
 The workflow performs the following steps:
 
-1. Checks if the KEB chart is rendered successfully by Helm
-2. Fetches the **last-k3s-versions** tag versions of k3s releases 
-3. Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-4. Creates required namespaces
-5. Installs dependencies required by the KEB chart
-6. Installs the KEB chart in the k3s cluster using `helm install`
-7. Waits for the KEB Pod to be ready
-8. Provisions an instance
-9. Updates the instance  
-10. Deprovisions the instance  
-11. Waits for all tests to finish
+1. Sets up a k3s cluster with required dependencies and installs the KEB chart
+2. Provisions the first instance and waits for it to complete successfully
+3. Updates the first instance to verify update operations work correctly
+4. Provisions a second instance to begin testing binding rotation
+5. Provisions a third instance to verify multiple instances can share the same binding
+6. Provisions a fourth instance to test binding rotation when the limit is reached
+7. Verifies that instances 1-3 share the same binding and instance 4 gets a different binding
+8. Deprovisions the second instance to free up a binding slot
+9. Provisions a fifth instance to verify it reuses the freed binding slot
+10. Updates the first instance with a new global account ID
+11. Verifies the global account ID propagates correctly to Runtime, Kyma, and GardenerCluster custom resource labels
+12. Deprovisions the first instance to validate cleanup processes
+13. Checks KEB logs for errors and warnings after each major operation
 
 ### Performance Tests
 

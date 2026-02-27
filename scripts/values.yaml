@@ -461,3 +461,12 @@ providersConfiguration:
       eu-central-1:
         displayName: eu-central-1 (Europe, Frankfurt)
         zones: [a, b, c]
+
+hap:
+  multiHyperscalerAccount:
+    allowedGlobalAccounts: ["*"]
+    limits:
+      default: 999999
+      aws: 3
+
+subscriptionGardenerResource: CredentialsBinding

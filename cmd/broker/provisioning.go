@@ -57,7 +57,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval})),
+				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount)),
 			disabled: !useCredentialsBinding,
 		},
 		{

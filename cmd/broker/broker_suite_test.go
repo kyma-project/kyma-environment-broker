@@ -84,6 +84,7 @@ type BrokerSuiteTest struct {
 	eventBroker              *event.PubSub
 	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
+	gardenerClient           *dynamicFake.FakeDynamicClient
 }
 
 func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
@@ -226,6 +227,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		eventBroker:    eventBroker,
 
 		k8sDeletionObjectTracker: ot,
+		gardenerClient:           gardenerClient,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
@@ -248,7 +250,7 @@ func (s *BrokerSuiteTest) GetKcpClient() client.Client {
 
 func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
 	resource := gardener.SecretBindingResource
-	if strings.ToLower(bindingResource) == "credentialsbinding" {
+	if strings.ToLower(bindingResource) == credentialsBinding {
 		resource = gardener.CredentialsBindingResource
 	}
 
@@ -1024,4 +1026,45 @@ func fixDiscoveredZones() map[string][]string {
 		"m5.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"c7i.large": {"zone-l", "zone-m"},
 	}
+}
+
+func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName, accountLabel string) {
+	shoot := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "core.gardener.cloud/v1beta1",
+			"kind":       "Shoot",
+			"metadata": map[string]interface{}{
+				"name":      shootName,
+				"namespace": gardenerKymaNamespace,
+				"labels": map[string]interface{}{
+					"account": accountLabel,
+				},
+			},
+			"spec": map[string]interface{}{
+				"credentialsBindingName": credentialsBindingName,
+			},
+		},
+	}
+
+	_, err := s.gardenerClient.Resource(schema.GroupVersionResource{
+		Group:    "core.gardener.cloud",
+		Version:  "v1beta1",
+		Resource: "shoots",
+	}).Namespace(gardenerKymaNamespace).Create(context.Background(), shoot, metav1.CreateOptions{})
+
+	require.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) CreateAdditionalCredentialsBinding(name, hyperscalerType string) {
+	cb := &gardener.CredentialsBinding{}
+	cb.SetName(name)
+	cb.SetNamespace(gardenerKymaNamespace)
+	cb.SetLabels(map[string]string{
+		"hyperscalerType": hyperscalerType,
+	})
+	cb.SetSecretRefName(name)
+	cb.SetSecretRefNamespace(gardenerKymaNamespace)
+
+	_, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &cb.Unstructured, metav1.CreateOptions{})
+	require.NoError(s.t, err)
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -16,6 +17,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func disabledMultiAccountConfig() *multiaccount.MultiAccountConfig {
+	return &multiaccount.MultiAccountConfig{
+		AllowedGlobalAccounts: []string{},
+	}
+}
 
 func TestResolveCredentialsBindingStep(t *testing.T) {
 	// given
@@ -52,7 +59,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -87,7 +94,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -121,7 +128,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -155,7 +162,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -189,7 +196,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -223,7 +230,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout, disabledMultiAccountConfig())
 
 		// when
 		_, backoff, err := step.Run(operation, log)
@@ -257,7 +264,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout, disabledMultiAccountConfig())
 
 		// when
 		_, backoff, err := step.Run(operation, log)
@@ -265,7 +272,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		// then
 		assert.Error(t, err)
 		assert.Zero(t, backoff)
-		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned secret binding with selector"))
+		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned credentials binding with selector"))
 
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
@@ -291,7 +298,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout, disabledMultiAccountConfig())
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -305,5 +312,195 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
 		assert.Empty(t, updatedInstance.SubscriptionSecretName)
+	})
+}
+
+func TestGetLimitForProvider(t *testing.T) {
+	t.Run("should return provider-specific limit when set", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default:   100,
+				AWS:       180,
+				GCP:       135,
+				Azure:     135,
+				OpenStack: 100,
+				AliCloud:  100,
+			},
+		}
+
+		assert.Equal(t, 180, getLimitForProvider(config, "aws"))
+		assert.Equal(t, 135, getLimitForProvider(config, "gcp"))
+		assert.Equal(t, 135, getLimitForProvider(config, "azure"))
+		assert.Equal(t, 100, getLimitForProvider(config, "openstack"))
+		assert.Equal(t, 100, getLimitForProvider(config, "alicloud"))
+	})
+
+	t.Run("should return default limit for unknown provider", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default:   250,
+				AWS:       180,
+				GCP:       135,
+				Azure:     135,
+				OpenStack: 100,
+				AliCloud:  100,
+			},
+		}
+
+		assert.Equal(t, 250, getLimitForProvider(config, "unknown-provider"))
+		assert.Equal(t, 250, getLimitForProvider(config, "new-hyperscaler"))
+	})
+
+	t.Run("should return default limit when provider-specific limit is zero", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default:   150,
+				AWS:       0,
+				GCP:       135,
+				Azure:     0,
+				OpenStack: 100,
+			},
+		}
+
+		assert.Equal(t, 150, getLimitForProvider(config, "aws"))
+		assert.Equal(t, 135, getLimitForProvider(config, "gcp"))
+		assert.Equal(t, 150, getLimitForProvider(config, "azure"))
+		assert.Equal(t, 100, getLimitForProvider(config, "openstack"))
+		assert.Equal(t, 150, getLimitForProvider(config, "alicloud"))
+	})
+
+	t.Run("should return 999999 when default is zero", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default: 0,
+				AWS:     0,
+				GCP:     0,
+			},
+		}
+
+		assert.Equal(t, 999999, getLimitForProvider(config, "aws"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "gcp"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "azure"))
+		assert.Equal(t, 999999, getLimitForProvider(config, "unknown"))
+	})
+
+	t.Run("should return 0 when config is nil", func(t *testing.T) {
+		assert.Equal(t, 0, getLimitForProvider(nil, "aws"))
+		assert.Equal(t, 0, getLimitForProvider(nil, "unknown"))
+	})
+
+	t.Run("should handle openstack provider name variants", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default:   100,
+				OpenStack: 75,
+			},
+		}
+
+		// All these variants map to SapConvergedCloud → OpenStack limit
+		assert.Equal(t, 75, getLimitForProvider(config, "openstack"))
+		assert.Equal(t, 75, getLimitForProvider(config, "sapconvergedcloud"))
+		assert.Equal(t, 75, getLimitForProvider(config, "sap-converged-cloud"))
+	})
+
+	t.Run("should use default when OpenStack limit is not set", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			Limits: multiaccount.HyperscalerAccountLimits{
+				Default:   200,
+				OpenStack: 0,
+			},
+		}
+
+		assert.Equal(t, 200, getLimitForProvider(config, "openstack"))
+		assert.Equal(t, 200, getLimitForProvider(config, "sapconvergedcloud"))
+	})
+}
+
+func TestIsMultiAccountEnabled(t *testing.T) {
+	t.Run("should return true when allowed global accounts is not empty", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"ga-123"},
+		}
+		assert.True(t, isMultiAccountEnabled(config))
+	})
+
+	t.Run("should return true when allowed global accounts has wildcard", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"*"},
+		}
+		assert.True(t, isMultiAccountEnabled(config))
+	})
+
+	t.Run("should return true when allowed global accounts has multiple entries", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"ga-1", "ga-2", "ga-3"},
+		}
+		assert.True(t, isMultiAccountEnabled(config))
+	})
+
+	t.Run("should return false when allowed global accounts is empty", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{},
+		}
+		assert.False(t, isMultiAccountEnabled(config))
+	})
+
+	t.Run("should return false when config is nil", func(t *testing.T) {
+		assert.False(t, isMultiAccountEnabled(nil))
+	})
+}
+
+func TestIsGlobalAccountAllowed(t *testing.T) {
+	t.Run("should return true when GA is in allowed global accounts", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"ga-123", "ga-456", "ga-789"},
+		}
+		assert.True(t, isGlobalAccountAllowed(config, "ga-123"))
+		assert.True(t, isGlobalAccountAllowed(config, "ga-456"))
+		assert.True(t, isGlobalAccountAllowed(config, "ga-789"))
+	})
+
+	t.Run("should return false when GA is not in allowed global accounts", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"ga-123", "ga-456"},
+		}
+		assert.False(t, isGlobalAccountAllowed(config, "ga-999"))
+		assert.False(t, isGlobalAccountAllowed(config, "ga-000"))
+	})
+
+	t.Run("should return true when allowed global accounts contains wildcard", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"*"},
+		}
+		assert.True(t, isGlobalAccountAllowed(config, "any-ga-id"))
+		assert.True(t, isGlobalAccountAllowed(config, "another-ga"))
+		assert.True(t, isGlobalAccountAllowed(config, "ga-123"))
+	})
+
+	t.Run("should return true when allowed global accounts has both wildcard and specific GAs", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"ga-specific", "*"},
+		}
+		assert.True(t, isGlobalAccountAllowed(config, "ga-specific"))
+		assert.True(t, isGlobalAccountAllowed(config, "any-other-ga"))
+	})
+
+	t.Run("should return false when allowed global accounts is empty", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{},
+		}
+		assert.False(t, isGlobalAccountAllowed(config, "ga-123"))
+	})
+
+	t.Run("should return false when config is nil", func(t *testing.T) {
+		assert.False(t, isGlobalAccountAllowed(nil, "ga-123"))
+	})
+
+	t.Run("should be case-sensitive for GA IDs", func(t *testing.T) {
+		config := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{"GA-123"},
+		}
+		assert.True(t, isGlobalAccountAllowed(config, "GA-123"))
+		assert.False(t, isGlobalAccountAllowed(config, "ga-123"))
 	})
 }
