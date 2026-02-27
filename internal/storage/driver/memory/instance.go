@@ -88,6 +88,41 @@ func (s *instances) GetNumberOfInstancesForGlobalAccountID(globalAccountID strin
 	return numberOfInstances, nil
 }
 
+func (s *instances) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	if len(bindingNames) == 0 {
+		return "", 0, nil
+	}
+
+	bindingSet := make(map[string]bool)
+	for _, name := range bindingNames {
+		bindingSet[name] = true
+	}
+
+	counts := make(map[string]int)
+	for _, inst := range s.instances {
+		if inst.GlobalAccountID == globalAccountID && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
+			counts[inst.SubscriptionSecretName]++
+		}
+	}
+
+	// Find the most populated binding below maxCount
+	// Iterate over bindingNames to include bindings with 0 instances
+	bestName := ""
+	bestCount := -1
+	for _, name := range bindingNames {
+		count := counts[name]
+		if count < maxCount && count > bestCount {
+			bestName = name
+			bestCount = count
+		}
+	}
+
+	if bestName == "" {
+		return "", 0, nil
+	}
+	return bestName, bestCount, nil
+}
+
 func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	inst, ok := s.instances[instanceID]
 	if !ok {

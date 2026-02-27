@@ -558,6 +558,36 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 	return res.Total, err
 }
 
+func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	if len(bindingNames) == 0 {
+		return "", 0, nil
+	}
+
+	var result struct {
+		SubscriptionSecretName string `db:"subscription_secret_name"`
+		Count                  int    `db:"count"`
+	}
+
+	err := r.session.Select("subscription_secret_name", "count(*) as count").
+		From(InstancesTableName).
+		Where(dbr.Eq("global_account_id", globalAccountID)).
+		Where("subscription_secret_name IN ?", bindingNames).
+		GroupBy("subscription_secret_name").
+		Having("count(*) < ?", maxCount).
+		OrderBy("count DESC").
+		Limit(1).
+		LoadOne(&result)
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return "", 0, nil
+		}
+		return "", 0, err
+	}
+
+	return result.SubscriptionSecretName, result.Count, nil
+}
+
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
