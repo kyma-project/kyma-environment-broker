@@ -77,9 +77,9 @@ To select the right hyperscaler account during provisioning, we need to know how
 
 | Method           | Pros | Cons | Decision |
 |------------------|------|------|----------|
-| Gardener API     | - Existing implementation covers a lot of it<br>- Simple<br>- Gardener has knowledge about shoots created w/o KEB and consuming subscriptions | - Performance (reading 2k shoots takes approximately 5s and returns 35MB of payload)<br>- Puts additional load on apiserver<br>- May have inconsistent data | ❌ |
-| Database         | - Querying is fast<br>- Minimal resource consumption | - May have inconsistent data<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ✅ |
-| Runtime CRs      | | - May have inconsistent data<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ❌ |
+| Gardener API     | - Existing implementation covers a lot of it<br>- Simple<br>- Gardener has knowledge about shoots created w/o KEB and consuming subscriptions | - Performance (reading 2k shoots takes approximately 5s and returns 35MB of payload)<br>- Puts additional load on apiserver | ❌ |
+| Database         | - Querying is fast<br>- Minimal resource consumption | - May have inconsistent data (compared to Gardener)<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ✅ |
+| Runtime CRs      | | - May have inconsistent data (compared to Gardener)<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ❌ |
 
 **Decision rationale:** Database approach is chosen for performance and resource efficiency. While the Gardener API provides complete data, its performance characteristics would impact provisioning speed and put unnecessary stress on the apiserver. The concern about shoots created outside KEB is not applicable to production environments, as manual shoot creation outside the dev environment should not take place. In production, all shoots must be created through KEB, ensuring data consistency.
 
