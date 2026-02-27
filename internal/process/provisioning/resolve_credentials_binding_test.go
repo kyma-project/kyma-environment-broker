@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -633,5 +634,353 @@ func TestMultiAccountSupport(t *testing.T) {
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
 		assert.Equal(t, fixture.AWSSecretName2, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should select CB3 when CB1 over limit and CB2 at limit", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindings()
+		const (
+			operationName   = "provisioning-operation-multi-4"
+			instanceID      = "instance-multi-4"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		// CB1 has 4 instances (over limit of 3)
+		for i := 1; i <= 4; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb1-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB2 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb2-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName2
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB3 has 1 instance (under limit)
+		instance1 := fixture.FixInstance("cb3-test-1")
+		instance1.SubscriptionSecretName = fixture.AWSSecretName3
+		instance1.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance1))
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, multiAccountConfig)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, fixture.AWSSecretName3, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, fixture.AWSSecretName3, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should select CB3 when CB1 and CB2 at limit", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindings()
+		const (
+			operationName   = "provisioning-operation-multi-5"
+			instanceID      = "instance-multi-5"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		// CB1 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb1-limit-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB2 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb2-limit-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName2
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB3 has 0 instances (under limit)
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, multiAccountConfig)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, fixture.AWSSecretName3, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, fixture.AWSSecretName3, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should select most populated when CB2 and CB3 under limit with equal counts", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindings()
+		const (
+			operationName   = "provisioning-operation-multi-6"
+			instanceID      = "instance-multi-6"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		// CB1 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb1-equal-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB2 has 1 instance (under limit)
+		instance2 := fixture.FixInstance("cb2-equal-test-1")
+		instance2.SubscriptionSecretName = fixture.AWSSecretName2
+		instance2.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance2))
+
+		// CB3 has 1 instance (under limit, equal to CB2)
+		instance3 := fixture.FixInstance("cb3-equal-test-1")
+		instance3.SubscriptionSecretName = fixture.AWSSecretName3
+		instance3.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance3))
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, multiAccountConfig)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		// Should select either CB2 or CB3 (both have count=1, so either is valid as "most populated below limit")
+		selectedSecret := *operation.ProvisioningParameters.Parameters.TargetSecret
+		assert.Contains(t, []string{fixture.AWSSecretName2, fixture.AWSSecretName3}, selectedSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Contains(t, []string{fixture.AWSSecretName2, fixture.AWSSecretName3}, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should select most populated binding below limit (fill-most-populated policy)", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindings()
+		const (
+			operationName   = "provisioning-operation-multi-8"
+			instanceID      = "instance-multi-8"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		// CB1 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb1-policy-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB2 has 1 instance (under limit, less populated)
+		instance2 := fixture.FixInstance("cb2-policy-test-1")
+		instance2.SubscriptionSecretName = fixture.AWSSecretName2
+		instance2.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance2))
+
+		// CB3 has 2 instances (under limit, more populated than CB2)
+		for i := 1; i <= 2; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb3-policy-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName3
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, multiAccountConfig)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, fixture.AWSSecretName3, *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, fixture.AWSSecretName3, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should claim new binding when all existing bindings are at limit", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindingsAndOneUnclaimed()
+		const (
+			operationName   = "provisioning-operation-multi-7"
+			instanceID      = "instance-multi-7"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		// CB1 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb1-claim-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB2 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb2-claim-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName2
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		// CB3 has 3 instances (at limit)
+		for i := 1; i <= 3; i++ {
+			instance := fixture.FixInstance(fmt.Sprintf("cb3-claim-test-%d", i))
+			instance.SubscriptionSecretName = fixture.AWSSecretName3
+			instance.GlobalAccountID = globalAccountID
+			require.NoError(t, brokerStorage.Instances().Insert(instance))
+		}
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, stepRetryTuple, multiAccountConfig)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "aws-unclaimed", *operation.ProvisioningParameters.Parameters.TargetSecret)
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "aws-unclaimed", updatedInstance.SubscriptionSecretName)
 	})
 }

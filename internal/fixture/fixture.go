@@ -34,6 +34,7 @@ const (
 	AzureTenantName                = "azure-tenant-2"
 	AWSSecretName                  = "aws-secret"
 	AWSSecretName2                 = "aws-secret-2"
+	AWSSecretName3                 = "aws-secret-3"
 	AWSEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
 	AzureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
 	AzureUnclaimedSecretName       = "azure-unclaimed"
@@ -287,6 +288,68 @@ func CreateGardenerClientWithMultipleAWSBindings() *gardener.Client {
 	})
 
 	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, sb1, sb2)
+
+	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func CreateGardenerClientWithThreeAWSBindings() *gardener.Client {
+	const (
+		namespace   = "test"
+		secretName1 = "secret-1"
+		secretName2 = "secret-2"
+		secretName3 = "secret-3"
+	)
+	s1 := createSecret(secretName1, namespace)
+	s2 := createSecret(secretName2, namespace)
+	s3 := createSecret(secretName3, namespace)
+	sb1 := createCredentialsBinding(AWSSecretName, namespace, secretName1, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb2 := createCredentialsBinding(AWSSecretName2, namespace, secretName2, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb3 := createCredentialsBinding(AWSSecretName3, namespace, secretName3, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, sb1, sb2, sb3)
+
+	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func CreateGardenerClientWithThreeAWSBindingsAndOneUnclaimed() *gardener.Client {
+	const (
+		namespace   = "test"
+		secretName1 = "secret-1"
+		secretName2 = "secret-2"
+		secretName3 = "secret-3"
+		secretName4 = "secret-4"
+	)
+	s1 := createSecret(secretName1, namespace)
+	s2 := createSecret(secretName2, namespace)
+	s3 := createSecret(secretName3, namespace)
+	s4 := createSecret(secretName4, namespace)
+	sb1 := createCredentialsBinding(AWSSecretName, namespace, secretName1, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb2 := createCredentialsBinding(AWSSecretName2, namespace, secretName2, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	sb3 := createCredentialsBinding(AWSSecretName3, namespace, secretName3, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      AWSTenantName,
+	})
+	// Unclaimed binding (no tenantName)
+	sb4 := createCredentialsBinding("aws-unclaimed", namespace, secretName4, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+	})
+
+	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, s4, sb1, sb2, sb3, sb4)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }
