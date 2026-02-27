@@ -33,7 +33,7 @@ This feature can be enabled gradually using an allowlist, letting you control wh
 | Simple Flag | `enabled: true/false`       | Enable/disable for all GAs (allowlist not implemented) | ❌ |
 | Allowlist  | `allowlist: [GA-1, GA-2, GA-3]` | Start with specific GAs        | 	✅ |
 | All GAs    | `allowlist: ["*"]`           | Enable for everyone            | 	✅ |
-| Disabled   | `allowlist: []`              | Feature off                 | 	✅ |
+| Disabled   | `allowlist: []` or no config provided | Feature off                 | 	✅ |
 
 **Decision rationale:** Allowlist provides all required modes with a single field: specific GAs, global enablement (`["*"]`), and disabled (`[]`). Simpler to implement and allows testing on selected GAs.
 
@@ -43,7 +43,7 @@ Each hyperscaler provider type should have a configurable maximum number of clus
 
 | Provider | Max clusters per account|
 |----------|--------------|
-| AWS | TBD |
+| AWS | 200 |
 | GCP | TBD |
 | Azure | TBD |
 | OpenStack | TBD |
@@ -77,7 +77,7 @@ To select the right hyperscaler account during provisioning, we need to know how
 
 | Method           | Pros | Cons | Decision |
 |------------------|------|------|----------|
-| Gardener API     | - Existing implementation covers a lot of it<br>- Simple<br>- Gardener has knowledge about shoots created w/o KEB and consuming subscriptions | - Performance (reading 2k shoots takes approximately 5s and returns 35MB of payload)<br>- Puts additional load on apiserver | ❌ |
+| Gardener API     | - Existing implementation covers a lot of it<br>- Simple<br>- Gardener has knowledge about shoots created w/o KEB and consuming subscriptions | - Performance (reading 2k shoots takes approximately 5s and returns 35MB of payload)<br>- Puts additional load on apiserver<br>- May have inconsistent data | ❌ |
 | Database         | - Querying is fast<br>- Minimal resource consumption | - May have inconsistent data<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ✅ |
 | Runtime CRs      | | - May have inconsistent data<br>- Some shoots might be directly created in Gardener and KEB has no knowledge about it | ❌ |
 
