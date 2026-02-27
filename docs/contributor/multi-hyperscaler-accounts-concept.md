@@ -2,7 +2,7 @@
 
 ## Problem
 
-One Global Account can only use one hyperscaler account per provider for regular provisioning, limiting cluster count to the account's capacity.
+For regular provisioning, a global account (GA) can use only one hyperscaler account per provider, limiting cluster count to the account's capacity.
 
 > ### Note: 
 > Multiple accounts per Global Account (GA) are already supported for special cases (e.g., normal AWS and EU Access AWS cluster in the same GA). However, automatic assignment based on capacity limits is not yet implemented.
