@@ -121,6 +121,19 @@ func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string
 	return result, err
 }
 
+func (s *Instance) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	sess := s.Factory.NewReadSession()
+	var resultName string
+	var resultCount int
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		name, count, err := sess.GetBestCredentialsBinding(globalAccountID, bindingNames, maxCount)
+		resultName = name
+		resultCount = count
+		return err == nil, nil
+	})
+	return resultName, resultCount, err
+}
+
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 	sess := s.Factory.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}

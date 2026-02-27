@@ -9,7 +9,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	runtimepkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -18,20 +20,22 @@ import (
 )
 
 type ResolveCredentialsBindingStep struct {
-	operationManager *process.OperationManager
-	gardenerClient   *gardener.Client
-	instanceStorage  storage.Instances
-	rulesService     *rules.RulesService
-	stepRetryTuple   internal.RetryTuple
-	mu               sync.Mutex
+	operationManager   *process.OperationManager
+	gardenerClient     *gardener.Client
+	instanceStorage    storage.Instances
+	rulesService       *rules.RulesService
+	stepRetryTuple     internal.RetryTuple
+	mu                 sync.Mutex
+	multiAccountConfig *multiaccount.MultiAccountConfig
 }
 
-func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveCredentialsBindingStep {
+func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple, multiAccountConfig *multiaccount.MultiAccountConfig) *ResolveCredentialsBindingStep {
 	step := &ResolveCredentialsBindingStep{
-		instanceStorage: brokerStorage.Instances(),
-		gardenerClient:  gardenerClient,
-		rulesService:    rulesService,
-		stepRetryTuple:  stepRetryTuple,
+		instanceStorage:    brokerStorage.Instances(),
+		gardenerClient:     gardenerClient,
+		rulesService:       rulesService,
+		stepRetryTuple:     stepRetryTuple,
+		multiAccountConfig: multiAccountConfig,
 	}
 	step.operationManager = process.NewOperationManager(brokerStorage.Operations(), step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -84,7 +88,13 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 
 	log.Info(fmt.Sprintf("getting credentials binding with selector %q", selectorForExistingSubscription))
 	if parsedRule.IsShared() {
-		return s.getSharedSecretName(selectorForExistingSubscription)
+		return s.getSharedCredentialsName(selectorForExistingSubscription)
+	}
+
+	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
+	if isGlobalAccountAllowed(s.multiAccountConfig, globalAccountID) {
+		log.Info(fmt.Sprintf("multi-account support enabled for GA: %s", globalAccountID))
+		return s.resolveWithMultiAccountSupport(operation, selectorForExistingSubscription, labelSelectorBuilder, log)
 	}
 
 	credentialsBinding, err := s.getCredentialsBinding(selectorForExistingSubscription)
@@ -96,29 +106,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 		return credentialsBinding.GetName(), nil
 	}
 
-	log.Info(fmt.Sprintf("no credentials binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
-
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", selectorForSBClaim))
-	credentialsBinding, err = s.getCredentialsBinding(selectorForSBClaim)
-	if err != nil {
-		if kebError.IsNotFoundError(err) {
-			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", selectorForSBClaim)
-		}
-		return "", err
-	}
-
-	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
-	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
-	if err != nil {
-		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
-	}
-
-	return credentialsBinding.GetName(), nil
+	return s.claimNewCredentialsBinding(operation.ProvisioningParameters.ErsContext.GlobalAccountID, labelSelectorBuilder, log)
 }
 
 func (s *ResolveCredentialsBindingStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -138,13 +126,13 @@ func (s *ResolveCredentialsBindingStep) matchProvisioningAttributesToRule(attr *
 	return result, nil
 }
 
-func (s *ResolveCredentialsBindingStep) getSharedSecretName(labelSelector string) (string, error) {
-	secretBinding, err := s.getSharedCredentialsBinding(labelSelector)
+func (s *ResolveCredentialsBindingStep) getSharedCredentialsName(labelSelector string) (string, error) {
+	credentialsBinding, err := s.getSharedCredentialsBinding(labelSelector)
 	if err != nil {
-		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
+		return "", fmt.Errorf("while getting credentials binding with selector %q: %w", labelSelector, err)
 	}
 
-	return secretBinding.GetName(), nil
+	return credentialsBinding.GetName(), nil
 }
 
 func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {
@@ -157,21 +145,21 @@ func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelecto
 	}
 	credentialsBinding, err := s.gardenerClient.GetLeastUsedCredentialsBindingFromSecretBindings(credentialsBindings.Items)
 	if err != nil {
-		return nil, fmt.Errorf("while getting least used secret binding: %w", err)
+		return nil, fmt.Errorf("while getting least used credentials binding: %w", err)
 	}
 
 	return credentialsBinding, nil
 }
 
 func (s *ResolveCredentialsBindingStep) getCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {
-	secretBindings, err := s.gardenerClient.GetCredentialsBindings(labelSelector)
+	credentialsBindings, err := s.gardenerClient.GetCredentialsBindings(labelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
+		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
-	if secretBindings == nil || len(secretBindings.Items) == 0 {
+	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
 		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-	return gardener.NewCredentialsBinding(secretBindings.Items[0]), nil
+	return gardener.NewCredentialsBinding(credentialsBindings.Items[0]), nil
 }
 
 func (s *ResolveCredentialsBindingStep) claimCredentialsBinding(credentialsBinding *gardener.CredentialsBinding, tenantName string) (*gardener.CredentialsBinding, error) {
@@ -190,4 +178,113 @@ func (s *ResolveCredentialsBindingStep) updateInstance(id, subscriptionSecretNam
 	instance.SubscriptionSecretName = subscriptionSecretName
 	_, err = s.instanceStorage.Update(*instance)
 	return err
+}
+
+func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation internal.Operation, selectorForExistingSubscription string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
+	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
+
+	allBindings, err := s.gardenerClient.GetCredentialsBindings(selectorForExistingSubscription)
+	if err != nil {
+		return "", fmt.Errorf("while getting credentials bindings for tenant %s: %w", globalAccountID, err)
+	}
+	hyperscalerAccountLimit := getLimitForProvider(s.multiAccountConfig, operation.ProviderValues.ProviderType)
+
+	if allBindings != nil && len(allBindings.Items) > 0 {
+		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
+		bindingNames := make([]string, len(allBindings.Items))
+		for i, binding := range allBindings.Items {
+			bindingNames[i] = binding.GetName()
+		}
+
+		bestBindingName, count, err := s.instanceStorage.GetBestCredentialsBinding(globalAccountID, bindingNames, hyperscalerAccountLimit)
+		if err != nil {
+			return "", fmt.Errorf("while getting best credentials binding: %w", err)
+		}
+		if bestBindingName != "" {
+			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", bestBindingName, count, hyperscalerAccountLimit))
+			return bestBindingName, nil
+		}
+
+		log.Info(fmt.Sprintf("all %d credentials bindings for GA %s are at or above limit %d, will claim new one", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
+	}
+
+	return s.claimNewCredentialsBinding(globalAccountID, labelSelectorBuilder, log)
+}
+
+func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccountID string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
+	log.Info(fmt.Sprintf("no credentials binding found for tenant: %q", globalAccountID))
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	selectorForSBClaim := labelSelectorBuilder.BuildForSecretBindingClaim()
+
+	log.Info(fmt.Sprintf("getting credentials binding with selector %q", selectorForSBClaim))
+	credentialsBinding, err := s.getCredentialsBinding(selectorForSBClaim)
+	if err != nil {
+		if kebError.IsNotFoundError(err) {
+			return "", fmt.Errorf("failed to find unassigned credentials binding with selector %q", selectorForSBClaim)
+		}
+		return "", err
+	}
+
+	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", globalAccountID))
+	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, globalAccountID)
+	if err != nil {
+		return "", fmt.Errorf("while claiming credentials binding for tenant: %s: %w", globalAccountID, err)
+	}
+
+	return credentialsBinding.GetName(), nil
+}
+
+func isMultiAccountEnabled(config *multiaccount.MultiAccountConfig) bool {
+	return config != nil && len(config.AllowedGlobalAccounts) > 0
+}
+
+func isGlobalAccountAllowed(config *multiaccount.MultiAccountConfig, globalAccountID string) bool {
+	if !isMultiAccountEnabled(config) {
+		return false
+	}
+
+	for _, ga := range config.AllowedGlobalAccounts {
+		if ga == "*" || ga == globalAccountID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getLimitForProvider(config *multiaccount.MultiAccountConfig, providerType string) int {
+	if config == nil {
+		return 0
+	}
+	cp := runtimepkg.CloudProviderFromString(providerType)
+
+	var limit int
+	switch cp {
+	case runtimepkg.AWS:
+		limit = config.Limits.AWS
+	case runtimepkg.GCP:
+		limit = config.Limits.GCP
+	case runtimepkg.Azure:
+		limit = config.Limits.Azure
+	case runtimepkg.SapConvergedCloud:
+		limit = config.Limits.OpenStack
+	case runtimepkg.Alicloud:
+		limit = config.Limits.AliCloud
+	default:
+		limit = config.Limits.Default
+	}
+
+	if limit == 0 {
+		limit = config.Limits.Default
+	}
+
+	// 0 means no limit (unlimited)
+	if limit == 0 {
+		return 999999
+	}
+
+	return limit
 }

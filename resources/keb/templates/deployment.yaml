@@ -194,6 +194,20 @@ spec:
               value: {{ .Values.gardener.project }}
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_ALLOWED_GLOBAL_ACCOUNTS
+              value: "{{ join "," .Values.hap.multiHyperscalerAccount.allowedGlobalAccounts }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_ALICLOUD
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.alicloud }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_AWS
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.aws }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_AZURE
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.azure }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_DEFAULT
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.default }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_GCP
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.gcp }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_OPENSTACK
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.openstack }}"
             - name: APP_HAP_RULE_FILE_PATH
               value: {{ .Values.configPaths.hapRule }}
             - name: APP_HOLD_HAP_STEPS
