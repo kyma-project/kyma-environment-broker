@@ -570,8 +570,17 @@ func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNa
 
 	err := r.session.Select("subscription_secret_name", "count(*) as count").
 		From(InstancesTableName).
-		Where(dbr.Eq("global_account_id", globalAccountID)).
 		Where("subscription_secret_name IN ?", bindingNames).
+		Where(dbr.Or(
+			dbr.And(
+				dbr.Neq("subscription_global_account_id", ""),
+				dbr.Eq("subscription_global_account_id", globalAccountID),
+			),
+			dbr.And(
+				dbr.Eq("global_account_id", globalAccountID),
+				dbr.Eq("subscription_global_account_id", ""),
+			),
+		)).
 		GroupBy("subscription_secret_name").
 		Having("count(*) < ?", maxCount).
 		OrderBy("count DESC").

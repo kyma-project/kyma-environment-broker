@@ -100,7 +100,16 @@ func (s *instances) GetBestCredentialsBinding(globalAccountID string, bindingNam
 
 	counts := make(map[string]int)
 	for _, inst := range s.instances {
-		if inst.GlobalAccountID == globalAccountID && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
+		// Count instances using bindings from this global account:
+		// - subscription_global_account_id tracks which GA "owns" the binding (set during account moves)
+		// - When empty: binding belongs to current global_account_id
+		// - When set: binding belongs to that GA (instance may have moved elsewhere)
+		isExplicitOwner := inst.SubscriptionGlobalAccountID != "" && inst.SubscriptionGlobalAccountID == globalAccountID
+		isCurrentOwnerNeverMoved := inst.GlobalAccountID == globalAccountID && inst.SubscriptionGlobalAccountID == ""
+
+		shouldCount := isExplicitOwner || isCurrentOwnerNeverMoved
+
+		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
 			counts[inst.SubscriptionSecretName]++
 		}
 	}
