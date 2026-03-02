@@ -171,7 +171,9 @@ func (step *ResolveSubscriptionSecretStep) getSecretBinding(labelSelector string
 	if secretBindings == nil || len(secretBindings.Items) == 0 {
 		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-	return gardener.NewSecretBinding(secretBindings.Items[0]), nil
+	return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
+
+	//return gardener.NewSecretBinding(secretBindings.Items[0]), nil
 }
 
 func (step *ResolveSubscriptionSecretStep) claimSecretBinding(secretBinding *gardener.SecretBinding, tenantName string) (*gardener.SecretBinding, error) {

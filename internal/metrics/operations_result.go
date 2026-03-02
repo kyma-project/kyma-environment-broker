@@ -88,6 +88,7 @@ func (s *resultsCollector) updateMetricsForOperation(operation internal.Operatio
 		}
 		s.metrics.With(cachedOperation.labels).Set(0)
 	}
+	// TODO so we calculate labels every time we get the same operation - rethink caching strategy and footprint
 	operationLabels := GetLabels(operation)
 	s.metrics.With(operationLabels).Set(1)
 
