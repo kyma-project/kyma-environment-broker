@@ -277,7 +277,7 @@ hap:
     # pool: hyperscalerType: azure
 
   multiHyperscalerAccount:
-    # assigning multiple hyperscaler accounts per Global Account when capacity limits are reached
+    # Assigns multiple hyperscaler accounts per global account when capacity limits are reached
     # - Empty array [] = feature disabled
     # - Specific GAs = enabled only for listed Global Accounts
     # - ["*"] = enabled for all Global Accounts
