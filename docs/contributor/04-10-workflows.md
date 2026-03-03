@@ -120,7 +120,7 @@ The [`run-keb-chart-integration-tests-reusable`](/.github/workflows/run-keb-char
 The workflow performs the following steps:
 
 1. Sets up a k3s cluster with required dependencies and installs the KEB chart
-2. Provisions the first instance and waits for it to complete successfully
+2. Starts provisioning the first instance and waits for it to complete successfully
 3. Updates the first instance to verify update operations work correctly
 4. Provisions a second instance to begin testing binding rotation
 5. Provisions a third instance to verify multiple instances can share the same binding
