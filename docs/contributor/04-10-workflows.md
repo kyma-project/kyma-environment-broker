@@ -123,7 +123,7 @@ The workflow performs the following steps:
 2. Starts provisioning the first instance and waits for it to complete successfully
 3. Updates the first instance to verify that update operations work correctly
 4. Provisions a second instance to begin testing binding rotation
-5. Provisions a third instance to verify multiple instances can share the same binding
+5. Provisions a third instance to verify that multiple instances can share the same binding
 6. Provisions a fourth instance to test binding rotation when the limit is reached
 7. Verifies that instances 1-3 share the same binding and instance 4 gets a different binding
 8. Deprovisions the second instance to free up a binding slot
