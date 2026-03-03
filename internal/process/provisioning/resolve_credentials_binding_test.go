@@ -233,7 +233,7 @@ func TestResolveCredentialsBindingStep(t *testing.T) {
 		instance.SubscriptionSecretName = ""
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
-		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout)
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout, disabledMultiAccountConfig())
 
 		// when
 		_, backoff, err := step.Run(operation, log)
