@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	runtimepkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -96,7 +95,7 @@ func (s *ResolveCredentialsBindingStep) resolveSecretName(operation internal.Ope
 	}
 
 	globalAccountID := operation.ProvisioningParameters.ErsContext.GlobalAccountID
-	if isGlobalAccountAllowed(s.multiAccountConfig, globalAccountID) {
+	if s.multiAccountConfig.IsGlobalAccountAllowed(globalAccountID) {
 		log.Info(fmt.Sprintf("multi-account support enabled for GA: %s", globalAccountID))
 		return s.resolveWithMultiAccountSupport(operation, selectorForExistingSubscription, labelSelectorBuilder, log)
 	}
@@ -199,7 +198,7 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	if err != nil {
 		return "", fmt.Errorf("while getting credentials bindings for tenant %s: %w", globalAccountID, err)
 	}
-	hyperscalerAccountLimit := getLimitForProvider(s.multiAccountConfig, operation.ProviderValues.ProviderType)
+	hyperscalerAccountLimit := s.multiAccountConfig.LimitForProvider(operation.ProviderValues.ProviderType)
 
 	if allBindings != nil && len(allBindings.Items) > 0 {
 		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
@@ -252,56 +251,4 @@ func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccount
 	}
 
 	return credentialsBinding.GetName(), nil
-}
-
-func isMultiAccountEnabled(config *multiaccount.MultiAccountConfig) bool {
-	return config != nil && len(config.AllowedGlobalAccounts) > 0
-}
-
-func isGlobalAccountAllowed(config *multiaccount.MultiAccountConfig, globalAccountID string) bool {
-	if !isMultiAccountEnabled(config) {
-		return false
-	}
-
-	for _, ga := range config.AllowedGlobalAccounts {
-		if ga == "*" || ga == globalAccountID {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getLimitForProvider(config *multiaccount.MultiAccountConfig, providerType string) int {
-	if config == nil {
-		return 0
-	}
-	cp := runtimepkg.CloudProviderFromString(providerType)
-
-	var limit int
-	switch cp {
-	case runtimepkg.AWS:
-		limit = config.Limits.AWS
-	case runtimepkg.GCP:
-		limit = config.Limits.GCP
-	case runtimepkg.Azure:
-		limit = config.Limits.Azure
-	case runtimepkg.SapConvergedCloud:
-		limit = config.Limits.OpenStack
-	case runtimepkg.Alicloud:
-		limit = config.Limits.AliCloud
-	default:
-		limit = config.Limits.Default
-	}
-
-	if limit == 0 {
-		limit = config.Limits.Default
-	}
-
-	// 0 means no limit (unlimited)
-	if limit == 0 {
-		return 999999
-	}
-
-	return limit
 }
