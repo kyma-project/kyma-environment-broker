@@ -279,8 +279,8 @@ hap:
   multiHyperscalerAccount:
     # Assigns multiple hyperscaler accounts per global account when capacity limits are reached
     # - Empty array [] = feature disabled
-    # - Specific GAs = enabled only for listed Global Accounts
-    # - ["*"] = enabled for all Global Accounts
+    # - Specific GAs = enabled only for listed global accounts
+    # - ["*"] = enabled for all global accounts
     allowedGlobalAccounts: []
     # Maximum clusters per hyperscaler account (applies only when allowedGlobalAccounts is not empty)
     # When a CredentialsBinding reaches this limit, new clusters use a different account
