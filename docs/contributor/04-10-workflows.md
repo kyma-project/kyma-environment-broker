@@ -121,7 +121,7 @@ The workflow performs the following steps:
 
 1. Sets up a k3s cluster with required dependencies and installs the KEB chart
 2. Starts provisioning the first instance and waits for it to complete successfully
-3. Updates the first instance to verify update operations work correctly
+3. Updates the first instance to verify that update operations work correctly
 4. Provisions a second instance to begin testing binding rotation
 5. Provisions a third instance to verify multiple instances can share the same binding
 6. Provisions a fourth instance to test binding rotation when the limit is reached
