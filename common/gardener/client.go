@@ -18,7 +18,6 @@ const requestTimeout = 10 * time.Second
 
 const (
 	TenantNameLabelKey      = "tenantName"
-	AccountLabelKey         = "account"
 	HyperscalerTypeLabelKey = "hyperscalerType"
 	DirtyLabelKey           = "dirty"
 	InternalLabelKey        = "internal"
