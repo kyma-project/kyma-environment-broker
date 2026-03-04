@@ -329,7 +329,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
+	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, gardenerClient, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)

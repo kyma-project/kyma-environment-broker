@@ -125,7 +125,8 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 		Level: slog.LevelInfo,
 	}))
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, log)
+	gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
+	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }

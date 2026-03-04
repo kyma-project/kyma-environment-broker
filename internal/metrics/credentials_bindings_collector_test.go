@@ -6,12 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -38,10 +41,10 @@ func TestCredentialsBindingsCollector(t *testing.T) {
 	deleted.DeletedAt = time.Now()
 	require.NoError(t, instances.Insert(deleted))
 
-	collector := NewCredentialsBindingsCollector(instances, 1*time.Minute, log)
+	collector := NewCredentialsBindingsCollector(instances, nil, 1*time.Minute, 5*time.Minute, log, prometheus.NewRegistry())
 
-	t.Run("initial counts are correct after first updateMetrics", func(t *testing.T) {
-		collector.updateMetrics()
+	t.Run("initial counts are correct after first poll", func(t *testing.T) {
+		collector.updateInstancesMetrics()
 
 		assert.Equal(t, float64(2), gaugeValue(collector, bindingAzure, ga1), "GA1/azure: 2 active instances")
 		assert.Equal(t, float64(1), gaugeValue(collector, bindingAzure2, ga1), "GA1/azure-2: 1 active instance")
@@ -55,7 +58,7 @@ func TestCredentialsBindingsCollector(t *testing.T) {
 	t.Run("counts are updated after new instance is added", func(t *testing.T) {
 		require.NoError(t, instances.Insert(fixCredentialInstance("i-9", ga2, bindingAWS)))
 
-		collector.updateMetrics()
+		collector.updateInstancesMetrics()
 
 		assert.Equal(t, float64(4), gaugeValue(collector, bindingAWS, ga2), "GA2/aws: 4 instances after insert")
 		assert.Equal(t, float64(2), gaugeValue(collector, bindingAzure, ga1))
@@ -76,4 +79,56 @@ func fixCredentialInstance(id, globalAccountID, subscriptionSecretName string) i
 		GlobalAccountID:        globalAccountID,
 		SubscriptionSecretName: subscriptionSecretName,
 	}
+}
+
+func TestAvailableCredentialsBindingsCollector(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	const namespace = "test"
+
+	// unclaimed: no tenantName label
+	awsUnclaimed1 := fixCredentialsBinding("aws-pool-1", namespace, map[string]string{gardener.HyperscalerTypeLabelKey: "aws"})
+	awsUnclaimed2 := fixCredentialsBinding("aws-pool-2", namespace, map[string]string{gardener.HyperscalerTypeLabelKey: "aws"})
+	azureUnclaimed := fixCredentialsBinding("azure-pool-1", namespace, map[string]string{gardener.HyperscalerTypeLabelKey: "azure"})
+	// claimed: has tenantName label
+	awsClaimed := fixCredentialsBinding("aws-claimed", namespace, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "aws",
+		gardener.TenantNameLabelKey:      "some-ga",
+	})
+	azureClaimed := fixCredentialsBinding("azure-claimed", namespace, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+		gardener.TenantNameLabelKey:      "some-other-ga",
+	})
+
+	objects := []runtime.Object{awsUnclaimed1, awsUnclaimed2, azureUnclaimed, awsClaimed, azureClaimed}
+	gardenerClient := gardener.NewClient(gardener.NewDynamicFakeClient(objects...), namespace)
+
+	collector := NewCredentialsBindingsCollector(nil, gardenerClient, 1*time.Minute, 5*time.Minute, log, prometheus.NewRegistry())
+
+	t.Run("counts unclaimed bindings per hyperscaler type", func(t *testing.T) {
+		collector.updateAvailableMetrics()
+
+		assert.Equal(t, float64(2), poolGaugeValue(collector, "aws"), "2 unclaimed AWS bindings")
+		assert.Equal(t, float64(1), poolGaugeValue(collector, "azure"), "1 unclaimed Azure binding")
+	})
+}
+
+func poolGaugeValue(c *CredentialsBindingsCollector, hyperscalerType string) float64 {
+	return testutil.ToFloat64(c.availableCredentialsBindings.With(prometheus.Labels{
+		"hyperscaler_type": hyperscalerType,
+	}))
+}
+
+func fixCredentialsBinding(name, namespace string, labels map[string]string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.CredentialsBindingGVK)
+	u.SetLabels(labels)
+	return u
 }
