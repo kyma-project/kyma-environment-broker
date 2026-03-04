@@ -51,7 +51,7 @@ func NewCredentialsBindingsCollector(
 	logger *slog.Logger,
 	registerer ...prometheus.Registerer,
 ) *CredentialsBindingsCollector {
-	reg := prometheus.Registerer(prometheus.DefaultRegisterer)
+	reg := prometheus.DefaultRegisterer
 	if len(registerer) > 0 && registerer[0] != nil {
 		reg = registerer[0]
 	}
