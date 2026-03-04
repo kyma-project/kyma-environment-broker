@@ -323,6 +323,10 @@ kymaDashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 metricsv2:
+  # Frequency of polling for available credentials bindings in Gardener.
+  availableCredentialsBindingsPollingInterval: 1m
+  # Frequency of polling for credentials binding instance counts.
+  credentialsBindingsPollingInterval: 1m
   # If true, enables metrics collection and Prometheus exposure.
   enabled: false
   # Duration of retaining finished operation results in memory.
