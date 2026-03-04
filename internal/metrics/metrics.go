@@ -37,13 +37,15 @@ type Config struct {
 	OperationStatsPollingInterval                   time.Duration `envconfig:"default=1m"`
 	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
 	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
+	CredentialsBindingsPollingInterval              time.Duration `envconfig:"default=1m"`
 }
 
 type RegisterContainer struct {
-	OperationResult            *resultsCollector
-	OperationStats             *operationsStats
-	OperationDurationCollector *OperationDurationCollector
-	InstancesCollector         *InstancesCollector
+	OperationResult              *resultsCollector
+	OperationStats               *operationsStats
+	OperationDurationCollector   *OperationDurationCollector
+	InstancesCollector           *InstancesCollector
+	CredentialsBindingsCollector *CredentialsBindingsCollector
 }
 
 func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
@@ -87,13 +89,17 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
 	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
 
+	credentialsBindingsCollector := NewCredentialsBindingsCollector(db.Instances(), cfg.CredentialsBindingsPollingInterval, logger)
+	credentialsBindingsCollector.StartCollector(ctx)
+
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
-		OperationResult:            opResult,
-		OperationStats:             opStats,
-		OperationDurationCollector: opDurationCollector,
-		InstancesCollector:         opInstanceCollector,
+		OperationResult:              opResult,
+		OperationStats:               opStats,
+		OperationDurationCollector:   opDurationCollector,
+		InstancesCollector:           opInstanceCollector,
+		CredentialsBindingsCollector: credentialsBindingsCollector,
 	}
 }
 

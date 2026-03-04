@@ -61,3 +61,9 @@ type InstanceERSContextStatsEntry struct {
 	LicenseType sql.NullString
 	Total       int
 }
+
+type InstanceByCredentialsBindingStatEntry struct {
+	GlobalAccountID        string
+	SubscriptionSecretName string
+	Total                  int
+}

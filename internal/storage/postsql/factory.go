@@ -38,6 +38,7 @@ type ReadSession interface {
 	GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error)
 	GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error)
 	GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error)
+	GetCredentialsBindingStats() ([]dbmodel.InstanceByCredentialsBindingStatEntry, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error)
 	ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error)

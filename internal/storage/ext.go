@@ -18,6 +18,7 @@ type Instances interface {
 	Delete(instanceID string) error
 	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
+	GetCredentialsBindingStats() (internal.CredentialsBindingStats, error)
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error)

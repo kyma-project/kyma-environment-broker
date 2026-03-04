@@ -214,6 +214,24 @@ func (s *instances) GetERSContextStats() (internal.ERSContextStats, error) {
 	return internal.ERSContextStats{}, fmt.Errorf("not implemented")
 }
 
+func (s *instances) GetCredentialsBindingStats() (internal.CredentialsBindingStats, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	result := internal.CredentialsBindingStats{
+		InstancesPerCredentialsBinding: make(map[string]int),
+		CredentialsBindingToGA:         make(map[string]string),
+	}
+	for _, inst := range s.instances {
+		if inst.DeletedAt.IsZero() && inst.SubscriptionSecretName != "" {
+			bindingName := inst.SubscriptionSecretName
+			result.InstancesPerCredentialsBinding[bindingName]++
+			result.CredentialsBindingToGA[bindingName] = inst.GlobalAccountID
+		}
+	}
+	return result, nil
+}
+
 func (s *instances) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

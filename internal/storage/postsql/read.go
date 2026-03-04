@@ -533,6 +533,18 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 	return rows, err
 }
 
+func (r readSession) GetCredentialsBindingStats() ([]dbmodel.InstanceByCredentialsBindingStatEntry, error) {
+	var rows []dbmodel.InstanceByCredentialsBindingStatEntry
+	_, err := r.session.
+		Select("global_account_id", "subscription_secret_name", "count(*) as total").
+		From(InstancesTableName).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where("subscription_secret_name != ''").
+		GroupBy("global_account_id", "subscription_secret_name").
+		Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation

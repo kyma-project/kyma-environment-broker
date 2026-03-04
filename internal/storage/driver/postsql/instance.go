@@ -406,6 +406,22 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 	return result, nil
 }
 
+func (s *Instance) GetCredentialsBindingStats() (internal.CredentialsBindingStats, error) {
+	entries, err := s.Factory.NewReadSession().GetCredentialsBindingStats()
+	if err != nil {
+		return internal.CredentialsBindingStats{}, err
+	}
+	result := internal.CredentialsBindingStats{
+		InstancesPerCredentialsBinding: make(map[string]int),
+		CredentialsBindingToGA:         make(map[string]string),
+	}
+	for _, e := range entries {
+		result.InstancesPerCredentialsBinding[e.SubscriptionSecretName] += e.Total
+		result.CredentialsBindingToGA[e.SubscriptionSecretName] = e.GlobalAccountID
+	}
+	return result, nil
+}
+
 func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
 
 	dtos, count, totalCount, err := s.Factory.NewReadSession().ListInstances(filter)
