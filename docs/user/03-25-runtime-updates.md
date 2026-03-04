@@ -7,7 +7,9 @@ The synchronous processing could happen, when there is no need to run updating o
 
 ## Configuration
 
-To enable synchronous processing of update requests, set the following configuration in the Kyma Environment Broker:
+### The synchronous processing
+
+The synchronous processing of updates, which does not need to create an operation, is disabled by default. To enable this feature set the following configuration in the Kyma Environment Broker:
 ```yaml
   broker:
     syncEmptyUpdateResponseEnabled: true
