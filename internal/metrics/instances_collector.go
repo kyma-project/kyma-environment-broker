@@ -20,19 +20,24 @@ import (
 // - kcp_keb_global_account_id_instances_total - total number of all instances per global account
 // - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
 // - kcp_keb_sub_account_id_instances_total - total number of instances per subaccount
+// - kcp_keb_v2_instance_empty_updates_total{instance_id} - total number of empty updates per instance
+// - kcp_keb_v2_instance_updates_total{instance_id} - total number of updates (update operations) per instance
 type InstancesStatsGetter interface {
 	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
+	GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats, error)
 }
 
 type InstancesCollector struct {
 	statsGetter InstancesStatsGetter
 
-	instancesDesc        *prometheus.Desc
-	instancesPerGAIDDesc *prometheus.Desc
-	instancesPerSAIDDesc *prometheus.Desc
-	licenseTypeDesc      *prometheus.Desc
-	logger               *slog.Logger
+	instancesDesc            *prometheus.Desc
+	instancesPerGAIDDesc     *prometheus.Desc
+	instancesPerSAIDDesc     *prometheus.Desc
+	licenseTypeDesc          *prometheus.Desc
+	instanceUpdatesDesc      *prometheus.Desc
+	instanceEmptyUpdatesDesc *prometheus.Desc
+	logger                   *slog.Logger
 }
 
 func NewInstancesCollector(statsGetter InstancesStatsGetter, logger *slog.Logger) *InstancesCollector {
@@ -59,6 +64,14 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter, logger *slog.Logger
 			"count of instances grouped by license types",
 			[]string{"license_type"},
 			nil),
+		instanceEmptyUpdatesDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, "instance_empty_updates_total"),
+			"The total number of instance empty updates",
+			[]string{"instance_id"}, nil),
+		instanceUpdatesDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespaceV2, prometheusSubsystemV2, "instance_updates_total"),
+			"The total number of update operations per instance",
+			[]string{"instance_id"}, nil),
 	}
 }
 
@@ -67,6 +80,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.instancesPerGAIDDesc
 	ch <- c.instancesPerSAIDDesc
 	ch <- c.licenseTypeDesc
+	ch <- c.instanceUpdatesDesc
 }
 
 // Collect implements the prometheus.Collector interface.
@@ -93,6 +107,17 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for t, num := range stats2.LicenseType {
 		collect(ch, c.licenseTypeDesc, num, t)
+	}
+	emptyUpdates, updates, err := c.statsGetter.GetUpdatesStats()
+	if err != nil {
+		c.logger.Error(err.Error())
+		return
+	}
+	for _, item := range updates.Instances {
+		collect(ch, c.instanceUpdatesDesc, item.EmptyUpdates, item.InstanceID)
+	}
+	for _, item := range emptyUpdates.Instances {
+		collect(ch, c.instanceEmptyUpdatesDesc, item.EmptyUpdates, item.InstanceID)
 	}
 }
 

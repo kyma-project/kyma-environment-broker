@@ -327,6 +327,18 @@ type CredentialsBindingStats struct {
 	CredentialsBindingToGA         map[string]string
 }
 
+type UpdateStats struct {
+	Instances []InstanceItem
+}
+
+type InstanceItem struct {
+	InstanceID      string
+	GlobalAccountID string
+
+	EmptyUpdates      int
+	UpdtateOperations int
+}
+
 // ERSContextStats provides aggregated information regarding ERSContext
 type ERSContextStats struct {
 	LicenseType map[string]int

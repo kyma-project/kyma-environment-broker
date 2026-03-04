@@ -269,6 +269,7 @@ func fixConfig() *Config {
 			OperationStatsPollingInterval:                   3 * time.Second,
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
+			AvailableCredentialsBindingsPollingInterval:     1 * time.Second,
 		},
 		ProvidersConfigurationFilePath:               "testdata/providers.yaml",
 		PlansConfigurationFilePath:                   "testdata/plans.yaml",

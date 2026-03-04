@@ -214,6 +214,10 @@ func (s *instances) GetERSContextStats() (internal.ERSContextStats, error) {
 	return internal.ERSContextStats{}, fmt.Errorf("not implemented")
 }
 
+func (s *instances) GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats, error) {
+	return internal.UpdateStats{}, internal.UpdateStats{}, fmt.Errorf("not implemented")
+}
+
 func (s *instances) GetCredentialsBindingStats() (internal.CredentialsBindingStats, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
