@@ -324,7 +324,7 @@ kymaDashboardConfig:
 
 metricsv2:
   # Frequency of polling for available credentials bindings in Gardener.
-  availableCredentialsBindingsPollingInterval: 1m
+  availableCredentialsBindingsPollingInterval: 1h
   # Frequency of polling for credentials binding instance counts.
   credentialsBindingsPollingInterval: 1m
   # If true, enables metrics collection and Prometheus exposure.

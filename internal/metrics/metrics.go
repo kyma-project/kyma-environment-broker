@@ -39,7 +39,7 @@ type Config struct {
 	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
 	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
 	CredentialsBindingsPollingInterval              time.Duration `envconfig:"default=1m"`
-	AvailableCredentialsBindingsPollingInterval     time.Duration `envconfig:"default=1m"`
+	AvailableCredentialsBindingsPollingInterval     time.Duration `envconfig:"default=1h"`
 }
 
 type RegisterContainer struct {
