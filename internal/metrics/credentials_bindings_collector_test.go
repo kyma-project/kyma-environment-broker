@@ -41,7 +41,11 @@ func TestCredentialsBindingsCollector(t *testing.T) {
 	deleted.DeletedAt = time.Now()
 	require.NoError(t, instances.Insert(deleted))
 
-	collector := NewCredentialsBindingsCollector(instances, nil, 1*time.Minute, 5*time.Minute, log, prometheus.NewRegistry())
+	collector := NewCredentialsBindingsCollector(instances, nil, 1*time.Minute, 5*time.Minute, log)
+	t.Cleanup(func() {
+		prometheus.Unregister(collector.instancesPerCredentialsBinding)
+		prometheus.Unregister(collector.availableCredentialsBindings)
+	})
 
 	t.Run("initial counts are correct after first poll", func(t *testing.T) {
 		collector.updateInstancesMetrics()
@@ -103,7 +107,11 @@ func TestAvailableCredentialsBindingsCollector(t *testing.T) {
 	objects := []runtime.Object{awsUnclaimed1, awsUnclaimed2, azureUnclaimed, awsClaimed, azureClaimed}
 	gardenerClient := gardener.NewClient(gardener.NewDynamicFakeClient(objects...), namespace)
 
-	collector := NewCredentialsBindingsCollector(nil, gardenerClient, 1*time.Minute, 5*time.Minute, log, prometheus.NewRegistry())
+	collector := NewCredentialsBindingsCollector(nil, gardenerClient, 1*time.Minute, 5*time.Minute, log)
+	t.Cleanup(func() {
+		prometheus.Unregister(collector.instancesPerCredentialsBinding)
+		prometheus.Unregister(collector.availableCredentialsBindings)
+	})
 
 	t.Run("counts unclaimed bindings per hyperscaler type", func(t *testing.T) {
 		collector.updateAvailableMetrics()

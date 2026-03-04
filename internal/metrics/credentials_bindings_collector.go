@@ -49,26 +49,20 @@ func NewCredentialsBindingsCollector(
 	dbPollingInterval time.Duration,
 	gardenerPollingInterval time.Duration,
 	logger *slog.Logger,
-	registerer ...prometheus.Registerer,
 ) *CredentialsBindingsCollector {
-	reg := prometheus.DefaultRegisterer
-	if len(registerer) > 0 && registerer[0] != nil {
-		reg = registerer[0]
-	}
-	factory := promauto.With(reg)
 	return &CredentialsBindingsCollector{
 		statsGetter:             statsGetter,
 		gardenerClient:          gardenerClient,
 		dbPollingInterval:       dbPollingInterval,
 		gardenerPollingInterval: gardenerPollingInterval,
 		logger:                  logger,
-		instancesPerCredentialsBinding: factory.NewGaugeVec(prometheus.GaugeOpts{
+		instancesPerCredentialsBinding: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespaceV2,
 			Subsystem: prometheusSubsystemV2,
 			Name:      "instances_per_credentials_binding",
 			Help:      "The number of active instances per CredentialsBinding",
 		}, []string{"credentials_binding", "global_account_id"}),
-		availableCredentialsBindings: factory.NewGaugeVec(prometheus.GaugeOpts{
+		availableCredentialsBindings: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespaceV2,
 			Subsystem: prometheusSubsystemV2,
 			Name:      "available_credentials_bindings",
