@@ -88,7 +88,7 @@ Existing HAP account selection rules remain unchanged. This feature adds the cap
 
 **When feature is enabled (GA in allowlist):**
 1. Existing HAP rules determine the labels used to select the `CredentialsBinding`
-2. Find ALL `CredentialsBindings` matching the defined labels
+2. Find all `CredentialsBindings` matching the defined labels
 3. If none found: claim new `CredentialsBinding`
 4. If found: query the database for cluster counts, select the most-populated account that is still below the limit
 5. If all accounts are at the limit: claim new `CredentialsBinding`
