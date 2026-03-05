@@ -83,7 +83,7 @@ Existing HAP account selection rules remain unchanged. This feature adds the cap
 **When feature is disabled (GA not in allowlist):**
 1. Existing HAP rules determine the labels used to select the `CredentialsBinding`
 2. Find `CredentialsBinding` using the defined labels
-3. If none found: claim new `CredentialsBinding`
+3. If none found, claim a new `CredentialsBinding`
 4. Provision cluster using selected `CredentialsBinding`
 
 **When feature is enabled (GA in allowlist):**
