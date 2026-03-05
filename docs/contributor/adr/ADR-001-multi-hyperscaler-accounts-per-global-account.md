@@ -134,7 +134,7 @@ GAs can scale beyond the capacity of a single hyperscaler account without manual
 
 Database-based counting is performant and avoids additional load on the Gardener apiserver. The fill-most-populated strategy increases the likelihood that accounts can be fully reclaimed by the cleanup job over time.
 
-The database may be slightly inconsistent with actual Gardener state if shoots are somehow created outside KEB, though this should not happen in production environments.
+The database may be slightly inconsistent with actual Gardener state if Shoots are created outside KEB, though this should not happen in production environments.
 
 ### Metrics
 
