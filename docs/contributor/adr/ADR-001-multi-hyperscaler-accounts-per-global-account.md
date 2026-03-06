@@ -1,28 +1,21 @@
 # Multi-Hyperscaler Accounts per Global Account
 
-## Problem
+## Status
+
+Accepted
+
+## Context
 
 For regular provisioning, a global account (GA) can use only one hyperscaler account per provider, limiting cluster count to the account's capacity.
 
 > ### Note: 
 > Multiple accounts per global account are already supported for special cases (for example, AWS and EU Access AWS cluster in the same GA). However, automatic assignment based on capacity limits is not available.
 
-## Solution
+The Hyperscaler Account Pool (HAP) selects a `CredentialsBinding` by matching the label `tenantName={GA}`. If none exists, a new one is claimed. There is no mechanism to automatically spill over into a second account once the first reaches its cluster capacity.
 
-Automatically assign multiple accounts per GA when capacity limit is reached.
+As GAs grow, this becomes a scaling bottleneck. A solution is needed to automatically distribute clusters across multiple hyperscaler accounts once a configurable per-account limit is reached.
 
-**Current provisioning:**
-- Find CredentialsBinding with `tenantName={GA}`
-- Use it to provision the cluster
-- If none exists, claim new one
-
-**New provisioning:**
-- Find ALL CredentialsBindings with `tenantName={GA}`
-- Count clusters in each
-- Use CredentialsBinding below limit (each CredentialsBinding = one hyperscaler account)
-- If all full, claim new one
-
-## Design
+## Decision
 
 ### 1. Rollout Strategy
 
@@ -37,12 +30,12 @@ This feature can be enabled gradually using an allowlist, letting you control wh
 
 **Decision rationale:** Allowlist provides all required modes with a single field: specific GAs, global enablement (`["*"]`), and disabled (`[]`). Simpler to implement and allows testing on selected GAs.
 
-### 2. Cluster Limits
+### 2. Cluster Limits per Hyperscaler Account
 
 Each hyperscaler provider type should have a configurable maximum number of clusters. Once the limit is reached, new clusters are provisioned in a different account. A default limit is used when a provider limit is not specified in the configuration. Specific providers can override this default value if needed.
 
-| Provider | Max clusters per account|
-|----------|--------------|
+| Provider | Max clusters per account |
+|----------|--------------------------|
 | AWS | 200 |
 | GCP | TBD |
 | Azure | TBD |
@@ -83,25 +76,23 @@ To select the right hyperscaler account during provisioning, we need to know how
 
 **Decision rationale:** Database approach is chosen for performance and resource efficiency. While the Gardener API provides the exact number of clusters on a hyperscaler account, its performance characteristics would impact provisioning speed and put unnecessary stress on the apiserver. The concern about shoots created outside KEB is not applicable to production environments, as manual shoot creation outside the dev environment should not take place. In production, all shoots must be created through KEB, ensuring data consistency.
 
-## Integration with Current HAP Implementation
+### 5. Provisioning Flow
 
 Existing HAP account selection rules remain unchanged. This feature adds the capability to use multiple CredentialsBindings for a given provider in one GA.
 
-**Provisioning flow:**
-
 **When feature is disabled (GA not in allowlist):**
-1. Existing HAP rules determine the labels used to select the CredentialsBinding
-2. Find CredentialsBinding using the defined labels
-3. If none found: claim new CredentialsBinding
-4. Provision cluster using selected CredentialsBinding
+1. Existing HAP rules determine the labels used to select the `CredentialsBinding`
+2. Find `CredentialsBinding` using the defined labels
+3. If none found, claim a new `CredentialsBinding`
+4. Provision cluster using selected `CredentialsBinding`
 
 **When feature is enabled (GA in allowlist):**
-1. Existing HAP rules determine the labels used to select the CredentialsBinding
-2. Find CredentialsBindings using the defined labels
-3. If none found: claim new CredentialsBinding
-4. If found: count clusters in each using database query, select most populated below limit
-5. If all at limit: claim new CredentialsBinding
-6. Provision cluster using selected CredentialsBinding
+1. Existing HAP rules determine the labels used to select the `CredentialsBinding`
+2. Find all `CredentialsBindings` matching the defined labels
+3. If none found, claim a new `CredentialsBinding`
+4. If found, query the database for cluster counts, select the most-populated account that is still below the limit
+5. If all accounts are at the limit, claim a new `CredentialsBinding`
+6. Provision cluster using the selected `CredentialsBinding`
 
 **Example:** GlobalAccount with AWS limit = 200
 - 150 clusters on CredentialsBinding-A -> provision on CredentialsBinding-A (below limit)
@@ -109,7 +100,7 @@ Existing HAP account selection rules remain unchanged. This feature adds the cap
 - 200 on CredentialsBinding-A, 150 on CredentialsBinding-B -> provision on CredentialsBinding-B (fill-most-populated)
 - 199 on CredentialsBinding-A, 150 on CredentialsBinding-B -> provision on CredentialsBinding-A (still below limit, fill-most-populated)
 
-## Configuration
+### 6. Configuration
 
 ```yaml
 hap:
@@ -137,7 +128,17 @@ hap:
     # strategy: "fill-most-populated"  # Possible options: "fill-most-populated", "fill-first", "round-robin"
 ```
 
-## Metrics
+## Consequences
+
+GAs can scale beyond the capacity of a single hyperscaler account without manual intervention. The gradual rollout via allowlist minimizes risk during adoption. Existing HAP selection rules remain unchanged; the feature layers on top transparently.
+
+Database-based counting is performant and avoids additional load on the Gardener apiserver. The fill-most-populated strategy increases the likelihood that accounts can be fully reclaimed by the cleanup job over time.
+
+The database may be slightly inconsistent with actual Gardener state if Shoots are created outside KEB, though this should not happen in production environments.
+
+### Metrics
+
+The following metrics are introduced to observe the feature:
 
 - `keb_credentials_bindings_per_ga` - CredentialsBindings per GA (1 CredentialsBinding = 1 hyperscaler account)
 - `keb_shoots_per_credentials_binding` - Shoots per CredentialsBinding
