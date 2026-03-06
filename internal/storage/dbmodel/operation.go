@@ -40,6 +40,11 @@ type OperationStatEntry struct {
 	InstanceID string
 }
 
+type UpdateStatEntry struct {
+	InstanceID string
+	Value      int
+}
+
 type OperationStatEntryV2 struct {
 	Count  int
 	Type   string

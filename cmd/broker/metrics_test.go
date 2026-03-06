@@ -63,6 +63,19 @@ func TestMetrics(t *testing.T) {
 		return suite.DecodeOperationID(resp)
 	}
 
+	updateSyncReq := func(iid string) {
+		resp := suite.CallAPI(
+			"PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid), `
+		{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"context": {
+				"license_type": "CUSTOMER"
+			}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
 	deleteReq := func(iid string) string {
 		resp := suite.CallAPI(
 			"DELETE", fmt.Sprintf(
@@ -151,6 +164,9 @@ func TestMetrics(t *testing.T) {
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op8 := suite.GetOperation(opID)
 		assert.NotNil(t, op8)
+
+		updateSyncReq(instance5)
+		updateSyncReq(instance5)
 
 		// Deprovisioning
 

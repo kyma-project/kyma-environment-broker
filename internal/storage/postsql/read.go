@@ -494,6 +494,30 @@ func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, err
 	return rows, err
 }
 
+func (r readSession) GetEmptyUpdatesStats() ([]dbmodel.UpdateStatEntry, error) {
+	var rows []dbmodel.UpdateStatEntry
+
+	// Find number of empty updates per instance, used for metrics
+	_, err := r.session.Select("instance_id, empty_updates as value").
+		From(InstancesTableName).
+		Where("empty_updates > 0").
+		Load(&rows)
+	return rows, err
+}
+
+func (r readSession) GetUpdatesStats() ([]dbmodel.UpdateStatEntry, error) {
+	var rows []dbmodel.UpdateStatEntry
+
+	// Find number of update operations per instance, used for metrics
+	_, err := r.session.Select("instance_id, count(*) as value").
+		From(OperationTableName).
+		Where("type = ?", "update").
+		GroupBy("instance_id").
+		Having("count(*) > 0").
+		Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
 	var stmt *dbr.SelectStmt
