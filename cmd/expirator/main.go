@@ -34,6 +34,15 @@ type Config struct {
 	PlanID           string        `envconfig:"default=7d55d31d-35ae-4438-bf13-6ffdfa107d9f"`
 }
 
+type Result struct {
+	count                    int
+	instancesToExpireCount   int
+	instancesToBeLeftCount   int
+	suspensionsAcceptedCount int
+	onlyMarkedAsExpiredCount int
+	failuresCount            int
+}
+
 type CleanupService struct {
 	cfg             Config
 	instanceStorage storage.Instances
@@ -77,9 +86,18 @@ func main() {
 	fatalOnError(err)
 	svc := newCleanupService(cfg, brokerClient, db.Instances())
 
-	err = svc.PerformCleanup()
-
+	result, err := svc.PerformCleanup()
 	fatalOnError(err)
+
+	slog.Info(fmt.Sprintf(
+		"Instances: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v, just marked expired: %+v, failures: %+v",
+		result.count,
+		result.instancesToExpireCount,
+		result.instancesToBeLeftCount,
+		result.suspensionsAcceptedCount,
+		result.onlyMarkedAsExpiredCount,
+		result.failuresCount,
+	))
 
 	slog.Info("Expirator job finished successfully!")
 
@@ -95,7 +113,7 @@ func main() {
 	fatalOnError(err)
 }
 
-func (s *CleanupService) PerformCleanup() error {
+func (s *CleanupService) PerformCleanup() (Result, error) {
 	filter := dbmodel.InstanceFilter{PlanIDs: []string{s.cfg.PlanID}, Expired: ptr.Bool(false)}
 	if s.cfg.TestRun {
 		filter.SubAccountIDs = []string{s.cfg.TestSubaccountID}
@@ -103,7 +121,7 @@ func (s *CleanupService) PerformCleanup() error {
 	instances, count, err := s.getInstances(filter)
 
 	if err != nil {
-		return fmt.Errorf("while getting instances: %s", err)
+		return Result{}, fmt.Errorf("while getting instances: %s", err)
 	}
 
 	instancesToExpire, instancesToExpireCount := s.filterInstances(
@@ -115,13 +133,26 @@ func (s *CleanupService) PerformCleanup() error {
 
 	if s.cfg.DryRun {
 		s.logInstances(instancesToExpire)
-		slog.Info(fmt.Sprintf("Instances: %+v, to expire now: %+v, to be left non-expired: %+v", count, instancesToExpireCount, instancesToBeLeftCount))
-	} else {
-		suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount := s.cleanupInstances(instancesToExpire)
-		slog.Info(fmt.Sprintf("Instances: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v, just marked expired: %+v, failures: %+v",
-			count, instancesToExpireCount, instancesToBeLeftCount, suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount))
+		return Result{
+			count:                    count,
+			instancesToExpireCount:   instancesToExpireCount,
+			instancesToBeLeftCount:   instancesToBeLeftCount,
+			suspensionsAcceptedCount: 0,
+			onlyMarkedAsExpiredCount: 0,
+			failuresCount:            0,
+		}, nil
 	}
-	return nil
+
+	suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount := s.cleanupInstances(instancesToExpire)
+
+	return Result{
+		count:                    count,
+		instancesToExpireCount:   instancesToExpireCount,
+		instancesToBeLeftCount:   instancesToBeLeftCount,
+		suspensionsAcceptedCount: suspensionsAcceptedCount,
+		onlyMarkedAsExpiredCount: onlyMarkedAsExpiredCount,
+		failuresCount:            failuresCount,
+	}, nil
 }
 
 func (s *CleanupService) getInstances(filter dbmodel.InstanceFilter) ([]internal.Instance, int, error) {

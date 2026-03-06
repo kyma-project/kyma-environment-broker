@@ -27,7 +27,7 @@ func NewDockerHandler() (*DockerHelper, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(fmt.Sprintf("host is -> %s", dockerClient.DaemonHost()))
+	fmt.Println("host is ->", dockerClient.DaemonHost())
 
 	return &DockerHelper{
 		client: dockerClient,

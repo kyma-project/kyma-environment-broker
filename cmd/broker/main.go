@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
@@ -124,6 +125,8 @@ type Config struct {
 	RegionsSupportingMachineFilePath string
 
 	HapRuleFilePath string
+
+	HapMultiHyperscalerAccount multiaccount.MultiAccountConfig `envconfig:"optional"`
 
 	ProvidersConfigurationFilePath string
 
@@ -326,7 +329,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, log)
+	_ = metrics.Register(ctx, eventBroker, db, cfg.Metrics, gardenerClient, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)

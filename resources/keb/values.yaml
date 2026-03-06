@@ -48,28 +48,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.25.47
+      version: 1.26.0
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_expirator_job:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.25.47"
+      version: "1.26.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.25.47
+      version: 1.26.0
   ingress:
     domainName: localhost
   istio:
@@ -276,6 +276,22 @@ hap:
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
 
+  multiHyperscalerAccount:
+    # Assigns multiple hyperscaler accounts per global account when capacity limits are reached
+    # - Empty array [] = feature disabled
+    # - Specific GAs = enabled only for listed global accounts
+    # - ["*"] = enabled for all global accounts
+    allowedGlobalAccounts: []
+    # Maximum clusters per hyperscaler account (applies only when allowedGlobalAccounts is not empty)
+    # When a CredentialsBinding reaches this limit, new clusters use a different account
+    limits:
+      default: 999999
+      aws: 999999
+      gcp: 999999
+      azure: 999999
+      openstack: 999999
+      alicloud: 999999
+
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.
   # Possible values: empty (default), "node", or "zone".
@@ -307,6 +323,10 @@ kymaDashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 metricsv2:
+  # Frequency of polling for available credentials bindings in Gardener.
+  availableCredentialsBindingsPollingInterval: 1h
+  # Frequency of polling for credentials binding instance counts.
+  credentialsBindingsPollingInterval: 1m
   # If true, enables metrics collection and Prometheus exposure.
   enabled: false
   # Duration of retaining finished operation results in memory.
@@ -474,7 +494,7 @@ cis:
 # Deprovision Retrigger Job Settings
 # =================================================
 deprovisionRetrigger:
-  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
+  # If true, the Job runs in dry-run mode and does not actually retrigger deprovisioning.
   dryRun: false
   # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
@@ -566,7 +586,7 @@ runtimeReconciler:
 # Service Binding Cleanup Job Settings
 # =================================================
 serviceBindingCleanup:
-  # If true, the job only logs what would be deleted without actually removing any bindings.
+  # If true, the Job only logs what would be deleted without actually removing any bindings.
   dryRun: false
   # If true, enables the Service Binding Cleanup CronJob.
   enabled: true

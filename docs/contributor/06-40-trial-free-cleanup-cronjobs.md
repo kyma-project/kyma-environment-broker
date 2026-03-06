@@ -1,17 +1,17 @@
 # Trial Cleanup CronJob and Free Cleanup CronJob
 
-Trial Cleanup CronJob and Free Cleanup CronJob are Jobs that make the SAP BTP, Kyma runtime instances with the trial or free plans expire 14 or 30 days after their creation, respectively.
+Trial Cleanup CronJob and Free Cleanup CronJob are Jobs that cause the SAP BTP, Kyma runtime instances with the trial or free plans to expire 14 or 30 days after their creation, respectively.
 Expiration means that the Kyma runtime instance is suspended and the `expired` flag is set.
 
 ## Details
 
 For each instance meeting the criteria, a PATCH request is sent to Kyma Environment Broker (KEB). This instance is marked as `expired`, and if it is in the `succeeded` state, the suspension process is started.
-If the instance is already in the `suspended` state, this instance is just marked as `expired`.
+If the instance is already in the `suspended` state, it is just marked as `expired`.
 
 ### Dry-Run Mode
 
-If you need to test the Job, you can run it in the `dry-run` mode.
-In that mode, the Job only logs the information about the candidate instances, that is, instances meeting the configured criteria. The instances are not affected.
+If you need to test the Job, you can run it in dry-run mode.
+In this mode, the Job only logs the information about the candidate instances, that is, instances meeting the configured criteria. The instances are not affected.
 
 ## Prerequisites
 
@@ -20,23 +20,23 @@ In that mode, the Job only logs the information about the candidate instances, t
 
 ## Configuration
 
-Jobs are CronJobs with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](../../resources/keb/values.yaml) file for the chart.
-By default, CronJobs are set according to the following schedules:
+These Jobs are CronJobs with a schedule that can be configured as values in the [values.yaml](../../resources/keb/values.yaml) file for the chart (see [Schedule syntax](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#schedule-syntax)).
+By default, CronJobs are scheduled as follows:
 
 * Trial Cleanup CronJob runs every day at 1:15 AM:
 
-```yaml  
-kyma-environment-broker.trialCleanup.schedule: "15 1 * * *"
-```
+    ```yaml  
+    kyma-environment-broker.trialCleanup.schedule: "15 1 * * *"
+    ```
 
 * Free Cleanup CronJob runs every hour at 40 minutes past the hour:
 
-```yaml
-kyma-environment-broker.freeCleanup.schedule: "40 * * * *"
-```
+    ```yaml
+    kyma-environment-broker.freeCleanup.schedule: "40 * * * *"
+    ```
 
 Use the following environment variables to configure the Jobs:
-                         |
+
 ### Trial Cleanup CronJob
 
 | Environment Variable | Current Value | Description |

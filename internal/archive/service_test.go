@@ -28,7 +28,7 @@ func TestService_Run(t *testing.T) {
 	service := NewService(db, false, true, 10)
 
 	// when
-	err, numberOfInstancesProcessed, numberOfOperationsDeleted := service.Run()
+	numberOfInstancesProcessed, numberOfOperationsDeleted, err := service.Run()
 
 	// then
 	require.NoError(t, err)

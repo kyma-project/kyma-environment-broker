@@ -27,7 +27,9 @@ func (s *CreateResourceNamesStep) Name() string {
 	return "Create_Resource_Names"
 }
 
-// The runtimeID could be generated and set in two different steps so we separated the logic to generate the Kyma name in this step
+// Run generates and sets the Kyma and Runtime resource names for the operation.
+// The runtimeID could be generated and set in two different steps, so the logic
+// to generate the Kyma name is separated into this step.
 func (s *CreateResourceNamesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
 		return s.operationManager.OperationFailed(operation, "RuntimeID not set, cannot create Kyma resource name and Runtime resource name", nil, log)

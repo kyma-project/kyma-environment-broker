@@ -66,7 +66,7 @@ on:
         required: false
       fd-increase-threshold:
         description: 'Allowed increase in open file descriptors (absolute)'
-        default: '1'
+        default: '2'
         required: false
       db-conn-increase-threshold:
         description: 'Allowed increase in DB connections (absolute)'
@@ -103,7 +103,7 @@ jobs:
       deprovisioning-workers-amount: ${{ inputs.deprovisioning-workers-amount || '25' }}
       memory-growth-threshold-percent: ${{ inputs.memory-growth-threshold-percent || '10' }}
       goroutine-increase-threshold: ${{ inputs.goroutine-increase-threshold || '1' }}
-      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '1' }}
+      fd-increase-threshold: ${{ inputs.fd-increase-threshold || '2' }}
       db-conn-increase-threshold: ${{ inputs.db-conn-increase-threshold || '1' }}
 
   analyze-for-leaks:

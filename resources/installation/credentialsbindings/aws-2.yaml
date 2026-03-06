@@ -1,0 +1,12 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: aws
+  name: aws-2
+  namespace: garden-kyma-dev
+provider:
+  type: aws
+credentialsRef:
+  name: aws-secret-2
+  namespace: garden-kyma-dev

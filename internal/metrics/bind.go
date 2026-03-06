@@ -65,7 +65,7 @@ type BindingCreationCollector struct {
 	bindingCreated *prometheus.CounterVec
 }
 
-// BindingCreationCollector provides a counter which shows the total number of created bindings:
+// NewBindingCreationCollector provides a counter which shows the total number of created bindings:
 // - kcp_keb_v2_binding_created_total{plan_id}
 func NewBindingCreationCollector() *BindingCreationCollector {
 	return &BindingCreationCollector{

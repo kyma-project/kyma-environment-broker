@@ -11,9 +11,9 @@ After the allocated time, [Trial Cleanup CronJob and Free Cleanup CronJob](06-40
 
 ## Details
 
-The cleaning process is performed in the following steps:
+The cleanup process is performed in the following steps:
 
-1. The cleanup CronJobs trigger the trial or free instance expiration by sending a `PUT` request to `/expire/service_instance/{instanceID}` KEB API endpoint, where **plan** must be set to `trial` or `free`. The possible KEB responses are:
+1. To trigger the trial or free instance expiration, the cleanup CronJobs send a `PUT` request to the `/expire/service_instance/{instanceID}` KEB API endpoint, with **plan** set to `trial` or `free`. The possible KEB responses are:
 
 	| Status Code | Description                                                                                             |
 	| --- |---------------------------------------------------------------------------------------------------------|
@@ -21,10 +21,10 @@ The cleaning process is performed in the following steps:
 	| 400 Bad Request | Returned if the request is malformed, missing mandatory data, or when the instance's plan is not Trial or Free. |
 	| 404 Not Found | Returned if the instance does not exist in the database.                                                    |
 
-2. If KEB accepts the instance expiration request, it marks the instance as expired by populating the instance's `ExpiredAt` field with a timestamp when the request is accepted.
+2. If KEB accepts the instance expiration request, it marks the instance as expired by populating the instance's **ExpiredAt** field with a timestamp when the request is accepted.
 3. KEB creates a suspension operation, which is added to the operations queue.
 4. KEB sets the **parameters.ers_context.active** field to `false`.
-5. The instance is deactivated and no longer usable. It can only be removed by a deprovisioning request.
+5. The instance is deactivated and no longer usable. It can only be removed through a deprovisioning request.
 
 ## Update Requests
 

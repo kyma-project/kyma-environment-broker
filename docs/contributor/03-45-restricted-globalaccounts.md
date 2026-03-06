@@ -1,8 +1,8 @@
 # Restricted Global Accounts
 ## Overview
 
-The Kyma Environment Broker configuration allows to restrict the provisioning for a defined set of Global Accounts.
-Each provisioning request contains the Global Account ID as a part of the context (the **globalaccount_id** field), for example:
+You can configure Kyma Environment Broker (KEB) to restrict the provisioning for a defined set of global accounts.
+Each provisioning request contains a global account ID as part of the context (the **globalaccount_id** field), for example:
 
 ```json
 {
@@ -20,11 +20,13 @@ Each provisioning request contains the Global Account ID as a part of the contex
 ```
 
 ## Configuration
+
 To enable the restriction, set the following properties:
-- **allowedGlobalAccountIDs** - a comma-separated list of allowed Global Account IDs.
+
+- **allowedGlobalAccountIDs** - a comma-separated list of allowed global account IDs.
 - **restrictToAllowedGlobalAccountIDs** - a boolean flag to enable or disable the restriction.
 
-See an example of the restriction configuration:
+See an example of restriction configuration:
 
 ```yaml
 broker:
@@ -32,5 +34,4 @@ broker:
   restrictToAllowedGlobalAccountIDs: true
 ```
 
-When the restriction is enabled, KEB checks if the **globalaccount_id** from the provisioning request context is contained in the list of allowed Global Account IDs. If not, the provisioning request is rejected with an appropriate error message.
-
+When the restriction is enabled, KEB checks if the **globalaccount_id** from the provisioning request context is included in the list of allowed global account IDs. If not, the provisioning request is rejected with an appropriate error message.

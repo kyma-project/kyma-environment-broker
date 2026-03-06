@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -37,16 +38,19 @@ type Config struct {
 	OperationStatsPollingInterval                   time.Duration `envconfig:"default=1m"`
 	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
 	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
+	CredentialsBindingsPollingInterval              time.Duration `envconfig:"default=1m"`
+	AvailableCredentialsBindingsPollingInterval     time.Duration `envconfig:"default=1h"`
 }
 
 type RegisterContainer struct {
-	OperationResult            *resultsCollector
-	OperationStats             *operationsStats
-	OperationDurationCollector *OperationDurationCollector
-	InstancesCollector         *InstancesCollector
+	OperationResult              *resultsCollector
+	OperationStats               *operationsStats
+	OperationDurationCollector   *OperationDurationCollector
+	InstancesCollector           *InstancesCollector
+	CredentialsBindingsCollector *CredentialsBindingsCollector
 }
 
-func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
+func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, gardenerClient *gardener.Client, logger *slog.Logger) *RegisterContainer {
 	logger = logger.With("from:", logPrefix)
 	logger.Info("Registering metrics")
 	opDurationCollector := NewOperationDurationCollector()
@@ -87,13 +91,17 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
 	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
 
+	credentialsBindingsCollector := NewCredentialsBindingsCollector(db.Instances(), gardenerClient, cfg.CredentialsBindingsPollingInterval, cfg.AvailableCredentialsBindingsPollingInterval, logger)
+	credentialsBindingsCollector.StartCollector(ctx)
+
 	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
-		OperationResult:            opResult,
-		OperationStats:             opStats,
-		OperationDurationCollector: opDurationCollector,
-		InstancesCollector:         opInstanceCollector,
+		OperationResult:              opResult,
+		OperationStats:               opStats,
+		OperationDurationCollector:   opDurationCollector,
+		InstancesCollector:           opInstanceCollector,
+		CredentialsBindingsCollector: credentialsBindingsCollector,
 	}
 }
 

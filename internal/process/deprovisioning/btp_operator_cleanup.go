@@ -55,7 +55,8 @@ func (s *BTPOperatorCleanupStep) Name() string {
 func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sClient client.Client, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
-		return s.retryOnError(operation, nil, err, log, "failed to list namespaces")
+		err = kebError.AsTemporaryError(err, "failed to list namespaces")
+		return s.retryOnError(operation, k8sClient, err, log, "failed to list namespaces")
 	}
 
 	var errors []string
@@ -65,7 +66,7 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sCli
 		return operation, 0, err
 	}
 	if SBCrdExists {
-		s.removeResources(k8sClient, gvk, namespaces, errors)
+		errors = s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	gvk.Kind = btpOperatorServiceInstance
@@ -74,11 +75,13 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sCli
 		return operation, 0, err
 	}
 	if SICrdExists {
-		s.removeResources(k8sClient, gvk, namespaces, errors)
+		errors = s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	if len(errors) != 0 {
-		return s.retryOnError(operation, nil, fmt.Errorf("%s", strings.Join(errors, ";")), log, "failed to cleanup")
+		err := fmt.Errorf("%s", strings.Join(errors, ";"))
+		err = kebError.AsTemporaryError(err, "failed to cleanup BTP operator resources")
+		return s.retryOnError(operation, k8sClient, err, log, "failed to cleanup")
 	}
 	return operation, 0, nil
 }
@@ -235,7 +238,7 @@ func (s *BTPOperatorCleanupStep) checkCRDExistence(k8sClient client.Client, gvk 
 	return true, nil
 }
 
-func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk schema.GroupVersionKind, namespaces corev1.NamespaceList, errors []string) {
+func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk schema.GroupVersionKind, namespaces corev1.NamespaceList, errors []string) []string {
 	for _, ns := range namespaces.Items {
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(gvk)
@@ -246,4 +249,5 @@ func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk sc
 	if err := s.removeFinalizers(k8sClient, namespaces, gvk); err != nil {
 		errors = append(errors, err.Error())
 	}
+	return errors
 }

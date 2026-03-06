@@ -73,7 +73,7 @@ func FixInstance(id string) internal.Instance {
 		InstanceID:                  id,
 		RuntimeID:                   runtimeId,
 		GlobalAccountID:             GlobalAccountId,
-		SubscriptionGlobalAccountID: SubscriptionGlobalAccountID,
+		SubscriptionGlobalAccountID: "",
 		SubAccountID:                subAccountId,
 		ServiceID:                   ServiceId,
 		ServiceName:                 ServiceName,

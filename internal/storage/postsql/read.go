@@ -533,6 +533,18 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 	return rows, err
 }
 
+func (r readSession) GetCredentialsBindingStats() ([]dbmodel.InstanceByCredentialsBindingStatEntry, error) {
+	var rows []dbmodel.InstanceByCredentialsBindingStatEntry
+	_, err := r.session.
+		Select("global_account_id", "subscription_secret_name", "count(*) as total").
+		From(InstancesTableName).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where("subscription_secret_name != ''").
+		GroupBy("global_account_id", "subscription_secret_name").
+		Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation
@@ -556,6 +568,45 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 		LoadOne(&res)
 
 	return res.Total, err
+}
+
+func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	if len(bindingNames) == 0 {
+		return "", 0, nil
+	}
+
+	var result struct {
+		SubscriptionSecretName string `db:"subscription_secret_name"`
+		Count                  int    `db:"count"`
+	}
+
+	err := r.session.Select("subscription_secret_name", "count(*) as count").
+		From(InstancesTableName).
+		Where("subscription_secret_name IN ?", bindingNames).
+		Where(dbr.Or(
+			dbr.And(
+				dbr.Neq("subscription_global_account_id", ""),
+				dbr.Eq("subscription_global_account_id", globalAccountID),
+			),
+			dbr.And(
+				dbr.Eq("global_account_id", globalAccountID),
+				dbr.Eq("subscription_global_account_id", ""),
+			),
+		)).
+		GroupBy("subscription_secret_name").
+		Having("count(*) < ?", maxCount).
+		OrderBy("count DESC").
+		Limit(1).
+		LoadOne(&result)
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return "", 0, nil
+		}
+		return "", 0, err
+	}
+
+	return result.SubscriptionSecretName, result.Count, nil
 }
 
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {

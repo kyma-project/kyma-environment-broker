@@ -34,8 +34,8 @@ func IsTemporaryError(err error) bool {
 	return ok && nfe.Temporary()
 }
 
-// can be used for temporary error
-// but still storing the original error in case returned to Execute
+// WrapTemporaryError can be used for temporary errors,
+// but still stores the original error in case it's returned to Execute.
 type WrapTemporaryError struct {
 	err error
 }
@@ -48,8 +48,8 @@ func WrapNewTemporaryError(err error) *WrapTemporaryError {
 	return &WrapTemporaryError{err: err}
 }
 
-func (te WrapTemporaryError) Error() string { return te.err.Error() }
-func (WrapTemporaryError) Temporary() bool  { return true }
+func (wte WrapTemporaryError) Error() string { return wte.err.Error() }
+func (WrapTemporaryError) Temporary() bool   { return true }
 
 func (wte WrapTemporaryError) GetReason() Reason {
 	return ReasonForError(wte.err, NotSet).GetReason()

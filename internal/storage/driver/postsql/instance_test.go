@@ -1289,3 +1289,143 @@ func fixDeprovisionOperation(instanceId string) internal.DeprovisioningOperation
 	operationId := fmt.Sprintf("%s-%d", instanceId, rand.Int())
 	return fixture.FixDeprovisioningOperation(operationId, instanceId)
 }
+func TestGetBestCredentialsBinding_SubaccountMovement(t *testing.T) {
+	cfg := brokerStorageDatabaseTestConfig()
+
+	storageCleanup, brokerStorage, err := storage.GetStorageForTests(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, brokerStorage)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	ga1 := "global-account-1"
+	ga2 := "global-account-2"
+	ga3 := "global-account-3"
+
+	bindings := []string{"aws-secret-1", "aws-secret-2", "aws-secret-3"}
+	limit := 3
+
+	// Binding 1: 2 instances for GA1 (one never moved, one moved away but owned by GA1)
+	inst1 := fixture.FixInstance("inst-1")
+	inst1.GlobalAccountID = ga1
+	inst1.SubscriptionGlobalAccountID = ""
+	inst1.SubscriptionSecretName = bindings[0]
+	require.NoError(t, brokerStorage.Instances().Insert(inst1))
+
+	inst2 := fixture.FixInstance("inst-2")
+	inst2.GlobalAccountID = ga2
+	inst2.SubscriptionGlobalAccountID = ga1
+	inst2.SubscriptionSecretName = bindings[0]
+	require.NoError(t, brokerStorage.Instances().Insert(inst2))
+
+	// Binding 2: 1 instance for GA1
+	inst3 := fixture.FixInstance("inst-3")
+	inst3.GlobalAccountID = ga1
+	inst3.SubscriptionGlobalAccountID = ""
+	inst3.SubscriptionSecretName = bindings[1]
+	require.NoError(t, brokerStorage.Instances().Insert(inst3))
+
+	// Binding 3: 0 instances for GA1
+	inst4 := fixture.FixInstance("inst-4")
+	inst4.GlobalAccountID = ga3
+	inst4.SubscriptionGlobalAccountID = ga3
+	inst4.SubscriptionSecretName = bindings[2]
+	require.NoError(t, brokerStorage.Instances().Insert(inst4))
+
+	t.Run("should select most populated binding (binding1 with 2 instances)", func(t *testing.T) {
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga1, bindings, limit)
+		require.NoError(t, err)
+		assert.Equal(t, bindings[0], name, "Should select binding1 (most populated with 2 instances)")
+		assert.Equal(t, 2, count, "GA1 has 2 instances: inst-1 (never moved) + inst-2 (moved away but owned)")
+	})
+
+	t.Run("should count moved instance correctly", func(t *testing.T) {
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga1, []string{bindings[0]}, limit)
+		require.NoError(t, err)
+		assert.Equal(t, bindings[0], name)
+		assert.Equal(t, 2, count, "Both inst-1 and inst-2 should count for GA1")
+	})
+
+	t.Run("should not count instances from different global account", func(t *testing.T) {
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga1, []string{bindings[2]}, limit)
+		require.NoError(t, err)
+		assert.Equal(t, "", name, "PostgreSQL returns empty when no instances match")
+		assert.Equal(t, 0, count)
+	})
+
+	t.Run("should handle limit enforcement", func(t *testing.T) {
+		inst5 := fixture.FixInstance("inst-5")
+		inst5.GlobalAccountID = ga1
+		inst5.SubscriptionGlobalAccountID = ""
+		inst5.SubscriptionSecretName = bindings[0]
+		require.NoError(t, brokerStorage.Instances().Insert(inst5))
+
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga1, bindings, limit)
+		require.NoError(t, err)
+		assert.Equal(t, bindings[1], name, "Should skip binding1 (at limit) and select binding2")
+		assert.Equal(t, 1, count, "Binding2 has 1 instance")
+
+		for i := 6; i <= 7; i++ {
+			inst := fixture.FixInstance(fmt.Sprintf("inst-%d", i))
+			inst.GlobalAccountID = ga1
+			inst.SubscriptionGlobalAccountID = ""
+			inst.SubscriptionSecretName = bindings[1]
+			require.NoError(t, brokerStorage.Instances().Insert(inst))
+		}
+
+		name, count, err = brokerStorage.Instances().GetBestCredentialsBinding(ga1, bindings, limit)
+		require.NoError(t, err)
+		assert.Equal(t, "", name, "All bindings at limit or have no GA1 instances")
+		assert.Equal(t, 0, count)
+	})
+
+	t.Run("should return empty when all bindings at limit", func(t *testing.T) {
+		for i := 8; i <= 10; i++ {
+			inst := fixture.FixInstance(fmt.Sprintf("inst-%d", i))
+			inst.GlobalAccountID = ga1
+			inst.SubscriptionGlobalAccountID = ""
+			inst.SubscriptionSecretName = bindings[2]
+			require.NoError(t, brokerStorage.Instances().Insert(inst))
+		}
+
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga1, bindings, limit)
+		require.NoError(t, err)
+		assert.Equal(t, "", name, "All bindings at limit")
+		assert.Equal(t, 0, count)
+	})
+
+	t.Run("should handle subaccount movement for GA2", func(t *testing.T) {
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(ga2, bindings, limit)
+		require.NoError(t, err)
+		assert.Equal(t, "", name, "PostgreSQL returns empty when no instances match for GA2")
+		assert.Equal(t, 0, count, "GA2 has no instances (inst-2 subscription owned by GA1)")
+	})
+
+	t.Run("should NOT count instance from GA2 that moved TO GA1 (binding still owned by GA2)", func(t *testing.T) {
+		instMoved := fixture.FixInstance("inst-moved-to-ga1")
+		instMoved.GlobalAccountID = ga1
+		instMoved.SubscriptionGlobalAccountID = ga2
+		instMoved.SubscriptionSecretName = "binding-moved"
+		require.NoError(t, brokerStorage.Instances().Insert(instMoved))
+
+		name, count, err := brokerStorage.Instances().GetBestCredentialsBinding(
+			ga1,
+			[]string{"binding-moved"},
+			limit,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "", name, "GA1 should NOT see instance moved from GA2 (binding owned by GA2)")
+		assert.Equal(t, 0, count, "GA1 has 0 instances on binding-moved (instance owned by GA2)")
+
+		name, count, err = brokerStorage.Instances().GetBestCredentialsBinding(
+			ga2,
+			[]string{"binding-moved"},
+			limit,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, "binding-moved", name, "GA2 SHOULD count instance even though it moved to GA1")
+		assert.Equal(t, 1, count, "GA2 owns the binding, so it counts against GA2's limit")
+	})
+}

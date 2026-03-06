@@ -103,8 +103,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 	defer teardownSuite(t)
 
 	srv, err := cis.NewFakeServer()
-	defer srv.Close()
 	require.NoError(t, err)
+	defer srv.Close()
 
 	cisClient := srv.Client()
 	cisConfig := CisEndpointConfig{

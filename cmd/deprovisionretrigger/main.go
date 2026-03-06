@@ -27,6 +27,13 @@ type Config struct {
 	DryRun   bool `envconfig:"default=true"`
 }
 
+type Result struct {
+	instancesToDeprovisionAgain int
+	deprovisioningAccepted      int
+	sanityFailedCount           int
+	failuresCount               int
+}
+
 type DeprovisionRetriggerService struct {
 	cfg             Config
 	instanceStorage storage.Instances
@@ -59,9 +66,16 @@ func main() {
 	fatalOnError(err)
 	svc := newDeprovisionRetriggerService(cfg, brokerClient, db.Instances())
 
-	err = svc.PerformCleanup()
-
+	result, err := svc.PerformCleanup()
 	fatalOnError(err)
+
+	slog.Info(fmt.Sprintf(
+		"Out of %d instances to retrigger deprovisioning: accepted requests = %d, skipped due to sanity failed = %d, failed requests = %d",
+		result.instancesToDeprovisionAgain,
+		result.deprovisioningAccepted,
+		result.sanityFailedCount,
+		result.failuresCount,
+	))
 
 	slog.Info("Deprovision retrigger job finished successfully!")
 	err = conn.Close()
@@ -84,28 +98,33 @@ func newDeprovisionRetriggerService(cfg Config, brokerClient BrokerClient, insta
 	}
 }
 
-func (s *DeprovisionRetriggerService) PerformCleanup() error {
+func (s *DeprovisionRetriggerService) PerformCleanup() (Result, error) {
 	notCompletelyDeletedFilter := dbmodel.InstanceFilter{DeletionAttempted: &[]bool{true}[0]}
 	instancesToDeprovisionAgain, _, _, err := s.instanceStorage.List(notCompletelyDeletedFilter)
 
 	if err != nil {
-		return fmt.Errorf("while getting not completely deprovisioned instances: %w", err)
+		return Result{}, fmt.Errorf("while getting not completely deprovisioned instances: %w", err)
 	}
 
 	if s.cfg.DryRun {
 		s.logInstances(instancesToDeprovisionAgain)
-		slog.Info(
-			"Dry run completed",
-			"instancesToRetrigger", len(instancesToDeprovisionAgain),
-		)
-	} else {
-		failuresCount, sanityFailedCount := s.retriggerDeprovisioningForInstances(instancesToDeprovisionAgain)
-		deprovisioningAccepted := len(instancesToDeprovisionAgain) - failuresCount - sanityFailedCount
-		slog.Info(fmt.Sprintf("Out of %d instances to retrigger deprovisioning: accepted requests = %d, skipped due to sanity failed = %d, failed requests = %d",
-			len(instancesToDeprovisionAgain), deprovisioningAccepted, sanityFailedCount, failuresCount))
+		return Result{
+			instancesToDeprovisionAgain: len(instancesToDeprovisionAgain),
+			deprovisioningAccepted:      0,
+			sanityFailedCount:           0,
+			failuresCount:               0,
+		}, nil
 	}
 
-	return nil
+	failuresCount, sanityFailedCount := s.retriggerDeprovisioningForInstances(instancesToDeprovisionAgain)
+	deprovisioningAccepted := len(instancesToDeprovisionAgain) - failuresCount - sanityFailedCount
+
+	return Result{
+		instancesToDeprovisionAgain: len(instancesToDeprovisionAgain),
+		deprovisioningAccepted:      deprovisioningAccepted,
+		sanityFailedCount:           sanityFailedCount,
+		failuresCount:               failuresCount,
+	}, nil
 }
 
 func (s *DeprovisionRetriggerService) retriggerDeprovisioningForInstances(instances []internal.Instance) (int, int) {

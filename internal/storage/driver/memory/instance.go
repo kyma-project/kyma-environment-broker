@@ -88,6 +88,50 @@ func (s *instances) GetNumberOfInstancesForGlobalAccountID(globalAccountID strin
 	return numberOfInstances, nil
 }
 
+func (s *instances) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	if len(bindingNames) == 0 {
+		return "", 0, nil
+	}
+
+	bindingSet := make(map[string]bool)
+	for _, name := range bindingNames {
+		bindingSet[name] = true
+	}
+
+	counts := make(map[string]int)
+	for _, inst := range s.instances {
+		// Count instances using bindings from this global account:
+		// - subscription_global_account_id tracks which GA "owns" the binding (set during account moves)
+		// - When empty: binding belongs to current global_account_id
+		// - When set: binding belongs to that GA (instance may have moved elsewhere)
+		isExplicitOwner := inst.SubscriptionGlobalAccountID != "" && inst.SubscriptionGlobalAccountID == globalAccountID
+		isCurrentOwnerNeverMoved := inst.GlobalAccountID == globalAccountID && inst.SubscriptionGlobalAccountID == ""
+
+		shouldCount := isExplicitOwner || isCurrentOwnerNeverMoved
+
+		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
+			counts[inst.SubscriptionSecretName]++
+		}
+	}
+
+	// Find the most populated binding below maxCount
+	// Iterate over bindingNames to include bindings with 0 instances
+	bestName := ""
+	bestCount := -1
+	for _, name := range bindingNames {
+		count := counts[name]
+		if count < maxCount && count > bestCount {
+			bestName = name
+			bestCount = count
+		}
+	}
+
+	if bestName == "" {
+		return "", 0, nil
+	}
+	return bestName, bestCount, nil
+}
+
 func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	inst, ok := s.instances[instanceID]
 	if !ok {
@@ -168,6 +212,24 @@ func (s *instances) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
 func (s *instances) GetERSContextStats() (internal.ERSContextStats, error) {
 	return internal.ERSContextStats{}, fmt.Errorf("not implemented")
+}
+
+func (s *instances) GetCredentialsBindingStats() (internal.CredentialsBindingStats, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	result := internal.CredentialsBindingStats{
+		InstancesPerCredentialsBinding: make(map[string]int),
+		CredentialsBindingToGA:         make(map[string]string),
+	}
+	for _, inst := range s.instances {
+		if inst.DeletedAt.IsZero() && inst.SubscriptionSecretName != "" {
+			bindingName := inst.SubscriptionSecretName
+			result.InstancesPerCredentialsBinding[bindingName]++
+			result.CredentialsBindingToGA[bindingName] = inst.GlobalAccountID
+		}
+	}
+	return result, nil
 }
 
 func (s *instances) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
@@ -298,47 +360,54 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 		return true
 	}
 
-	for _, s := range states {
-		switch s {
-		case dbmodel.InstanceSucceeded:
-			if op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceFailed:
-			if op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision) {
-				return true
-			}
-		case dbmodel.InstanceError:
-			if op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceProvisioning:
-			if op.Type == internal.OperationTypeProvision && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceDeprovisioning:
-			if op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceUpgrading:
-			if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceUpdating:
-			if op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress {
-				return true
-			}
-		case dbmodel.InstanceDeprovisioned:
-			if op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision {
-				return true
-			}
-		case dbmodel.InstanceNotDeprovisioned:
-			if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
-				return true
-			}
+	for _, state := range states {
+		if matched := s.matchState(state, op); matched {
+			return matched
 		}
 	}
 
+	return false
+}
+
+func (s *instances) matchState(state dbmodel.InstanceState, op *internal.Operation) bool {
+	switch state {
+	case dbmodel.InstanceSucceeded:
+		if op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceFailed:
+		if op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision) {
+			return true
+		}
+	case dbmodel.InstanceError:
+		if op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceProvisioning:
+		if op.Type == internal.OperationTypeProvision && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceDeprovisioning:
+		if op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceUpgrading:
+		if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceUpdating:
+		if op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress {
+			return true
+		}
+	case dbmodel.InstanceDeprovisioned:
+		if op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision {
+			return true
+		}
+	case dbmodel.InstanceNotDeprovisioned:
+		if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
+			return true
+		}
+	}
 	return false
 }
 

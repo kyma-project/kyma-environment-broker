@@ -43,13 +43,10 @@ func (e *events) RunGarbageCollection(pollingPeriod, retention time.Duration) {
 		return
 	}
 	ticker := time.NewTicker(pollingPeriod)
-	for {
-		select {
-		case <-ticker.C:
-			sess := e.Factory.NewWriteSession()
-			if err := sess.DeleteEvents(time.Now().Add(-retention)); err != nil {
-				slog.Error(fmt.Sprintf("failed to delete old events: %v", err))
-			}
+	for range ticker.C {
+		sess := e.Factory.NewWriteSession()
+		if err := sess.DeleteEvents(time.Now().Add(-retention)); err != nil {
+			slog.Error(fmt.Sprintf("failed to delete old events: %v", err))
 		}
 	}
 }
