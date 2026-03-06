@@ -363,9 +363,42 @@ func (s *Instance) Delete(instanceID string) error {
 	return sess.DeleteInstance(instanceID)
 }
 
+func (s *Instance) GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats, error) {
+	session := s.Factory.NewReadSession()
+
+	emptyUpdates, err := session.GetEmptyUpdatesStats()
+	if err != nil {
+		return internal.UpdateStats{}, internal.UpdateStats{}, err
+	}
+	resultEmptyUpdates := internal.UpdateStats{}
+	resultEmptyUpdates.Instances = make([]internal.InstanceItem, len(emptyUpdates))
+	for i, entry := range emptyUpdates {
+		resultEmptyUpdates.Instances[i] = internal.InstanceItem{
+			InstanceID:   entry.InstanceID,
+			EmptyUpdates: entry.Value,
+		}
+	}
+
+	updates, err := session.GetUpdatesStats()
+	if err != nil {
+		return internal.UpdateStats{}, internal.UpdateStats{}, err
+	}
+	resultUpdates := internal.UpdateStats{}
+	resultUpdates.Instances = make([]internal.InstanceItem, len(updates))
+	for i, entry := range updates {
+		resultUpdates.Instances[i] = internal.InstanceItem{
+			InstanceID:   entry.InstanceID,
+			EmptyUpdates: entry.Value,
+		}
+	}
+
+	return resultEmptyUpdates, resultUpdates, nil
+}
+
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
-	entries, err := s.Factory.NewReadSession().GetActiveInstanceStats()
+	session := s.Factory.NewReadSession()
+	entries, err := session.GetActiveInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -380,7 +413,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	subEntries, err := s.Factory.NewReadSession().GetSubaccountsInstanceStats()
+	subEntries, err := session.GetSubaccountsInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
