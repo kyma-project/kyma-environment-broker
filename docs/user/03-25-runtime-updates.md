@@ -1,24 +1,24 @@
-# SAP BTP, Kyma Runtime updates
+# SAP BTP, Kyma Runtime Updates
 
 ## Overview
 
-According to [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance), Kyma Runtime update reqeust could be processed synchronously or asynchronously. The asynchronous process is the default one, and it is triggered when the update request contains changes in parameters.
-The synchronous processing could happen, when there is no need to run updating operation. This optimization prevents from creating and processing multiple operations.
+According to [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance), a Kyma runtime update request can be processed synchronously or asynchronously. The asynchronous process is the default, and it is triggered when the update request contains parameter changes.
+Synchronous processing can occur when there is no need to run an updating operation. This optimization prevents the creation and processing of multiple operations.
 
 ## Configuration
 
-### The synchronous processing
+### Synchronous Processing
 
-The synchronous processing of updates, which does not need to create an operation, is disabled by default. To enable this feature set the following configuration in the Kyma Environment Broker:
+Synchronous update processing, which does not require an operation, is disabled by default. To enable this feature, set the following configuration in KEB:
 ```yaml
   broker:
     syncEmptyUpdateResponseEnabled: true
 ```
 
-## Identical updates
+## Identical Updates
 
-If an update request does not modify any parameters of the runtime and the last operation has succeeded, Kyma Environment Broker does not need to perform any action and could response synchronously with HTTP 200 status code. For example:
-The instance is being provisioned using the following request:
+If an update request does not modify any runtime parameters and the last operation succeeded, Kyma Environment Broker does not need to perform any action and can respond synchronously with the HTTP `200` status code. For example:
+The instance has been provisioned using the following request:
    ```bash
    curl --request PUT \
    --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
@@ -44,7 +44,7 @@ The instance is being provisioned using the following request:
       }
    }'
    ```
-Then an update is triggered:
+Then, an update is triggered:
    ```bash
    curl --request PATCH \
    --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
@@ -60,8 +60,8 @@ Then an update is triggered:
       }
    }'
    ```
-The broker response with HTTP 202 status, because the `machineType` parameter has changed and the update operation is created and processed asynchronously. Wait for the operation is finished.
-The second update request which does not modify any parameter:
+The broker returns the HTTP `202` status code because the **machineType** parameter has changed, and the update operation is created and processed asynchronously. Wait for the operation to finish.
+The next update request does not modify any parameters:
    ```bash
    curl --request PATCH \
    --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
@@ -77,9 +77,9 @@ The second update request which does not modify any parameter:
       }
    }'
    ```
-The broker response with HTTP 200 status, because there is no need to create an update operation. Nothing has changed.
+The broker returns the HTTP `200` status code because no update operation is needed. Nothing has changed.
 
-Next update, which modifies machine type again:
+Yet another update modifies the machine type again:
    ```bash
    curl --request PATCH \
    --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
@@ -95,8 +95,8 @@ Next update, which modifies machine type again:
       }
    }'
    ```
-The response is HTTP 202, because the `machineType` parameter has changed and the update operation is created and processed asynchronously.
-Do not wait for a success, execute next update request, which does not modify any parameter:
+The response is HTTP `202` because the **machineType** parameter has changed, and the update operation is created and processed asynchronously.
+Do not wait for success. Execute the next update request that does not modify any parameters:
    ```bash
    curl --request PATCH \
    --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
@@ -112,13 +112,13 @@ Do not wait for a success, execute next update request, which does not modify an
       }
    }'
    ```
-You will see exactly the same response with the same operation ID like the previous update request, because the last operation has not finished and the parameters are the same. The broker response with HTTP 202 status, but no new operation is created.
+You see the same response with the same operation ID as the previous update request, because the last operation has not finished, and the parameters are the same. The broker returns the HTTP `202` status code, but no new operation is created.
 
-# Last operation has not finished
+## Last Operation Has Not Finished
 
-The update request is processed asynchronously when the last operation has not finished. The update request start a new operation, when the last operation has failed, because the runtime may be in an unexpected state and the update operation is a way to verify the runtime status and provide those information to the user. 
-If the last operation is still in progress but parameters are the same, you will get HTTP 202 Accepted status, but no new operation will be created. The response contains operation ID of the last operation.
+The update request is processed asynchronously until the last operation finishes. The update request starts a new operation when the last operation failed, because the runtime may be in an unexpected state. The update operation is a way to verify the runtime status and provide that information to the user. 
+If the last operation is still in progress but the parameters are the same, you get the HTTP `202 Accepted` status, but no new operation is created. The response contains the operation ID of the last operation.
 
-## Suspension and unsuspension
+## Suspension and Unsuspension
 
-The `active` context parameter change is always processed synchronously - the response status is HTTP 200 even if under the hood a new operation is created.
+The **active** context parameter change is always processed synchronously - the response status is HTTP `200` even if, under the hood, a new operation is created.
