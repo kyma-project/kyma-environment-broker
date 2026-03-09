@@ -30,6 +30,32 @@ spec:
       imagePullSecrets:
           - name: {{ .Values.imagePullSecret }}
       {{- end }}
+      initContainers:
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
+        - name: cloudsql-proxy
+          restartPolicy: Always
+          image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
+          {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
+                    "--private-ip"]
+          {{- else }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
+                    "--private-ip",
+                    "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql-instance-credentials
+              readOnly: true
+          {{- end }}
+          {{- with .Values.deployment.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 16 }}
+          {{- end }}
+        {{- end}}
       containers:
         - name: subaccount-sync
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-sync:{{ .Values.global.images.kyma_environment_subaccount_sync.version }}"
@@ -146,30 +172,6 @@ spec:
               readOnly: true
           {{- end }}
           {{- end }}
-        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
-        - name: cloudsql-proxy
-          image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
-          {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
-          command: ["/cloud-sql-proxy",
-                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
-                    "--exit-zero-on-sigterm",
-                    "--private-ip"]
-          {{- else }}
-          command: ["/cloud-sql-proxy",
-                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
-                    "--exit-zero-on-sigterm",
-                    "--private-ip",
-                    "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
-          volumeMounts:
-            - name: cloudsql-instance-credentials
-              mountPath: /secrets/cloudsql-instance-credentials
-              readOnly: true
-          {{- end }}
-          {{- with .Values.deployment.securityContext }}
-          securityContext:
-            {{ toYaml . | nindent 16 }}
-          {{- end }}
-        {{- end}}
       {{- if or (and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)) (and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)) .Values.global.caBundle.enabled }}
       volumes:
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}

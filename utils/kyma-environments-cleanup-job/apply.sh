@@ -19,9 +19,9 @@ if [[ "$currentContext" != *dev* ]]; then
 fi
 
 SCRIPT_CLOUDSQL_PROXY_COMMAND=$(kubectl get deployment $deploymentName -n $namespace -o jsonpath=\
-"{.spec.template.spec.containers[?(@.name==\"$cloudsqlProxyContainerName\")].command}")
+"{.spec.template.spec.initContainers[?(@.name==\"$cloudsqlProxyContainerName\")].command}")
 SCRIPT_CLOUDSQL_PROXY_IMAGE=$(kubectl get deployment $deploymentName -n $namespace -o jsonpath=\
-"{.spec.template.spec.containers[?(@.name==\"$cloudsqlProxyContainerName\")].image}")
+"{.spec.template.spec.initContainers[?(@.name==\"$cloudsqlProxyContainerName\")].image}")
 
 export SCRIPT_CLOUDSQL_PROXY_COMMAND
 export SCRIPT_CLOUDSQL_PROXY_IMAGE

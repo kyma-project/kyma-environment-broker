@@ -25,6 +25,12 @@ spec:
           securityContext:
             runAsUser: 2000
           restartPolicy: OnFailure
+          initContainers:
+            - name: cloudsql-proxy
+              restartPolicy: Always
+              image: ${SCRIPT_CLOUDSQL_PROXY_IMAGE}
+              imagePullPolicy: IfNotPresent
+              command: ${SCRIPT_CLOUDSQL_PROXY_COMMAND} # set by script
           containers:
             - name: kyma-environments-cleanup
               command: ["/bin/main"]
@@ -83,10 +89,6 @@ spec:
                 - name: gardener-kubeconfig
                   mountPath: /gardener/kubeconfig
                   readOnly: true
-            - name: cloudsql-proxy
-              image: ${SCRIPT_CLOUDSQL_PROXY_IMAGE}
-              imagePullPolicy: IfNotPresent
-              command: ${SCRIPT_CLOUDSQL_PROXY_COMMAND} # set by script
           volumes:
             - name: gardener-kubeconfig
               secret:
