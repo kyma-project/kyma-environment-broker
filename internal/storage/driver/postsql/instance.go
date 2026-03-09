@@ -374,8 +374,8 @@ func (s *Instance) GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats
 	resultEmptyUpdates.Instances = make([]internal.InstanceItem, len(emptyUpdates))
 	for i, entry := range emptyUpdates {
 		resultEmptyUpdates.Instances[i] = internal.InstanceItem{
-			InstanceID:   entry.InstanceID,
-			EmptyUpdates: entry.Value,
+			InstanceID: entry.InstanceID,
+			Value:      entry.Value,
 		}
 	}
 
@@ -387,8 +387,8 @@ func (s *Instance) GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats
 	resultUpdates.Instances = make([]internal.InstanceItem, len(updates))
 	for i, entry := range updates {
 		resultUpdates.Instances[i] = internal.InstanceItem{
-			InstanceID:   entry.InstanceID,
-			EmptyUpdates: entry.Value,
+			InstanceID: entry.InstanceID,
+			Value:      entry.Value,
 		}
 	}
 

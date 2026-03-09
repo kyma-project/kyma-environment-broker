@@ -335,8 +335,7 @@ type InstanceItem struct {
 	InstanceID      string
 	GlobalAccountID string
 
-	EmptyUpdates      int
-	UpdtateOperations int
+	Value int
 }
 
 // ERSContextStats provides aggregated information regarding ERSContext

@@ -115,10 +115,10 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	for _, item := range updates.Instances {
-		collect(ch, c.instanceUpdatesDesc, item.EmptyUpdates, item.InstanceID)
+		collect(ch, c.instanceUpdatesDesc, item.Value, item.InstanceID)
 	}
 	for _, item := range emptyUpdates.Instances {
-		collect(ch, c.instanceEmptyUpdatesDesc, item.EmptyUpdates, item.InstanceID)
+		collect(ch, c.instanceEmptyUpdatesDesc, item.Value, item.InstanceID)
 	}
 }
 

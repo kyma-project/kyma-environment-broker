@@ -336,7 +336,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if len(updateStorage) > 0 {
-		instance, err := b.instanceStorage.Update(*instance)
+		instance, err = b.instanceStorage.Update(*instance)
 		if err != nil {
 			params := strings.Join(updateStorage, ", ")
 			logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s)", params, err.Error()))
