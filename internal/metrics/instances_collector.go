@@ -81,6 +81,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.instancesPerSAIDDesc
 	ch <- c.licenseTypeDesc
 	ch <- c.instanceUpdatesDesc
+	ch <- c.instanceEmptyUpdatesDesc
 }
 
 // Collect implements the prometheus.Collector interface.
