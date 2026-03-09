@@ -57,35 +57,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const fixedGardenerNamespace = "garden-test"
-
 const (
-	btpOperatorGroup           = "services.cloud.sap.com"
-	btpOperatorApiVer          = "v1"
-	btpOperatorServiceInstance = "ServiceInstance"
-	btpOperatorServiceBinding  = "ServiceBinding"
-	instanceName               = "my-service-instance"
-	bindingName                = "my-binding"
-	kymaNamespace              = "kyma-system"
-	testSuiteSpeedUpFactor     = 10000
-)
-
-var (
-	serviceBindingGvk = schema.GroupVersionKind{
-		Group:   btpOperatorGroup,
-		Version: btpOperatorApiVer,
-		Kind:    btpOperatorServiceBinding,
-	}
-	serviceInstanceGvk = schema.GroupVersionKind{
-		Group:   btpOperatorGroup,
-		Version: btpOperatorApiVer,
-		Kind:    btpOperatorServiceInstance,
-	}
+	testSuiteSpeedUpFactor = 10000
 )
 
 // BrokerSuiteTest is a helper which allows to write simple tests of any KEB processes (provisioning, deprovisioning, update).
@@ -93,7 +70,6 @@ var (
 type BrokerSuiteTest struct {
 	db             storage.BrokerStorage
 	storageCleanup func() error
-	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -108,6 +84,7 @@ type BrokerSuiteTest struct {
 	eventBroker              *event.PubSub
 	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
+	gardenerClient           *dynamicFake.FakeDynamicClient
 }
 
 func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
@@ -148,7 +125,8 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 		Level: slog.LevelInfo,
 	}))
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, log)
+	gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
+	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
@@ -243,7 +221,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts := &BrokerSuiteTest{
 		db:             db,
 		storageCleanup: storageCleanup,
-		gardenerClient: gardenerClient,
 		router:         httputil.NewRouter(),
 		t:              t,
 		k8sKcp:         cli,
@@ -251,6 +228,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		eventBroker:    eventBroker,
 
 		k8sDeletionObjectTracker: ot,
+		gardenerClient:           gardenerClient,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
@@ -273,7 +251,7 @@ func (s *BrokerSuiteTest) GetKcpClient() client.Client {
 
 func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
 	resource := gardener.SecretBindingResource
-	if strings.ToLower(bindingResource) == "credentialsbinding" {
+	if strings.ToLower(bindingResource) == credentialsBinding {
 		resource = gardener.CredentialsBindingResource
 	}
 
@@ -447,6 +425,10 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 					Description: broker.AlicloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
+				broker.BuildRuntimeAlicloudPlanID: {
+					Description: broker.BuildRuntimeAlicloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
 			},
 		},
 	}
@@ -465,7 +447,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
 		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)
@@ -673,38 +655,6 @@ func (s *BrokerSuiteTest) processKIMProvisioningByInstanceID(iid string) {
 	s.SetRuntimeResourceStateReady(runtimeID)
 }
 
-func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructured.Unstructured {
-	op, err := s.db.Operations().GetProvisioningOperationByID(opID)
-	require.NoError(s.t, err)
-
-	un := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      op.ShootName,
-				"namespace": fixedGardenerNamespace,
-				"labels": map[string]interface{}{
-					globalAccountLabel: op.ProvisioningParameters.ErsContext.GlobalAccountID,
-					subAccountLabel:    op.ProvisioningParameters.ErsContext.SubAccountID,
-				},
-				"annotations": map[string]interface{}{
-					runtimeIDAnnotation: op.RuntimeID,
-				},
-			},
-			"spec": map[string]interface{}{
-				"region": "eu",
-				"maintenance": map[string]interface{}{
-					"timeWindow": map[string]interface{}{
-						"begin": "030000+0000",
-						"end":   "040000+0000",
-					},
-				},
-			},
-		},
-	}
-	un.SetGroupVersionKind(shootGVK)
-	return &un
-}
-
 func (s *BrokerSuiteTest) AssertKymaResourceExists(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)
@@ -852,7 +802,7 @@ func (s *BrokerSuiteTest) AssertKymaAnnotationExists(opId, annotationName string
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.Contains(s.t, obj.GetAnnotations(), annotationName)
 }
 
@@ -869,7 +819,7 @@ func (s *BrokerSuiteTest) AssertKymaLabelsExist(opId string, expectedLabels map[
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.Subset(s.t, obj.GetLabels(), expectedLabels)
 }
 
@@ -886,18 +836,8 @@ func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel
 	})
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	assert.NoError(s.t, err)
 	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
-}
-
-func (s *BrokerSuiteTest) fixServiceBindingAndInstances(t *testing.T) {
-	createResource(t, serviceInstanceGvk, s.k8sSKR, kymaNamespace, instanceName)
-	createResource(t, serviceBindingGvk, s.k8sSKR, kymaNamespace, bindingName)
-}
-
-func (s *BrokerSuiteTest) assertServiceBindingAndInstancesAreRemoved(t *testing.T) {
-	assertResourcesAreRemoved(t, serviceInstanceGvk, s.k8sSKR)
-	assertResourcesAreRemoved(t, serviceBindingGvk, s.k8sSKR)
 }
 
 func (s *BrokerSuiteTest) WaitForInstanceArchivedCreated(iid string) {
@@ -969,6 +909,19 @@ func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtim
 	return runtimes.Items[0]
 }
 
+func (s *BrokerSuiteTest) SetRuntimeResourceStateByInstanceId(iid string, state imv1.State) {
+	var runtimes imv1.RuntimeList
+	err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+	require.NoError(s.t, err)
+	require.NotZerof(s.t, len(runtimes.Items), "no runtime resource found for instance id %s", iid)
+
+	runtime := runtimes.Items[0]
+	runtime.Status.State = state
+
+	err = s.k8sKcp.Update(context.Background(), &runtime)
+	require.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []string) {
 	runtime := s.GetRuntimeResourceByInstanceID(id)
 	assert.Equal(s.t, admins, runtime.Spec.Security.Administrators)
@@ -993,6 +946,7 @@ func (s *BrokerSuiteTest) failRuntimeByKIM(iid string) {
 		runtime.Status.State = imv1.RuntimeStateFailed
 
 		err = s.k8sKcp.Update(context.Background(), &runtime)
+		assert.NoError(s.t, err)
 		return true, nil
 	})
 	require.NoError(s.t, err)
@@ -1011,23 +965,6 @@ func (s *BrokerSuiteTest) AssertBTPOperatorSecret() {
 	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: "kyma-installer", Name: "btp-operator"}, secret)
 	require.NoError(s.t, err)
 	assert.Equal(s.t, "btp-operator", secret.Name)
-}
-
-func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {
-	list := &unstructured.UnstructuredList{}
-	list.SetGroupVersionKind(gvk)
-	err := k8sClient.List(context.TODO(), list)
-	assert.NoError(t, err)
-	assert.Zero(t, len(list.Items))
-}
-
-func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client, namespace string, name string) {
-	object := &unstructured.Unstructured{}
-	object.SetGroupVersionKind(gvk)
-	object.SetNamespace(namespace)
-	object.SetName(name)
-	err := k8sClient.Create(context.TODO(), object)
-	assert.NoError(t, err)
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider imv1.Provider, name, machineType string, autoScalerMin, autoScalerMax, zonesNumer int) {
@@ -1090,4 +1027,45 @@ func fixDiscoveredZones() map[string][]string {
 		"m5.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"c7i.large": {"zone-l", "zone-m"},
 	}
+}
+
+func (s *BrokerSuiteTest) CreateTestShoot(shootName, credentialsBindingName, accountLabel string) {
+	shoot := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "core.gardener.cloud/v1beta1",
+			"kind":       "Shoot",
+			"metadata": map[string]interface{}{
+				"name":      shootName,
+				"namespace": gardenerKymaNamespace,
+				"labels": map[string]interface{}{
+					"account": accountLabel,
+				},
+			},
+			"spec": map[string]interface{}{
+				"credentialsBindingName": credentialsBindingName,
+			},
+		},
+	}
+
+	_, err := s.gardenerClient.Resource(schema.GroupVersionResource{
+		Group:    "core.gardener.cloud",
+		Version:  "v1beta1",
+		Resource: "shoots",
+	}).Namespace(gardenerKymaNamespace).Create(context.Background(), shoot, metav1.CreateOptions{})
+
+	require.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) CreateAdditionalCredentialsBinding(name, hyperscalerType string) {
+	cb := &gardener.CredentialsBinding{}
+	cb.SetName(name)
+	cb.SetNamespace(gardenerKymaNamespace)
+	cb.SetLabels(map[string]string{
+		"hyperscalerType": hyperscalerType,
+	})
+	cb.SetSecretRefName(name)
+	cb.SetSecretRefNamespace(gardenerKymaNamespace)
+
+	_, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &cb.Unstructured, metav1.CreateOptions{})
+	require.NoError(s.t, err)
 }

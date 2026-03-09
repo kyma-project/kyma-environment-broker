@@ -297,6 +297,26 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 	return &operation, nil
 }
 
+// GetLastOperationWithAllStates returns last Operation for given instance ID. Returns an error if the operation does not exist.
+func (s *operations) GetLastOperationWithAllStates(instanceID string) (*internal.Operation, error) {
+	session := s.Factory.NewReadSession()
+	dto, dbErr := session.GetLastOperationWithAllStates(instanceID)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+
+	operation := internal.Operation{}
+	err := json.Unmarshal([]byte(dto.Data), &operation)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshalling operation data: %w", err)
+	}
+	operation, err = s.toOperation(&dto, operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
+}
+
 // GetOperationByID returns Operation with given ID. Returns an error if the operation does not exist.
 func (s *operations) GetOperationByID(operationID string) (*internal.Operation, error) {
 	op := internal.Operation{}
@@ -948,25 +968,6 @@ func (s *operations) insert(dto dbmodel.OperationDTO) error {
 		return true, nil
 	})
 	return lastErr
-}
-
-func (s *operations) getByInstanceID(id string) (*dbmodel.OperationDTO, error) {
-	session := s.Factory.NewReadSession()
-	operation := dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operation, lastErr = session.GetOperationByInstanceID(id)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("operation does not exist")
-				return false, lastErr
-			}
-			return false, nil
-		}
-		return true, nil
-	})
-
-	return &operation, err
 }
 
 func (s *operations) getByTypeAndInstanceID(id string, opType internal.OperationType) (*dbmodel.OperationDTO, error) {

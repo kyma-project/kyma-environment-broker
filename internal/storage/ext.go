@@ -18,8 +18,11 @@ type Instances interface {
 	Delete(instanceID string) error
 	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
+	GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats, error)
+	GetCredentialsBindingStats() (internal.CredentialsBindingStats, error)
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
+	GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 
@@ -47,6 +50,7 @@ type Operations interface {
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
 	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
+	GetLastOperationWithAllStates(instanceID string) (*internal.Operation, error)
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)

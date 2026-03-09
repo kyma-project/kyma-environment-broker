@@ -240,10 +240,6 @@ func requestFailureServerError(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-func requestFailureUnprocessableEntity(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusUnprocessableEntity)
-}
-
 func (c *ClientTest) getInstance(w http.ResponseWriter, r *http.Request) {
 	instance := path.Base(r.URL.Path)
 	if instance == "non-existent" {

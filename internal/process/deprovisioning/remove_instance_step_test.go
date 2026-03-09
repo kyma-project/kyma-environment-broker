@@ -25,7 +25,7 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
-	operation, backoff, err := step.Run(operation, fixLogger())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -53,7 +53,7 @@ func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T
 	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
-	operation, backoff, err := step.Run(operation, fixLogger())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
-	operation, backoff, err := step.Run(operation, fixLogger())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -88,6 +88,7 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	assert.Equal(t, 0, len(operationFromStorage.RuntimeID))
 
 	instanceFromStorage, err := memoryStorage.Instances().GetByID(testInstanceID)
+	assert.NoError(t, err)
 	assert.Equal(t, 0, len(instanceFromStorage.RuntimeID))
 	assert.Equal(t, time.Time{}, instanceFromStorage.DeletedAt)
 

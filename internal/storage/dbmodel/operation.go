@@ -40,6 +40,11 @@ type OperationStatEntry struct {
 	InstanceID string
 }
 
+type UpdateStatEntry struct {
+	InstanceID string
+	Value      int
+}
+
 type OperationStatEntryV2 struct {
 	Count  int
 	Type   string
@@ -60,4 +65,10 @@ type InstanceBySubAccountIDStatEntry struct {
 type InstanceERSContextStatsEntry struct {
 	LicenseType sql.NullString
 	Total       int
+}
+
+type InstanceByCredentialsBindingStatEntry struct {
+	GlobalAccountID        string
+	SubscriptionSecretName string
+	Total                  int
 }

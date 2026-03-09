@@ -13,19 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var UsageError = errors.New("UsageError")
-var InvalidRuleError = errors.New("InvalidRuleError")
+var ErrUsage = errors.New("UsageError")
+var ErrInvalidRule = errors.New("InvalidRuleError")
 
 type ParseCommand struct {
 	cobraCmd     *cobra.Command
 	rule         string
-	parser       rules.Parser
 	ruleFilePath string
-	sort         bool
-	unique       bool
 	match        string
-	signature    bool
-	noColor      bool
 }
 
 func NewParseCmd() *cobra.Command {
@@ -81,7 +76,7 @@ func (cmd *ParseCommand) Run() error {
 
 	if err != nil {
 		cmd.cobraCmd.Printf("Error: %s\n", err)
-		return UsageError
+		return ErrUsage
 	}
 
 	rulesetValid := rulesService.IsRulesetValid()
@@ -92,14 +87,14 @@ func (cmd *ParseCommand) Run() error {
 			dataToMatch, err = getDataForMatching(cmd.match)
 			if err != nil {
 				cmd.cobraCmd.Printf("Provided data to match is not valid: %s\n", err)
-				return UsageError
+				return ErrUsage
 			}
 			matchingResults, matched := rulesService.MatchProvisioningAttributesWithValidRuleset(dataToMatch)
 			if matched {
 				cmd.cobraCmd.Printf("Matched rule: %s\n", matchingResults.Rule())
 			} else {
 				cmd.cobraCmd.Printf("No rule matched the provided data.\n")
-				return InvalidRuleError
+				return ErrInvalidRule
 			}
 		}
 	} else {
@@ -107,7 +102,7 @@ func (cmd *ParseCommand) Run() error {
 		for _, ve := range rulesService.ValidationInfo.All() {
 			cmd.cobraCmd.Printf("%s\n", ve)
 		}
-		return InvalidRuleError
+		return ErrInvalidRule
 	}
 	return nil
 }

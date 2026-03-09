@@ -90,7 +90,7 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instance, err = h.deactivateInstance(instance, logger)
+	_, err = h.deactivateInstance(instance, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to update the instance in the database after deactivating: %s", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
@@ -99,8 +99,6 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 
 	res := expirationResponse{suspensionOpID}
 	httputil.WriteResponse(w, http.StatusAccepted, res)
-
-	return
 }
 
 func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log *slog.Logger) (*internal.Instance, error) {

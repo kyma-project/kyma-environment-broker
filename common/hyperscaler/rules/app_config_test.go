@@ -52,6 +52,7 @@ func TestAppConfig(t *testing.T) {
 	}
 
 	values, err = chartutil.ToRenderValues(ch, values, chartutil.ReleaseOptions{}, &chartutil.Capabilities{})
+	require.NoError(t, err)
 
 	resources, err := engine.Render(ch, values)
 	require.NoError(t, err)

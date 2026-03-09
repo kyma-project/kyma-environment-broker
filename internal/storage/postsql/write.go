@@ -239,6 +239,9 @@ func (ws writeSession) UpsertSubaccountState(state dbmodel.SubaccountStateDTO) d
 		return dberr.Internal("Failed to update record to subaccount_states table: %s", err)
 	}
 	rAffected, err := result.RowsAffected()
+	if err != nil {
+		return dberr.Internal("the DB driver does not support RowsAffected operation %s", err)
+	}
 	if rAffected == int64(0) {
 		_, err = ws.insertInto(SubaccountStatesTableName).
 			Pair("id", state.ID).

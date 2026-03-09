@@ -1,35 +1,35 @@
 # Subaccount Cleanup CronJob
 
 Each SAP BTP, Kyma runtime instance in the Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
-Subaccount Cleanup is an application that periodically calls the CIS service and notifies about `SUBACCOUNT_DELETE` events.
-Based on these events, Subaccount Cleanup triggers the deprovisioning action on the Kyma runtime instances belonging to the given subaccount.
+Subaccount Cleanup is an application that periodically calls the CIS service and reports **SUBACCOUNT_DELETE** events.
+Based on these events, Subaccount Cleanup triggers the deprovisioning action on Kyma runtime instances belonging to the given subaccount.
 
 ## Details
 
 The Subaccount Cleanup workflow is divided into several steps:
 
-1. Fetch `SUBACCOUNT_DELETE` events from the CIS service.
+1. Fetch **SUBACCOUNT_DELETE** events from the CIS service.
 
-    a. CIS client makes a call to the CIS service and as a response, it gets a list of events divided into pages.
+    a. CIS client makes a call to the CIS service and in response, it gets a list of events divided into pages.
 
     b. CIS client fetches the rest of the events by making a call to each page one by one.
 
     c. A subaccount ID is taken from each event and kept in an array.
 
-    d. When the CIS client ends its workflow, it displays logs with information on how many subaccounts were fetched.
+    d. When the CIS client completes its workflow, it displays logs with information on how many subaccounts were fetched.
 
 2. Find all instances in the KEB database based on the fetched subaccount IDs.
-   The subaccounts pool is divided into pieces. For each piece, a query is made to the database to fetch instances.
+   The subaccounts pool is divided into batches. For each batch, a query is made to the database to fetch instances.
 
 3. Trigger the deprovisioning operation for each instance found in step 2.
 
-   Logs inform about the status of each triggered action:
+   Logs provide the status of each triggered action:
 
     ```
     deprovisioning for instance <InstanceID> (SubAccountID: <SubAccountID>) was triggered, operation: <OperationID>
     ```
 
-   Subaccount Cleanup also uses logs to inform about the end of the deprovisioning operation.
+   Subaccount Cleanup also uses logs to inform about the completion of the deprovisioning operation.
 
 ## Prerequisites
 

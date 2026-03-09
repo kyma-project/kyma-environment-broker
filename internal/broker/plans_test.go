@@ -38,10 +38,10 @@ func TestSchemaService_Azure(t *testing.T) {
 func TestSchemaService_Aws(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	create, update, _ := schemaService.AWSSchemas("cf-eu11")
+	create, _, _ := schemaService.AWSSchemas("cf-eu11")
 	validateSchema(t, Marshal(create), "aws/aws-schema-additional-params-ingress-eu.json")
 
-	create, update, _ = schemaService.AWSSchemas("cf-us11")
+	create, update, _ := schemaService.AWSSchemas("cf-us11")
 	validateSchema(t, Marshal(create), "aws/aws-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "aws/update-aws-schema-additional-params-ingress.json")
 }

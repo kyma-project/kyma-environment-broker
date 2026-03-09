@@ -140,7 +140,7 @@ func (p *FakeProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.In
 }
 
 func createFakeClientset() kubernetes.Interface {
-	c := fake.NewSimpleClientset()
+	c := fake.NewClientset()
 	c.PrependReactor("create", "serviceaccounts", func(action testing.Action) (handled bool, ret runtime.Object, err error) {
 		obj := action.(testing.CreateAction).GetObject()
 		subresource := action.GetSubresource()

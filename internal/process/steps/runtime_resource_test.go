@@ -144,7 +144,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
-		op, backoff, err := step.Run(operation, fixLogger())
+		op, backoff, _ := step.Run(operation, fixLogger())
 
 		// then
 		assert.Zero(t, backoff)

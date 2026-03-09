@@ -25,12 +25,10 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
 	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *process.Queue {
 
-	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
+	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
 		fatalOnError(err, logs)
 	}
-
-	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService, planSpec)
 
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
@@ -58,7 +56,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, trialRegionsMapping, workersProvider, valuesProvider),
+			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, workersProvider, valuesProvider),
 		},
 		{
 			stage: "check_runtime_resource",

@@ -131,6 +131,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	assert.Len(t, response.Metadata.Labels, 1)
 
 	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
 	assert.False(t, *inst.Parameters.ErsContext.Active)
 }
 
@@ -226,7 +227,7 @@ func TestUpgradePlan(t *testing.T) {
 		require.NotNil(t, err)
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
+		assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 
 	})
@@ -244,6 +245,7 @@ func TestUpgradePlan(t *testing.T) {
 		require.NoError(t, err)
 
 		ops, err := st.Operations().ListOperationsByInstanceID(instanceID)
+		require.NoError(t, err)
 		var updateOperation internal.Operation
 		for _, o := range ops {
 			if o.Type == internal.OperationTypeUpdate {
@@ -607,6 +609,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -634,6 +637,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -659,6 +663,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -757,6 +762,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
 			MaintenanceInfo: nil,
 		}, true)
+		require.NoError(t, err)
 		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
 
 		// then
@@ -2442,6 +2448,44 @@ func TestUpdateWithoutOperation(t *testing.T) {
 			updateParameters:  `{"machineType":"m5.xlarge", "foo":"bar"}`,
 			expectedSync:      true,
 		},
+		"Update with additional worker node pool change": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "additionalWorkerNodePools": []}`,
+			updateParameters:  `{                                                "additionalWorkerNodePools": []}`,
+			expectedSync:      true,
+		},
+		"Update with oidc": {
+			initialParameters: `{"machineType":"m5.xlarge","region":"eu-west-1", "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			updateParameters: `{                                                "oidc":{"list": [
+            {
+                "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+                "groupsClaim": "groups",
+                "groupsPrefix": "-",
+                "issuerURL": "https://kymatest.accounts400.ondemand.com",
+                "signingAlgs": [
+                    "RS256"
+                ],
+                "usernameClaim": "sub",
+                "usernamePrefix": "-",
+                "requiredClaims": [],
+                "encodedJwksArray": ""
+            }
+        ]}}`,
+			expectedSync: true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			initialParams := pkg.ProvisioningParametersDTO{}
@@ -2550,6 +2594,70 @@ func TestUpdateWithoutOperationDependsOnLastOperation(t *testing.T) {
 
 		})
 	}
+}
+
+func TestZeroFieldsForTrial(t *testing.T) {
+	t.Run("should zero out specific fields for trial plan", func(t *testing.T) {
+		// given
+		st := storage.NewMemoryStorage()
+		handler := &handler{}
+		q := &automock.Queue{}
+		kcBuilder := &kcMock.KcBuilder{}
+
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+		params := internal.UpdatingParametersDTO{
+			MachineType: ptr.String("m5.large"),
+		}
+		params.AutoScalerMin = ptr.Integer(5)
+		params.AutoScalerMax = ptr.Integer(10)
+
+		details := domain.UpdateDetails{
+			PlanID: broker.TrialPlanID,
+		}
+
+		// when
+		svc.ZeroFieldsForTrialPlan(details, &params)
+
+		// then
+		assert.Nil(t, params.AutoScalerMin)
+		assert.Nil(t, params.AutoScalerMax)
+		assert.Nil(t, params.MachineType)
+	})
+
+	t.Run("should not zero out fields for non-trial plan", func(t *testing.T) {
+		// given
+		st := storage.NewMemoryStorage()
+		handler := &handler{}
+		q := &automock.Queue{}
+		kcBuilder := &kcMock.KcBuilder{}
+
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+			fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil)
+
+		expectedMin := ptr.Integer(5)
+		expectedMax := ptr.Integer(10)
+		expectedMachineType := ptr.String("m5.large")
+
+		params := internal.UpdatingParametersDTO{
+			MachineType: expectedMachineType,
+		}
+		params.AutoScalerMin = expectedMin
+		params.AutoScalerMax = expectedMax
+
+		details := domain.UpdateDetails{
+			PlanID: broker.AWSPlanID,
+		}
+
+		// when
+		svc.ZeroFieldsForTrialPlan(details, &params)
+
+		// then
+		assert.Equal(t, expectedMin, params.AutoScalerMin)
+		assert.Equal(t, expectedMax, params.AutoScalerMax)
+		assert.Equal(t, expectedMachineType, params.MachineType)
+	})
 }
 
 func fixValueProvider(t *testing.T) broker.ValuesProvider {

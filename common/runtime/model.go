@@ -64,7 +64,6 @@ type RuntimeDTO struct {
 	LicenseType                 *string                   `json:"licenseType,omitempty"`
 	CommercialModel             *string                   `json:"commercialModel,omitempty"`
 	Actions                     []Action                  `json:"actions,omitempty"`
-	EmptyUpdates                int                       `json:"emptyUpdates,omitempty"`
 }
 
 type CloudProvider string
@@ -130,8 +129,6 @@ func CloudProviderFromString(provider string) CloudProvider {
 	}
 }
 
-// FIXME: this is a makeshift check until the provisioner is capable of returning error messages
-// https://github.com/kyma-project/control-plane/issues/946
 func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 	min, max := planMin, planMax
 	if p.AutoScalerMin != nil {
@@ -189,7 +186,7 @@ func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
 		if err := o.validateSingleOIDC(instanceOidcConfig, &errs); err != nil {
 			return err
 		}
-	} else if o.List != nil && len(o.List) > 0 {
+	} else if len(o.List) > 0 {
 		o.validateOIDCList(&errs)
 	}
 
@@ -371,17 +368,17 @@ type Action struct {
 }
 
 type RuntimeStatus struct {
-	CreatedAt        time.Time       `json:"createdAt"`
-	ModifiedAt       time.Time       `json:"modifiedAt"`
-	ExpiredAt        *time.Time      `json:"expiredAt,omitempty"`
-	DeletedAt        *time.Time      `json:"deletedAt,omitempty"`
-	State            State           `json:"state"`
-	Provisioning     *Operation      `json:"provisioning,omitempty"`
-	Deprovisioning   *Operation      `json:"deprovisioning,omitempty"`
-	UpgradingCluster *OperationsData `json:"upgradingCluster,omitempty"`
-	Update           *OperationsData `json:"update,omitempty"`
-	Suspension       *OperationsData `json:"suspension,omitempty"`
-	Unsuspension     *OperationsData `json:"unsuspension,omitempty"`
+	CreatedAt        time.Time             `json:"createdAt"`
+	ModifiedAt       time.Time             `json:"modifiedAt"`
+	ExpiredAt        *time.Time            `json:"expiredAt,omitempty"`
+	DeletedAt        *time.Time            `json:"deletedAt,omitempty"`
+	State            State                 `json:"state"`
+	Provisioning     *Operation            `json:"provisioning,omitempty"`
+	Deprovisioning   *Operation            `json:"deprovisioning,omitempty"`
+	UpgradingCluster *OperationsData       `json:"upgradingCluster,omitempty"`
+	Update           *UpdateOperationsData `json:"update,omitempty"`
+	Suspension       *OperationsData       `json:"suspension,omitempty"`
+	Unsuspension     *OperationsData       `json:"unsuspension,omitempty"`
 }
 
 type OperationType string
@@ -399,6 +396,13 @@ type OperationsData struct {
 	Data       []Operation `json:"data"`
 	TotalCount int         `json:"totalCount"`
 	Count      int         `json:"count"`
+}
+
+type UpdateOperationsData struct {
+	Data              []Operation `json:"data"`
+	TotalCount        int         `json:"totalCount"`
+	EmptyUpdatesCount int         `json:"emptyUpdatesCount,omitempty"`
+	Count             int         `json:"count"`
 }
 
 type Operation struct {

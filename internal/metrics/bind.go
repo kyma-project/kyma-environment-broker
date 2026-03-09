@@ -18,10 +18,9 @@ import (
 type BindDurationCollector struct {
 	bindHistogram   *prometheus.HistogramVec
 	unbindHistogram *prometheus.HistogramVec
-	logger          *slog.Logger
 }
 
-func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
+func NewBindDurationCollector() *BindDurationCollector {
 	return &BindDurationCollector{
 		bindHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespaceV2,
@@ -37,7 +36,6 @@ func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 			Help:      "The time of the unbind request",
 			Buckets:   prometheus.LinearBuckets(50, 200, 15),
 		}, []string{}),
-		logger: logger,
 	}
 }
 
@@ -67,7 +65,7 @@ type BindingCreationCollector struct {
 	bindingCreated *prometheus.CounterVec
 }
 
-// BindingCreationCollector provides a counter which shows the total number of created bindings:
+// NewBindingCreationCollector provides a counter which shows the total number of created bindings:
 // - kcp_keb_v2_binding_created_total{plan_id}
 func NewBindingCreationCollector() *BindingCreationCollector {
 	return &BindingCreationCollector{

@@ -1,19 +1,19 @@
 # Environments Cleanup CronJob
 
 > ### Caution:
-> The CronJob must run only in the development environment. You must be connected to the development Kubernetes cluster before applying the CronJob.
+> The CronJob must only be run in the development environment. You must be connected to the development Kubernetes cluster before applying the CronJob.
 
 > ### Note:
-> Environments Cleanup CronJob is applied manually. There is no automatic release process for the Job because of its destructiveness. To get more details on using the Job, visit its [`README`](../../utils/kyma-environments-cleanup-job/README.md).
+> Environments Cleanup CronJob is applied manually. There is no automatic release process for the Job due to its destructiveness. To get more details on using the Job, see [Kyma Environments Cleanup CronJob](../../utils/kyma-environments-cleanup-job/README.md).
 
-Environments Cleanup CronJob removes Kyma runtimes which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
+Environments Cleanup CronJob removes Kyma runtimes older than 24h. The CronJob is scheduled to run daily at midnight, according to the system's local time.
 
 ## Prerequisites
 
-* Gardener project of choice to filter Shoots without a proper label and remove lingering Shoots
+* A Gardener project of choice to filter Shoots without a proper label and remove lingering Shoots
 * The Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
 * KEB to trigger Kyma runtime deprovisioning
-* Kubernetes client to clean up Runtime custom resources (CRs) created directly using Kyma Infrastructure Manager (KIM) and omitting KEB
+* A Kubernetes client to clean up Runtime custom resources (CRs) created directly using Kyma Infrastructure Manager (KIM), omitting KEB
 
 ## Configuration
 
@@ -30,7 +30,7 @@ The Environments Cleanup binary allows you to override some configuration parame
 | **APP_DATABASE_HOST** | Specifies the host of the database. | `localhost` |
 | **APP_DATABASE_PORT** | Specifies the port for the database. | `5432` |
 | **APP_DATABASE_NAME** | Specifies the name of the database. | `broker` |
-| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
+| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)  | None |
 | **APP_DATABASE_SECRET_KEY** | Database encryption key. (Optional) | None |
 | **APP_BROKER_URL**  | Specifies the KEB URL. | `https://kyma-env-broker.kyma.local` |

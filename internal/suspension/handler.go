@@ -132,6 +132,10 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log *slog.
 	}
 	id := uuid.New().String()
 	operation, err := internal.NewProvisioningOperationWithID(id, instance.InstanceID, instance.Parameters)
+	if err != nil {
+		log.Error(fmt.Sprintf("unable to create provisioning operation: %s", err.Error()))
+		return err
+	}
 	operation.InstanceDetails, err = instance.GetInstanceDetails()
 
 	if err != nil {

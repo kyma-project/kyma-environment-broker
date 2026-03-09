@@ -20,23 +20,21 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.25.39` |
+| global.images.kyma_environment_<br>broker.version | - | `1.26.1` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.25.39` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.26.1` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.25.39` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.26.1` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.25.39` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.26.1` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.25.39` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.26.1` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.25.39` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.26.1` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.25.39` |
-| global.images.kyma_environment_<br>globalaccounts.dir | - | None |
-| global.images.kyma_environment_<br>globalaccounts.<br>version | - | `1.25.39` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.26.1` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.25.39` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.26.1` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -116,6 +114,13 @@
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |
 | gardener.shootDomain | Default domain for shoots (clusters) created by Gardener. | `kyma-dev.shoot.canary.k8s-hana.ondemand.com` |
 | hap.rule | Rules for mapping plans and regions to hyperscaler account pools. | `- aws  - aws(PR=cf-eu11) -> EU  - azure  - azure(PR=cf-ch20) -> EU  - gcp  - gcp(PR=cf-sa30) -> PR  - trial -> S  - sap-converged-cloud(HR=*) -> S  - azure_lite  - preview  - free` |
+| hap.multiHyperscalerAccount.<br>allowedGlobalAccounts | Assigns multiple hyperscaler accounts per global account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed global accounts - ["*"] = enabled for all global accounts | `[]` |
+| hap.multiHyperscalerAccount.<br>limits.default | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.aws | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.gcp | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.azure | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.openstack | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.alicloud | - | `999999` |
 | infrastructureManager.<br>controlPlaneFailureTolerance | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". | `` |
 | infrastructureManager.<br>defaultShootPurpose | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. | `development` |
 | infrastructureManager.<br>defaultTrialProvider | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS. | `Azure` |
@@ -127,6 +132,8 @@
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |
+| metricsv2.<br>availableCredentialsBindingsPollingInterval | Frequency of polling for available credentials bindings in Gardener. | `1h` |
+| metricsv2.<br>credentialsBindingsPollingInterval | Frequency of polling for credentials binding instance counts. | `1m` |
 | metricsv2.enabled | If true, enables metrics collection and Prometheus exposure. | `False` |
 | metricsv2.<br>operationResultFinishedOperationRetentionPeriod | Duration of retaining finished operation results in memory. | `3h` |
 | metricsv2.<br>operationResultPollingInterval | Frequency of polling for operation results. | `1m` |
@@ -176,7 +183,7 @@
 | cis.entitlements.<br>serviceURL | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. | None |
 | cis.entitlements.<br>clientIdKey | The key in the Kubernetes Secret that contains the CIS Entitlements client ID. | `id` |
 | cis.entitlements.<br>secretKey | The key in the Kubernetes Secret that contains the CIS Entitlements client secret. | `secret` |
-| deprovisionRetrigger.<br>dryRun | If true, the job runs in dry-run mode and does not actually retrigger deprovisioning. | `False` |
+| deprovisionRetrigger.<br>dryRun | If true, the Job runs in dry-run mode and does not actually retrigger deprovisioning. | `False` |
 | deprovisionRetrigger.<br>enabled | If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted. | `True` |
 | deprovisionRetrigger.<br>schedule | - | `0 2 * * *` |
 | freeCleanup.dryRun | If true, the job only logs what would be deleted without actually removing any data. | `False` |
@@ -186,9 +193,6 @@
 | freeCleanup.schedule | - | `0,15,30,45 * * * *` |
 | freeCleanup.testRun | If true, runs the job in test mode (no real deletions, for testing purposes). | `False` |
 | freeCleanup.<br>testSubaccountID | Subaccount ID used for test runs. | `prow-keb-trial-suspension` |
-| globalaccounts.<br>dryRun | If true, runs the global accounts synchronization job in dry-run mode (no changes are made). | `False` |
-| globalaccounts.<br>enabled | If true, enables the global accounts synchronization job. | `False` |
-| globalaccounts.name | Name of the global accounts synchronization job or deployment. | `kyma-environment-globalaccounts` |
 | migratorJobs.argosync.<br>enabled | If true, enables the ArgoCD sync job for schema migration. | `False` |
 | migratorJobs.argosync.<br>syncwave | The sync wave value for ArgoCD hooks. | `0` |
 | migratorJobs.<br>direction | Defines the direction of the schema migration, either "up" or "down". | `up` |
@@ -208,7 +212,7 @@
 | runtimeReconciler.<br>jobInterval | Interval (in minutes) between reconciliation job runs. | `1440` |
 | runtimeReconciler.<br>jobReconciliationDelay | Delay before starting reconciliation after job trigger. | `1s` |
 | runtimeReconciler.<br>metricsPort | Port on which the reconciler exposes Prometheus metrics. | `8081` |
-| serviceBindingCleanup.<br>dryRun | If true, the job only logs what would be deleted without actually removing any bindings. | `False` |
+| serviceBindingCleanup.<br>dryRun | If true, the Job only logs what would be deleted without actually removing any bindings. | `False` |
 | serviceBindingCleanup.<br>enabled | If true, enables the Service Binding Cleanup CronJob. | `True` |
 | serviceBindingCleanup.<br>requestRetries | Number of times to retry a failed DELETE request for a binding. | `2` |
 | serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |

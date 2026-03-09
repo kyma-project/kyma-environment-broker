@@ -1,6 +1,6 @@
 <!--{"metadata":{"requirement":"MANDATORY | RECOMMENDED","type":"EXTERNAL | INTERNAL","category":"CONFIGURATION | FEATURE | MIGRATION"}}-->
 
-# Updating Kyma Environment Broker: <!-- Name the update -->
+# Updating KEB: <!-- Name the update -->
 
 > ### Note: <!-- In case of a mandatory update that will cause unwanted/severe impact if not performed, use ### Caution: instead of ### Note:.-->
 > <!--State whether the notable change is mandatory or recommended. Briefly explain what will happen without the update or why it's recommended.-->

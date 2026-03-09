@@ -91,7 +91,7 @@ func TestPubSub_WhenHandlerReturnsError(t *testing.T) {
 
 func containsA(slice []eventA, item eventA) bool {
 	for _, s := range slice {
-		if s == item {
+		if s.msg == item.msg {
 			return true
 		}
 	}
@@ -100,7 +100,7 @@ func containsA(slice []eventA, item eventA) bool {
 
 func containsB(slice []eventB, item eventB) bool {
 	for _, s := range slice {
-		if s == item {
+		if s.msg == item.msg {
 			return true
 		}
 	}

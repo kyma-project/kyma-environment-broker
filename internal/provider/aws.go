@@ -47,22 +47,6 @@ type (
 	}
 )
 
-// awsZones defines a possible suffixes for given AWS regions
-// The table is tested in a unit test to check if all necessary regions are covered
-var awsZones = map[string]string{
-	"eu-central-1":   "abc",
-	"eu-west-2":      "abc",
-	"ca-central-1":   "abd",
-	"sa-east-1":      "abc",
-	"us-east-1":      "abcdf",
-	"us-west-2":      "abcd",
-	"ap-northeast-1": "acd",
-	"ap-northeast-2": "abc",
-	"ap-south-1":     "abc",
-	"ap-southeast-1": "abc",
-	"ap-southeast-2": "abc",
-}
-
 func (p *AWSInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
 	region := DefaultAWSRegion

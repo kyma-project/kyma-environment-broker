@@ -8,17 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	apicorev1 "k8s.io/api/core/v1"
+
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -270,7 +267,7 @@ func getKubeConfigSecretName(runtimeId string) string {
 	return fmt.Sprintf("kubeconfig-%s", runtimeId)
 }
 
-func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clusterID string) (*apicorev1.Secret, error) {
+func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clusterID string) (*v1.Secret, error) {
 	if credentials == nil || clusterID == "" {
 		return nil, fmt.Errorf("empty params given")
 	}
@@ -302,23 +299,23 @@ func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clus
 			secretTokenUrl:     []byte(credentials.URL),
 			secretClusterId:    []byte(clusterID),
 		},
-		Type: apicorev1.SecretTypeOpaque,
+		Type: v1.SecretTypeOpaque,
 	}, nil
 }
 
-func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secret, log *slog.Logger) error {
+func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *v1.Secret, log *slog.Logger) error {
 	if futureSecret == nil {
 		return fmt.Errorf("empty secret data given")
 	}
-	currentSecret := apicorev1.Secret{}
+	currentSecret := v1.Secret{}
 	getErr := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: BtpManagerSecretNamespace, Name: BtpManagerSecretName}, &currentSecret)
 	switch {
-	case getErr != nil && !apierrors.IsNotFound(getErr):
+	case getErr != nil && !errors.IsNotFound(getErr):
 		return fmt.Errorf("failed to get the secret for BTP Manager: %s", getErr)
-	case getErr != nil && apierrors.IsNotFound(getErr):
+	case getErr != nil && errors.IsNotFound(getErr):
 		namespace := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: BtpManagerSecretNamespace}}
 		createErr := k8sClient.Create(context.Background(), namespace)
-		if createErr != nil && !apierrors.IsAlreadyExists(createErr) {
+		if createErr != nil && !errors.IsAlreadyExists(createErr) {
 			return fmt.Errorf("could not create %s namespace: %s", BtpManagerSecretNamespace, createErr)
 		}
 

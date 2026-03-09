@@ -321,6 +321,24 @@ type InstanceStats struct {
 	PerSubAcocuntID        map[string]int
 }
 
+// CredentialsBindingStats provides metrics derived from SubscriptionSecretName on active instances.
+type CredentialsBindingStats struct {
+	InstancesPerCredentialsBinding map[string]int
+	CredentialsBindingToGA         map[string]string
+}
+
+type UpdateStats struct {
+	Instances []InstanceItem
+}
+
+type InstanceItem struct {
+	InstanceID      string
+	GlobalAccountID string
+
+	EmptyUpdates      int
+	UpdtateOperations int
+}
+
 // ERSContextStats provides aggregated information regarding ERSContext
 type ERSContextStats struct {
 	LicenseType map[string]int

@@ -34,13 +34,24 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 		return false
 	}
 
-	p.Parameters.TargetSecret = nil
-
-	if !reflect.DeepEqual(p.Parameters, input.Parameters) {
-		return false
+	// empty list and nil does not make any difference
+	if (p.Parameters.AdditionalWorkerNodePools == nil && len(input.Parameters.AdditionalWorkerNodePools) == 0) ||
+		(input.Parameters.AdditionalWorkerNodePools == nil && len(p.Parameters.AdditionalWorkerNodePools) == 0) {
+		p.Parameters.AdditionalWorkerNodePools = input.Parameters.AdditionalWorkerNodePools
 	}
 
-	return true
+	// empty list (RequiredClaims) and nil does not make any difference. Data read from DB can have nil even if it was empty when sent to DB, so we need to make sure that we compare them correctly.
+	if p.Parameters.OIDC != nil && input.Parameters.OIDC != nil && len(p.Parameters.OIDC.List) == len(input.Parameters.OIDC.List) {
+		for i, oidc := range p.Parameters.OIDC.List {
+			if oidc.RequiredClaims == nil && len(input.Parameters.OIDC.List[i].RequiredClaims) == 0 {
+				p.Parameters.OIDC.List[i].RequiredClaims = input.Parameters.OIDC.List[i].RequiredClaims
+			}
+		}
+
+	}
+	p.Parameters.TargetSecret = nil
+
+	return reflect.DeepEqual(p.Parameters, input.Parameters)
 }
 
 type UpdatingParametersDTO struct {

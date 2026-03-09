@@ -39,8 +39,8 @@ func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 
 	// When
 	_, backoff, err := step.Run(operation, fixLogger())
-
 	// Then
+	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertNoKymaResourceWithGivenRuntimeID(t, kcpClient, operation.KymaResourceNamespace, steps.KymaName(operation))
 }
@@ -68,6 +68,7 @@ func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
+	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertNoKymaResourceWithGivenRuntimeID(t, kcpClient, operation.KymaResourceNamespace, steps.KymaName(operation))
 }

@@ -5,16 +5,15 @@ import (
 )
 
 type Rule struct {
-	Plan                           string
-	PlatformRegion                 string
-	PlatformRegionSuffix           bool
-	HyperscalerRegionSuffix        bool
-	HyperscalerRegion              string
-	EuAccess                       bool
-	Shared                         bool
-	ContainsInputAttributes        bool
-	ContainsOutputAttributes       bool
-	hyperscalerNameMappingFunction func(string) string
+	Plan                     string
+	PlatformRegion           string
+	PlatformRegionSuffix     bool
+	HyperscalerRegionSuffix  bool
+	HyperscalerRegion        string
+	EuAccess                 bool
+	Shared                   bool
+	ContainsInputAttributes  bool
+	ContainsOutputAttributes bool
 }
 
 func NewRule() *Rule {

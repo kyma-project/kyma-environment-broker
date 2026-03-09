@@ -24,6 +24,7 @@ func TestGetBinding(t *testing.T) {
 
 		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeProvision)
 		err := operationsMemory.InsertOperation(operation)
+		require.NoError(t, err)
 
 		expiredBinding := &internal.Binding{
 			ID:         "test-binding-id",
@@ -59,6 +60,7 @@ func TestGetBinding(t *testing.T) {
 
 		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeProvision)
 		err := operationsMemory.InsertOperation(operation)
+		require.NoError(t, err)
 
 		expiredBinding := &internal.Binding{
 			ID:         "test-binding-id",
@@ -94,6 +96,7 @@ func TestGetBinding(t *testing.T) {
 
 		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeDeprovision)
 		err := operationsMemory.InsertOperation(operation)
+		require.NoError(t, err)
 
 		binding := &internal.Binding{
 			ID:         "test-binding-id",

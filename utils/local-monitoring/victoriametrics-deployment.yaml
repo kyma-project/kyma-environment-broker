@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: victoriametrics
+  namespace: monitoring
+  labels:
+    app: victoriametrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: victoriametrics
+  template:
+    metadata:
+      labels:
+        app: victoriametrics
+    spec:
+      containers:
+        - name: victoriametrics
+          image: victoriametrics/victoria-metrics:v1.101.0
+          args:
+            - "-promscrape.config=/config/scrape.yml"
+            - "-retentionPeriod=30d"
+            - "-httpListenAddr=:8428"
+          ports:
+            - containerPort: 8428
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: data
+              mountPath: /victoria-metrics-data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: victoriametrics-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victoriametrics
+  namespace: monitoring
+  labels:
+    app: victoriametrics
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8428
+      targetPort: 8428
+      name: http
+  selector:
+    app: victoriametrics

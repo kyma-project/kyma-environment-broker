@@ -287,10 +287,6 @@ func (h *unbindHandler) deleteServiceBindingFromStorage(w http.ResponseWriter, r
 	}
 }
 
-func (h *unbindHandler) setBindingsStorage(bindings storage.Bindings) {
-	h.bindings = bindings
-}
-
 func (h *unbindHandler) setHandlerFunc(handleFunc func(w http.ResponseWriter, r *http.Request)) {
 	h.handleFunc = handleFunc
 }

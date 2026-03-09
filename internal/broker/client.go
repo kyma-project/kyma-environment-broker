@@ -44,23 +44,6 @@ func (e UnexpectedStatusCodeError) Error() string {
 }
 
 type (
-	contextDTO struct {
-		GlobalAccountID string `json:"globalaccount_id"`
-		SubAccountID    string `json:"subaccount_id"`
-		Active          *bool  `json:"active"`
-	}
-
-	parametersDTO struct {
-		Expired *bool `json:"expired"`
-	}
-
-	serviceUpdatePatchDTO struct {
-		ServiceID  string        `json:"service_id"`
-		PlanID     string        `json:"plan_id"`
-		Context    contextDTO    `json:"context"`
-		Parameters parametersDTO `json:"parameters"`
-	}
-
 	serviceInstancesResponseDTO struct {
 		Operation string `json:"operation"`
 	}
@@ -351,12 +334,6 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, requestB
 	}
 
 	return nil
-}
-
-func (c *Client) warnOnError(do func() error) {
-	if err := do(); err != nil {
-		slog.Warn(err.Error())
-	}
 }
 
 // setHttpClient auxiliary method of testing to get rid of oAuth client wrapper

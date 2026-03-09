@@ -414,7 +414,6 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	// given
-	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
@@ -466,7 +465,6 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 
 func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testing.T) {
 	// given
-	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)

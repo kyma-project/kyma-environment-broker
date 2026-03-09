@@ -66,7 +66,6 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		newSchemaService(t),
 		newProviderSpec(t),
 		fixValueProvider(t),
-		false,
 		config.FakeProviderConfigProvider{},
 		nil,
 		nil,

@@ -211,6 +211,20 @@ func (r readSession) GetLastOperation(instanceID string, types []internal.Operat
 	return operation, nil
 }
 
+func (r readSession) GetLastOperationWithAllStates(instanceID string) (dbmodel.OperationDTO, dberr.Error) {
+	condition := dbr.Eq("instance_id", instanceID)
+	operation, err := r.getLastOperation(condition)
+	if err != nil {
+		switch {
+		case dberr.IsNotFound(err):
+			return dbmodel.OperationDTO{}, dberr.NotFound("for instance ID: %s %s", instanceID, err)
+		default:
+			return dbmodel.OperationDTO{}, err
+		}
+	}
+	return operation, nil
+}
+
 func (r readSession) GetOperationByInstanceID(instanceId string) (dbmodel.OperationDTO, dberr.Error) {
 	condition := dbr.Eq("instance_id", instanceId)
 	operation, err := r.getOperation(condition)
@@ -256,6 +270,9 @@ func (r readSession) ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.O
 	addOperationFilters(stmt, filter)
 
 	_, err := stmt.Load(&operations)
+	if err != nil {
+		return nil, -1, -1, err
+	}
 
 	totalCount, err := r.getOperationCount(filter)
 	if err != nil {
@@ -477,6 +494,30 @@ func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, err
 	return rows, err
 }
 
+func (r readSession) GetEmptyUpdatesStats() ([]dbmodel.UpdateStatEntry, error) {
+	var rows []dbmodel.UpdateStatEntry
+
+	// Find number of empty updates per instance, used for metrics
+	_, err := r.session.Select("instance_id, empty_updates as value").
+		From(InstancesTableName).
+		Where("empty_updates > 0").
+		Load(&rows)
+	return rows, err
+}
+
+func (r readSession) GetUpdatesStats() ([]dbmodel.UpdateStatEntry, error) {
+	var rows []dbmodel.UpdateStatEntry
+
+	// Find number of update operations per instance, used for metrics
+	_, err := r.session.Select("instance_id, count(*) as value").
+		From(OperationTableName).
+		Where("type = ?", "update").
+		GroupBy("instance_id").
+		Having("count(*) > 0").
+		Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
 	var stmt *dbr.SelectStmt
@@ -516,6 +557,18 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 	return rows, err
 }
 
+func (r readSession) GetCredentialsBindingStats() ([]dbmodel.InstanceByCredentialsBindingStatEntry, error) {
+	var rows []dbmodel.InstanceByCredentialsBindingStatEntry
+	_, err := r.session.
+		Select("global_account_id", "subscription_secret_name", "count(*) as total").
+		From(InstancesTableName).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where("subscription_secret_name != ''").
+		GroupBy("global_account_id", "subscription_secret_name").
+		Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation
@@ -539,6 +592,45 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 		LoadOne(&res)
 
 	return res.Total, err
+}
+
+func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	if len(bindingNames) == 0 {
+		return "", 0, nil
+	}
+
+	var result struct {
+		SubscriptionSecretName string `db:"subscription_secret_name"`
+		Count                  int    `db:"count"`
+	}
+
+	err := r.session.Select("subscription_secret_name", "count(*) as count").
+		From(InstancesTableName).
+		Where("subscription_secret_name IN ?", bindingNames).
+		Where(dbr.Or(
+			dbr.And(
+				dbr.Neq("subscription_global_account_id", ""),
+				dbr.Eq("subscription_global_account_id", globalAccountID),
+			),
+			dbr.And(
+				dbr.Eq("global_account_id", globalAccountID),
+				dbr.Eq("subscription_global_account_id", ""),
+			),
+		)).
+		GroupBy("subscription_secret_name").
+		Having("count(*) < ?", maxCount).
+		OrderBy("count DESC").
+		Limit(1).
+		LoadOne(&result)
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return "", 0, nil
+		}
+		return "", 0, err
+	}
+
+	return result.SubscriptionSecretName, result.Count, nil
 }
 
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
@@ -643,29 +735,6 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 		Select("count(*) as total").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName))
-
-	if len(filter.States) > 0 || filter.Suspended != nil {
-		stateFilters := buildInstanceStateFilters("o1", filter)
-		stmt.Where(stateFilters)
-	}
-
-	addInstanceFilters(stmt, filter, "o1")
-	err := stmt.LoadOne(&res)
-
-	return res.Total, err
-}
-
-func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
-	var res struct {
-		Total int
-	}
-	var stmt = r.session.
-		Select("count(*) as total").
-		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, internal.OperationStatePending, internal.OperationStateCanceled)).
-		Where("o2.created_at IS NULL").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", internal.OperationStatePending, internal.OperationStateCanceled))
 
 	if len(filter.States) > 0 || filter.Suspended != nil {
 		stateFilters := buildInstanceStateFilters("o1", filter)
@@ -898,6 +967,9 @@ func (r readSession) ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbm
 	addInstanceArchivedFilter(stmt, filter)
 
 	_, err := stmt.Load(&instancesArchived)
+	if err != nil {
+		return []dbmodel.InstanceArchivedDTO{}, -1, -1, err
+	}
 
 	totalCount, err := r.getInstanceArchivedCount(filter)
 	if err != nil {

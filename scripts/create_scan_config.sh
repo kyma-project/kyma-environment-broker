@@ -27,7 +27,6 @@ bdba:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:${TAG}
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:${TAG}
 mend:

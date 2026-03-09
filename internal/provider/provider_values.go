@@ -124,7 +124,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
-	case broker.AlicloudPlanID:
+	case broker.AlicloudPlanID, broker.BuildRuntimeAlicloudPlanID:
 		p = &AlicloudInputProvider{
 			Purpose:                s.defaultPurpose,
 			MultiZone:              s.multiZoneCluster,

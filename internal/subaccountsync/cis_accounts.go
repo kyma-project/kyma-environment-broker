@@ -16,21 +16,6 @@ func (c *RateLimitedCisClient) buildSubaccountRequest(subaccountID string) (*htt
 	return request, nil
 }
 
-func (c *RateLimitedCisClient) fetchDataForSetOfSubaccounts(subaccounts subaccountsSetType) (statesFromCisType, error) {
-
-	subaccountsDataFromAccounts := make(statesFromCisType)
-	for subaccount := range subaccounts {
-		accountData, err := c.GetSubaccountData(string(subaccount))
-		if err != nil {
-			c.log.Error(fmt.Sprintf("while getting subaccount data: %s", err))
-		} else {
-			c.log.Debug(fmt.Sprintf("getting for subaccount %s", subaccount))
-			subaccountsDataFromAccounts[subaccount] = accountData
-		}
-	}
-	return subaccountsDataFromAccounts, nil
-}
-
 func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateType, error) {
 	request, err := c.buildSubaccountRequest(subaccountID)
 	if err != nil {

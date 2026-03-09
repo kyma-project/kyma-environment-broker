@@ -121,11 +121,24 @@ func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string
 	return result, err
 }
 
-// TODO: Wrap retries in single method WithRetries
+func (s *Instance) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+	sess := s.Factory.NewReadSession()
+	var resultName string
+	var resultCount int
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		name, count, err := sess.GetBestCredentialsBinding(globalAccountID, bindingNames, maxCount)
+		resultName = name
+		resultCount = count
+		return err == nil, nil
+	})
+	return resultName, resultCount, err
+}
+
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 	sess := s.Factory.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}
 	var lastErr dberr.Error
+	// TODO: Wrap retries in single method WithRetries
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instanceDTO, lastErr = sess.GetInstanceByID(instanceID)
 		if lastErr != nil {
@@ -144,7 +157,7 @@ func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 		return nil, err
 	}
 
-	lastOp, err := s.operations.GetLastOperation(instanceID)
+	lastOp, err := s.operations.GetLastOperationWithAllStates(instanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
 			return &instance, nil
@@ -350,9 +363,42 @@ func (s *Instance) Delete(instanceID string) error {
 	return sess.DeleteInstance(instanceID)
 }
 
+func (s *Instance) GetUpdatesStats() (internal.UpdateStats, internal.UpdateStats, error) {
+	session := s.Factory.NewReadSession()
+
+	emptyUpdates, err := session.GetEmptyUpdatesStats()
+	if err != nil {
+		return internal.UpdateStats{}, internal.UpdateStats{}, err
+	}
+	resultEmptyUpdates := internal.UpdateStats{}
+	resultEmptyUpdates.Instances = make([]internal.InstanceItem, len(emptyUpdates))
+	for i, entry := range emptyUpdates {
+		resultEmptyUpdates.Instances[i] = internal.InstanceItem{
+			InstanceID:   entry.InstanceID,
+			EmptyUpdates: entry.Value,
+		}
+	}
+
+	updates, err := session.GetUpdatesStats()
+	if err != nil {
+		return internal.UpdateStats{}, internal.UpdateStats{}, err
+	}
+	resultUpdates := internal.UpdateStats{}
+	resultUpdates.Instances = make([]internal.InstanceItem, len(updates))
+	for i, entry := range updates {
+		resultUpdates.Instances[i] = internal.InstanceItem{
+			InstanceID:   entry.InstanceID,
+			EmptyUpdates: entry.Value,
+		}
+	}
+
+	return resultEmptyUpdates, resultUpdates, nil
+}
+
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
-	entries, err := s.Factory.NewReadSession().GetActiveInstanceStats()
+	session := s.Factory.NewReadSession()
+	entries, err := session.GetActiveInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -367,7 +413,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	subEntries, err := s.Factory.NewReadSession().GetSubaccountsInstanceStats()
+	subEntries, err := session.GetSubaccountsInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -389,6 +435,22 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 	}
 	for _, e := range entries {
 		result.LicenseType[strings.Trim(e.LicenseType.String, `"`)] += e.Total
+	}
+	return result, nil
+}
+
+func (s *Instance) GetCredentialsBindingStats() (internal.CredentialsBindingStats, error) {
+	entries, err := s.Factory.NewReadSession().GetCredentialsBindingStats()
+	if err != nil {
+		return internal.CredentialsBindingStats{}, err
+	}
+	result := internal.CredentialsBindingStats{
+		InstancesPerCredentialsBinding: make(map[string]int),
+		CredentialsBindingToGA:         make(map[string]string),
+	}
+	for _, e := range entries {
+		result.InstancesPerCredentialsBinding[e.SubscriptionSecretName] += e.Total
+		result.CredentialsBindingToGA[e.SubscriptionSecretName] = e.GlobalAccountID
 	}
 	return result, nil
 }

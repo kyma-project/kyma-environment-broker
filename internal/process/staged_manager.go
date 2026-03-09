@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -24,8 +23,6 @@ type StagedManager struct {
 
 	stages           []*stage
 	operationTimeout time.Duration
-
-	mu sync.RWMutex
 
 	speedFactor int64
 	cfg         StagedManagerConfiguration

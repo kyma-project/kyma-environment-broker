@@ -6,14 +6,14 @@
 
 The diagram illustrates the architecture based on an example provisioning request.
 1. The user sends a provisioning request.
-2. Kyma Environment Broker (KEB) requests an appropriate Secret Binding.
+2. Kyma Environment Broker (KEB) requests an appropriate SecretBinding (CredentialsBinding).
 3. KEB creates a Runtime resource.
 4. KEB creates a Kyma resource.
 
 ## Prerequisites
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* Kubernetes cluster, or [k3d](https://k3d.io) for local installation
+* A Kubernetes cluster, or [k3d](https://k3d.io) for local installation
 * [yq](https://github.com/mikefarah/yq)
 
 ## Procedure
@@ -78,7 +78,7 @@ The diagram illustrates the architecture based on an example provisioning reques
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
    ```
 
-6. To simulate Lifecycle Manager and transition the Kyma instance to the `Ready` state, use the following command:
+6. To simulate Kyma Lifecycle Manager (KLM) and transition the Kyma instance to the `Ready` state, use the following command:
 
    ```bash
    make set-kyma-state KYMA_ID=<kyma_id> STATE=Ready
@@ -105,7 +105,7 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
-8. To deprovision the instance, use the following command. Note that this command can only work if you have used the command provided in this document to create the instance.
+8. To deprovision the instance, use the following command. Note that this command can only work if you created the instance using the command provided in this document.
 
    ```bash
    curl --request DELETE \
@@ -125,4 +125,4 @@ The diagram illustrates the architecture based on an example provisioning reques
 
 ### Kyma Control Plane (KCP) CLI
 
-To list, filter, and observe runtimes and their various attributes and states using the KCP CLI, set the `keb-api-url` to `http://localhost:8080` in the KCP configuration file.
+To list, filter, and observe runtimes and their various attributes and states using the KCP CLI, set the **keb-api-url** to `http://localhost:8080` in the KCP configuration file.

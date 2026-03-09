@@ -103,8 +103,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 	defer teardownSuite(t)
 
 	srv, err := cis.NewFakeServer()
-	defer srv.Close()
 	require.NoError(t, err)
+	defer srv.Close()
 
 	cisClient := srv.Client()
 	cisConfig := CisEndpointConfig{
@@ -1622,6 +1622,10 @@ func setupStorageContainer() func() {
 		ContainerName: "subaccount-sync-tests",
 		Image:         internal.PostgresImage,
 	})
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error creating database container: %s", err))
+		os.Exit(1)
+	}
 	return func() {
 		if cleanupContainer != nil {
 			err := cleanupContainer()

@@ -62,10 +62,8 @@ func TestCallWithRetry(t *testing.T) {
 			return fakeService.fakeCall2()
 		}, 1, time.Second*1)
 		assert.NoError(t, err)
-		assert.Equal(t, foo{
-			x: 1,
-			y: 4,
-		}, result)
+		assert.Equal(t, 1, result.x)
+		assert.Equal(t, 4, result.y)
 	})
 
 	t.Run("call with error 1", func(t *testing.T) {
@@ -117,7 +115,8 @@ func TestCallWithRetry(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.NotEmpty(t, result)
-		assert.Equal(t, result, foo{x: -1, y: -1999})
+		assert.Equal(t, -1, result.x)
+		assert.Equal(t, -1999, result.y)
 		wg.Wait()
 	})
 

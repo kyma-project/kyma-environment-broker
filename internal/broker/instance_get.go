@@ -21,7 +21,6 @@ type GetInstanceEndpoint struct {
 	config            Config
 	instancesStorage  storage.Instances
 	operationsStorage storage.Provisioning
-	brokerURL         string
 	kcBuilder         kubeconfig.KcBuilder
 	log               *slog.Logger
 }

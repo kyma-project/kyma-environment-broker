@@ -91,14 +91,14 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), offset)
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 2*offset)
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
@@ -142,14 +142,14 @@ func TestOperation(t *testing.T) {
 		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
 		require.NoError(t, err)
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 		require.True(t, givenOperation.CreatedAt.Equal(op.CreatedAt))
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
@@ -200,14 +200,14 @@ func TestOperation(t *testing.T) {
 		assert.Equal(t, givenOperation.ID, op.ID)
 		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), offset)
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 		require.Equal(t, givenOperation.CreatedAt.Sub(op.CreatedAt), 2*offset)
 
-		op, err = svc.UpdateOperation(*op)
+		_, err = svc.UpdateOperation(*op)
 		require.NoError(t, err)
 
 		op, err = svc.GetOperationByID("operation-id")
@@ -444,6 +444,7 @@ func TestOperation(t *testing.T) {
 		givenOperation3.Description = "diff"
 		givenOperation3.ProvisionerOperationID = "modified-op-id"
 		op, err = svc.UpdateUpgradeClusterOperation(givenOperation3)
+		require.NoError(t, err)
 		op.CreatedAt = op.CreatedAt.Truncate(time.Millisecond)
 
 		// then

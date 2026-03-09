@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -21,10 +20,9 @@ import (
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
-	logger                  *slog.Logger
 }
 
-func NewOperationDurationCollector(logger *slog.Logger) *OperationDurationCollector {
+func NewOperationDurationCollector() *OperationDurationCollector {
 	return &OperationDurationCollector{
 		provisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespaceV2,
@@ -40,7 +38,6 @@ func NewOperationDurationCollector(logger *slog.Logger) *OperationDurationCollec
 			Help:      "The time of the deprovisioning process",
 			Buckets:   prometheus.LinearBuckets(6, 2, 58),
 		}, []string{"plan_id"}),
-		logger: logger,
 	}
 }
 
