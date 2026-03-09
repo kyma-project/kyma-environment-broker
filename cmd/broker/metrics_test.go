@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -232,8 +231,8 @@ func TestMetrics(t *testing.T) {
 		suite.AssertMetrics2(1, *op11)
 
 		// uncomment to see the output of the metric endpoint
-		resp := suite.CallAPI("GET", "/metrics", "")
-		r, _ := io.ReadAll(resp.Body)
-		fmt.Printf("%s", r)
+		//resp := suite.CallAPI("GET", "/metrics", "")
+		//r, _ := io.ReadAll(resp.Body)
+		//fmt.Printf("%s", r)
 	})
 }
