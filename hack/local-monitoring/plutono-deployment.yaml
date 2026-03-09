@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plutono-dashboard-keb
+  namespace: monitoring
+  labels:
+    plutono-dashboard: "true"
+data:
+  keb-dashboard.json: |
+    # This is loaded from the dashboards/ directory via the setup script.
+    # See plutono-deployment.yaml for how dashboards are mounted.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plutono
+  namespace: monitoring
+  labels:
+    app: plutono
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plutono
+  template:
+    metadata:
+      labels:
+        app: plutono
+    spec:
+      containers:
+        - name: plutono
+          # Plutono is a Grafana fork — use the grafana image for compatibility.
+          # If you have a Plutono-specific image, replace this.
+          image: ghcr.io/credativ/plutono:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: PL_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: PL_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            - name: PL_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: PL_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Admin"
+            - name: PL_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: "/var/lib/plutono/dashboards/keb-dashboard.json"
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/plutono/provisioning/datasources
+            - name: dashboard-provider
+              mountPath: /etc/plutono/provisioning/dashboards
+            - name: dashboards
+              mountPath: /var/lib/plutono/dashboards
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: datasources
+          configMap:
+            name: plutono-datasources
+        - name: dashboard-provider
+          configMap:
+            name: plutono-dashboard-provider
+        - name: dashboards
+          configMap:
+            name: plutono-dashboard-keb-json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plutono
+  namespace: monitoring
+  labels:
+    app: plutono
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app: plutono
