@@ -119,7 +119,7 @@ func (c *CredentialsBindingsCollector) updateAvailableMetrics() {
 	c.gardenerMu.Lock()
 	defer c.gardenerMu.Unlock()
 
-	list, err := c.gardenerClient.GetCredentialsBindings(fmt.Sprintf("!%s", gardener.TenantNameLabelKey))
+	list, err := c.gardenerClient.GetCredentialsBindings(fmt.Sprintf("!%s,%s!=true,!%s", gardener.TenantNameLabelKey, gardener.SharedLabelKey, gardener.DirtyLabelKey))
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("%s -> failed to get available credentials bindings: %s", logPrefix, err.Error()))
 		return
