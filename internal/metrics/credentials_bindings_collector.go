@@ -28,7 +28,7 @@ type GardenerCredentialsBindingsLister interface {
 //     Number of active instances per CredentialsBinding.
 //
 //   - kcp_keb_v2_available_credentials_bindings{hyperscaler_type}
-//     Number of unclaimed CredentialsBindings per hyperscaler type.
+//     Number of unclaimed, not shared, and not dirty CredentialsBindings per hyperscaler type.
 type CredentialsBindingsCollector struct {
 	statsGetter             CredentialsBindingsStatsGetter
 	gardenerClient          GardenerCredentialsBindingsLister
