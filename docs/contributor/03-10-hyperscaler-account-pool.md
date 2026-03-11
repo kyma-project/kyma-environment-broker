@@ -133,7 +133,7 @@ The following is an example with an AWS limit of 180:
 |---|---|
 | 150 clusters on CredentialsBinding-A | KEB provisions on CredentialsBinding-A, which is below the limit. |
 | 180 clusters on CredentialsBinding-A | KEB claims CredentialsBinding-B and provisions the cluster on it. |
-| 180 on A, 150 on B | KEB provisions on B using the fill-most-populated strategy. |
 | 179 on A, 150 on B | KEB provisions on A, which is still below the limit, using the fill-most-populated strategy. |
+| 180 on A, 150 on B | KEB provisions on B using the fill-most-populated strategy, because A has reached its limit. |
 
 Accounts that already exceed the configured limit continue to work. KEB routes new clusters to a different account, and existing clusters on the over-limit account continue to work normally. Once the cluster count on the over-limit account drops below the configured limit, it becomes eligible for new clusters again.
