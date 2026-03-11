@@ -86,3 +86,54 @@ metadata:
     tenantName: {TENANT_NAME}
     hyperscalerType: "gcp_cf-sa30"
 ```
+
+## Multi-Hyperscaler Accounts per Global Account
+
+By default, one tenant can use only one hyperscaler account per provider. This limits the total number of clusters to the capacity of that single account.
+
+To remove this restriction, KEB supports assigning multiple hyperscaler accounts to a tenant. Once a per-account cluster limit is reached, KEB automatically claims an additional hyperscaler account. Existing HAP account selection rules remain unchanged.
+
+### Enable the Feature
+
+Control the feature using the **allowedGlobalAccounts** configuration field:
+
+| Configuration | Meaning |
+|---|---|
+| `allowedGlobalAccounts: []` or no config | Feature disabled for all global accounts |
+| `allowedGlobalAccounts: ["GA-1", "GA-2"]` | Feature enabled only for the listed global accounts |
+| `allowedGlobalAccounts: ["*"]` | Feature enabled for all global accounts |
+
+### Cluster Limits per Hyperscaler Account
+
+Each provider type has a configurable maximum number of clusters per account. When a CredentialsBinding reaches its limit, KEB provisions new clusters using a different account. The `default` limit applies to any provider that is not explicitly configured.
+
+When a tenant has multiple accounts with available capacity, KEB uses the **fill-most-populated** strategy. It selects the account with the most clusters that is still below the limit. This maximizes the chance that the least-used account can be fully drained and reclaimed by the cleanup job over time.
+
+### Provisioning Flow
+
+When the feature is disabled (global account not in **allowedGlobalAccounts**), the following actions take place:
+
+1. HAP rules determine the labels used to select the CredentialsBinding.
+2. KEB queries for a CredentialsBinding matching the defined labels.
+3. If none is found, KEB claims a new CredentialsBinding.
+4. KEB provisions the cluster using the selected CredentialsBinding.
+
+When the feature is enabled (global account is in **allowedGlobalAccounts**), the following actions take place:
+
+1. HAP rules determine the labels used to select the CredentialsBinding.
+2. KEB queries for all CredentialsBindings matching the defined labels.
+3. If none are found, KEB claims a new CredentialsBinding.
+4. If accounts are found, KEB queries the database for cluster counts and selects the most-populated account still below the limit.
+5. If all accounts are at the limit, KEB claims a new CredentialsBinding.
+6. KEB provisions the cluster using the selected CredentialsBinding.
+
+The following is an example with an AWS limit of 180:
+
+| Situation | Action |
+|---|---|
+| 150 clusters on CredentialsBinding-A | KEB provisions on CredentialsBinding-A, which is below the limit. |
+| 180 clusters on CredentialsBinding-A | KEB claims CredentialsBinding-B and provisions the cluster on it. |
+| 179 on A, 150 on B | KEB provisions on A, which is still below the limit, using the fill-most-populated strategy. |
+| 180 on A, 150 on B | KEB provisions on B using the fill-most-populated strategy, because A has reached its limit. |
+
+Accounts that already exceed the configured limit continue to work. KEB routes new clusters to a different account, and existing clusters on the over-limit account continue to work normally. Once the cluster count on the over-limit account drops below the configured limit, it becomes eligible for new clusters again.
