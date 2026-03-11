@@ -501,3 +501,75 @@ This approach completely decouples the logical machine definition from the insta
 | Flexibility          | Only the machine **version** can be updated      | The **name is fully abstract** and can be switched to a completely different machine type                         |
 | Logic Complexity     | More complicated logic, varies for each provider | Straightforward logic that is the **same across all providers**                                                   |
 | Potential Issues     | –                                                | **AWS:** two general types and two GPU types<br>**Azure:** two general machine types<br>Naming can be challenging |
+
+# Updating Machine Versions
+
+When introducing a new machine version, follow these steps:
+1. Check whether the pricing differs between the current and the new machine version to ensure cost expectations remain accurate.
+2. Ensure the new machine version is available in the same regions and availability zones.
+3. Modify the machine version configuration in KEB so that all newly created clusters use the updated machine version.
+4. Update the machine version in all existing runtime CRs so that already running clusters are aligned with the new version.
+
+# BTP Cockpit
+
+Below is the current AWS schema used in BTP Cockpit:
+
+```json
+{
+  "machineType": {
+    "_enumDisplayName": {
+      "m6i.large": "m6i.large (2vCPU, 8GB RAM)",
+      "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)",
+      "m5.large": "m5.large (2vCPU, 8GB RAM)",
+      "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)"
+    },
+    "description": "Specifies the type of the virtual machine.",
+    "enum": [
+      "m6i.large",
+      "m6i.16xlarge",
+      "m5.large",
+      "m5.16xlarge"
+    ],
+    "type": "string"
+  }
+}
+```
+
+The JSON schema requires that the `machineType` value must be one of the entries defined in the enum list.
+It does not allow values outside of this predefined set.
+
+If abstract machine types are introduced (e.g., `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
+The updated schema would therefore include both the abstract types and the existing concrete instance types:
+```json
+{
+  "machineType": {
+    "_enumDisplayName": {
+      "m.large": "m.large (2vCPU, 8GB RAM)",
+      "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
+      "m6i.large": "m6i.large (2vCPU, 8GB RAM)",
+      "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)",
+      "m5.large": "m5.large (2vCPU, 8GB RAM)",
+      "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)"
+    },
+    "description": "Specifies the type of the virtual machine.",
+    "enum": [
+      "m.large",
+      "m.16xlarge",
+      "m6i.large",
+      "m6i.16xlarge",
+      "m5.large",
+      "m5.16xlarge"
+    ],
+    "type": "string"
+  }
+}
+```
+
+If the logical machine family `m` is mapped to a newer generation (for example `m7i`), the Kyma Environment Broker (KEB) must resolve the machine type before passing it to the Runtime CR.
+For example, the following user inputs:
+- `m.large`
+- `m6i.large`
+- `m5.large`
+
+must all be resolved internally to `m7i.large` before being written to the Runtime CR.
+However, to avoid confusion for users, the GET API endpoint should always return the machine type exactly as it was originally provided by the user, rather than the internally resolved value.
