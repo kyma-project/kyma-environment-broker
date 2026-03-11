@@ -546,10 +546,10 @@ The updated schema would therefore include both the abstract types and the exist
     "_enumDisplayName": {
       "m.large": "m.large (2vCPU, 8GB RAM)",
       "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
-      "m6i.large": "m6i.large (2vCPU, 8GB RAM)",
-      "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)",
-      "m5.large": "m5.large (2vCPU, 8GB RAM)",
-      "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)"
+      "m6i.large": "m6i.large (deprecated, use m.large)",
+      "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
+      "m5.large": "m5.large (deprecated, use m.large)",
+      "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
     },
     "description": "Specifies the type of the virtual machine.",
     "enum": [
