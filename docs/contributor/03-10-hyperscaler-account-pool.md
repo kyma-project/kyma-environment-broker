@@ -105,27 +105,27 @@ Control the feature using the **allowedGlobalAccounts** configuration field:
 
 ### Cluster Limits per Hyperscaler Account
 
-Each provider type has a configurable maximum number of clusters per account. When a `CredentialsBinding` reaches its limit, KEB provisions new clusters using a different account. A `default` limit applies to any provider not explicitly configured.
+Each provider type has a configurable maximum number of clusters per account. When a CredentialsBinding reaches its limit, KEB provisions new clusters using a different account. The `default` limit applies to any provider that is not explicitly configured.
 
-When a tenant has multiple accounts with available capacity, KEB uses the **fill-most-populated** strategy: it selects the account with the most clusters that is still below the limit. This maximizes the chance that the least-used account can be fully drained and reclaimed by the cleanup job over time.
+When a tenant has multiple accounts with available capacity, KEB uses the **fill-most-populated** strategy. It selects the account with the most clusters that is still below the limit. This maximizes the chance that the least-used account can be fully drained and reclaimed by the cleanup job over time.
 
 ### Provisioning Flow
 
-**When the feature is disabled** (global account not in `allowedGlobalAccounts`):
+When the feature is disabled (global account not in **allowedGlobalAccounts**), the following actions take place:
 
-1. HAP rules determine the labels used to select the `CredentialsBinding`.
-2. KEB queries for a `CredentialsBinding` matching the defined labels.
-3. If none is found, KEB claims a new `CredentialsBinding`.
-4. KEB provisions the cluster using the selected `CredentialsBinding`.
+1. HAP rules determine the labels used to select the CredentialsBinding.
+2. KEB queries for a CredentialsBinding matching the defined labels.
+3. If none is found, KEB claims a new CredentialsBinding.
+4. KEB provisions the cluster using the selected CredentialsBinding.
 
-**When the feature is enabled** (global account is in `allowedGlobalAccounts`):
+When the feature is enabled (global account is in **allowedGlobalAccounts**), the following actions take place:
 
-1. HAP rules determine the labels used to select the `CredentialsBinding`.
-2. KEB queries for all `CredentialsBindings` matching the defined labels.
-3. If none are found, KEB claims a new `CredentialsBinding`.
+1. HAP rules determine the labels used to select the CredentialsBinding.
+2. KEB queries for all CredentialsBindings matching the defined labels.
+3. If none are found, KEB claims a new CredentialsBinding.
 4. If accounts are found, KEB queries the database for cluster counts and selects the most-populated account still below the limit.
-5. If all accounts are at the limit, KEB claims a new `CredentialsBinding`.
-6. KEB provisions the cluster using the selected `CredentialsBinding`.
+5. If all accounts are at the limit, KEB claims a new CredentialsBinding.
+6. KEB provisions the cluster using the selected CredentialsBinding.
 
 The following is an example with an AWS limit of 180:
 
