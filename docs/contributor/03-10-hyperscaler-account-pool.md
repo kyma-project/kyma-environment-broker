@@ -95,7 +95,7 @@ To remove this restriction, KEB supports assigning multiple hyperscaler accounts
 
 ### Enable the Feature
 
-Control the feature using the `allowedGlobalAccounts` configuration field:
+Control the feature using the **allowedGlobalAccounts** configuration field:
 
 | Configuration | Meaning |
 |---|---|
