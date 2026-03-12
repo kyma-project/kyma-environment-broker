@@ -45,6 +45,9 @@ func TestCredentialsBindingsCollector(t *testing.T) {
 	t.Cleanup(func() {
 		prometheus.Unregister(collector.instancesPerCredentialsBinding)
 		prometheus.Unregister(collector.availableCredentialsBindings)
+		prometheus.Unregister(collector.claimedCredentialsBindings)
+		prometheus.Unregister(collector.dirtyCredentialsBindings)
+		prometheus.Unregister(collector.sharedCredentialsBindings)
 	})
 
 	t.Run("initial counts are correct after first poll", func(t *testing.T) {
@@ -97,6 +100,9 @@ func TestAvailableCredentialsBindingsCollector(t *testing.T) {
 		t.Cleanup(func() {
 			prometheus.Unregister(c.instancesPerCredentialsBinding)
 			prometheus.Unregister(c.availableCredentialsBindings)
+			prometheus.Unregister(c.claimedCredentialsBindings)
+			prometheus.Unregister(c.dirtyCredentialsBindings)
+			prometheus.Unregister(c.sharedCredentialsBindings)
 		})
 		return c
 	}
@@ -115,7 +121,7 @@ func TestAvailableCredentialsBindingsCollector(t *testing.T) {
 		})
 
 		collector := newCollector(t, awsUnclaimed1, awsUnclaimed2, azureUnclaimed, awsClaimed, azureClaimed)
-		collector.updateAvailableMetrics()
+		collector.updateGardenerMetrics()
 
 		assert.Equal(t, float64(2), poolGaugeValue(collector, "aws"), "2 unclaimed AWS bindings")
 		assert.Equal(t, float64(1), poolGaugeValue(collector, "azure"), "1 unclaimed Azure binding")
@@ -138,7 +144,7 @@ func TestAvailableCredentialsBindingsCollector(t *testing.T) {
 		})
 
 		collector := newCollector(t, awsAvailable, awsShared, azureAvailable, azureShared)
-		collector.updateAvailableMetrics()
+		collector.updateGardenerMetrics()
 
 		assert.Equal(t, float64(1), poolGaugeValue(collector, "aws"), "shared AWS binding must not be counted as available")
 		assert.Equal(t, float64(1), poolGaugeValue(collector, "azure"), "shared Azure binding must not be counted as available")
@@ -161,15 +167,174 @@ func TestAvailableCredentialsBindingsCollector(t *testing.T) {
 		})
 
 		collector := newCollector(t, awsAvailable, awsDirty, gcpAvailable, gcpDirty)
-		collector.updateAvailableMetrics()
+		collector.updateGardenerMetrics()
 
 		assert.Equal(t, float64(1), poolGaugeValue(collector, "aws"), "dirty AWS binding must not be counted as available")
 		assert.Equal(t, float64(1), poolGaugeValue(collector, "gcp"), "dirty GCP binding must not be counted as available")
 	})
 }
 
+func TestClaimedCredentialsBindingsCollector(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	const namespace = "test"
+
+	newCollector := func(t *testing.T, objects ...runtime.Object) *CredentialsBindingsCollector {
+		t.Helper()
+		gc := gardener.NewClient(gardener.NewDynamicFakeClient(objects...), namespace)
+		c := NewCredentialsBindingsCollector(nil, gc, 1*time.Minute, 5*time.Minute, log)
+		t.Cleanup(func() {
+			prometheus.Unregister(c.instancesPerCredentialsBinding)
+			prometheus.Unregister(c.availableCredentialsBindings)
+			prometheus.Unregister(c.claimedCredentialsBindings)
+			prometheus.Unregister(c.dirtyCredentialsBindings)
+			prometheus.Unregister(c.sharedCredentialsBindings)
+		})
+		return c
+	}
+
+	t.Run("counts claimed bindings per hyperscaler type and tenant", func(t *testing.T) {
+		awsClaimed1 := fixCredentialsBinding("aws-claimed-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.TenantNameLabelKey:      "tenant-a",
+		})
+		awsClaimed2 := fixCredentialsBinding("aws-claimed-2", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.TenantNameLabelKey:      "tenant-a",
+		})
+		awsClaimedOtherTenant := fixCredentialsBinding("aws-claimed-3", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.TenantNameLabelKey:      "tenant-b",
+		})
+		azureClaimed := fixCredentialsBinding("azure-claimed-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "azure",
+			gardener.TenantNameLabelKey:      "tenant-a",
+		})
+		awsUnclaimed := fixCredentialsBinding("aws-unclaimed", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+		})
+
+		collector := newCollector(t, awsClaimed1, awsClaimed2, awsClaimedOtherTenant, azureClaimed, awsUnclaimed)
+		collector.updateGardenerMetrics()
+
+		assert.Equal(t, float64(2), claimedGaugeValue(collector, "aws", "tenant-a"), "2 AWS bindings claimed by tenant-a")
+		assert.Equal(t, float64(1), claimedGaugeValue(collector, "aws", "tenant-b"), "1 AWS binding claimed by tenant-b")
+		assert.Equal(t, float64(1), claimedGaugeValue(collector, "azure", "tenant-a"), "1 Azure binding claimed by tenant-a")
+		assert.Equal(t, float64(0), claimedGaugeValue(collector, "aws", "tenant-c"), "unclaimed binding not counted")
+	})
+}
+
+func TestDirtyCredentialsBindingsCollector(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	const namespace = "test"
+
+	newCollector := func(t *testing.T, objects ...runtime.Object) *CredentialsBindingsCollector {
+		t.Helper()
+		gc := gardener.NewClient(gardener.NewDynamicFakeClient(objects...), namespace)
+		c := NewCredentialsBindingsCollector(nil, gc, 1*time.Minute, 5*time.Minute, log)
+		t.Cleanup(func() {
+			prometheus.Unregister(c.instancesPerCredentialsBinding)
+			prometheus.Unregister(c.availableCredentialsBindings)
+			prometheus.Unregister(c.claimedCredentialsBindings)
+			prometheus.Unregister(c.dirtyCredentialsBindings)
+			prometheus.Unregister(c.sharedCredentialsBindings)
+		})
+		return c
+	}
+
+	t.Run("counts dirty bindings per hyperscaler type", func(t *testing.T) {
+		awsDirty1 := fixCredentialsBinding("aws-dirty-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.DirtyLabelKey:           "true",
+		})
+		awsDirty2 := fixCredentialsBinding("aws-dirty-2", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.DirtyLabelKey:           "true",
+		})
+		gcpDirty := fixCredentialsBinding("gcp-dirty-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "gcp",
+			gardener.DirtyLabelKey:           "true",
+		})
+		awsClean := fixCredentialsBinding("aws-clean", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+		})
+
+		collector := newCollector(t, awsDirty1, awsDirty2, gcpDirty, awsClean)
+		collector.updateGardenerMetrics()
+
+		assert.Equal(t, float64(2), dirtyGaugeValue(collector, "aws"), "2 dirty AWS bindings")
+		assert.Equal(t, float64(1), dirtyGaugeValue(collector, "gcp"), "1 dirty GCP binding")
+		assert.Equal(t, float64(0), dirtyGaugeValue(collector, "azure"), "no dirty Azure bindings")
+	})
+}
+
+func TestSharedCredentialsBindingsCollector(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	const namespace = "test"
+
+	newCollector := func(t *testing.T, objects ...runtime.Object) *CredentialsBindingsCollector {
+		t.Helper()
+		gc := gardener.NewClient(gardener.NewDynamicFakeClient(objects...), namespace)
+		c := NewCredentialsBindingsCollector(nil, gc, 1*time.Minute, 5*time.Minute, log)
+		t.Cleanup(func() {
+			prometheus.Unregister(c.instancesPerCredentialsBinding)
+			prometheus.Unregister(c.availableCredentialsBindings)
+			prometheus.Unregister(c.claimedCredentialsBindings)
+			prometheus.Unregister(c.dirtyCredentialsBindings)
+			prometheus.Unregister(c.sharedCredentialsBindings)
+		})
+		return c
+	}
+
+	t.Run("counts shared bindings per hyperscaler type", func(t *testing.T) {
+		awsShared1 := fixCredentialsBinding("aws-shared-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.SharedLabelKey:          "true",
+		})
+		awsShared2 := fixCredentialsBinding("aws-shared-2", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+			gardener.SharedLabelKey:          "true",
+		})
+		azureShared := fixCredentialsBinding("azure-shared-1", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "azure",
+			gardener.SharedLabelKey:          "true",
+		})
+		awsNotShared := fixCredentialsBinding("aws-not-shared", namespace, map[string]string{
+			gardener.HyperscalerTypeLabelKey: "aws",
+		})
+
+		collector := newCollector(t, awsShared1, awsShared2, azureShared, awsNotShared)
+		collector.updateGardenerMetrics()
+
+		assert.Equal(t, float64(2), sharedGaugeValue(collector, "aws"), "2 shared AWS bindings")
+		assert.Equal(t, float64(1), sharedGaugeValue(collector, "azure"), "1 shared Azure binding")
+		assert.Equal(t, float64(0), sharedGaugeValue(collector, "gcp"), "no shared GCP bindings")
+	})
+}
+
 func poolGaugeValue(c *CredentialsBindingsCollector, hyperscalerType string) float64 {
 	return testutil.ToFloat64(c.availableCredentialsBindings.With(prometheus.Labels{
+		"hyperscaler_type": hyperscalerType,
+	}))
+}
+
+func claimedGaugeValue(c *CredentialsBindingsCollector, hyperscalerType, tenantName string) float64 {
+	return testutil.ToFloat64(c.claimedCredentialsBindings.With(prometheus.Labels{
+		"hyperscaler_type": hyperscalerType,
+		"tenant_name":      tenantName,
+	}))
+}
+
+func dirtyGaugeValue(c *CredentialsBindingsCollector, hyperscalerType string) float64 {
+	return testutil.ToFloat64(c.dirtyCredentialsBindings.With(prometheus.Labels{
+		"hyperscaler_type": hyperscalerType,
+	}))
+}
+
+func sharedGaugeValue(c *CredentialsBindingsCollector, hyperscalerType string) float64 {
+	return testutil.ToFloat64(c.sharedCredentialsBindings.With(prometheus.Labels{
 		"hyperscaler_type": hyperscalerType,
 	}))
 }
