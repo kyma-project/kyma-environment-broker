@@ -22,6 +22,11 @@ type GardenerCredentialsBindingsLister interface {
 	GetCredentialsBindings(labelSelector string) (*unstructured.UnstructuredList, error)
 }
 
+type claimedKey struct {
+	hyperscalerType string
+	tenantName      string
+}
+
 // CredentialsBindingsCollector provides gauges describing hyperscaler account usage:
 //
 //   - kcp_keb_v2_instances_per_credentials_binding{credentials_binding,global_account_id}
@@ -184,21 +189,21 @@ func (c *CredentialsBindingsCollector) updateClaimedCredentialsBindings() {
 		return
 	}
 
-	countByTypeTenant := make(map[[2]string]int)
+	countByTypeTenant := make(map[claimedKey]int)
 	for _, item := range list.Items {
 		hyperscalerType := item.GetLabels()[gardener.HyperscalerTypeLabelKey]
 		tenantName := item.GetLabels()[gardener.TenantNameLabelKey]
 		if hyperscalerType == "" || tenantName == "" {
 			continue
 		}
-		countByTypeTenant[[2]string{hyperscalerType, tenantName}]++
+		countByTypeTenant[claimedKey{hyperscalerType: hyperscalerType, tenantName: tenantName}]++
 	}
 
 	c.claimedCredentialsBindings.Reset()
 	for key, count := range countByTypeTenant {
 		c.claimedCredentialsBindings.With(prometheus.Labels{
-			"hyperscaler_type": key[0],
-			"tenant_name":      key[1],
+			"hyperscaler_type": key.hyperscalerType,
+			"tenant_name":      key.tenantName,
 		}).Set(float64(count))
 	}
 }
