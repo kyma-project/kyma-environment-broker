@@ -83,7 +83,7 @@ func NewCredentialsBindingsCollector(
 			Namespace: prometheusNamespaceV2,
 			Subsystem: prometheusSubsystemV2,
 			Name:      "available_credentials_bindings",
-			Help:      "The number of unclaimed CredentialsBindings per hyperscaler type",
+			Help:      "The number of unclaimed, not shared, and not dirty CredentialsBindings per hyperscaler type",
 		}, []string{"hyperscaler_type"}),
 		claimedCredentialsBindings: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespaceV2,
