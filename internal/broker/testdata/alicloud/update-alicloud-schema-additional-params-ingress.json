@@ -22,7 +22,8 @@
             "machineType",
             "haZones",
             "autoScalerMin",
-            "autoScalerMax"
+            "autoScalerMax",
+            "taints"
         ],
         "additionalProperties": false,
         "properties": {
@@ -79,6 +80,48 @@
             "minLength": 1,
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
             "type": "string"
+            },
+            "taints": {
+            "description": "Specifies taints for the worker node pool. With the taints added, a node can repel sets of Pods with no matching tolerations.",
+            "items": {
+                "_controlsOrder": [
+                "key",
+                "value",
+                "effect"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                "effect": {
+                    "_enumDisplayName": {
+                    "NoExecute": "NoExecute",
+                    "NoSchedule": "NoSchedule",
+                    "PreferNoSchedule": "PreferNoSchedule"
+                    },
+                    "description": "Specifies the taint effect.",
+                    "enum": [
+                    "NoSchedule",
+                    "PreferNoSchedule",
+                    "NoExecute"
+                    ],
+                    "type": "string"
+                },
+                "key": {
+                    "description": "Specifies the taint key.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Specifies the taint value.",
+                    "type": "string"
+                }
+                },
+                "required": [
+                "key",
+                "effect"
+                ],
+                "type": "object"
+            },
+            "type": "array"
             }
         },
         "required": [

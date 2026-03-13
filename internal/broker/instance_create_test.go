@@ -1497,6 +1497,42 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 0, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
+		"Valid taints": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1", "effect": "NoSchedule"}]}]`,
+			expectedError:             false,
+		},
+		"Multiple valid taints": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1", "effect": "NoSchedule"}, {"key": "t2", "value": "v2", "effect": "PreferNoSchedule"}]}]`,
+			expectedError:             false,
+		},
+		"Taint with empty value": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "", "effect": "NoExecute"}]}]`,
+			expectedError:             false,
+		},
+		"Taint with empty key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "", "value": "v1", "effect": "NoSchedule"}]}]`,
+			expectedError:             true,
+		},
+		"Taint with invalid effect": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1", "effect": "InvalidEffect"}]}]`,
+			expectedError:             true,
+		},
+		"Taint with missing effect": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1"}]}]`,
+			expectedError:             true,
+		},
+		"Duplicate taints same key and effect": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1", "effect": "NoSchedule"}, {"key": "t1", "value": "v2", "effect": "NoSchedule"}]}]`,
+			expectedError:             true,
+		},
+		"Same key different effects allowed": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "t1", "value": "v1", "effect": "NoSchedule"}, {"key": "t1", "value": "v2", "effect": "NoExecute"}]}]`,
+			expectedError:             false,
+		},
+		"Empty taints array": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": []}]`,
+			expectedError:             false,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given

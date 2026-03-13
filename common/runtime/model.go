@@ -555,12 +555,27 @@ type ModuleDTO struct {
 	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }
 
+type TaintEffect string
+
+const (
+	TaintEffectNoSchedule       TaintEffect = "NoSchedule"
+	TaintEffectPreferNoSchedule TaintEffect = "PreferNoSchedule"
+	TaintEffectNoExecute        TaintEffect = "NoExecute"
+)
+
+type TaintDTO struct {
+	Key    string      `json:"key"`
+	Value  string      `json:"value"`
+	Effect TaintEffect `json:"effect"`
+}
+
 type AdditionalWorkerNodePool struct {
-	Name          string `json:"name"`
-	MachineType   string `json:"machineType"`
-	HAZones       bool   `json:"haZones"`
-	AutoScalerMin int    `json:"autoScalerMin"`
-	AutoScalerMax int    `json:"autoScalerMax"`
+	Name          string     `json:"name"`
+	MachineType   string     `json:"machineType"`
+	HAZones       bool       `json:"haZones"`
+	AutoScalerMin int        `json:"autoScalerMin"`
+	AutoScalerMax int        `json:"autoScalerMax"`
+	Taints        []TaintDTO `json:"taints,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
@@ -572,6 +587,29 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	}
 	if a.AutoScalerMin < 0 {
 		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
+	}
+	return nil
+}
+
+func (a AdditionalWorkerNodePool) ValidateTaints(taints []TaintDTO, poolName string) error {
+	validEffects := map[TaintEffect]struct{}{
+		TaintEffectNoSchedule:       {},
+		TaintEffectPreferNoSchedule: {},
+		TaintEffectNoExecute:        {},
+	}
+	seen := make(map[string]struct{})
+	for _, t := range taints {
+		if t.Key == "" {
+			return fmt.Errorf("taint key must not be empty for %s additional worker node pool", poolName)
+		}
+		if _, ok := validEffects[t.Effect]; !ok {
+			return fmt.Errorf("taint effect %q is not valid for %s additional worker node pool, valid effects are: NoSchedule, PreferNoSchedule, NoExecute", t.Effect, poolName)
+		}
+		pair := t.Key + "=" + string(t.Effect)
+		if _, exists := seen[pair]; exists {
+			return fmt.Errorf("duplicate taint with key %q and effect %q for %s additional worker node pool", t.Key, t.Effect, poolName)
+		}
+		seen[pair] = struct{}{}
 	}
 	return nil
 }
