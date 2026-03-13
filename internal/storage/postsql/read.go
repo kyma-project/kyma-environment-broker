@@ -607,6 +607,7 @@ func (r readSession) GetInstanceCountPerBinding(globalAccountID string, bindingN
 	_, err := r.session.Select("subscription_secret_name", "count(*) as count").
 		From(InstancesTableName).
 		Where("subscription_secret_name IN ?", bindingNames).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
 		Where(dbr.Or(
 			dbr.And(
 				dbr.Neq("subscription_global_account_id", ""),

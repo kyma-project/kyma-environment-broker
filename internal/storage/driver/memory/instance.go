@@ -105,7 +105,7 @@ func (s *instances) GetInstanceCountPerBinding(globalAccountID string, bindingNa
 
 		shouldCount := isExplicitOwner || isCurrentOwnerNeverMoved
 
-		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
+		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] && inst.DeletedAt.IsZero() {
 			counts[inst.SubscriptionSecretName]++
 		}
 	}
