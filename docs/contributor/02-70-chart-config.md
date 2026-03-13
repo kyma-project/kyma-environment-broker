@@ -69,6 +69,7 @@
 | broker.<br>defaultRequestRegion | Default platform region for requests if not specified. | `cf-eu10` |
 | broker.enablePlans | Comma-separated list of plan names enabled and available for provisioning in KEB. | `azure,gcp,azure_lite,trial,aws` |
 | broker.<br>enablePlanUpgrades | If true, allows users to upgrade their plans (if a plan supports upgrades). | `false` |
+| broker.<br>ACLEnabledPlans | Comma-separated list of plan names for which has enabled ACL feature. The 'all' value enables it for all plans. | `no-plan` |
 | broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |

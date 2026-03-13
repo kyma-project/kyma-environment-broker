@@ -119,7 +119,7 @@ func validateSchema(t *testing.T, actual []byte, file string) {
 			t.Fail()
 		}
 	}
-	if !assert.JSONEq(t, prettyActual.String(), prettyExpected.String()) {
+	if !assert.JSONEq(t, prettyExpected.String(), prettyActual.String()) {
 		t.Errorf("%v Schema() = \n######### Actual ###########%v\n######### End Actual ########, expected \n##### Expected #####%v\n##### End Expected #####", file, prettyActual.String(), prettyExpected.String())
 	}
 }
@@ -194,6 +194,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
+		EnableAclPlans:              []string{"gcp"},
 	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }

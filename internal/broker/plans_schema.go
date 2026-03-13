@@ -53,6 +53,7 @@ type UpdateProperties struct {
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
+	ACL                       *ACLType                       `json:"acl,omitempty"`
 }
 
 type NetworkingProperties struct {
@@ -66,6 +67,16 @@ type NetworkingType struct {
 	Type
 	Properties NetworkingProperties `json:"properties"`
 	Required   []string             `json:"required"`
+}
+
+type ACLProperties struct {
+	AllowedCIDRs Type `json:"allowedCIDRs"`
+}
+
+type ACLType struct {
+	Type
+	Properties ACLProperties `json:"properties"`
+	Required   []string      `json:"required"`
 }
 
 type OIDCProperties struct {
@@ -751,7 +762,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering", "acl"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -769,6 +780,28 @@ func AdministratorsProperty() *Type {
 		Description: "Specifies the list of runtime administrators.",
 		Items: &Type{
 			Type: "string",
+		},
+	}
+}
+
+func ACLProperty() *ACLType {
+	return &ACLType{
+		Type: Type{
+			Type:  "object",
+			Title: "Access Control List",
+		},
+		Required: []string{"allowedCIDRs"},
+		Properties: ACLProperties{
+			AllowedCIDRs: Type{
+				Type:        "array",
+				Title:       "Allowed CIDRs",
+				Description: "The whitelisted CIRDs which are allowed to access the API server.",
+				Items: &Type{
+					Type:    "string",
+					Example: "5.6.0.0/16",
+					Title:   "CIDR range",
+				},
+			},
 		},
 	}
 }

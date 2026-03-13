@@ -3,6 +3,7 @@ package runtime
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"net/url"
 	"slices"
 	"strings"
@@ -100,6 +101,11 @@ type ProvisioningParametersDTO struct {
 	ColocateControlPlane      *bool                      `json:"colocateControlPlane,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
+	ACL                       *AclDTO                    `json:"acl,omitempty"`
+}
+
+type AclDTO struct {
+	AllowedCIDRs []string `json:"allowedCIDRs,omitempty"`
 }
 
 const HAAutoscalerMinimumValue = 3
@@ -332,6 +338,19 @@ func (o *OIDCConnectDTO) validSigningAlgsSet() map[string]bool {
 	}
 
 	return signingAlgsSet
+}
+
+func (a *AclDTO) Validate() error {
+	if a == nil {
+		return nil
+	}
+	for _, cidr := range a.AllowedCIDRs {
+		_, err := networking.ValidateCidr(cidr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type NetworkingDTO struct {

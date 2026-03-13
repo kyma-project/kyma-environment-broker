@@ -8,12 +8,32 @@
     "additionalWorkerNodePools",
     "oidc",
     "administrators",
-    "ingressFiltering"
+    "ingressFiltering",
+    "acl"
   ],
   "_load_current_config": true,
   "_show_form_view": true,
   "additionalProperties": false,
   "properties": {
+    "acl": {
+      "type": "object",
+      "required": [
+        "allowedCIDRs"
+      ],
+      "title": "Access Control List",
+      "properties": {
+        "allowedCIDRs": {
+          "description": "The whitelisted CIRDs which are allowed to access the API server.",
+          "items": {
+            "title": "CIDR range",
+            "example": "5.6.0.0/16",
+            "type": "string"
+          },
+          "title": "Allowed CIDRs",
+          "type": "array"
+        }
+      }
+    },
     "additionalWorkerNodePools": {
       "description": "Specifies the list of additional worker node pools.",
       "type": "array",

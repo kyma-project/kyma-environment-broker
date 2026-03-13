@@ -314,6 +314,15 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, err
 	}
 
+	planID := instance.ServicePlanID
+	if details.PlanID != "" {
+		planID = details.PlanID
+	}
+	err = b.validateACL(params, planID, logger)
+	if err != nil {
+		return domain.UpdateServiceSpec{}, err
+	}
+
 	operationID := uuid.New().String()
 	logger = logger.With("operationID", operationID)
 
@@ -426,6 +435,14 @@ func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, pa
 		params.AutoScalerMin = nil
 		params.AutoScalerMax = nil
 	}
+}
+
+func (b *UpdateEndpoint) validateACL(params internal.UpdatingParametersDTO, planID string, logger *slog.Logger) error {
+	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))) && params.ACL != nil {
+		return apiresponses.NewFailureResponse(errors.New("ACL is not supported for this plan"), http.StatusBadRequest, "ACL is not supported for this plan")
+	}
+
+	return params.ACL.Validate()
 }
 
 func (b *UpdateEndpoint) validateMachineTypeSupportedInRegion(regionsSupportingMachine internal.RegionsSupporter, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) error {
@@ -797,6 +814,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = b.collectAdditionalWorkerPools(params)
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
+	}
+
+	if params.ACL != nil {
+		instance.Parameters.Parameters.ACL = params.ACL
+		updateStorage = append(updateStorage, "ACL")
 	}
 
 	if params.Name != nil && *params.Name != "" {
