@@ -205,7 +205,7 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 		for i, binding := range allBindings.Items {
 			bindingNames[i] = binding.GetName()
 		}
-		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d: %v", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit, bindingNames))
+		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit %d, bindings: %v", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit, bindingNames))
 
 		instancesPerBinding, err := s.instanceStorage.GetInstanceCountPerBinding(globalAccountID, bindingNames)
 		if err != nil {
