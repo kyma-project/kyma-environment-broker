@@ -297,6 +297,12 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = s.createOIDCConfigFromInput(oidcInput, oidc)
 	}
 
+	if operation.ProvisioningParameters.Parameters.ACL != nil {
+		kubernetesConfig.KubeAPIServer.ACL = &imv1.ACL{
+			AllowedCIDRs: operation.ProvisioningParameters.Parameters.ACL.AllowedCIDRs,
+		}
+	}
+
 	return kubernetesConfig
 }
 
