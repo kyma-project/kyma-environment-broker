@@ -212,21 +212,8 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 			return "", fmt.Errorf("while getting instance counts per binding: %w", err)
 		}
 
-		// Find the most populated binding that is still below the limit.
-		// Bindings with tenantName label but 0 instances in KEB DB are also considered
-		selectedBinding := ""
-		selectedBindingCount := -1
-		for _, name := range bindingNames {
-			count := instancesPerBinding[name]
-			log.Info(fmt.Sprintf("credentials binding %s has %d instances", name, count))
-			if count < hyperscalerAccountLimit && count > selectedBindingCount {
-				selectedBinding = name
-				selectedBindingCount = count
-			}
-		}
-
-		if selectedBinding != "" {
-			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", selectedBinding, selectedBindingCount, hyperscalerAccountLimit))
+		if selectedBinding, count := s.selectBindingBelowLimit(bindingNames, instancesPerBinding, hyperscalerAccountLimit, log); selectedBinding != "" {
+			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", selectedBinding, count, hyperscalerAccountLimit))
 			return selectedBinding, nil
 		}
 
@@ -234,6 +221,22 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	}
 
 	return s.claimNewCredentialsBinding(globalAccountID, labelSelectorBuilder, log)
+}
+
+// selectBindingBelowLimit finds the most populated binding that is still below the limit.
+// Bindings with tenantName label but 0 instances in KEB DB are also considered
+func (s *ResolveCredentialsBindingStep) selectBindingBelowLimit(bindingNames []string, instancesPerBinding map[string]int, limit int, log *slog.Logger) (string, int) {
+	selected := ""
+	selectedCount := -1
+	for _, name := range bindingNames {
+		count := instancesPerBinding[name]
+		log.Info(fmt.Sprintf("credentials binding %s has %d instances", name, count))
+		if count < limit && count > selectedCount {
+			selected = name
+			selectedCount = count
+		}
+	}
+	return selected, selectedCount
 }
 
 func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccountID string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
