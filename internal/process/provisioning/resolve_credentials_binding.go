@@ -201,11 +201,11 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	hyperscalerAccountLimit := s.multiAccountConfig.LimitForProvider(operation.ProviderValues.ProviderType)
 
 	if allBindings != nil && len(allBindings.Items) > 0 {
-		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
 		bindingNames := make([]string, len(allBindings.Items))
 		for i, binding := range allBindings.Items {
 			bindingNames[i] = binding.GetName()
 		}
+		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d: %v", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit, bindingNames))
 
 		instancesPerBinding, err := s.instanceStorage.GetInstanceCountPerBinding(globalAccountID, bindingNames)
 		if err != nil {
@@ -218,6 +218,7 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 		selectedBindingCount := -1
 		for _, name := range bindingNames {
 			count := instancesPerBinding[name]
+			log.Info(fmt.Sprintf("credentials binding %s has %d instances", name, count))
 			if count < hyperscalerAccountLimit && count > selectedBindingCount {
 				selectedBinding = name
 				selectedBindingCount = count
@@ -257,7 +258,7 @@ func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccount
 		return "", err
 	}
 
-	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", globalAccountID))
+	log.Info(fmt.Sprintf("claiming credentials binding %s for tenant %q", credentialsBinding.GetName(), globalAccountID))
 	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, globalAccountID)
 	if err != nil {
 		return "", fmt.Errorf("while claiming credentials binding for tenant: %s: %w", globalAccountID, err)
