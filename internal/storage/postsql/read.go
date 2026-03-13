@@ -626,8 +626,8 @@ func (r readSession) GetInstanceCountPerBinding(globalAccountID string, bindingN
 	}
 
 	counts := make(map[string]int)
-	for _, r := range results {
-		counts[r.SubscriptionSecretName] = r.Count
+	for _, row := range results {
+		counts[row.SubscriptionSecretName] = row.Count
 	}
 
 	return counts, nil
