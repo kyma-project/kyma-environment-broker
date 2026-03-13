@@ -207,13 +207,26 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 			bindingNames[i] = binding.GetName()
 		}
 
-		bestBindingName, count, err := s.instanceStorage.GetBestCredentialsBinding(globalAccountID, bindingNames, hyperscalerAccountLimit)
+		instancesPerBinding, err := s.instanceStorage.GetInstanceCountPerBinding(globalAccountID, bindingNames)
 		if err != nil {
-			return "", fmt.Errorf("while getting best credentials binding: %w", err)
+			return "", fmt.Errorf("while getting instance counts per binding: %w", err)
 		}
-		if bestBindingName != "" {
-			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", bestBindingName, count, hyperscalerAccountLimit))
-			return bestBindingName, nil
+
+		// Find the most populated binding that is still below the limit.
+		// Bindings with tenantName label but 0 instances in KEB DB are also considered
+		selectedBinding := ""
+		selectedBindingCount := -1
+		for _, name := range bindingNames {
+			count := instancesPerBinding[name]
+			if count < hyperscalerAccountLimit && count > selectedBindingCount {
+				selectedBinding = name
+				selectedBindingCount = count
+			}
+		}
+
+		if selectedBinding != "" {
+			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", selectedBinding, selectedBindingCount, hyperscalerAccountLimit))
+			return selectedBinding, nil
 		}
 
 		log.Info(fmt.Sprintf("all %d credentials bindings for GA %s are at or above limit %d, will claim new one", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
