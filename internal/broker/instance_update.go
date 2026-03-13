@@ -433,7 +433,7 @@ func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, pa
 	}
 }
 
-func (b *UpdateEndpoint) validateACL(params pkg.ProvisioningParametersDTO, planID string, logger *slog.Logger) error {
+func (b *UpdateEndpoint) validateACL(params internal.UpdatingParametersDTO, planID string, logger *slog.Logger) error {
 	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))) && params.ACL != nil {
 		return apiresponses.NewFailureResponse(errors.New("ACL is not supported for this plan"), http.StatusBadRequest, "ACL is not supported for this plan")
 	}
@@ -447,6 +447,7 @@ func (b *UpdateEndpoint) validateACL(params pkg.ProvisioningParametersDTO, planI
 			}
 		}
 	}
+	return nil
 }
 
 func (b *UpdateEndpoint) validateMachineTypeSupportedInRegion(regionsSupportingMachine internal.RegionsSupporter, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) error {
