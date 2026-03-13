@@ -100,6 +100,11 @@ type ProvisioningParametersDTO struct {
 	ColocateControlPlane      *bool                      `json:"colocateControlPlane,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
+	ACL                       *AclDTO                    `json:"acl,omitempty"`
+}
+
+type AclDTO struct {
+	AllowedCIDRs []string `json:"allowedCIDRs,omitempty"`
 }
 
 const HAAutoscalerMinimumValue = 3

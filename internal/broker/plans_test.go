@@ -54,6 +54,14 @@ func TestSchemaService_Gcp(t *testing.T) {
 	validateSchema(t, Marshal(update), "gcp/update-gcp-schema-additional-params-ingress.json")
 }
 
+func TestSchemaService_GcpWithACL(t *testing.T) {
+	schemaService := createSchemaServiceWithACL(t, StringList{GCPPlanName})
+
+	create, update, _ := schemaService.GCPSchemas("cf-us11")
+	validateSchema(t, Marshal(create), "gcp/gcp-schema-additional-params-ingress-acl.json")
+	validateSchema(t, Marshal(update), "gcp/update-gcp-schema-additional-params-ingress-acl.json")
+}
+
 func TestSchemaService_SapConvergedCloud(t *testing.T) {
 	schemaService := createSchemaService(t)
 
@@ -119,7 +127,7 @@ func validateSchema(t *testing.T, actual []byte, file string) {
 			t.Fail()
 		}
 	}
-	if !assert.JSONEq(t, prettyActual.String(), prettyExpected.String()) {
+	if !assert.JSONEq(t, prettyExpected.String(), prettyActual.String()) {
 		t.Errorf("%v Schema() = \n######### Actual ###########%v\n######### End Actual ########, expected \n##### Expected #####%v\n##### End Expected #####", file, prettyActual.String(), prettyExpected.String())
 	}
 }
@@ -194,6 +202,24 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
+	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
+	return schemaService
+}
+
+func createSchemaServiceWithACL(t *testing.T, acl StringList) *SchemaService {
+	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
+	require.NoError(t, err)
+
+	provider, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
+	require.NoError(t, err)
+
+	channelResolver := &fixture.FakeChannelResolver{}
+
+	schemaService := NewSchemaService(provider, plans, nil, Config{
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
+		EnableAclPlans:              acl,
 	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }
