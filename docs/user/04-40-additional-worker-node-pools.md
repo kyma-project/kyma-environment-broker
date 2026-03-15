@@ -3,6 +3,16 @@
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.
 To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**.
 
+You can also configure optional Kubernetes taints for each additional worker node pool using the **taints** property.
+Each taint object supports:
+
+- **key** (required)
+- **value** (optional)
+- **effect** (required): **NoSchedule**, **PreferNoSchedule**, or **NoExecute**
+
+Within a single worker node pool, duplicate taints with the same **key** and **effect** are not allowed.
+Using the same **key** with different **effect** values is allowed.
+
 See the example:
 
 ```bash
@@ -47,6 +57,11 @@ If you do not provide the **additionalWorkerNodePools** list in the update reque
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
 If you rename your existing additional worker node pool, it is deleted, and a new one is created.
 
+For taints updates inside **additionalWorkerNodePools**:
+
+- If you set **taints** to an empty list (**[]**), existing taints for that worker node pool are removed.
+- If you do not provide the **taints** field in the update payload for that worker node pool, existing taints for that worker node pool are also removed.
+
 The **haZones** property specifies whether high availability zones are supported. This setting is permanent and cannot be changed later. 
 
 With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
@@ -68,6 +83,43 @@ See the following JSON example without the **additionalWorkerNodePools** list:
   "parameters" : {
     "region": {REGION},
     "name" : {CLUSTER_NAME}
+  }
+}
+```
+
+See the following JSON example with **taints**:
+
+```json
+{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+  "context": {
+    "globalaccount_id": {GLOBAL_ACCOUNT_ID}
+  },
+  "parameters": {
+    "region": {REGION},
+    "name": {CLUSTER_NAME},
+    "additionalWorkerNodePools": [
+      {
+        "name": "worker-1",
+        "machineType": "Standard_D2s_v5",
+        "haZones": true,
+        "autoScalerMin": 3,
+        "autoScalerMax": 20,
+        "taints": [
+          {
+            "key": "dedicated",
+            "value": "gpu",
+            "effect": "NoSchedule"
+          },
+          {
+            "key": "spot",
+            "value": "true",
+            "effect": "PreferNoSchedule"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
