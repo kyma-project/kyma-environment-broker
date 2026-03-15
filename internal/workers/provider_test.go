@@ -332,6 +332,18 @@ func TestToGardenerTaints(t *testing.T) {
 		}, result)
 	})
 
+	t.Run("same key with different effects are mapped", func(t *testing.T) {
+		taints := []runtime.TaintDTO{
+			{Key: "dedicated", Value: "gpu", Effect: runtime.TaintEffectNoSchedule},
+			{Key: "dedicated", Value: "gpu", Effect: runtime.TaintEffectNoExecute},
+		}
+		result := toGardenerTaints(taints)
+		assert.Equal(t, []corev1.Taint{
+			{Key: "dedicated", Value: "gpu", Effect: corev1.TaintEffectNoSchedule},
+			{Key: "dedicated", Value: "gpu", Effect: corev1.TaintEffectNoExecute},
+		}, result)
+	})
+
 	t.Run("multiple taints are all mapped", func(t *testing.T) {
 		taints := []runtime.TaintDTO{
 			{Key: "k1", Value: "v1", Effect: runtime.TaintEffectNoSchedule},

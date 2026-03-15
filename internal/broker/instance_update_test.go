@@ -792,6 +792,10 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "", "value": "gpu", "effect": "NoSchedule"}]}]`,
 			expectedError:             true,
 		},
+		"Empty taint object": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{}]}]`,
+			expectedError:             true,
+		},
 		"Invalid taint effect": {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": [{"key": "dedicated", "value": "gpu", "effect": "InvalidEffect"}]}]`,
 			expectedError:             true,
