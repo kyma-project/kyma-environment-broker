@@ -256,7 +256,7 @@ curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_I
   }"
 ```
 
-To remove all taints from a worker node pool, set **taints** to an empty list:
+To remove all taints from a worker node pool, set **taints** to an empty list.
 
 ```bash
 curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
