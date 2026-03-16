@@ -161,17 +161,17 @@ Each additional worker node pool supports an optional **taints** list. With tain
 
 Each taint object has the following properties:
 
-| Property | Required | Description |
-|----------|----------|-------------|
-| **key** | Yes | The taint key. |
-| **value** | No | The taint value. |
-| **effect** | Yes | The taint effect. Allowed values: `NoSchedule`, `PreferNoSchedule`, `NoExecute`. |
+| Property | Required | Allowed values |
+|----------|----------|----------------|
+| **key** | Yes | Any non-empty string |
+| **value** | No | Any string |
+| **effect** | Yes | `NoSchedule`, `PreferNoSchedule`, `NoExecute` |
 
 The combination of **key** and **effect** must be unique within a single worker node pool. Using the same **key** with different **effect** values is allowed.
 
 ### Provisioning with Taints
 
-To provision a cluster with taints on an additional worker node pool:
+To provision a cluster with taints in an additional worker node pool, run the following command:
 
 ```bash
 curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -223,7 +223,7 @@ Taint updates follow these rules:
 > ### Note: 
 > You can't preserve existing taints without providing them explicitly in the update request.
 
-To update taints on an existing worker node pool:
+To update taints in an existing worker node pool, run the following command:
 
 ```bash
 curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
