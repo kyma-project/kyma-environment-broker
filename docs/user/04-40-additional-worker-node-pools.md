@@ -220,7 +220,8 @@ Taint updates follow these rules:
 - If you set **taints** to an empty list (`[]`), the existing taints for that pool are also removed.
 - To update taints, provide the full desired list of taints — the update overwrites the existing taints for that pool.
 
-> **NOTE:** There is no way to preserve existing taints without providing them explicitly in the update request.
+> ### Note: 
+> You can't preserve existing taints without providing them explicitly in the update request.
 
 To update taints on an existing worker node pool:
 
