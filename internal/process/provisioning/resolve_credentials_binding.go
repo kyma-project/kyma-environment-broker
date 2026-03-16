@@ -212,14 +212,12 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 			return "", fmt.Errorf("while getting instance counts per binding: %w", err)
 		}
 
-		if s.multiAccountConfig.MinBindingsForGuard > 0 && len(bindingNames) >= s.multiAccountConfig.MinBindingsForGuard {
-			if !s.anyBindingHasInstances(instancesPerBinding) {
-				log.Error(fmt.Sprintf("data inconsistency: %d credentials bindings are claimed for GA %s but no active instances found in the database", len(bindingNames), globalAccountID))
-				return "", kebError.LastError{
-					Message:   "Internal error. Please contact us for further assistance.",
-					Reason:    kebError.KEBInternalCode,
-					Component: kebError.AccountPoolDependency,
-				}
+		if s.multiAccountConfig.MinBindingsForGuard > 0 && len(bindingNames) >= s.multiAccountConfig.MinBindingsForGuard && !s.anyBindingHasInstances(instancesPerBinding) {
+			log.Error(fmt.Sprintf("data inconsistency: %d credentials bindings are claimed for GA %s but no active instances found in the database", len(bindingNames), globalAccountID))
+			return "", kebError.LastError{
+				Message:   "Internal error. Please contact us for further assistance.",
+				Reason:    kebError.KEBInternalCode,
+				Component: kebError.AccountPoolDependency,
 			}
 		}
 		if selectedBinding, count := s.selectBindingBelowLimit(bindingNames, instancesPerBinding, hyperscalerAccountLimit, log); selectedBinding != "" {
