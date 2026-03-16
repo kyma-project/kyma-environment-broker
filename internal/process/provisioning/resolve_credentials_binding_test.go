@@ -1107,6 +1107,7 @@ func TestMultiAccountSupport(t *testing.T) {
 
 		multiAccountConfig := &multiaccount.MultiAccountConfig{
 			AllowedGlobalAccounts: []string{globalAccountID},
+			MinBindingsForGuard:   3,
 			Limits: multiaccount.HyperscalerAccountLimits{
 				AWS:     3,
 				Default: 100,
@@ -1127,5 +1128,57 @@ func TestMultiAccountSupport(t *testing.T) {
 		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
 		assert.Equal(t, fixture.AWSSecretName, updatedInstance.SubscriptionSecretName)
+	})
+
+	t.Run("should return provisioning error when multiple CBs have tenantName but DB has 0 instances for all of them", func(t *testing.T) {
+		// given
+		brokerStorage := storage.NewMemoryStorage()
+		gardenerClient := fixture.CreateGardenerClientWithThreeAWSBindings()
+		const (
+			operationName   = "provisioning-operation-multi-cb-empty-db"
+			instanceID      = "instance-multi-cb-empty-db"
+			platformRegion  = "cf-ap11"
+			providerType    = "aws"
+			globalAccountID = fixture.AWSTenantName
+		)
+
+		operation := fixture.FixProvisioningOperation(operationName, instanceID, fixture.WithProvider(string(pkg.AWS)))
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, brokerStorage.Operations().InsertOperation(operation))
+
+		instance := fixture.FixInstance(instanceID)
+		instance.SubscriptionSecretName = ""
+		instance.GlobalAccountID = globalAccountID
+		require.NoError(t, brokerStorage.Instances().Insert(instance))
+
+		multiAccountConfig := &multiaccount.MultiAccountConfig{
+			AllowedGlobalAccounts: []string{globalAccountID},
+			MinBindingsForGuard:   3,
+			Limits: multiaccount.HyperscalerAccountLimits{
+				AWS:     3,
+				Default: 100,
+			},
+		}
+
+		immediateTimeout := internal.RetryTuple{
+			Timeout:  -1 * time.Second,
+			Interval: 1 * time.Second,
+		}
+		step := NewResolveCredentialsBindingStep(brokerStorage, gardenerClient, rulesService, immediateTimeout, multiAccountConfig)
+
+		// when
+		_, backoff, err := step.Run(operation, log)
+
+		// then
+		require.Error(t, err)
+		assert.Zero(t, backoff)
+		assert.Contains(t, err.Error(), "Internal error. Please contact us for further assistance.")
+
+		updatedInstance, err := brokerStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Empty(t, updatedInstance.SubscriptionSecretName)
 	})
 }

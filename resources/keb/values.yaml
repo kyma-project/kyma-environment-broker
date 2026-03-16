@@ -282,6 +282,10 @@ hap:
     # - Specific GAs = enabled only for listed global accounts
     # - ["*"] = enabled for all global accounts
     allowedGlobalAccounts: []
+    # Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard.
+    # When the number of claimed bindings without any active instances in the DB is equal to or greater than this value, provisioning returns an error.
+    # Set to 0 to disable the guard.
+    minBindingsForGuard: 0
     # Maximum clusters per hyperscaler account (applies only when allowedGlobalAccounts is not empty)
     # When a CredentialsBinding reaches this limit, new clusters use a different account
     limits:

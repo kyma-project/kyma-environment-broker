@@ -115,6 +115,7 @@
 | gardener.shootDomain | Default domain for shoots (clusters) created by Gardener. | `kyma-dev.shoot.canary.k8s-hana.ondemand.com` |
 | hap.rule | Rules for mapping plans and regions to hyperscaler account pools. | `- aws  - aws(PR=cf-eu11) -> EU  - azure  - azure(PR=cf-ch20) -> EU  - gcp  - gcp(PR=cf-sa30) -> PR  - trial -> S  - sap-converged-cloud(HR=*) -> S  - azure_lite  - preview  - free` |
 | hap.multiHyperscalerAccount.<br>allowedGlobalAccounts | Assigns multiple hyperscaler accounts per global account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed global accounts - ["*"] = enabled for all global accounts | `[]` |
+| hap.multiHyperscalerAccount.<br>minBindingsForGuard | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When the number of claimed bindings without any active instances in the DB is equal to or greater than this value, provisioning returns an error. Set to 0 to disable the guard. | `0` |
 | hap.multiHyperscalerAccount.<br>limits.default | - | `999999` |
 | hap.multiHyperscalerAccount.<br>limits.aws | - | `999999` |
 | hap.multiHyperscalerAccount.<br>limits.gcp | - | `999999` |
