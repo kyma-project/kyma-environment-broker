@@ -216,7 +216,7 @@ curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?
 
 Taint updates follow these rules:
 
-- If you omit the **taints** field for a worker node pool in the update request, the existing taints for that pool are **removed**.
+- If you omit the **taints** field for a worker node pool in the update request, the existing taints for that pool are removed.
 - If you set **taints** to an empty list (`[]`), the existing taints for that pool are also **removed**.
 - To update taints, provide the full desired list of taints — the update overwrites the existing taints for that pool.
 
