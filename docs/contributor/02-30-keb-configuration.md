@@ -53,6 +53,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup. |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener. |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;ALLOWED_GLOBAL_&#x200b;ACCOUNTS** | <code>[]</code> | Assigns multiple hyperscaler accounts per global account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed global accounts - ["*"] = enabled for all global accounts |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;INCONSISTENCY_&#x200b;THRESHOLD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When this many bindings are claimed but none have active instances in the DB, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_ALICLOUD** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AWS** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AZURE** | <code>999999</code> | - |

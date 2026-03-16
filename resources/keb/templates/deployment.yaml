@@ -222,6 +222,8 @@ spec:
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ join "," .Values.hap.multiHyperscalerAccount.allowedGlobalAccounts }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_INCONSISTENCY_THRESHOLD
+              value: "{{ .Values.hap.multiHyperscalerAccount.inconsistencyThreshold }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_ALICLOUD
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.alicloud }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_AWS
