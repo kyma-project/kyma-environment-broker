@@ -214,7 +214,7 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 
 		if s.multiAccountConfig.MinBindingsForGuard > 0 && len(bindingNames) >= s.multiAccountConfig.MinBindingsForGuard {
 			if !s.anyBindingHasInstances(instancesPerBinding) {
-				log.Error("data inconsistency: %d credentials bindings are claimed for GA %s but no active instances found in the database", len(bindingNames), globalAccountID)
+				log.Error(fmt.Sprintf("data inconsistency: %d credentials bindings are claimed for GA %s but no active instances found in the database", len(bindingNames), globalAccountID))
 				return "", kebError.LastError{
 					Message:   "Internal error. Please contact us for further assistance.",
 					Reason:    kebError.KEBInternalCode,
