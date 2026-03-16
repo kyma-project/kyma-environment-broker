@@ -163,7 +163,7 @@ Each taint object has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **key** | Yes | The taint key. Must not be empty. |
+| **key** | Yes | The taint key. |
 | **value** | No | The taint value. |
 | **effect** | Yes | The taint effect. Allowed values: `NoSchedule`, `PreferNoSchedule`, `NoExecute`. |
 
