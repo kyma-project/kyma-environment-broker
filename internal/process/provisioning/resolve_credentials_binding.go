@@ -201,25 +201,42 @@ func (s *ResolveCredentialsBindingStep) resolveWithMultiAccountSupport(operation
 	hyperscalerAccountLimit := s.multiAccountConfig.LimitForProvider(operation.ProviderValues.ProviderType)
 
 	if allBindings != nil && len(allBindings.Items) > 0 {
-		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit: %d", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
 		bindingNames := make([]string, len(allBindings.Items))
 		for i, binding := range allBindings.Items {
 			bindingNames[i] = binding.GetName()
 		}
+		log.Info(fmt.Sprintf("found %d credentials binding(s) for GA %s, provider limit %d, bindings: %v", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit, bindingNames))
 
-		bestBindingName, count, err := s.instanceStorage.GetBestCredentialsBinding(globalAccountID, bindingNames, hyperscalerAccountLimit)
+		instancesPerBinding, err := s.instanceStorage.GetInstanceCountPerBinding(globalAccountID, bindingNames)
 		if err != nil {
-			return "", fmt.Errorf("while getting best credentials binding: %w", err)
+			return "", fmt.Errorf("while getting instance counts per binding: %w", err)
 		}
-		if bestBindingName != "" {
-			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", bestBindingName, count, hyperscalerAccountLimit))
-			return bestBindingName, nil
+
+		if selectedBinding, count := s.selectBindingBelowLimit(bindingNames, instancesPerBinding, hyperscalerAccountLimit, log); selectedBinding != "" {
+			log.Info(fmt.Sprintf("selected credentials binding %s with %d instances (below limit %d)", selectedBinding, count, hyperscalerAccountLimit))
+			return selectedBinding, nil
 		}
 
 		log.Info(fmt.Sprintf("all %d credentials bindings for GA %s are at or above limit %d, will claim new one", len(allBindings.Items), globalAccountID, hyperscalerAccountLimit))
 	}
 
 	return s.claimNewCredentialsBinding(globalAccountID, labelSelectorBuilder, log)
+}
+
+// selectBindingBelowLimit finds the most populated binding that is still below the limit.
+// Bindings with tenantName label but 0 instances in KEB DB are also considered
+func (s *ResolveCredentialsBindingStep) selectBindingBelowLimit(bindingNames []string, instancesPerBinding map[string]int, limit int, log *slog.Logger) (string, int) {
+	selected := ""
+	selectedCount := -1
+	for _, name := range bindingNames {
+		count := instancesPerBinding[name]
+		log.Info(fmt.Sprintf("credentials binding %s has %d instances", name, count))
+		if count < limit && count > selectedCount {
+			selected = name
+			selectedCount = count
+		}
+	}
+	return selected, selectedCount
 }
 
 func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccountID string, labelSelectorBuilder *subscriptions.LabelSelectorBuilder, log *slog.Logger) (string, error) {
@@ -244,7 +261,7 @@ func (s *ResolveCredentialsBindingStep) claimNewCredentialsBinding(globalAccount
 		return "", err
 	}
 
-	log.Info(fmt.Sprintf("claiming credentials binding for tenant %q", globalAccountID))
+	log.Info(fmt.Sprintf("claiming credentials binding %s for tenant %q", credentialsBinding.GetName(), globalAccountID))
 	credentialsBinding, err = s.claimCredentialsBinding(credentialsBinding, globalAccountID)
 	if err != nil {
 		return "", fmt.Errorf("while claiming credentials binding for tenant: %s: %w", globalAccountID, err)

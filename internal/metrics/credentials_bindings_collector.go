@@ -22,6 +22,11 @@ type GardenerCredentialsBindingsLister interface {
 	GetCredentialsBindings(labelSelector string) (*unstructured.UnstructuredList, error)
 }
 
+type claimedKey struct {
+	hyperscalerType string
+	tenantName      string
+}
+
 // CredentialsBindingsCollector provides gauges describing hyperscaler account usage:
 //
 //   - kcp_keb_v2_instances_per_credentials_binding{credentials_binding,global_account_id}
@@ -29,6 +34,15 @@ type GardenerCredentialsBindingsLister interface {
 //
 //   - kcp_keb_v2_available_credentials_bindings{hyperscaler_type}
 //     Number of unclaimed, not shared, and not dirty CredentialsBindings per hyperscaler type.
+//
+//   - kcp_keb_v2_claimed_credentials_bindings{hyperscaler_type,tenant_name}
+//     Number of claimed CredentialsBindings per hyperscaler type and tenant.
+//
+//   - kcp_keb_v2_dirty_credentials_bindings{hyperscaler_type}
+//     Number of dirty CredentialsBindings per hyperscaler type.
+//
+//   - kcp_keb_v2_shared_credentials_bindings{hyperscaler_type}
+//     Number of shared CredentialsBindings per hyperscaler type.
 type CredentialsBindingsCollector struct {
 	statsGetter             CredentialsBindingsStatsGetter
 	gardenerClient          GardenerCredentialsBindingsLister
@@ -41,6 +55,9 @@ type CredentialsBindingsCollector struct {
 
 	instancesPerCredentialsBinding *prometheus.GaugeVec
 	availableCredentialsBindings   *prometheus.GaugeVec
+	claimedCredentialsBindings     *prometheus.GaugeVec
+	dirtyCredentialsBindings       *prometheus.GaugeVec
+	sharedCredentialsBindings      *prometheus.GaugeVec
 }
 
 func NewCredentialsBindingsCollector(
@@ -66,7 +83,25 @@ func NewCredentialsBindingsCollector(
 			Namespace: prometheusNamespaceV2,
 			Subsystem: prometheusSubsystemV2,
 			Name:      "available_credentials_bindings",
-			Help:      "The number of unclaimed CredentialsBindings per hyperscaler type",
+			Help:      "The number of unclaimed, not shared, and not dirty CredentialsBindings per hyperscaler type",
+		}, []string{"hyperscaler_type"}),
+		claimedCredentialsBindings: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
+			Name:      "claimed_credentials_bindings",
+			Help:      "The number of claimed CredentialsBindings per hyperscaler type and tenant",
+		}, []string{"hyperscaler_type", "tenant_name"}),
+		dirtyCredentialsBindings: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
+			Name:      "dirty_credentials_bindings",
+			Help:      "The number of dirty CredentialsBindings per hyperscaler type",
+		}, []string{"hyperscaler_type"}),
+		sharedCredentialsBindings: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: prometheusNamespaceV2,
+			Subsystem: prometheusSubsystemV2,
+			Name:      "shared_credentials_bindings",
+			Help:      "The number of shared CredentialsBindings per hyperscaler type",
 		}, []string{"hyperscaler_type"}),
 	}
 }
@@ -84,13 +119,13 @@ func (c *CredentialsBindingsCollector) StartCollector(ctx context.Context) {
 		}
 	}()
 	go func() {
-		c.updateAvailableMetrics()
+		c.updateGardenerMetrics()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-time.After(c.gardenerPollingInterval):
-				c.updateAvailableMetrics()
+				c.updateGardenerMetrics()
 			}
 		}
 	}()
@@ -115,10 +150,17 @@ func (c *CredentialsBindingsCollector) updateInstancesMetrics() {
 	}
 }
 
-func (c *CredentialsBindingsCollector) updateAvailableMetrics() {
+func (c *CredentialsBindingsCollector) updateGardenerMetrics() {
 	c.gardenerMu.Lock()
 	defer c.gardenerMu.Unlock()
 
+	c.updateAvailableCredentialsBindings()
+	c.updateClaimedCredentialsBindings()
+	c.updateDirtyCredentialsBindings()
+	c.updateSharedCredentialsBindings()
+}
+
+func (c *CredentialsBindingsCollector) updateAvailableCredentialsBindings() {
 	list, err := c.gardenerClient.GetCredentialsBindings(fmt.Sprintf("!%s,%s!=true,!%s", gardener.TenantNameLabelKey, gardener.SharedLabelKey, gardener.DirtyLabelKey))
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("%s -> failed to get available credentials bindings: %s", logPrefix, err.Error()))
@@ -137,5 +179,75 @@ func (c *CredentialsBindingsCollector) updateAvailableMetrics() {
 	c.availableCredentialsBindings.Reset()
 	for hyperscalerType, count := range countByType {
 		c.availableCredentialsBindings.With(prometheus.Labels{"hyperscaler_type": hyperscalerType}).Set(float64(count))
+	}
+}
+
+func (c *CredentialsBindingsCollector) updateClaimedCredentialsBindings() {
+	list, err := c.gardenerClient.GetCredentialsBindings(gardener.TenantNameLabelKey)
+	if err != nil {
+		c.logger.Error(fmt.Sprintf("%s -> failed to get claimed credentials bindings: %s", logPrefix, err.Error()))
+		return
+	}
+
+	countByTypeTenant := make(map[claimedKey]int)
+	for _, item := range list.Items {
+		hyperscalerType := item.GetLabels()[gardener.HyperscalerTypeLabelKey]
+		tenantName := item.GetLabels()[gardener.TenantNameLabelKey]
+		if hyperscalerType == "" || tenantName == "" {
+			continue
+		}
+		countByTypeTenant[claimedKey{hyperscalerType: hyperscalerType, tenantName: tenantName}]++
+	}
+
+	c.claimedCredentialsBindings.Reset()
+	for key, count := range countByTypeTenant {
+		c.claimedCredentialsBindings.With(prometheus.Labels{
+			"hyperscaler_type": key.hyperscalerType,
+			"tenant_name":      key.tenantName,
+		}).Set(float64(count))
+	}
+}
+
+func (c *CredentialsBindingsCollector) updateDirtyCredentialsBindings() {
+	list, err := c.gardenerClient.GetCredentialsBindings(fmt.Sprintf("%s=true", gardener.DirtyLabelKey))
+	if err != nil {
+		c.logger.Error(fmt.Sprintf("%s -> failed to get dirty credentials bindings: %s", logPrefix, err.Error()))
+		return
+	}
+
+	countByType := make(map[string]int)
+	for _, item := range list.Items {
+		hyperscalerType := item.GetLabels()[gardener.HyperscalerTypeLabelKey]
+		if hyperscalerType == "" {
+			continue
+		}
+		countByType[hyperscalerType]++
+	}
+
+	c.dirtyCredentialsBindings.Reset()
+	for hyperscalerType, count := range countByType {
+		c.dirtyCredentialsBindings.With(prometheus.Labels{"hyperscaler_type": hyperscalerType}).Set(float64(count))
+	}
+}
+
+func (c *CredentialsBindingsCollector) updateSharedCredentialsBindings() {
+	list, err := c.gardenerClient.GetCredentialsBindings(fmt.Sprintf("%s=true", gardener.SharedLabelKey))
+	if err != nil {
+		c.logger.Error(fmt.Sprintf("%s -> failed to get shared credentials bindings: %s", logPrefix, err.Error()))
+		return
+	}
+
+	countByType := make(map[string]int)
+	for _, item := range list.Items {
+		hyperscalerType := item.GetLabels()[gardener.HyperscalerTypeLabelKey]
+		if hyperscalerType == "" {
+			continue
+		}
+		countByType[hyperscalerType]++
+	}
+
+	c.sharedCredentialsBindings.Reset()
+	for hyperscalerType, count := range countByType {
+		c.sharedCredentialsBindings.With(prometheus.Labels{"hyperscaler_type": hyperscalerType}).Set(float64(count))
 	}
 }
