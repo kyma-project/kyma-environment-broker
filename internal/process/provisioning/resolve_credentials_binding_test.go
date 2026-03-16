@@ -1106,8 +1106,8 @@ func TestMultiAccountSupport(t *testing.T) {
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		multiAccountConfig := &multiaccount.MultiAccountConfig{
-			AllowedGlobalAccounts:  []string{globalAccountID},
-			InconsistencyThreshold: 3,
+			AllowedGlobalAccounts: []string{globalAccountID},
+			MinBindingsForGuard:   3,
 			Limits: multiaccount.HyperscalerAccountLimits{
 				AWS:     3,
 				Default: 100,
@@ -1155,8 +1155,8 @@ func TestMultiAccountSupport(t *testing.T) {
 		require.NoError(t, brokerStorage.Instances().Insert(instance))
 
 		multiAccountConfig := &multiaccount.MultiAccountConfig{
-			AllowedGlobalAccounts:  []string{globalAccountID},
-			InconsistencyThreshold: 3,
+			AllowedGlobalAccounts: []string{globalAccountID},
+			MinBindingsForGuard:   3,
 			Limits: multiaccount.HyperscalerAccountLimits{
 				AWS:     3,
 				Default: 100,
