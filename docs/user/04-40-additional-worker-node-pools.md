@@ -157,7 +157,7 @@ The update operation overwrites the additional worker node pools with the list p
 
 ## Taints
 
-Each additional worker node pool supports an optional **taints** list. Taints allow you to control which workloads are scheduled onto the nodes of a given worker pool.
+Each additional worker node pool supports an optional **taints** list. With taints, you can control which workloads are scheduled to nodes in a given worker pool.
 
 Each taint object has the following properties:
 
