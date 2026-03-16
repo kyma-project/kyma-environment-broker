@@ -53,13 +53,13 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup. |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener. |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;ALLOWED_GLOBAL_&#x200b;ACCOUNTS** | <code>[]</code> | Assigns multiple hyperscaler accounts per global account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed global accounts - ["*"] = enabled for all global accounts |
-| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;MIN_BINDINGS_FOR_&#x200b;GUARD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When this many bindings are claimed but none have active instances in the DB, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_ALICLOUD** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AWS** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AZURE** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_DEFAULT** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_GCP** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_OPENSTACK** | <code>999999</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;MIN_BINDINGS_FOR_&#x200b;GUARD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When this many bindings are claimed but none have active instances in the DB, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |
 | **APP_HOLD_HAP_STEPS** | <code>false</code> | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". |
