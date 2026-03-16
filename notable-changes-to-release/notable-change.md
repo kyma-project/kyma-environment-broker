@@ -1,6 +1,6 @@
 <!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"FEATURE"}}-->
 
-# Updating Kyma Environment Broker: Taints Support for Additional Worker Node Pools
+# KEB: Taints Support for Additional Worker Node Pools
 
 > ### Caution:
 > This update is mandatory. Without performing it, you will not be able to use the feature in the SAP BTP cockpit.
