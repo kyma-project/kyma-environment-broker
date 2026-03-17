@@ -655,20 +655,27 @@ This approach completely decouples the logical machine definition from the insta
 
 # Comparison
 
-| Aspect               | Semi-Abstract Configuration                      | Abstract Configuration                                                                                            |
-|----------------------|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Configuration Length | Shorter configuration                            | Longer configuration                                                                                              |
-| Flexibility          | Only the machine **version** can be updated      | The **name is fully abstract** and can be switched to a completely different machine type                         |
-| Logic Complexity     | More complicated logic, varies for each provider | Straightforward logic that is the **same across all providers**                                                   |
-| Potential Issues     | –                                                | **AWS:** two general types and two GPU types<br>**Azure:** two general machine types<br>Naming can be challenging |
+| Aspect           | Semi-Abstract Configuration (with templates)                                                                                          | Semi-Abstract Configuration (without templates)                                                                                       | Abstract Configuration                                                                                                                                                              |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Flexibility      | Only the machine **version** should to be updated, switching to a completely different machine type can make the configuration messy. | Only the machine **version** should to be updated, switching to a completely different machine type can make the configuration messy. | The **name is fully abstract**, allowing seamless switching to a completely different machine type.                                                                                 |
+| Logic Complexity | Straightforward logic that is **consistent across all providers**.                                                                    | More complex logic that **varies between providers**.                                                                                 | Straightforward logic that is **consistent across all providers**.                                                                                                                  |
+| Potential Issues | None identified.                                                                                                                      | None identified.                                                                                                                      | **AWS:** Multiple general-purpose and GPU instance types<br>**Azure:** Multiple general machine types<br>Creating a consistent naming scheme will be challenging if not impossible. |
+
 
 # Updating Machine Versions
 
-When introducing a new machine version, follow these steps:
-1. Check whether the pricing differs between the current and the new machine version to ensure cost expectations remain accurate.
-2. Ensure the new machine version is available in the same regions and availability zones.
-3. Modify the machine version configuration in KEB so that all newly created clusters use the updated machine version.
-4. Update the machine version in all existing runtime CRs so that already running clusters are aligned with the new version.
+When a new machine type version is announced by the hyperscaler, follow this process:
+
+Prerequisites:
+1. Verify whether there is any pricing difference between the current and the new machine version to ensure cost expectations remain accurate. (Owner: @huskies)
+2. Confirm that the new machine version is available in the same regions and availability zones. (Owners: @huskies, @gopher, @SRE)
+
+Process:
+1. Register the new machine type in the Consumer Reporter. (Owner: @huskies)
+2. Update the machine version configuration in KEB so that all newly created worker pools use the new version. (Owner: @gopher)
+   - KEB does not automatically update existing worker pools.
+   - For example, even if a user updates administrators and the configuration changes, existing worker pools will not be updated, and nodes will not be restarted during peak load.
+3. During a maintenance window, SRE updates all existing runtime CRs using the Cluster Orchestrator. (Owner: @SRE)
 
 # BTP Cockpit
 
