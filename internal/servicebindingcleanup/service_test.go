@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -233,6 +234,54 @@ func TestServiceBindingCleanupJob(t *testing.T) {
 
 		// cleanup
 		require.NoError(t, bindingsStorage.Delete(binding.InstanceID, binding.ID))
+		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
+	})
+
+	t.Run("should retry on 5xx and continue cleanup with remaining bindings", func(t *testing.T) {
+		// given
+		failBinding := internal.Binding{
+			ID:         "fail-binding-id",
+			InstanceID: "fail-instance-id",
+			ExpiresAt:  time.Now().Add(-time.Hour),
+		}
+		successBinding := internal.Binding{
+			ID:         "success-binding-id",
+			InstanceID: "success-instance-id",
+			ExpiresAt:  time.Now().Add(-time.Hour),
+		}
+		require.NoError(t, bindingsStorage.Insert(&failBinding))
+		require.NoError(t, bindingsStorage.Insert(&successBinding))
+
+		svc := servicebindingcleanup.NewService(false, brokerClient, bindingsStorage)
+
+		// when
+		var failAttempts atomic.Int32
+		handler.setHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			instanceID := r.PathValue("instance_id")
+			bindingID := r.PathValue("binding_id")
+			if instanceID == failBinding.InstanceID && bindingID == failBinding.ID {
+				failAttempts.Add(1)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			handler.deleteServiceBindingFromStorage(w, r)
+		})
+
+		err := svc.PerformCleanup()
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, int32(requestRetries), failAttempts.Load())
+
+		actualBinding, err := bindingsStorage.Get(failBinding.InstanceID, failBinding.ID)
+		require.NoError(t, err)
+		assert.Equal(t, failBinding.ID, actualBinding.ID)
+
+		_, err = bindingsStorage.Get(successBinding.InstanceID, successBinding.ID)
+		assert.True(t, dberr.IsNotFound(err))
+
+		// cleanup
+		require.NoError(t, bindingsStorage.Delete(failBinding.InstanceID, failBinding.ID))
 		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
 	})
 }

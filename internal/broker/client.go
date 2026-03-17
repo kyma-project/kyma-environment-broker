@@ -199,6 +199,11 @@ func (c *Client) Unbind(binding internal.Binding) error {
 				slog.Warn(fmt.Sprintf("request failed - timeout (attempt %d/%d)", requestAttemptNum, c.RequestRetries))
 				continue
 			}
+			var unexpectedStatusCodeErr UnexpectedStatusCodeError
+			if errors.As(err, &unexpectedStatusCodeErr) && unexpectedStatusCodeErr.UnexpectedStatusCode >= http.StatusInternalServerError {
+				slog.Warn(fmt.Sprintf("request failed - server error %d (attempt %d/%d)", unexpectedStatusCodeErr.UnexpectedStatusCode, requestAttemptNum, c.RequestRetries))
+				continue
+			}
 			break
 		}
 		break
