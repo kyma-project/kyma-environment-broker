@@ -795,7 +795,9 @@ Process:
 
 # Deprecating old machine types with explicit versions
 
-The following example uses AWS, but the same migration pattern applies to the other providers.
+The following examples use AWS, but the same migration pattern applies to the other providers.
+
+## Option 1: Migration without CIS changes
 
 1. At the beginning, the configuration exposes only versioned machine types from the `m` family:
 
@@ -863,6 +865,59 @@ The following example uses AWS, but the same migration pattern applies to the ot
    In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `m.large`.
 7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
    This should only be done once there is evidence that no new entries using deprecated values are being created anymore.
+
+## Option 2: Migration with CIS support
+
+1. Request support from CIS for conditional disabling of enum validation for selected schema fields.
+
+2. At the start, the configuration exposes only explicitly versioned machine types from the `m` family:
+
+   ```yaml
+    providersConfiguration:
+      aws:
+        machines:
+          m6i.large: m6i.large (2vCPU, 8GB RAM)
+          m6i.16xlarge: m6i.16xlarge (64vCPU, 256GB RAM)
+          m5.large: m5.large (2vCPU, 8GB RAM)
+          m5.16xlarge: m5.16xlarge (64vCPU, 256GB RAM)
+    ```
+
+3. Add the new logical machine types and configure version resolution in KEB:
+
+    ```yaml
+    providersConfiguration:
+      aws:
+        machines:
+          m.large: mi.large (2vCPU, 8GB RAM)
+          m.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
+        machinesVersions:
+          m{version}i.{size}: m6i.{size}
+          m{version}.{size}: m6i.{size}
+    ```
+
+4. Once the CIS feature is available, disable enum validation for **machineType** in BTP CLI and BTP Cockpit.
+In this model, inputs such as `m6i.large`, `m5.large` and `m.large` can all be accepted and resolved internally to the currently supported concrete value, for example `m6i.large`.
+
+    ```json
+    {
+      "machineType": {
+        "_enumDisplayName": {
+          "m.large": "m.large (2vCPU, 8GB RAM)",
+          "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)"
+        },
+        "description": "Specifies the type of the virtual machine.",
+        "validation": false,
+        "enum": [
+          "m.large",
+          "m.16xlarge"
+        ],
+        "type": "string"
+      }
+    }
+    ```
+
+5. SRE updates existing Runtime CRs with Cluster Orchestrator so that already provisioned clusters are aligned with the version-agnostic representation.
+6. After runtime migration is complete, update the KEB database so that active entries no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `m.large`.
 
 # Topics Not Covered by This ADR
 
