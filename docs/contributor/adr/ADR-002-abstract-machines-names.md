@@ -662,23 +662,6 @@ This approach completely decouples the logical machine definition from the insta
 | Potential Issues | None identified.                                                                                                                      | None identified.                                                                                                                      | **AWS:** Multiple general-purpose and GPU instance types<br>**Azure:** Multiple general machine types<br>Creating a consistent naming scheme will be challenging if not impossible. |
 
 
-# Updating Machine Versions
-
-When a machine generation is deprecated or a new generation becomes available, and the hyperscaler guarantees backward compatibility, use the following rollout process:
-
-Prerequisites:
-1. Verify whether there is any pricing difference between the current and the new machine version to ensure cost expectations remain accurate. (Owner: @huskies)
-2. Confirm that the new machine version is available in the same regions and availability zones. (Owners: @huskies, @gopher, @SRE)
-
-Process:
-1. Register the new machine type in the Consumer Reporter. (Owner: @huskies)
-2. Update the machine version configuration in KEB so that all newly created worker pools use the new version. (Owner: @gopher)
-   - KEB does not automatically update existing worker pools.
-   - For example, even if a user updates administrators and the configuration changes, existing worker pools will not be updated, and nodes will not be restarted during peak load.
-3. During a maintenance window, SRE updates all existing runtime CRs using the Cluster Orchestrator. (Owner: @SRE)
-   - Clusters should be updated in batches.
-   - Operators should remain in a heightened alert state throughout the rollout.
-
 # JSON Schema
 
 Below is the current AWS schema used in BTP Cockpit:
@@ -792,6 +775,94 @@ The machine type field is empty, making updates impossible.
 The field is automatically set to the first available value from the schema.
 
 ![update-instance-view-2.png](assets/update-instance-view-2.png)
+
+# Updating Machine Versions
+
+When a machine generation is deprecated or a new generation becomes available, and the hyperscaler guarantees backward compatibility, use the following rollout process:
+
+Prerequisites:
+1. Verify whether there is any pricing difference between the current and the new machine version to ensure cost expectations remain accurate. (Owner: @huskies)
+2. Confirm that the new machine version is available in the same regions and availability zones. (Owners: @huskies, @gopher, @SRE)
+
+Process:
+1. Register the new machine type in the Consumer Reporter. (Owner: @huskies)
+2. Update the machine version configuration in KEB so that all newly created worker pools use the new version. (Owner: @gopher)
+   - KEB does not automatically update existing worker pools.
+   - For example, even if a user updates administrators and the configuration changes, existing worker pools will not be updated, and nodes will not be restarted during peak load.
+3. During a maintenance window, SRE updates all existing runtime CRs using the Cluster Orchestrator. (Owner: @SRE)
+   - Clusters should be updated in batches.
+   - Operators should remain in a heightened alert state throughout the rollout.
+
+# Deprecating old machine types with explicit versions
+
+The following example uses AWS, but the same migration pattern applies to the other providers.
+
+1. At the beginning, the configuration exposes only versioned machine types from the `m` family:
+
+   ```yaml
+    providersConfiguration:
+      aws:
+        machines:
+          m6i.large: m6i.large (2vCPU, 8GB RAM)
+          m6i.16xlarge: m6i.16xlarge (64vCPU, 256GB RAM)
+          m5.large: m5.large (2vCPU, 8GB RAM)
+          m5.16xlarge: m5.16xlarge (64vCPU, 256GB RAM)
+    ```
+
+2. Next, add the new version-agnostic machine types while keeping the existing versioned values for backward compatibility.
+   The old values remain valid, but they are marked as deprecated and point users to the new logical machine types:
+
+    ```yaml
+    providersConfiguration:
+      aws:
+        machines:
+          m.large: mi.large (2vCPU, 8GB RAM)
+          m.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
+          m6i.large: m6i.large (deprecated, use m.large)
+          m6i.16xlarge: m6i.16xlarge (deprecated, use m.16xlarge)
+          m5.large: m5.large (deprecated, use m.large)
+          m5.16xlarge: m5.16xlarge (deprecated, use m.16xlarge)
+        machinesVersions:
+          m{version}i.{size}: m6i.{size}
+          m{version}.{size}: m6i.{size}
+    ```
+
+3. Because the BTP CLI validates input against the schema on the client side, all previously supported machine types must remain in the enum during the migration period.
+   The schema therefore includes both:
+   - the new version-agnostic values, and,
+   - the old versioned values marked as deprecated.
+
+    ```json
+    {
+      "machineType": {
+        "_enumDisplayName": {
+          "m.large": "m.large (2vCPU, 8GB RAM)",
+          "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
+          "m6i.large": "m6i.large (deprecated, use m.large)",
+          "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
+          "m5.large": "m5.large (deprecated, use m.large)",
+          "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
+        },
+        "description": "Specifies the type of the virtual machine.",
+        "enum": [
+          "m.large",
+          "m.16xlarge",
+          "m6i.large",
+          "m6i.16xlarge",
+          "m5.large",
+          "m5.16xlarge"
+        ],
+        "type": "string"
+      }
+    }
+    ```
+
+4. SRE updates all existing Runtime CRs using Cluster Orchestrator so that existing clusters are aligned with the new version agnostic machine types.
+5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for active entries, and only the logical values such as `m.large` remain.
+6. If new entries using deprecated machine types such as `m6i.large` or `m5.large` still appear, this most likely means that some internal users or automations are still relying on the old values.
+   In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `m.large`.
+7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
+   This should only be done once there is evidence that no new entries using deprecated values are being created anymore.
 
 # Topics Not Covered by This ADR
 
