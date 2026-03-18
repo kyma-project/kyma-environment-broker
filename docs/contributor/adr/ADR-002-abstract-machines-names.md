@@ -93,7 +93,7 @@ providersConfiguration:
 ```
 
 
-# Semi-Abstract Configuration
+# Version Agnostic Configuration
 
 To simplify upgrades between instance generations, the configuration can be partially abstracted.
 Instead of referencing full instance family names, a logical machine type is used. The actual family is then resolved through a mapping.
@@ -178,7 +178,7 @@ AWS instance types follow the format:
 <family>.<size>
 ```
 
-When using the semi-abstract configuration, the resolution process is:
+When using the version agnostic configuration, the resolution process is:
 1. Split the configured machine type by the dot (.) separator.
 2. Extract the logical machine family (the part before the dot).
 3. Look up the corresponding AWS instance family in `machinesVersions`.
@@ -269,7 +269,7 @@ Azure instance types follow the format:
 <prefix>_<machine family with size>_<optional additional info>_<version>
 ```
 
-When using the semi-abstract configuration, the resolution process is:
+When using the version agnostic configuration, the resolution process is:
 1. Split the configured machine type by the underscore _.
 2. Identify the logical machine family (second element) and remove numeric characters to isolate the family prefix.
 3. Combine the prefix and normalized family and look up the version in `machinesVersions`.
@@ -356,7 +356,7 @@ AWS instance types follow the format:
 <family with version>-<type>-<size>-<optional info>
 ```
 
-When using the semi-abstract configuration, the resolution steps are:
+When using the version agnostic configuration, the resolution steps are:
 1. Split the configured machine type by the - separator.
 2. Identify the logical machine family (the first segment).
 3. Map it to the corresponding GCP instance family using `machinesVersions`.
@@ -408,7 +408,7 @@ SAP Cloud Infrastructure instance types follow the format:
 <family>_<cpu>_<memory>_<version>
 ```
 
-When using the semi-abstract configuration, the resolution steps are:
+When using the version agnostic configuration, the resolution steps are:
 1. Split the configured machine type by the _ separator.
 2. Identify the logical machine family (the first segment).
 3. Map it to the corresponding SAP Cloud Infrastructure instance family using `machinesVersions`.
@@ -461,7 +461,7 @@ Alibaba Cloud instance types follow the format:
 <prefix>.<family with version>.<size>
 ```
 
-When using the semi-abstract configuration, the resolution process is:
+When using the version agnostic configuration, the resolution process is:
 1. Split the configured machine type using the dot (.) separator.
 2. Extract the logical machine family (the second segment).
 3. Combine prefix with logical machine family.
@@ -480,9 +480,9 @@ Step 3: lookup ecs.gi → g9i
 Result: ecs.g9i.large
 ```
 
-# Abstract configuration
+# Family Agnostic configuration
 
-The abstract configuration fully separates logical machine types from actual instance types.
+The family agnostic configuration fully separates logical machine types from actual instance types.
 Instead of referencing instance families directly, machines are defined using logical categories such as `general`, `compute`, `memory`, `storage`, or `gpu`.
 
 The actual instance types are defined in `machinesMapping`, which maps each logical machine to a concrete instance.
@@ -655,7 +655,7 @@ This approach completely decouples the logical machine definition from the insta
 
 # Comparison
 
-| Aspect           | Semi-Abstract Configuration (with templates)                                                                                          | Semi-Abstract Configuration (without templates)                                                                                       | Abstract Configuration                                                                                                                                                              |
+| Aspect           | Version Agnostic Configuration (with templates)                                                                                       | Version Agnostic Configuration (without templates)                                                                                    | Family Agnostic Configuration                                                                                                                                                       |
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Flexibility      | Only the machine **version** should to be updated, switching to a completely different machine type can make the configuration messy. | Only the machine **version** should to be updated, switching to a completely different machine type can make the configuration messy. | The **name is fully abstract**, allowing seamless switching to a completely different machine type.                                                                                 |
 | Logic Complexity | Straightforward logic that is **consistent across all providers**.                                                                    | More complex logic that **varies between providers**.                                                                                 | Straightforward logic that is **consistent across all providers**.                                                                                                                  |
@@ -664,7 +664,7 @@ This approach completely decouples the logical machine definition from the insta
 
 # Updating Machine Versions
 
-When a new machine type version is announced by the hyperscaler, follow this process:
+When a machine generation is deprecated or a new generation becomes available, and the hyperscaler guarantees backward compatibility, use the following rollout process:
 
 Prerequisites:
 1. Verify whether there is any pricing difference between the current and the new machine version to ensure cost expectations remain accurate. (Owner: @huskies)
@@ -676,6 +676,8 @@ Process:
    - KEB does not automatically update existing worker pools.
    - For example, even if a user updates administrators and the configuration changes, existing worker pools will not be updated, and nodes will not be restarted during peak load.
 3. During a maintenance window, SRE updates all existing runtime CRs using the Cluster Orchestrator. (Owner: @SRE)
+   - Clusters should be updated in batches.
+   - Operators should remain in a heightened alert state throughout the rollout.
 
 # JSON Schema
 
@@ -790,3 +792,9 @@ The machine type field is empty, making updates impossible.
 The field is automatically set to the first available value from the schema.
 
 ![update-instance-view-2.png](assets/update-instance-view-2.png)
+
+# Topics Not Covered by This ADR
+
+This ADR does not address:
+- Defining abstract machine sizes that are standardized across all hyperscalers.
+- Automatically selecting machine versions based on availability in a given region or availability zone.
