@@ -677,7 +677,7 @@ Process:
    - For example, even if a user updates administrators and the configuration changes, existing worker pools will not be updated, and nodes will not be restarted during peak load.
 3. During a maintenance window, SRE updates all existing runtime CRs using the Cluster Orchestrator. (Owner: @SRE)
 
-# BTP Cockpit
+# JSON Schema
 
 Below is the current AWS schema used in BTP Cockpit:
 
@@ -740,3 +740,53 @@ For example, the following user inputs:
 
 must all be resolved internally to `m7i.large` before being written to the Runtime CR.
 However, to avoid confusion for users, the GET API endpoint should always return the machine type exactly as it was originally provided by the user, rather than the internally resolved value.
+
+# BTP CLI
+
+When submitting a provisioning request with a machine type that is not defined in the schema (e.g., `test`), the request is rejected by the BTP CLI before reaching KEB.
+This behavior indicates that the BTP CLI performs client-side schema validation, enforcing that the **machineType** must match one of the allowed enum values.
+As a result, all previously supported machine types must remain in the schema to ensure backward compatibility.
+
+## Example
+
+Input parameters:
+```json
+{
+    "name": "my-environment-instance",
+    "region": "eu-west-2",
+    "machineType": "test"
+}
+```
+
+Command:
+```
+btp create accounts/environment-instance --display-name my-environment-instance --environment kyma --service kymaruntime --plan aws --parameters parameters.json
+
+Error when validating schema parameters: #/machineType: #: only 1 subschema matches out of 2 #/machineType: test is not a valid enum value [Error: 11008/400]
+
+FAILED
+```
+
+# BTP Cockpit
+
+A Kyma cluster was provisioned with machine type `m6i.large`, which was later removed from the schema.
+
+## Observed Behavior
+
+### View Parameters
+
+The original machine type (`m6i.large`) is displayed correctly.
+
+![view-parameters-view.png](assets/view-parameters-view.png)
+
+### Update Instance (Form View)
+
+The machine type field is empty, making updates impossible.
+
+![update-instance-view-1.png](assets/update-instance-view-1.png)
+
+### Switching JSON ↔ Form View
+
+The field is automatically set to the first available value from the schema.
+
+![update-instance-view-2.png](assets/update-instance-view-2.png)
