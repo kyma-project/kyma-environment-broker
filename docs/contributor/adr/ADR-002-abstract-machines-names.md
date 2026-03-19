@@ -364,26 +364,26 @@ providersConfiguration:
       z-highmem-44: z-highmem-44 (44vCPU, 352GB RAM)
 
       # Deprecated machines with explicit version
-      n2-standard-2: n2-standard-2 (2vCPU, 8GB RAM)
-      n2-standard-4: n2-standard-4 (4vCPU, 16GB RAM)
-      n2-standard-8: n2-standard-8 (8vCPU, 32GB RAM)
-      n2-standard-16: n2-standard-16 (16vCPU, 64GB RAM)
-      n2-standard-32: n2-standard-32 (32vCPU, 128GB RAM)
-      n2-standard-48: n2-standard-48 (48vCPU, 192GB RAM)
-      n2-standard-64: n2-standard-64 (64vCPU, 256GB RAM)
-      c2d-highcpu-2: c2d-highcpu-2 (2vCPU, 4GB RAM)
-      c2d-highcpu-4: c2d-highcpu-4 (4vCPU, 8GB RAM)
-      c2d-highcpu-8: c2d-highcpu-8 (8vCPU, 16GB RAM)
-      c2d-highcpu-16: c2d-highcpu-16 (16vCPU, 32GB RAM)
-      c2d-highcpu-32: c2d-highcpu-32 (32vCPU, 64GB RAM)
-      c2d-highcpu-56: c2d-highcpu-56 (56vCPU, 112GB RAM)
-      g2-standard-4: g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*
-      g2-standard-8: g2-standard-8 (1GPU, 8vCPU, 32GB RAM)*
-      g2-standard-12: g2-standard-12 (1GPU, 12vCPU, 48GB RAM)*
-      g2-standard-16: g2-standard-16 (1GPU, 16vCPU, 64GB RAM)*
-      g2-standard-24: g2-standard-24 (2GPU, 24vCPU, 96GB RAM)*
-      g2-standard-32: g2-standard-32 (1GPU, 32vCPU, 128GB RAM)*
-      g2-standard-48: g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*
+      n2-standard-2: n2-standard-2 (deprecated, use n2-standard-2)
+      n2-standard-4: n2-standard-4 (deprecated, use n2-standard-4)
+      n2-standard-8: n2-standard-8 (deprecated, use n2-standard-8)
+      n2-standard-16: n2-standard-16 (deprecated, use n2-standard-16)
+      n2-standard-32: n2-standard-32 (deprecated, use n2-standard-32)
+      n2-standard-48: n2-standard-48 (deprecated, use n2-standard-48)
+      n2-standard-64: n2-standard-64 (deprecated, use n2-standard-64)
+      c2d-highcpu-2: c2d-highcpu-2 (deprecated, use c2d-highcpu-2)
+      c2d-highcpu-4: c2d-highcpu-4 (deprecated, use c2d-highcpu-4)
+      c2d-highcpu-8: c2d-highcpu-8 (deprecated, use c2d-highcpu-8)
+      c2d-highcpu-16: c2d-highcpu-16 (deprecated, use c2d-highcpu-16)
+      c2d-highcpu-32: c2d-highcpu-32 (deprecated, use c2d-highcpu-32)
+      c2d-highcpu-56: c2d-highcpu-56 (deprecated, use c2d-highcpu-64)
+      g2-standard-4: g2-standard-4 (deprecated, use g2-standard-4)*
+      g2-standard-8: g2-standard-8 (deprecated, use g2-standard-8)*
+      g2-standard-12: g2-standard-12 (deprecated, use g2-standard-12)*
+      g2-standard-16: g2-standard-16 (deprecated, use g2-standard-16)*
+      g2-standard-24: g2-standard-24 (deprecated, use g2-standard-24)*
+      g2-standard-32: g2-standard-32 (deprecated, use g2-standard-32)*
+      g2-standard-48: g2-standard-48 (deprecated, use g2-standard-48)*
 
     machinesVersions:
       n-standard-{size}: n2-standard-{size}
@@ -458,13 +458,13 @@ providersConfiguration:
       ecs.g.16xlarge: ecs.g.16xlarge (64vCPU, 256GB RAM)
         
       # Deprecated machines with explicit version
-      ecs.g9i.large: ecs.g9i.large (2vCPU, 8GB RAM)
-      ecs.g9i.xlarge: ecs.g9i.xlarge (4vCPU, 16GB RAM)
-      ecs.g9i.2xlarge: ecs.g9i.2xlarge (8vCPU, 32GB RAM)
-      ecs.g9i.4xlarge: ecs.g9i.4xlarge (16vCPU, 64GB RAM)
-      ecs.g9i.8xlarge: ecs.g9i.8xlarge (32vCPU, 128GB RAM)
-      ecs.g9i.12xlarge: ecs.g9i.12xlarge (48vCPU, 192GB RAM)
-      ecs.g9i.16xlarge: ecs.g9i.16xlarge (64vCPU, 256GB RAM)
+      ecs.g9i.large: ecs.g9i.large (deprecated, use ecs.g9i.large)
+      ecs.g9i.xlarge: ecs.g9i.xlarge (deprecated, use ecs.g9i.xlarge)
+      ecs.g9i.2xlarge: ecs.g9i.2xlarge (deprecated, use ecs.g9i.2xlarge)
+      ecs.g9i.4xlarge: ecs.g9i.4xlarge (deprecated, use ecs.g9i.4xlarge)
+      ecs.g9i.8xlarge: ecs.g9i.8xlarge (deprecated, use ecs.g9i.8xlarge)
+      ecs.g9i.12xlarge: ecs.g9i.12xlarge (deprecated, use ecs.g9i.12xlarge)
+      ecs.g9i.16xlarge: ecs.g9i.16xlarge (deprecated, use ecs.g9i.16xlarge)
 
     machinesVersions:
       ecs.g.{size}: ecs.g9i.{size}
