@@ -203,19 +203,19 @@ providersConfiguration:
 
 ### Machine version resolution
 
-|      Input      |    Template     |     Output      |
-|:---------------:|:---------------:|:---------------:|
-|    `m.large`    |   `m.{size}`    |   `m6i.large`   |
-|    `c.large`    |   `c.{size}`    |   `c7i.large`   |
-|   `g.xlarge`    |   `g.{size}`    |   `g6.xlarge`   |
-|  `gdn.xlarge`   |  `gdn.{size}`   |  `g4dn.xlarge`  |
-|    `r.large`    |   `r.{size}`    |   `r7i.large`   |
-|    `i.large`    |   `i.{size}`    |   `i7i.large`   |
-|   `m6i.large`   |  `m6i.{size}`   |   `m6i.large`   |
-|   `m5.large`    |   `m5.{size}`   |   `m6i.large`   |
-|   `c7i.large`   |  `c7i.{size}`   |   `c7i.large`   |
-|   `g6.xlarge`   |   `g6.{size}`   |   `g6.xlarge`   |
-|  `g4dn.xlarge`  |  `g4dn.{size}`  |  `g4dn.xlarge`  |
+|     Input     | Input Template | Output Template |    Output     |
+|:-------------:|:--------------:|:---------------:|:-------------:|
+|   `m.large`   |   `m.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
+|   `c.large`   |   `c.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
+|  `g.xlarge`   |   `g.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
+| `gdn.xlarge`  |  `gdn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
+|   `r.large`   |   `r.{size}`   |  `r7i.{size}`   |  `r7i.large`  |
+|   `i.large`   |   `i.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
+|  `m6i.large`  |  `m6i.{size}`  |  `m6i.{size}`   |  `m6i.large`  |
+|  `m5.large`   |  `m5.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
+|  `c7i.large`  |  `c7i.{size}`  |  `c7i.{size}`   |  `c7i.large`  |
+|  `g6.xlarge`  |  `g6.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
+| `g4dn.xlarge` | `g4dn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
 
 
 ## Azure
@@ -310,18 +310,18 @@ providersConfiguration:
 
 ### Machine version resolution
 
-|         Input          |          Template           |         Output         |
-|:----------------------:|:---------------------------:|:----------------------:|
-|     `Standard_D2s`     |     `Standard_D{size}s`     |   `Standard_D2s_v5`    |
-|     `Standard_D4`      |     `Standard_D{size}`      |    `Standard_D4_v3`    |
-|     `Standard_F2s`     |     `Standard_F{size}s`     |   `Standard_F2s_v2`    |
-|  `Standard_NC4as_T4`   |  `Standard_NC{size}as_T4`   | `Standard_NC4as_T4_v3` |
-|     `Standard_E2s`     |     `Standard_E{size}s`     |   `Standard_E2s_v6`    |
-|     `Standard_L8s`     |     `Standard_L{size}s`     |   `Standard_L8s_v3`    |
-|   `Standard_D2s_v5`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
-|    `Standard_D4_v3`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
-|   `Standard_F2s_v2`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
-| `Standard_NC4as_T4_v3` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
+|         Input          |       Input Template        |       Output Template       |         Output         |
+|:----------------------:|:---------------------------:|:---------------------------:|:----------------------:|
+|     `Standard_D2s`     |     `Standard_D{size}s`     |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
+|     `Standard_D4`      |     `Standard_D{size}`      |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
+|     `Standard_F2s`     |     `Standard_F{size}s`     |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
+|  `Standard_NC4as_T4`   |  `Standard_NC{size}as_T4`   | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
+|     `Standard_E2s`     |     `Standard_E{size}s`     |   `Standard_E{size}s_v6`    |   `Standard_E2s_v6`    |
+|     `Standard_L8s`     |     `Standard_L{size}s`     |   `Standard_L{size}s_v3`    |   `Standard_L8s_v3`    |
+|   `Standard_D2s_v5`    |   `Standard_D{size}s_v5`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
+|    `Standard_D4_v3`    |    `Standard_D{size}_v3`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
+|   `Standard_F2s_v2`    |   `Standard_F{size}s_v2`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
+| `Standard_NC4as_T4_v3` | `Standard_NC{size}as_T4_v3` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
 
 
 ## GCP
@@ -398,16 +398,16 @@ providersConfiguration:
 
 ### Machine version resolution
 
-|      Input      |       Template       |            Output            |
-|:---------------:|:--------------------:|:----------------------------:|
-| `n-standard-2`  | `n-standard-{size}`  |       `n2-standard-2`        |
-|  `c-highcpu-2`  |  `c-highcpu-{size}`  |       `c2d-highcpu-2`        |
-| `g-standard-4`  | `g-standard-{size}`  |       `g2-standard-4`        |
-| `m-ultramem-32` | `m-ultramem-{size}`  |       `m3-ultramem-32`       |
-| `z-highmem-14`  |  `z-highmem-{size}`  | `z3-highmem-14-standardlssd` |
-| `n2-standard-2` | `n2-standard-{size}` |       `n2-standard-2`        |
-| `c2d-highcpu-2` | `c2d-highcpu-{size}` |       `c2d-highcpu-2`        |
-| `g2-standard-4` | `g2-standard-{size}` |       `g2-standard-4`        |
+|      Input      |    Input Template    |         Output Template          |            Output            |
+|:---------------:|:--------------------:|:--------------------------------:|:----------------------------:|
+| `n-standard-2`  | `n-standard-{size}`  |       `n2-standard-{size}`       |       `n2-standard-2`        |
+|  `c-highcpu-2`  |  `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+| `g-standard-4`  | `g-standard-{size}`  |       `g2-standard-{size}`       |       `g2-standard-4`        |
+| `m-ultramem-32` | `m-ultramem-{size}`  |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
+| `z-highmem-14`  |  `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
+| `n2-standard-2` | `n2-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
+| `c2d-highcpu-2` | `c2d-highcpu-{size}` |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+| `g2-standard-4` | `g2-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
 
 
 ## SAP Cloud Infrastructure
@@ -435,9 +435,9 @@ providersConfiguration:
 
 ### Machine version resolution
 
-|   Input   |        Template         |    Output    |
-|:---------:|:-----------------------:|:------------:|
-| `g_c2_m8` | `g_c{c_size}_m{m_size}` | `g_c2_m8_v2` |
+|   Input   |     Input Template      |      Output Template       |    Output    |
+|:---------:|:-----------------------:|:--------------------------:|:------------:|
+| `g_c2_m8` | `g_c{c_size}_m{m_size}` | `g_c{c_size}_m{m_size}_v2` | `g_c2_m8_v2` |
 
 
 ## Alibaba Cloud
@@ -473,10 +473,10 @@ providersConfiguration:
 
 ### Machine version resolution
 
-|      Input      |     Template     |     Output      |
-|:---------------:|:----------------:|:---------------:|
-|  `ecs.g.large`  |  `ecs.g.{size}`  | `ecs.g9i.large` |
-| `ecs.g9i.large` | `ecs.g9i.{size}` | `ecs.g9i.large` |
+|      Input      |  Input Template  | Output Template  |     Output      |
+|:---------------:|:----------------:|:----------------:|:---------------:|
+|  `ecs.g.large`  |  `ecs.g.{size}`  | `ecs.g9i.{size}` | `ecs.g9i.large` |
+| `ecs.g9i.large` | `ecs.g9i.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
 
 
 # Family Agnostic configuration
