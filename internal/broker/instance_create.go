@@ -1015,11 +1015,11 @@ func (b *ProvisionEndpoint) filterOutUnsupportedSeedRegions(supportedRegions, se
 
 func (b *ProvisionEndpoint) validateACL(parameters internal.ProvisioningParameters) error {
 	params := parameters.Parameters
-	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(parameters.PlanID))) && params.ACL != nil {
-		return apiresponses.NewFailureResponse(errors.New("ACL is not supported for this plan"), http.StatusBadRequest, "ACL is not supported for this plan")
+	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(parameters.PlanID))) && params.AccessControlList != nil {
+		return apiresponses.NewFailureResponse(errors.New("AccessControlList is not supported for this plan"), http.StatusBadRequest, "AccessControlList is not supported for this plan")
 	}
 
-	return params.ACL.Validate()
+	return params.AccessControlList.Validate()
 }
 
 func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {

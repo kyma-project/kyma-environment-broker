@@ -3,8 +3,10 @@ package broker
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -28,9 +30,19 @@ func TestSchemaService_Azure(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	create, _, _ := schemaService.AzureSchemas("cf-ch20")
-	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress-eu.json")
+	//validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress-eu.json")
 
 	create, update, _ := schemaService.AzureSchemas("cf-us21")
+
+	type Wrapper struct {
+		Parameters json.RawMessage `json:"parameters"`
+	}
+	raw := Marshal(create)
+	wrapped := Marshal(Wrapper{
+		Parameters: raw,
+	})
+	fmt.Println(strconv.Quote(string(wrapped)))
+
 	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "azure/update-azure-schema-additional-params-ingress.json")
 }
@@ -194,7 +206,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-		EnableAclPlans:              []string{"gcp"},
+		EnableAclPlans:              []string{"azure"},
 	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }

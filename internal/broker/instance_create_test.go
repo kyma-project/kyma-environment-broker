@@ -1737,15 +1737,15 @@ func TestACLValidation(t *testing.T) {
 
 		expectedError bool
 	}{
-		"Invalid ACL": {
+		"Invalid AccessControlList": {
 			givenACL:      `{"allowedCIDRs": ["1.2.3.4444/16"]}`,
 			expectedError: true,
 		},
-		"Invalid ACL - wrong CIDR": {
+		"Invalid AccessControlList - wrong CIDR": {
 			givenACL:      `{"allowedCIDRs": ["1.2.5.5/24"]}`,
 			expectedError: true,
 		},
-		"Valid ACL": {
+		"Valid AccessControlList": {
 			givenACL:      `{"allowedCIDRs": ["1.2.3.0/24", "2.3.4.128/28"]}`,
 			expectedError: false,
 		},

@@ -134,7 +134,7 @@ func TestCreateRuntimeResourceStep_CreateACL(t *testing.T) {
 	}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
-	operation.ProvisioningParameters.Parameters.ACL = &pkg.AclDTO{
+	operation.ProvisioningParameters.Parameters.AccessControlList = &pkg.AclDTO{
 		AllowedCIDRs: []string{"10.0.0.0/16", "192.168.0.0/24"},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)

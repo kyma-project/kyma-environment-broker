@@ -439,7 +439,7 @@ func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, pa
 
 func (b *UpdateEndpoint) validateACL(params internal.UpdatingParametersDTO, planID string, logger *slog.Logger) error {
 	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))) && params.ACL != nil {
-		return apiresponses.NewFailureResponse(errors.New("ACL is not supported for this plan"), http.StatusBadRequest, "ACL is not supported for this plan")
+		return apiresponses.NewFailureResponse(errors.New("AccessControlList is not supported for this plan"), http.StatusBadRequest, "AccessControlList is not supported for this plan")
 	}
 
 	return params.ACL.Validate()
@@ -817,8 +817,8 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	}
 
 	if params.ACL != nil {
-		instance.Parameters.Parameters.ACL = params.ACL
-		updateStorage = append(updateStorage, "ACL")
+		instance.Parameters.Parameters.AccessControlList = params.ACL
+		updateStorage = append(updateStorage, "AccessControlList")
 	}
 
 	if params.Name != nil && *params.Name != "" {
