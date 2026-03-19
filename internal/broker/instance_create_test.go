@@ -1795,7 +1795,7 @@ func TestACLValidation(t *testing.T) {
 				domain.ProvisionDetails{
 					ServiceID:     serviceID,
 					PlanID:        broker.GCPPlanID,
-					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "cluster-name", "region": "europe-west3", "acl": %s}`, tc.givenACL)),
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "cluster-name", "region": "europe-west3", "accessControlList": %s}`, tc.givenACL)),
 					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 				}, true)
 

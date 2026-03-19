@@ -170,8 +170,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		s.channelResolver,
 	)
 	if s.cfg.IsACLEnabledForPlanName(planName) {
-		createProperties.ACL = ACLProperty()
-		updateProperties.ACL = ACLProperty()
+		createProperties.AccessControlList = ACLProperty()
+		updateProperties.AccessControlList = ACLProperty()
 	}
 	return createSchemaWithProperties(createProperties, s.defaultOIDCConfig, false, requiredSchemaProperties(), flags),
 		createSchemaWithProperties(updateProperties, s.defaultOIDCConfig, true, requiredSchemaProperties(), flags), true
@@ -238,7 +238,7 @@ func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string,
 		s.channelResolver,
 	)
 	if s.cfg.IsACLEnabledForPlanName(AzureLitePlanName) {
-		properties.ACL = ACLProperty()
+		properties.AccessControlList = ACLProperty()
 	}
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
@@ -297,7 +297,7 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		},
 	}
 	if s.cfg.IsACLEnabledForPlanName(FreemiumPlanName) {
-		properties.ACL = ACLProperty()
+		properties.AccessControlList = ACLProperty()
 	}
 	if !update {
 		defaultChannel := "regular"
@@ -326,7 +326,7 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 		},
 	}
 	if s.cfg.IsACLEnabledForPlanName(TrialPlanName) {
-		properties.ACL = ACLProperty()
+		properties.AccessControlList = ACLProperty()
 	}
 
 	if !update {

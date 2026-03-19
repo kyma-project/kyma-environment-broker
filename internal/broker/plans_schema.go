@@ -53,7 +53,7 @@ type UpdateProperties struct {
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
-	ACL                       *ACLType                       `json:"acl,omitempty"`
+	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 }
 
 type NetworkingProperties struct {
@@ -762,7 +762,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering", "acl"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -787,15 +787,16 @@ func AdministratorsProperty() *Type {
 func ACLProperty() *ACLType {
 	return &ACLType{
 		Type: Type{
-			Type:  "object",
-			Title: "Access Control List",
+			Type:        "object",
+			Title:       "Access Control List",
+			Description: "Allows you to restrict access to Kubernetes API server.",
 		},
 		Required: []string{"allowedCIDRs"},
 		Properties: ACLProperties{
 			AllowedCIDRs: Type{
 				Type:        "array",
 				Title:       "Allowed CIDRs",
-				Description: "The whitelisted CIRDs which are allowed to access the API server.",
+				Description: "The whitelisted CIRDs which are allowed to access Kubernetes API server. Provide an empty list if you don't want to define Access Control List.",
 				Items: &Type{
 					Type:    "string",
 					Example: "5.6.0.0/16",
