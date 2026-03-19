@@ -97,6 +97,7 @@ providersConfiguration:
 
 To simplify upgrades between instance generations, the configuration can be partially abstracted.
 Instead of referencing full instance family names, a logical machine type is used. The actual family is then resolved through a mapping.
+If the provided machine type does not match any mapping template, the original user-supplied value is used unchanged.
 
 ## AWS
 
@@ -192,13 +193,9 @@ providersConfiguration:
       c.{size}: c7i.{size}
       g.{size}: g6.{size}
       gdn.{size}: g4dn.{size}
-      r.{size}: r7i.{size}
+      r.{size}: r8i.{size}
       i.{size}: i7i.{size}
-      m6i.{size}: m6i.{size}
       m5.{size}: m6i.{size}
-      c7i.{size}: c7i.{size}
-      g6.{size}: g6.{size}
-      g4dn.{size}: g4dn.{size}
 ```
 
 ### Machine version resolution
@@ -209,13 +206,13 @@ providersConfiguration:
 |   `c.large`   |   `c.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
 |  `g.xlarge`   |   `g.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
 | `gdn.xlarge`  |  `gdn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
-|   `r.large`   |   `r.{size}`   |  `r7i.{size}`   |  `r7i.large`  |
+|   `r.large`   |   `r.{size}`   |  `r8i.{size}`   |  `r8i.large`  |
 |   `i.large`   |   `i.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
-|  `m6i.large`  |  `m6i.{size}`  |  `m6i.{size}`   |  `m6i.large`  |
 |  `m5.large`   |  `m5.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
-|  `c7i.large`  |  `c7i.{size}`  |  `c7i.{size}`   |  `c7i.large`  |
-|  `g6.xlarge`  |  `g6.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
-| `g4dn.xlarge` | `g4dn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
+|  `m6i.large`  |      `-`       |       `-`       |  `m6i.large`  |
+|  `c7i.large`  |      `-`       |       `-`       |  `c7i.large`  |
+|  `g6.xlarge`  |      `-`       |       `-`       |  `g6.xlarge`  |
+| `g4dn.xlarge` |      `-`       |       `-`       | `g4dn.xlarge` |
 
 
 ## Azure
@@ -302,26 +299,22 @@ providersConfiguration:
       Standard_NC{size}as_T4: Standard_NC{size}as_T4_v3
       Standard_E{size}s: Standard_E{size}s_v6
       Standard_L{size}s: Standard_L{size}s_v3
-      Standard_D{size}s_v5: Standard_D{size}s_v5
-      Standard_D{size}_v3: Standard_D{size}_v3
-      Standard_F{size}s_v2: Standard_F{size}s_v2
-      Standard_NC{size}as_T4_v3: Standard_NC{size}as_T4_v3
 ```
 
 ### Machine version resolution
 
-|         Input          |       Input Template        |       Output Template       |         Output         |
-|:----------------------:|:---------------------------:|:---------------------------:|:----------------------:|
-|     `Standard_D2s`     |     `Standard_D{size}s`     |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
-|     `Standard_D4`      |     `Standard_D{size}`      |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
-|     `Standard_F2s`     |     `Standard_F{size}s`     |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
-|  `Standard_NC4as_T4`   |  `Standard_NC{size}as_T4`   | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
-|     `Standard_E2s`     |     `Standard_E{size}s`     |   `Standard_E{size}s_v6`    |   `Standard_E2s_v6`    |
-|     `Standard_L8s`     |     `Standard_L{size}s`     |   `Standard_L{size}s_v3`    |   `Standard_L8s_v3`    |
-|   `Standard_D2s_v5`    |   `Standard_D{size}s_v5`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
-|    `Standard_D4_v3`    |    `Standard_D{size}_v3`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
-|   `Standard_F2s_v2`    |   `Standard_F{size}s_v2`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
-| `Standard_NC4as_T4_v3` | `Standard_NC{size}as_T4_v3` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
+|         Input          |      Input Template      |       Output Template       |         Output         |
+|:----------------------:|:------------------------:|:---------------------------:|:----------------------:|
+|     `Standard_D2s`     |   `Standard_D{size}s`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
+|     `Standard_D4`      |    `Standard_D{size}`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
+|     `Standard_F2s`     |   `Standard_F{size}s`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
+|  `Standard_NC4as_T4`   | `Standard_NC{size}as_T4` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
+|     `Standard_E2s`     |   `Standard_E{size}s`    |   `Standard_E{size}s_v6`    |   `Standard_E2s_v6`    |
+|     `Standard_L8s`     |   `Standard_L{size}s`    |   `Standard_L{size}s_v3`    |   `Standard_L8s_v3`    |
+|   `Standard_D2s_v5`    |           `-`            |             `-`             |   `Standard_D2s_v5`    |
+|    `Standard_D4_v3`    |           `-`            |             `-`             |    `Standard_D4_v3`    |
+|   `Standard_F2s_v2`    |           `-`            |             `-`             |   `Standard_F2s_v2`    |
+| `Standard_NC4as_T4_v3` |           `-`            |             `-`             | `Standard_NC4as_T4_v3` |
 
 
 ## GCP
@@ -391,23 +384,20 @@ providersConfiguration:
       g-standard-{size}: g2-standard-{size}
       m-ultramem-{size}: m3-ultramem-{size}
       z-highmem-{size}: z3-highmem-{size}-standardlssd
-      n2-standard-{size}: n2-standard-{size}
-      c2d-highcpu-{size}: c2d-highcpu-{size}
-      g2-standard-{size}: g2-standard-{size}
 ```
 
 ### Machine version resolution
 
-|      Input      |    Input Template    |         Output Template          |            Output            |
-|:---------------:|:--------------------:|:--------------------------------:|:----------------------------:|
-| `n-standard-2`  | `n-standard-{size}`  |       `n2-standard-{size}`       |       `n2-standard-2`        |
-|  `c-highcpu-2`  |  `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
-| `g-standard-4`  | `g-standard-{size}`  |       `g2-standard-{size}`       |       `g2-standard-4`        |
-| `m-ultramem-32` | `m-ultramem-{size}`  |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
-| `z-highmem-14`  |  `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
-| `n2-standard-2` | `n2-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
-| `c2d-highcpu-2` | `c2d-highcpu-{size}` |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
-| `g2-standard-4` | `g2-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
+|      Input      |   Input Template    |         Output Template          |            Output            |
+|:---------------:|:-------------------:|:--------------------------------:|:----------------------------:|
+| `n-standard-2`  | `n-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
+|  `c-highcpu-2`  | `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+| `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
+| `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
+| `z-highmem-14`  | `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
+| `n2-standard-2` |         `-`         |               `-`                |       `n2-standard-2`        |
+| `c2d-highcpu-2` |         `-`         |               `-`                |       `c2d-highcpu-2`        |
+| `g2-standard-4` |         `-`         |               `-`                |       `g2-standard-4`        |
 
 
 ## SAP Cloud Infrastructure
@@ -468,15 +458,14 @@ providersConfiguration:
 
     machinesVersions:
       ecs.g.{size}: ecs.g9i.{size}
-      ecs.g9i.{size}: ecs.g9i.{size}
 ```
 
 ### Machine version resolution
 
-|      Input      |  Input Template  | Output Template  |     Output      |
-|:---------------:|:----------------:|:----------------:|:---------------:|
-|  `ecs.g.large`  |  `ecs.g.{size}`  | `ecs.g9i.{size}` | `ecs.g9i.large` |
-| `ecs.g9i.large` | `ecs.g9i.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
+|      Input      | Input Template | Output Template  |     Output      |
+|:---------------:|:--------------:|:----------------:|:---------------:|
+|  `ecs.g.large`  | `ecs.g.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
+| `ecs.g9i.large` |      `-`       |       `-`        | `ecs.g9i.large` |
 
 
 # Family Agnostic configuration
