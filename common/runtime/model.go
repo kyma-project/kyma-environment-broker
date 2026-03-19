@@ -3,11 +3,12 @@ package runtime
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 )
