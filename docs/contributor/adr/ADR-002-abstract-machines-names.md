@@ -1,4 +1,4 @@
-# Abstract machines names
+# Abstract Machines Names
 
 ## Status
 
