@@ -835,30 +835,30 @@ The following examples use AWS, but the same migration pattern applies to the ot
    - the new version-agnostic values, and,
    - the old versioned values marked as deprecated.
 
-    ```json
-    {
-      "machineType": {
-        "_enumDisplayName": {
-          "m.large": "m.large (2vCPU, 8GB RAM)",
-          "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
-          "m6i.large": "m6i.large (deprecated, use m.large)",
-          "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
-          "m5.large": "m5.large (deprecated, use m.large)",
-          "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
-        },
-        "description": "Specifies the type of the virtual machine.",
-        "enum": [
-          "m.large",
-          "m.16xlarge",
-          "m6i.large",
-          "m6i.16xlarge",
-          "m5.large",
-          "m5.16xlarge"
-        ],
-        "type": "string"
-      }
-    }
-    ```
+   ```json
+   {
+     "machineType": {
+       "_enumDisplayName": {
+         "m.large": "m.large (2vCPU, 8GB RAM)",
+         "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
+         "m6i.large": "m6i.large (deprecated, use m.large)",
+         "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
+         "m5.large": "m5.large (deprecated, use m.large)",
+         "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
+       },
+       "description": "Specifies the type of the virtual machine.",
+       "enum": [
+         "m.large",
+         "m.16xlarge",
+         "m6i.large",
+         "m6i.16xlarge",
+         "m5.large",
+         "m5.16xlarge"
+       ],
+       "type": "string"
+     }
+   }
+   ```
 
 4. SRE updates all existing Runtime CRs using Cluster Orchestrator so that existing clusters are aligned with the new version agnostic machine types.
 5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for active entries, and only the logical values such as `m.large` remain.
