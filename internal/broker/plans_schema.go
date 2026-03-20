@@ -796,7 +796,7 @@ func ACLProperty() *ACLType {
 			AllowedCIDRs: Type{
 				Type:        "array",
 				Title:       "Allowed CIDRs",
-				Description: "The whitelisted CIRDs which are allowed to access Kubernetes API server. Provide an empty list if you don't want to define Access Control List.",
+				Description: "The whitelisted CIDRs allowed to access the Kubernetes API server. If you don't want to define Access Control List, provide an empty list.",
 				Items: &Type{
 					Type:    "string",
 					Example: "5.6.0.0/16",
