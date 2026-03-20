@@ -690,7 +690,7 @@ Below is the current AWS schema used in BTP Cockpit:
 The JSON schema requires that the **machineType** value must be one of the entries defined in the enum list.
 It does not allow values outside of this predefined set.
 
-If abstract machine types are introduced (e.g., `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
+If abstract machine types are introduced (for example, `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
 The updated schema would therefore include both the abstract types and the existing concrete instance types:
 
 ```json
