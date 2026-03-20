@@ -794,7 +794,7 @@ Process:
    - Clusters should be updated in batches.
    - Operators should remain in a heightened alert state throughout the rollout.
 
-### Deprecating old machine types with explicit versions
+### Deprecating Old Machine Types with Explicit Versions
 
 The following examples use AWS, but the same migration pattern applies to the other providers.
 
