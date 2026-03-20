@@ -729,7 +729,7 @@ However, to avoid confusion for users, the GET API endpoint should always return
 
 ### BTP CLI
 
-When submitting a provisioning request with a machine type that is not defined in the schema (e.g., `test`), the request is rejected by the BTP CLI before reaching KEB.
+When submitting a provisioning request with a machine type not defined in the schema (for example, `test`), the BTP CLI rejects it before it reaches KEB.
 This behavior indicates that the BTP CLI performs client-side schema validation, enforcing that the **machineType** must match one of the allowed enum values.
 As a result, all previously supported machine types must remain in the schema to ensure backward compatibility.
 
