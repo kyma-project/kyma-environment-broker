@@ -102,6 +102,8 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
+            - name: APP_BROKER_ACL_ENABLED_PLANS
+              value: "{{ .Values.broker.ACLEnabledPlans }}"
             - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ .Values.broker.allowedGlobalAccountIDs }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
@@ -124,8 +126,6 @@ spec:
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DUAL_STACK_DOCS_URL
               value: "{{ .Values.broker.dualStackDocsURL }}"
-            - name: APP_BROKER_ENABLE_ACL_PLANS
-              value: "{{ .Values.broker.ACLEnabledPlans }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_PLAN_UPGRADES

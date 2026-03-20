@@ -1768,7 +1768,7 @@ func TestACLValidation(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
-				broker.Config{EnablePlans: []string{"gcp"}, EnableAclPlans: []string{"gcp"}},
+				broker.Config{EnablePlans: []string{"gcp"}, ACLEnabledPlans: []string{"gcp"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				imConfigFixture,
 				memoryStorage,

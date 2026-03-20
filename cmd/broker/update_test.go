@@ -108,7 +108,7 @@ func TestUpdate(t *testing.T) {
 
 func TestUpdateWithACL(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.EnableAclPlans = []string{broker.AWSPlanName}
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
@@ -218,7 +218,7 @@ func TestUpdateWithACL(t *testing.T) {
 
 func TestAddACL(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.EnableAclPlans = []string{broker.AWSPlanName}
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()

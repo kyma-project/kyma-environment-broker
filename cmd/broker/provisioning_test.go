@@ -154,7 +154,7 @@ func TestProvisioningForAWS(t *testing.T) {
 
 func TestProvisioningWithACL(t *testing.T) {
 	cfg := fixConfig()
-	cfg.Broker.EnableAclPlans = []string{broker.AWSPlanName}
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()

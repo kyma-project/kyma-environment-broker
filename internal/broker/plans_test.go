@@ -195,7 +195,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-		EnableAclPlans:              []string{"gcp"},
+		ACLEnabledPlans:             []string{"gcp"},
 	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }

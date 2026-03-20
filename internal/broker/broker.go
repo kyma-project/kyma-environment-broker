@@ -66,7 +66,7 @@ type Config struct {
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
 	// enables Access-Control-List.
-	EnableAclPlans StringList `envconfig:"default=false"`
+	ACLEnabledPlans StringList `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
@@ -81,10 +81,10 @@ func (cfg *Config) Validate() error {
 }
 
 func (cfg *Config) IsACLEnabledForPlanName(planName string) bool {
-	if cfg.EnableAclPlans.Contains("all") {
+	if cfg.ACLEnabledPlans.Contains("all") {
 		return true
 	}
-	return cfg.EnableAclPlans.Contains(planName)
+	return cfg.ACLEnabledPlans.Contains(planName)
 }
 
 func NewServicesConfigFromFile(path string) (ServicesConfig, error) {
