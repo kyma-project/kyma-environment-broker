@@ -4,6 +4,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_ACL_&#x200b;ENABLED_PLANS** | None | - |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
@@ -15,7 +16,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified. |
 | **APP_BROKER_DUAL_&#x200b;STACK_DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support</code> | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. |
-| **APP_BROKER_ENABLE_&#x200b;ACL_PLANS** | <code>no-plan</code> | Comma-separated list of plan names for which has enabled ACL feature. The 'all' value enables it for all plans. |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB. |
 | **APP_BROKER_ENABLE_&#x200b;PLAN_UPGRADES** | <code>false</code> | If true, allows users to upgrade their plans (if a plan supports upgrades). |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
