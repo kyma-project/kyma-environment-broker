@@ -867,7 +867,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
 7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
    This should only be done once there is evidence that no new entries using deprecated values are being created anymore.
 
-#### Option 2: Migration with CIS support
+#### Option 2: Migration with CIS Support
 
 1. Request support from CIS for conditional disabling of enum validation for selected schema fields.
 
