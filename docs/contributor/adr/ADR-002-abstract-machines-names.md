@@ -482,7 +482,7 @@ If the provided machine type does not match any mapping template, the original u
     | `ecs.g9i.large` |      `-`       |       `-`        | `ecs.g9i.large` |
 
 
-### Family Agnostic configuration
+### Family Agnostic Configuration
 
 The family agnostic configuration fully separates logical machine types from actual instance types.
 Instead of referencing instance families directly, machines are defined using logical categories such as `general`, `compute`, `memory`, `storage`, or `gpu`.
