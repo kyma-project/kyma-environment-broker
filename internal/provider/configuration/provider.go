@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -30,6 +31,7 @@ type providerDTO struct {
 	SupportingMachines  RegionsSupportingMachine `yaml:"regionsSupportingMachine,omitempty"`
 	ZonesDiscovery      bool                     `yaml:"zonesDiscovery"`
 	DualStack           bool                     `yaml:"dualStack,omitempty"`
+	MachinesVersions    map[string]string        `yaml:"machinesVersions,omitempty"`
 }
 
 type dto map[runtime.CloudProvider]providerDTO
@@ -253,4 +255,123 @@ func (p *ProviderSpec) IsDualStackSupported(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.DualStack
+}
+
+// ResolveMachineType resolves a given machine type to its versioned equivalent
+// using provider-specific template mappings. If no templates match, or if no
+// provider data is available, the original machineType is returned unchanged.
+func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType string) string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil || len(providerData.MachinesVersions) == 0 {
+		return machineType
+	}
+
+	// Sort templates from the most specific to the least specific, so we prefer
+	// the most constrained match when multiple templates could match the input.
+	templates := make([]string, 0, len(providerData.MachinesVersions))
+	for inputTemplate := range providerData.MachinesVersions {
+		templates = append(templates, inputTemplate)
+	}
+
+	sort.SliceStable(templates, func(i, j int) bool {
+		leftScore := templateSpecificity(templates[i])
+		rightScore := templateSpecificity(templates[j])
+
+		if leftScore == rightScore {
+			return templates[i] < templates[j]
+		}
+		return leftScore > rightScore
+	})
+
+	// Resolve the first matching template.
+	for _, inputTemplate := range templates {
+		outputTemplate := providerData.MachinesVersions[inputTemplate]
+
+		regex, placeholderNames := templateToRegexp(inputTemplate)
+		matches := regex.FindStringSubmatch(machineType)
+		if matches == nil {
+			continue
+		}
+
+		// Build placeholder -> captured value map.
+		values := make(map[string]string, len(placeholderNames))
+		for i, name := range placeholderNames {
+			values[name] = matches[i+1]
+		}
+
+		// Replace placeholders in the output template with captured values.
+		resolved := replaceTemplatePlaceholders(outputTemplate, values)
+		if resolved != "" {
+			return resolved
+		}
+	}
+
+	// No template matched, so return the original value unchanged.
+	return machineType
+}
+
+// templateSpecificity returns a score used to sort templates by how specific they are.
+// More literal characters means more specific. Fewer placeholders also means more specific.
+func templateSpecificity(template string) int {
+	placeholderRE := regexp.MustCompile(`\{[a-zA-Z0-9_]+\}`)
+	placeholders := placeholderRE.FindAllString(template, -1)
+
+	literalLength := len(placeholderRE.ReplaceAllString(template, ""))
+	placeholderPenalty := len(placeholders) * 1000
+
+	return literalLength*10000 - placeholderPenalty
+}
+
+// templateToRegexp converts a template such as "m.{size}" into a regular expression
+// like "^m\\.([^.]+)$" and returns the placeholder names in capture-group order.
+func templateToRegexp(template string) (*regexp.Regexp, []string) {
+	placeholderRE := regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
+
+	var pattern strings.Builder
+	pattern.WriteString("^")
+
+	placeholderNames := make([]string, 0)
+	lastIdx := 0
+
+	for _, match := range placeholderRE.FindAllStringSubmatchIndex(template, -1) {
+		fullStart, fullEnd := match[0], match[1]
+		nameStart, nameEnd := match[2], match[3]
+
+		// Escape literal text between placeholders.
+		pattern.WriteString(regexp.QuoteMeta(template[lastIdx:fullStart]))
+
+		placeholderName := template[nameStart:nameEnd]
+		placeholderNames = append(placeholderNames, placeholderName)
+
+		// Placeholder values in current machine-type templates are alphanumeric.
+		// This prevents matching already-versioned values such as:
+		// Standard_D48s_v5 against Standard_D{size}
+		pattern.WriteString(`([a-zA-Z0-9]+)`)
+
+		lastIdx = fullEnd
+	}
+
+	// Escape trailing literal text.
+	pattern.WriteString(regexp.QuoteMeta(template[lastIdx:]))
+	pattern.WriteString("$")
+
+	return regexp.MustCompile(pattern.String()), placeholderNames
+}
+
+// replaceTemplatePlaceholders replaces placeholders in the template with resolved values.
+// Unknown placeholders are left unchanged.
+func replaceTemplatePlaceholders(template string, values map[string]string) string {
+	placeholderRE := regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
+
+	return placeholderRE.ReplaceAllStringFunc(template, func(token string) string {
+		match := placeholderRE.FindStringSubmatch(token)
+		if len(match) != 2 {
+			return token
+		}
+
+		if value, ok := values[match[1]]; ok {
+			return value
+		}
+		return token
+	})
 }
