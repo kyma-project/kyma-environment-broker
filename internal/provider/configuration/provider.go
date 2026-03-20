@@ -313,7 +313,7 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 // templateSpecificity returns a score used to sort templates by how specific they are.
 // More literal characters means more specific. Fewer placeholders also means more specific.
 func templateSpecificity(template string) int {
-	placeholderRE := regexp.MustCompile(`\{[a-zA-Z0-9_]+\}`)
+	placeholderRE := regexp.MustCompile(`\{\w+}`)
 	placeholders := placeholderRE.FindAllString(template, -1)
 
 	literalLength := len(placeholderRE.ReplaceAllString(template, ""))
@@ -325,7 +325,7 @@ func templateSpecificity(template string) int {
 // templateToRegexp converts a template such as "m.{size}" into a regular expression
 // like "^m\\.([^.]+)$" and returns the placeholder names in capture-group order.
 func templateToRegexp(template string) (*regexp.Regexp, []string) {
-	placeholderRE := regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
+	placeholderRE := regexp.MustCompile(`\{(\w+)}`)
 
 	var pattern strings.Builder
 	pattern.WriteString("^")
@@ -361,7 +361,7 @@ func templateToRegexp(template string) (*regexp.Regexp, []string) {
 // replaceTemplatePlaceholders replaces placeholders in the template with resolved values.
 // Unknown placeholders are left unchanged.
 func replaceTemplatePlaceholders(template string, values map[string]string) string {
-	placeholderRE := regexp.MustCompile(`\{([a-zA-Z0-9_]+)\}`)
+	placeholderRE := regexp.MustCompile(`\{(\w+)}`)
 
 	return placeholderRE.ReplaceAllStringFunc(template, func(token string) string {
 		match := placeholderRE.FindStringSubmatch(token)
