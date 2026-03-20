@@ -10,10 +10,10 @@ Machine types are currently exposed to users as concrete hyperscaler-specific in
 This makes machine configuration tightly coupled to a specific provider family and generation.
 
 That coupling causes the following problems:
-- introducing a newer machine generation requires schema changes,
-- previously accepted values must remain valid for backward compatibility,
-- removing old values breaks update flows in BTP Cockpit and client-side validation in BTP CLI,
-- switching to a different machine family or generation is operationally expensive and hard to communicate to users.
+- Introducing a newer machine generation requires schema changes,
+- Previously accepted values must remain valid for backward compatibility,
+- Removing old values breaks update flows in the BTP Cockpit and client-side validation in BTP CLI,
+- Switching to a different machine family or generation is operationally expensive and hard to communicate to users.
 
 To address this, machine names should be abstracted from concrete instance types while preserving backward compatibility for already supported values.
 
