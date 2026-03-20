@@ -17,7 +17,7 @@ That coupling causes the following problems:
 
 To address this, machine names should be abstracted from concrete instance types while preserving backward compatibility for already supported values.
 
-### Current configuration
+### Current Configuration
 
 - AWS
 
