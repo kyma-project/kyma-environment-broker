@@ -813,7 +813,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
     ```
 
 2. Next, add the new version-agnostic machine types while keeping the existing versioned values for backward compatibility.
-   The old values remain valid, but they are marked as deprecated and point users to the new logical machine types:
+   The old values remain valid, but they are marked as deprecated and point users to the new logical machine types.
 
     ```yaml
     providersConfiguration:
