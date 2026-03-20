@@ -172,7 +172,7 @@ func TestProvisioningWithACL(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"acl": {
+						"accessControlList": {
                             "allowedCIDRs": ["1.2.3.0/24"]
                         }
 					}
@@ -200,7 +200,7 @@ func TestProvisioningWithACL(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"acl": {
+						"accessControlList": {
                             "allowedCIDRs": ["1.2.3.333/24"]
                         }
 					}

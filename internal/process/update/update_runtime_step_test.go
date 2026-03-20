@@ -97,7 +97,7 @@ func TestUpdateRuntimeStep_RunUpdateACL(t *testing.T) {
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		ACL: &pkg.AclDTO{
+		AccessControlList: &pkg.AclDTO{
 			AllowedCIDRs: []string{"1.2.3.16/30"},
 		},
 	}
@@ -126,7 +126,7 @@ func TestUpdateRuntimeStep_RunDeleteACL(t *testing.T) {
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		ACL: &pkg.AclDTO{
+		AccessControlList: &pkg.AclDTO{
 			AllowedCIDRs: []string{},
 		},
 	}

@@ -438,11 +438,11 @@ func (b *UpdateEndpoint) ZeroFieldsForTrialPlan(details domain.UpdateDetails, pa
 }
 
 func (b *UpdateEndpoint) validateACL(params internal.UpdatingParametersDTO, planID string, logger *slog.Logger) error {
-	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))) && params.ACL != nil {
+	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))) && params.AccessControlList != nil {
 		return apiresponses.NewFailureResponse(errors.New("AccessControlList is not supported for this plan"), http.StatusBadRequest, "AccessControlList is not supported for this plan")
 	}
 
-	return params.ACL.Validate()
+	return params.AccessControlList.Validate()
 }
 
 func (b *UpdateEndpoint) validateMachineTypeSupportedInRegion(regionsSupportingMachine internal.RegionsSupporter, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO) error {
@@ -816,8 +816,8 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
 	}
 
-	if params.ACL != nil {
-		instance.Parameters.Parameters.AccessControlList = params.ACL
+	if params.AccessControlList != nil {
+		instance.Parameters.Parameters.AccessControlList = params.AccessControlList
 		updateStorage = append(updateStorage, "AccessControlList")
 	}
 
