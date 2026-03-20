@@ -718,7 +718,7 @@ The updated schema would therefore include both the abstract types and the exist
 }
 ```
 
-If the logical machine family `m` is mapped to a newer generation (for example `m7i`), the Kyma Environment Broker (KEB) must resolve the machine type before passing it to the Runtime CR.
+If the logical machine family `m` is mapped to a newer generation (for example `m7i`), Kyma Environment Broker (KEB) must resolve the machine type before passing it to the Runtime CR.
 For example, the following user inputs:
 - `m.large`
 - `m6i.large`
