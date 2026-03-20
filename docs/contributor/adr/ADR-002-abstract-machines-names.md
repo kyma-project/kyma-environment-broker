@@ -1,474 +1,488 @@
-# Current configuration
+# Abstract machines names
 
-## AWS
+## Status
 
-```yaml
-providersConfiguration:
-  aws:
-    machines:
-      m6i.large: m6i.large (2vCPU, 8GB RAM)
-      m6i.16xlarge: m6i.16xlarge (64vCPU, 256GB RAM)
-      m5.large: m5.large (2vCPU, 8GB RAM)
-      m5.16xlarge: m5.16xlarge (64vCPU, 256GB RAM)
-      c7i.large: c7i.large (2vCPU, 4GB RAM)
-      c7i.16xlarge: c7i.16xlarge (64vCPU, 128GB RAM)
-      g6.xlarge: g6.xlarge (1GPU, 4vCPU, 16GB RAM)*
-      g6.16xlarge: g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*
-      g4dn.xlarge: g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*
-      g4dn.16xlarge: g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+Accepted
 
-      # New memory-intensive machine types
-      r7i.large: r7i.large (2vCPU, 16GB RAM)
-      r7i.16xlarge: r7i.16xlarge (64vCPU, 512GB RAM)
-        
-      # New storage-intensive machine types
-      i7i.large: i7i.large (2vCPU, 16GB RAM)
-      i7i.16xlarge: i7i.16xlarge (64vCPU, 512GB RAM)
-```
+## Context
 
-## Azure
+Machine types are currently exposed to users as concrete hyperscaler-specific instance names such as `m6i.large`, `Standard_D2s_v5`, or `n2-standard-2`.
+This makes machine configuration tightly coupled to a specific provider family and generation.
 
-```yaml
-providersConfiguration:
-  azure:
-    machines:
-      Standard_D2s_v5: Standard_D2s_v5 (2vCPU, 8GB RAM)
-      Standard_D64s_v5: Standard_D64s_v5 (64vCPU, 256GB RAM)
-      Standard_D4_v3: Standard_D4_v3 (4vCPU, 16GB RAM)
-      Standard_D64_v3: Standard_D64_v3 (64vCPU, 256GB RAM)
-      Standard_F2s_v2: Standard_F2s_v2 (2vCPU, 4GB RAM)
-      Standard_F64s_v2: Standard_F64s_v2 (64vCPU, 128GB RAM)
-      Standard_NC4as_T4_v3: Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*
-      Standard_NC64as_T4_v3: Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*
+That coupling creates several problems:
+- introducing a newer machine generation requires schema changes,
+- previously accepted values must remain valid for backward compatibility,
+- removing old values breaks update flows in BTP Cockpit and client-side validation in BTP CLI,
+- switching to a different machine family or generation is operationally expensive and hard to communicate to users.
 
-      # New memory-intensive machine types
-      Standard_E2s_v6: Standard_E2s_v6 (2vCPU, 16GB RAM)
-      Standard_E64s_v6: Standard_E64s_v6 (64vCPU, 512GB RAM)
+To address this, machine names should be abstracted from concrete instance types while preserving backward compatibility for already supported values.
 
-      # New storage-intensive machine types
-      Standard_L8s_v3: Standard_L8s_v3 (8vCPU, 64GB RAM)
-      Standard_L64s_v3: Standard_L64s_v3 (64vCPU, 512GB RAM)
-```
+### Current configuration
 
-## GCP
+- AWS
 
-```yaml
-providersConfiguration:
-  gcp:
-    machines:
-      n2-standard-2: n2-standard-2 (2vCPU, 8GB RAM)
-      n2-standard-64: n2-standard-64 (64vCPU, 256GB RAM)
-      c2d-highcpu-2: c2d-highcpu-2 (2vCPU, 4GB RAM)
-      c2d-highcpu-56: c2d-highcpu-56 (56vCPU, 112GB RAM)
-      g2-standard-4: g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*
-      g2-standard-48: g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*
-
-      # New memory-intensive machine types
-      m3-ultramem-32: m3-ultramem-32 (32vCPU, 976GB RAM)
-      m3-ultramem-64: m3-ultramem-64 (64vCPU, 1,952GB RAM)
-
-      # New storage-intensive machine types
-      z3-highmem-14-standardlssd: z3-highmem-14-standardlssd (14vCPU, 112GB RAM)
-      z3-highmem-44-standardlssd: z3-highmem-44-standardlssd (44vCPU, 352GB RAM)
-```
-
-## SAP Cloud Infrastructure
-
-```yaml
-providersConfiguration:
-  sap-converged-cloud:
-    machines:
-      g_c2_m8: g_c2_m8 (2vCPU, 8GB RAM)
-      g_c64_m256: g_c64_m256 (64vCPU, 256GB RAM)
-```
-
-## Alibaba Cloud
-
-```yaml
-providersConfiguration:
-    alicloud:
+  ```yaml
+  providersConfiguration:
+    aws:
       machines:
-        "ecs.g9i.large": "ecs.g9i.large (2vCPU, 8GB RAM)"
-        "ecs.g9i.16xlarge": "ecs.g9i.16xlarge (64vCPU, 256GB RAM)"
-```
+        m6i.large: m6i.large (2vCPU, 8GB RAM)
+        m6i.16xlarge: m6i.16xlarge (64vCPU, 256GB RAM)
+        m5.large: m5.large (2vCPU, 8GB RAM)
+        m5.16xlarge: m5.16xlarge (64vCPU, 256GB RAM)
+        c7i.large: c7i.large (2vCPU, 4GB RAM)
+        c7i.16xlarge: c7i.16xlarge (64vCPU, 128GB RAM)
+        g6.xlarge: g6.xlarge (1GPU, 4vCPU, 16GB RAM)*
+        g6.16xlarge: g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+        g4dn.xlarge: g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*
+        g4dn.16xlarge: g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+  
+        # New memory-intensive machine types
+        r7i.large: r7i.large (2vCPU, 16GB RAM)
+        r7i.16xlarge: r7i.16xlarge (64vCPU, 512GB RAM)
+          
+        # New storage-intensive machine types
+        i7i.large: i7i.large (2vCPU, 16GB RAM)
+        i7i.16xlarge: i7i.16xlarge (64vCPU, 512GB RAM)
+  ```
 
+- Azure
 
-# Version Agnostic Configuration
+  ```yaml
+  providersConfiguration:
+    azure:
+      machines:
+        Standard_D2s_v5: Standard_D2s_v5 (2vCPU, 8GB RAM)
+        Standard_D64s_v5: Standard_D64s_v5 (64vCPU, 256GB RAM)
+        Standard_D4_v3: Standard_D4_v3 (4vCPU, 16GB RAM)
+        Standard_D64_v3: Standard_D64_v3 (64vCPU, 256GB RAM)
+        Standard_F2s_v2: Standard_F2s_v2 (2vCPU, 4GB RAM)
+        Standard_F64s_v2: Standard_F64s_v2 (64vCPU, 128GB RAM)
+        Standard_NC4as_T4_v3: Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*
+        Standard_NC64as_T4_v3: Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*
+  
+        # New memory-intensive machine types
+        Standard_E2s_v6: Standard_E2s_v6 (2vCPU, 16GB RAM)
+        Standard_E64s_v6: Standard_E64s_v6 (64vCPU, 512GB RAM)
+  
+        # New storage-intensive machine types
+        Standard_L8s_v3: Standard_L8s_v3 (8vCPU, 64GB RAM)
+        Standard_L64s_v3: Standard_L64s_v3 (64vCPU, 512GB RAM)
+  ```
+
+- GCP
+
+  ```yaml
+  providersConfiguration:
+    gcp:
+      machines:
+        n2-standard-2: n2-standard-2 (2vCPU, 8GB RAM)
+        n2-standard-64: n2-standard-64 (64vCPU, 256GB RAM)
+        c2d-highcpu-2: c2d-highcpu-2 (2vCPU, 4GB RAM)
+        c2d-highcpu-56: c2d-highcpu-56 (56vCPU, 112GB RAM)
+        g2-standard-4: g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*
+        g2-standard-48: g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*
+  
+        # New memory-intensive machine types
+        m3-ultramem-32: m3-ultramem-32 (32vCPU, 976GB RAM)
+        m3-ultramem-64: m3-ultramem-64 (64vCPU, 1,952GB RAM)
+  
+        # New storage-intensive machine types
+        z3-highmem-14-standardlssd: z3-highmem-14-standardlssd (14vCPU, 112GB RAM)
+        z3-highmem-44-standardlssd: z3-highmem-44-standardlssd (44vCPU, 352GB RAM)
+  ```
+
+- SAP Cloud Infrastructure
+
+  ```yaml
+  providersConfiguration:
+    sap-converged-cloud:
+      machines:
+        g_c2_m8: g_c2_m8 (2vCPU, 8GB RAM)
+        g_c64_m256: g_c64_m256 (64vCPU, 256GB RAM)
+  ```
+
+- Alibaba Cloud
+
+  ```yaml
+  providersConfiguration:
+      alicloud:
+        machines:
+          "ecs.g9i.large": "ecs.g9i.large (2vCPU, 8GB RAM)"
+          "ecs.g9i.16xlarge": "ecs.g9i.16xlarge (64vCPU, 256GB RAM)"
+  ```
+
+### Version Agnostic Configuration
 
 To simplify upgrades between instance generations, the configuration can be partially abstracted.
 Instead of referencing full instance family names, a logical machine type is used. The actual family is then resolved through a mapping.
 If the provided machine type does not match any mapping template, the original user-supplied value is used unchanged.
 
-## AWS
+- AWS
 
-### Configuration
+  - Configuration
 
-```yaml
-providersConfiguration:
-  aws:
-    machines:
-      # Version Agnostic machines
-      m.large: m.large (2vCPU, 8GB RAM)
-      m.xlarge: m.xlarge (4vCPU, 16GB RAM)
-      m.2xlarge: m.2xlarge (8vCPU, 32GB RAM)
-      m.4xlarge: m.4xlarge (16vCPU, 64GB RAM)
-      m.8xlarge: m.8xlarge (32vCPU, 128GB RAM)
-      m.12xlarge: m.12xlarge (48vCPU, 192GB RAM)
-      m.16xlarge: m.16xlarge (64vCPU, 256GB RAM)
-      c.large: c.large (2vCPU, 4GB RAM)
-      c.xlarge: c.xlarge (4vCPU, 8GB RAM)
-      c.2xlarge: c.2xlarge (8vCPU, 16GB RAM)
-      c.4xlarge: c.4xlarge (16vCPU, 32GB RAM)
-      c.8xlarge: c.8xlarge (32vCPU, 64GB RAM)
-      c.12xlarge: c.12xlarge (48vCPU, 96GB RAM)
-      c.16xlarge: c.16xlarge (64vCPU, 128GB RAM)
-      g.xlarge: g.xlarge (1GPU, 4vCPU, 16GB RAM)*
-      g.2xlarge: g.2xlarge (1GPU, 8vCPU, 32GB RAM)*
-      g.4xlarge: g.4xlarge (1GPU, 16vCPU, 64GB RAM)*
-      g.8xlarge: g.8xlarge (1GPU, 32vCPU, 128GB RAM)*
-      g.12xlarge: g.12xlarge (4GPU, 48vCPU, 192GB RAM)*
-      g.16xlarge: g.16xlarge (1GPU, 64vCPU, 256GB RAM)*
-      gdn.xlarge: gdn.xlarge (1GPU, 4vCPU, 16GB RAM)*
-      gdn.2xlarge: gdn.2xlarge (1GPU, 8vCPU, 32GB RAM)*
-      gdn.4xlarge: gdn.4xlarge (1GPU, 16vCPU, 64GB RAM)*
-      gdn.8xlarge: gdn.8xlarge (1GPU, 32vCPU, 128GB RAM)*
-      gdn.12xlarge: gdn.12xlarge (4GPU, 48vCPU, 192GB RAM)*
-      gdn.16xlarge: gdn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+    ```yaml
+    providersConfiguration:
+      aws:
+        machines:
+          # Version Agnostic machines
+          m.large: m.large (2vCPU, 8GB RAM)
+          m.xlarge: m.xlarge (4vCPU, 16GB RAM)
+          m.2xlarge: m.2xlarge (8vCPU, 32GB RAM)
+          m.4xlarge: m.4xlarge (16vCPU, 64GB RAM)
+          m.8xlarge: m.8xlarge (32vCPU, 128GB RAM)
+          m.12xlarge: m.12xlarge (48vCPU, 192GB RAM)
+          m.16xlarge: m.16xlarge (64vCPU, 256GB RAM)
+          c.large: c.large (2vCPU, 4GB RAM)
+          c.xlarge: c.xlarge (4vCPU, 8GB RAM)
+          c.2xlarge: c.2xlarge (8vCPU, 16GB RAM)
+          c.4xlarge: c.4xlarge (16vCPU, 32GB RAM)
+          c.8xlarge: c.8xlarge (32vCPU, 64GB RAM)
+          c.12xlarge: c.12xlarge (48vCPU, 96GB RAM)
+          c.16xlarge: c.16xlarge (64vCPU, 128GB RAM)
+          g.xlarge: g.xlarge (1GPU, 4vCPU, 16GB RAM)*
+          g.2xlarge: g.2xlarge (1GPU, 8vCPU, 32GB RAM)*
+          g.4xlarge: g.4xlarge (1GPU, 16vCPU, 64GB RAM)*
+          g.8xlarge: g.8xlarge (1GPU, 32vCPU, 128GB RAM)*
+          g.12xlarge: g.12xlarge (4GPU, 48vCPU, 192GB RAM)*
+          g.16xlarge: g.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+          gdn.xlarge: gdn.xlarge (1GPU, 4vCPU, 16GB RAM)*
+          gdn.2xlarge: gdn.2xlarge (1GPU, 8vCPU, 32GB RAM)*
+          gdn.4xlarge: gdn.4xlarge (1GPU, 16vCPU, 64GB RAM)*
+          gdn.8xlarge: gdn.8xlarge (1GPU, 32vCPU, 128GB RAM)*
+          gdn.12xlarge: gdn.12xlarge (4GPU, 48vCPU, 192GB RAM)*
+          gdn.16xlarge: gdn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
+    
+          # New memory-intensive machine types
+          r.large: r.large (2vCPU, 16GB RAM)
+          r.xlarge: r.xlarge (4vCPU, 32GB RAM)
+          r.2xlarge: r.2xlarge (8vCPU, 64GB RAM)
+          r.4xlarge: r.4xlarge (16vCPU, 128GB RAM)
+          r.8xlarge: r.8xlarge (32vCPU, 256GB RAM)
+          r.12xlarge: r.12xlarge (48vCPU, 384GB RAM)
+          r.16xlarge: r.16xlarge (64vCPU, 512GB RAM)
+    
+          # New storage-intensive machine types
+          i.large: i.large (2vCPU, 16GB RAM)
+          i.xlarge: i.xlarge (4vCPU, 32GB RAM)
+          i.2xlarge: i.2xlarge (8vCPU, 64GB RAM)
+          i.4xlarge: i.4xlarge (16vCPU, 128GB RAM)
+          i.8xlarge: i.8xlarge (32vCPU, 256GB RAM)
+          i.12xlarge: i.12xlarge (48vCPU, 384GB RAM)
+          i.16xlarge: i.16xlarge (64vCPU, 512GB RAM)
+          
+          # Deprecated machines with explicit version
+          m6i.large: m6i.large (deprecated, use m.large)
+          m6i.xlarge: m6i.xlarge (deprecated, use m.xlarge)
+          m6i.2xlarge: m6i.2xlarge (deprecated, use m.2xlarge)
+          m6i.4xlarge: m6i.4xlarge (deprecated, use m.4xlarge)
+          m6i.8xlarge: m6i.8xlarge (deprecated, use m.8xlarge)
+          m6i.12xlarge: m6i.12xlarge (deprecated, use m.12xlarge)
+          m6i.16xlarge: m6i.16xlarge (deprecated, use m.16xlarge)
+          m5.large: m5.large (deprecated, use m.large)
+          m5.xlarge: m5.xlarge (deprecated, use m.xlarge)
+          m5.2xlarge: m5.2xlarge (deprecated, use m.2xlarge)
+          m5.4xlarge: m5.4xlarge (deprecated, use m.4xlarge)
+          m5.8xlarge: m5.8xlarge (deprecated, use m.8xlarge)
+          m5.12xlarge: m5.12xlarge (deprecated, use m.12xlarge)
+          m5.16xlarge: m5.16xlarge (deprecated, use m.16xlarge)
+          c7i.large: c7i.large (deprecated, use c.large)
+          c7i.xlarge: c7i.xlarge (deprecated, use c.xlarge)
+          c7i.2xlarge: c7i.2xlarge (deprecated, use c.2xlarge)
+          c7i.4xlarge: c7i.4xlarge (deprecated, use c.4xlarge)
+          c7i.8xlarge: c7i.8xlarge (deprecated, use c.8xlarge)
+          c7i.12xlarge: c7i.12xlarge (deprecated, use c.12xlarge)
+          c7i.16xlarge: c7i.16xlarge (deprecated, use c.16xlarge)
+          g6.xlarge: g6.xlarge (deprecated, use g.xlarge)*
+          g6.2xlarge: g6.2xlarge (deprecated, use g.2xlarge)*
+          g6.4xlarge: g6.4xlarge (deprecated, use g.4xlarge)*
+          g6.8xlarge: g6.8xlarge (deprecated, use g.8xlarge)*
+          g6.12xlarge: g6.12xlarge (deprecated, use g.12xlarge)*
+          g6.16xlarge: g6.16xlarge (deprecated, use g.16xlarge)*
+          g4dn.xlarge: g4dn.xlarge (deprecated, use gdn.xlarge)*
+          g4dn.2xlarge: g4dn.2xlarge (deprecated, use gdn.2xlarge)*
+          g4dn.4xlarge: g4dn.4xlarge (deprecated, use gdn.4xlarge)*
+          g4dn.8xlarge: g4dn.8xlarge (deprecated, use gdn.8xlarge)*
+          g4dn.12xlarge: g4dn.12xlarge (deprecated, use gdn.12xlarge)*
+          g4dn.16xlarge: g4dn.16xlarge (deprecated, use gdn.16xlarge)*
+    
+        machinesVersions:
+          m.{size}: m6i.{size}
+          c.{size}: c7i.{size}
+          g.{size}: g6.{size}
+          gdn.{size}: g4dn.{size}
+          r.{size}: r8i.{size}
+          i.{size}: i7i.{size}
+          m5.{size}: m6i.{size}
+    ```
 
-      # New memory-intensive machine types
-      r.large: r.large (2vCPU, 16GB RAM)
-      r.xlarge: r.xlarge (4vCPU, 32GB RAM)
-      r.2xlarge: r.2xlarge (8vCPU, 64GB RAM)
-      r.4xlarge: r.4xlarge (16vCPU, 128GB RAM)
-      r.8xlarge: r.8xlarge (32vCPU, 256GB RAM)
-      r.12xlarge: r.12xlarge (48vCPU, 384GB RAM)
-      r.16xlarge: r.16xlarge (64vCPU, 512GB RAM)
+  - Machine version resolution
 
-      # New storage-intensive machine types
-      i.large: i.large (2vCPU, 16GB RAM)
-      i.xlarge: i.xlarge (4vCPU, 32GB RAM)
-      i.2xlarge: i.2xlarge (8vCPU, 64GB RAM)
-      i.4xlarge: i.4xlarge (16vCPU, 128GB RAM)
-      i.8xlarge: i.8xlarge (32vCPU, 256GB RAM)
-      i.12xlarge: i.12xlarge (48vCPU, 384GB RAM)
-      i.16xlarge: i.16xlarge (64vCPU, 512GB RAM)
-      
-      # Deprecated machines with explicit version
-      m6i.large: m6i.large (deprecated, use m.large)
-      m6i.xlarge: m6i.xlarge (deprecated, use m.xlarge)
-      m6i.2xlarge: m6i.2xlarge (deprecated, use m.2xlarge)
-      m6i.4xlarge: m6i.4xlarge (deprecated, use m.4xlarge)
-      m6i.8xlarge: m6i.8xlarge (deprecated, use m.8xlarge)
-      m6i.12xlarge: m6i.12xlarge (deprecated, use m.12xlarge)
-      m6i.16xlarge: m6i.16xlarge (deprecated, use m.16xlarge)
-      m5.large: m5.large (deprecated, use m.large)
-      m5.xlarge: m5.xlarge (deprecated, use m.xlarge)
-      m5.2xlarge: m5.2xlarge (deprecated, use m.2xlarge)
-      m5.4xlarge: m5.4xlarge (deprecated, use m.4xlarge)
-      m5.8xlarge: m5.8xlarge (deprecated, use m.8xlarge)
-      m5.12xlarge: m5.12xlarge (deprecated, use m.12xlarge)
-      m5.16xlarge: m5.16xlarge (deprecated, use m.16xlarge)
-      c7i.large: c7i.large (deprecated, use c.large)
-      c7i.xlarge: c7i.xlarge (deprecated, use c.xlarge)
-      c7i.2xlarge: c7i.2xlarge (deprecated, use c.2xlarge)
-      c7i.4xlarge: c7i.4xlarge (deprecated, use c.4xlarge)
-      c7i.8xlarge: c7i.8xlarge (deprecated, use c.8xlarge)
-      c7i.12xlarge: c7i.12xlarge (deprecated, use c.12xlarge)
-      c7i.16xlarge: c7i.16xlarge (deprecated, use c.16xlarge)
-      g6.xlarge: g6.xlarge (deprecated, use g.xlarge)*
-      g6.2xlarge: g6.2xlarge (deprecated, use g.2xlarge)*
-      g6.4xlarge: g6.4xlarge (deprecated, use g.4xlarge)*
-      g6.8xlarge: g6.8xlarge (deprecated, use g.8xlarge)*
-      g6.12xlarge: g6.12xlarge (deprecated, use g.12xlarge)*
-      g6.16xlarge: g6.16xlarge (deprecated, use g.16xlarge)*
-      g4dn.xlarge: g4dn.xlarge (deprecated, use gdn.xlarge)*
-      g4dn.2xlarge: g4dn.2xlarge (deprecated, use gdn.2xlarge)*
-      g4dn.4xlarge: g4dn.4xlarge (deprecated, use gdn.4xlarge)*
-      g4dn.8xlarge: g4dn.8xlarge (deprecated, use gdn.8xlarge)*
-      g4dn.12xlarge: g4dn.12xlarge (deprecated, use gdn.12xlarge)*
-      g4dn.16xlarge: g4dn.16xlarge (deprecated, use gdn.16xlarge)*
+    |     Input     | Input Template | Output Template |    Output     |
+    |:-------------:|:--------------:|:---------------:|:-------------:|
+    |   `m.large`   |   `m.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
+    |   `c.large`   |   `c.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
+    |  `g.xlarge`   |   `g.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
+    | `gdn.xlarge`  |  `gdn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
+    |   `r.large`   |   `r.{size}`   |  `r8i.{size}`   |  `r8i.large`  |
+    |   `i.large`   |   `i.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
+    |  `m5.large`   |  `m5.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
+    |  `m6i.large`  |      `-`       |       `-`       |  `m6i.large`  |
+    |  `c7i.large`  |      `-`       |       `-`       |  `c7i.large`  |
+    |  `g6.xlarge`  |      `-`       |       `-`       |  `g6.xlarge`  |
+    | `g4dn.xlarge` |      `-`       |       `-`       | `g4dn.xlarge` |
 
-    machinesVersions:
-      m.{size}: m6i.{size}
-      c.{size}: c7i.{size}
-      g.{size}: g6.{size}
-      gdn.{size}: g4dn.{size}
-      r.{size}: r8i.{size}
-      i.{size}: i7i.{size}
-      m5.{size}: m6i.{size}
-```
+- Azure
 
-### Machine version resolution
+  - Configuration
 
-|     Input     | Input Template | Output Template |    Output     |
-|:-------------:|:--------------:|:---------------:|:-------------:|
-|   `m.large`   |   `m.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
-|   `c.large`   |   `c.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
-|  `g.xlarge`   |   `g.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
-| `gdn.xlarge`  |  `gdn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
-|   `r.large`   |   `r.{size}`   |  `r8i.{size}`   |  `r8i.large`  |
-|   `i.large`   |   `i.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
-|  `m5.large`   |  `m5.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
-|  `m6i.large`  |      `-`       |       `-`       |  `m6i.large`  |
-|  `c7i.large`  |      `-`       |       `-`       |  `c7i.large`  |
-|  `g6.xlarge`  |      `-`       |       `-`       |  `g6.xlarge`  |
-| `g4dn.xlarge` |      `-`       |       `-`       | `g4dn.xlarge` |
+    ```yaml
+    providersConfiguration:
+      azure:
+        machines:
+          # Version Agnostic machines
+          Standard_D2s: Standard_D2s (2vCPU, 8GB RAM)
+          Standard_D4s: Standard_D4s (4vCPU, 16GB RAM)
+          Standard_D8s: Standard_D8s (8vCPU, 32GB RAM)
+          Standard_D16s: Standard_D16s (16vCPU, 64GB RAM)
+          Standard_D32s: Standard_D32s (32vCPU, 128GB RAM)
+          Standard_D48s: Standard_D48s (48vCPU, 192GB RAM)
+          Standard_D64s: Standard_D64s (64vCPU, 256GB RAM)
+          Standard_D4: Standard_D4 (4vCPU, 16GB RAM)
+          Standard_D8: Standard_D8 (8vCPU, 32GB RAM)
+          Standard_D16: Standard_D16 (16vCPU, 64GB RAM)
+          Standard_D32: Standard_D32 (32vCPU, 128GB RAM)
+          Standard_D48: Standard_D48 (48vCPU, 192GB RAM)
+          Standard_D64: Standard_D64 (64vCPU, 256GB RAM)
+          Standard_F2s: Standard_F2s (2vCPU, 4GB RAM)
+          Standard_F4s: Standard_F4s (4vCPU, 8GB RAM)
+          Standard_F8s: Standard_F8s (8vCPU, 16GB RAM)
+          Standard_F16s: Standard_F16s (16vCPU, 32GB RAM)
+          Standard_F32s: Standard_F32s (32vCPU, 64GB RAM)
+          Standard_F48s: Standard_F48s (48vCPU, 96GB RAM)
+          Standard_F64s: Standard_F64s (64vCPU, 128GB RAM)
+          Standard_NC4as_T4: Standard_NC4as_T4 (1GPU, 4vCPU, 28GB RAM)*
+          Standard_NC8as_T4: Standard_NC8as_T4 (1GPU, 8vCPU, 56GB RAM)*
+          Standard_NC16as_T4: Standard_NC16as_T4 (1GPU, 16vCPU, 110GB RAM)*
+          Standard_NC64as_T4: Standard_NC64as_T4 (4GPU, 64vCPU, 440GB RAM)*
+    
+          # New memory-intensive machine types
+          Standard_E2s: Standard_E2s (2vCPU, 16GB RAM)
+          Standard_E4s: Standard_E4s (4vCPU, 32GB RAM)
+          Standard_E8s: Standard_E8s (8vCPU, 64GB RAM)
+          Standard_E16s: Standard_E16s (16vCPU, 128GB RAM)
+          Standard_E20s: Standard_E20s (20vCPU, 160GB RAM)
+          Standard_E32s: Standard_E32s (32vCPU, 256GB RAM)
+          Standard_E48s: Standard_E48s (48vCPU, 384GB RAM)
+          Standard_E64s: Standard_E64s (64vCPU, 512GB RAM)
+    
+          # New storage-intensive machine types
+          Standard_L8s: Standard_L8s (8vCPU, 64GB RAM)
+          Standard_L16s: Standard_L16s (16vCPU, 128GB RAM)
+          Standard_L32s: Standard_L32s (32vCPU, 256GB RAM)
+          Standard_L48s: Standard_L48s (48vCPU, 384GB RAM)
+          Standard_L64s: Standard_L64s (64vCPU, 512GB RAM)
+    
+          # Deprecated machines with explicit version
+          Standard_D2s_v5: Standard_D2s_v5 (deprecated, use Standard_D2s)
+          Standard_D4s_v5: Standard_D4s_v5 (deprecated, use Standard_D4s)
+          Standard_D8s_v5: Standard_D8s_v5 (deprecated, use Standard_D8s)
+          Standard_D16s_v5: Standard_D16s_v5 (deprecated, use Standard_D16s)
+          Standard_D32s_v5: Standard_D32s_v5 (deprecated, use Standard_D32s)
+          Standard_D48s_v5: Standard_D48s_v5 (deprecated, use Standard_D48s)
+          Standard_D64s_v5: Standard_D64s_v5 (deprecated, use Standard_D64s)
+          Standard_D4_v3: Standard_D4_v3 (deprecated, use Standard_D4)
+          Standard_D8_v3: Standard_D8_v3 (deprecated, use Standard_D8)
+          Standard_D16_v3: Standard_D16_v3 (deprecated, use Standard_D16)
+          Standard_D32_v3: Standard_D32_v3 (deprecated, use Standard_D32)
+          Standard_D48_v3: Standard_D48_v3 (deprecated, use Standard_D48)
+          Standard_D64_v3: Standard_D64_v3 (deprecated, use Standard_D64)
+          Standard_F2s_v2: Standard_F2s_v2 (deprecated, use Standard_F2s)
+          Standard_F4s_v2: Standard_F4s_v2 (deprecated, use Standard_F4s)
+          Standard_F8s_v2: Standard_F8s_v2 (deprecated, use Standard_F8s)
+          Standard_F16s_v2: Standard_F16s_v2 (deprecated, use Standard_F16s)
+          Standard_F32s_v2: Standard_F32s_v2 (deprecated, use Standard_F32s)
+          Standard_F48s_v2: Standard_F48s_v2 (deprecated, use Standard_F48s)
+          Standard_F64s_v2: Standard_F64s_v2 (deprecated, use Standard_F64s)
+          Standard_NC4as_T4_v3: Standard_NC4as_T4_v3 (deprecated, use Standard_NC4as_T4)*
+          Standard_NC8as_T4_v3: Standard_NC8as_T4_v3 (deprecated, use Standard_NC8as_T4)*
+          Standard_NC16as_T4_v3: Standard_NC16as_T4_v3 (deprecated, use Standard_NC16as_T4)*
+          Standard_NC64as_T4_v3: Standard_NC64as_T4_v3 (deprecated, use Standard_NC64as_T4)*
+    
+        machinesVersions:
+          Standard_D{size}s: Standard_D{size}s_v5
+          Standard_D{size}: Standard_D{size}_v3
+          Standard_F{size}s: Standard_F{size}s_v2
+          Standard_NC{size}as_T4: Standard_NC{size}as_T4_v3
+          Standard_E{size}s: Standard_E{size}s_v6
+          Standard_L{size}s: Standard_L{size}s_v3
+    ```
 
+  - Machine version resolution
 
-## Azure
+    |         Input          |      Input Template      |       Output Template       |         Output         |
+    |:----------------------:|:------------------------:|:---------------------------:|:----------------------:|
+    |     `Standard_D2s`     |   `Standard_D{size}s`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
+    |     `Standard_D4`      |    `Standard_D{size}`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
+    |     `Standard_F2s`     |   `Standard_F{size}s`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
+    |  `Standard_NC4as_T4`   | `Standard_NC{size}as_T4` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
+    |     `Standard_E2s`     |   `Standard_E{size}s`    |   `Standard_E{size}s_v6`    |   `Standard_E2s_v6`    |
+    |     `Standard_L8s`     |   `Standard_L{size}s`    |   `Standard_L{size}s_v3`    |   `Standard_L8s_v3`    |
+    |   `Standard_D2s_v5`    |           `-`            |             `-`             |   `Standard_D2s_v5`    |
+    |    `Standard_D4_v3`    |           `-`            |             `-`             |    `Standard_D4_v3`    |
+    |   `Standard_F2s_v2`    |           `-`            |             `-`             |   `Standard_F2s_v2`    |
+    | `Standard_NC4as_T4_v3` |           `-`            |             `-`             | `Standard_NC4as_T4_v3` |
 
-### Configuration
+- GCP
 
-```yaml
-providersConfiguration:
-  azure:
-    machines:
-      # Version Agnostic machines
-      Standard_D2s: Standard_D2s (2vCPU, 8GB RAM)
-      Standard_D4s: Standard_D4s (4vCPU, 16GB RAM)
-      Standard_D8s: Standard_D8s (8vCPU, 32GB RAM)
-      Standard_D16s: Standard_D16s (16vCPU, 64GB RAM)
-      Standard_D32s: Standard_D32s (32vCPU, 128GB RAM)
-      Standard_D48s: Standard_D48s (48vCPU, 192GB RAM)
-      Standard_D64s: Standard_D64s (64vCPU, 256GB RAM)
-      Standard_D4: Standard_D4 (4vCPU, 16GB RAM)
-      Standard_D8: Standard_D8 (8vCPU, 32GB RAM)
-      Standard_D16: Standard_D16 (16vCPU, 64GB RAM)
-      Standard_D32: Standard_D32 (32vCPU, 128GB RAM)
-      Standard_D48: Standard_D48 (48vCPU, 192GB RAM)
-      Standard_D64: Standard_D64 (64vCPU, 256GB RAM)
-      Standard_F2s: Standard_F2s (2vCPU, 4GB RAM)
-      Standard_F4s: Standard_F4s (4vCPU, 8GB RAM)
-      Standard_F8s: Standard_F8s (8vCPU, 16GB RAM)
-      Standard_F16s: Standard_F16s (16vCPU, 32GB RAM)
-      Standard_F32s: Standard_F32s (32vCPU, 64GB RAM)
-      Standard_F48s: Standard_F48s (48vCPU, 96GB RAM)
-      Standard_F64s: Standard_F64s (64vCPU, 128GB RAM)
-      Standard_NC4as_T4: Standard_NC4as_T4 (1GPU, 4vCPU, 28GB RAM)*
-      Standard_NC8as_T4: Standard_NC8as_T4 (1GPU, 8vCPU, 56GB RAM)*
-      Standard_NC16as_T4: Standard_NC16as_T4 (1GPU, 16vCPU, 110GB RAM)*
-      Standard_NC64as_T4: Standard_NC64as_T4 (4GPU, 64vCPU, 440GB RAM)*
+  - Configuration
 
-      # New memory-intensive machine types
-      Standard_E2s: Standard_E2s (2vCPU, 16GB RAM)
-      Standard_E4s: Standard_E4s (4vCPU, 32GB RAM)
-      Standard_E8s: Standard_E8s (8vCPU, 64GB RAM)
-      Standard_E16s: Standard_E16s (16vCPU, 128GB RAM)
-      Standard_E20s: Standard_E20s (20vCPU, 160GB RAM)
-      Standard_E32s: Standard_E32s (32vCPU, 256GB RAM)
-      Standard_E48s: Standard_E48s (48vCPU, 384GB RAM)
-      Standard_E64s: Standard_E64s (64vCPU, 512GB RAM)
+    ```yaml
+    providersConfiguration:
+      gcp:
+        machines:
+          # Version Agnostic machines
+          n-standard-2: n-standard-2 (2vCPU, 8GB RAM)
+          n-standard-4: n-standard-4 (4vCPU, 16GB RAM)
+          n-standard-8: n-standard-8 (8vCPU, 32GB RAM)
+          n-standard-16: n-standard-16 (16vCPU, 64GB RAM)
+          n-standard-32: n-standard-32 (32vCPU, 128GB RAM)
+          n-standard-48: n-standard-48 (48vCPU, 192GB RAM)
+          n-standard-64: n-standard-64 (64vCPU, 256GB RAM)
+          c-highcpu-2: c-highcpu-2 (2vCPU, 4GB RAM)
+          c-highcpu-4: c-highcpu-4 (4vCPU, 8GB RAM)
+          c-highcpu-8: c-highcpu-8 (8vCPU, 16GB RAM)
+          c-highcpu-16: c-highcpu-16 (16vCPU, 32GB RAM)
+          c-highcpu-32: c-highcpu-32 (32vCPU, 64GB RAM)
+          c-highcpu-56: c-highcpu-56 (56vCPU, 112GB RAM)
+          g-standard-4: g-standard-4 (1GPU, 4vCPU, 16GB RAM)*
+          g-standard-8: g-standard-8 (1GPU, 8vCPU, 32GB RAM)*
+          g-standard-12: g-standard-12 (1GPU, 12vCPU, 48GB RAM)*
+          g-standard-16: g-standard-16 (1GPU, 16vCPU, 64GB RAM)*
+          g-standard-24: g-standard-24 (2GPU, 24vCPU, 96GB RAM)*
+          g-standard-32: g-standard-32 (1GPU, 32vCPU, 128GB RAM)*
+          g-standard-48: g-standard-48 (4GPU, 48vCPU, 192GB RAM)*
+    
+          # New memory-intensive machine types
+          m-ultramem-32: m-ultramem-32 (32vCPU, 976GB RAM)
+          m-ultramem-64: m-ultramem-64 (64vCPU, 1,952GB RAM)
+    
+          # New storage-intensive machine types
+          z-highmem-14: z-highmem-14 (14vCPU, 112GB RAM)
+          z-highmem-22: z-highmem-22 (22vCPU, 176GB RAM)
+          z-highmem-44: z-highmem-44 (44vCPU, 352GB RAM)
+    
+          # Deprecated machines with explicit version
+          n2-standard-2: n2-standard-2 (deprecated, use n2-standard-2)
+          n2-standard-4: n2-standard-4 (deprecated, use n2-standard-4)
+          n2-standard-8: n2-standard-8 (deprecated, use n2-standard-8)
+          n2-standard-16: n2-standard-16 (deprecated, use n2-standard-16)
+          n2-standard-32: n2-standard-32 (deprecated, use n2-standard-32)
+          n2-standard-48: n2-standard-48 (deprecated, use n2-standard-48)
+          n2-standard-64: n2-standard-64 (deprecated, use n2-standard-64)
+          c2d-highcpu-2: c2d-highcpu-2 (deprecated, use c2d-highcpu-2)
+          c2d-highcpu-4: c2d-highcpu-4 (deprecated, use c2d-highcpu-4)
+          c2d-highcpu-8: c2d-highcpu-8 (deprecated, use c2d-highcpu-8)
+          c2d-highcpu-16: c2d-highcpu-16 (deprecated, use c2d-highcpu-16)
+          c2d-highcpu-32: c2d-highcpu-32 (deprecated, use c2d-highcpu-32)
+          c2d-highcpu-56: c2d-highcpu-56 (deprecated, use c2d-highcpu-64)
+          g2-standard-4: g2-standard-4 (deprecated, use g2-standard-4)*
+          g2-standard-8: g2-standard-8 (deprecated, use g2-standard-8)*
+          g2-standard-12: g2-standard-12 (deprecated, use g2-standard-12)*
+          g2-standard-16: g2-standard-16 (deprecated, use g2-standard-16)*
+          g2-standard-24: g2-standard-24 (deprecated, use g2-standard-24)*
+          g2-standard-32: g2-standard-32 (deprecated, use g2-standard-32)*
+          g2-standard-48: g2-standard-48 (deprecated, use g2-standard-48)*
+    
+        machinesVersions:
+          n-standard-{size}: n2-standard-{size}
+          c-highcpu-{size}: c2d-highcpu-{size}
+          g-standard-{size}: g2-standard-{size}
+          m-ultramem-{size}: m3-ultramem-{size}
+          z-highmem-{size}: z3-highmem-{size}-standardlssd
+    ```
 
-      # New storage-intensive machine types
-      Standard_L8s: Standard_L8s (8vCPU, 64GB RAM)
-      Standard_L16s: Standard_L16s (16vCPU, 128GB RAM)
-      Standard_L32s: Standard_L32s (32vCPU, 256GB RAM)
-      Standard_L48s: Standard_L48s (48vCPU, 384GB RAM)
-      Standard_L64s: Standard_L64s (64vCPU, 512GB RAM)
+  - Machine version resolution
 
-      # Deprecated machines with explicit version
-      Standard_D2s_v5: Standard_D2s_v5 (deprecated, use Standard_D2s)
-      Standard_D4s_v5: Standard_D4s_v5 (deprecated, use Standard_D4s)
-      Standard_D8s_v5: Standard_D8s_v5 (deprecated, use Standard_D8s)
-      Standard_D16s_v5: Standard_D16s_v5 (deprecated, use Standard_D16s)
-      Standard_D32s_v5: Standard_D32s_v5 (deprecated, use Standard_D32s)
-      Standard_D48s_v5: Standard_D48s_v5 (deprecated, use Standard_D48s)
-      Standard_D64s_v5: Standard_D64s_v5 (deprecated, use Standard_D64s)
-      Standard_D4_v3: Standard_D4_v3 (deprecated, use Standard_D4)
-      Standard_D8_v3: Standard_D8_v3 (deprecated, use Standard_D8)
-      Standard_D16_v3: Standard_D16_v3 (deprecated, use Standard_D16)
-      Standard_D32_v3: Standard_D32_v3 (deprecated, use Standard_D32)
-      Standard_D48_v3: Standard_D48_v3 (deprecated, use Standard_D48)
-      Standard_D64_v3: Standard_D64_v3 (deprecated, use Standard_D64)
-      Standard_F2s_v2: Standard_F2s_v2 (deprecated, use Standard_F2s)
-      Standard_F4s_v2: Standard_F4s_v2 (deprecated, use Standard_F4s)
-      Standard_F8s_v2: Standard_F8s_v2 (deprecated, use Standard_F8s)
-      Standard_F16s_v2: Standard_F16s_v2 (deprecated, use Standard_F16s)
-      Standard_F32s_v2: Standard_F32s_v2 (deprecated, use Standard_F32s)
-      Standard_F48s_v2: Standard_F48s_v2 (deprecated, use Standard_F48s)
-      Standard_F64s_v2: Standard_F64s_v2 (deprecated, use Standard_F64s)
-      Standard_NC4as_T4_v3: Standard_NC4as_T4_v3 (deprecated, use Standard_NC4as_T4)*
-      Standard_NC8as_T4_v3: Standard_NC8as_T4_v3 (deprecated, use Standard_NC8as_T4)*
-      Standard_NC16as_T4_v3: Standard_NC16as_T4_v3 (deprecated, use Standard_NC16as_T4)*
-      Standard_NC64as_T4_v3: Standard_NC64as_T4_v3 (deprecated, use Standard_NC64as_T4)*
+    |      Input      |   Input Template    |         Output Template          |            Output            |
+    |:---------------:|:-------------------:|:--------------------------------:|:----------------------------:|
+    | `n-standard-2`  | `n-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
+    |  `c-highcpu-2`  | `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+    | `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
+    | `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
+    | `z-highmem-14`  | `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
+    | `n2-standard-2` |         `-`         |               `-`                |       `n2-standard-2`        |
+    | `c2d-highcpu-2` |         `-`         |               `-`                |       `c2d-highcpu-2`        |
+    | `g2-standard-4` |         `-`         |               `-`                |       `g2-standard-4`        |
 
-    machinesVersions:
-      Standard_D{size}s: Standard_D{size}s_v5
-      Standard_D{size}: Standard_D{size}_v3
-      Standard_F{size}s: Standard_F{size}s_v2
-      Standard_NC{size}as_T4: Standard_NC{size}as_T4_v3
-      Standard_E{size}s: Standard_E{size}s_v6
-      Standard_L{size}s: Standard_L{size}s_v3
-```
+- SAP Cloud Infrastructure
 
-### Machine version resolution
+  - Configuration
 
-|         Input          |      Input Template      |       Output Template       |         Output         |
-|:----------------------:|:------------------------:|:---------------------------:|:----------------------:|
-|     `Standard_D2s`     |   `Standard_D{size}s`    |   `Standard_D{size}s_v5`    |   `Standard_D2s_v5`    |
-|     `Standard_D4`      |    `Standard_D{size}`    |    `Standard_D{size}_v3`    |    `Standard_D4_v3`    |
-|     `Standard_F2s`     |   `Standard_F{size}s`    |   `Standard_F{size}s_v2`    |   `Standard_F2s_v2`    |
-|  `Standard_NC4as_T4`   | `Standard_NC{size}as_T4` | `Standard_NC{size}as_T4_v3` | `Standard_NC4as_T4_v3` |
-|     `Standard_E2s`     |   `Standard_E{size}s`    |   `Standard_E{size}s_v6`    |   `Standard_E2s_v6`    |
-|     `Standard_L8s`     |   `Standard_L{size}s`    |   `Standard_L{size}s_v3`    |   `Standard_L8s_v3`    |
-|   `Standard_D2s_v5`    |           `-`            |             `-`             |   `Standard_D2s_v5`    |
-|    `Standard_D4_v3`    |           `-`            |             `-`             |    `Standard_D4_v3`    |
-|   `Standard_F2s_v2`    |           `-`            |             `-`             |   `Standard_F2s_v2`    |
-| `Standard_NC4as_T4_v3` |           `-`            |             `-`             | `Standard_NC4as_T4_v3` |
+    When using the new-generation general-purpose `g` machine type, the configuration should be defined as follows.
 
+    ```yaml
+    providersConfiguration:
+      sap-converged-cloud:
+        machines:
+          # These machine types belong to the first generation and are inherently version-agnostic, as they do not have explicit version identifiers.
+          g_c2_m8: g_c2_m8 (2vCPU, 8GB RAM)
+          g_c4_m16: g_c4_m16 (4vCPU, 16GB RAM)
+          g_c6_m24: g_c6_m24 (6vCPU, 24GB RAM)
+          g_c8_m32: g_c8_m32 (8vCPU, 32GB RAM)
+          g_c12_m48: g_c12_m48 (12vCPU, 48GB RAM)
+          g_c16_m64: g_c16_m64 (16vCPU, 64GB RAM)
+          g_c32_m128: g_c32_m128 (32vCPU, 128GB RAM)
+          g_c64_m256: g_c64_m256 (64vCPU, 256GB RAM)
+        machinesVersions:
+          g_c{c_size}_m{m_size}: g_c{c_size}_m{m_size}_v2
+    ```
 
-## GCP
+  - Machine version resolution
 
-### Configuration
+    |   Input   |     Input Template      |      Output Template       |    Output    |
+    |:---------:|:-----------------------:|:--------------------------:|:------------:|
+    | `g_c2_m8` | `g_c{c_size}_m{m_size}` | `g_c{c_size}_m{m_size}_v2` | `g_c2_m8_v2` |
 
-```yaml
-providersConfiguration:
-  gcp:
-    machines:
-      # Version Agnostic machines
-      n-standard-2: n-standard-2 (2vCPU, 8GB RAM)
-      n-standard-4: n-standard-4 (4vCPU, 16GB RAM)
-      n-standard-8: n-standard-8 (8vCPU, 32GB RAM)
-      n-standard-16: n-standard-16 (16vCPU, 64GB RAM)
-      n-standard-32: n-standard-32 (32vCPU, 128GB RAM)
-      n-standard-48: n-standard-48 (48vCPU, 192GB RAM)
-      n-standard-64: n-standard-64 (64vCPU, 256GB RAM)
-      c-highcpu-2: c-highcpu-2 (2vCPU, 4GB RAM)
-      c-highcpu-4: c-highcpu-4 (4vCPU, 8GB RAM)
-      c-highcpu-8: c-highcpu-8 (8vCPU, 16GB RAM)
-      c-highcpu-16: c-highcpu-16 (16vCPU, 32GB RAM)
-      c-highcpu-32: c-highcpu-32 (32vCPU, 64GB RAM)
-      c-highcpu-56: c-highcpu-56 (56vCPU, 112GB RAM)
-      g-standard-4: g-standard-4 (1GPU, 4vCPU, 16GB RAM)*
-      g-standard-8: g-standard-8 (1GPU, 8vCPU, 32GB RAM)*
-      g-standard-12: g-standard-12 (1GPU, 12vCPU, 48GB RAM)*
-      g-standard-16: g-standard-16 (1GPU, 16vCPU, 64GB RAM)*
-      g-standard-24: g-standard-24 (2GPU, 24vCPU, 96GB RAM)*
-      g-standard-32: g-standard-32 (1GPU, 32vCPU, 128GB RAM)*
-      g-standard-48: g-standard-48 (4GPU, 48vCPU, 192GB RAM)*
+- Alibaba Cloud
 
-      # New memory-intensive machine types
-      m-ultramem-32: m-ultramem-32 (32vCPU, 976GB RAM)
-      m-ultramem-64: m-ultramem-64 (64vCPU, 1,952GB RAM)
+  - Configuration
 
-      # New storage-intensive machine types
-      z-highmem-14: z-highmem-14 (14vCPU, 112GB RAM)
-      z-highmem-22: z-highmem-22 (22vCPU, 176GB RAM)
-      z-highmem-44: z-highmem-44 (44vCPU, 352GB RAM)
+    ```yaml
+    providersConfiguration:
+      alicloud:
+        machines:
+          # Version Agnostic machines
+          ecs.g.large: ecs.g.large (2vCPU, 8GB RAM)
+          ecs.g.xlarge: ecs.g.xlarge (4vCPU, 16GB RAM)
+          ecs.g.2xlarge: ecs.g.2xlarge (8vCPU, 32GB RAM)
+          ecs.g.4xlarge: ecs.g.4xlarge (16vCPU, 64GB RAM)
+          ecs.g.8xlarge: ecs.g.8xlarge (32vCPU, 128GB RAM)
+          ecs.g.12xlarge: ecs.g.12xlarge (48vCPU, 192GB RAM)
+          ecs.g.16xlarge: ecs.g.16xlarge (64vCPU, 256GB RAM)
+            
+          # Deprecated machines with explicit version
+          ecs.g9i.large: ecs.g9i.large (deprecated, use ecs.g9i.large)
+          ecs.g9i.xlarge: ecs.g9i.xlarge (deprecated, use ecs.g9i.xlarge)
+          ecs.g9i.2xlarge: ecs.g9i.2xlarge (deprecated, use ecs.g9i.2xlarge)
+          ecs.g9i.4xlarge: ecs.g9i.4xlarge (deprecated, use ecs.g9i.4xlarge)
+          ecs.g9i.8xlarge: ecs.g9i.8xlarge (deprecated, use ecs.g9i.8xlarge)
+          ecs.g9i.12xlarge: ecs.g9i.12xlarge (deprecated, use ecs.g9i.12xlarge)
+          ecs.g9i.16xlarge: ecs.g9i.16xlarge (deprecated, use ecs.g9i.16xlarge)
+    
+        machinesVersions:
+          ecs.g.{size}: ecs.g9i.{size}
+    ```
 
-      # Deprecated machines with explicit version
-      n2-standard-2: n2-standard-2 (deprecated, use n2-standard-2)
-      n2-standard-4: n2-standard-4 (deprecated, use n2-standard-4)
-      n2-standard-8: n2-standard-8 (deprecated, use n2-standard-8)
-      n2-standard-16: n2-standard-16 (deprecated, use n2-standard-16)
-      n2-standard-32: n2-standard-32 (deprecated, use n2-standard-32)
-      n2-standard-48: n2-standard-48 (deprecated, use n2-standard-48)
-      n2-standard-64: n2-standard-64 (deprecated, use n2-standard-64)
-      c2d-highcpu-2: c2d-highcpu-2 (deprecated, use c2d-highcpu-2)
-      c2d-highcpu-4: c2d-highcpu-4 (deprecated, use c2d-highcpu-4)
-      c2d-highcpu-8: c2d-highcpu-8 (deprecated, use c2d-highcpu-8)
-      c2d-highcpu-16: c2d-highcpu-16 (deprecated, use c2d-highcpu-16)
-      c2d-highcpu-32: c2d-highcpu-32 (deprecated, use c2d-highcpu-32)
-      c2d-highcpu-56: c2d-highcpu-56 (deprecated, use c2d-highcpu-64)
-      g2-standard-4: g2-standard-4 (deprecated, use g2-standard-4)*
-      g2-standard-8: g2-standard-8 (deprecated, use g2-standard-8)*
-      g2-standard-12: g2-standard-12 (deprecated, use g2-standard-12)*
-      g2-standard-16: g2-standard-16 (deprecated, use g2-standard-16)*
-      g2-standard-24: g2-standard-24 (deprecated, use g2-standard-24)*
-      g2-standard-32: g2-standard-32 (deprecated, use g2-standard-32)*
-      g2-standard-48: g2-standard-48 (deprecated, use g2-standard-48)*
+  - Machine version resolution
 
-    machinesVersions:
-      n-standard-{size}: n2-standard-{size}
-      c-highcpu-{size}: c2d-highcpu-{size}
-      g-standard-{size}: g2-standard-{size}
-      m-ultramem-{size}: m3-ultramem-{size}
-      z-highmem-{size}: z3-highmem-{size}-standardlssd
-```
-
-### Machine version resolution
-
-|      Input      |   Input Template    |         Output Template          |            Output            |
-|:---------------:|:-------------------:|:--------------------------------:|:----------------------------:|
-| `n-standard-2`  | `n-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
-|  `c-highcpu-2`  | `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
-| `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
-| `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
-| `z-highmem-14`  | `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
-| `n2-standard-2` |         `-`         |               `-`                |       `n2-standard-2`        |
-| `c2d-highcpu-2` |         `-`         |               `-`                |       `c2d-highcpu-2`        |
-| `g2-standard-4` |         `-`         |               `-`                |       `g2-standard-4`        |
-
-
-## SAP Cloud Infrastructure
-
-When using the new-generation general-purpose `g` machine type, the configuration should be defined as follows.
-
-### Configuration
-
-```yaml
-providersConfiguration:
-  sap-converged-cloud:
-    machines:
-      # These machine types belong to the first generation and are inherently version-agnostic, as they do not have explicit version identifiers.
-      g_c2_m8: g_c2_m8 (2vCPU, 8GB RAM)
-      g_c4_m16: g_c4_m16 (4vCPU, 16GB RAM)
-      g_c6_m24: g_c6_m24 (6vCPU, 24GB RAM)
-      g_c8_m32: g_c8_m32 (8vCPU, 32GB RAM)
-      g_c12_m48: g_c12_m48 (12vCPU, 48GB RAM)
-      g_c16_m64: g_c16_m64 (16vCPU, 64GB RAM)
-      g_c32_m128: g_c32_m128 (32vCPU, 128GB RAM)
-      g_c64_m256: g_c64_m256 (64vCPU, 256GB RAM)
-    machinesVersions:
-      g_c{c_size}_m{m_size}: g_c{c_size}_m{m_size}_v2
-```
-
-### Machine version resolution
-
-|   Input   |     Input Template      |      Output Template       |    Output    |
-|:---------:|:-----------------------:|:--------------------------:|:------------:|
-| `g_c2_m8` | `g_c{c_size}_m{m_size}` | `g_c{c_size}_m{m_size}_v2` | `g_c2_m8_v2` |
-
-
-## Alibaba Cloud
-
-### Configuration
-
-```yaml
-providersConfiguration:
-  alicloud:
-    machines:
-      # Version Agnostic machines
-      ecs.g.large: ecs.g.large (2vCPU, 8GB RAM)
-      ecs.g.xlarge: ecs.g.xlarge (4vCPU, 16GB RAM)
-      ecs.g.2xlarge: ecs.g.2xlarge (8vCPU, 32GB RAM)
-      ecs.g.4xlarge: ecs.g.4xlarge (16vCPU, 64GB RAM)
-      ecs.g.8xlarge: ecs.g.8xlarge (32vCPU, 128GB RAM)
-      ecs.g.12xlarge: ecs.g.12xlarge (48vCPU, 192GB RAM)
-      ecs.g.16xlarge: ecs.g.16xlarge (64vCPU, 256GB RAM)
-        
-      # Deprecated machines with explicit version
-      ecs.g9i.large: ecs.g9i.large (deprecated, use ecs.g9i.large)
-      ecs.g9i.xlarge: ecs.g9i.xlarge (deprecated, use ecs.g9i.xlarge)
-      ecs.g9i.2xlarge: ecs.g9i.2xlarge (deprecated, use ecs.g9i.2xlarge)
-      ecs.g9i.4xlarge: ecs.g9i.4xlarge (deprecated, use ecs.g9i.4xlarge)
-      ecs.g9i.8xlarge: ecs.g9i.8xlarge (deprecated, use ecs.g9i.8xlarge)
-      ecs.g9i.12xlarge: ecs.g9i.12xlarge (deprecated, use ecs.g9i.12xlarge)
-      ecs.g9i.16xlarge: ecs.g9i.16xlarge (deprecated, use ecs.g9i.16xlarge)
-
-    machinesVersions:
-      ecs.g.{size}: ecs.g9i.{size}
-```
-
-### Machine version resolution
-
-|      Input      | Input Template | Output Template  |     Output      |
-|:---------------:|:--------------:|:----------------:|:---------------:|
-|  `ecs.g.large`  | `ecs.g.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
-| `ecs.g9i.large` |      `-`       |       `-`        | `ecs.g9i.large` |
+    |      Input      | Input Template | Output Template  |     Output      |
+    |:---------------:|:--------------:|:----------------:|:---------------:|
+    |  `ecs.g.large`  | `ecs.g.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
+    | `ecs.g9i.large` |      `-`       |       `-`        | `ecs.g9i.large` |
 
 
-# Family Agnostic configuration
+### Family Agnostic configuration
 
 The family agnostic configuration fully separates logical machine types from actual instance types.
 Instead of referencing instance families directly, machines are defined using logical categories such as `general`, `compute`, `memory`, `storage`, or `gpu`.
@@ -476,161 +490,159 @@ Instead of referencing instance families directly, machines are defined using lo
 The actual instance types are defined in `machinesMapping`, which maps each logical machine to a concrete instance.
 This allows instance generations or families to be changed by updating only the mapping, without modifying the main configuration.
 
-## AWS
+- AWS
 
-```yaml
-providersConfiguration:
-  aws:
-    machines:
-      general-2: general-2 (2vCPU, 8GB RAM)
-      general-64: general-64 (64vCPU, 256GB RAM)
-      general-prev-2: general-prev-2 (2vCPU, 8GB RAM)
-      general-prev-64: general-prev-64 (64vCPU, 256GB RAM)
-      compute-2: compute-2 (2vCPU, 4GB RAM)
-      compute-64: compute-64 (64vCPU, 128GB RAM)
-      gpu-4: gpu-4 (1GPU, 4vCPU, 16GB RAM)*
-      gpu-64: gpu-64 (1GPU, 64vCPU, 256GB RAM)*
-      gpu-legacy-4: gpu-legacy-4 (1GPU, 4vCPU, 16GB RAM)*
-      gpu-legacy-64: gpu-legacy-64 (1GPU, 64vCPU, 256GB RAM)*
+  ```yaml
+  providersConfiguration:
+    aws:
+      machines:
+        general-2: general-2 (2vCPU, 8GB RAM)
+        general-64: general-64 (64vCPU, 256GB RAM)
+        general-prev-2: general-prev-2 (2vCPU, 8GB RAM)
+        general-prev-64: general-prev-64 (64vCPU, 256GB RAM)
+        compute-2: compute-2 (2vCPU, 4GB RAM)
+        compute-64: compute-64 (64vCPU, 128GB RAM)
+        gpu-4: gpu-4 (1GPU, 4vCPU, 16GB RAM)*
+        gpu-64: gpu-64 (1GPU, 64vCPU, 256GB RAM)*
+        gpu-legacy-4: gpu-legacy-4 (1GPU, 4vCPU, 16GB RAM)*
+        gpu-legacy-64: gpu-legacy-64 (1GPU, 64vCPU, 256GB RAM)*
+  
+        # New memory-intensive machine types
+        memory-2: memory-2 (2vCPU, 16GB RAM)
+        memory-64: memory-64 (64vCPU, 512GB RAM)
+  
+        # New storage-intensive machine types
+        storage-2: storage-2 (2vCPU, 16GB RAM)
+        storage-64: storage-64 (64vCPU, 512GB RAM)
+  
+      machinesMapping:
+        general-2: m6i.large
+        general-64: m6i.16xlarge
+        general-prev-2: m5.large
+        general-prev-64: m5.16xlarge
+        compute-2: c7i.large
+        compute-64: c7i.16xlarge
+        gpu-4: g6.xlarge
+        gpu-64: g6.16xlarge
+        gpu-legacy-4: g4dn.xlarge
+        gpu-legacy-64: g4dn.16xlarge
+  
+        # New memory-intensive machine types
+        memory-2: r7i.large
+        memory-64: r7i.16xlarge
+  
+        # New storage-intensive machine types
+        storage-2: i7i.large
+        storage-64: i7i.16xlarge
+  ```
 
-      # New memory-intensive machine types
-      memory-2: memory-2 (2vCPU, 16GB RAM)
-      memory-64: memory-64 (64vCPU, 512GB RAM)
+- Azure
 
-      # New storage-intensive machine types
-      storage-2: storage-2 (2vCPU, 16GB RAM)
-      storage-64: storage-64 (64vCPU, 512GB RAM)
+  ```yaml
+  providersConfiguration:
+    azure:
+      machines:
+        general-2: general-2 (2vCPU, 8GB RAM)
+        general-64: general-64 (64vCPU, 256GB RAM)
+        general-prev-4: general-prev-4 (4vCPU, 16GB RAM)
+        general-prev-64: general-prev-64 (64vCPU, 256GB RAM)
+        compute-2: compute-2 (2vCPU, 4GB RAM)
+        compute-64: compute-64 (64vCPU, 128GB RAM)
+        gpu-4: gpu-4 (1GPU, 4vCPU, 28GB RAM)*
+        gpu-64: gpu-64 (4GPU, 64vCPU, 440GB RAM)*
+  
+        # New memory-intensive machine types
+        memory-2: memory-2 (2vCPU, 16GB RAM)
+        memory-64: memory-64 (64vCPU, 512GB RAM)
+  
+        # New storage-intensive machine types
+        storage-8: storage-8 (8vCPU, 64GB RAM)
+        storage-64: storage-64 (64vCPU, 512GB RAM)
+  
+      machinesMapping:
+        general-2: Standard_D2s_v5
+        general-64: Standard_D64s_v5
+        general-prev-4: Standard_D4_v3
+        general-prev-64: Standard_D64_v3
+        compute-2: Standard_F2s_v2
+        compute-64: Standard_F64s_v2
+        gpu-4: Standard_NC4as_T4_v3
+        gpu-64: Standard_NC64as_T4_v3
+  
+        # New memory-intensive machine types
+        memory-2: Standard_E2s_v6
+        memory-64: Standard_E64s_v6
+  
+        # New storage-intensive machine types
+        storage-8: Standard_L8s_v3
+        storage-64: Standard_L64s_v3
+  ```
 
-    machinesMapping:
-      general-2: m6i.large
-      general-64: m6i.16xlarge
-      general-prev-2: m5.large
-      general-prev-64: m5.16xlarge
-      compute-2: c7i.large
-      compute-64: c7i.16xlarge
-      gpu-4: g6.xlarge
-      gpu-64: g6.16xlarge
-      gpu-legacy-4: g4dn.xlarge
-      gpu-legacy-64: g4dn.16xlarge
+- GCP
 
-      # New memory-intensive machine types
-      memory-2: r7i.large
-      memory-64: r7i.16xlarge
+  ```yaml
+  providersConfiguration:
+    gcp:
+      machines:
+        general-2: general-2 (2vCPU, 8GB RAM)
+        general-64: general-64 (64vCPU, 256GB RAM)
+        compute-2: compute-2 (2vCPU, 4GB RAM)
+        compute-56: compute-56 (56vCPU, 112GB RAM)
+        gpu-4: gpu-4 (1GPU, 4vCPU, 16GB RAM)*
+        gpu-48: gpu-48 (4GPU, 48vCPU, 192GB RAM)*
+  
+        # New memory-intensive machine types
+        memory-32: memory-32 (32vCPU, 976GB RAM)
+        memory-64: memory-64 (64vCPU, 1,952GB RAM)
+  
+        # New storage-intensive machine types
+        storage-14: storage-14 (14vCPU, 112GB RAM)
+        storage-44: storage-44 (44vCPU, 352GB RAM)
+          
+      machinesMapping:
+        general-2: n2-standard-2
+        general-64: n2-standard-64
+        compute-2: c2d-highcpu-2
+        compute-56: c2d-highcpu-56
+        gpu-4: g2-standard-4
+        gpu-48: g2-standard-48
+  
+        # New memory-intensive machine types
+        memory-32: m3-ultramem-32
+        memory-64: m3-ultramem-64
+  
+        # New storage-intensive machine types
+        storage-14: z3-highmem-14-standardlssd
+        storage-44: z3-highmem-44-standardlssd
+  ```
 
-      # New storage-intensive machine types
-      storage-2: i7i.large
-      storage-64: i7i.16xlarge
-```
+- SAP Cloud Infrastructure
 
-## Azure
+  ```yaml
+  providersConfiguration:
+    sap-converged-cloud:
+      machines:
+        general-2: general-2 (2vCPU, 8GB RAM)
+        general-64: general-64 (64vCPU, 256GB RAM)
+  
+      machinesMapping:
+        general-2: g_c2_m8
+        general-64: g_c64_m256
+  ```
 
-```yaml
-providersConfiguration:
-  azure:
-    machines:
-      general-2: general-2 (2vCPU, 8GB RAM)
-      general-64: general-64 (64vCPU, 256GB RAM)
-      general-prev-4: general-prev-4 (4vCPU, 16GB RAM)
-      general-prev-64: general-prev-64 (64vCPU, 256GB RAM)
-      compute-2: compute-2 (2vCPU, 4GB RAM)
-      compute-64: compute-64 (64vCPU, 128GB RAM)
-      gpu-4: gpu-4 (1GPU, 4vCPU, 28GB RAM)*
-      gpu-64: gpu-64 (4GPU, 64vCPU, 440GB RAM)*
+- Alibaba Cloud
 
-      # New memory-intensive machine types
-      memory-2: memory-2 (2vCPU, 16GB RAM)
-      memory-64: memory-64 (64vCPU, 512GB RAM)
-
-      # New storage-intensive machine types
-      storage-8: storage-8 (8vCPU, 64GB RAM)
-      storage-64: storage-64 (64vCPU, 512GB RAM)
-
-    machinesMapping:
-      general-2: Standard_D2s_v5
-      general-64: Standard_D64s_v5
-      general-prev-4: Standard_D4_v3
-      general-prev-64: Standard_D64_v3
-      compute-2: Standard_F2s_v2
-      compute-64: Standard_F64s_v2
-      gpu-4: Standard_NC4as_T4_v3
-      gpu-64: Standard_NC64as_T4_v3
-
-      # New memory-intensive machine types
-      memory-2: Standard_E2s_v6
-      memory-64: Standard_E64s_v6
-
-      # New storage-intensive machine types
-      storage-8: Standard_L8s_v3
-      storage-64: Standard_L64s_v3
-```
-
-## GCP
-
-```yaml
-providersConfiguration:
-  gcp:
-    machines:
-      general-2: general-2 (2vCPU, 8GB RAM)
-      general-64: general-64 (64vCPU, 256GB RAM)
-      compute-2: compute-2 (2vCPU, 4GB RAM)
-      compute-56: compute-56 (56vCPU, 112GB RAM)
-      gpu-4: gpu-4 (1GPU, 4vCPU, 16GB RAM)*
-      gpu-48: gpu-48 (4GPU, 48vCPU, 192GB RAM)*
-
-      # New memory-intensive machine types
-      memory-32: memory-32 (32vCPU, 976GB RAM)
-      memory-64: memory-64 (64vCPU, 1,952GB RAM)
-
-      # New storage-intensive machine types
-      storage-14: storage-14 (14vCPU, 112GB RAM)
-      storage-44: storage-44 (44vCPU, 352GB RAM)
-        
-    machinesMapping:
-      general-2: n2-standard-2
-      general-64: n2-standard-64
-      compute-2: c2d-highcpu-2
-      compute-56: c2d-highcpu-56
-      gpu-4: g2-standard-4
-      gpu-48: g2-standard-48
-
-      # New memory-intensive machine types
-      memory-32: m3-ultramem-32
-      memory-64: m3-ultramem-64
-
-      # New storage-intensive machine types
-      storage-14: z3-highmem-14-standardlssd
-      storage-44: z3-highmem-44-standardlssd
-```
-
-## SAP Cloud Infrastructure
-
-```yaml
-providersConfiguration:
-  sap-converged-cloud:
-    machines:
-      general-2: general-2 (2vCPU, 8GB RAM)
-      general-64: general-64 (64vCPU, 256GB RAM)
-
-    machinesMapping:
-      general-2: g_c2_m8
-      general-64: g_c64_m256
-```
-
-## Alibaba Cloud
-
-```yaml
-providersConfiguration:
-  alicloud:
-    machines:
-      general-2: "general-2 (2vCPU, 8GB RAM)"
-      general-64: "general-64 (64vCPU, 256GB RAM)"
-
-    machinesMapping:
-      general-2: ecs.g9i.large
-      general-64: ecs.g9i.16xlarge
-```
-
-## Resolution Logic
+  ```yaml
+  providersConfiguration:
+    alicloud:
+      machines:
+        general-2: "general-2 (2vCPU, 8GB RAM)"
+        general-64: "general-64 (64vCPU, 256GB RAM)"
+  
+      machinesMapping:
+        general-2: ecs.g9i.large
+        general-64: ecs.g9i.16xlarge
+  ```
 
 Instance types are resolved using a direct mapping between logical machine types and instance types.
 
@@ -641,7 +653,7 @@ The resolution process is:
 
 This approach completely decouples the logical machine definition from the instance family, making upgrades or replacements easier by modifying only the mapping.
 
-# Comparison
+### Comparison
 
 | Aspect           | Version Agnostic Configuration                                                                                                        | Family Agnostic Configuration                                                                                                                                                       |
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -650,7 +662,7 @@ This approach completely decouples the logical machine definition from the insta
 | Potential Issues | None identified.                                                                                                                      | **AWS:** Multiple general-purpose and GPU instance types<br>**Azure:** Multiple general machine types<br>Creating a consistent naming scheme will be challenging if not impossible. |
 
 
-# JSON Schema
+### JSON Schema
 
 Below is the current AWS schema used in BTP Cockpit:
 
@@ -680,6 +692,7 @@ It does not allow values outside of this predefined set.
 
 If abstract machine types are introduced (e.g., `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
 The updated schema would therefore include both the abstract types and the existing concrete instance types:
+
 ```json
 {
   "machineType": {
@@ -714,13 +727,13 @@ For example, the following user inputs:
 must all be resolved internally to `m7i.large` before being written to the Runtime CR.
 However, to avoid confusion for users, the GET API endpoint should always return the machine type exactly as it was originally provided by the user, rather than the internally resolved value.
 
-# BTP CLI
+### BTP CLI
 
 When submitting a provisioning request with a machine type that is not defined in the schema (e.g., `test`), the request is rejected by the BTP CLI before reaching KEB.
 This behavior indicates that the BTP CLI performs client-side schema validation, enforcing that the **machineType** must match one of the allowed enum values.
 As a result, all previously supported machine types must remain in the schema to ensure backward compatibility.
 
-## Example
+#### Example
 
 Input parameters:
 ```json
@@ -740,31 +753,31 @@ Error when validating schema parameters: #/machineType: #: only 1 subschema matc
 FAILED
 ```
 
-# BTP Cockpit
+### BTP Cockpit
 
 A Kyma cluster was provisioned with machine type `m6i.large`, which was later removed from the schema.
 
-## Observed Behavior
+#### Observed Behavior
 
-### View Parameters
+- View Parameters
 
-The original machine type (`m6i.large`) is displayed correctly.
+  The original machine type (`m6i.large`) is displayed correctly.
+  
+  ![view-parameters-view.png](assets/view-parameters-view.png)
 
-![view-parameters-view.png](assets/view-parameters-view.png)
+- Update Instance (Form View)
 
-### Update Instance (Form View)
+  The machine type field is empty, making updates impossible.
+  
+  ![update-instance-view-1.png](assets/update-instance-view-1.png)
 
-The machine type field is empty, making updates impossible.
+- Switching JSON ↔ Form View
 
-![update-instance-view-1.png](assets/update-instance-view-1.png)
+  The field is automatically set to the first available value from the schema.
+  
+  ![update-instance-view-2.png](assets/update-instance-view-2.png)
 
-### Switching JSON ↔ Form View
-
-The field is automatically set to the first available value from the schema.
-
-![update-instance-view-2.png](assets/update-instance-view-2.png)
-
-# Updating Machine Versions
+### Updating Machine Versions
 
 When a machine generation is deprecated or a new generation becomes available, and the hyperscaler guarantees backward compatibility, use the following rollout process:
 
@@ -781,11 +794,11 @@ Process:
    - Clusters should be updated in batches.
    - Operators should remain in a heightened alert state throughout the rollout.
 
-# Deprecating old machine types with explicit versions
+### Deprecating old machine types with explicit versions
 
 The following examples use AWS, but the same migration pattern applies to the other providers.
 
-## Option 1: Migration without CIS changes
+#### Option 1: Migration without CIS changes
 
 1. At the beginning, the configuration exposes only versioned machine types from the `m` family:
 
@@ -854,7 +867,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
 7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
    This should only be done once there is evidence that no new entries using deprecated values are being created anymore.
 
-## Option 2: Migration with CIS support
+#### Option 2: Migration with CIS support
 
 1. Request support from CIS for conditional disabling of enum validation for selected schema fields.
 
@@ -907,7 +920,31 @@ In this model, inputs such as `m6i.large`, `m5.large` and `m.large` can all be a
 5. SRE updates existing Runtime CRs with Cluster Orchestrator so that already provisioned clusters are aligned with the version-agnostic representation.
 6. After runtime migration is complete, update the KEB database so that active entries no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `m.large`.
 
-# Topics Not Covered by This ADR
+## Decision
+
+We decided to use the version-agnostic configuration model.
+
+## Consequences
+
+### Positive
+
+- Machine names become more stable for users and less tightly coupled to hyperscaler-specific generations.
+- Introducing a new supported machine generation usually requires only updating the `machinesVersions` mapping, rather than changing the public machine names exposed in the main configuration.
+- Backward compatibility can be preserved by keeping previously supported explicit machine types in the schema during the migration period.
+- KEB can internally resolve both logical and deprecated explicit values to the currently supported concrete machine type before writing the Runtime CR.
+- The same resolution pattern can be applied consistently across providers, even if the concrete naming conventions differ.
+- Users can gradually migrate from explicit versioned names to logical names without breaking existing automation immediately.
+- The model keeps the public configuration relatively close to existing provider-specific naming, which makes it easier to understand than a fully family-agnostic abstraction.
+- Switching from one generation to another becomes operationally cheaper because the main user-facing contract remains unchanged.
+
+### Negative
+
+- The public schema still needs to contain deprecated explicit machine types as long as BTP CLI and BTP Cockpit enforce enum-based client-side validation.
+- As a result, the schema will grow over time and require maintenance until old values can be safely removed.
+- Updating the machine version mapping affects only newly created worker pools; existing runtimes still require a separate migration process coordinated by SRE.
+- Deprecation cleanup is operationally slow because old enum values cannot be removed immediately without risking broken updates in BTP Cockpit and rejected requests in BTP CLI.
+
+## Topics Not Covered by This ADR
 
 This ADR does not address:
 - Defining abstract machine sizes that are standardized across all hyperscalers.
