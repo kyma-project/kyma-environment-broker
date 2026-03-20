@@ -691,7 +691,7 @@ The JSON schema requires that the **machineType** value must be one of the entri
 It does not allow values outside of this predefined set.
 
 If abstract machine types are introduced (for example, `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
-The updated schema would therefore include both the abstract types and the existing concrete instance types:
+The updated schema would therefore include both the abstract types and the existing concrete instance types.
 
 ```json
 {
