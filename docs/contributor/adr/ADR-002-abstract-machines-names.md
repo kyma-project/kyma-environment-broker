@@ -800,7 +800,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
 
 #### Option 1: Migration without CIS changes
 
-1. At the beginning, the configuration exposes only versioned machine types from the `m` family:
+1. At the beginning, the configuration exposes only versioned machine types from the `m` family.
 
    ```yaml
     providersConfiguration:
