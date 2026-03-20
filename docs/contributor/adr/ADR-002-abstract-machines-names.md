@@ -647,7 +647,7 @@ This allows instance generations or families to be changed by updating only the 
 Instance types are resolved using a direct mapping between logical machine types and instance types.
 
 The resolution process is the following:
-1. Read the configured logical machine type (e.g., `general-2`).
+1. Read the configured logical machine type (for example, `general-2`).
 2. Look up the corresponding instance type in `machinesMapping`.
 3. Return the mapped instance type.
 
