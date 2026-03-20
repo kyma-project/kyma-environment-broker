@@ -9,7 +9,7 @@ Accepted
 Machine types are currently exposed to users as concrete hyperscaler-specific instance names such as `m6i.large`, `Standard_D2s_v5`, or `n2-standard-2`.
 This makes machine configuration tightly coupled to a specific provider family and generation.
 
-That coupling creates several problems:
+That coupling causes the following problems:
 - introducing a newer machine generation requires schema changes,
 - previously accepted values must remain valid for backward compatibility,
 - removing old values breaks update flows in BTP Cockpit and client-side validation in BTP CLI,
