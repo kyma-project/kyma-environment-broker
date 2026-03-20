@@ -798,7 +798,7 @@ Process:
 
 The following examples use AWS, but the same migration pattern applies to the other providers.
 
-#### Option 1: Migration without CIS changes
+#### Option 1: Migration Without CIS Changes
 
 1. At the beginning, the configuration exposes only versioned machine types from the `m` family.
 
