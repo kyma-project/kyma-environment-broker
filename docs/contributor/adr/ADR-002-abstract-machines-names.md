@@ -922,7 +922,7 @@ In this model, inputs such as `m6i.large`, `m5.large` and `m.large` can all be a
 
 ## Decision
 
-The final decision will be made at the next architecture meeting. In the meantime, we are preparing a proof of concept for the version-agnostic configuration.
+Internally, we are leaning towards a version‑agnostic approach, but the final decision will be made at the next architecture meeting.
 
 ## Consequences
 
