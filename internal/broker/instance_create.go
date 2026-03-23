@@ -597,6 +597,9 @@ func (b *ProvisionEndpoint) validateAddtionalWorkerNodePools(parameters pkg.Prov
 		if err := checkAutoScalerConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
+		if err := checkTaintsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 
 		if err := checkAvailableZones(
 			l,
@@ -737,6 +740,25 @@ func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWork
 	var errors []string
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
 		if err := additionalWorkerNodePool.Validate(); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+
+	if len(errors) == 0 {
+		return nil
+	}
+
+	message := "The following additionalWorkerPools have validation issues: "
+	message = message + strings.Join(errors, "; ")
+	message = message + "."
+
+	return fmt.Errorf("%s", message)
+}
+
+func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.ValidateTaints(additionalWorkerNodePool.Taints, additionalWorkerNodePool.Name); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}

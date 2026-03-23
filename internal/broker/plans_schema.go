@@ -203,6 +203,25 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	HAZones       *Type          `json:"haZones,omitempty"`
 	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
 	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
+	Taints        *TaintsType    `json:"taints,omitempty"`
+}
+
+type TaintsType struct {
+	Type
+	Items TaintsItems `json:"items,omitempty"`
+}
+
+type TaintsItems struct {
+	Type
+	ControlsOrder []string         `json:"_controlsOrder,omitempty"`
+	Required      []string         `json:"required,omitempty"`
+	Properties    TaintsProperties `json:"properties,omitempty"`
+}
+
+type TaintsProperties struct {
+	Key    Type `json:"key,omitempty"`
+	Value  Type `json:"value,omitempty"`
+	Effect Type `json:"effect,omitempty"`
 }
 
 type OIDCs struct {
@@ -761,7 +780,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			UniqueItems: true,
 			Description: "Specifies the list of additional worker node pools."},
 		Items: AdditionalWorkerNodePoolsItems{
-			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
+			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints"},
 			Required:      []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",
@@ -801,6 +820,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					Default:     autoscalerMaxDefaultValue,
 					Description: "Specifies the maximum number of virtual machines to create.",
 				},
+				Taints: NewTaintsSchema(rejectUnsupportedParameters),
 			},
 		},
 	}
@@ -808,4 +828,45 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 		additionalWorkerNodePoolsType.Items.Type.AdditionalProperties = false
 	}
 	return additionalWorkerNodePoolsType
+}
+
+func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
+	t := &TaintsType{
+		Type: Type{
+			Type:        "array",
+			Description: "Specifies taints for the worker node pool. With the taints added, a node can repel sets of Pods with no matching tolerations.",
+		},
+		Items: TaintsItems{
+			ControlsOrder: []string{"key", "value", "effect"},
+			Required:      []string{"key", "effect"},
+			Type: Type{
+				Type: "object",
+			},
+			Properties: TaintsProperties{
+				Key: Type{
+					Type:        "string",
+					MinLength:   1,
+					Description: "Specifies the taint key.",
+				},
+				Value: Type{
+					Type:        "string",
+					Description: "Specifies the taint value.",
+				},
+				Effect: Type{
+					Type:        "string",
+					Description: "Specifies the taint effect.",
+					Enum:        []interface{}{"NoSchedule", "PreferNoSchedule", "NoExecute"},
+					EnumDisplayName: map[string]string{
+						"NoSchedule":       "NoSchedule",
+						"PreferNoSchedule": "PreferNoSchedule",
+						"NoExecute":        "NoExecute",
+					},
+				},
+			},
+		},
+	}
+	if rejectUnsupportedParameters {
+		t.Items.Type.AdditionalProperties = false
+	}
+	return t
 }

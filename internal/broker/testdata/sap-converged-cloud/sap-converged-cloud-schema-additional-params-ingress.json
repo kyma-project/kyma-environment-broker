@@ -25,7 +25,7 @@
       "items": {
         "type": "object",
         "required": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
-        "_controlsOrder": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "_controlsOrder": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints"],
         "additionalProperties": false,
         "properties": {
           "name": {
@@ -79,6 +79,48 @@
             "minimum": 1,
             "maximum": 300,
             "default": 20
+          },
+          "taints": {
+            "description": "Specifies taints for the worker node pool. With the taints added, a node can repel sets of Pods with no matching tolerations.",
+            "items": {
+                "_controlsOrder": [
+                "key",
+                "value",
+                "effect"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                "effect": {
+                    "_enumDisplayName": {
+                    "NoExecute": "NoExecute",
+                    "NoSchedule": "NoSchedule",
+                    "PreferNoSchedule": "PreferNoSchedule"
+                    },
+                    "description": "Specifies the taint effect.",
+                    "enum": [
+                    "NoSchedule",
+                    "PreferNoSchedule",
+                    "NoExecute"
+                    ],
+                    "type": "string"
+                },
+                "key": {
+                    "description": "Specifies the taint key.",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Specifies the taint value.",
+                    "type": "string"
+                }
+                },
+                "required": [
+                "key",
+                "effect"
+                ],
+                "type": "object"
+            },
+            "type": "array"
           }
         }
       }

@@ -109,6 +109,8 @@ func GetLabels(op internal.Operation) map[string]string {
 	labels := make(map[string]string)
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
+	labels["runtime_id"] = op.RuntimeID
+	labels["shoot_name"] = op.ShootName
 	labels["global_account_id"] = op.GlobalAccountID
 	labels["plan_id"] = op.ProvisioningParameters.PlanID
 	labels["type"] = string(op.Type)

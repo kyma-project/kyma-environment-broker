@@ -1,7 +1,7 @@
 # Additional Worker Node Pools
 
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.
-To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**.
+To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**. Optionally, you can also configure [**taints**](#taints) for each pool.
 
 See the example:
 
@@ -154,3 +154,133 @@ The update operation overwrites the additional worker node pools with the list p
       ]
     }
     ```
+
+## Taints
+
+Each additional worker node pool supports an optional **taints** list. With taints, you can control which workloads are scheduled to nodes in a given worker pool.
+
+Each taint object has the following properties:
+
+| Property | Required | Allowed values |
+|----------|----------|----------------|
+| **key** | Yes | Any non-empty string |
+| **value** | No | Any string |
+| **effect** | Yes | `NoSchedule`, `PreferNoSchedule`, `NoExecute` |
+
+The combination of **key** and **effect** must be unique within a single worker node pool. Using the same **key** with different **effect** values is allowed.
+
+### Provisioning with Taints
+
+To provision a cluster with taints in an additional worker node pool, run the following command:
+
+```bash
+curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"name\": \"$NAME\",
+      \"region\": \"$REGION\",
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"taints\": [
+            {
+              \"key\": \"dedicated\",
+              \"value\": \"gpu\",
+              \"effect\": \"NoSchedule\"
+            },
+            {
+              \"key\": \"dedicated\",
+              \"value\": \"gpu\",
+              \"effect\": \"NoExecute\"
+            }
+          ]
+        }
+      ]
+    }
+  }"
+```
+
+### Updating Taints
+
+Taint updates follow these rules:
+
+- If you omit the **taints** field for a worker node pool in the update request, the existing taints for that pool are removed.
+- If you set **taints** to an empty list (`[]`), the existing taints for that pool are also removed.
+- To update taints, provide the full desired list of taints — the update overwrites the existing taints for that pool.
+
+> ### Note: 
+> You can't preserve existing taints without providing them explicitly in the update request.
+
+To update taints in an existing worker node pool, run the following command:
+
+```bash
+curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"taints\": [
+            {
+              \"key\": \"dedicated\",
+              \"value\": \"gpu\",
+              \"effect\": \"NoSchedule\"
+            }
+          ]
+        }
+      ]
+    }
+  }"
+```
+
+To remove all taints from a worker node pool, set **taints** to an empty list.
+
+```bash
+curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"taints\": []
+        }
+      ]
+    }
+  }"
+```

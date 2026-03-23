@@ -97,12 +97,12 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		sh := gardener.Shoot{Unstructured: shoot}
 		// shoots could be not migrated yet, that's why check also secretBindingName field
 		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
-			logger.Info(fmt.Sprintf("Subscription is still used by shoot %s, nothing to free", sh.GetName()))
+			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, nothing to free", credentialsBindingName, sh.GetName()))
 			return operation, 0, nil
 		}
 	}
 
-	logger.Info("Subscription is not used by any shoot, marking as dirty")
+	logger.Info(fmt.Sprintf("Credentials binding %s is not used by any shoot, marking as dirty", credentialsBindingName))
 	labels := credentialsBinding.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)

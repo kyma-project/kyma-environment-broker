@@ -88,9 +88,10 @@ func (s *instances) GetNumberOfInstancesForGlobalAccountID(globalAccountID strin
 	return numberOfInstances, nil
 }
 
-func (s *instances) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+func (s *instances) GetInstanceCountPerBinding(globalAccountID string, bindingNames []string) (map[string]int, error) {
+	counts := make(map[string]int)
 	if len(bindingNames) == 0 {
-		return "", 0, nil
+		return counts, nil
 	}
 
 	bindingSet := make(map[string]bool)
@@ -98,38 +99,18 @@ func (s *instances) GetBestCredentialsBinding(globalAccountID string, bindingNam
 		bindingSet[name] = true
 	}
 
-	counts := make(map[string]int)
 	for _, inst := range s.instances {
-		// Count instances using bindings from this global account:
-		// - subscription_global_account_id tracks which GA "owns" the binding (set during account moves)
-		// - When empty: binding belongs to current global_account_id
-		// - When set: binding belongs to that GA (instance may have moved elsewhere)
 		isExplicitOwner := inst.SubscriptionGlobalAccountID != "" && inst.SubscriptionGlobalAccountID == globalAccountID
 		isCurrentOwnerNeverMoved := inst.GlobalAccountID == globalAccountID && inst.SubscriptionGlobalAccountID == ""
 
 		shouldCount := isExplicitOwner || isCurrentOwnerNeverMoved
 
-		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] {
+		if shouldCount && inst.SubscriptionSecretName != "" && bindingSet[inst.SubscriptionSecretName] && inst.DeletedAt.IsZero() {
 			counts[inst.SubscriptionSecretName]++
 		}
 	}
 
-	// Find the most populated binding below maxCount
-	// Iterate over bindingNames to include bindings with 0 instances
-	bestName := ""
-	bestCount := -1
-	for _, name := range bindingNames {
-		count := counts[name]
-		if count < maxCount && count > bestCount {
-			bestName = name
-			bestCount = count
-		}
-	}
-
-	if bestName == "" {
-		return "", 0, nil
-	}
-	return bestName, bestCount, nil
+	return counts, nil
 }
 
 func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
