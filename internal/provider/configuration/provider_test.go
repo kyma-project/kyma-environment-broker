@@ -327,23 +327,23 @@ func TestProviderSpec_ResolveMachineType(t *testing.T) {
 		providerSpec, err := NewProviderSpec(strings.NewReader(`
 aws:
   machinesVersions:
-    "m.{size}": "m6i.{size}"
-    "c.{size}": "c7i.{size}"
+    "mi.{size}": "m6i.{size}"
+    "ci.{size}": "c7i.{size}"
     "g.{size}": "g6.{size}"
     "gdn.{size}": "g4dn.{size}"
-    "r.{size}": "r8i.{size}"
-    "i.{size}": "i7i.{size}"
+    "ri.{size}": "r8i.{size}"
+    "ii.{size}": "i7i.{size}"
     "m5.{size}": "m6i.{size}"
 `))
 		require.NoError(t, err)
 
 		tests := map[string]string{
-			"m.large":      "m6i.large",
-			"c.xlarge":     "c7i.xlarge",
+			"mi.large":     "m6i.large",
+			"ci.xlarge":    "c7i.xlarge",
 			"g.2xlarge":    "g6.2xlarge",
 			"gdn.4xlarge":  "g4dn.4xlarge",
-			"r.8xlarge":    "r8i.8xlarge",
-			"i.12xlarge":   "i7i.12xlarge",
+			"ri.8xlarge":   "r8i.8xlarge",
+			"ii.12xlarge":  "i7i.12xlarge",
 			"m6i.16xlarge": "m6i.16xlarge",
 			"m5.large":     "m6i.large",
 			"c7i.xlarge":   "c7i.xlarge",
@@ -398,7 +398,7 @@ azure:
 gcp:
   machinesVersions:
     n-standard-{size}: n2-standard-{size}
-    c-highcpu-{size}: c2d-highcpu-{size}
+    cd-highcpu-{size}: c2d-highcpu-{size}
     g-standard-{size}: g2-standard-{size}
     m-ultramem-{size}: m3-ultramem-{size}
     z-highmem-{size}: z3-highmem-{size}-standardlssd
@@ -407,7 +407,7 @@ gcp:
 
 		tests := map[string]string{
 			"n-standard-2":   "n2-standard-2",
-			"c-highcpu-4":    "c2d-highcpu-4",
+			"cd-highcpu-4":   "c2d-highcpu-4",
 			"g-standard-8":   "g2-standard-8",
 			"m-ultramem-32":  "m3-ultramem-32",
 			"z-highmem-44":   "z3-highmem-44-standardlssd",
@@ -449,12 +449,12 @@ sap-converged-cloud:
 		providerSpec, err := NewProviderSpec(strings.NewReader(`
 alicloud:
   machinesVersions:
-    ecs.g.{size}: ecs.g9i.{size}
+    ecs.gi.{size}: ecs.g9i.{size}
 `))
 		require.NoError(t, err)
 
 		tests := map[string]string{
-			"ecs.g.large":      "ecs.g9i.large",
+			"ecs.gi.large":     "ecs.g9i.large",
 			"ecs.g9i.16xlarge": "ecs.g9i.16xlarge",
 		}
 
