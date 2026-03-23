@@ -295,7 +295,7 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 	for _, inputTemplate := range templates {
 		outputTemplate := providerData.MachinesVersions[inputTemplate]
 
-		regex, placeholderNames := templateToRegexp(inputTemplate)
+		regex, placeholderNames := templateToRegex(inputTemplate)
 		matches := regex.FindStringSubmatch(machineType)
 		if matches == nil {
 			continue
@@ -318,30 +318,30 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 	return machineType
 }
 
-var placeholderRE = regexp.MustCompile(`{(\w+)}`)
+var placeholderRegex = regexp.MustCompile(`{(\w+)}`)
 
 // templatePlaceholderCount returns the number of placeholders in the template.
 // Fewer placeholders means a more specific template.
 func templatePlaceholderCount(template string) int {
-	return len(placeholderRE.FindAllString(template, -1))
+	return len(placeholderRegex.FindAllString(template, -1))
 }
 
 // templateLiteralLength returns the number of literal characters in the template.
 // More literal characters means a more specific template.
 func templateLiteralLength(template string) int {
-	return len(placeholderRE.ReplaceAllString(template, ""))
+	return len(placeholderRegex.ReplaceAllString(template, ""))
 }
 
-// templateToRegexp converts a template such as "m.{size}" into a regular expression
+// templateToRegex converts a template such as "m.{size}" into a regular expression
 // like "^m\\.([^.]+)$" and returns the placeholder names in capture-group order.
-func templateToRegexp(template string) (*regexp.Regexp, []string) {
+func templateToRegex(template string) (*regexp.Regexp, []string) {
 	var pattern strings.Builder
 	pattern.WriteString("^")
 
 	placeholderNames := make([]string, 0)
 	lastIdx := 0
 
-	for _, match := range placeholderRE.FindAllStringSubmatchIndex(template, -1) {
+	for _, match := range placeholderRegex.FindAllStringSubmatchIndex(template, -1) {
 		fullStart, fullEnd := match[0], match[1]
 		nameStart, nameEnd := match[2], match[3]
 
@@ -369,8 +369,8 @@ func templateToRegexp(template string) (*regexp.Regexp, []string) {
 // replaceTemplatePlaceholders replaces placeholders in the template with resolved values.
 // Unknown placeholders are left unchanged.
 func replaceTemplatePlaceholders(template string, values map[string]string) string {
-	return placeholderRE.ReplaceAllStringFunc(template, func(token string) string {
-		match := placeholderRE.FindStringSubmatch(token)
+	return placeholderRegex.ReplaceAllStringFunc(template, func(token string) string {
+		match := placeholderRegex.FindStringSubmatch(token)
 		if len(match) != 2 {
 			return token
 		}
