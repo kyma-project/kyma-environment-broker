@@ -916,7 +916,7 @@ In this model, inputs such as `m6i.large`, `m5.large` and `mi.large` can all be 
     }
     ```
 
-5. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version such as `m7i.large`. KEB configuration is already changed, so new worker pools are created with target version.
+5. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version, such as `m7i.large`. The KEB configuration is already changed, so new worker pools are created with the target version.
 6. After runtime migration is complete, update the KEB database so that instances no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `mi.large`.
 
 ## Decision
