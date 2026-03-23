@@ -53,9 +53,9 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 ### Pros
 
 - Simple to implement.
-- Clear billing: users pay extra only for GB above the plan default.
-- No machine-type metadata required.
-- User has more control over the size
+- Users pay extra only for GB above the plan default.
+- No calculations of the volume size per machine are needed.
+- KEB operators need to refresh ERS only once when this feature is rolled out.
 
 ### Cons
 
@@ -64,6 +64,16 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 ## Approach 2: Dynamic Volume Based on Machine Type + `additionalVolumeGb`
 
 KEB computes a volume size automatically based on the selected machine type (using a formula or lookup table, e.g., `volume_base + max(vCPUs/2, memory_GiB/8) * volume_factor`). The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top via an optional `additionalVolumeGb` parameter, which is billed separately per GB above the computed base.
+
+The computed volume size is shown alongside vCPU and memory in the machine type display name in the BTP cockpit, e.g. `m6i.4xlarge (16 vCPU, 64 GiB RAM, 148 GB volume)`.
+
+**BTP cockpit - main worker pool:**
+
+![Approach 2 - dynamic volume size in BTP cockpit main worker pool](../../assets/adr-003-volume-size-approach2-dynamic-main-worker-pool.png)
+
+**BTP cockpit - additional worker node pool:**
+
+![Approach 2 - dynamic volume size in BTP cockpit additional worker node pool](../../assets/adr-003-volume-size-approach2-dynamic-additional-worker-pool.png)
 
 **Provisioning request example:**
 ```json
@@ -85,21 +95,18 @@ KEB computes a volume size automatically based on the selected machine type (usi
 }
 ```
 
-To make the computed default transparent, each machine type option displayed in the BTP cockpit (the `machineType` enum) would need to include the resulting volume size alongside vCPU and memory information, e.g.:
-
-```
-m6i.4xlarge (16 vCPU, 64 GiB RAM, 148 GiB disk)
-```
-
 ### Pros
 
 - Large machines automatically get a larger disk without any user action.
-- Billing is clearly scoped to the additional portion only.
+- Users pay extra only for GB above the machine type default.
 
 ### Cons
 
 - More complex to implement.
-- Different formula parameters needed per OS image? (GardenLinux vs. Ubuntu Pro).
+- Different formula parameters may be needed per OS image (GardenLinux vs. Ubuntu Pro).
+- Users may not notice that the volume size differs per machine type.
+- Every formula change requires KEB operators to be notified and ERS to be refreshed.
+- There is a risk of temporarily inconsistent disk sizes displayed in the BTP cockpit if KEB already uses a different size for a given machine, since ERS refresh takes time.
 
 
 ## Decision
