@@ -126,20 +126,20 @@ If the provided machine type does not match any mapping template, the original u
       aws:
         machines:
           # Version Agnostic machines
-          m.large: m.large (2vCPU, 8GB RAM)
-          m.xlarge: m.xlarge (4vCPU, 16GB RAM)
-          m.2xlarge: m.2xlarge (8vCPU, 32GB RAM)
-          m.4xlarge: m.4xlarge (16vCPU, 64GB RAM)
-          m.8xlarge: m.8xlarge (32vCPU, 128GB RAM)
-          m.12xlarge: m.12xlarge (48vCPU, 192GB RAM)
-          m.16xlarge: m.16xlarge (64vCPU, 256GB RAM)
-          c.large: c.large (2vCPU, 4GB RAM)
-          c.xlarge: c.xlarge (4vCPU, 8GB RAM)
-          c.2xlarge: c.2xlarge (8vCPU, 16GB RAM)
-          c.4xlarge: c.4xlarge (16vCPU, 32GB RAM)
-          c.8xlarge: c.8xlarge (32vCPU, 64GB RAM)
-          c.12xlarge: c.12xlarge (48vCPU, 96GB RAM)
-          c.16xlarge: c.16xlarge (64vCPU, 128GB RAM)
+          mi.large: mi.large (2vCPU, 8GB RAM)
+          mi.xlarge: mi.xlarge (4vCPU, 16GB RAM)
+          mi.2xlarge: mi.2xlarge (8vCPU, 32GB RAM)
+          mi.4xlarge: mi.4xlarge (16vCPU, 64GB RAM)
+          mi.8xlarge: mi.8xlarge (32vCPU, 128GB RAM)
+          mi.12xlarge: mi.12xlarge (48vCPU, 192GB RAM)
+          mi.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
+          ci.large: ci.large (2vCPU, 4GB RAM)
+          ci.xlarge: ci.xlarge (4vCPU, 8GB RAM)
+          ci.2xlarge: ci.2xlarge (8vCPU, 16GB RAM)
+          ci.4xlarge: ci.4xlarge (16vCPU, 32GB RAM)
+          ci.8xlarge: ci.8xlarge (32vCPU, 64GB RAM)
+          ci.12xlarge: ci.12xlarge (48vCPU, 96GB RAM)
+          ci.16xlarge: ci.16xlarge (64vCPU, 128GB RAM)
           g.xlarge: g.xlarge (1GPU, 4vCPU, 16GB RAM)*
           g.2xlarge: g.2xlarge (1GPU, 8vCPU, 32GB RAM)*
           g.4xlarge: g.4xlarge (1GPU, 16vCPU, 64GB RAM)*
@@ -154,45 +154,45 @@ If the provided machine type does not match any mapping template, the original u
           gdn.16xlarge: gdn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
     
           # New memory-intensive machine types
-          r.large: r.large (2vCPU, 16GB RAM)
-          r.xlarge: r.xlarge (4vCPU, 32GB RAM)
-          r.2xlarge: r.2xlarge (8vCPU, 64GB RAM)
-          r.4xlarge: r.4xlarge (16vCPU, 128GB RAM)
-          r.8xlarge: r.8xlarge (32vCPU, 256GB RAM)
-          r.12xlarge: r.12xlarge (48vCPU, 384GB RAM)
-          r.16xlarge: r.16xlarge (64vCPU, 512GB RAM)
+          ri.large: ri.large (2vCPU, 16GB RAM)
+          ri.xlarge: ri.xlarge (4vCPU, 32GB RAM)
+          ri.2xlarge: ri.2xlarge (8vCPU, 64GB RAM)
+          ri.4xlarge: ri.4xlarge (16vCPU, 128GB RAM)
+          ri.8xlarge: ri.8xlarge (32vCPU, 256GB RAM)
+          ri.12xlarge: ri.12xlarge (48vCPU, 384GB RAM)
+          ri.16xlarge: ri.16xlarge (64vCPU, 512GB RAM)
     
           # New storage-intensive machine types
-          i.large: i.large (2vCPU, 16GB RAM)
-          i.xlarge: i.xlarge (4vCPU, 32GB RAM)
-          i.2xlarge: i.2xlarge (8vCPU, 64GB RAM)
-          i.4xlarge: i.4xlarge (16vCPU, 128GB RAM)
-          i.8xlarge: i.8xlarge (32vCPU, 256GB RAM)
-          i.12xlarge: i.12xlarge (48vCPU, 384GB RAM)
-          i.16xlarge: i.16xlarge (64vCPU, 512GB RAM)
+          ii.large: ii.large (2vCPU, 16GB RAM)
+          ii.xlarge: ii.xlarge (4vCPU, 32GB RAM)
+          ii.2xlarge: ii.2xlarge (8vCPU, 64GB RAM)
+          ii.4xlarge: ii.4xlarge (16vCPU, 128GB RAM)
+          ii.8xlarge: ii.8xlarge (32vCPU, 256GB RAM)
+          ii.12xlarge: ii.12xlarge (48vCPU, 384GB RAM)
+          ii.16xlarge: ii.16xlarge (64vCPU, 512GB RAM)
           
           # Deprecated machines with explicit version
-          m6i.large: m6i.large (deprecated, use m.large)
-          m6i.xlarge: m6i.xlarge (deprecated, use m.xlarge)
-          m6i.2xlarge: m6i.2xlarge (deprecated, use m.2xlarge)
-          m6i.4xlarge: m6i.4xlarge (deprecated, use m.4xlarge)
-          m6i.8xlarge: m6i.8xlarge (deprecated, use m.8xlarge)
-          m6i.12xlarge: m6i.12xlarge (deprecated, use m.12xlarge)
-          m6i.16xlarge: m6i.16xlarge (deprecated, use m.16xlarge)
-          m5.large: m5.large (deprecated, use m.large)
-          m5.xlarge: m5.xlarge (deprecated, use m.xlarge)
-          m5.2xlarge: m5.2xlarge (deprecated, use m.2xlarge)
-          m5.4xlarge: m5.4xlarge (deprecated, use m.4xlarge)
-          m5.8xlarge: m5.8xlarge (deprecated, use m.8xlarge)
-          m5.12xlarge: m5.12xlarge (deprecated, use m.12xlarge)
-          m5.16xlarge: m5.16xlarge (deprecated, use m.16xlarge)
-          c7i.large: c7i.large (deprecated, use c.large)
-          c7i.xlarge: c7i.xlarge (deprecated, use c.xlarge)
-          c7i.2xlarge: c7i.2xlarge (deprecated, use c.2xlarge)
-          c7i.4xlarge: c7i.4xlarge (deprecated, use c.4xlarge)
-          c7i.8xlarge: c7i.8xlarge (deprecated, use c.8xlarge)
-          c7i.12xlarge: c7i.12xlarge (deprecated, use c.12xlarge)
-          c7i.16xlarge: c7i.16xlarge (deprecated, use c.16xlarge)
+          m6i.large: m6i.large (deprecated, use mi.large)
+          m6i.xlarge: m6i.xlarge (deprecated, use mi.xlarge)
+          m6i.2xlarge: m6i.2xlarge (deprecated, use mi.2xlarge)
+          m6i.4xlarge: m6i.4xlarge (deprecated, use mi.4xlarge)
+          m6i.8xlarge: m6i.8xlarge (deprecated, use mi.8xlarge)
+          m6i.12xlarge: m6i.12xlarge (deprecated, use mi.12xlarge)
+          m6i.16xlarge: m6i.16xlarge (deprecated, use mi.16xlarge)
+          m5.large: m5.large (deprecated, use mi.large)
+          m5.xlarge: m5.xlarge (deprecated, use mi.xlarge)
+          m5.2xlarge: m5.2xlarge (deprecated, use mi.2xlarge)
+          m5.4xlarge: m5.4xlarge (deprecated, use mi.4xlarge)
+          m5.8xlarge: m5.8xlarge (deprecated, use mi.8xlarge)
+          m5.12xlarge: m5.12xlarge (deprecated, use mi.12xlarge)
+          m5.16xlarge: m5.16xlarge (deprecated, use mi.16xlarge)
+          c7i.large: c7i.large (deprecated, use ci.large)
+          c7i.xlarge: c7i.xlarge (deprecated, use ci.xlarge)
+          c7i.2xlarge: c7i.2xlarge (deprecated, use ci.2xlarge)
+          c7i.4xlarge: c7i.4xlarge (deprecated, use ci.4xlarge)
+          c7i.8xlarge: c7i.8xlarge (deprecated, use ci.8xlarge)
+          c7i.12xlarge: c7i.12xlarge (deprecated, use ci.12xlarge)
+          c7i.16xlarge: c7i.16xlarge (deprecated, use ci.16xlarge)
           g6.xlarge: g6.xlarge (deprecated, use g.xlarge)*
           g6.2xlarge: g6.2xlarge (deprecated, use g.2xlarge)*
           g6.4xlarge: g6.4xlarge (deprecated, use g.4xlarge)*
@@ -207,12 +207,12 @@ If the provided machine type does not match any mapping template, the original u
           g4dn.16xlarge: g4dn.16xlarge (deprecated, use gdn.16xlarge)*
     
         machinesVersions:
-          m.{size}: m6i.{size}
-          c.{size}: c7i.{size}
+          mi.{size}: m6i.{size}
+          ci.{size}: c7i.{size}
           g.{size}: g6.{size}
           gdn.{size}: g4dn.{size}
-          r.{size}: r8i.{size}
-          i.{size}: i7i.{size}
+          ri.{size}: r8i.{size}
+          ii.{size}: i7i.{size}
           m5.{size}: m6i.{size}
     ```
 
@@ -220,12 +220,12 @@ If the provided machine type does not match any mapping template, the original u
 
     |     Input     | Input Template | Output Template |    Output     |
     |:-------------:|:--------------:|:---------------:|:-------------:|
-    |   `m.large`   |   `m.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
-    |   `c.large`   |   `c.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
+    |  `mi.large`   |  `mi.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
+    |  `ci.large`   |  `ci.{size}`   |  `c7i.{size}`   |  `c7i.large`  |
     |  `g.xlarge`   |   `g.{size}`   |   `g6.{size}`   |  `g6.xlarge`  |
     | `gdn.xlarge`  |  `gdn.{size}`  |  `g4dn.{size}`  | `g4dn.xlarge` |
-    |   `r.large`   |   `r.{size}`   |  `r8i.{size}`   |  `r8i.large`  |
-    |   `i.large`   |   `i.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
+    |  `ri.large`   |  `ri.{size}`   |  `r8i.{size}`   |  `r8i.large`  |
+    |  `ii.large`   |  `ii.{size}`   |  `i7i.{size}`   |  `i7i.large`  |
     |  `m5.large`   |  `m5.{size}`   |  `m6i.{size}`   |  `m6i.large`  |
     |  `m6i.large`  |      `-`       |       `-`       |  `m6i.large`  |
     |  `c7i.large`  |      `-`       |       `-`       |  `c7i.large`  |
@@ -349,12 +349,12 @@ If the provided machine type does not match any mapping template, the original u
           n-standard-32: n-standard-32 (32vCPU, 128GB RAM)
           n-standard-48: n-standard-48 (48vCPU, 192GB RAM)
           n-standard-64: n-standard-64 (64vCPU, 256GB RAM)
-          c-highcpu-2: c-highcpu-2 (2vCPU, 4GB RAM)
-          c-highcpu-4: c-highcpu-4 (4vCPU, 8GB RAM)
-          c-highcpu-8: c-highcpu-8 (8vCPU, 16GB RAM)
-          c-highcpu-16: c-highcpu-16 (16vCPU, 32GB RAM)
-          c-highcpu-32: c-highcpu-32 (32vCPU, 64GB RAM)
-          c-highcpu-56: c-highcpu-56 (56vCPU, 112GB RAM)
+          cd-highcpu-2: cd-highcpu-2 (2vCPU, 4GB RAM)
+          cd-highcpu-4: cd-highcpu-4 (4vCPU, 8GB RAM)
+          cd-highcpu-8: cd-highcpu-8 (8vCPU, 16GB RAM)
+          cd-highcpu-16: cd-highcpu-16 (16vCPU, 32GB RAM)
+          cd-highcpu-32: cd-highcpu-32 (32vCPU, 64GB RAM)
+          cd-highcpu-56: cd-highcpu-56 (56vCPU, 112GB RAM)
           g-standard-4: g-standard-4 (1GPU, 4vCPU, 16GB RAM)*
           g-standard-8: g-standard-8 (1GPU, 8vCPU, 32GB RAM)*
           g-standard-12: g-standard-12 (1GPU, 12vCPU, 48GB RAM)*
@@ -373,30 +373,30 @@ If the provided machine type does not match any mapping template, the original u
           z-highmem-44: z-highmem-44 (44vCPU, 352GB RAM)
     
           # Deprecated machines with explicit version
-          n2-standard-2: n2-standard-2 (deprecated, use n2-standard-2)
-          n2-standard-4: n2-standard-4 (deprecated, use n2-standard-4)
-          n2-standard-8: n2-standard-8 (deprecated, use n2-standard-8)
-          n2-standard-16: n2-standard-16 (deprecated, use n2-standard-16)
-          n2-standard-32: n2-standard-32 (deprecated, use n2-standard-32)
-          n2-standard-48: n2-standard-48 (deprecated, use n2-standard-48)
-          n2-standard-64: n2-standard-64 (deprecated, use n2-standard-64)
-          c2d-highcpu-2: c2d-highcpu-2 (deprecated, use c2d-highcpu-2)
-          c2d-highcpu-4: c2d-highcpu-4 (deprecated, use c2d-highcpu-4)
-          c2d-highcpu-8: c2d-highcpu-8 (deprecated, use c2d-highcpu-8)
-          c2d-highcpu-16: c2d-highcpu-16 (deprecated, use c2d-highcpu-16)
-          c2d-highcpu-32: c2d-highcpu-32 (deprecated, use c2d-highcpu-32)
-          c2d-highcpu-56: c2d-highcpu-56 (deprecated, use c2d-highcpu-64)
-          g2-standard-4: g2-standard-4 (deprecated, use g2-standard-4)*
-          g2-standard-8: g2-standard-8 (deprecated, use g2-standard-8)*
-          g2-standard-12: g2-standard-12 (deprecated, use g2-standard-12)*
-          g2-standard-16: g2-standard-16 (deprecated, use g2-standard-16)*
-          g2-standard-24: g2-standard-24 (deprecated, use g2-standard-24)*
-          g2-standard-32: g2-standard-32 (deprecated, use g2-standard-32)*
-          g2-standard-48: g2-standard-48 (deprecated, use g2-standard-48)*
+          n2-standard-2: n2-standard-2 (deprecated, use n-standard-2)
+          n2-standard-4: n2-standard-4 (deprecated, use n-standard-4)
+          n2-standard-8: n2-standard-8 (deprecated, use n-standard-8)
+          n2-standard-16: n2-standard-16 (deprecated, use n-standard-16)
+          n2-standard-32: n2-standard-32 (deprecated, use n-standard-32)
+          n2-standard-48: n2-standard-48 (deprecated, use n-standard-48)
+          n2-standard-64: n2-standard-64 (deprecated, use n-standard-64)
+          c2d-highcpu-2: c2d-highcpu-2 (deprecated, use cd-highcpu-2)
+          c2d-highcpu-4: c2d-highcpu-4 (deprecated, use cd-highcpu-4)
+          c2d-highcpu-8: c2d-highcpu-8 (deprecated, use cd-highcpu-8)
+          c2d-highcpu-16: c2d-highcpu-16 (deprecated, use cd-highcpu-16)
+          c2d-highcpu-32: c2d-highcpu-32 (deprecated, use cd-highcpu-32)
+          c2d-highcpu-56: c2d-highcpu-56 (deprecated, use cd-highcpu-64)
+          g2-standard-4: g2-standard-4 (deprecated, use g-standard-4)*
+          g2-standard-8: g2-standard-8 (deprecated, use g-standard-8)*
+          g2-standard-12: g2-standard-12 (deprecated, use g-standard-12)*
+          g2-standard-16: g2-standard-16 (deprecated, use g-standard-16)*
+          g2-standard-24: g2-standard-24 (deprecated, use g-standard-24)*
+          g2-standard-32: g2-standard-32 (deprecated, use g-standard-32)*
+          g2-standard-48: g2-standard-48 (deprecated, use g-standard-48)*
     
         machinesVersions:
           n-standard-{size}: n2-standard-{size}
-          c-highcpu-{size}: c2d-highcpu-{size}
+          cd-highcpu-{size}: c2d-highcpu-{size}
           g-standard-{size}: g2-standard-{size}
           m-ultramem-{size}: m3-ultramem-{size}
           z-highmem-{size}: z3-highmem-{size}-standardlssd
@@ -407,7 +407,7 @@ If the provided machine type does not match any mapping template, the original u
     |      Input      |   Input Template    |         Output Template          |            Output            |
     |:---------------:|:-------------------:|:--------------------------------:|:----------------------------:|
     | `n-standard-2`  | `n-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
-    |  `c-highcpu-2`  | `c-highcpu-{size}`  |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+    | `cd-highcpu-2`  | `cd-highcpu-{size}` |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
     | `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
     | `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
     | `z-highmem-14`  | `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
@@ -453,33 +453,33 @@ If the provided machine type does not match any mapping template, the original u
       alicloud:
         machines:
           # Version Agnostic machines
-          ecs.g.large: ecs.g.large (2vCPU, 8GB RAM)
-          ecs.g.xlarge: ecs.g.xlarge (4vCPU, 16GB RAM)
-          ecs.g.2xlarge: ecs.g.2xlarge (8vCPU, 32GB RAM)
-          ecs.g.4xlarge: ecs.g.4xlarge (16vCPU, 64GB RAM)
-          ecs.g.8xlarge: ecs.g.8xlarge (32vCPU, 128GB RAM)
-          ecs.g.12xlarge: ecs.g.12xlarge (48vCPU, 192GB RAM)
-          ecs.g.16xlarge: ecs.g.16xlarge (64vCPU, 256GB RAM)
+          ecs.gi.large: ecs.gi.large (2vCPU, 8GB RAM)
+          ecs.gi.xlarge: ecs.gi.xlarge (4vCPU, 16GB RAM)
+          ecs.gi.2xlarge: ecs.gi.2xlarge (8vCPU, 32GB RAM)
+          ecs.gi.4xlarge: ecs.gi.4xlarge (16vCPU, 64GB RAM)
+          ecs.gi.8xlarge: ecs.gi.8xlarge (32vCPU, 128GB RAM)
+          ecs.gi.12xlarge: ecs.gi.12xlarge (48vCPU, 192GB RAM)
+          ecs.gi.16xlarge: ecs.gi.16xlarge (64vCPU, 256GB RAM)
             
           # Deprecated machines with explicit version
-          ecs.g9i.large: ecs.g9i.large (deprecated, use ecs.g9i.large)
-          ecs.g9i.xlarge: ecs.g9i.xlarge (deprecated, use ecs.g9i.xlarge)
-          ecs.g9i.2xlarge: ecs.g9i.2xlarge (deprecated, use ecs.g9i.2xlarge)
-          ecs.g9i.4xlarge: ecs.g9i.4xlarge (deprecated, use ecs.g9i.4xlarge)
-          ecs.g9i.8xlarge: ecs.g9i.8xlarge (deprecated, use ecs.g9i.8xlarge)
-          ecs.g9i.12xlarge: ecs.g9i.12xlarge (deprecated, use ecs.g9i.12xlarge)
-          ecs.g9i.16xlarge: ecs.g9i.16xlarge (deprecated, use ecs.g9i.16xlarge)
+          ecs.g9i.large: ecs.g9i.large (deprecated, use ecs.gi.large)
+          ecs.g9i.xlarge: ecs.g9i.xlarge (deprecated, use ecs.gi.xlarge)
+          ecs.g9i.2xlarge: ecs.g9i.2xlarge (deprecated, use ecs.gi.2xlarge)
+          ecs.g9i.4xlarge: ecs.g9i.4xlarge (deprecated, use ecs.gi.4xlarge)
+          ecs.g9i.8xlarge: ecs.g9i.8xlarge (deprecated, use ecs.gi.8xlarge)
+          ecs.g9i.12xlarge: ecs.g9i.12xlarge (deprecated, use ecs.gi.12xlarge)
+          ecs.g9i.16xlarge: ecs.g9i.16xlarge (deprecated, use ecs.gi.16xlarge)
     
         machinesVersions:
-          ecs.g.{size}: ecs.g9i.{size}
+          ecs.gi.{size}: ecs.g9i.{size}
     ```
 
   - Machine version resolution
 
-    |      Input      | Input Template | Output Template  |     Output      |
-    |:---------------:|:--------------:|:----------------:|:---------------:|
-    |  `ecs.g.large`  | `ecs.g.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
-    | `ecs.g9i.large` |      `-`       |       `-`        | `ecs.g9i.large` |
+    |      Input      | Input Template  | Output Template  |     Output      |
+    |:---------------:|:---------------:|:----------------:|:---------------:|
+    | `ecs.gi.large`  | `ecs.gi.{size}` | `ecs.g9i.{size}` | `ecs.g9i.large` |
+    | `ecs.g9i.large` |       `-`       |       `-`        | `ecs.g9i.large` |
 
 
 ### Family Agnostic Configuration
@@ -655,11 +655,11 @@ This approach completely decouples the logical machine definition from the insta
 
 ### Comparison
 
-| Aspect           | Version Agnostic Configuration                                                                                                        | Family Agnostic Configuration                                                                                                                                                       |
-|------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Aspect           | Version Agnostic Configuration                                                                                                     | Family Agnostic Configuration                                                                                                                                                       |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Flexibility      | Only the machine **version** should be updated; switching to a completely different machine type can make the configuration messy. | The **name is fully abstract**, allowing seamless switching to a completely different machine type.                                                                                 |
-| Logic Complexity | Straightforward logic that is **consistent across all providers**.                                                                    | Straightforward logic that is **consistent across all providers**.                                                                                                                  |
-| Potential Issues | None identified.                                                                                                                      | **AWS:** Multiple general-purpose and GPU instance types<br>**Azure:** Multiple general machine types<br>Creating a consistent naming scheme will be challenging if not impossible. |
+| Logic Complexity | Straightforward logic that is **consistent across all providers**.                                                                 | Straightforward logic that is **consistent across all providers**.                                                                                                                  |
+| Potential Issues | None identified.                                                                                                                   | Creating a consistent naming scheme will be challenging if not impossible.<br>**AWS:** Multiple general-purpose and GPU instance types<br>**Azure:** Multiple general machine types |
 
 
 ### JSON Schema
