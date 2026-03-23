@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -255,6 +256,134 @@ func (p *ProviderSpec) IsDualStackSupported(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.DualStack
+}
+
+func (p *ProviderSpec) ValidateMachinesVersions() error {
+	var errs []error
+
+	for provider, providerDTO := range p.data {
+		if len(providerDTO.MachinesVersions) == 0 {
+			continue
+		}
+
+		for inputTemplate, outputTemplate := range providerDTO.MachinesVersions {
+			errs = append(errs, validateMachinesVersionMapping(provider, inputTemplate, outputTemplate)...)
+		}
+	}
+
+	if len(errs) > 0 {
+		var errMses []string
+		for _, err := range errs {
+			errMses = append(errMses, err.Error())
+		}
+
+		return fmt.Errorf("Failed to validate machines versions: %s", strings.Join(errMses, "; "))
+	}
+
+	return nil
+}
+
+func validateMachinesVersionMapping(providerName runtime.CloudProvider, inputTemplate, outputTemplate string) []error {
+	var errs []error
+
+	if strings.TrimSpace(inputTemplate) == "" {
+		errs = append(errs, fmt.Errorf("provider %q: machinesVersions contains an empty input template", providerName))
+		return errs
+	}
+	if strings.TrimSpace(outputTemplate) == "" {
+		errs = append(errs, fmt.Errorf("provider %q: machinesVersions[%q] has an empty output template", providerName, inputTemplate))
+		return errs
+	}
+
+	inputPlaceholders, inputErrs := parseAndValidateTemplatePlaceholders(inputTemplate, true)
+	for _, err := range inputErrs {
+		errs = append(errs, fmt.Errorf("provider %q: invalid input template %q: %w", providerName, inputTemplate, err))
+	}
+
+	outputPlaceholders, outputErrs := parseAndValidateTemplatePlaceholders(outputTemplate, false)
+	for _, err := range outputErrs {
+		errs = append(errs, fmt.Errorf("provider %q: invalid output template %q for input %q: %w", providerName, outputTemplate, inputTemplate, err))
+	}
+
+	if len(inputErrs) > 0 || len(outputErrs) > 0 {
+		return errs
+	}
+
+	inputSet := make(map[string]struct{}, len(inputPlaceholders))
+	for _, name := range inputPlaceholders {
+		inputSet[name] = struct{}{}
+	}
+
+	for _, name := range outputPlaceholders {
+		if _, ok := inputSet[name]; !ok {
+			errs = append(errs, fmt.Errorf(
+				"provider %q: invalid mapping %q -> %q: output placeholder %q is not defined in input template",
+				providerName, inputTemplate, outputTemplate, "{"+name+"}",
+			))
+		}
+	}
+
+	return errs
+}
+
+func parseAndValidateTemplatePlaceholders(template string, rejectAdjacent bool) ([]string, []error) {
+	var errs []error
+	var names []string
+
+	seen := make(map[string]struct{})
+	var prevWasPlaceholder bool
+
+	for i := 0; i < len(template); {
+		switch template[i] {
+		case '{':
+			end := strings.IndexByte(template[i+1:], '}')
+			if end == -1 {
+				errs = append(errs, fmt.Errorf("unclosed placeholder starting at position %d", i))
+				return names, errs
+			}
+
+			end += i + 1
+			name := template[i+1 : end]
+
+			if name == "" {
+				errs = append(errs, fmt.Errorf("empty placeholder at position %d", i))
+			} else if !isValidPlaceholderName(name) {
+				errs = append(errs, fmt.Errorf("invalid placeholder name %q at position %d", name, i))
+			} else {
+				if _, exists := seen[name]; exists {
+					errs = append(errs, fmt.Errorf("duplicate placeholder %q", "{"+name+"}"))
+				}
+				seen[name] = struct{}{}
+				names = append(names, name)
+			}
+
+			if rejectAdjacent && prevWasPlaceholder {
+				errs = append(errs, fmt.Errorf("adjacent placeholders are not allowed"))
+			}
+
+			prevWasPlaceholder = true
+			i = end + 1
+
+		case '}':
+			errs = append(errs, fmt.Errorf("unmatched closing brace at position %d", i))
+			i++
+
+		default:
+			prevWasPlaceholder = false
+			i++
+		}
+	}
+
+	return names, errs
+}
+
+func isValidPlaceholderName(name string) bool {
+	for _, r := range name {
+		if !(r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)) {
+			return false
+		}
+	}
+	return true
 }
 
 // ResolveMachineType resolves a given machine type to its versioned equivalent

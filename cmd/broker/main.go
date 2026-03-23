@@ -349,6 +349,7 @@ func main() {
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
+	fatalOnError(providerSpec.ValidateMachinesVersions(), log)
 
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)

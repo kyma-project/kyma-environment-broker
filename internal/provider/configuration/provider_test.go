@@ -301,6 +301,27 @@ aws:
 	assert.ElementsMatch(t, []string{"m6i.large", "g6.xlarge", "g4dn.xlarge"}, machineTypes)
 }
 
+func TestProviderSpec_ValidateMachinesVersions(t *testing.T) {
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    "x.{size}{c_size}": "x1.{size}{c_size}"
+    "dup.{size}.{size}": "dup2.{size}"
+    "broken.{size": "broken.{size}"
+    "bad-output.{size}": "bad.{other}"
+`))
+	require.NoError(t, err)
+
+	err = providerSpec.ValidateMachinesVersions()
+	require.Error(t, err)
+
+	msg := err.Error()
+	assert.Contains(t, msg, `provider "aws": invalid input template "x.{size}{c_size}": adjacent placeholders are not allowed`)
+	assert.Contains(t, msg, `provider "aws": invalid input template "dup.{size}.{size}": duplicate placeholder "{size}"`)
+	assert.Contains(t, msg, `provider "aws": invalid input template "broken.{size": unclosed placeholder starting at position 7`)
+	assert.Contains(t, msg, `provider "aws": invalid mapping "bad-output.{size}" -> "bad.{other}": output placeholder "{other}" is not defined in input template`)
+}
+
 func TestProviderSpec_ResolveMachineType(t *testing.T) {
 	t.Run("AWS", func(t *testing.T) {
 		providerSpec, err := NewProviderSpec(strings.NewReader(`
