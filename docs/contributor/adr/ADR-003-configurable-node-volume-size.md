@@ -48,7 +48,14 @@ Expose `volumeSizeGb` as an optional, user-configurable integer parameter per wo
 }
 ```
 
-The schema declares `minimum` and `maximum` constraints as static values. The default and minimum are shown in the BTP cockpit. Users pay for every GB above the plan default.
+The schema declares `minimum` and `maximum` constraints as static values. The default and minimum are shown in the BTP cockpit.
+
+### Billing
+
+- The plan default volume size is included in the base machine price with no additional charge.
+- Any `volumeSizeGb` value above the plan default is charged.
+- The volume size is available as a status attribute on the Kubernetes node API, so the actual disk size per node can be detected at runtime for billing purposes.
+- The price calculator must be updated to include a `volumeSizeGb` input field showing the additional cost when the value exceeds the default.
 
 ### Pros
 
@@ -94,6 +101,13 @@ The computed volume size is shown alongside vCPU and memory in the machine type 
   }
 }
 ```
+
+### Billing
+
+- The computed base volume size is included in the base machine price at no extra cost.
+- Only the `additionalVolumeGb` amount is charged, per GB, per node, per month.
+- The volume size is available as a status attribute on the Kubernetes node API, so the actual disk size per node can be detected at runtime for billing purposes.
+- The price calculator must be updated to include a `volumeSizeGb` input field showing the additional cost when the value exceeds the default.
 
 ### Pros
 
