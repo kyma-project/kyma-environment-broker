@@ -323,7 +323,7 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 	return machineType
 }
 
-var placeholderRegex = regexp.MustCompile(`{(\w+)}`)
+var placeholderRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 // templatePlaceholderCount returns the number of placeholders in the template.
 // Fewer placeholders means a more specific template.
