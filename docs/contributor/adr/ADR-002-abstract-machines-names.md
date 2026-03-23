@@ -860,8 +860,8 @@ The following examples use AWS, but the same migration pattern applies to the ot
    }
    ```
 
-4. SRE updates all existing Runtime CRs using Cluster Orchestrator so that existing clusters are aligned with the new version agnostic machine types.
-5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for active entries, and only the logical values such as `mi.large` remain.
+4. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version such as `m7i.large`.
+5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for instances, and only the logical values such as `mi.large` remain.
 6. If new entries using deprecated machine types such as `m6i.large` or `m5.large` still appear, this most likely means that some internal users or automations are still relying on the old values.
    In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `mi.large`.
 7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
@@ -916,8 +916,8 @@ In this model, inputs such as `m6i.large`, `m5.large` and `mi.large` can all be 
     }
     ```
 
-5. SRE updates existing Runtime CRs with Cluster Orchestrator so that already provisioned clusters are aligned with the version-agnostic representation.
-6. After runtime migration is complete, update the KEB database so that active entries no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `mi.large`.
+5. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version such as `m7i.large`.
+6. After runtime migration is complete, update the KEB database so that instances no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `mi.large`.
 
 ## Decision
 
