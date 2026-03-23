@@ -70,9 +70,38 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 
 ## Approach 2: Dynamic Volume Based on Machine Type + `additionalVolumeGb`
 
-KEB computes a volume size automatically based on the selected machine type (using a formula or lookup table, e.g., `volume_base + max(vCPUs/2, memory_GiB/8) * volume_factor`). The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top via an optional `additionalVolumeGb` parameter, which is billed separately per GB above the computed base.
+KEB computes a volume size automatically based on the selected machine type. The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top via an optional `additionalVolumeGb` parameter, which is billed separately per GB above the computed base.
 
-The computed volume size is shown alongside vCPU and memory in the machine type display name in the BTP cockpit, e.g. `m6i.4xlarge (16 vCPU, 64 GiB RAM, 148 GB volume)`.
+The dynamic volume size can be obtained using one of two approaches:
+
+**Option A: Configurable mapping table** — maps machine size ranges (e.g., by vCPU count) to fixed volume sizes. Easier to reason about but requires maintaining the table as new machine types are added.
+
+**Option B: Formula** — computes the volume size from the machine's resources:
+
+```
+volume_size = volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor
+```
+
+Where the formula values come from:
+
+| Value | Source |
+|-------|--------|
+| `volume_base` | Configurable base ammount per landscape |
+| `vCPUs` | Machine type metadata from the provider (e.g., 32 vCPUs for `m6i.8xlarge`) |
+| `memory_GiB` | Machine type metadata from the provider (e.g., 128 GiB for `m6i.8xlarge`) |
+| `volume_factor` | Normalized resource multiplier for total volume size set per landscape |
+
+**Example producing 148 GiB** for a 32 vCPU / 128 GiB RAM machine (e.g., `m6i.8xlarge`) on a GardenLinux landscape (`volume_base=20`, `volume_factor=8`):
+
+```
+volume_size = 20 + max(32/2, 128/8) * 8
+           = 20 + max(16, 16) * 8
+           = 20 + 16 * 8
+           = 20 + 128
+           = 148 GiB
+```
+
+The computed volume size is shown alongside vCPU and memory in the machine type display name in the BTP cockpit, e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`.
 
 **BTP cockpit - main worker pool:**
 
