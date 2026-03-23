@@ -375,12 +375,8 @@ func templateToRegex(template string) (*regexp.Regexp, []string) {
 // Unknown placeholders are left unchanged.
 func replaceTemplatePlaceholders(template string, values map[string]string) string {
 	return placeholderRegex.ReplaceAllStringFunc(template, func(token string) string {
-		match := placeholderRegex.FindStringSubmatch(token)
-		if len(match) != 2 {
-			return token
-		}
-
-		if value, ok := values[match[1]]; ok {
+		name := token[1 : len(token)-1]
+		if value, ok := values[name]; ok {
 			return value
 		}
 		return token
