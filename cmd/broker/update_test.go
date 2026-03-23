@@ -16,6 +16,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
@@ -3217,6 +3218,369 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
    			}`)
 		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	})
+
+	t.Run("should add additional worker node pool with taints via update", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1"
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers == nil || len(*runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers) == 0)
+
+		// when
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": [
+										{"key": "gpu", "value": "true", "effect": "NoSchedule"},
+										{"key": "dedicated", "value": "ml", "effect": "PreferNoSchedule"}
+									]
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "tainted-pool", "m6i.large", 3, 20, 3)
+		suite.assertAdditionalWorkerTaints(t, runtime.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{
+			{Key: "gpu", Value: "true", Effect: corev1.TaintEffectNoSchedule},
+			{Key: "dedicated", Value: "ml", Effect: corev1.TaintEffectPreferNoSchedule},
+		})
+	})
+
+	t.Run("should update taints on existing additional worker node pool", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": [
+										{"key": "gpu", "value": "true", "effect": "NoSchedule"}
+									]
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtimeAfterProvisioning.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{
+			{Key: "gpu", Value: "true", Effect: corev1.TaintEffectNoSchedule},
+		})
+
+		// when - update taint
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": [
+										{"key": "gpu", "value": "false", "effect": "NoExecute"}
+									]
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtime.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{
+			{Key: "gpu", Value: "false", Effect: corev1.TaintEffectNoExecute},
+		})
+	})
+
+	t.Run("should remove taints from additional worker node pool", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": [
+										{"key": "gpu", "value": "true", "effect": "NoSchedule"}
+									]
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when - remove taints
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": []
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtime.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{})
+	})
+
+	t.Run("should keep no taints when explicitly updating empty taints on pool without taints", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1",
+					"additionalWorkerNodePools": [
+						{
+							"name": "tainted-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtimeAfterProvisioning.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{})
+
+		// when - explicit empty taints on already empty taints
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "tainted-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"taints": []
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Contains(t, []int{http.StatusOK, http.StatusAccepted}, resp.StatusCode)
+		if resp.StatusCode == http.StatusAccepted {
+			upgradeOperationID := suite.DecodeOperationID(resp)
+			suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		}
+
+		// then
+		runtimeAfterUpdate := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtimeAfterUpdate.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtimeAfterUpdate.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{})
+	})
+
+	t.Run("should add additional worker node pool with taint without value", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1"
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "tainted-pool",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20,
+									"taints": [
+										{"key": "dedicated", "effect": "NoSchedule"}
+									]
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerTaints(t, runtime.Spec.Shoot.Provider, "tainted-pool", []corev1.Taint{
+			{Key: "dedicated", Value: "", Effect: corev1.TaintEffectNoSchedule},
+		})
 	})
 }
 

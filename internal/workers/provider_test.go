@@ -16,6 +16,7 @@ import (
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func TestCreateAdditionalWorkers(t *testing.T) {
@@ -234,6 +235,137 @@ aws:
 		assertWorker(t, workers, "worker-1", 3, "zone-d", "zone-e", "zone-f", "zone-h")
 		assertWorker(t, workers, "worker-2", 1, "zone-d", "zone-e", "zone-f", "zone-h")
 		assertWorker(t, workers, "worker-3", 1, "zone-i", "zone-j")
+	})
+
+	t.Run("should map taints to gardener worker", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-tainted",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+				Taints: []runtime.TaintDTO{
+					{Key: "gpu", Value: "true", Effect: runtime.TaintEffectNoSchedule},
+					{Key: "dedicated", Value: "ml", Effect: runtime.TaintEffectPreferNoSchedule},
+				},
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			log,
+		)
+
+		// then
+		assert.NoError(t, err)
+		assert.Len(t, workers, 1)
+		assert.Equal(t, "worker-tainted", workers[0].Name)
+		assert.Len(t, workers[0].Taints, 2)
+		assert.Equal(t, corev1.Taint{Key: "gpu", Value: "true", Effect: corev1.TaintEffectNoSchedule}, workers[0].Taints[0])
+		assert.Equal(t, corev1.Taint{Key: "dedicated", Value: "ml", Effect: corev1.TaintEffectPreferNoSchedule}, workers[0].Taints[1])
+	})
+
+	t.Run("should not set taints when none provided", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-no-taints",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			log,
+		)
+
+		// then
+		assert.NoError(t, err)
+		assert.Len(t, workers, 1)
+		assert.Nil(t, workers[0].Taints)
+	})
+}
+
+func TestToGardenerTaints(t *testing.T) {
+	t.Run("nil input returns nil", func(t *testing.T) {
+		result := toGardenerTaints(nil)
+		assert.Nil(t, result)
+	})
+
+	t.Run("empty slice returns nil", func(t *testing.T) {
+		result := toGardenerTaints([]runtime.TaintDTO{})
+		assert.Nil(t, result)
+	})
+
+	t.Run("single taint is mapped correctly", func(t *testing.T) {
+		taints := []runtime.TaintDTO{
+			{Key: "dedicated", Value: "gpu", Effect: runtime.TaintEffectNoSchedule},
+		}
+		result := toGardenerTaints(taints)
+		assert.Equal(t, []corev1.Taint{
+			{Key: "dedicated", Value: "gpu", Effect: corev1.TaintEffectNoSchedule},
+		}, result)
+	})
+
+	t.Run("same key with different effects are mapped", func(t *testing.T) {
+		taints := []runtime.TaintDTO{
+			{Key: "dedicated", Value: "gpu", Effect: runtime.TaintEffectNoSchedule},
+			{Key: "dedicated", Value: "gpu", Effect: runtime.TaintEffectNoExecute},
+		}
+		result := toGardenerTaints(taints)
+		assert.Equal(t, []corev1.Taint{
+			{Key: "dedicated", Value: "gpu", Effect: corev1.TaintEffectNoSchedule},
+			{Key: "dedicated", Value: "gpu", Effect: corev1.TaintEffectNoExecute},
+		}, result)
+	})
+
+	t.Run("multiple taints are all mapped", func(t *testing.T) {
+		taints := []runtime.TaintDTO{
+			{Key: "k1", Value: "v1", Effect: runtime.TaintEffectNoSchedule},
+			{Key: "k2", Value: "v2", Effect: runtime.TaintEffectPreferNoSchedule},
+			{Key: "k3", Value: "", Effect: runtime.TaintEffectNoExecute},
+		}
+		result := toGardenerTaints(taints)
+		assert.Equal(t, []corev1.Taint{
+			{Key: "k1", Value: "v1", Effect: corev1.TaintEffectNoSchedule},
+			{Key: "k2", Value: "v2", Effect: corev1.TaintEffectPreferNoSchedule},
+			{Key: "k3", Value: "", Effect: corev1.TaintEffectNoExecute},
+		}, result)
+	})
+
+	t.Run("taint without value is mapped with empty value", func(t *testing.T) {
+		taints := []runtime.TaintDTO{
+			{Key: "special", Effect: runtime.TaintEffectNoExecute},
+		}
+		result := toGardenerTaints(taints)
+		assert.Equal(t, []corev1.Taint{
+			{Key: "special", Value: "", Effect: corev1.TaintEffectNoExecute},
+		}, result)
 	})
 }
 

@@ -22,7 +22,7 @@ type Instances interface {
 	GetCredentialsBindingStats() (internal.CredentialsBindingStats, error)
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
-	GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error)
+	GetInstanceCountPerBinding(globalAccountID string, bindingNames []string) (map[string]int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 

@@ -5,14 +5,14 @@ import (
 	"log/slog"
 	"strconv"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -86,6 +86,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			MaxSurge:       &workerMaxSurge,
 			MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
 			Zones:          workerZones,
+			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
 		}
 
 		if values.ProviderType != "openstack" {
@@ -100,4 +101,19 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 	}
 
 	return workers, nil
+}
+
+func toGardenerTaints(taints []pkg.TaintDTO) []corev1.Taint {
+	if len(taints) == 0 {
+		return nil
+	}
+	result := make([]corev1.Taint, 0, len(taints))
+	for _, t := range taints {
+		result = append(result, corev1.Taint{
+			Key:    t.Key,
+			Value:  t.Value,
+			Effect: corev1.TaintEffect(t.Effect),
+		})
+	}
+	return result
 }

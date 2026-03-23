@@ -594,19 +594,20 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 	return res.Total, err
 }
 
-func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNames []string, maxCount int) (string, int, error) {
+func (r readSession) GetInstanceCountPerBinding(globalAccountID string, bindingNames []string) (map[string]int, error) {
 	if len(bindingNames) == 0 {
-		return "", 0, nil
+		return make(map[string]int), nil
 	}
 
-	var result struct {
+	var results []struct {
 		SubscriptionSecretName string `db:"subscription_secret_name"`
 		Count                  int    `db:"count"`
 	}
 
-	err := r.session.Select("subscription_secret_name", "count(*) as count").
+	_, err := r.session.Select("subscription_secret_name", "count(*) as count").
 		From(InstancesTableName).
 		Where("subscription_secret_name IN ?", bindingNames).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
 		Where(dbr.Or(
 			dbr.And(
 				dbr.Neq("subscription_global_account_id", ""),
@@ -618,19 +619,18 @@ func (r readSession) GetBestCredentialsBinding(globalAccountID string, bindingNa
 			),
 		)).
 		GroupBy("subscription_secret_name").
-		Having("count(*) < ?", maxCount).
-		OrderBy("count DESC").
-		Limit(1).
-		LoadOne(&result)
+		Load(&results)
 
 	if err != nil {
-		if err == dbr.ErrNotFound {
-			return "", 0, nil
-		}
-		return "", 0, err
+		return nil, err
 	}
 
-	return result.SubscriptionSecretName, result.Count, nil
+	counts := make(map[string]int)
+	for _, row := range results {
+		counts[row.SubscriptionSecretName] = row.Count
+	}
+
+	return counts, nil
 }
 
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {

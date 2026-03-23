@@ -982,6 +982,17 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 	assert.Len(t, worker.Zones, zonesNumer)
 }
 
+func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider imv1.Provider, name string, expectedTaints []corev1.Taint) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.ElementsMatch(t, expectedTaints, worker.Taints)
+}
+
 func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
 	var worker *v1beta1.Worker
 	for _, additionalWorker := range *provider.AdditionalWorkers {

@@ -5,6 +5,7 @@ import runtimepkg "github.com/kyma-project/kyma-environment-broker/common/runtim
 type MultiAccountConfig struct {
 	AllowedGlobalAccounts []string
 	Limits                HyperscalerAccountLimits
+	MinBindingsForGuard   int `envconfig:"default=0"`
 }
 
 type HyperscalerAccountLimits struct {

@@ -43,18 +43,26 @@ func (s *Service) PerformCleanup() error {
 		return nil
 	}
 	slog.Info("Requesting Service Bindings removal...")
+	var failedCount int
 	for _, binding := range bindings {
 		if err := s.brokerClient.Unbind(binding); err != nil {
 			var unexpectedStatusCodeErr broker.UnexpectedStatusCodeError
 			if errors.Is(err, context.DeadlineExceeded) {
+				failedCount++
+				slog.Warn(fmt.Sprintf("unbind timed out for service binding ID %q and instance ID %q, will retry on next scheduled run", binding.ID, binding.InstanceID))
 				continue
 			}
 			if errors.As(err, &unexpectedStatusCodeErr) && unexpectedStatusCodeErr.UnexpectedStatusCode == http.StatusGone {
 				slog.Info(fmt.Sprintf("instance with ID: %q does not exist for service binding with ID %q", binding.InstanceID, binding.ID))
 				continue
 			}
-			return fmt.Errorf("while sending unbind request for service binding ID %q and instance ID %q: %w", binding.ID, binding.InstanceID, err)
+			failedCount++
+			slog.Error(fmt.Sprintf("failed to unbind service binding ID %q for instance ID %q: %s, will retry on next scheduled run", binding.ID, binding.InstanceID, err.Error()))
+			continue
 		}
+	}
+	if failedCount > 0 {
+		slog.Warn(fmt.Sprintf("Service Binding cleanup completed with %d failure(s) out of %d binding(s)", failedCount, len(bindings)))
 	}
 	return nil
 }

@@ -234,6 +234,8 @@ spec:
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.gcp }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_OPENSTACK
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.openstack }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_MIN_BINDINGS_FOR_GUARD
+              value: "{{ .Values.hap.multiHyperscalerAccount.minBindingsForGuard }}"
             - name: APP_HAP_RULE_FILE_PATH
               value: {{ .Values.configPaths.hapRule }}
             - name: APP_HOLD_HAP_STEPS

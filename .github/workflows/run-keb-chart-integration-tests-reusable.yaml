@@ -380,7 +380,7 @@ jobs:
           
           # Verify fifth instance has the same binding as instances 1 and 3 (reuses freed slot)
           if [ "$BINDING_NAME_5" != "$BINDING_NAME_1" ] || [ "$BINDING_NAME_5" != "$BINDING_NAME_3" ]; then
-            echo "Error: Fifth instance should have same binding as instances 1 and 3 (reusing freed slot)"ń
+            echo "Error: Fifth instance should have same binding as instances 1 and 3 (reusing freed slot)"
             echo "Instance 1: $BINDING_NAME_1"
             echo "Instance 3: $BINDING_NAME_3"
             echo "Instance 5: $BINDING_NAME_5"
