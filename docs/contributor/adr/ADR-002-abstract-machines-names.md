@@ -826,8 +826,8 @@ The following examples use AWS, but the same migration pattern applies to the ot
           m5.large: m5.large (deprecated, use mi.large)
           m5.16xlarge: m5.16xlarge (deprecated, use mi.16xlarge)
         machinesVersions:
-          m{version}i.{size}: m6i.{size}
-          m{version}.{size}: m6i.{size}
+          mi.{size}: m6i.{size}
+          m5.{size}: m6i.{size}
     ```
 
 3. Because the BTP CLI validates input against the schema on the client side, all previously supported machine types must remain in the enum during the migration period.
@@ -892,8 +892,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
           mi.large: mi.large (2vCPU, 8GB RAM)
           mi.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
         machinesVersions:
-          m{version}i.{size}: m6i.{size}
-          m{version}.{size}: m6i.{size}
+          mi.{size}: m6i.{size}
     ```
 
 4. Once the CIS feature is available, disable enum validation for **machineType** in BTP CLI and BTP Cockpit.
