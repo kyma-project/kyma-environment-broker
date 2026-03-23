@@ -296,15 +296,20 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 		outputTemplate := providerData.MachinesVersions[inputTemplate]
 
 		regex, placeholderNames := templateToRegex(inputTemplate)
-		matches := regex.FindStringSubmatch(machineType)
-		if matches == nil {
+
+		// regex.FindStringSubmatch returns either nil (no match) or a slice where:
+		// matchedValues[0] is the full match and matchedValues[1:] are the capture groups.
+		// Since templateToRegex creates exactly one capture group per placeholder,
+		// we expect len(matchedValues) == len(placeholderNames) + 1 here.
+		matchedValues := regex.FindStringSubmatch(machineType)
+		if matchedValues == nil {
 			continue
 		}
 
 		// Build placeholder -> captured value map.
 		values := make(map[string]string, len(placeholderNames))
 		for i, name := range placeholderNames {
-			values[name] = matches[i+1]
+			values[name] = matchedValues[i+1]
 		}
 
 		// Replace placeholders in the output template with captured values.
