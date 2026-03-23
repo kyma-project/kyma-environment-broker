@@ -258,25 +258,38 @@ func (p *ProviderSpec) IsDualStackSupported(cp runtime.CloudProvider) bool {
 }
 
 // ResolveMachineType resolves a given machine type to its versioned equivalent
-// using provider-specific template mappings. If no templates match, or if no
-// provider data is available, the original machineType is returned unchanged.
+// using provider-specific template mappings.
+//
+// Example:
+//
+//	input:  "Standard_D4"
+//	template: "Standard_D{size}" -> "Standard_D{size}_v3"
+//	output: "Standard_D4_v3"
+//
+// If no templates match, or if no provider data is available,
+// the original machineType is returned unchanged.
 func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType string) string {
 	providerData := p.findProviderDTO(cp)
 	if providerData == nil || len(providerData.MachinesVersions) == 0 {
 		return machineType
 	}
 
-	// Sort templates from the most specific to the least specific, so we prefer
-	// the most constrained match when multiple templates could match the input.
+	// Collect all input templates (keys of the mapping)
 	templates := make([]string, 0, len(providerData.MachinesVersions))
 	for inputTemplate := range providerData.MachinesVersions {
 		templates = append(templates, inputTemplate)
 	}
 
+	// Sort templates by "specificity" so that the best match is tried first.
+	// Rules:
+	//   1. Fewer placeholders → more specific
+	//   2. More literal characters → more specific
+	//   3. Lexicographic order (stable fallback)
 	sort.SliceStable(templates, func(i, j int) bool {
 		leftPlaceholderCount := templatePlaceholderCount(templates[i])
 		rightPlaceholderCount := templatePlaceholderCount(templates[j])
 
+		// Prefer templates with fewer placeholders
 		if leftPlaceholderCount != rightPlaceholderCount {
 			return leftPlaceholderCount < rightPlaceholderCount
 		}
@@ -284,17 +297,20 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 		leftLiteralLength := templateLiteralLength(templates[i])
 		rightLiteralLength := templateLiteralLength(templates[j])
 
+		// Prefer templates with more fixed (non-placeholder) characters
 		if leftLiteralLength != rightLiteralLength {
 			return leftLiteralLength > rightLiteralLength
 		}
 
+		// Final deterministic ordering
 		return templates[i] < templates[j]
 	})
 
-	// Resolve the first matching template.
+	// Try to resolve using the first matching (most specific) template
 	for _, inputTemplate := range templates {
 		outputTemplate := providerData.MachinesVersions[inputTemplate]
 
+		// Convert template into regex + ordered placeholder names
 		regex, placeholderNames := templateToRegex(inputTemplate)
 
 		// regex.FindStringSubmatch returns either nil (no match) or a slice where:
@@ -306,23 +322,30 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 			continue
 		}
 
-		// Build placeholder -> captured value map.
+		// Build map: placeholder → actual value from input
+		// matchedValues[0] = full match
+		// matchedValues[1:] = captured groups (placeholders)
 		values := make(map[string]string, len(placeholderNames))
 		for i, name := range placeholderNames {
 			values[name] = matchedValues[i+1]
 		}
 
-		// Replace placeholders in the output template with captured values.
+		// Apply captured values to output template
+		// Example:
+		//   template: "Standard_D{size}_v3"
+		//   values: {size: "4"}
+		//   result: "Standard_D4_v3"
 		resolved := replaceTemplatePlaceholders(outputTemplate, values)
 		if resolved != "" {
 			return resolved
 		}
 	}
 
-	// No template matched, so return the original value unchanged.
+	// If no templates matched, return input unchanged
 	return machineType
 }
 
+// Matches placeholders like "{size}", "{c_size}", etc.
 var placeholderRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 // templatePlaceholderCount returns the number of placeholders in the template.
@@ -337,8 +360,14 @@ func templateLiteralLength(template string) int {
 	return len(placeholderRegex.ReplaceAllString(template, ""))
 }
 
-// templateToRegex converts a template such as "m.{size}" into a regular expression
-// like "^m\\.([^.]+)$" and returns the placeholder names in capture-group order.
+// templateToRegex converts a template into a regular expression
+// and extracts placeholder names in order.
+//
+// Example:
+//
+//	"Standard_D{size}" →
+//	  regex: "^Standard_D([a-zA-Z0-9]+)$"
+//	  placeholders: ["size"]
 func templateToRegex(template string) (*regexp.Regexp, []string) {
 	var pattern strings.Builder
 	pattern.WriteString("^")
@@ -346,13 +375,15 @@ func templateToRegex(template string) (*regexp.Regexp, []string) {
 	placeholderNames := make([]string, 0)
 	lastIdx := 0
 
+	// Iterate over all placeholder matches
 	for _, match := range placeholderRegex.FindAllStringSubmatchIndex(template, -1) {
 		fullStart, fullEnd := match[0], match[1]
 		nameStart, nameEnd := match[2], match[3]
 
-		// Escape literal text between placeholders.
+		// Add escaped literal part before the placeholder
 		pattern.WriteString(regexp.QuoteMeta(template[lastIdx:fullStart]))
 
+		// Extract placeholder name (e.g. "size")
 		placeholderName := template[nameStart:nameEnd]
 		placeholderNames = append(placeholderNames, placeholderName)
 
@@ -364,21 +395,34 @@ func templateToRegex(template string) (*regexp.Regexp, []string) {
 		lastIdx = fullEnd
 	}
 
-	// Escape trailing literal text.
+	// Add any remaining literal text after last placeholder
 	pattern.WriteString(regexp.QuoteMeta(template[lastIdx:]))
 	pattern.WriteString("$")
 
 	return regexp.MustCompile(pattern.String()), placeholderNames
 }
 
-// replaceTemplatePlaceholders replaces placeholders in the template with resolved values.
-// Unknown placeholders are left unchanged.
+// replaceTemplatePlaceholders substitutes placeholders in a template
+// with their resolved values.
+//
+// Example:
+//
+//	template: "Standard_D{size}_v3"
+//	values: {size: "4"}
+//	result: "Standard_D4_v3"
+//
+// If a placeholder has no value, it is left unchanged.
 func replaceTemplatePlaceholders(template string, values map[string]string) string {
 	return placeholderRegex.ReplaceAllStringFunc(template, func(token string) string {
+		// Strip braces: "{size}" → "size"
 		name := token[1 : len(token)-1]
+
+		// Replace if value exists
 		if value, ok := values[name]; ok {
 			return value
 		}
+
+		// Otherwise keep original placeholder
 		return token
 	})
 }
