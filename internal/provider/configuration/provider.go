@@ -274,13 +274,21 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 	}
 
 	sort.SliceStable(templates, func(i, j int) bool {
-		leftScore := templateSpecificity(templates[i])
-		rightScore := templateSpecificity(templates[j])
+		leftPlaceholderCount := templatePlaceholderCount(templates[i])
+		rightPlaceholderCount := templatePlaceholderCount(templates[j])
 
-		if leftScore == rightScore {
-			return templates[i] < templates[j]
+		if leftPlaceholderCount != rightPlaceholderCount {
+			return leftPlaceholderCount < rightPlaceholderCount
 		}
-		return leftScore > rightScore
+
+		leftLiteralLength := templateLiteralLength(templates[i])
+		rightLiteralLength := templateLiteralLength(templates[j])
+
+		if leftLiteralLength != rightLiteralLength {
+			return leftLiteralLength > rightLiteralLength
+		}
+
+		return templates[i] < templates[j]
 	})
 
 	// Resolve the first matching template.
@@ -310,23 +318,23 @@ func (p *ProviderSpec) ResolveMachineType(cp runtime.CloudProvider, machineType 
 	return machineType
 }
 
-// templateSpecificity returns a score used to sort templates by how specific they are.
-// More literal characters means more specific. Fewer placeholders also means more specific.
-func templateSpecificity(template string) int {
-	placeholderRE := regexp.MustCompile(`\{\w+}`)
-	placeholders := placeholderRE.FindAllString(template, -1)
+var placeholderRE = regexp.MustCompile(`{(\w+)}`)
 
-	literalLength := len(placeholderRE.ReplaceAllString(template, ""))
-	placeholderPenalty := len(placeholders) * 1000
+// templatePlaceholderCount returns the number of placeholders in the template.
+// Fewer placeholders means a more specific template.
+func templatePlaceholderCount(template string) int {
+	return len(placeholderRE.FindAllString(template, -1))
+}
 
-	return literalLength*10000 - placeholderPenalty
+// templateLiteralLength returns the number of literal characters in the template.
+// More literal characters means a more specific template.
+func templateLiteralLength(template string) int {
+	return len(placeholderRE.ReplaceAllString(template, ""))
 }
 
 // templateToRegexp converts a template such as "m.{size}" into a regular expression
 // like "^m\\.([^.]+)$" and returns the placeholder names in capture-group order.
 func templateToRegexp(template string) (*regexp.Regexp, []string) {
-	placeholderRE := regexp.MustCompile(`\{(\w+)}`)
-
 	var pattern strings.Builder
 	pattern.WriteString("^")
 
@@ -361,8 +369,6 @@ func templateToRegexp(template string) (*regexp.Regexp, []string) {
 // replaceTemplatePlaceholders replaces placeholders in the template with resolved values.
 // Unknown placeholders are left unchanged.
 func replaceTemplatePlaceholders(template string, values map[string]string) string {
-	placeholderRE := regexp.MustCompile(`\{(\w+)}`)
-
 	return placeholderRE.ReplaceAllStringFunc(template, func(token string) string {
 		match := placeholderRE.FindStringSubmatch(token)
 		if len(match) != 2 {
