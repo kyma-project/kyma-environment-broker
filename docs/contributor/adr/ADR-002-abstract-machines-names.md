@@ -690,24 +690,24 @@ Below is the current AWS schema used in BTP Cockpit:
 The JSON schema requires that the **machineType** value must be one of the entries defined in the enum list.
 It does not allow values outside of this predefined set.
 
-If abstract machine types are introduced (for example, `m.large`), the existing machine types must remain in the schema to maintain backward compatibility.
+If abstract machine types are introduced (for example, `mi.large`), the existing machine types must remain in the schema to maintain backward compatibility.
 The updated schema would therefore include both the abstract types and the existing concrete instance types.
 
 ```json
 {
   "machineType": {
     "_enumDisplayName": {
-      "m.large": "m.large (2vCPU, 8GB RAM)",
-      "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
-      "m6i.large": "m6i.large (deprecated, use m.large)",
-      "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
-      "m5.large": "m5.large (deprecated, use m.large)",
-      "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
+      "mi.large": "mi.large (2vCPU, 8GB RAM)",
+      "mi.16xlarge": "mi.16xlarge (64vCPU, 256GB RAM)",
+      "m6i.large": "m6i.large (deprecated, use mi.large)",
+      "m6i.16xlarge": "m6i.16xlarge (deprecated, use mi.16xlarge)",
+      "m5.large": "m5.large (deprecated, use mi.large)",
+      "m5.16xlarge": "m5.16xlarge (deprecated, use mi.16xlarge)"
     },
     "description": "Specifies the type of the virtual machine.",
     "enum": [
-      "m.large",
-      "m.16xlarge",
+      "mi.large",
+      "mi.16xlarge",
       "m6i.large",
       "m6i.16xlarge",
       "m5.large",
@@ -720,7 +720,7 @@ The updated schema would therefore include both the abstract types and the exist
 
 If the logical machine family `m` is mapped to a newer generation (for example `m7i`), Kyma Environment Broker (KEB) must resolve the machine type before passing it to the Runtime CR.
 For example, the following user inputs:
-- `m.large`
+- `mi.large`
 - `m6i.large`
 - `m5.large`
 
@@ -819,12 +819,12 @@ The following examples use AWS, but the same migration pattern applies to the ot
     providersConfiguration:
       aws:
         machines:
-          m.large: mi.large (2vCPU, 8GB RAM)
-          m.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
-          m6i.large: m6i.large (deprecated, use m.large)
-          m6i.16xlarge: m6i.16xlarge (deprecated, use m.16xlarge)
-          m5.large: m5.large (deprecated, use m.large)
-          m5.16xlarge: m5.16xlarge (deprecated, use m.16xlarge)
+          mi.large: mi.large (2vCPU, 8GB RAM)
+          mi.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
+          m6i.large: m6i.large (deprecated, use mi.large)
+          m6i.16xlarge: m6i.16xlarge (deprecated, use mi.16xlarge)
+          m5.large: m5.large (deprecated, use mi.large)
+          m5.16xlarge: m5.16xlarge (deprecated, use mi.16xlarge)
         machinesVersions:
           m{version}i.{size}: m6i.{size}
           m{version}.{size}: m6i.{size}
@@ -839,17 +839,17 @@ The following examples use AWS, but the same migration pattern applies to the ot
    {
      "machineType": {
        "_enumDisplayName": {
-         "m.large": "m.large (2vCPU, 8GB RAM)",
-         "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)",
-         "m6i.large": "m6i.large (deprecated, use m.large)",
-         "m6i.16xlarge": "m6i.16xlarge (deprecated, use m.16xlarge)",
-         "m5.large": "m5.large (deprecated, use m.large)",
-         "m5.16xlarge": "m5.16xlarge (deprecated, use m.16xlarge)"
+         "mi.large": "mi.large (2vCPU, 8GB RAM)",
+         "mi.16xlarge": "mi.16xlarge (64vCPU, 256GB RAM)",
+         "m6i.large": "m6i.large (deprecated, use mi.large)",
+         "m6i.16xlarge": "m6i.16xlarge (deprecated, use mi.16xlarge)",
+         "m5.large": "m5.large (deprecated, use mi.large)",
+         "m5.16xlarge": "m5.16xlarge (deprecated, use mi.16xlarge)"
        },
        "description": "Specifies the type of the virtual machine.",
        "enum": [
-         "m.large",
-         "m.16xlarge",
+         "mi.large",
+         "mi.16xlarge",
          "m6i.large",
          "m6i.16xlarge",
          "m5.large",
@@ -861,9 +861,9 @@ The following examples use AWS, but the same migration pattern applies to the ot
    ```
 
 4. SRE updates all existing Runtime CRs using Cluster Orchestrator so that existing clusters are aligned with the new version agnostic machine types.
-5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for active entries, and only the logical values such as `m.large` remain.
+5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for active entries, and only the logical values such as `mi.large` remain.
 6. If new entries using deprecated machine types such as `m6i.large` or `m5.large` still appear, this most likely means that some internal users or automations are still relying on the old values.
-   In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `m.large`.
+   In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `mi.large`.
 7. As the final step, remove the explicit versioned machine types from both the configuration and the JSON schema.
    This should only be done once there is evidence that no new entries using deprecated values are being created anymore.
 
@@ -889,28 +889,28 @@ The following examples use AWS, but the same migration pattern applies to the ot
     providersConfiguration:
       aws:
         machines:
-          m.large: mi.large (2vCPU, 8GB RAM)
-          m.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
+          mi.large: mi.large (2vCPU, 8GB RAM)
+          mi.16xlarge: mi.16xlarge (64vCPU, 256GB RAM)
         machinesVersions:
           m{version}i.{size}: m6i.{size}
           m{version}.{size}: m6i.{size}
     ```
 
 4. Once the CIS feature is available, disable enum validation for **machineType** in BTP CLI and BTP Cockpit.
-In this model, inputs such as `m6i.large`, `m5.large` and `m.large` can all be accepted and resolved internally to the currently supported concrete value, for example `m6i.large`.
+In this model, inputs such as `m6i.large`, `m5.large` and `mi.large` can all be accepted and resolved internally to the currently supported concrete value, for example `m6i.large`.
 
     ```json
     {
       "machineType": {
         "_enumDisplayName": {
-          "m.large": "m.large (2vCPU, 8GB RAM)",
-          "m.16xlarge": "m.16xlarge (64vCPU, 256GB RAM)"
+          "mi.large": "mi.large (2vCPU, 8GB RAM)",
+          "mi.16xlarge": "mi.16xlarge (64vCPU, 256GB RAM)"
         },
         "description": "Specifies the type of the virtual machine.",
         "validation": false,
         "enum": [
-          "m.large",
-          "m.16xlarge"
+          "mi.large",
+          "mi.16xlarge"
         ],
         "type": "string"
       }
@@ -918,7 +918,7 @@ In this model, inputs such as `m6i.large`, `m5.large` and `m.large` can all be a
     ```
 
 5. SRE updates existing Runtime CRs with Cluster Orchestrator so that already provisioned clusters are aligned with the version-agnostic representation.
-6. After runtime migration is complete, update the KEB database so that active entries no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `m.large`.
+6. After runtime migration is complete, update the KEB database so that active entries no longer store explicit versioned values such as `m6i.large` or `m5.large`, and instead store only logical values such as `mi.large`.
 
 ## Decision
 
