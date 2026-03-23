@@ -7,11 +7,11 @@
 
 ## Context
 
-<!-- Describe the problem and the context in which it occurs. Include any relevant background information, constraints, and assumptions. -->
+<!-- Describe the problem and the context in which it occurs. -->
 
 ## Considered Options
 
-<!-- List the options that were considered with their advantages and disadvantages or the reasons for discarding them. -->
+<!-- List the options that were considered with their advantages and disadvantages. -->
 
 ## Decision
 
