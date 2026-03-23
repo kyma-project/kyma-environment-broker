@@ -379,7 +379,7 @@ func parseAndValidateTemplatePlaceholders(template string, rejectAdjacent bool) 
 
 func isValidPlaceholderName(name string) bool {
 	for _, r := range name {
-		if !(r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)) {
+		if r != '_' && !unicode.IsLetter(r) && !unicode.IsDigit(r) {
 			return false
 		}
 	}
