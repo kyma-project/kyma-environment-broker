@@ -860,7 +860,7 @@ The following examples use AWS, but the same migration pattern applies to the ot
    }
    ```
 
-4. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version such as `m7i.large`. KEB configuration is already changed, so new worker pools are created with target version.
+4. SRE migrates all existing Runtime CRs using Cluster Orchestrator, updating machine types (for example, `m6i.large` and `m5.large`) to the target version, such as `m7i.large`. The KEB configuration is already changed, so new worker pools are created with the target version.
 5. After the migration of existing runtimes, update the KEB database so that versioned values such as `m6i.large` and `m5.large` are no longer stored for instances, and only the logical values such as `mi.large` remain.
 6. If new entries using deprecated machine types such as `m6i.large` or `m5.large` still appear, this most likely means that some internal users or automations are still relying on the old values.
    In that case, contact the owners of those automations and ask them to switch to the version-agnostic values, for example `mi.large`.
