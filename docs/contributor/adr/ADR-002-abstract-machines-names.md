@@ -37,8 +37,8 @@ To address this, machine names should be abstracted from concrete instance types
         g4dn.16xlarge: g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*
   
         # New memory-intensive machine types
-        r7i.large: r7i.large (2vCPU, 16GB RAM)
-        r7i.16xlarge: r7i.16xlarge (64vCPU, 512GB RAM)
+        r8i.large: r8i.large (2vCPU, 16GB RAM)
+        r8i.16xlarge: r8i.16xlarge (64vCPU, 512GB RAM)
           
         # New storage-intensive machine types
         i7i.large: i7i.large (2vCPU, 16GB RAM)
