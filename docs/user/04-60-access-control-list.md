@@ -1,7 +1,7 @@
 # Access Control List
 
 The Kyma Kubernetes API access can be restricted using Access Control List. You can specify IP ranges which are allowed to access the Kubernetes API. IP which does not belong to one of the range, are not allowed to access the API. Keep in mind that beside the IP address is in a specified range, the user must be authorized to access the API.
-To define Access Control List you must provide `accessControlList` parameter in the provisioning request. For example:
+To define an Access Control List, provide the **accessControlList** parameter in the provisioning request. For example:
 
 
 ```bash
@@ -26,7 +26,7 @@ To define Access Control List you must provide `accessControlList` parameter in 
    }"
 ```
 
-The set of IP ranges can be modified after the cluster is provisioned. To do that, send a PATCH request with the new set of IP ranges:
+You can modify the set of IP ranges after the cluster is provisioned. To do that, send a PATCH request with the new set of IP ranges.
 
 ```bash
    curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -49,7 +49,7 @@ The set of IP ranges can be modified after the cluster is provisioned. To do tha
 ```
 
 If the `accessControlList` parameter is not provided, the cluster is created without any restrictions. It means that all IP addresses are allowed to access the Kubernetes API, but the user must be authorized to access it.
-If the update request does not contain `accessControlList` parameter, the existing Access Control List is stay unchanged. To remove Access Control List, set `allowedCIDRs` to an empty list (`[]`):
+If the update request does not contain the **accessControlList** parameter, the existing Access Control List remains unchanged. To remove your Access Control List, set **allowedCIDRs** to an empty list (`[]`).
 
 ```bash
    curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
