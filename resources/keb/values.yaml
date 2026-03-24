@@ -186,6 +186,8 @@ broker:
   allowedGlobalAccountIDs: ""
   # If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted".
   syncEmptyUpdateResponseEnabled: "true"
+  # A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans.
+  ACLEnabledPlans: "no-plan"
   
 # Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure.
 btpRegionsMigrationSapConvergedCloud: |-

@@ -91,6 +91,16 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
+	if operation.UpdatingParameters.AccessControlList != nil {
+		if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL == nil {
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = &imv1.ACL{AllowedCIDRs: []string{}}
+		}
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs = operation.UpdatingParameters.AccessControlList.AllowedCIDRs
+		if len(operation.UpdatingParameters.AccessControlList.AllowedCIDRs) == 0 {
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = nil
+		}
+	}
+
 	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
 		if oidc.List != nil {
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = s.getOIDCConfigs(oidc)

@@ -86,6 +86,7 @@
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
 | broker.<br>allowedGlobalAccountIDs | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. | `` |
 | broker.<br>syncEmptyUpdateResponseEnabled | If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted". | `true` |
+| broker.<br>ACLEnabledPlans | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. | `no-plan` |
 | btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
 | provisioning.<br>workersAmount | Number of workers in provisioning queue. | `20` |

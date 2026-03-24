@@ -84,7 +84,64 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	assert.Equal(t, "new-machine-type", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+}
 
+func TestUpdateRuntimeStep_RunUpdateACL(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	runtime := fixRuntimeResourceWithACL(runtimeResourceName, []string{"7.7.7.8/30"})
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtime).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider())
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AccessControlList: &pkg.AclDTO{
+			AllowedCIDRs: []string{"1.2.3.16/30"},
+		},
+	}
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"1.2.3.16/30"}, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs)
+}
+
+func TestUpdateRuntimeStep_RunDeleteACL(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	runtime := fixRuntimeResourceWithACL(runtimeResourceName, []string{"7.7.7.8/30"})
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtime).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider())
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AccessControlList: &pkg.AclDTO{
+			AllowedCIDRs: []string{},
+		},
+	}
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
 }
 
 func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) {
@@ -655,6 +712,37 @@ func fixRuntimeResource(name string) runtime.Object {
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine: gardener.Machine{
+								Type: "original-type",
+							},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixRuntimeResourceWithACL(name string, acl []string) runtime.Object {
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	return &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: kcpSystemNamespace,
+		},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Kubernetes: imv1.Kubernetes{
+					KubeAPIServer: imv1.APIServer{
+						ACL: &imv1.ACL{AllowedCIDRs: acl},
+					},
+				},
 				Provider: imv1.Provider{
 					Workers: []gardener.Worker{
 						{

@@ -31,6 +31,7 @@ func TestSchemaService_Azure(t *testing.T) {
 	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress-eu.json")
 
 	create, update, _ := schemaService.AzureSchemas("cf-us21")
+
 	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "azure/update-azure-schema-additional-params-ingress.json")
 }
@@ -119,7 +120,7 @@ func validateSchema(t *testing.T, actual []byte, file string) {
 			t.Fail()
 		}
 	}
-	if !assert.JSONEq(t, prettyActual.String(), prettyExpected.String()) {
+	if !assert.JSONEq(t, prettyExpected.String(), prettyActual.String()) {
 		t.Errorf("%v Schema() = \n######### Actual ###########%v\n######### End Actual ########, expected \n##### Expected #####%v\n##### End Expected #####", file, prettyActual.String(), prettyExpected.String())
 	}
 }
@@ -194,6 +195,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
+		ACLEnabledPlans:             []string{"gcp"},
 	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
 	return schemaService
 }

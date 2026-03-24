@@ -64,6 +64,9 @@ type Config struct {
 	RestrictToAllowedGlobalAccounts bool
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
+
+	// enables Access-Control-List.
+	ACLEnabledPlans StringList `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
@@ -75,6 +78,13 @@ func (cfg *Config) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (cfg *Config) IsACLEnabledForPlanName(planName string) bool {
+	if cfg.ACLEnabledPlans.Contains("all") {
+		return true
+	}
+	return cfg.ACLEnabledPlans.Contains(planName)
 }
 
 func NewServicesConfigFromFile(path string) (ServicesConfig, error) {

@@ -152,6 +152,63 @@ func TestProvisioningForAWS(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 }
 
+func TestProvisioningWithACL(t *testing.T) {
+	cfg := fixConfig()
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.0/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+
+	// test validation
+	resp1 := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s-e?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.333/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp1.Body.Close() }()
+	assert.Equal(t, http.StatusBadRequest, resp1.StatusCode)
+}
+
 func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.AllowedGlobalAccounts = []string{"g-account-id"}

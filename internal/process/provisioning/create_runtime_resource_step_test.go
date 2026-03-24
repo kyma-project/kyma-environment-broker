@@ -123,6 +123,47 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
+func TestCreateRuntimeResourceStep_CreateACL(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{
+		MultiZoneCluster: true,
+	}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.AccessControlList = &pkg.AclDTO{
+		AllowedCIDRs: []string{"10.0.0.0/16", "192.168.0.0/24"},
+	}
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	expectedACL := &imv1.ACL{
+		AllowedCIDRs: []string{"10.0.0.0/16", "192.168.0.0/24"},
+	}
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
+	assert.Equal(t, expectedACL, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
+}
+
 func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)

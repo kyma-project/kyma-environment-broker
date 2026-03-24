@@ -4,6 +4,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_ACL_&#x200b;ENABLED_PLANS** | <code>no-plan</code> | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |

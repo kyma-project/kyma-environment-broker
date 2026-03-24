@@ -1730,6 +1730,85 @@ func TestAreNamesUnique(t *testing.T) {
 	}
 }
 
+func TestACLValidation(t *testing.T) {
+
+	for tn, tc := range map[string]struct {
+		givenACL string
+
+		expectedError bool
+	}{
+		"Invalid AccessControlList": {
+			givenACL:      `{"allowedCIDRs": ["1.2.3.4444/16"]}`,
+			expectedError: true,
+		},
+		"Invalid AccessControlList - wrong CIDR": {
+			givenACL:      `{"allowedCIDRs": ["1.2.5.5/24"]}`,
+			expectedError: true,
+		},
+		"Valid AccessControlList": {
+			givenACL:      `{"allowedCIDRs": ["1.2.3.0/24", "2.3.4.128/28"]}`,
+			expectedError: false,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			// #setup memory storage
+			memoryStorage := storage.NewMemoryStorage()
+
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", mock.AnythingOfType("string")).Return(true)
+
+			kcBuilder := &kcMock.KcBuilder{}
+			// #create provisioner endpoint
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{EnablePlans: []string{"gcp"}, ACLEnabledPlans: []string{"gcp"}},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
+				memoryStorage,
+				queue,
+				broker.PlansConfig{},
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				newSchemaService(t),
+				newProviderSpec(t),
+				fixValueProvider(t),
+				config.FakeProviderConfigProvider{},
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				map[string]string{},
+			)
+
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContextWithProvider(t, "cf-eu10", "gcp"), instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        broker.GCPPlanID,
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "cluster-name", "region": "europe-west3", "accessControlList": %s}`, tc.givenACL)),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+				}, true)
+
+			if tc.expectedError {
+				assert.NotNil(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
+
 func TestNetworkingValidation(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		givenNetworking string

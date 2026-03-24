@@ -260,6 +260,7 @@ func main() {
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
+	log.Info(fmt.Sprintf("Access Control List enabled plans: %v", cfg.Broker.ACLEnabledPlans))
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()

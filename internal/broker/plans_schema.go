@@ -53,6 +53,7 @@ type UpdateProperties struct {
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
+	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 }
 
 type NetworkingProperties struct {
@@ -66,6 +67,16 @@ type NetworkingType struct {
 	Type
 	Properties NetworkingProperties `json:"properties"`
 	Required   []string             `json:"required"`
+}
+
+type ACLProperties struct {
+	AllowedCIDRs Type `json:"allowedCIDRs"`
+}
+
+type ACLType struct {
+	Type
+	Properties ACLProperties `json:"properties"`
+	Required   []string      `json:"required"`
 }
 
 type OIDCProperties struct {
@@ -751,7 +762,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -769,6 +780,29 @@ func AdministratorsProperty() *Type {
 		Description: "Specifies the list of runtime administrators.",
 		Items: &Type{
 			Type: "string",
+		},
+	}
+}
+
+func ACLProperty() *ACLType {
+	return &ACLType{
+		Type: Type{
+			Type:        "object",
+			Title:       "Access Control List",
+			Description: "Allows you to restrict access to Kubernetes API server.",
+		},
+		Required: []string{"allowedCIDRs"},
+		Properties: ACLProperties{
+			AllowedCIDRs: Type{
+				Type:        "array",
+				Title:       "Allowed CIDRs",
+				Description: "The whitelisted CIDRs allowed to access the Kubernetes API server. If you don't want to define Access Control List, provide an empty list.",
+				Items: &Type{
+					Type:    "string",
+					Example: "5.6.0.0/16",
+					Title:   "CIDR range",
+				},
+			},
 		},
 	}
 }

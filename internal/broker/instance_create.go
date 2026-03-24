@@ -383,6 +383,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
+	err = b.validateACL(provisioningParameters)
+	if err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
 
 	if err := validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, logger); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
@@ -895,20 +899,6 @@ func (b *ProvisionEndpoint) createDashboardURL(planID, instanceID string) string
 	return fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
 }
 
-func validateCidr(cidr string) (*net.IPNet, error) {
-	ip, ipNet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return nil, err
-	}
-	// find cases like: 10.250.0.1/19
-	if ipNet != nil {
-		if !ipNet.IP.Equal(ip) {
-			return nil, fmt.Errorf("%s must be valid canonical CIDR", ip)
-		}
-	}
-	return ipNet, nil
-}
-
 func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParametersDTO) error {
 	var err, e error
 	if len(parameters.Zones) > 4 {
@@ -920,7 +910,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	var nodes, services, pods *net.IPNet
-	if nodes, e = validateCidr(parameters.Networking.NodesCidr); e != nil {
+	if nodes, e = networking.ValidateCidr(parameters.Networking.NodesCidr); e != nil {
 		err = multierror.Append(err, fmt.Errorf("while parsing nodes CIDR: %w", e))
 	}
 	// error is handled before, in the validate CIDR
@@ -931,14 +921,14 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	if parameters.Networking.PodsCidr != nil {
-		if pods, e = validateCidr(*parameters.Networking.PodsCidr); e != nil {
+		if pods, e = networking.ValidateCidr(*parameters.Networking.PodsCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("while parsing pods CIDR: %w", e))
 		}
 	} else {
 		_, pods, _ = net.ParseCIDR(networking.DefaultPodsCIDR)
 	}
 	if parameters.Networking.ServicesCidr != nil {
-		if services, e = validateCidr(*parameters.Networking.ServicesCidr); e != nil {
+		if services, e = networking.ValidateCidr(*parameters.Networking.ServicesCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("while parsing services CIDR: %w", e))
 		}
 	} else {
@@ -1021,6 +1011,15 @@ func (b *ProvisionEndpoint) filterOutUnsupportedSeedRegions(supportedRegions, se
 		}
 	}
 	return supportedSeedRegions
+}
+
+func (b *ProvisionEndpoint) validateACL(parameters internal.ProvisioningParameters) error {
+	params := parameters.Parameters
+	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(parameters.PlanID))) && params.AccessControlList != nil {
+		return apiresponses.NewFailureResponse(errors.New("AccessControlList is not supported for this plan"), http.StatusBadRequest, "AccessControlList is not supported for this plan")
+	}
+
+	return params.AccessControlList.Validate()
 }
 
 func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {

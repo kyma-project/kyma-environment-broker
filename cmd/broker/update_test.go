@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+
 	"net/http"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -102,6 +104,176 @@ func TestUpdate(t *testing.T) {
 		"kyma-project.io/region":          "eu-west-1",
 		"kyma-project.io/platform-region": "cf-eu10",
 	})
+}
+
+func TestUpdateWithACL(t *testing.T) {
+	cfg := fixConfig()
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.0/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Equal(t, []string{"1.2.3.0/24"}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs)
+
+	// update
+	resp1 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				    "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				    "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+                    "context": {},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.0/24", "1.2.5.0/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp1.Body.Close() }()
+
+	updadeOperationID := suite.DecodeOperationID(resp1)
+
+	suite.WaitForOperationState(updadeOperationID, domain.Succeeded)
+
+	// update
+	resp2 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				    "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				    "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+                    "context": {},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"oidc": {
+                            "clientID": "id-ooo",
+                            "signingAlgs": ["RS256"],
+                            "issuerURL": "https://issuer.url.com"
+                        }
+					}
+		}`)
+	defer func() { _ = resp2.Body.Close() }()
+
+	updadeOperationID = suite.DecodeOperationID(resp2)
+
+	suite.WaitForOperationState(updadeOperationID, domain.Succeeded)
+
+	// then
+	runtime = suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Equal(t, []string{"1.2.3.0/24", "1.2.5.0/24"}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs)
+
+	// update
+	resp3 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				    "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				    "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+                    "context": {},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": []
+                        }
+					}
+		}`)
+	defer func() { _ = resp3.Body.Close() }()
+
+	updadeOperationID = suite.DecodeOperationID(resp3)
+
+	suite.WaitForOperationState(updadeOperationID, domain.Succeeded)
+
+	// then
+	runtime = suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
+
+}
+
+func TestAddACL(t *testing.T) {
+	cfg := fixConfig()
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
+
+	// update
+	resp1 := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				    "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				    "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+                    "context": {},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.0/24", "1.2.5.0/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp1.Body.Close() }()
+
+	updadeOperationID := suite.DecodeOperationID(resp1)
+
+	suite.WaitForOperationState(updadeOperationID, domain.Succeeded)
+
+	// then
+	runtime = suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Equal(t, []string{"1.2.3.0/24", "1.2.5.0/24"}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs)
 }
 
 func TestUpdateWithKIM(t *testing.T) {
