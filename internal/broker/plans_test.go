@@ -16,10 +16,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	platformRegionUS11 = "cf-us11"
+	platformRegionUS21 = "cf-us21"
+	platformRegionEU20 = "cf-eu20"
+	platformRegionEU40 = "cf-eu40"
+)
+
 func TestSchemaService_Alicloud(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	create, update, _ := schemaService.AlicloudSchemas("cf-eu40")
+	create, update, _ := schemaService.AlicloudSchemas(platformRegionEU40)
 	validateSchema(t, Marshal(create), "alicloud/alicloud-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "alicloud/update-alicloud-schema-additional-params-ingress.json")
 }
@@ -30,8 +37,7 @@ func TestSchemaService_Azure(t *testing.T) {
 	create, _, _ := schemaService.AzureSchemas("cf-ch20")
 	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress-eu.json")
 
-	create, update, _ := schemaService.AzureSchemas("cf-us21")
-
+	create, update, _ := schemaService.AzureSchemas(platformRegionUS21)
 	validateSchema(t, Marshal(create), "azure/azure-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "azure/update-azure-schema-additional-params-ingress.json")
 }
@@ -42,7 +48,7 @@ func TestSchemaService_Aws(t *testing.T) {
 	create, _, _ := schemaService.AWSSchemas("cf-eu11")
 	validateSchema(t, Marshal(create), "aws/aws-schema-additional-params-ingress-eu.json")
 
-	create, update, _ := schemaService.AWSSchemas("cf-us11")
+	create, update, _ := schemaService.AWSSchemas(platformRegionUS11)
 	validateSchema(t, Marshal(create), "aws/aws-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "aws/update-aws-schema-additional-params-ingress.json")
 }
@@ -50,7 +56,7 @@ func TestSchemaService_Aws(t *testing.T) {
 func TestSchemaService_Gcp(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	create, update, _ := schemaService.GCPSchemas("cf-us11")
+	create, update, _ := schemaService.GCPSchemas(platformRegionUS11)
 	validateSchema(t, Marshal(create), "gcp/gcp-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "gcp/update-gcp-schema-additional-params-ingress.json")
 }
@@ -58,7 +64,7 @@ func TestSchemaService_Gcp(t *testing.T) {
 func TestSchemaService_SapConvergedCloud(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	create, update, _ := schemaService.SapConvergedCloudSchemas("cf-eu20")
+	create, update, _ := schemaService.SapConvergedCloudSchemas(platformRegionEU20)
 	validateSchema(t, Marshal(create), "sap-converged-cloud/sap-converged-cloud-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "sap-converged-cloud/update-sap-converged-cloud-schema-additional-params-ingress.json")
 }
@@ -66,7 +72,7 @@ func TestSchemaService_SapConvergedCloud(t *testing.T) {
 func TestSchemaService_FreeAWS(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	got := schemaService.FreeSchema(pkg.AWS, "cf-us21", false)
+	got := schemaService.FreeSchema(pkg.AWS, platformRegionUS21, false)
 	validateSchema(t, Marshal(got), "aws/free-aws-schema-additional-params-ingress.json")
 
 	got = schemaService.FreeSchema(pkg.AWS, "cf-eu11", false)
@@ -76,7 +82,7 @@ func TestSchemaService_FreeAWS(t *testing.T) {
 func TestSchemaService_FreeAzure(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	got := schemaService.FreeSchema(pkg.Azure, "cf-us21", false)
+	got := schemaService.FreeSchema(pkg.Azure, platformRegionUS21, false)
 	validateSchema(t, Marshal(got), "azure/free-azure-schema-additional-params-ingress.json")
 
 	got = schemaService.FreeSchema(pkg.Azure, "cf-ch20", false)
@@ -86,7 +92,7 @@ func TestSchemaService_FreeAzure(t *testing.T) {
 func TestSchemaService_AzureLite(t *testing.T) {
 	schemaService := createSchemaService(t)
 
-	create, update, _ := schemaService.AzureLiteSchemas("cf-us21")
+	create, update, _ := schemaService.AzureLiteSchemas(platformRegionUS21)
 	validateSchema(t, Marshal(create), "azure/azure-lite-schema-additional-params-ingress.json")
 	validateSchema(t, Marshal(update), "azure/update-azure-lite-schema-additional-params-ingress.json")
 
@@ -110,24 +116,36 @@ func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 	}
 
 	cases := []schemaCase{
-		{"aws-create", func() *map[string]interface{} { s, _, _ := schemaService.AWSSchemas("cf-us11"); return s }},
-		{"aws-update", func() *map[string]interface{} { _, s, _ := schemaService.AWSSchemas("cf-us11"); return s }},
-		{"azure-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureSchemas("cf-us21"); return s }},
-		{"azure-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureSchemas("cf-us21"); return s }},
-		{"azure-lite-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureLiteSchemas("cf-us21"); return s }},
-		{"azure-lite-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureLiteSchemas("cf-us21"); return s }},
-		{"gcp-create", func() *map[string]interface{} { s, _, _ := schemaService.GCPSchemas("cf-us11"); return s }},
-		{"gcp-update", func() *map[string]interface{} { _, s, _ := schemaService.GCPSchemas("cf-us11"); return s }},
-		{"sap-converged-cloud-create", func() *map[string]interface{} { s, _, _ := schemaService.SapConvergedCloudSchemas("cf-eu20"); return s }},
-		{"sap-converged-cloud-update", func() *map[string]interface{} { _, s, _ := schemaService.SapConvergedCloudSchemas("cf-eu20"); return s }},
-		{"alicloud-create", func() *map[string]interface{} { s, _, _ := schemaService.AlicloudSchemas("cf-eu40"); return s }},
-		{"alicloud-update", func() *map[string]interface{} { _, s, _ := schemaService.AlicloudSchemas("cf-eu40"); return s }},
-		{"preview-create", func() *map[string]interface{} { s, _, _ := schemaService.PreviewSchemas("cf-us11"); return s }},
-		{"preview-update", func() *map[string]interface{} { _, s, _ := schemaService.PreviewSchemas("cf-us11"); return s }},
-		{"free-aws-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, "cf-us21", false) }},
-		{"free-aws-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, "cf-us21", true) }},
-		{"free-azure-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, "cf-us21", false) }},
-		{"free-azure-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, "cf-us21", true) }},
+		{"aws-create", func() *map[string]interface{} { s, _, _ := schemaService.AWSSchemas(platformRegionUS11); return s }},
+		{"aws-update", func() *map[string]interface{} { _, s, _ := schemaService.AWSSchemas(platformRegionUS11); return s }},
+		{"azure-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureSchemas(platformRegionUS21); return s }},
+		{"azure-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureSchemas(platformRegionUS21); return s }},
+		{"azure-lite-create", func() *map[string]interface{} {
+			s, _, _ := schemaService.AzureLiteSchemas(platformRegionUS21)
+			return s
+		}},
+		{"azure-lite-update", func() *map[string]interface{} {
+			_, s, _ := schemaService.AzureLiteSchemas(platformRegionUS21)
+			return s
+		}},
+		{"gcp-create", func() *map[string]interface{} { s, _, _ := schemaService.GCPSchemas(platformRegionUS11); return s }},
+		{"gcp-update", func() *map[string]interface{} { _, s, _ := schemaService.GCPSchemas(platformRegionUS11); return s }},
+		{"sap-converged-cloud-create", func() *map[string]interface{} {
+			s, _, _ := schemaService.SapConvergedCloudSchemas(platformRegionEU20)
+			return s
+		}},
+		{"sap-converged-cloud-update", func() *map[string]interface{} {
+			_, s, _ := schemaService.SapConvergedCloudSchemas(platformRegionEU20)
+			return s
+		}},
+		{"alicloud-create", func() *map[string]interface{} { s, _, _ := schemaService.AlicloudSchemas(platformRegionEU40); return s }},
+		{"alicloud-update", func() *map[string]interface{} { _, s, _ := schemaService.AlicloudSchemas(platformRegionEU40); return s }},
+		{"preview-create", func() *map[string]interface{} { s, _, _ := schemaService.PreviewSchemas(platformRegionUS11); return s }},
+		{"preview-update", func() *map[string]interface{} { _, s, _ := schemaService.PreviewSchemas(platformRegionUS11); return s }},
+		{"free-aws-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, platformRegionUS21, false) }},
+		{"free-aws-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, platformRegionUS21, true) }},
+		{"free-azure-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, platformRegionUS21, false) }},
+		{"free-azure-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, platformRegionUS21, true) }},
 		{"trial-create", func() *map[string]interface{} { return schemaService.TrialSchema(false) }},
 		{"trial-update", func() *map[string]interface{} { return schemaService.TrialSchema(true) }},
 	}
