@@ -155,6 +155,7 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	flags ControlFlagsObject) *map[string]interface{} {
 	properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
 	properties.Administrators = AdministratorsProperty()
+	properties.Gvisor = GvisorProperty()
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
 	}

@@ -54,6 +54,17 @@ type UpdateProperties struct {
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
+	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
+}
+
+type GvisorProperties struct {
+	Enabled Type `json:"enabled"`
+}
+
+type GvisorType struct {
+	Type
+	Required   []string         `json:"required"`
+	Properties GvisorProperties `json:"properties"`
 }
 
 type NetworkingProperties struct {
@@ -903,4 +914,22 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 		t.Items.Type.AdditionalProperties = false
 	}
 	return t
+}
+
+func GvisorProperty() *GvisorType {
+	return &GvisorType{
+		Type: Type{
+			Type:        "object",
+			Title:       "gVisor container runtime sandbox",
+			Description: "Configures the gVisor container runtime sandbox for a worker pool",
+		},
+		Required: []string{"enabled"},
+		Properties: GvisorProperties{
+			Enabled: Type{
+				Type:    "boolean",
+				Title:   "Enable gVisor container runtime sandbox",
+				Default: false,
+			},
+		},
+	}
 }
