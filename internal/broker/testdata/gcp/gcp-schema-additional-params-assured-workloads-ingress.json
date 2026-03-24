@@ -27,7 +27,7 @@
       "title": "Access Control List",
       "properties": {
         "allowedCIDRs": {
-          "description": "The whitelisted CIRDs which are allowed to access Kubernetes API server. Provide an empty list if you don't want to define Access Control List.",
+          "description": "The whitelisted CIDRs allowed to access the Kubernetes API server. If you don't want to define Access Control List, provide an empty list.",
           "items": {
             "title": "CIDR range",
             "example": "5.6.0.0/16",
