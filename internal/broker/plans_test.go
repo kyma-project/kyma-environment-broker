@@ -101,6 +101,71 @@ func TestSchemaService_Trial(t *testing.T) {
 	validateSchema(t, Marshal(got), "azure/azure-trial-schema-additional-params-ingress.json")
 }
 
+func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	type schemaCase struct {
+		name string
+		get  func() *map[string]interface{}
+	}
+
+	cases := []schemaCase{
+		{"aws-create", func() *map[string]interface{} { s, _, _ := schemaService.AWSSchemas("cf-us11"); return s }},
+		{"aws-update", func() *map[string]interface{} { _, s, _ := schemaService.AWSSchemas("cf-us11"); return s }},
+		{"azure-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureSchemas("cf-us21"); return s }},
+		{"azure-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureSchemas("cf-us21"); return s }},
+		{"azure-lite-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureLiteSchemas("cf-us21"); return s }},
+		{"azure-lite-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureLiteSchemas("cf-us21"); return s }},
+		{"gcp-create", func() *map[string]interface{} { s, _, _ := schemaService.GCPSchemas("cf-us11"); return s }},
+		{"gcp-update", func() *map[string]interface{} { _, s, _ := schemaService.GCPSchemas("cf-us11"); return s }},
+		{"sap-converged-cloud-create", func() *map[string]interface{} { s, _, _ := schemaService.SapConvergedCloudSchemas("cf-eu20"); return s }},
+		{"sap-converged-cloud-update", func() *map[string]interface{} { _, s, _ := schemaService.SapConvergedCloudSchemas("cf-eu20"); return s }},
+		{"alicloud-create", func() *map[string]interface{} { s, _, _ := schemaService.AlicloudSchemas("cf-eu40"); return s }},
+		{"alicloud-update", func() *map[string]interface{} { _, s, _ := schemaService.AlicloudSchemas("cf-eu40"); return s }},
+		{"preview-create", func() *map[string]interface{} { s, _, _ := schemaService.PreviewSchemas("cf-us11"); return s }},
+		{"preview-update", func() *map[string]interface{} { _, s, _ := schemaService.PreviewSchemas("cf-us11"); return s }},
+		{"free-aws-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, "cf-us21", false) }},
+		{"free-aws-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, "cf-us21", true) }},
+		{"free-azure-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, "cf-us21", false) }},
+		{"free-azure-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, "cf-us21", true) }},
+		{"trial-create", func() *map[string]interface{} { return schemaService.TrialSchema(false) }},
+		{"trial-update", func() *map[string]interface{} { return schemaService.TrialSchema(true) }},
+	}
+
+	expectedGvisor := gvisorProperty()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+
+			gvisor, ok := props["gvisor"]
+			require.True(t, ok, "expected 'gvisor' property to be present in schema")
+
+			assert.Equal(t, expectedGvisor, gvisor)
+		})
+	}
+}
+
+func gvisorProperty() map[string]interface{} {
+	return map[string]interface{}{
+		"type":        "object",
+		"title":       "gVisor container runtime sandbox",
+		"description": "Configures the gVisor container runtime sandbox for a worker pool",
+		"required":    []interface{}{"enabled"},
+		"properties": map[string]interface{}{
+			"enabled": map[string]interface{}{
+				"type":    "boolean",
+				"title":   "Enable gVisor container runtime sandbox",
+				"default": false,
+			},
+		},
+	}
+}
+
 func validateSchema(t *testing.T, actual []byte, file string) {
 	var prettyExpected bytes.Buffer
 	expected := readJsonFile(t, file)
