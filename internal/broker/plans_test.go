@@ -151,7 +151,7 @@ func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
 }
 
 func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
-	schemaService := createSchemaService(t) // GvisorEnabled defaults to false
+	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
