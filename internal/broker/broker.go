@@ -59,6 +59,7 @@ type Config struct {
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
+	GvisorEnabled               bool `envconfig:"default=false"`
 
 	AllowedGlobalAccounts           StringList `envconfig:"optional"`
 	RestrictToAllowedGlobalAccounts bool

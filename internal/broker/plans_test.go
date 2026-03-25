@@ -108,7 +108,7 @@ func TestSchemaService_Trial(t *testing.T) {
 }
 
 func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
-	schemaService := createSchemaService(t)
+	schemaService := createSchemaServiceWithGvisor(t)
 	expectedGvisor := gvisorProperty()
 
 	for _, tc := range allPlanSchemaCases(schemaService) {
@@ -128,7 +128,7 @@ func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 }
 
 func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
-	schemaService := createSchemaService(t)
+	schemaService := createSchemaServiceWithGvisor(t)
 
 	for _, tc := range allPlanSchemaCases(schemaService) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -299,6 +299,24 @@ func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *test
 }
 
 func createSchemaService(t *testing.T) *SchemaService {
+	return createSchemaServiceWithConfig(t, Config{
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
+		ACLEnabledPlans:             []string{"gcp"},
+	})
+}
+
+func createSchemaServiceWithGvisor(t *testing.T) *SchemaService {
+	return createSchemaServiceWithConfig(t, Config{
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
+		GvisorEnabled:               true,
+	})
+}
+
+func createSchemaServiceWithConfig(t *testing.T, cfg Config) *SchemaService {
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)
 
@@ -307,11 +325,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 
 	channelResolver := &fixture.FakeChannelResolver{}
 
-	schemaService := NewSchemaService(provider, plans, nil, Config{
-		RejectUnsupportedParameters: true,
-		EnablePlanUpgrades:          true,
-		DualStackDocsURL:            "https://placeholder.com",
-		ACLEnabledPlans:             []string{"gcp"},
-	}, StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName}, channelResolver)
-	return schemaService
+	return NewSchemaService(provider, plans, nil, cfg,
+		StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName},
+		channelResolver)
 }
