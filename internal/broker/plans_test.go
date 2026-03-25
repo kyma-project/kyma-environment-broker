@@ -109,50 +109,9 @@ func TestSchemaService_Trial(t *testing.T) {
 
 func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 	schemaService := createSchemaService(t)
-
-	type schemaCase struct {
-		name string
-		get  func() *map[string]interface{}
-	}
-
-	cases := []schemaCase{
-		{"aws-create", func() *map[string]interface{} { s, _, _ := schemaService.AWSSchemas(platformRegionUS11); return s }},
-		{"aws-update", func() *map[string]interface{} { _, s, _ := schemaService.AWSSchemas(platformRegionUS11); return s }},
-		{"azure-create", func() *map[string]interface{} { s, _, _ := schemaService.AzureSchemas(platformRegionUS21); return s }},
-		{"azure-update", func() *map[string]interface{} { _, s, _ := schemaService.AzureSchemas(platformRegionUS21); return s }},
-		{"azure-lite-create", func() *map[string]interface{} {
-			s, _, _ := schemaService.AzureLiteSchemas(platformRegionUS21)
-			return s
-		}},
-		{"azure-lite-update", func() *map[string]interface{} {
-			_, s, _ := schemaService.AzureLiteSchemas(platformRegionUS21)
-			return s
-		}},
-		{"gcp-create", func() *map[string]interface{} { s, _, _ := schemaService.GCPSchemas(platformRegionUS11); return s }},
-		{"gcp-update", func() *map[string]interface{} { _, s, _ := schemaService.GCPSchemas(platformRegionUS11); return s }},
-		{"sap-converged-cloud-create", func() *map[string]interface{} {
-			s, _, _ := schemaService.SapConvergedCloudSchemas(platformRegionEU20)
-			return s
-		}},
-		{"sap-converged-cloud-update", func() *map[string]interface{} {
-			_, s, _ := schemaService.SapConvergedCloudSchemas(platformRegionEU20)
-			return s
-		}},
-		{"alicloud-create", func() *map[string]interface{} { s, _, _ := schemaService.AlicloudSchemas(platformRegionEU40); return s }},
-		{"alicloud-update", func() *map[string]interface{} { _, s, _ := schemaService.AlicloudSchemas(platformRegionEU40); return s }},
-		{"preview-create", func() *map[string]interface{} { s, _, _ := schemaService.PreviewSchemas(platformRegionUS11); return s }},
-		{"preview-update", func() *map[string]interface{} { _, s, _ := schemaService.PreviewSchemas(platformRegionUS11); return s }},
-		{"free-aws-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, platformRegionUS21, false) }},
-		{"free-aws-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.AWS, platformRegionUS21, true) }},
-		{"free-azure-create", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, platformRegionUS21, false) }},
-		{"free-azure-update", func() *map[string]interface{} { return schemaService.FreeSchema(pkg.Azure, platformRegionUS21, true) }},
-		{"trial-create", func() *map[string]interface{} { return schemaService.TrialSchema(false) }},
-		{"trial-update", func() *map[string]interface{} { return schemaService.TrialSchema(true) }},
-	}
-
 	expectedGvisor := gvisorProperty()
 
-	for _, tc := range cases {
+	for _, tc := range allPlanSchemaCases(schemaService) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
 			require.NotNil(t, schema)
@@ -166,6 +125,61 @@ func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 			assert.Equal(t, expectedGvisor, gvisor)
 		})
 	}
+}
+
+func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	for _, tc := range allPlanSchemaCases(schemaService) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+			controlsOrderContainsGvisor(t, schema)
+		})
+	}
+}
+
+func allPlanSchemaCases(svc *SchemaService) []struct {
+	name string
+	get  func() *map[string]interface{}
+} {
+	return []struct {
+		name string
+		get  func() *map[string]interface{}
+	}{
+		{"aws-create", func() *map[string]interface{} { s, _, _ := svc.AWSSchemas(platformRegionUS11); return s }},
+		{"aws-update", func() *map[string]interface{} { _, s, _ := svc.AWSSchemas(platformRegionUS11); return s }},
+		{"azure-create", func() *map[string]interface{} { s, _, _ := svc.AzureSchemas(platformRegionUS21); return s }},
+		{"azure-update", func() *map[string]interface{} { _, s, _ := svc.AzureSchemas(platformRegionUS21); return s }},
+		{"azure-lite-create", func() *map[string]interface{} { s, _, _ := svc.AzureLiteSchemas(platformRegionUS21); return s }},
+		{"azure-lite-update", func() *map[string]interface{} { _, s, _ := svc.AzureLiteSchemas(platformRegionUS21); return s }},
+		{"gcp-create", func() *map[string]interface{} { s, _, _ := svc.GCPSchemas(platformRegionUS11); return s }},
+		{"gcp-update", func() *map[string]interface{} { _, s, _ := svc.GCPSchemas(platformRegionUS11); return s }},
+		{"sap-converged-cloud-create", func() *map[string]interface{} { s, _, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s }},
+		{"sap-converged-cloud-update", func() *map[string]interface{} { _, s, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s }},
+		{"alicloud-create", func() *map[string]interface{} { s, _, _ := svc.AlicloudSchemas(platformRegionEU40); return s }},
+		{"alicloud-update", func() *map[string]interface{} { _, s, _ := svc.AlicloudSchemas(platformRegionEU40); return s }},
+		{"preview-create", func() *map[string]interface{} { s, _, _ := svc.PreviewSchemas(platformRegionUS11); return s }},
+		{"preview-update", func() *map[string]interface{} { _, s, _ := svc.PreviewSchemas(platformRegionUS11); return s }},
+		{"free-aws-create", func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, false) }},
+		{"free-aws-update", func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, true) }},
+		{"free-azure-create", func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, false) }},
+		{"free-azure-update", func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, true) }},
+		{"trial-create", func() *map[string]interface{} { return svc.TrialSchema(false) }},
+		{"trial-update", func() *map[string]interface{} { return svc.TrialSchema(true) }},
+	}
+}
+
+func controlsOrderContainsGvisor(t *testing.T, schema *map[string]interface{}) {
+	t.Helper()
+	raw, ok := (*schema)[ControlsOrderKey].([]interface{})
+	require.True(t, ok, "schema has no %q key", ControlsOrderKey)
+	for _, v := range raw {
+		if s, ok := v.(string); ok && s == "gvisor" {
+			return
+		}
+	}
+	t.Fatalf("%q does not contain %q", ControlsOrderKey, "gvisor")
 }
 
 func gvisorProperty() map[string]interface{} {
