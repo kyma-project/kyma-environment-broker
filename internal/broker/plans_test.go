@@ -190,6 +190,23 @@ func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemProperties(t *
 	}
 }
 
+func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
+			assert.NotContains(t, order, "gvisor")
+		})
+	}
+}
+
 func TestSchemaService_GvisorPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
 	schemaService := createSchemaServiceWithGvisor(t)
 	expectedGvisor := gvisorProperty()
@@ -286,6 +303,28 @@ func planSchemaCases(svc *SchemaService, planNames ...string) []struct {
 func additionalWorkerNodePoolsItemProperties(t *testing.T, schema *map[string]interface{}) map[string]interface{} {
 	t.Helper()
 
+	items := additionalWorkerNodePoolsItems(t, schema)
+
+	itemProps, ok := items["properties"].(map[string]interface{})
+	require.True(t, ok, "'additionalWorkerNodePools.items' has no 'properties' key")
+
+	return itemProps
+}
+
+func additionalWorkerNodePoolsItemControlsOrder(t *testing.T, schema *map[string]interface{}) []interface{} {
+	t.Helper()
+
+	items := additionalWorkerNodePoolsItems(t, schema)
+
+	order, ok := items["_controlsOrder"].([]interface{})
+	require.True(t, ok, "'additionalWorkerNodePools.items' has no '_controlsOrder' key")
+
+	return order
+}
+
+func additionalWorkerNodePoolsItems(t *testing.T, schema *map[string]interface{}) map[string]interface{} {
+	t.Helper()
+
 	props, ok := (*schema)["properties"].(map[string]interface{})
 	require.True(t, ok, "schema has no 'properties' key")
 
@@ -295,10 +334,7 @@ func additionalWorkerNodePoolsItemProperties(t *testing.T, schema *map[string]in
 	items, ok := awnp["items"].(map[string]interface{})
 	require.True(t, ok, "'additionalWorkerNodePools' has no 'items' key")
 
-	itemProps, ok := items["properties"].(map[string]interface{})
-	require.True(t, ok, "'additionalWorkerNodePools.items' has no 'properties' key")
-
-	return itemProps
+	return items
 }
 
 func controlsOrderContainsGvisor(t *testing.T, schema *map[string]interface{}) {
