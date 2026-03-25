@@ -190,6 +190,27 @@ func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemProperties(t *
 	}
 }
 
+func TestSchemaService_GvisorPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
+	schemaService := createSchemaServiceWithGvisor(t)
+	expectedGvisor := gvisorProperty()
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+
+			gvisor, ok := itemProps["gvisor"]
+			require.True(t, ok, "expected 'gvisor' to be present in additionalWorkerNodePools item properties")
+			assert.Equal(t, expectedGvisor, gvisor)
+		})
+	}
+}
+
 type planSchemaEntry struct {
 	create func() *map[string]interface{}
 	update func() *map[string]interface{}
