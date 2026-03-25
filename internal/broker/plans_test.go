@@ -21,6 +21,9 @@ const (
 	platformRegionUS21 = "cf-us21"
 	platformRegionEU20 = "cf-eu20"
 	platformRegionEU40 = "cf-eu40"
+
+	freeAWSPlanName   = "free-aws"
+	freeAzurePlanName = "free-azure"
 )
 
 func TestSchemaService_Alicloud(t *testing.T) {
@@ -111,7 +114,11 @@ func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 	schemaService := createSchemaServiceWithGvisor(t)
 	expectedGvisor := gvisorProperty()
 
-	for _, tc := range allPlanSchemaCases(schemaService) {
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
 			require.NotNil(t, schema)
@@ -130,7 +137,11 @@ func TestSchemaService_GvisorPropertyPresentInAllPlans(t *testing.T) {
 func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
 	schemaService := createSchemaServiceWithGvisor(t)
 
-	for _, tc := range allPlanSchemaCases(schemaService) {
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
 			require.NotNil(t, schema)
@@ -142,7 +153,11 @@ func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
 func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
 	schemaService := createSchemaService(t) // GvisorEnabled defaults to false
 
-	for _, tc := range allPlanSchemaCases(schemaService) {
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
 			require.NotNil(t, schema)
@@ -158,35 +173,111 @@ func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
 	}
 }
 
-func allPlanSchemaCases(svc *SchemaService) []struct {
+func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
+	schemaService := createSchemaServiceWithGvisor(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+			assert.NotContains(t, itemProps, "gvisor")
+		})
+	}
+}
+
+type planSchemaEntry struct {
+	create func() *map[string]interface{}
+	update func() *map[string]interface{}
+}
+
+func planSchemaCases(svc *SchemaService, planNames ...string) []struct {
 	name string
 	get  func() *map[string]interface{}
 } {
-	return []struct {
+	registry := map[string]planSchemaEntry{
+		AWSPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.AWSSchemas(platformRegionUS11); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.AWSSchemas(platformRegionUS11); return s },
+		},
+		AzurePlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.AzureSchemas(platformRegionUS21); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.AzureSchemas(platformRegionUS21); return s },
+		},
+		AzureLitePlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.AzureLiteSchemas(platformRegionUS21); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.AzureLiteSchemas(platformRegionUS21); return s },
+		},
+		GCPPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.GCPSchemas(platformRegionUS11); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.GCPSchemas(platformRegionUS11); return s },
+		},
+		SapConvergedCloudPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s },
+		},
+		AlicloudPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.AlicloudSchemas(platformRegionEU40); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.AlicloudSchemas(platformRegionEU40); return s },
+		},
+		PreviewPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.PreviewSchemas(platformRegionUS11); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.PreviewSchemas(platformRegionUS11); return s },
+		},
+		freeAWSPlanName: {
+			create: func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, false) },
+			update: func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, true) },
+		},
+		freeAzurePlanName: {
+			create: func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, false) },
+			update: func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, true) },
+		},
+		TrialPlanName: {
+			create: func() *map[string]interface{} { return svc.TrialSchema(false) },
+			update: func() *map[string]interface{} { return svc.TrialSchema(true) },
+		},
+	}
+
+	var cases []struct {
 		name string
 		get  func() *map[string]interface{}
-	}{
-		{"aws-create", func() *map[string]interface{} { s, _, _ := svc.AWSSchemas(platformRegionUS11); return s }},
-		{"aws-update", func() *map[string]interface{} { _, s, _ := svc.AWSSchemas(platformRegionUS11); return s }},
-		{"azure-create", func() *map[string]interface{} { s, _, _ := svc.AzureSchemas(platformRegionUS21); return s }},
-		{"azure-update", func() *map[string]interface{} { _, s, _ := svc.AzureSchemas(platformRegionUS21); return s }},
-		{"azure-lite-create", func() *map[string]interface{} { s, _, _ := svc.AzureLiteSchemas(platformRegionUS21); return s }},
-		{"azure-lite-update", func() *map[string]interface{} { _, s, _ := svc.AzureLiteSchemas(platformRegionUS21); return s }},
-		{"gcp-create", func() *map[string]interface{} { s, _, _ := svc.GCPSchemas(platformRegionUS11); return s }},
-		{"gcp-update", func() *map[string]interface{} { _, s, _ := svc.GCPSchemas(platformRegionUS11); return s }},
-		{"sap-converged-cloud-create", func() *map[string]interface{} { s, _, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s }},
-		{"sap-converged-cloud-update", func() *map[string]interface{} { _, s, _ := svc.SapConvergedCloudSchemas(platformRegionEU20); return s }},
-		{"alicloud-create", func() *map[string]interface{} { s, _, _ := svc.AlicloudSchemas(platformRegionEU40); return s }},
-		{"alicloud-update", func() *map[string]interface{} { _, s, _ := svc.AlicloudSchemas(platformRegionEU40); return s }},
-		{"preview-create", func() *map[string]interface{} { s, _, _ := svc.PreviewSchemas(platformRegionUS11); return s }},
-		{"preview-update", func() *map[string]interface{} { _, s, _ := svc.PreviewSchemas(platformRegionUS11); return s }},
-		{"free-aws-create", func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, false) }},
-		{"free-aws-update", func() *map[string]interface{} { return svc.FreeSchema(pkg.AWS, platformRegionUS21, true) }},
-		{"free-azure-create", func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, false) }},
-		{"free-azure-update", func() *map[string]interface{} { return svc.FreeSchema(pkg.Azure, platformRegionUS21, true) }},
-		{"trial-create", func() *map[string]interface{} { return svc.TrialSchema(false) }},
-		{"trial-update", func() *map[string]interface{} { return svc.TrialSchema(true) }},
 	}
+	for _, planName := range planNames {
+		entry := registry[planName]
+		cases = append(cases,
+			struct {
+				name string
+				get  func() *map[string]interface{}
+			}{planName + "-create", entry.create},
+			struct {
+				name string
+				get  func() *map[string]interface{}
+			}{planName + "-update", entry.update},
+		)
+	}
+	return cases
+}
+
+func additionalWorkerNodePoolsItemProperties(t *testing.T, schema *map[string]interface{}) map[string]interface{} {
+	t.Helper()
+
+	props, ok := (*schema)["properties"].(map[string]interface{})
+	require.True(t, ok, "schema has no 'properties' key")
+
+	awnp, ok := props["additionalWorkerNodePools"].(map[string]interface{})
+	require.True(t, ok, "schema has no 'additionalWorkerNodePools' property")
+
+	items, ok := awnp["items"].(map[string]interface{})
+	require.True(t, ok, "'additionalWorkerNodePools' has no 'items' key")
+
+	itemProps, ok := items["properties"].(map[string]interface{})
+	require.True(t, ok, "'additionalWorkerNodePools.items' has no 'properties' key")
+
+	return itemProps
 }
 
 func controlsOrderContainsGvisor(t *testing.T, schema *map[string]interface{}) {
