@@ -226,6 +226,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
 	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints        *TaintsType    `json:"taints,omitempty"`
+	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
 }
 
 type TaintsType struct {
@@ -825,7 +826,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			UniqueItems: true,
 			Description: "Specifies the list of additional worker node pools."},
 		Items: AdditionalWorkerNodePoolsItems{
-			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints"},
+			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints", "gvisor"},
 			Required:      []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",

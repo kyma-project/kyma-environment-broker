@@ -174,7 +174,7 @@ func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
 }
 
 func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
-	schemaService := createSchemaServiceWithGvisor(t)
+	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,

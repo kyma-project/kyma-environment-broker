@@ -159,6 +159,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	properties.Administrators = AdministratorsProperty()
 	if flags.gvisorEnabled {
 		properties.Gvisor = GvisorProperty()
+		if properties.AdditionalWorkerNodePools != nil {
+			properties.AdditionalWorkerNodePools.Items.Properties.Gvisor = GvisorProperty()
+		}
 	}
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
