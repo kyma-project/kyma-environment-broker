@@ -343,6 +343,7 @@ func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 	return NewControlFlagsObject(
 		s.ingressFilteringPlans.Contains(planName),
+		s.cfg.GvisorEnabled,
 		s.cfg.RejectUnsupportedParameters,
 	)
 }
