@@ -139,6 +139,25 @@ func TestSchemaService_GvisorInControlsOrder(t *testing.T) {
 	}
 }
 
+func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
+	schemaService := createSchemaService(t) // GvisorEnabled defaults to false
+
+	for _, tc := range allPlanSchemaCases(schemaService) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+			assert.NotContains(t, props, "gvisor")
+
+			order, ok := (*schema)[ControlsOrderKey].([]interface{})
+			require.True(t, ok, "schema has no %q key", ControlsOrderKey)
+			assert.NotContains(t, order, "gvisor")
+		})
+	}
+}
+
 func allPlanSchemaCases(svc *SchemaService) []struct {
 	name string
 	get  func() *map[string]interface{}
