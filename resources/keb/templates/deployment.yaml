@@ -136,6 +136,8 @@ spec:
               value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
               value: "{{ .Values.broker.gardenerSeedsCache }}"
+            - name: APP_BROKER_GVISOR_ENABLED
+              value: "{{ .Values.broker.gvisorEnabled }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA

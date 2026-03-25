@@ -155,6 +155,8 @@ broker:
   freeExpirationPeriod: 720h
   # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds.
   gardenerSeedsCache: "gardener-seeds-cache"
+  # If true, includes the gVisor container runtime sandbox property in every plan schema.
+  gvisorEnabled: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one freemium (free) Kyma runtime.
