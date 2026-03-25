@@ -65,10 +65,10 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 
 ### Pros
 
-- Simple to implement.
+- Simple to implement and maintain.
 - Users pay extra only for GB above the plan default.
 - No calculations of the volume size per machine are needed.
-- KEB operators need to refresh ERS only once when this feature is rolled out.
+- KEB operators need to refresh ERS only once when this feature is rolled out or when the default value is changed.
 
 ### Cons
 
