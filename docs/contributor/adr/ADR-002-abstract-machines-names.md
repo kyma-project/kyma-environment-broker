@@ -921,7 +921,7 @@ In this model, inputs such as `m6i.large`, `m5.large` and `mi.large` can all be 
 
 ## Decision
 
-Internally, we are leaning towards the version‑agnostic approach, but the final decision will be made at the next architecture meeting.
+We decided to adopt the version-agnostic machine naming approach.
 
 ## Consequences
 
