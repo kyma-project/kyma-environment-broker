@@ -18,7 +18,13 @@ Users running large machine types with many pods can encounter disk-full conditi
 
 ## Approach 1: Static `volumeSizeGb` per Worker Pool
 
-Expose `volumeSizeGb` as an optional, user-configurable integer parameter per worker pool and for the main worker. The value cannot be set below the plan default. When not provided, the plan default applies unchanged.
+There are two variants for what we could expose to the user:
+
+**Variant A: Expose `volumeSizeGb` directly** - the user sets the total volume size. The schema shows the default and minimum (equal to the plan default). Users see and manage the full size. When the parameter is not provided in the payload, the plan default is applied for backwards compatibility.
+
+**Variant B: Expose only `additionalVolumeGb`** - the user sets only the extra GB on top of the plan default. The input defaults to 0. The plan default base is transparent to the user and always included for free. Tthe input directly represents what the user pays for.
+
+The screenshots below show Variant A. For Variant B the UI looks almost the same, but the default value would be 0 and the label would be `Additional Volume Gb`.
 
 **BTP cockpit - main worker pool:**
 
@@ -72,11 +78,11 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 
 KEB computes a volume size automatically based on the selected machine type. The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top via an optional `additionalVolumeGb` parameter, which is billed separately per GB above the computed base.
 
-The dynamic volume size can be obtained using one of two approaches:
+The dynamic volume size can be obtained using one of two sub-options for the calculation:
 
-**Option A: Configurable mapping table** — maps machine size ranges (e.g., by vCPU count) to fixed volume sizes. Easier to reason about but requires maintaining the table as new machine types are added.
+**Sub-option A: Configurable mapping table** — maps machine size ranges (e.g., by vCPU count) to fixed volume sizes. Easier to reason about but requires maintaining the table as new machine types are added.
 
-**Option B: Formula** — computes the volume size from the machine's resources:
+**Sub-option B: Formula** - computes the volume size from the machine's resources:
 
 ```
 volume_size = volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor
