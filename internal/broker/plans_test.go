@@ -207,6 +207,23 @@ func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemControlsOrder(
 	}
 }
 
+func TestSchemaService_GvisorPresentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+	schemaService := createSchemaServiceWithGvisor(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
+			assert.Contains(t, order, "gvisor")
+		})
+	}
+}
+
 func TestSchemaService_GvisorPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
 	schemaService := createSchemaServiceWithGvisor(t)
 	expectedGvisor := gvisorProperty()
