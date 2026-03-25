@@ -161,6 +161,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 		properties.Gvisor = GvisorProperty()
 		if properties.AdditionalWorkerNodePools != nil {
 			properties.AdditionalWorkerNodePools.Items.Properties.Gvisor = GvisorProperty()
+			properties.AdditionalWorkerNodePools.Items.ControlsOrder = append(
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "gvisor",
+			)
 		}
 	}
 	if flags.ingressFilteringEnabled {

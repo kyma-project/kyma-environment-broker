@@ -826,7 +826,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			UniqueItems: true,
 			Description: "Specifies the list of additional worker node pools."},
 		Items: AdditionalWorkerNodePoolsItems{
-			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints", "gvisor"},
+			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints"},
 			Required:      []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",
