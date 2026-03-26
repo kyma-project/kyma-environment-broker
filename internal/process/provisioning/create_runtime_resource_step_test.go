@@ -1574,9 +1574,9 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) 
 
 func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 	for _, testCase := range []struct {
-		name        string
-		gvisor      *pkg.GvisorDTO
-		expectCRI   bool
+		name      string
+		gvisor    *pkg.GvisorDTO
+		expectCRI bool
 	}{
 		{
 			name:      "should set CRI on cpu-worker-0 when gvisor is enabled",
@@ -1636,10 +1636,10 @@ func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 
 func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
 	for _, testCase := range []struct {
-		name               string
-		mainGvisor         *pkg.GvisorDTO
-		awnpGvisor         *pkg.GvisorDTO
-		expectMainCRI      bool
+		name                string
+		mainGvisor          *pkg.GvisorDTO
+		awnpGvisor          *pkg.GvisorDTO
+		expectMainCRI       bool
 		expectAdditionalCRI bool
 	}{
 		{
