@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type provisionEndpointBuilder struct {
+type fakeProvisionEndpointBuilder struct {
 	brokerConfig                         Config
 	gardenerConfig                       gardener.Config
 	imConfig                             InfrastructureManager
@@ -42,31 +42,66 @@ type provisionEndpointBuilder struct {
 	btpRegionsMigrationSapConvergedCloud map[string]string
 }
 
-func newProvisionEndpointBuilder() *provisionEndpointBuilder {
-	return &provisionEndpointBuilder{}
+func NewFakeProvisionEndpointBuilder() *fakeProvisionEndpointBuilder {
+	return &fakeProvisionEndpointBuilder{}
 }
 
-func (b *provisionEndpointBuilder) WithInfrastructureManager(im InfrastructureManager) *provisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithInfrastructureManager(im InfrastructureManager) *fakeProvisionEndpointBuilder {
 	b.imConfig = im
 	return b
 }
 
-func (b *provisionEndpointBuilder) WithStorage(st storage.BrokerStorage) *provisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithStorage(st storage.BrokerStorage) *fakeProvisionEndpointBuilder {
 	b.db = st
 	return b
 }
 
-func (b *provisionEndpointBuilder) WithLogger(l *slog.Logger) *provisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithLogger(l *slog.Logger) *fakeProvisionEndpointBuilder {
 	b.log = l
 	return b
 }
 
-func (b *provisionEndpointBuilder) WithSchemaService(s *SchemaService) *provisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithSchemaService(s *SchemaService) *fakeProvisionEndpointBuilder {
 	b.schemaService = s
 	return b
 }
 
-func (b *provisionEndpointBuilder) Build() *ProvisionEndpoint {
+func (b *fakeProvisionEndpointBuilder) WithConfig(brokerConfig Config) *fakeProvisionEndpointBuilder {
+	b.brokerConfig = brokerConfig
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithGardenerConfig(gardenerConfig gardener.Config) *fakeProvisionEndpointBuilder {
+	b.gardenerConfig = gardenerConfig
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithQueue(queue Queue) *fakeProvisionEndpointBuilder {
+	b.queue = queue
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithDashboardConfig(dashboardConfig dashboard.Config) *fakeProvisionEndpointBuilder {
+	b.dashboardConfig = dashboardConfig
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithKubeconfigBuilder(kubeconfigBuilder kubeconfig.KcBuilder) *fakeProvisionEndpointBuilder {
+	b.kcBuilder = kubeconfigBuilder
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithConfigurationProvider(provider ConfigurationProvider) *fakeProvisionEndpointBuilder {
+	b.providerSpec = provider
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithValuesProvider(provider ValuesProvider) *fakeProvisionEndpointBuilder {
+	b.valuesProvider = provider
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
 		b.gardenerConfig,
@@ -99,7 +134,7 @@ func TestColocateControlPlane(t *testing.T) {
 	imConfig := InfrastructureManager{
 		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
-	provisionEndpoint := newProvisionEndpointBuilder().
+	provisionEndpoint := NewFakeProvisionEndpointBuilder().
 		WithStorage(st).
 		WithInfrastructureManager(imConfig).
 		WithLogger(log).
@@ -161,7 +196,7 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 	imConfig := InfrastructureManager{
 		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
-	provisionEndpoint := newProvisionEndpointBuilder().
+	provisionEndpoint := NewFakeProvisionEndpointBuilder().
 		WithStorage(st).
 		WithInfrastructureManager(imConfig).
 		WithLogger(log).
