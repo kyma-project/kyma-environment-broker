@@ -78,6 +78,10 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	maxUnavailable := intstr.FromInt32(int32(provisioning.DefaultIfParamNotSet(runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue(), operation.UpdatingParameters.MaxUnavailable)))
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
+	if operation.UpdatingParameters.Gvisor != nil {
+		runtime.Spec.Shoot.Provider.Workers[0].CRI = workers.ToGardenerCRI(operation.UpdatingParameters.Gvisor)
+	}
+
 	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
 		values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 		if err != nil {
