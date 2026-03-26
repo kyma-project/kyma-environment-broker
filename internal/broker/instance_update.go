@@ -811,6 +811,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		updateStorage = append(updateStorage, "Machine type")
 	}
 
+	if params.Gvisor != nil {
+		instance.Parameters.Parameters.Gvisor = params.Gvisor
+		updateStorage = append(updateStorage, "Gvisor")
+	}
+
 	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = b.collectAdditionalWorkerPools(params)
 		updateStorage = append(updateStorage, "Additional Worker Node Pools")
