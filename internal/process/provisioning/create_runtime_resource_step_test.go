@@ -1572,6 +1572,68 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) 
 	assert.Empty(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers)
 }
 
+func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
+	for _, testCase := range []struct {
+		name        string
+		gvisor      *pkg.GvisorDTO
+		expectCRI   bool
+	}{
+		{
+			name:      "should set CRI on cpu-worker-0 when gvisor is enabled",
+			gvisor:    &pkg.GvisorDTO{Enabled: true},
+			expectCRI: true,
+		},
+		{
+			name:      "should not set CRI on cpu-worker-0 when gvisor is nil",
+			gvisor:    nil,
+			expectCRI: false,
+		},
+		{
+			name:      "should not set CRI on cpu-worker-0 when gvisor is disabled",
+			gvisor:    &pkg.GvisorDTO{Enabled: false},
+			expectCRI: false,
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// given
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+			memoryStorage := storage.NewMemoryStorage()
+			inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+
+			instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+			operation.ProvisioningParameters.Parameters.Gvisor = testCase.gvisor
+			assertInsertions(t, memoryStorage, instance, operation)
+
+			cli := getClientForTests(t)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+
+			// when
+			_, repeat, err := step.Run(operation, fixLogger())
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			require.NoError(t, err)
+			require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+
+			if testCase.expectCRI {
+				require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].CRI)
+				assert.Equal(t, gardener.CRINameContainerD, runtime.Spec.Shoot.Provider.Workers[0].CRI.Name)
+				assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, runtime.Spec.Shoot.Provider.Workers[0].CRI.ContainerRuntimes)
+			} else {
+				assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].CRI)
+			}
+		})
+	}
+}
+
 // testing auxiliary functions
 
 func Test_Defaults(t *testing.T) {
