@@ -6,6 +6,7 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,4 +73,43 @@ func TestPersistenceOnUpdate_Gvisor(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	assert.Equal(t, gvisor, instance.Parameters.Parameters.Gvisor)
+}
+
+func TestGvisorWhitelist_Update(t *testing.T) {
+	const allowedGA = "allowed-global-account-id"
+	const otherGA = "other-global-account-id"
+	gvisor := &pkg.GvisorDTO{Enabled: true}
+
+	t.Run("should reject when global account is not in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, otherGA)
+
+		// then
+		require.Error(t, err)
+	})
+
+	t.Run("should allow when global account is in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should reject when whitelist is empty", func(t *testing.T) {
+		// given
+		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+
+		// then
+		require.Error(t, err)
+	})
 }

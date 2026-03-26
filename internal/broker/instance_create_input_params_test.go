@@ -332,7 +332,7 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 	})
 }
 
-func TestGvisorWhitelistValidation(t *testing.T) {
+func TestGvisorWhitelist_Provision(t *testing.T) {
 	const allowedGA = "allowed-global-account-id"
 	const otherGA = "other-global-account-id"
 	gvisor := &pkg.GvisorDTO{Enabled: true}
