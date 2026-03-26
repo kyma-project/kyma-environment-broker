@@ -103,6 +103,7 @@ type Config struct {
 
 	FreemiumWhitelistedGlobalAccountsFilePath string
 	MaxPodsWhitelistedGlobalAccountsFilePath  string
+	GvisorWhitelistedGlobalAccountsFilePath   string
 
 	DomainName string
 
@@ -516,6 +517,10 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of globalAccountIds for unlimited freemium: %d", len(freemiumGlobalAccountIds)))
 
+	gvisorWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.GvisorWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of globalAccountIds allowed for gvisor: %d", len(gvisorWhitelistedGlobalAccountIds)))
+
 	quotaClient := quota.NewClient(context.Background(), cfg.Quota, logs)
 	quotaWhitelistedSubaccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.QuotaWhitelistedSubaccountsFilePath)
 	fatalOnError(err, logs)
@@ -529,14 +534,16 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
-			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
+			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder,
+			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
 			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient, quotaWhitelistedSubaccountIds,
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient,
+			quotaWhitelistedSubaccountIds, gvisorWhitelistedGlobalAccountIds,
 			rulesService, gardenerClient, awsClientFactory),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
