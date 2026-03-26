@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGvisorUpdatingParameters(t *testing.T) {
-	sut := &UpdateEndpoint{}
+func TestUpdatingParameters_Gvisor(t *testing.T) {
+	endpoint := &UpdateEndpoint{}
 
 	t.Run("should unmarshal gvisor enabled: true", func(t *testing.T) {
 		// given
@@ -18,7 +18,7 @@ func TestGvisorUpdatingParameters(t *testing.T) {
 		details := domain.UpdateDetails{RawParameters: rawParams}
 
 		// when
-		params, err := sut.unmarshalParams(details, fixLogger())
+		params, err := endpoint.unmarshalParams(details, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestGvisorUpdatingParameters(t *testing.T) {
 		details := domain.UpdateDetails{RawParameters: rawParams}
 
 		// when
-		params, err := sut.unmarshalParams(details, fixLogger())
+		params, err := endpoint.unmarshalParams(details, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestGvisorUpdatingParameters(t *testing.T) {
 		details := domain.UpdateDetails{RawParameters: rawParams}
 
 		// when
-		params, err := sut.unmarshalParams(details, fixLogger())
+		params, err := endpoint.unmarshalParams(details, fixLogger())
 
 		// then
 		require.NoError(t, err)
