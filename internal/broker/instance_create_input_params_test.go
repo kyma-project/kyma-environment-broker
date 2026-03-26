@@ -141,6 +141,11 @@ func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFa
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithBtpRegionsMigrationSapConvergedCloud(m map[string]string) *fakeProvisionEndpointBuilder {
+	b.btpRegionsMigrationSapConvergedCloud = m
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
