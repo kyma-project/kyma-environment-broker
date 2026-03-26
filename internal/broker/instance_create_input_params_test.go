@@ -136,6 +136,11 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	)
 }
 
+func (b *fakeProvisionEndpointBuilder) WithConfigMapConfigProvider(provider config.ConfigMapConfigProvider) *fakeProvisionEndpointBuilder {
+	b.providerConfigProvider = provider
+	return b
+}
+
 func TestColocateControlPlane(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
