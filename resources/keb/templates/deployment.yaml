@@ -218,6 +218,8 @@ spec:
               value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.freemiumWhitelistedGlobalAccountIds }}
+            - name: APP_GVISOR_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.gvisorWhitelistedGlobalAccountIds }}
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_GARDENER_PROJECT
