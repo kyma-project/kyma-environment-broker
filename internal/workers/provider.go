@@ -97,7 +97,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			}
 		}
 
-		worker.CRI = toGardenerCRI(additionalWorkerNodePool.Gvisor)
+		worker.CRI = ToGardenerCRI(additionalWorkerNodePool.Gvisor)
 
 		workers = append(workers, worker)
 	}
@@ -105,7 +105,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 	return workers, nil
 }
 
-func toGardenerCRI(gvisor *pkg.GvisorDTO) *gardener.CRI {
+func ToGardenerCRI(gvisor *pkg.GvisorDTO) *gardener.CRI {
 	if gvisor == nil || !gvisor.Enabled {
 		return nil
 	}

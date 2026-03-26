@@ -232,6 +232,8 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		}
 	}
 
+	provider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
+
 	additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools,
 		values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, log)
 	if err != nil {
