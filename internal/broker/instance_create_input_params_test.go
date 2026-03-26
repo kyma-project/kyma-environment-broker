@@ -121,6 +121,11 @@ func (b *fakeProvisionEndpointBuilder) WithQuotaClient(client QuotaClient) *fake
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithQuotaWhitelist(whitelist whitelist.Set) *fakeProvisionEndpointBuilder {
+	b.quotaWhitelist = whitelist
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,

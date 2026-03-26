@@ -2899,34 +2899,29 @@ func TestQuotaLimitCheck(t *testing.T) {
 		quotaClient := &automock.QuotaClient{}
 		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(2, nil)
 
-		// #create provisioner endpoint
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
-				CheckQuotaLimit:      true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			config.FakeProviderConfigProvider{},
-			quotaClient,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
+				CheckQuotaLimit:      true}).
+			WithGardenerConfig(gardener.Config{
+				Project:      "test",
+				ShootDomain:  "example.com",
+				DNSProviders: fixDNSProviders()}).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithFreemiumWhitelist(whitelist.Set{}).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+			WithQuotaClient(quotaClient).
+			Build()
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -2953,34 +2948,29 @@ func TestQuotaLimitCheck(t *testing.T) {
 		quotaClient := &automock.QuotaClient{}
 		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(0, fmt.Errorf("error message"))
 
-		// #create provisioner endpoint
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
-				CheckQuotaLimit:      true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			config.FakeProviderConfigProvider{},
-			quotaClient,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
+				CheckQuotaLimit:      true}).
+			WithGardenerConfig(gardener.Config{
+				Project:      "test",
+				ShootDomain:  "example.com",
+				DNSProviders: fixDNSProviders()}).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithFreemiumWhitelist(whitelist.Set{}).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+			WithQuotaClient(quotaClient).
+			Build()
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -3007,34 +2997,30 @@ func TestQuotaLimitCheck(t *testing.T) {
 		quotaClient := &automock.QuotaClient{}
 		quotaClient.On("GetQuota", subAccountID, broker.AzurePlanName).Return(1, nil)
 
-		// #create provisioner endpoint
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
-				CheckQuotaLimit:      true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			config.FakeProviderConfigProvider{},
-			quotaClient,
-			whitelist.Set{subAccountID: struct{}{}},
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
+				CheckQuotaLimit:      true}).
+			WithGardenerConfig(gardener.Config{
+				Project:      "test",
+				ShootDomain:  "example.com",
+				DNSProviders: fixDNSProviders()}).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithFreemiumWhitelist(whitelist.Set{}).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+			WithQuotaClient(quotaClient).
+			WithQuotaWhitelist(whitelist.Set{subAccountID: struct{}{}}).
+			Build()
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
