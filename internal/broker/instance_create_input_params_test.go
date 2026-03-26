@@ -111,6 +111,16 @@ func (b *fakeProvisionEndpointBuilder) WithPlansConfig(plansConfig PlansConfig) 
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithConfigMapConfigProvider(provider config.ConfigMapConfigProvider) *fakeProvisionEndpointBuilder {
+	b.providerConfigProvider = provider
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithQuotaClient(client QuotaClient) *fakeProvisionEndpointBuilder {
+	b.quotaClient = client
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
@@ -134,11 +144,6 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.awsClientFactory,
 		b.btpRegionsMigrationSapConvergedCloud,
 	)
-}
-
-func (b *fakeProvisionEndpointBuilder) WithConfigMapConfigProvider(provider config.ConfigMapConfigProvider) *fakeProvisionEndpointBuilder {
-	b.providerConfigProvider = provider
-	return b
 }
 
 func TestColocateControlPlane(t *testing.T) {
