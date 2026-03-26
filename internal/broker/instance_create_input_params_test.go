@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
@@ -30,6 +31,7 @@ type fakeProvisionEndpointBuilder struct {
 	dashboardConfig                      dashboard.Config
 	kcBuilder                            kubeconfig.KcBuilder
 	freemiumWhitelist                    whitelist.Set
+	gvisorWhitelist                      whitelist.Set
 	schemaService                        *SchemaService
 	providerSpec                         ConfigurationProvider
 	valuesProvider                       ValuesProvider
@@ -106,6 +108,11 @@ func (b *fakeProvisionEndpointBuilder) WithFreemiumWhitelist(whitelist whitelist
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithGvisorWhitelist(wl whitelist.Set) *fakeProvisionEndpointBuilder {
+	b.gvisorWhitelist = wl
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) WithPlansConfig(plansConfig PlansConfig) *fakeProvisionEndpointBuilder {
 	b.plansConfig = plansConfig
 	return b
@@ -158,6 +165,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.dashboardConfig,
 		b.kcBuilder,
 		b.freemiumWhitelist,
+		b.gvisorWhitelist,
 		b.schemaService,
 		b.providerSpec,
 		b.valuesProvider,
@@ -321,5 +329,44 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 		require.Len(t, parameters.AdditionalWorkerNodePools, 1)
 		require.NotNil(t, parameters.AdditionalWorkerNodePools[0].Gvisor)
 		assert.True(t, parameters.AdditionalWorkerNodePools[0].Gvisor.Enabled)
+	})
+}
+
+func TestGvisorWhitelistValidation(t *testing.T) {
+	const allowedGA = "allowed-global-account-id"
+	const otherGA = "other-global-account-id"
+	gvisor := &pkg.GvisorDTO{Enabled: true}
+
+	t.Run("should reject when global account is not in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, otherGA)
+
+		// then
+		require.Error(t, err)
+	})
+
+	t.Run("should allow when global account is in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should reject when whitelist is empty", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+
+		// then
+		require.Error(t, err)
 	})
 }
