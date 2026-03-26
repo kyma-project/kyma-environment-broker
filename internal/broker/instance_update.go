@@ -70,6 +70,7 @@ type UpdateEndpoint struct {
 	planSpec         *configuration.PlanSpecifications
 	quotaClient      QuotaClient
 	quotaWhitelist   whitelist.Set
+	gvisorWhitelist  whitelist.Set
 	rulesService     *rules.RulesService
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
@@ -97,6 +98,7 @@ func NewUpdate(cfg Config,
 	schemaService *SchemaService,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
+	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
@@ -123,6 +125,7 @@ func NewUpdate(cfg Config,
 		planSpec:                                 planSpec,
 		quotaClient:                              quotaClient,
 		quotaWhitelist:                           quotaWhitelist,
+		gvisorWhitelist:                          gvisorWhitelist,
 		rulesService:                             rulesService,
 		gardenerClient:                           gardenerClient,
 		awsClientFactory:                         awsClientFactory,
@@ -294,6 +297,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
+	if err := b.validateGvisorWhitelist(params.Gvisor, ersContext.GlobalAccountID); err != nil {
+		return domain.UpdateServiceSpec{}, err
+	}
 
 	// TODO: remove once we implemented proper filtering of parameters - removing parameters that are not supported by the plan
 	b.ZeroFieldsForTrialPlan(details, &params)
@@ -413,6 +419,17 @@ func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, ins
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
+	}
+	return nil
+}
+
+func (b *UpdateEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
+	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+		return apiresponses.NewFailureResponse(
+			errors.New("gvisor parameter is not allowed for this global account"),
+			http.StatusBadRequest,
+			"gvisor parameter is not allowed for this global account",
+		)
 	}
 	return nil
 }
