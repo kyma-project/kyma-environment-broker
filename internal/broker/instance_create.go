@@ -87,6 +87,7 @@ type ProvisionEndpoint struct {
 	kcBuilder       kubeconfig.KcBuilder
 
 	freemiumWhiteList whitelist.Set
+	gvisorWhitelist   whitelist.Set
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
@@ -121,6 +122,7 @@ func NewProvision(brokerConfig Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
+	gvisorWhitelist whitelist.Set,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
 	valuesProvider ValuesProvider,
@@ -152,6 +154,7 @@ func NewProvision(brokerConfig Config,
 		shootDnsProviders:                    gardenerConfig.DNSProviders,
 		dashboardConfig:                      dashboardConfig,
 		freemiumWhiteList:                    freemiumWhitelist,
+		gvisorWhitelist:                      gvisorWhitelist,
 		kcBuilder:                            kcBuilder,
 		providerSpec:                         providerSpec,
 		valuesProvider:                       valuesProvider,
@@ -392,6 +395,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if err := b.validateGvisorWhitelist(parameters.Gvisor, provisioningParameters.ErsContext.GlobalAccountID); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
 	if err != nil {
 		return fmt.Errorf("while creating plan validator: %w", err)
@@ -485,6 +492,13 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
+	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+		return errors.New("gvisor parameter is not allowed for this global account")
 	}
 	return nil
 }
