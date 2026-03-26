@@ -768,6 +768,58 @@ func TestUpdateRuntimeStep_GvisorOnMainWorker(t *testing.T) {
 	}
 }
 
+func TestUpdateRuntimeStep_GvisorOnMainAndAdditionalWorkers(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{},
+		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
+		fixValuesProvider())
+
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.DiscoveredZones = map[string][]string{
+		"m6i.large": {"zone-a", "zone-b", "zone-c"},
+	}
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		Gvisor: &pkg.GvisorDTO{Enabled: true},
+		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-1",
+				MachineType:   "m6i.large",
+				HAZones:       false,
+				AutoScalerMin: 1,
+				AutoScalerMax: 3,
+				Gvisor:        &pkg.GvisorDTO{Enabled: true},
+			},
+		},
+	}
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].CRI)
+	assert.Equal(t, gardener.CRINameContainerD, gotRuntime.Spec.Shoot.Provider.Workers[0].CRI.Name)
+	assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, gotRuntime.Spec.Shoot.Provider.Workers[0].CRI.ContainerRuntimes)
+
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].CRI)
+	assert.Equal(t, gardener.CRINameContainerD, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].CRI.Name)
+	assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].CRI.ContainerRuntimes)
+}
+
 // fixtures
 
 func fixRuntimeResource(name string) runtime.Object {
