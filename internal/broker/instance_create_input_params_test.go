@@ -7,13 +7,89 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type provisionEndpointBuilder struct {
+	brokerConfig                         Config
+	gardenerConfig                       gardener.Config
+	imConfig                             InfrastructureManager
+	db                                   storage.BrokerStorage
+	queue                                Queue
+	plansConfig                          PlansConfig
+	log                                  *slog.Logger
+	dashboardConfig                      dashboard.Config
+	kcBuilder                            kubeconfig.KcBuilder
+	freemiumWhitelist                    whitelist.Set
+	schemaService                        *SchemaService
+	providerSpec                         ConfigurationProvider
+	valuesProvider                       ValuesProvider
+	providerConfigProvider               config.ConfigMapConfigProvider
+	quotaClient                          QuotaClient
+	quotaWhitelist                       whitelist.Set
+	rulesService                         *rules.RulesService
+	gardenerClient                       *gardener.Client
+	awsClientFactory                     aws.ClientFactory
+	btpRegionsMigrationSapConvergedCloud map[string]string
+}
+
+func newProvisionEndpointBuilder() *provisionEndpointBuilder {
+	return &provisionEndpointBuilder{}
+}
+
+func (b *provisionEndpointBuilder) WithInfrastructureManager(im InfrastructureManager) *provisionEndpointBuilder {
+	b.imConfig = im
+	return b
+}
+
+func (b *provisionEndpointBuilder) WithStorage(st storage.BrokerStorage) *provisionEndpointBuilder {
+	b.db = st
+	return b
+}
+
+func (b *provisionEndpointBuilder) WithLogger(l *slog.Logger) *provisionEndpointBuilder {
+	b.log = l
+	return b
+}
+
+func (b *provisionEndpointBuilder) WithSchemaService(s *SchemaService) *provisionEndpointBuilder {
+	b.schemaService = s
+	return b
+}
+
+func (b *provisionEndpointBuilder) Build() *ProvisionEndpoint {
+	return NewProvision(
+		b.brokerConfig,
+		b.gardenerConfig,
+		b.imConfig,
+		b.db,
+		b.queue,
+		b.plansConfig,
+		b.log,
+		b.dashboardConfig,
+		b.kcBuilder,
+		b.freemiumWhitelist,
+		b.schemaService,
+		b.providerSpec,
+		b.valuesProvider,
+		b.providerConfigProvider,
+		b.quotaClient,
+		b.quotaWhitelist,
+		b.rulesService,
+		b.gardenerClient,
+		b.awsClientFactory,
+		b.btpRegionsMigrationSapConvergedCloud,
+	)
+}
 
 func TestColocateControlPlane(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -23,6 +99,12 @@ func TestColocateControlPlane(t *testing.T) {
 	imConfig := InfrastructureManager{
 		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
+	provisionEndpoint := newProvisionEndpointBuilder().
+		WithStorage(st).
+		WithInfrastructureManager(imConfig).
+		WithLogger(log).
+		WithSchemaService(createSchemaService(t)).
+		Build()
 
 	t.Run("should parse colocateControlPlane: true", func(t *testing.T) {
 		// given
@@ -30,29 +112,6 @@ func TestColocateControlPlane(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
-
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
 
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
@@ -69,29 +128,6 @@ func TestColocateControlPlane(t *testing.T) {
 			RawParameters: rawParameters,
 		}
 
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
-
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
 
@@ -106,28 +142,6 @@ func TestColocateControlPlane(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
 
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
@@ -147,6 +161,12 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 	imConfig := InfrastructureManager{
 		IngressFilteringPlans: []string{"aws", "azure", "gcp"},
 	}
+	provisionEndpoint := newProvisionEndpointBuilder().
+		WithStorage(st).
+		WithInfrastructureManager(imConfig).
+		WithLogger(log).
+		WithSchemaService(createSchemaService(t)).
+		Build()
 
 	t.Run("should parse gvisor enabled: true", func(t *testing.T) {
 		// given
@@ -154,29 +174,6 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
-
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
 
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
@@ -194,29 +191,6 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 			RawParameters: rawParameters,
 		}
 
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
-
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
 
@@ -231,29 +205,6 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
-
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
 
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
@@ -281,29 +232,6 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
-
-		provisionEndpoint := NewProvision(
-			Config{},
-			gardener.Config{},
-			imConfig,
-			st,
-			nil,
-			nil,
-			log,
-			dashboard.Config{},
-			nil,
-			nil,
-			createSchemaService(t),
-			nil,
-			nil,
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
 
 		// when
 		parameters, err := provisionEndpoint.extractInputParameters(details)
