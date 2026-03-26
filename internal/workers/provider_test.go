@@ -309,6 +309,64 @@ aws:
 		assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, workers[0].CRI.ContainerRuntimes)
 	})
 
+	t.Run("should not set CRI when gvisor is nil", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:        "no-gvisor-pool",
+				MachineType: "standard",
+				HAZones:     true,
+				Gvisor:      nil,
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			log,
+		)
+
+		// then
+		assert.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Nil(t, workers[0].CRI)
+	})
+
+	t.Run("should not set CRI when gvisor is disabled", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:        "gvisor-disabled-pool",
+				MachineType: "standard",
+				HAZones:     true,
+				Gvisor:      &runtime.GvisorDTO{Enabled: false},
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			log,
+		)
+
+		// then
+		assert.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Nil(t, workers[0].CRI)
+	})
+
 	t.Run("should not set taints when none provided", func(t *testing.T) {
 		// given
 		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
