@@ -1633,6 +1633,91 @@ func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 	}
 }
 
+func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
+	for _, testCase := range []struct {
+		name               string
+		mainGvisor         *pkg.GvisorDTO
+		awnpGvisor         *pkg.GvisorDTO
+		expectMainCRI      bool
+		expectAdditionalCRI bool
+	}{
+		{
+			name:                "gvisor enabled on main worker only — additional worker has no CRI",
+			mainGvisor:          &pkg.GvisorDTO{Enabled: true},
+			awnpGvisor:          nil,
+			expectMainCRI:       true,
+			expectAdditionalCRI: false,
+		},
+		{
+			name:                "gvisor enabled on additional worker only — main worker has no CRI",
+			mainGvisor:          nil,
+			awnpGvisor:          &pkg.GvisorDTO{Enabled: true},
+			expectMainCRI:       false,
+			expectAdditionalCRI: true,
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// given
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+			memoryStorage := storage.NewMemoryStorage()
+			inputConfig := broker.InfrastructureManager{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+
+			instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+			operation.ProvisioningParameters.Parameters.Gvisor = testCase.mainGvisor
+			operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+				{
+					Name:          "extra-worker",
+					MachineType:   "m6i.large",
+					HAZones:       false,
+					AutoScalerMin: 1,
+					AutoScalerMax: 3,
+					Gvisor:        testCase.awnpGvisor,
+				},
+			}
+			assertInsertions(t, memoryStorage, instance, operation)
+
+			cli := getClientForTests(t)
+			providerSpec := fixture.NewProviderSpecWithZonesDiscovery(t, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec)
+
+			// when
+			_, repeat, err := step.Run(operation, fixLogger())
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			require.NoError(t, err)
+
+			require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+			if testCase.expectMainCRI {
+				require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].CRI)
+				assert.Equal(t, gardener.CRINameContainerD, runtime.Spec.Shoot.Provider.Workers[0].CRI.Name)
+				assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, runtime.Spec.Shoot.Provider.Workers[0].CRI.ContainerRuntimes)
+			} else {
+				assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].CRI)
+			}
+
+			require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+			require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+			additionalWorker := (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0]
+			if testCase.expectAdditionalCRI {
+				require.NotNil(t, additionalWorker.CRI)
+				assert.Equal(t, gardener.CRINameContainerD, additionalWorker.CRI.Name)
+				assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, additionalWorker.CRI.ContainerRuntimes)
+			} else {
+				assert.Nil(t, additionalWorker.CRI)
+			}
+		})
+	}
+}
+
 // testing auxiliary functions
 
 func Test_Defaults(t *testing.T) {
