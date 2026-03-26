@@ -10,12 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/config"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -52,28 +50,21 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
-	createSvc := broker.NewProvision(
-		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
-		gardener.Config{Project: "test", ShootDomain: "example.com"},
-		broker.InfrastructureManager{},
-		st,
-		queue,
-		broker.PlansConfig{},
-		fixLogger(),
-		dashboardConfig,
-		kcBuilder,
-		whitelist.Set{},
-		newSchemaService(t),
-		newProviderSpec(t),
-		fixValueProvider(t),
-		config.FakeProviderConfigProvider{},
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		map[string]string{},
-	)
+	createSvc := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(gardener.Config{Project: "test", ShootDomain: "example.com"}).
+		WithInfrastructureManager(broker.InfrastructureManager{}).
+		WithStorage(st).
+		WithQueue(queue).
+		WithLogger(fixLogger()).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+		Build()
+
 	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
