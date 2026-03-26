@@ -2680,31 +2680,26 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
 		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{
 				EnablePlans: []string{broker.AWSPlanName},
-				URL:         brokerURL,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
+				URL:         brokerURL}).
+			WithGardenerConfig(gardener.Config{
+				Project:      "test",
+				ShootDomain:  "example.com",
+				DNSProviders: fixDNSProviders()}).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithFreemiumWhitelist(whitelist.Set{}).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+			Build()
 
 		expectedErr := fmt.Errorf("[instanceID: %s] cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, missingRegion, existingAWSSeedRegions)
@@ -2742,31 +2737,26 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
 		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{
 				EnablePlans: []string{broker.AWSPlanName},
-				URL:         brokerURL,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			imConfigFixture,
-			memoryStorage,
-			queue,
-			broker.PlansConfig{},
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			newSchemaService(t),
-			newProviderSpec(t),
-			fixValueProvider(t),
-			config.FakeProviderConfigProvider{},
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-			map[string]string{},
-		)
+				URL:         brokerURL}).
+			WithGardenerConfig(gardener.Config{
+				Project:      "test",
+				ShootDomain:  "example.com",
+				DNSProviders: fixDNSProviders()}).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithFreemiumWhitelist(whitelist.Set{}).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+			Build()
 
 		expectedErr := fmt.Errorf("[instanceID: %s] cannot colocate the control plane in the %s region. Provider aws can have control planes in the following regions: %s",
 			instanceID, unsupportedRegion, existingAWSSeedRegions)
