@@ -126,6 +126,21 @@ func (b *fakeProvisionEndpointBuilder) WithQuotaWhitelist(whitelist whitelist.Se
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithRulesService(service *rules.RulesService) *fakeProvisionEndpointBuilder {
+	b.rulesService = service
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Client) *fakeProvisionEndpointBuilder {
+	b.gardenerClient = client
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFactory) *fakeProvisionEndpointBuilder {
+	b.awsClientFactory = factory
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
