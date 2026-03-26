@@ -3052,35 +3052,29 @@ func TestRestrictGA(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
-	// #create provisioner endpoint
-	provisionEndpoint := broker.NewProvision(
-		broker.Config{
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
 			EnablePlans:                     []string{"gcp", "azure"},
 			URL:                             brokerURL,
 			OnlySingleTrialPerGA:            true,
 			RestrictToAllowedGlobalAccounts: true,
-			AllowedGlobalAccounts:           []string{allowedGA},
-		},
-		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		imConfigFixture,
-		memoryStorage,
-		queue,
-		broker.PlansConfig{},
-		fixLogger(),
-		dashboardConfig,
-		kcBuilder,
-		whitelist.Set{},
-		newSchemaService(t),
-		newProviderSpec(t),
-		fixValueProvider(t),
-		config.FakeProviderConfigProvider{},
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		map[string]string{},
-	)
+			AllowedGlobalAccounts:           []string{allowedGA}}).
+		WithGardenerConfig(gardener.Config{
+			Project:      "test",
+			ShootDomain:  "example.com",
+			DNSProviders: fixDNSProviders()}).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(fixLogger()).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+		Build()
 
 	// when
 	response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -3179,33 +3173,31 @@ func TestDiscoveryZones(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			provisionEndpoint := broker.NewProvision(
-				broker.Config{
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(broker.Config{
 					EnablePlans:          []string{"aws"},
 					URL:                  brokerURL,
 					OnlySingleTrialPerGA: true,
-					CheckQuotaLimit:      true,
-				},
-				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				imConfigFixture,
-				memoryStorage,
-				queue,
-				broker.PlansConfig{},
-				log,
-				dashboardConfig,
-				kcBuilder,
-				whitelist.Set{},
-				newSchemaService(t),
-				fixture.NewProviderSpecWithZonesDiscovery(t, true),
-				fixValueProvider(t),
-				config.FakeProviderConfigProvider{},
-				nil,
-				nil,
-				rulesService,
-				fixture.CreateGardenerClient(),
-				fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError),
-				map[string]string{},
-			)
+					CheckQuotaLimit:      true}).
+				WithGardenerConfig(gardener.Config{
+					Project:      "test",
+					ShootDomain:  "example.com",
+					DNSProviders: fixDNSProviders()}).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{}).
+				WithSchemaService(newSchemaService(t)).
+				WithConfigurationProvider(fixture.NewProviderSpecWithZonesDiscovery(t, true)).
+				WithValuesProvider(fixValueProvider(t)).
+				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+				WithRulesService(rulesService).
+				WithGardenerClient(fixture.CreateGardenerClient()).
+				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError)).
+				Build()
 
 			// when
 			_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
