@@ -279,5 +279,6 @@ func fixConfig() *Config {
 		SubscriptionGardenerResource:                 "secretbinding",
 		MachinesAvailabilityEndpoint:                 true,
 		BtpRegionsMigrationSapConvergedCloudFilePath: "testdata/btp-regions-migration-sap-converged-cloud.yaml",
+		GvisorWhitelistedGlobalAccountsFilePath:      "testdata/gvisor_whitelist.yaml",
 	}
 }
