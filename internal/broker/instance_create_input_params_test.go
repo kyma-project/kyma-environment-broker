@@ -106,6 +106,11 @@ func (b *fakeProvisionEndpointBuilder) WithFreemiumWhitelist(whitelist whitelist
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithPlansConfig(plansConfig PlansConfig) *fakeProvisionEndpointBuilder {
+	b.plansConfig = plansConfig
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
