@@ -101,6 +101,11 @@ func (b *fakeProvisionEndpointBuilder) WithValuesProvider(provider ValuesProvide
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithFreemiumWhitelist(whitelist whitelist.Set) *fakeProvisionEndpointBuilder {
+	b.freemiumWhitelist = whitelist
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
