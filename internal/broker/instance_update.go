@@ -297,7 +297,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
-	if err := b.validateGvisorWhitelist(params.Gvisor, ersContext.GlobalAccountID); err != nil {
+	if err := b.validateGvisorAccess(params, ersContext.GlobalAccountID); err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
@@ -423,13 +423,21 @@ func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, ins
 	return nil
 }
 
+func (b *UpdateEndpoint) validateGvisorAccess(params internal.UpdatingParametersDTO, globalAccountID string) error {
+	if err := b.validateGvisorWhitelist(params.Gvisor, globalAccountID); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+	for _, pool := range params.AdditionalWorkerNodePools {
+		if err := b.validateGvisorWhitelist(pool.Gvisor, globalAccountID); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
 func (b *UpdateEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
 	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
-		return apiresponses.NewFailureResponse(
-			errors.New(GvisorNotAvailableForAccountMsg),
-			http.StatusBadRequest,
-			"gvisor parameter is not allowed for this global account",
-		)
+		return errors.New(GvisorNotAvailableForAccountMsg)
 	}
 	return nil
 }
