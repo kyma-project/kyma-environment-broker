@@ -3308,6 +3308,116 @@ func TestBtpRegionsMigrationSapConvergedCloud_NewRegion(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestGvisorProvisioning(t *testing.T) {
+	const awsRegion = "eu-central-1"
+	const awsMachineType = "m6i.large"
+	const awsPoolName = "pool-1"
+
+	awsPoolWithGvisor := fmt.Sprintf(
+		`[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": true}}]`,
+		awsPoolName, awsMachineType,
+	)
+
+	for tn, tc := range map[string]struct {
+		rawParameters   string
+		gvisorWhitelist whitelist.Set
+		expectedErrMsg  string
+	}{
+		"main worker gvisor enabled, account whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "gvisor": {"enabled": true}}`, clusterName, awsRegion),
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"main worker gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "gvisor": {"enabled": true}}`, clusterName, awsRegion),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main worker gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "gvisor": {"enabled": false}}`, clusterName, awsRegion),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"gvisor absent, whitelist empty": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, awsRegion),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
+		},
+		"AWNP gvisor enabled, account whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main and AWNP gvisor enabled, account whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"main and AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{
+				EnablePlans:          []string{"aws"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
+				GvisorEnabled:        true,
+			}
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			memoryStorage := storage.NewMemoryStorage()
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(brokerCfg).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{}).
+				WithGvisorWhitelist(tc.gvisorWhitelist).
+				WithSchemaService(newSchemaServiceWithBrokerConfig(t, brokerCfg)).
+				WithConfigurationProvider(newProviderSpec(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				Build()
+
+			// when
+			_, err := provisionEndpoint.Provision(
+				fixRequestContext(t, "cf-eu10"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        broker.AWSPlanID,
+					RawParameters: json.RawMessage(tc.rawParameters),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				},
+				true,
+			)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
