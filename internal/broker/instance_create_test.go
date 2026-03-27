@@ -3312,11 +3312,10 @@ func TestGvisorProvisioning(t *testing.T) {
 	const awsRegion = "eu-central-1"
 	const awsMachineType = "m6i.large"
 	const awsPoolName = "pool-1"
+	const awsPoolWithGvisorFmt = `[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": %t}}]`
 
-	awsPoolWithGvisor := fmt.Sprintf(
-		`[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": true}}]`,
-		awsPoolName, awsMachineType,
-	)
+	awsPoolWithGvisorEnabled := fmt.Sprintf(awsPoolWithGvisorFmt, awsPoolName, awsMachineType, true)
+	awsPoolWithGvisorDisabled := fmt.Sprintf(awsPoolWithGvisorFmt, awsPoolName, awsMachineType, false)
 
 	for tn, tc := range map[string]struct {
 		rawParameters   string
@@ -3336,7 +3335,7 @@ func TestGvisorProvisioning(t *testing.T) {
 		"main worker gvisor disabled, account not whitelisted": {
 			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "gvisor": {"enabled": false}}`, clusterName, awsRegion),
 			gvisorWhitelist: whitelist.Set{},
-			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+			expectedErrMsg:  "",
 		},
 		"gvisor absent, whitelist empty": {
 			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, awsRegion),
@@ -3344,22 +3343,42 @@ func TestGvisorProvisioning(t *testing.T) {
 			expectedErrMsg:  "",
 		},
 		"AWNP gvisor enabled, account whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
 			expectedErrMsg:  "",
 		},
 		"AWNP gvisor enabled, account not whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{},
 			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
 		},
+		"AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
+		},
 		"main and AWNP gvisor enabled, account whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
 			expectedErrMsg:  "",
 		},
 		"main and AWNP gvisor enabled, account not whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorEnabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main and AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": false}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
+		},
+		"main gvisor enabled and AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main gvisor disabled and AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s", "gvisor": {"enabled": false}, "additionalWorkerNodePools": %s}`, clusterName, awsRegion, awsMachineType, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{},
 			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
 		},

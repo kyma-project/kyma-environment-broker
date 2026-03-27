@@ -335,36 +335,59 @@ func TestGvisorProvisioningParameters(t *testing.T) {
 func TestGvisorWhitelist_Provision(t *testing.T) {
 	const allowedGA = "allowed-global-account-id"
 	const otherGA = "other-global-account-id"
-	gvisor := &pkg.GvisorDTO{Enabled: true}
+	gvisorEnabled := &pkg.GvisorDTO{Enabled: true}
+	gvisorDisabled := &pkg.GvisorDTO{Enabled: false}
 
-	t.Run("should reject when global account is not in whitelist", func(t *testing.T) {
+	t.Run("should allow when gvisor is disabled and whitelist is empty (default)", func(t *testing.T) {
 		// given
-		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{}}
 
 		// when
-		err := endpoint.validateGvisorWhitelist(gvisor, otherGA)
-
-		// then
-		require.Error(t, err)
-	})
-
-	t.Run("should allow when global account is in whitelist", func(t *testing.T) {
-		// given
-		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+		err := endpoint.validateGvisorWhitelist(gvisorDisabled, otherGA)
 
 		// then
 		require.NoError(t, err)
 	})
 
-	t.Run("should reject when whitelist is empty", func(t *testing.T) {
+	t.Run("should allow when gvisor is disabled and global account is not in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisorDisabled, otherGA)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should reject when gvisor is enabled and global account is not in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisorEnabled, otherGA)
+
+		// then
+		require.Error(t, err)
+	})
+
+	t.Run("should allow when gvisor is enabled and global account is in whitelist", func(t *testing.T) {
+		// given
+		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
+
+		// when
+		err := endpoint.validateGvisorWhitelist(gvisorEnabled, allowedGA)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should reject when gvisor is enabled and whitelist is empty", func(t *testing.T) {
 		// given
 		endpoint := &ProvisionEndpoint{gvisorWhitelist: whitelist.Set{}}
 
 		// when
-		err := endpoint.validateGvisorWhitelist(gvisor, allowedGA)
+		err := endpoint.validateGvisorWhitelist(gvisorEnabled, allowedGA)
 
 		// then
 		require.Error(t, err)
