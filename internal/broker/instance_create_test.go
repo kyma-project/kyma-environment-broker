@@ -3371,6 +3371,16 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	return schemaService
 }
 
+func newSchemaServiceWithBrokerConfig(t *testing.T, cfg broker.Config) *broker.SchemaService {
+	plans := newPlanSpec(t)
+	prov := newProviderSpec(t)
+
+	channelResolver := &fixture.FakeChannelResolver{}
+	return broker.NewSchemaService(prov, plans, nil, cfg,
+		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
+}
+
 func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
 	spec, err := configuration.NewProviderSpecFromFile("testdata/providers.yaml")
 	require.NoError(t, err)
