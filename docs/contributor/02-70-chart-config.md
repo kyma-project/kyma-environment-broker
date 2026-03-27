@@ -105,7 +105,6 @@
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
 | configPaths.<br>quotaWhitelistedSubaccountIds | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. | `/config/quotaWhitelistedSubaccountIds.yaml` |
-| configPaths.<br>regionsSupportingMachine | Path to the list of regions that support machine-type selection. | `/config/regionsSupportingMachine.yaml` |
 | configPaths.<br>skrDNSProvidersValues | Path to the DNS providers values. | `/config/skrDNSProvidersValues.yaml` |
 | configPaths.<br>skrOIDCDefaultValues | Path to the default OIDC values. | `/config/skrOIDCDefaultValues.yaml` |
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
