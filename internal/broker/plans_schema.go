@@ -921,7 +921,6 @@ func GvisorProperty() *GvisorType {
 	return &GvisorType{
 		Type: Type{
 			Type:        "object",
-			Title:       "gVisor container runtime sandbox",
 			Description: "Configures the gVisor container runtime sandbox for a worker pool",
 		},
 		Required: []string{"enabled"},
