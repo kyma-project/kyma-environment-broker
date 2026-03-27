@@ -2687,11 +2687,10 @@ func TestZeroFieldsForTrial(t *testing.T) {
 func TestGvisorUpdate(t *testing.T) {
 	const awsMachineType = "m6i.large"
 	const awsPoolName = "pool-1"
+	const awsPoolWithGvisorFmt = `[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": %t}}]`
 
-	awsPoolWithGvisor := fmt.Sprintf(
-		`[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": true}}]`,
-		awsPoolName, awsMachineType,
-	)
+	awsPoolWithGvisorEnabled := fmt.Sprintf(awsPoolWithGvisorFmt, awsPoolName, awsMachineType, true)
+	awsPoolWithGvisorDisabled := fmt.Sprintf(awsPoolWithGvisorFmt, awsPoolName, awsMachineType, false)
 
 	for tn, tc := range map[string]struct {
 		rawParameters   string
@@ -2711,7 +2710,7 @@ func TestGvisorUpdate(t *testing.T) {
 		"main worker gvisor disabled, account not whitelisted": {
 			rawParameters:   `{"gvisor": {"enabled": false}}`,
 			gvisorWhitelist: whitelist.Set{},
-			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+			expectedErrMsg:  "",
 		},
 		"gvisor absent, whitelist empty": {
 			rawParameters:   `{"machineType": "m6i.large"}`,
@@ -2719,24 +2718,44 @@ func TestGvisorUpdate(t *testing.T) {
 			expectedErrMsg:  "",
 		},
 		"AWNP gvisor enabled, account whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
 			expectedErrMsg:  "",
 		},
 		"AWNP gvisor enabled, account not whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{},
 			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
 		},
+		"AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
+		},
 		"main and AWNP gvisor enabled, account whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
 			expectedErrMsg:  "",
 		},
 		"main and AWNP gvisor enabled, account not whitelisted": {
-			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisorEnabled),
 			gvisorWhitelist: whitelist.Set{},
 			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main gvisor enabled and AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main gvisor disabled and AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": false}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisorEnabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main and AWNP gvisor disabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": false}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisorDisabled),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
