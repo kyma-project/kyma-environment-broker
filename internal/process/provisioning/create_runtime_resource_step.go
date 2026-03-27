@@ -239,7 +239,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	}
 	provider.AdditionalWorkers = &additionalWorkers
 
-	if !whitelist.IsNotWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+	if whitelist.IsWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
 		provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 			Kubelet: &gardener.KubeletConfig{
 				MaxPods: &MaxPods,

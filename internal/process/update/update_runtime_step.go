@@ -154,7 +154,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
 	}
 
-	if !whitelist.IsNotWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+	if whitelist.IsWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
 		runtime.Spec.Shoot.Provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 			Kubelet: &gardener.KubeletConfig{
 				MaxPods: &provisioning.MaxPods,
