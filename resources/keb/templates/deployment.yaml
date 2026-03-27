@@ -266,6 +266,8 @@ spec:
               value: "{{ .Values.kymaDashboardConfig.landscapeURL }}"
             - name: APP_MACHINES_AVAILABILITY_ENDPOINT
               value: "{{ .Values.machinesAvailabilityEndpoint }}"
+            - name: APP_MAX_PODS_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.maxPodsWhitelistedGlobalAccountIds }}
             - name: APP_METRICS_AVAILABLE_CREDENTIALS_BINDINGS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.availableCredentialsBindingsPollingInterval }}"
             - name: APP_METRICS_CREDENTIALS_BINDINGS_POLLING_INTERVAL

@@ -21,6 +21,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -37,25 +38,29 @@ const (
 	dbRetryTimeout   = 1 * time.Minute
 )
 
+var MaxPods int32 = 250
+
 type CreateRuntimeResourceStep struct {
-	operationManager  *process.OperationManager
-	instanceStorage   storage.Instances
-	k8sClient         client.Client
-	config            broker.InfrastructureManager
-	oidcDefaultValues pkg.OIDCConfigDTO
-	workersProvider   *workers.Provider
-	providerSpec      *configuration.ProviderSpec
+	operationManager                   *process.OperationManager
+	instanceStorage                    storage.Instances
+	k8sClient                          client.Client
+	config                             broker.InfrastructureManager
+	oidcDefaultValues                  pkg.OIDCConfigDTO
+	workersProvider                    *workers.Provider
+	providerSpec                       *configuration.ProviderSpec
+	maxPodsWhitelistedGlobalAccountIds whitelist.Set
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:   db.Instances(),
-		k8sClient:         k8sClient,
-		config:            infrastructureManagerConfig,
-		oidcDefaultValues: oidcDefaultValues,
-		workersProvider:   workersProvider,
-		providerSpec:      providerSpec,
+		instanceStorage:                    db.Instances(),
+		k8sClient:                          k8sClient,
+		config:                             infrastructureManagerConfig,
+		oidcDefaultValues:                  oidcDefaultValues,
+		workersProvider:                    workersProvider,
+		providerSpec:                       providerSpec,
+		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -233,6 +238,24 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
 	}
 	provider.AdditionalWorkers = &additionalWorkers
+
+	if !whitelist.IsNotWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+		provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
+			Kubelet: &gardener.KubeletConfig{
+				MaxPods: &MaxPods,
+			},
+		}
+
+		if provider.AdditionalWorkers != nil {
+			for i := range *provider.AdditionalWorkers {
+				(*provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
+					Kubelet: &gardener.KubeletConfig{
+						MaxPods: &MaxPods,
+					},
+				}
+			}
+		}
+	}
 
 	return provider, nil
 }

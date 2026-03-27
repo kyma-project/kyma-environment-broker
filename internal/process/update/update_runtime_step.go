@@ -15,6 +15,7 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -27,22 +28,24 @@ import (
 )
 
 type UpdateRuntimeStep struct {
-	operationManager *process.OperationManager
-	k8sClient        client.Client
-	delay            time.Duration
-	config           broker.InfrastructureManager
-	workersProvider  *workers.Provider
-	valuesProvider   broker.ValuesProvider
+	operationManager                   *process.OperationManager
+	k8sClient                          client.Client
+	delay                              time.Duration
+	config                             broker.InfrastructureManager
+	workersProvider                    *workers.Provider
+	valuesProvider                     broker.ValuesProvider
+	maxPodsWhitelistedGlobalAccountIds whitelist.Set
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
-		k8sClient:       k8sClient,
-		delay:           delay,
-		config:          infrastructureManagerConfig,
-		workersProvider: workersProvider,
-		valuesProvider:  valuesProvider,
+		k8sClient:                          k8sClient,
+		delay:                              delay,
+		config:                             infrastructureManagerConfig,
+		workersProvider:                    workersProvider,
+		valuesProvider:                     valuesProvider,
+		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -149,6 +152,24 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	if operation.UpdatedPlanID != "" {
 		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
+	}
+
+	if !whitelist.IsNotWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+		runtime.Spec.Shoot.Provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
+			Kubelet: &gardener.KubeletConfig{
+				MaxPods: &provisioning.MaxPods,
+			},
+		}
+
+		if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
+			for i := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+				(*runtime.Spec.Shoot.Provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
+					Kubelet: &gardener.KubeletConfig{
+						MaxPods: &provisioning.MaxPods,
+					},
+				}
+			}
+		}
 	}
 
 	err = s.k8sClient.Update(context.Background(), &runtime)

@@ -4664,3 +4664,143 @@ func TestUpdate_CredentialsBinding(t *testing.T) {
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 3, "zone-h", "zone-i", "zone-j", "zone-k")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "zone-l", "zone-m")
 }
+
+func TestUpdateWithMaxPods(t *testing.T) {
+	t.Run("whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "whitelisted-global-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1"
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "whitelisted-global-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "name-2",
+									"machineType": "m5.large",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Equal(t, int32(250), *runtime.Spec.Shoot.Provider.Workers[0].Kubernetes.Kubelet.MaxPods)
+		for _, additionalWorker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			assert.Equal(t, int32(250), *additionalWorker.Kubernetes.Kubelet.MaxPods)
+		}
+	})
+
+	t.Run("not whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "not-whitelisted-global-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1"
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "not-whitelisted-global-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "name-2",
+									"machineType": "m5.large",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		require.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Kubernetes)
+		for _, additionalWorker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			require.Nil(t, additionalWorker.Kubernetes)
+		}
+	})
+}

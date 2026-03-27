@@ -220,6 +220,8 @@ configPaths:
   # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
   # Only accounts listed here can provision more than the default limit of free environments.
   freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
+  # Path to the list of global account IDs that are allowed to use an increased maximum number of pods.
+  maxPodsWhitelistedGlobalAccountIds: "/config/maxPodsWhitelistedGlobalAccountIds.yaml"
   # Path to the rules for mapping plans and regions to hyperscaler account pools.
   hapRule: "/config/hapRule.yaml"
   # Path to the plans configuration file, which defines available service plans.
@@ -249,6 +251,12 @@ events:
 # List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
 # Only accounts listed here can provision more than the default limit of free environments.
 freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:
+
+# List of global account IDs that are allowed to use an increased maximum number of pods.
+# For accounts listed here, the maximum number of pods in all worker node pools is set to 250.
+# For all other accounts, the default limit of 110 pods per node is applied.
+maxPodsWhitelistedGlobalAccountIds: |-
   whitelist:
 
 gardener:
