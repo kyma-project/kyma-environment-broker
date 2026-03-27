@@ -436,7 +436,7 @@ func (b *UpdateEndpoint) validateGvisorAccess(params internal.UpdatingParameters
 }
 
 func (b *UpdateEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
-	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+	if gvisor != nil && gvisor.Enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
 		return errors.New(GvisorNotAvailableForAccountMsg)
 	}
 	return nil
