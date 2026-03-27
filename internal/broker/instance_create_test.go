@@ -77,10 +77,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -149,10 +146,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite"},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithLogger(log).
@@ -198,10 +192,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite", broker.TrialPlanName},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithLogger(log).
@@ -248,10 +239,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite", broker.TrialPlanName},
 				OnlySingleTrialPerGA: false}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -313,10 +301,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "trial"},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -378,10 +363,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "trial"},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -423,10 +405,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite"},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithLogger(log).
@@ -462,10 +441,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite"},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithLogger(log).
@@ -505,10 +481,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -559,10 +532,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -611,10 +581,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -666,10 +633,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -720,10 +684,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -815,10 +776,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -899,10 +857,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp", "azure"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -942,10 +897,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1009,10 +961,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1066,10 +1015,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:          []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName},
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1123,10 +1069,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:      []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName},
 				OnlyOneFreePerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithPlansConfig(broker.PlansConfig{}).
@@ -1169,10 +1112,7 @@ func TestProvision_Provision(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans:      []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName},
 				OnlyOneFreePerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithPlansConfig(broker.PlansConfig{}).
@@ -1214,10 +1154,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1260,10 +1197,7 @@ func TestProvision_Provision(t *testing.T) {
 				EnablePlans:          []string{"gcp"},
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1901,10 +1835,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans: []string{broker.SapConvergedCloudPlanName},
 				URL:         brokerURL}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -1946,10 +1877,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans: []string{"gcp", "azure"},
 				URL:         brokerURL}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2431,10 +2359,7 @@ func TestAdditionalProperties(t *testing.T) {
 				OnlySingleTrialPerGA:        true,
 				MonitorAdditionalProperties: true,
 				AdditionalPropertiesPath:    tempDir}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2499,10 +2424,7 @@ func TestAdditionalProperties(t *testing.T) {
 				OnlySingleTrialPerGA:        true,
 				MonitorAdditionalProperties: true,
 				AdditionalPropertiesPath:    tempDir}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2581,10 +2503,7 @@ func TestAdditionalProperties(t *testing.T) {
 				OnlySingleTrialPerGA:        true,
 				MonitorAdditionalProperties: true,
 				AdditionalPropertiesPath:    tempDir}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2638,10 +2557,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans: []string{broker.AWSPlanName},
 				URL:         brokerURL}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2684,10 +2600,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans: []string{broker.AWSPlanName},
 				URL:         brokerURL}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2741,10 +2654,7 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 			WithConfig(broker.Config{
 				EnablePlans: []string{broker.AWSPlanName},
 				URL:         brokerURL}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2808,10 +2718,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
 				CheckQuotaLimit:      true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2856,10 +2763,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
 				CheckQuotaLimit:      true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2905,10 +2809,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
 				CheckQuotaLimit:      true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -2954,10 +2855,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
 				CheckQuotaLimit:      true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -3003,10 +2901,7 @@ func TestQuotaLimitCheck(t *testing.T) {
 				URL:                  brokerURL,
 				OnlySingleTrialPerGA: true,
 				CheckQuotaLimit:      true}).
-			WithGardenerConfig(gardener.Config{
-				Project:      "test",
-				ShootDomain:  "example.com",
-				DNSProviders: fixDNSProviders()}).
+			WithGardenerConfig(fixGardenerConfig()).
 			WithInfrastructureManager(imConfigFixture).
 			WithStorage(memoryStorage).
 			WithQueue(queue).
@@ -3491,4 +3386,11 @@ func newPlanSpec(t *testing.T) *configuration.PlanSpecifications {
 func newEmptyProviderSpec() *configuration.ProviderSpec {
 	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
 	return spec
+}
+
+func fixGardenerConfig() gardener.Config {
+	return gardener.Config{
+		Project:      "test",
+		ShootDomain:  "example.com",
+		DNSProviders: fixDNSProviders()}
 }
