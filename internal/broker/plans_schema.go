@@ -921,13 +921,13 @@ func GvisorProperty() *GvisorType {
 	return &GvisorType{
 		Type: Type{
 			Type:        "object",
-			Description: "Configures the gVisor container runtime sandbox for a worker pool",
+			Description: "Configures the gVisor container runtime for a worker pool",
 		},
 		Required: []string{"enabled"},
 		Properties: GvisorProperties{
 			Enabled: Type{
 				Type:    "boolean",
-				Title:   "Enable gVisor container runtime sandbox",
+				Title:   "Enable gVisor container runtime",
 				Default: false,
 			},
 		},

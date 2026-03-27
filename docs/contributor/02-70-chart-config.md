@@ -69,7 +69,7 @@
 | broker.<br>defaultRequestRegion | Default platform region for requests if not specified. | `cf-eu10` |
 | broker.enablePlans | Comma-separated list of plan names enabled and available for provisioning in KEB. | `azure,gcp,azure_lite,trial,aws` |
 | broker.<br>enablePlanUpgrades | If true, allows users to upgrade their plans (if a plan supports upgrades). | `false` |
-| broker.<br>gvisorEnabled | If true, includes the gVisor container runtime sandbox property in every plan schema. | `false` |
+| broker.<br>gvisorEnabled | If true, includes the gVisor container runtime property in every plan schema. | `false` |
 | broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |
@@ -101,6 +101,7 @@
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
 | configPaths.<br>maxPodsWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. | `/config/maxPodsWhitelistedGlobalAccountIds.yaml` |
 | configPaths.<br>gvisorWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use the gVisor container runtime sandbox in worker pools. | `/config/gvisorWhitelistedGlobalAccountIds.yaml` |
+| configPaths.<br>gvisorWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use the gVisor container runtime in worker pools. | `/config/gvisorWhitelistedGlobalAccountIds.yaml` |
 | configPaths.hapRule | Path to the rules for mapping plans and regions to hyperscaler account pools. | `/config/hapRule.yaml` |
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
@@ -115,6 +116,7 @@
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
 | maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
 | gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime sandbox. | `whitelist:` |
+| gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
 | gardener.<br>kubeconfigPath | Path to the kubeconfig file for accessing the Gardener cluster. | `/gardener/kubeconfig/kubeconfig` |
 | gardener.project | Gardener project connected to SA for HAP credentials lookup. | `kyma-dev` |
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |

@@ -369,12 +369,12 @@ func controlsOrderContainsGvisor(t *testing.T, schema *map[string]interface{}) {
 func gvisorProperty() map[string]interface{} {
 	return map[string]interface{}{
 		"type":        "object",
-		"description": "Configures the gVisor container runtime sandbox for a worker pool",
+		"description": "Configures the gVisor container runtime for a worker pool",
 		"required":    []interface{}{"enabled"},
 		"properties": map[string]interface{}{
 			"enabled": map[string]interface{}{
 				"type":    "boolean",
-				"title":   "Enable gVisor container runtime sandbox",
+				"title":   "Enable gVisor container runtime",
 				"default": false,
 			},
 		},
