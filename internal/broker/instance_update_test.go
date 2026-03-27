@@ -2684,6 +2684,102 @@ func TestZeroFieldsForTrial(t *testing.T) {
 	})
 }
 
+func TestGvisorUpdate(t *testing.T) {
+	const awsMachineType = "m6i.large"
+	const awsPoolName = "pool-1"
+
+	awsPoolWithGvisor := fmt.Sprintf(
+		`[{"name": "%s", "machineType": "%s", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 3, "gvisor": {"enabled": true}}]`,
+		awsPoolName, awsMachineType,
+	)
+
+	for tn, tc := range map[string]struct {
+		rawParameters   string
+		gvisorWhitelist whitelist.Set
+		expectedErrMsg  string
+	}{
+		"main worker gvisor enabled, account whitelisted": {
+			rawParameters:   `{"gvisor": {"enabled": true}}`,
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"main worker gvisor enabled, account not whitelisted": {
+			rawParameters:   `{"gvisor": {"enabled": true}}`,
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main worker gvisor disabled, account not whitelisted": {
+			rawParameters:   `{"gvisor": {"enabled": false}}`,
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"gvisor absent, whitelist empty": {
+			rawParameters:   `{"machineType": "m6i.large"}`,
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  "",
+		},
+		"AWNP gvisor enabled, account whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+		"main and AWNP gvisor enabled, account whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{globalAccountID: {}},
+			expectedErrMsg:  "",
+		},
+		"main and AWNP gvisor enabled, account not whitelisted": {
+			rawParameters:   fmt.Sprintf(`{"gvisor": {"enabled": true}, "additionalWorkerNodePools": %s}`, awsPoolWithGvisor),
+			gvisorWhitelist: whitelist.Set{},
+			expectedErrMsg:  broker.GvisorNotAvailableForAccountMsg,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{GvisorEnabled: true}
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = broker.AWSPlanID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			svc := broker.NewUpdate(brokerCfg, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient,
+				newProviderSpec(t), newPlanSpec(t), imConfigFixture,
+				newSchemaServiceWithBrokerConfig(t, brokerCfg),
+				nil, nil, tc.gvisorWhitelist, nil, nil, nil)
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:     "",
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(tc.rawParameters),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "active": true}`, globalAccountID)),
+			}, true)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec := newPlanSpec(t)
 	return provider.NewPlanSpecificValuesProvider(
