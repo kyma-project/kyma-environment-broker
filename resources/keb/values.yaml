@@ -255,7 +255,6 @@ freemiumWhitelistedGlobalAccountIds: |-
 
 # List of global account IDs that are allowed to use an increased maximum number of pods.
 # For accounts listed here, the maximum number of pods in all worker node pools is set to 250.
-# For all other accounts, the default limit of 110 pods per node is applied.
 maxPodsWhitelistedGlobalAccountIds: |-
   whitelist:
 
