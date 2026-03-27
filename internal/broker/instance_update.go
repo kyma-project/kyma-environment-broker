@@ -825,6 +825,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		instance.Parameters.Parameters.Name = *params.Name
 		updateStorage = append(updateStorage, "Cluster Name")
 	}
+	operation.ProvisioningParameters = instance.Parameters
 
 	return updateStorage, nil
 }
