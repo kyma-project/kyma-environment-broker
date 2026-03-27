@@ -75,7 +75,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |
 | **APP_MACHINES_&#x200b;AVAILABILITY_&#x200b;ENDPOINT** | <code>false</code> | If true, the broker exposes the API endpoint that returns the availability of machine types. |
-| **APP_MAX_PODS_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/maxPodsWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use an increased maximum number of pods. |
+| **APP_MAX_PODS_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/maxPodsWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. |
 | **APP_METRICS_&#x200b;AVAILABLE_&#x200b;CREDENTIALS_&#x200b;BINDINGS_POLLING_&#x200b;INTERVAL** | <code>1h</code> | Frequency of polling for available credentials bindings in Gardener. |
 | **APP_METRICS_&#x200b;CREDENTIALS_&#x200b;BINDINGS_POLLING_&#x200b;INTERVAL** | <code>1m</code> | Frequency of polling for credentials binding instance counts. |
 | **APP_METRICS_ENABLED** | <code>false</code> | If true, enables metrics collection and Prometheus exposure. |
