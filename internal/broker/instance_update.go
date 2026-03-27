@@ -426,7 +426,7 @@ func (b *UpdateEndpoint) validateOIDC(params internal.UpdatingParametersDTO, ins
 func (b *UpdateEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
 	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
 		return apiresponses.NewFailureResponse(
-			errors.New("gvisor parameter is not allowed for this global account"),
+			errors.New(GvisorNotAvailableForAccountMsg),
 			http.StatusBadRequest,
 			"gvisor parameter is not allowed for this global account",
 		)

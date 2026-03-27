@@ -110,6 +110,7 @@ const (
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
 	maskedKubeconfig                                   = "*****"
+	GvisorNotAvailableForAccountMsg                    = "The gvisor parameter is not available for your account. Please contact us for further assistance."
 )
 
 func NewProvision(brokerConfig Config,
@@ -498,7 +499,7 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 
 func (b *ProvisionEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
 	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
-		return errors.New("gvisor parameter is not allowed for this global account")
+		return errors.New(GvisorNotAvailableForAccountMsg)
 	}
 	return nil
 }
