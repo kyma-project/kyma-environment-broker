@@ -396,8 +396,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if err := b.validateGvisorWhitelist(parameters.Gvisor, provisioningParameters.ErsContext.GlobalAccountID); err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	if err := b.validateGvisorAccess(parameters, provisioningParameters.ErsContext.GlobalAccountID); err != nil {
+		return err
 	}
 
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
@@ -492,6 +492,18 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 		if count > 0 {
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateGvisorAccess(parameters pkg.ProvisioningParametersDTO, globalAccountID string) error {
+	if err := b.validateGvisorWhitelist(parameters.Gvisor, globalAccountID); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+	for _, pool := range parameters.AdditionalWorkerNodePools {
+		if err := b.validateGvisorWhitelist(pool.Gvisor, globalAccountID); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 	return nil
