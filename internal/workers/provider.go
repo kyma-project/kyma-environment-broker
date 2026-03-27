@@ -97,10 +97,22 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			}
 		}
 
+		worker.CRI = ToGardenerCRI(additionalWorkerNodePool.Gvisor)
+
 		workers = append(workers, worker)
 	}
 
 	return workers, nil
+}
+
+func ToGardenerCRI(gvisor *pkg.GvisorDTO) *gardener.CRI {
+	if gvisor == nil || !gvisor.Enabled {
+		return nil
+	}
+	return &gardener.CRI{
+		Name:              gardener.CRINameContainerD,
+		ContainerRuntimes: []gardener.ContainerRuntime{{Type: "gvisor"}},
+	}
 }
 
 func toGardenerTaints(taints []pkg.TaintDTO) []corev1.Taint {

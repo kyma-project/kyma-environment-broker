@@ -103,6 +103,11 @@ type ProvisioningParametersDTO struct {
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
+	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
+}
+
+type GvisorDTO struct {
+	Enabled bool `json:"enabled"`
 }
 
 type AclDTO struct {
@@ -596,6 +601,7 @@ type AdditionalWorkerNodePool struct {
 	AutoScalerMin int        `json:"autoScalerMin"`
 	AutoScalerMax int        `json:"autoScalerMax"`
 	Taints        []TaintDTO `json:"taints,omitempty"`
+	Gvisor        *GvisorDTO `json:"gvisor,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {

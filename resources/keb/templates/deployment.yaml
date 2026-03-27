@@ -136,6 +136,8 @@ spec:
               value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
               value: "{{ .Values.broker.gardenerSeedsCache }}"
+            - name: APP_BROKER_GVISOR_ENABLED
+              value: "{{ .Values.broker.gvisorEnabled }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
@@ -216,6 +218,8 @@ spec:
               value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.freemiumWhitelistedGlobalAccountIds }}
+            - name: APP_GVISOR_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.gvisorWhitelistedGlobalAccountIds }}
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_GARDENER_PROJECT

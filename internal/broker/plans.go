@@ -60,6 +60,7 @@ var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
 
 type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
+	gvisorEnabled               bool
 	rejectUnsupportedParameters bool
 }
 
@@ -119,9 +120,10 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		ingressFilteringEnabled:     ingressFilteringEnabled,
+		gvisorEnabled:               gvisorEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
 	}
 }
@@ -155,6 +157,15 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	flags ControlFlagsObject) *map[string]interface{} {
 	properties.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update, flags.rejectUnsupportedParameters)
 	properties.Administrators = AdministratorsProperty()
+	if flags.gvisorEnabled {
+		properties.Gvisor = GvisorProperty()
+		if properties.AdditionalWorkerNodePools != nil {
+			properties.AdditionalWorkerNodePools.Items.Properties.Gvisor = GvisorProperty()
+			properties.AdditionalWorkerNodePools.Items.ControlsOrder = append(
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "gvisor",
+			)
+		}
+	}
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
 	}

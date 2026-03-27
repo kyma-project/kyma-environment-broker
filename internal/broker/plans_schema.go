@@ -54,6 +54,17 @@ type UpdateProperties struct {
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
+	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
+}
+
+type GvisorProperties struct {
+	Enabled Type `json:"enabled"`
+}
+
+type GvisorType struct {
+	Type
+	Required   []string         `json:"required"`
+	Properties GvisorProperties `json:"properties"`
 }
 
 type NetworkingProperties struct {
@@ -215,6 +226,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
 	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints        *TaintsType    `json:"taints,omitempty"`
+	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
 }
 
 type TaintsType struct {
@@ -762,7 +774,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -903,4 +915,22 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 		t.Items.Type.AdditionalProperties = false
 	}
 	return t
+}
+
+func GvisorProperty() *GvisorType {
+	return &GvisorType{
+		Type: Type{
+			Type:        "object",
+			Title:       "gVisor container runtime sandbox",
+			Description: "Configures the gVisor container runtime sandbox for a worker pool",
+		},
+		Required: []string{"enabled"},
+		Properties: GvisorProperties{
+			Enabled: Type{
+				Type:    "boolean",
+				Title:   "Enable gVisor container runtime sandbox",
+				Default: false,
+			},
+		},
+	}
 }

@@ -87,6 +87,7 @@ type ProvisionEndpoint struct {
 	kcBuilder       kubeconfig.KcBuilder
 
 	freemiumWhiteList whitelist.Set
+	gvisorWhitelist   whitelist.Set
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
@@ -109,6 +110,7 @@ const (
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
 	maskedKubeconfig                                   = "*****"
+	GvisorNotAvailableForAccountMsg                    = "The gvisor parameter is not available for your account. Please contact us for further assistance."
 )
 
 func NewProvision(brokerConfig Config,
@@ -121,6 +123,7 @@ func NewProvision(brokerConfig Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
+	gvisorWhitelist whitelist.Set,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
 	valuesProvider ValuesProvider,
@@ -152,6 +155,7 @@ func NewProvision(brokerConfig Config,
 		shootDnsProviders:                    gardenerConfig.DNSProviders,
 		dashboardConfig:                      dashboardConfig,
 		freemiumWhiteList:                    freemiumWhitelist,
+		gvisorWhitelist:                      gvisorWhitelist,
 		kcBuilder:                            kcBuilder,
 		providerSpec:                         providerSpec,
 		valuesProvider:                       valuesProvider,
@@ -392,6 +396,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if err := b.validateGvisorAccess(parameters, provisioningParameters.ErsContext.GlobalAccountID); err != nil {
+		return err
+	}
+
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
 	if err != nil {
 		return fmt.Errorf("while creating plan validator: %w", err)
@@ -485,6 +493,25 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateGvisorAccess(parameters pkg.ProvisioningParametersDTO, globalAccountID string) error {
+	if err := b.validateGvisorWhitelist(parameters.Gvisor, globalAccountID); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+	for _, pool := range parameters.AdditionalWorkerNodePools {
+		if err := b.validateGvisorWhitelist(pool.Gvisor, globalAccountID); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
+	if gvisor != nil && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+		return errors.New(GvisorNotAvailableForAccountMsg)
 	}
 	return nil
 }
