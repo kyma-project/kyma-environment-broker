@@ -737,7 +737,7 @@ func TestUpdateRuntimeStep_GvisorOnMainWorker(t *testing.T) {
 			err := imv1.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
 			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithCRI(runtimeResourceName, tc.initialCRI)).Build()
-			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider())
+			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{})
 
 			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 			operation.RuntimeResourceName = runtimeResourceName
@@ -775,7 +775,7 @@ func TestUpdateRuntimeStep_GvisorOnMainAndAdditionalWorkers(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{},
 		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
-		fixValuesProvider())
+		fixValuesProvider(), whitelist.Set{})
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID

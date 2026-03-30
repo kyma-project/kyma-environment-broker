@@ -1606,7 +1606,7 @@ func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false))
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
@@ -1680,7 +1680,7 @@ func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
 
 			cli := getClientForTests(t)
 			providerSpec := fixture.NewProviderSpecWithZonesDiscovery(t, false)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec, whitelist.Set{})
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
