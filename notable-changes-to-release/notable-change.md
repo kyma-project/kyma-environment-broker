@@ -11,7 +11,7 @@ Access to Environment Registry Service (ERS).
 
 ## What's Changed
 
-You can enable the **gVisor** container runtime on the main worker pool and on individual additional worker node pools. gVisor provides an additional layer of isolation between containers and the host kernel. The feature is gated behind a global account whitelist.
+For cloud-native container security and portability, you can enable the **gVisor** container runtime on the main Kyma worker pool and on individual additional worker node pools. gVisor provides an additional layer of isolation between containers and the host kernel. The feature is gated behind a global account whitelist.
 
 ## Procedure
 

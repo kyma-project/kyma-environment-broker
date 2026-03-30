@@ -1,18 +1,16 @@
 # gVisor Container Runtime Sandbox
 
 > ### Note:
-> The gVisor container runtime sandbox feature is only available to whitelisted global accounts.
+> The gVisor container runtime sandbox feature is available only to whitelisted global accounts.
+> Consequently, by default, gVisor is disabled.
 > An attempt to enable gVisor for a non-whitelisted account results in an error.
+> The gVisor parameter is validated against the global account whitelist on every field where it appears. If gVisor is set on any worker pool (main or additional) and the global account is not whitelisted, the entire request is rejected.
 
-Kyma Environment Broker (KEB) allows you to enable the [gVisor](https://gvisor.dev/) container runtime sandbox during SAP BTP, Kyma runtime provisioning and update operations.
-By default, gVisor is disabled.
-
-You can enable gVisor on the **main worker pool** by setting the **gvisor** parameter at the root level of the provisioning or update request.
-You can also enable gVisor on **additional worker node pools** by setting the **gvisor** parameter on individual items in the **additionalWorkerNodePools** list.
+For cloud-native container security and portability, you can enable the [gVisor](https://gvisor.dev/) container runtime sandbox on the main Kyma worker pool and on additional worker node pools when provisioning or updating SAP BTP, Kyma runtime.
 
 ## Provisioning with gVisor
 
-To provision a Kyma runtime with gVisor enabled on the main worker pool, set the **gvisor** parameter with **enabled** set to `true`:
+To provision a Kyma runtime with gVisor enabled on the main Kyma worker pool, add the **gvisor** parameter at the root level of the request with **enabled** set to `true`.
 
 ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -39,7 +37,7 @@ To provision a Kyma runtime with gVisor enabled on the main worker pool, set the
 
 ## Updating gVisor
 
-To enable gVisor on an existing Kyma runtime, send an update request with the **gvisor** parameter:
+To enable gVisor on an existing Kyma runtime, send an update request with the **gvisor** parameter.
 
 ```bash
    curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -62,7 +60,7 @@ To enable gVisor on an existing Kyma runtime, send an update request with the **
    }"
 ```
 
-To disable gVisor, set **enabled** to `false`:
+To disable gVisor, set **enabled** to `false`.
 
 ```bash
    curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -89,9 +87,9 @@ If you omit the **gvisor** parameter from an update request, the existing gVisor
 
 ## gVisor on Additional Worker Node Pools
 
-You can enable gVisor independently on each additional worker node pool. The **gvisor** setting on the main worker pool and on additional worker node pools are independent of each other.
+You can enable gVisor independently on each additional worker node pool by setting the **gvisor** parameter on individual items in the **additionalWorkerNodePools** list. The **gvisor** setting on the main worker pool and on additional worker node pools are independent of each other.
 
-To provision a Kyma runtime with gVisor enabled on an additional worker node pool, include the **gvisor** parameter in the pool definition:
+To provision a Kyma runtime with gVisor enabled on an additional worker node pool, include the **gvisor** parameter in the pool definition.
 
 ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -125,7 +123,7 @@ To provision a Kyma runtime with gVisor enabled on an additional worker node poo
    }"
 ```
 
-You can also combine gVisor on the main worker pool and additional worker node pools in the same request:
+You can also combine gVisor on the main worker pool and additional worker node pools in the same request.
 
 ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -161,6 +159,3 @@ You can also combine gVisor on the main worker pool and additional worker node p
        }
    }"
 ```
-
-> ### Note:
-> The gVisor parameter is validated against the global account whitelist on every field where it appears. If gVisor is set on any worker pool (main or additional) and the global account is not whitelisted, the entire request is rejected.
