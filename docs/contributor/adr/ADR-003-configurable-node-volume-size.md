@@ -159,3 +159,33 @@ The computed volume size is shown alongside vCPU and memory in the machine type 
 
 
 ## Decision
+
+Approach 2 is chosen.
+
+## Implementation
+
+Two sub-approaches are considered for how the computed volume size is stored and shared between KEB and KCR.
+
+### Sub-approach 1: New ConfigMap
+
+A dedicated ConfigMap is created that stores the machine type details and the computed default disk size for each machine type. The ConfigMap is populated and kept up to date by KEB. KCR reads the ConfigMap to look up the default disk size for a given machine type and uses it to calculate the additional size set by the user.
+
+**Pros:**
+
+**Cons:**
+- Introduces a new resource that KEB must manage.
+- The ConfigMap may need to be created at runtime by KEB.
+- KCR must watch the new resource.
+- Complex solution to implement and maintain.
+
+### Sub-approach 2: Extend the RuntimeCR
+
+The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is used only for informational purposes by KCR.
+
+**Pros:**
+- Uses the already existing RuntimeCR.
+- Easier to implement and maintain, especially for external KCP operators.
+- KCR already watches the RuntimeCR.
+
+**Cons:**
+- The RuntimeCR CRD must be extended.
