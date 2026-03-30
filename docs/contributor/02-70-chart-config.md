@@ -114,7 +114,7 @@
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
 | maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
-| gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime sandbox. | `whitelist:` |
+| gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
 | gardener.<br>kubeconfigPath | Path to the kubeconfig file for accessing the Gardener cluster. | `/gardener/kubeconfig/kubeconfig` |
 | gardener.project | Gardener project connected to SA for HAP credentials lookup. | `kyma-dev` |
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |
