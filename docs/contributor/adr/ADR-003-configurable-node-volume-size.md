@@ -183,6 +183,7 @@ Two sub-approaches are considered for how the computed volume size is stored and
 A dedicated ConfigMap is created that stores the machine type details and the computed default disk size for each machine type. The ConfigMap is populated and kept up to date by KEB. KCR reads the ConfigMap to look up the default disk size for a given machine type and uses it to calculate the additional size set by the user.
 
 **Pros:**
+- Only 2 teams involved in implementation
 
 **Cons:**
 - Introduces a new resource that KEB must manage.
@@ -192,7 +193,19 @@ A dedicated ConfigMap is created that stores the machine type details and the co
 
 ### Sub-approach 2: Extend the RuntimeCR
 
-The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is used by KCR solely for billing purposes.
+The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the ShootCR, it is used by KCR solely for billing purposes.
+
+The `additionalVolumeGb` field is placed inside the existing `volume` object. The `volume.size` field reflects the total disk size, which is the sum of the default size and `additionalVolumeGb`.
+
+```json
+"volume": {
+  "size": "100Gi",
+  "type": "StandardSSD_LRS",
+  "additionalVolumeGb": 20
+}
+```
+
+In this example, the default size is 80 GiB and the user requested 20 GiB of additional volume, so `volume.size` is set to 100 GiB.
 
 **Pros:**
 - Uses the already existing RuntimeCR.
@@ -201,3 +214,4 @@ The existing RuntimeCR is extended with a new field that stores the `additionalV
 
 **Cons:**
 - The RuntimeCR CRD must be extended.
+- 3 teams involved in implementation
