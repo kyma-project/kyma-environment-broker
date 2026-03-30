@@ -205,7 +205,7 @@ The `additionalVolumeGb` field is placed inside the existing `volume` object. Th
 }
 ```
 
-In this example, the default size is 80 GiB and the user requested 20 GiB of additional volume, so `volume.size` is set to 100 GiB.
+In this example, the default size is 80 GiB and the user requested 20 GiB of additional volume, so `volume.size` is set to 100 GiB. KEB is responsible for computing this sum.
 
 **Pros:**
 - Uses the already existing RuntimeCR.
