@@ -1,5 +1,17 @@
 # Configurable Node Volume Size
 
+## Contents
+
+- [Status](#status)
+- [Context](#context)
+  - [Current State](#current-state)
+- [Approach 1: Static `volumeSizeGb` per Worker Pool](#approach-1-static-volumesizegb-per-worker-pool)
+- [Approach 2: Dynamic Volume Based on Machine Type + `additionalVolumeGb`](#approach-2-dynamic-volume-based-on-machine-type--additionalvolumegb)
+- [Decision](#decision)
+- [Implementation](#implementation)
+  - [Sub-approach 1: New ConfigMap](#sub-approach-1-new-configmap)
+  - [Sub-approach 2: Extend the RuntimeCR](#sub-approach-2-extend-the-runtimecr)
+
 ## Status
 
 Proposed
