@@ -218,14 +218,14 @@ spec:
               value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.freemiumWhitelistedGlobalAccountIds }}
-            - name: APP_GVISOR_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
-              value: {{ .Values.configPaths.gvisorWhitelistedGlobalAccountIds }}
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_GARDENER_PROJECT
               value: {{ .Values.gardener.project }}
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
+            - name: APP_GVISOR_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.gvisorWhitelistedGlobalAccountIds }}
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ join "," .Values.hap.multiHyperscalerAccount.allowedGlobalAccounts }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_ALICLOUD
