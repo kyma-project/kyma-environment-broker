@@ -180,7 +180,7 @@ A dedicated ConfigMap is created that stores the machine type details and the co
 
 ### Sub-approach 2: Extend the RuntimeCR
 
-The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is used only for informational purposes by KCR.
+The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is used by KCR solely for billing purposes.
 
 **Pros:**
 - Uses the already existing RuntimeCR.
