@@ -184,7 +184,7 @@ The existing RuntimeCR is extended with a new field that stores the `additionalV
 
 **Pros:**
 - Uses the already existing RuntimeCR.
-- Easier to implement and maintain, especially for external KCP operators.
+- Easier to implement and maintain. From the perspective of external KCP operators, nothing changes as no new resources are introduced.
 - KCR already watches the RuntimeCR.
 
 **Cons:**
