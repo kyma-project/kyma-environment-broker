@@ -297,7 +297,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
-	if err := b.validateGvisorAccess(params, ersContext.GlobalAccountID); err != nil {
+	if err := b.validateGvisorAccess(params, instance.GlobalAccountID); err != nil {
 		return domain.UpdateServiceSpec{}, err
 	}
 
