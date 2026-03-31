@@ -10,6 +10,8 @@
 - [Decision](#decision)
 - [Implementation](#implementation)
   - [Sub-approach 1: New ConfigMap](#sub-approach-1-new-configmap)
+    - [Option A: Static ConfigMap defined in values.yaml](#option-a-static-configmap-defined-in-valuesyaml)
+    - [Option B: Chart defines an empty ConfigMap, KEB populates it at startup](#option-b-chart-defines-an-empty-configmap-keb-populates-it-at-startup)
   - [Sub-approach 2: Extend the RuntimeCR](#sub-approach-2-extend-the-runtimecr)
 
 ## Status
@@ -34,7 +36,7 @@ There are two variants for what we could expose to the user:
 
 **Variant A: Expose `volumeSizeGb` directly** - the user sets the total volume size. The schema shows the default and minimum (equal to the plan default). Users see and manage the full size. When the parameter is not provided in the payload, the plan default is applied for backwards compatibility.
 
-**Variant B: Expose only `additionalVolumeGb`** - the user sets only the extra GB on top of the plan default. The input defaults to 0. The plan default base is transparent to the user and always included for free. Tthe input directly represents what the user pays for.
+**Variant B: Expose only `additionalVolumeGb`** - the user sets only the extra GB on top of the plan default. The input defaults to 0. The plan default base is transparent to the user and always included for free. The input directly represents what the user pays for.
 
 The screenshots below show Variant A. For Variant B the UI looks almost the same, but the default value would be 0 and the label would be `Additional Volume Gb`.
 
@@ -104,7 +106,7 @@ Where the formula values come from:
 
 | Value | Source |
 |-------|--------|
-| `volume_base` | Configurable base ammount per landscape |
+| `volume_base` | Configurable base amount per landscape |
 | `vCPUs` | Machine type metadata from the provider (e.g., 32 vCPUs for `m6i.8xlarge`) |
 | `memory_GiB` | Machine type metadata from the provider (e.g., 128 GiB for `m6i.8xlarge`) |
 | `volume_factor` | Normalized resource multiplier for total volume size set per landscape |
@@ -180,16 +182,105 @@ Two sub-approaches are considered for how the computed volume size is stored and
 
 ### Sub-approach 1: New ConfigMap
 
-A dedicated ConfigMap is created that stores the machine type details and the computed default disk size for each machine type. The ConfigMap is populated and kept up to date by KEB. KCR reads the ConfigMap to look up the default disk size for a given machine type and uses it to calculate the additional size set by the user.
+A dedicated ConfigMap stores machine type characteristics and the computed default disk size for each machine type. KCR reads the ConfigMap to look up the default disk size for a given machine type and uses it to calculate the billable additional size set by the user.
+
+Two options are considered for how the ConfigMap is populated.
+
+#### Option A: Static ConfigMap defined in values.yaml
+
+The machine characteristics are defined in `values.yaml` in a structured, nested format. A new section `machineCharacteristics` (name to be discussed) lists every supported machine type with its properties as nested keys:
+
+```yaml
+# values.yaml
+machineCharacteristics:
+  m6i.4xlarge:
+    cpu: 16
+    ram: 64
+    gpu: 0
+    nodeSize: 80
+  m6i.8xlarge:
+    cpu: 32
+    ram: 128
+    gpu: 0
+    nodeSize: 148
+```
+
+A Helm template iterates over this structure and renders a flat ConfigMap, using a `machineName_field` key naming convention:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keb-machine-characteristics
+data:
+  {{- range $machine, $props := .Values.machineCharacteristics }}
+  {{ $machine }}_cpu: {{ $props.cpu | quote }}
+  {{ $machine }}_ram: {{ $props.ram | quote }}
+  {{ $machine }}_gpu: {{ $props.gpu | quote }}
+  {{ $machine }}_nodeSize: {{ $props.nodeSize | quote }}
+  {{- end }}
+```
+
+Which produces:
+
+```yaml
+data:
+  m6i.4xlarge_cpu: "16"
+  m6i.4xlarge_ram: "64"
+  m6i.4xlarge_gpu: "0"
+  m6i.4xlarge_nodeSize: "80"
+  m6i.8xlarge_cpu: "32"
+  m6i.8xlarge_ram: "128"
+  m6i.8xlarge_gpu: "0"
+  m6i.8xlarge_nodeSize: "148"
+```
+
+As an alternative to flat keys, the ConfigMap could store the entire structure as an embedded YAML string under a single key.
+
+```yaml
+data:
+  machineCharacteristics: |
+    m6i.4xlarge:
+      cpu: 16
+      ram: 64
+      gpu: 0
+      nodeSize: 80
+    m6i.8xlarge:
+      cpu: 32
+      ram: 128
+      gpu: 0
+      nodeSize: 148
+```
 
 **Pros:**
-- Only 2 teams involved in implementation
+- Content is fully declarative in the chart.
+- ArgoCD manages the ConfigMap like any other chart resource.
+- No runtime logic needed to populate the ConfigMap.
+- Backward compatible.
+- No action required for external operators. We can define those values for every machine type in our config.
+- More details available for KCR.
 
 **Cons:**
-- Introduces a new resource that KEB must manage.
-- The ConfigMap may need to be created at runtime by KEB.
-- KCR must watch the new resource.
-- Complex solution to implement and maintain.
+- Some machine type data is duplicated in `values.yaml`.
+- `values.yaml` length will grow significantly.
+
+#### Option B: Chart defines an empty ConfigMap, KEB populates it at startup
+
+The Helm chart defines the ConfigMap with no data entries. When KEB starts, it reads the existing machine type definitions from `providersConfig`, applies the volume size formula for each machine type, and writes the results into the ConfigMap. The final structure of the keys in the ConfigMap is identical to Option A.
+
+As an alternative to running the formula, KEB could extract the node size directly from the existing enum display name (e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). The volume value would be embedded in the display name. However, this would also require the operators to update the display name, as the display name does not currently contain the volume size.
+
+**Pros:**
+- Machine type data has a single source of truth: the existing `providersConfig` in KEB.
+- New machine types are picked up automatically.
+- More details available for KCR.
+
+**Cons:**
+- There is a gap between KEB startup and the moment the ConfigMap is fully populated.
+- Should KEB watch this ConfigMap and reconcile it, or is a new job required?
+- If Argo CD manages the ConfigMap and detects drift between the chart definition (empty) and the live state (populated by KEB), it may revert the ConfigMap to the empty state on the next sync. This would require annotating the ConfigMap with `argocd.argoproj.io/compare-options: IgnoreExtraneous` (see [Argo CD compare options](https://argo-cd.readthedocs.io/en/stable/user-guide/compare-options/)).
+- Most complex solution to implement.
+
 
 ### Sub-approach 2: Extend the RuntimeCR
 
@@ -214,4 +305,5 @@ In this example, the default size is 80 GiB and the user requested 20 GiB of add
 
 **Cons:**
 - The RuntimeCR CRD must be extended.
-- 3 teams involved in implementation
+- 3 teams involved in implementation.
+- Less information available for KCR.
