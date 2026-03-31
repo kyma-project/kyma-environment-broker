@@ -259,6 +259,7 @@ func main() {
 
 	log.Info("Starting Kyma Environment Broker")
 
+	log.Info(fmt.Sprintf("Available plans: %v", broker.AvailablePlans.GetAllPlanNamesAsStrings()))
 	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
 	log.Info(fmt.Sprintf("Access Control List enabled plans: %v", cfg.Broker.ACLEnabledPlans))
 
@@ -335,6 +336,8 @@ func main() {
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
 
+	log.Info("Rules service configuration loaded successfully")
+
 	rulesetValid := rulesService.IsRulesetValid()
 
 	if !rulesetValid {
@@ -344,6 +347,8 @@ func main() {
 		}
 		fatalOnError(err, log)
 	}
+
+	log.Info("Ruleset validated")
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
@@ -614,6 +619,7 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 func fatalOnError(err error, log *slog.Logger) {
 	if err != nil {
 		log.Error(err.Error())
+		log.Error("Application will be terminated")
 		os.Exit(1)
 	}
 }

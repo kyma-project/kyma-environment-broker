@@ -146,7 +146,7 @@ broker:
   # Default platform region for requests if not specified.
   defaultRequestRegion: "cf-eu10"
   # Comma-separated list of plan names enabled and available for provisioning in KEB.
-  enablePlans: "azure,gcp,azure_lite,trial,aws"
+  enablePlans: "azure,gcp,azure_lite,trial,aws,no-plan"
   # If true, allows users to upgrade their plans (if a plan supports upgrades).
   enablePlanUpgrades: "false"
   # URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans

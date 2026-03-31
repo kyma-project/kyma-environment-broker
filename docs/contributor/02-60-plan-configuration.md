@@ -1,6 +1,11 @@
 # Plan Configuration
 
-According to the Open Service Broker API (OSB API) specification, Kyma Environment Broker (KEB) supports multiple Kyma plans. Each plan has its own configuration, which specifies allowed regions, zones, machine types, and their display names. This document describes an overview of the plan configuration.
+According to the Open Service Broker API (OSB API) specification, Kyma Environment Broker (KEB) supports multiple Kyma plans. Each plan has its own configuration, 
+which specifies allowed regions, zones, machine types, and their display names. This document describes an overview of the plan configuration.
+
+## Available Plans
+Available plans (their names and IDs) are hard-wired in KEB (see [`plans.go`](../../internal/broker/plans.go)). 
+If you want to add a new plan, you need to implement it in KEB, i.e. define constants and extend `PlanIDsMapping` map.
 
 ## Enabling Plans
 
@@ -9,6 +14,20 @@ The **enablePlans** property contains a comma-separated list of supported plan n
 ```yaml
 enablePlans: "trial,aws,gcp"
 ```
+
+This setting affects catalog of services, which means that only enabled plans are visible in the catalog and can be used for provisioning.
+Moreover, if provisioning is triggered with plan which is not enabled, the provisioning fails during schema validation with a message "plan-id not in the catalog".
+
+If a plan is not defined in KEB, an error is logged during Rules Service initialization, but KEB still starts and runs normally. 
+Provisioning fails only when triggered, and each attempt fails with log message: `No valid ruleset or empty valid ruleset`.
+
+Update operations are not affected by the **enablePlans** property, which means that if a plan is disabled after provisioning, the update operations for the existing instances of this plan still work.
+If update operation change plan to a disabled plan, it is allowed. To prevent this, you can use the **upgradableToPlans** property in the plan configuration, which defines allowed plan changes. For example:
+
+If you want to prevent creation of new instances of a plan, disregarding whether you use provisioning or update operation, you need to remove the plan from the **enablePlans** list
+and remove all occurrences of the plan from the **upgradableToPlans** list of other plans.
+
+Deprovisioning is not affected by the **enablePlans** property, which means that if a plan is disabled after provisioning, the deprovisioning operations for the existing instances of this plan still work.
 
 ## HAP Rules
 
