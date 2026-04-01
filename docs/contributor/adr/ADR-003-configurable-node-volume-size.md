@@ -12,6 +12,7 @@
   - [Sub-approach 1: New ConfigMap](#sub-approach-1-new-configmap)
     - [Option A: Static ConfigMap defined in values.yaml](#option-a-static-configmap-defined-in-valuesyaml)
     - [Option B: Chart defines an empty ConfigMap, KEB populates it at startup](#option-b-chart-defines-an-empty-configmap-keb-populates-it-at-startup)
+    - [Option C: Use the existing ConfigMap owned by KCR](#option-c-use-the-existing-configmap-owned-by-kcr)
   - [Sub-approach 2: Extend the RuntimeCR](#sub-approach-2-extend-the-runtimecr)
 
 ## Status
@@ -280,6 +281,30 @@ As an alternative to running the formula, KEB could extract the node size direct
 - Should KEB watch this ConfigMap and reconcile it, or is a new job required?
 - If Argo CD manages the ConfigMap and detects drift between the chart definition (empty) and the live state (populated by KEB), it may revert the ConfigMap to the empty state on the next sync. This would require annotating the ConfigMap with `argocd.argoproj.io/compare-options: IgnoreExtraneous` (see [Argo CD compare options](https://argo-cd.readthedocs.io/en/stable/user-guide/compare-options/)).
 - Most complex solution to implement.
+
+#### Option C: Use the existing ConfigMap owned by KCR
+
+Instead of creating a new ConfigMap, KEB reads the default volume sizes from the existing ConfigMap managed by KCR.
+
+The ConfigMap already contains all supported machine types. The default volume size values for each machine type can be calculated using the formula (volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor) and added directly to this ConfigMap.
+
+**How KEB uses the ConfigMap:**
+- If a machine type is present in the ConfigMap, KEB uses the value from the map as the default volume size and ignores the plan default.
+- If a machine type is not present, KEB falls back to the plan default.
+- The volume size read from the ConfigMap is appended to the machine type display name shown in the BTP cockpit (e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). If the existing display name does not follow the bracket format (e.g. `test 80gb disk`), a consistent insertion strategy must be defined.
+
+**Startup and validation behaviour:**
+- At startup, KEB checks whether the ConfigMap exists. This check is controlled by a `configMapRequired` flag (default: `true`, exact name TBD). If the flag is `true` and the ConfigMap is missing, KEB panics.
+- At startup and on each provisioning or update request that changes the machine type, KEB validates that the requested machine type is present in the ConfigMap. If not, KEB should perform some retries before failing the operation.
+- The KCR ConfigMap may contain machine types that KEB does not use; that is acceptable. However, every machine type that KEB supports **must** be present in the ConfigMap.
+
+**Pros:**
+- Single source of truth shared by KEB and KCR.
+- KEB does not need to create or manage any new ConfigMap.
+- Operators on restricted markets do not need to make any changes on the KEB side.
+
+**Cons:**
+- KEB has a new dependency on KCR.
 
 
 ### Sub-approach 2: Extend the RuntimeCR
