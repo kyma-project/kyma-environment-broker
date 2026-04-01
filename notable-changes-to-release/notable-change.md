@@ -1,6 +1,6 @@
 <!--{"metadata":{"requirement":"RECOMMENDED","type":"INTERNAL","category":"CONFIGURATION"}}-->
 
-# KEB: Max Pods Allowlist
+# KEB: Allowlist for Global Accounts with the Maximum Number of Pods
 
 > ### Note:
 > This is an optional change. To add max pods allowlist, update the Kyma Environment Broker (KEB) configuration.
