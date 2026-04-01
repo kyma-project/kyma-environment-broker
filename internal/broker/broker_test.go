@@ -1,9 +1,9 @@
 package broker
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/stretchr/testify/assert"
 )
 
