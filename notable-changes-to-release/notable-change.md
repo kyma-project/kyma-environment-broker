@@ -8,7 +8,7 @@
 ## What's Changed
 
 Added support for configuring an allowlist of global account IDs that are allowed to use an increased maximum number of Pods. 
-A new configuration field `maxPodsWhitelistedGlobalAccountIds` has been introduced, enabling global accounts included in this allowlist
+With the new **maxPodsWhitelistedGlobalAccountIds** configuration field, you can allowlist global accounts, enabling them 
 to run up to 250 Pods across all worker node pools instead of the default limit.
 
 Example configuration:
