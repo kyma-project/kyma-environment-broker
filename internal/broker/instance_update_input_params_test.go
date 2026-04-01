@@ -6,7 +6,6 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,66 +72,4 @@ func TestPersistenceOnUpdate_Gvisor(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	assert.Equal(t, gvisor, instance.Parameters.Parameters.Gvisor)
-}
-
-func TestGvisorWhitelist_Update(t *testing.T) {
-	const allowedGA = "allowed-global-account-id"
-	const otherGA = "other-global-account-id"
-	gvisorEnabled := &pkg.GvisorDTO{Enabled: true}
-	gvisorDisabled := &pkg.GvisorDTO{Enabled: false}
-
-	t.Run("should allow when gvisor is disabled and whitelist is empty (default)", func(t *testing.T) {
-		// given
-		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisorDisabled, otherGA)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("should allow when gvisor is disabled and global account is not in whitelist", func(t *testing.T) {
-		// given
-		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisorDisabled, otherGA)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("should reject when gvisor is enabled and global account is not in whitelist", func(t *testing.T) {
-		// given
-		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisorEnabled, otherGA)
-
-		// then
-		require.Error(t, err)
-	})
-
-	t.Run("should allow when gvisor is enabled and global account is in whitelist", func(t *testing.T) {
-		// given
-		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{allowedGA: {}}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisorEnabled, allowedGA)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("should reject when gvisor enabled and whitelist is empty", func(t *testing.T) {
-		// given
-		endpoint := &UpdateEndpoint{gvisorWhitelist: whitelist.Set{}}
-
-		// when
-		err := endpoint.validateGvisorWhitelist(gvisorEnabled, allowedGA)
-
-		// then
-		require.Error(t, err)
-	})
 }

@@ -498,20 +498,12 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 }
 
 func (b *ProvisionEndpoint) validateGvisorAccess(parameters pkg.ProvisioningParametersDTO, globalAccountID string) error {
-	if err := b.validateGvisorWhitelist(parameters.Gvisor, globalAccountID); err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
+	enabled := gvisorToBool(parameters.Gvisor)
 	for _, pool := range parameters.AdditionalWorkerNodePools {
-		if err := b.validateGvisorWhitelist(pool.Gvisor, globalAccountID); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+		enabled = enabled || gvisorToBool(pool.Gvisor)
 	}
-	return nil
-}
-
-func (b *ProvisionEndpoint) validateGvisorWhitelist(gvisor *pkg.GvisorDTO, globalAccountID string) error {
-	if gvisor != nil && gvisor.Enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
-		return errors.New(GvisorNotAvailableForAccountMsg)
+	if err := validateGvisorWhitelist(enabled, globalAccountID, b.gvisorWhitelist); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 	return nil
 }
