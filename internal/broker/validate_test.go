@@ -1,11 +1,13 @@
 package broker
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_gvisorToBool(t *testing.T) {
