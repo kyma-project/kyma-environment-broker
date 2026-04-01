@@ -3,6 +3,7 @@ package broker
 import (
 	"errors"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 )
 
