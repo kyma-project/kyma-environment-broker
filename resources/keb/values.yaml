@@ -234,8 +234,6 @@ configPaths:
   providersConfig: "/config/providersConfig.yaml"
   # Path to the list of subaccount IDs that are allowed to bypass quota restrictions.
   quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
-  # Path to the list of regions that support machine-type selection.
-  regionsSupportingMachine: "/config/regionsSupportingMachine.yaml"
   # Path to the DNS providers values.
   skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
   # Path to the default OIDC values.

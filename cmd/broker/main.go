@@ -124,8 +124,6 @@ type Config struct {
 
 	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
 
-	RegionsSupportingMachineFilePath string
-
 	HapRuleFilePath string
 
 	HapMultiHyperscalerAccount multiaccount.MultiAccountConfig `envconfig:"optional"`

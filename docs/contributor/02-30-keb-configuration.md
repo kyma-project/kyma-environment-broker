@@ -97,7 +97,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Entitlements API request fails. |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | <code>/config/quotaWhitelistedSubaccountIds.yaml</code> | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. |
-| **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | <code>/config/regionsSupportingMachine.yaml</code> | Path to the list of regions that support machine-type selection. |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template. |
 | **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | <code>/config/skrDNSProvidersValues.yaml</code> | Path to the DNS providers values. |
 | **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | <code>/config/skrOIDCDefaultValues.yaml</code> | Path to the default OIDC values. |
