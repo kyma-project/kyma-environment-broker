@@ -502,8 +502,8 @@ func (b *ProvisionEndpoint) validateGvisorAccess(parameters pkg.ProvisioningPara
 	for _, pool := range parameters.AdditionalWorkerNodePools {
 		enabled = enabled || gvisorToBool(pool.Gvisor)
 	}
-	if err := validateGvisorWhitelist(enabled, globalAccountID, b.gvisorWhitelist); err != nil {
-		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	if enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+		return apiresponses.NewFailureResponse(errors.New(GvisorNotAvailableForAccountMsg), http.StatusBadRequest, GvisorNotAvailableForAccountMsg)
 	}
 	return nil
 }
