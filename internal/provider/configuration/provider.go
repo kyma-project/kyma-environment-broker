@@ -232,6 +232,7 @@ func (p *ProviderSpec) IsRegionSupported(cp runtime.CloudProvider, region, machi
 	machineType = p.ResolveMachineType(cp, machineType)
 
 	for machineFamily, regions := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
 		if strings.HasPrefix(machineType, machineFamily) {
 			if _, exists := regions[region]; exists {
 				return true
@@ -252,6 +253,7 @@ func (p *ProviderSpec) SupportedRegions(cp runtime.CloudProvider, machineType st
 	machineType = p.ResolveMachineType(cp, machineType)
 
 	for machineFamily, regionsMap := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
 		if strings.HasPrefix(machineType, machineFamily) {
 			regions := make([]string, 0, len(regionsMap))
 			for region := range regionsMap {
@@ -274,6 +276,7 @@ func (p *ProviderSpec) AvailableZones(cp runtime.CloudProvider, machineType, reg
 	machineType = p.ResolveMachineType(cp, machineType)
 
 	for machineFamily, regionsMap := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
 		if strings.HasPrefix(machineType, machineFamily) {
 			zones := regionsMap[region]
 			if len(zones) == 0 {
