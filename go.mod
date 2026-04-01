@@ -22,7 +22,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-project/infrastructure-manager v0.0.0-20260313132546-aa49051f0dea
 	github.com/labstack/gommon v0.4.2
-	github.com/lib/pq v1.12.0
+	github.com/lib/pq v1.12.1
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
