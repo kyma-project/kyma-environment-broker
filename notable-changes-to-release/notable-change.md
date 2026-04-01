@@ -23,8 +23,8 @@ maxPodsWhitelistedGlobalAccountIds: |-
 ## Procedure
 
 1. Open the KEB configuration file.
-2. Add the `maxPodsWhitelistedGlobalAccountIds` section.
-3. Add the desired global account IDs under `whitelist`:
+2. Add the **maxPodsWhitelistedGlobalAccountIds** section.
+3. Add the desired global account IDs under **whitelist**.
 
     ```yaml
     maxPodsWhitelistedGlobalAccountIds: |-
