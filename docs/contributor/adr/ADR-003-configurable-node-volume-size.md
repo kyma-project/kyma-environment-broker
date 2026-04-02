@@ -290,19 +290,15 @@ The ConfigMap already contains all supported machine types. The default volume s
 
 **How KEB uses the ConfigMap:**
 - If a machine type is present in the ConfigMap, KEB uses the value from the map as the default volume size and ignores the plan default.
-- If a machine type is not present, KEB falls back to the plan default, or fails the operation if `kcrConfigMapRequired` is `true`.
+- If a machine type is not present in the ConfigMap, or is present but its disk size entry is missing, KEB fails the operation.
 - The volume size read from the ConfigMap is appended to the machine type display name shown in the BTP cockpit (e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). If the existing display name does not follow the bracket format (e.g. `test 80gb disk`), a consistent insertion strategy must be defined.
 
 **Startup and validation behaviour:**
 
-Two flags control the ConfigMap behaviour:
+`kcrConfigMapEnabled` (default: `false`) — when `false`, KEB ignores the ConfigMap entirely and always uses the plan default. When `true`, KEB panics at startup if the ConfigMap is missing, and any provisioning or update request where the machine type or its disk size is not found in the ConfigMap fails immediately.
 
-- `kcrConfigMapEnabled` (default: `false`) - controls whether KEB reads from the ConfigMap at all. When `false`, KEB ignores the ConfigMap entirely and always uses the plan default.
-- `kcrConfigMapRequired` (default: `false`) - controls whether the ConfigMap must be present. When `true`, KEB panics at startup if the ConfigMap is missing. This flag is only meaningful when `kcrConfigMapEnabled` is also `true`.
-
-- At startup, KEB checks whether the ConfigMap exists. If `kcrConfigMapEnabled` is `true` and `kcrConfigMapRequired` is `true` and the ConfigMap is missing, KEB panics.
-- On each provisioning or update request that changes the machine type, KEB validates that the requested machine type is present in the ConfigMap. If `kcrConfigMapEnabled` is `true` and `kcrConfigMapRequired` is `false` and the machine type is not found, KEB logs a warning and falls back to the plan default without failing the operation. If `kcrConfigMapRequired` is also `true` and the machine type is missing, KEB fails the operation.
-- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports **must** be present in the ConfigMap when `kcrConfigMapRequired` is `true`.
+- On each provisioning or update request that changes the machine type, KEB looks up the machine type in the ConfigMap. If the machine type is not found, or is found but its disk size entry is missing, KEB fails the operation.
+- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports **must** be present in the ConfigMap when `kcrConfigMapEnabled` is `true`.
 
 **Pros:**
 - Single source of truth shared by KEB and KCR.
@@ -314,8 +310,7 @@ Two flags control the ConfigMap behaviour:
 
 **Deployment plan:**
 1. KCR extends their ConfigMap to include the default volume size for every supported machine type.
-2. KEB is deployed with `kcrConfigMapEnabled: true` and `kcrConfigMapRequired: false`. KEB reads the ConfigMap if it is present but does not panic if it is missing or incomplete. The plan default is used as a fallback. During this phase, provisioning and update operations continue normally regardless of whether the machine type is found in the ConfigMap.
-3. KEB is deployed with `kcrConfigMapRequired: true`. From this point, KEB panics at startup if the ConfigMap is missing, and provisioning or update operations that request a machine type not present in the ConfigMap are failed.
+2. Once KCR has confirmed that all machine types used by KEB are present in the ConfigMap, KEB is deployed with `kcrConfigMapEnabled: true`. From this point, KEB panics at startup if the ConfigMap is missing, and provisioning or update operations that request a machine type not present in the ConfigMap, or whose disk size entry is missing, are failed immediately.
 
 
 ### Sub-approach 2: Extend the RuntimeCR
