@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -32,29 +35,36 @@ type EC2API interface {
 	DescribeInstanceTypeOfferings(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error)
 }
 
-func NewFactory() ClientFactory {
-	return AWSClientFactory{}
+func NewFactory(providerSpec *configuration.ProviderSpec) ClientFactory {
+	return AWSClientFactory{
+		providerSpec: providerSpec,
+	}
 }
 
-type AWSClientFactory struct{}
+type AWSClientFactory struct {
+	providerSpec *configuration.ProviderSpec
+}
 
-func (AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
-	return NewClient(ctx, accessKeyID, secretAccessKey, region)
+func (a AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
+	return NewClient(ctx, a.providerSpec, accessKeyID, secretAccessKey, region)
 }
 
 type AWSClient struct {
-	ec2Client EC2API
+	ec2Client    EC2API
+	providerSpec *configuration.ProviderSpec
 }
 
-func NewClient(ctx context.Context, key, secret, region string) (*AWSClient, error) {
+func NewClient(ctx context.Context, providerSpec *configuration.ProviderSpec, key, secret, region string) (*AWSClient, error) {
 	cfg, err := newAWSConfig(ctx, key, secret, region)
 	if err != nil {
 		return nil, fmt.Errorf("while creating AWS config: %w", err)
 	}
-	return &AWSClient{ec2Client: ec2.NewFromConfig(cfg)}, nil
+	return &AWSClient{ec2Client: ec2.NewFromConfig(cfg), providerSpec: providerSpec}, nil
 }
 
 func (c *AWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+	machineType = c.providerSpec.ResolveMachineType(pkg.AWS, machineType)
+
 	params := &ec2.DescribeInstanceTypeOfferingsInput{
 		LocationType: "availability-zone",
 		Filters: []types.Filter{

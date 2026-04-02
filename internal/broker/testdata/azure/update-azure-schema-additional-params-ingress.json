@@ -59,7 +59,11 @@
               "Standard_NC4as_T4_v3",
               "Standard_NC8as_T4_v3",
               "Standard_NC16as_T4_v3",
-              "Standard_NC64as_T4_v3"
+              "Standard_NC64as_T4_v3",
+              "Standard_NC4as_T4",
+              "Standard_NC8as_T4",
+              "Standard_NC16as_T4",
+              "Standard_NC64as_T4"
             ],
             "_enumDisplayName": {
               "Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
@@ -85,7 +89,11 @@
               "Standard_NC4as_T4_v3": "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*",
               "Standard_NC8as_T4_v3": "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)*",
               "Standard_NC16as_T4_v3": "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)*",
-              "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*"
+              "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*",
+              "Standard_NC4as_T4": "Standard_NC4as_T4 (1GPU, 4vCPU, 28GB RAM)*",
+              "Standard_NC8as_T4": "Standard_NC8as_T4 (1GPU, 8vCPU, 56GB RAM)*",
+              "Standard_NC16as_T4": "Standard_NC16as_T4 (1GPU, 16vCPU, 110GB RAM)*",
+              "Standard_NC64as_T4": "Standard_NC64as_T4 (4GPU, 64vCPU, 440GB RAM)*"
             }
           },
           "haZones": {

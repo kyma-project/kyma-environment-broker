@@ -65,6 +65,7 @@ type (
 		IsRegionSupported(cp pkg.CloudProvider, region, machineType string) bool
 		SupportedRegions(cp pkg.CloudProvider, machineType string) []string
 		AvailableZones(cp pkg.CloudProvider, machineType, region string) []string
+		ResolveMachineType(cp pkg.CloudProvider, machineType string) string
 	}
 
 	QuotaClient interface {
@@ -600,7 +601,7 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 		}
 
 		if IsExternalLicenseType(provisioningParameters.ErsContext) {
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
+			if err := checkGPUMachinesUsage(b.providerSpec, pkg.CloudProviderFromString(values.ProviderType), parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
@@ -680,7 +681,7 @@ func IsExternalLicenseType(ersContext internal.ERSContext) bool {
 	return *ersContext.ExternalLicenseType()
 }
 
-func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkGPUMachinesUsage(providerSpec ConfigurationProvider, provider pkg.CloudProvider, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	var GPUMachines = []string{
 		"g2-standard",
 		"g6",
@@ -693,7 +694,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 
 	for _, pool := range additionalWorkerNodePools {
 		for _, GPUMachine := range GPUMachines {
-			if strings.HasPrefix(pool.MachineType, GPUMachine) {
+			if strings.HasPrefix(providerSpec.ResolveMachineType(provider, pool.MachineType), GPUMachine) {
 				if _, exists := usedGPUMachines[pool.MachineType]; !exists {
 					orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
 				}
