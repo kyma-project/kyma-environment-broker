@@ -362,7 +362,7 @@ func main() {
 	log.Info("Plans and providers configuration is valid")
 	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
 
-	awsClientFactory := aws.NewFactory()
+	awsClientFactory := aws.NewFactory(providerSpec)
 
 	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, log)

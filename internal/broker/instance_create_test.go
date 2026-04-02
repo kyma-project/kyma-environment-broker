@@ -3528,11 +3528,6 @@ func newPlanSpec(t *testing.T) *configuration.PlanSpecifications {
 	return spec
 }
 
-func newEmptyProviderSpec() *configuration.ProviderSpec {
-	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
-	return spec
-}
-
 func fixGardenerConfig() gardener.Config {
 	return gardener.Config{
 		Project:      "test",
