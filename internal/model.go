@@ -153,6 +153,9 @@ type Operation struct {
 
 	// DiscoveredZones stores availability zones per machine type, resolved at runtime
 	DiscoveredZones map[string][]string `json:"discovered_zones"`
+
+	// NewOrUpdatedWorkers lists workers that require a machine type update
+	NewOrUpdatedWorkers []string `json:"new_or_updated_workers"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)

@@ -57,7 +57,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, workersProvider, valuesProvider, maxPodsWhitelistedGlobalAccountIds),
+			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, workersProvider, valuesProvider, maxPodsWhitelistedGlobalAccountIds, providerSpec),
 		},
 		{
 			stage: "check_runtime_resource",

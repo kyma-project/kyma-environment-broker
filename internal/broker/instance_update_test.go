@@ -2804,6 +2804,177 @@ func TestGvisorUpdate(t *testing.T) {
 	}
 }
 
+func TestDetectNewOrUpdatedWorkers(t *testing.T) {
+	t.Run("returns empty when nothing changed", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+						{Name: "pool-b", MachineType: "m6i.xlarge"},
+					},
+				},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+						{Name: "pool-b", MachineType: "m6i.xlarge"},
+					},
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Empty(t, got)
+	})
+
+	t.Run("returns empty when nothing changed and kyma worker uses default", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Empty(t, got)
+	})
+
+	t.Run("detects kyma worker machine type change", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+				},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.xlarge"),
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Equal(t, []string{"cpu-worker-0"}, got)
+	})
+
+	t.Run("detects kyma worker machine type change from default", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.xlarge"),
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Equal(t, []string{"cpu-worker-0"}, got)
+	})
+
+	t.Run("detects new additional worker pool", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+					},
+				},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+						{Name: "pool-b", MachineType: "m6i.xlarge"},
+					},
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Equal(t, []string{"pool-b"}, got)
+	})
+
+	t.Run("detects updated additional worker pool machine type", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+					},
+				},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.xlarge"},
+					},
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Equal(t, []string{"pool-a"}, got)
+	})
+
+	t.Run("detects both kyma and additional workers", func(t *testing.T) {
+		instance := &internal.Instance{
+			Parameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.large"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.large"},
+					},
+				},
+			},
+		}
+
+		operation := internal.Operation{
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: pkg.ProvisioningParametersDTO{
+					MachineType: ptr.String("m6i.xlarge"),
+					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+						{Name: "pool-a", MachineType: "m6i.xlarge"},
+						{Name: "pool-b", MachineType: "m6i.2xlarge"},
+					},
+				},
+			},
+		}
+
+		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
+		require.Equal(t, []string{"cpu-worker-0", "pool-a", "pool-b"}, got)
+	})
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec := newPlanSpec(t)
 	return provider.NewPlanSpecificValuesProvider(
