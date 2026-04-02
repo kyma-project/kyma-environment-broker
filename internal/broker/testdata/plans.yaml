@@ -138,6 +138,10 @@ azure:
     - "Standard_NC8as_T4_v3"
     - "Standard_NC16as_T4_v3"
     - "Standard_NC64as_T4_v3"
+    - "Standard_NC4as_T4"
+    - "Standard_NC8as_T4"
+    - "Standard_NC16as_T4"
+    - "Standard_NC64as_T4"
   regions: &azure_regions
     cf-ch20: [ "switzerlandnorth" ]
     default: [ "eastus","centralus","westus2","uksouth","northeurope","westeurope","japaneast","southeastasia","australiaeast","brazilsouth","canadacentral" ]
