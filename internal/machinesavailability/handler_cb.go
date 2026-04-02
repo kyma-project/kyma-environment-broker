@@ -55,12 +55,6 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			MachineTypes: []MachineType{},
 		}
 
-		regionSupportingMachine, err := h.providerSpec.RegionSupportingMachine(string(provider))
-		if err != nil {
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
-			return
-		}
-
 		accessKeyID, secretAccessKey, err := h.clientCredentials(strings.ToLower(string(provider)))
 		if err != nil {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
@@ -88,7 +82,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 				Regions: []Region{},
 			}
 
-			regions := regionSupportingMachine.SupportedRegions(machineType)
+			regions := h.providerSpec.SupportedRegions(provider, machineType)
 			if len(regions) == 0 {
 				regions = h.providerSpec.Regions(provider)
 			}

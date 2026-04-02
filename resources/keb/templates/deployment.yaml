@@ -318,8 +318,6 @@ spec:
               value: "{{ .Values.cis.entitlements.serviceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.quotaWhitelistedSubaccountIds }}
-            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
-              value: {{ .Values.configPaths.regionsSupportingMachine }}
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH

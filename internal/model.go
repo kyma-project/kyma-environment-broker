@@ -541,9 +541,3 @@ type RetryTuple struct {
 type ProviderConfig struct {
 	SeedRegions []string `json:"seedRegions" yaml:"seedRegions"`
 }
-
-type RegionsSupporter interface {
-	IsSupported(region string, machineType string) bool
-	SupportedRegions(machineType string) []string
-	AvailableZonesForAdditionalWorkers(machineType, region, planID string) ([]string, error)
-}
