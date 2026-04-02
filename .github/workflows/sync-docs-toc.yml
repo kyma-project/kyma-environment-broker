@@ -1,0 +1,157 @@
+name: Sync KEB docs structure to product-kyma-runtime
+
+# Triggered on every push to main that touches .md files under docs/.
+# Two structural changes are handled:
+#   1. A new .md file was added  → add it to operations-keb in toc.yaml
+#   2. An existing .md file was renamed → update the filename in toc.yaml
+#
+# Pure content changes to existing files require no action: the fileTree
+# reference in manifest.yaml already pulls the latest content automatically.
+
+env:
+  PRODUCT_RUNTIME_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}"
+  PRODUCT_RUNTIME_CLONE_URL: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
+  # needed by gh CLI for GitHub Enterprise
+  GH_ENTERPRISE_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**/*.md'
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: "Base commit SHA to diff against (leave empty to use HEAD~1)"
+        required: false
+        default: ''
+
+jobs:
+  sync-toc:
+    # For push: runs automatically when doc files change.
+    # For workflow_dispatch: manual trigger for testing on any branch.
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required environment variables
+        run: |
+          [ -z "${{ vars.GIT_USER_EMAIL }}" ] && echo "GIT_USER_EMAIL is required" && exit 1
+          [ -z "${{ vars.GIT_USER_NAME }}" ] && echo "GIT_USER_NAME is required" && exit 1
+          [ -z "${{ vars.GH_TOOLS_HOST }}" ] && echo "GH_TOOLS_HOST is required" && exit 1
+          [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ] && echo "PK_RUNTIME_REPO_NAME is required" && exit 1
+          echo "Validated"
+
+      - name: Checkout KEB
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect structural changes in docs/
+        id: detect
+        run: |
+          # For push: diff the entire push (all commits, any merge strategy).
+          # For workflow_dispatch: use provided base_sha or fall back to HEAD~1.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.base_sha }}" ]; then
+            BASE_SHA="${{ inputs.base_sha }}"
+            HEAD_SHA="HEAD"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.event.after }}"
+          else
+            BASE_SHA="HEAD~1"
+            HEAD_SHA="HEAD"
+          fi
+
+          # Added .md files (excludes docs/assets/)
+          git diff --diff-filter=A --name-only ${BASE_SHA} ${HEAD_SHA} -- 'docs/**' \
+            | grep '\.md$' \
+            | grep -v '^docs/assets/' \
+            > /tmp/added_files.txt || true
+
+          # Renamed .md files – git format: "R<score>\t<old>\t<new>"
+          # -M enables rename detection (default 50 % similarity threshold)
+          git diff -M --diff-filter=R --name-status ${BASE_SHA} ${HEAD_SHA} -- 'docs/**' \
+            | grep '\.md' \
+            | grep -v 'docs/assets/' \
+            > /tmp/renamed_files.txt || true
+
+          echo "=== Added ==="
+          cat /tmp/added_files.txt
+          echo "=== Renamed ==="
+          cat /tmp/renamed_files.txt
+
+          if [ -s /tmp/added_files.txt ] || [ -s /tmp/renamed_files.txt ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No structural doc changes detected – nothing to sync."
+          fi
+
+      - name: Set branch name
+        if: steps.detect.outputs.has_changes == 'true'
+        run: echo "BRANCH_NAME=keb-docs-sync-${GITHUB_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Setup git and clone product-kyma-runtime
+        if: steps.detect.outputs.has_changes == 'true'
+        run: |
+          git config --global user.email ${{ vars.GIT_USER_EMAIL }}
+          git config --global user.name ${{ vars.GIT_USER_NAME }}
+          git clone ${PRODUCT_RUNTIME_CLONE_URL} product-kyma-runtime
+
+      - name: Update toc.yaml
+        if: steps.detect.outputs.has_changes == 'true'
+        run: |
+          python3 scripts/python/update_toc.py \
+            --toc     product-kyma-runtime/docs/toc.yaml \
+            --added   /tmp/added_files.txt \
+            --renamed /tmp/renamed_files.txt
+
+      - name: Commit and push changes
+        if: steps.detect.outputs.has_changes == 'true'
+        working-directory: product-kyma-runtime
+        run: |
+          git checkout -B ${BRANCH_NAME}
+          git add docs/toc.yaml
+          git commit -m "docs(keb): sync doc structure changes to toc.yaml
+
+          Triggered by kyma-environment-broker@${GITHUB_SHA}"
+          git remote set-url origin ${PRODUCT_RUNTIME_CLONE_URL}
+          git push origin ${BRANCH_NAME}
+
+      - name: Create PR if needed
+        if: steps.detect.outputs.has_changes == 'true'
+        working-directory: product-kyma-runtime
+        env:
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          prs=$(gh pr list \
+            -R "${PRODUCT_RUNTIME_REPO_URL}" \
+            -A ${{ vars.GIT_USER_NAME }} \
+            --state open \
+            --json headRefName \
+            | jq -r '.[] | .headRefName')
+
+          if echo "$prs" | tr " " '\n' | grep -F -q -x "${BRANCH_NAME}"; then
+            echo "PR already exists – skipping creation."
+            exit 0
+          fi
+
+          ADDED_LIST=$(sed 's/^/- /' /tmp/added_files.txt)
+          [ -z "$ADDED_LIST" ] && ADDED_LIST="_none_"
+          RENAMED_LIST=$(awk -F'\t' '{print "- `" $2 "` → `" $3 "`"}' /tmp/renamed_files.txt)
+          [ -z "$RENAMED_LIST" ] && RENAMED_LIST="_none_"
+
+          printf '## Automated sync from kyma-environment-broker\n\nThis PR was created automatically after structural changes were detected\nin the `docs/` directory of kyma-environment-broker\n(commit: `%s`).\n\n### Added files\n%s\n\n### Renamed files\n%s\n\n> [!NOTE]\n> New entries are placed by numeric prefix order.\n> Please review their position in `toc.yaml` and adjust nesting if needed.\n' \
+            "${GITHUB_SHA}" "${ADDED_LIST}" "${RENAMED_LIST}" > /tmp/pr_body.md
+
+          gh pr create \
+            -B main \
+            -H "${BRANCH_NAME}" \
+            -R "${PRODUCT_RUNTIME_REPO_URL}" \
+            --title "docs(keb): sync doc structure changes to toc.yaml" \
+            --body-file /tmp/pr_body.md | tee $GITHUB_STEP_SUMMARY
