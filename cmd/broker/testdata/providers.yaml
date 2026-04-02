@@ -8,6 +8,13 @@ aws:
     "g4dn":
       "us-east-1": ["x"]
   machines:
+    "mi.large": "mi.large (2vCPU, 8GB RAM)"
+    "mi.xlarge": "mi.xlarge (4vCPU, 16GB RAM)"
+    "mi.2xlarge": "mi.2xlarge (8vCPU, 32GB RAM)"
+    "mi.4xlarge": "mi.4xlarge (16vCPU, 64GB RAM)"
+    "mi.8xlarge": "mi.8xlarge (32vCPU, 128GB RAM)"
+    "mi.12xlarge": "mi.12xlarge (48vCPU, 192GB RAM)"
+    "mi.16xlarge": "mi.16xlarge (64vCPU, 256GB RAM)"
     "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
     "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
     "m6i.2xlarge": "m6i.2xlarge (8vCPU, 32GB RAM)"
@@ -41,6 +48,16 @@ aws:
     "g4dn.8xlarge": "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
     "g4dn.12xlarge": "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
     "g4dn.16xlarge": "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
+    "ri.large": "ri.large (2vCPU, 16GB RAM)"
+    "ri.xlarge": "ri.xlarge (4vCPU, 32GB RAM)"
+    "ri.2xlarge": "ri.2xlarge (8vCPU, 64GB RAM)"
+    "ri.4xlarge": "ri.4xlarge (16vCPU, 128GB RAM)"
+    "ri.8xlarge": "ri.8xlarge (32vCPU, 256GB RAM)"
+    "ri.12xlarge": "ri.12xlarge (48vCPU, 384GB RAM)"
+    "ri.16xlarge": "ri.16xlarge (64vCPU, 512GB RAM)"
+  machinesVersions:
+    mi.{size}: m6i.{size}
+    ri.{size}: r8i.{size}
   regions:
     eu-central-1:
       displayName: "eu-central-1 (Europe, Frankfurt)"

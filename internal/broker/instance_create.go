@@ -269,6 +269,8 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	operation.DashboardURL = dashboardURL
 	logger.Info(fmt.Sprintf("Runtime ShootDomain: %s", operation.ShootDomain))
 
+	operation.NewOrUpdatedWorkers = CollectWorkers(operation.Operation)
+
 	err = b.operationsStorage.InsertOperation(operation.Operation)
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot save operation: %s", err))
@@ -1203,4 +1205,12 @@ func newAWSClientUsingCredentialsBinding(
 	}
 
 	return client, nil
+}
+
+func CollectWorkers(operation internal.Operation) []string {
+	workers := []string{"cpu-worker-0"}
+	for _, worker := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+		workers = append(workers, worker.Name)
+	}
+	return workers
 }

@@ -3443,6 +3443,47 @@ func TestGvisorProvisioning(t *testing.T) {
 	}
 }
 
+func TestCollectWorkers(t *testing.T) {
+	tests := []struct {
+		name      string
+		operation internal.Operation
+		expected  []string
+	}{
+		{
+			name: "no additional workers",
+			operation: internal.Operation{
+				ProvisioningParameters: internal.ProvisioningParameters{
+					Parameters: pkg.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{},
+					},
+				},
+			},
+			expected: []string{"cpu-worker-0"},
+		},
+		{
+			name: "with additional workers",
+			operation: internal.Operation{
+				ProvisioningParameters: internal.ProvisioningParameters{
+					Parameters: pkg.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+							{Name: "worker-1"},
+							{Name: "worker-2"},
+						},
+					},
+				},
+			},
+			expected: []string{"cpu-worker-0", "worker-1", "worker-2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := broker.CollectWorkers(tt.operation)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion

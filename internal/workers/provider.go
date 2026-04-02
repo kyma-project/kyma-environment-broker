@@ -3,6 +3,7 @@ package workers
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -29,7 +30,7 @@ func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configurat
 }
 
 func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string, discoveredZones map[string][]string, log *slog.Logger) ([]gardener.Worker, error) {
+	zones []string, planID string, discoveredZones map[string][]string, newOrUpdatedWorkers []string, log *slog.Logger) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -69,10 +70,15 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
+		machineType := p.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(values.ProviderType), additionalWorkerNodePool.MachineType)
+		if exists && !slices.Contains(newOrUpdatedWorkers, additionalWorkerNodePool.Name) {
+			machineType = currentAdditionalWorker.Machine.Type
+		}
+
 		worker := gardener.Worker{
 			Name: additionalWorkerNodePool.Name,
 			Machine: gardener.Machine{
-				Type: additionalWorkerNodePool.MachineType,
+				Type: machineType,
 				Image: &gardener.ShootMachineImage{
 					Name:    p.imConfig.MachineImage,
 					Version: &p.imConfig.MachineImageVersion,
