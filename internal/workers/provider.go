@@ -35,10 +35,10 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
-		currentAdditionalWorker, exists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
+		currentAdditionalWorker, workerExists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
 
 		var workerZones []string
-		if exists {
+		if workerExists {
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
@@ -71,7 +71,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
 		machineType := p.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(values.ProviderType), additionalWorkerNodePool.MachineType)
-		if exists && !slices.Contains(newOrUpdatedWorkers, additionalWorkerNodePool.Name) {
+		if workerExists && !slices.Contains(newOrUpdatedWorkers, additionalWorkerNodePool.Name) {
 			machineType = currentAdditionalWorker.Machine.Type
 			log.Info(fmt.Sprintf(
 				"Reusing existing machine type for unchanged additional worker node pool %s: %s",
