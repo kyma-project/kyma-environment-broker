@@ -3458,7 +3458,7 @@ func TestCollectWorkers(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{"cpu-worker-0"},
+			expected: []string{internal.KymaWorkerName},
 		},
 		{
 			name: "with additional workers",
@@ -3472,7 +3472,7 @@ func TestCollectWorkers(t *testing.T) {
 					},
 				},
 			},
-			expected: []string{"cpu-worker-0", "worker-1", "worker-2"},
+			expected: []string{internal.KymaWorkerName, "worker-1", "worker-2"},
 		},
 	}
 

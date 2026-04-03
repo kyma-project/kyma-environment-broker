@@ -73,7 +73,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	// Update the runtime
 
-	if slices.Contains(operation.NewOrUpdatedWorkers, "cpu-worker-0") {
+	if slices.Contains(operation.NewOrUpdatedWorkers, internal.KymaWorkerName) {
 		oldType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
 
 		newType := s.providerSpec.ResolveMachineType(

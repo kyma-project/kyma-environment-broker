@@ -2863,7 +2863,7 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
-		require.Equal(t, []string{"cpu-worker-0"}, got)
+		require.Equal(t, []string{internal.KymaWorkerName}, got)
 	})
 
 	t.Run("detects kyma worker machine type change from default", func(t *testing.T) {
@@ -2880,7 +2880,7 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
-		require.Equal(t, []string{"cpu-worker-0"}, got)
+		require.Equal(t, []string{internal.KymaWorkerName}, got)
 	})
 
 	t.Run("detects new additional worker pool", func(t *testing.T) {
@@ -2957,7 +2957,7 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
-		require.Equal(t, []string{"cpu-worker-0", "pool-a", "pool-b"}, got)
+		require.Equal(t, []string{internal.KymaWorkerName, "pool-a", "pool-b"}, got)
 	})
 }
 

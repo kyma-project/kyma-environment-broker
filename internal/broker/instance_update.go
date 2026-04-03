@@ -904,7 +904,7 @@ func DetectNewOrUpdatedWorkers(
 	}
 
 	if operationMachineType != instanceMachineType {
-		workers = append(workers, "cpu-worker-0")
+		workers = append(workers, internal.KymaWorkerName)
 	}
 
 	instancePoolsByName := make(map[string]pkg.AdditionalWorkerNodePool, len(instance.Parameters.Parameters.AdditionalWorkerNodePools))
