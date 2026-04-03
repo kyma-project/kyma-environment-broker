@@ -27,7 +27,7 @@ If update operation change plan to a disabled plan, it is allowed. To prevent th
 If you want to prevent creation of new instances of a plan, disregarding whether you use provisioning or update operation, you need to remove the plan from the **enablePlans** list
 and remove all occurrences of the plan from the **upgradableToPlans** list of other plans.
 
-Deprovisioning is not affected by the **enablePlans** property, which means that if a plan is disabled after provisioning, the deprovisioning operations for the existing instances of this plan still work.
+Deprovisioning is not affected by the **enablePlans** property, so if a plan is disabled after provisioning, deprovisioning operations for existing instances of that plan still work.
 
 ## HAP Rules
 
