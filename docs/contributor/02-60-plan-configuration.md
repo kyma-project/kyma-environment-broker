@@ -16,7 +16,7 @@ enablePlans: "trial,aws,gcp"
 ```
 
 This setting affects the services catalog, so only enabled plans are visible in it and can be used for provisioning.
-Moreover, if provisioning is triggered with plan which is not enabled, the provisioning fails during schema validation with a message "plan-id not in the catalog".
+Moreover, if provisioning is triggered with a plan that is not enabled, it fails during schema validation with the message "plan-id not in the catalog".
 
 If a plan is not defined in KEB, an error is logged during Rules Service initialization, but KEB still starts and runs normally. 
 Provisioning fails only when triggered, and each attempt fails with log message: `No valid ruleset or empty valid ruleset`.
