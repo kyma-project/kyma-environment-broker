@@ -15,7 +15,7 @@ The **enablePlans** property contains a comma-separated list of supported plan n
 enablePlans: "trial,aws,gcp"
 ```
 
-This setting affects catalog of services, which means that only enabled plans are visible in the catalog and can be used for provisioning.
+This setting affects the services catalog, so only enabled plans are visible in it and can be used for provisioning.
 Moreover, if provisioning is triggered with plan which is not enabled, the provisioning fails during schema validation with a message "plan-id not in the catalog".
 
 If a plan is not defined in KEB, an error is logged during Rules Service initialization, but KEB still starts and runs normally. 
