@@ -374,6 +374,7 @@ As users migrate their clusters to agnostic machine names they automatically rec
 **Cons:**
 - Clusters that never migrate to agnostic names keep the old volume size indefinitely.
 - The feature is only fully deployed once all clusters have moved to agnostic machine names.
+- Agnostic machine name feature must be released
 
 **Billing edge cases:**
 
@@ -384,5 +385,3 @@ Three scenarios arise when `additionalVolumeGb` interacts with deprecated machin
 - **User migrates from deprecated to agnostic machine name while additionalVolumeGb is set.** For example, the user migrates from `m6i.8xlarge` to `mi.8xlarge`. The new computed default jumps from 80 GiB to 148 GiB. The user had `additionalVolumeGb: 20`, so the total would become 168 GiB — larger than what the user originally intended, and the 20 GiB may now overlap with the free portion of the new default.
 
 - **Block additionalVolumeGb for deprecated machine names.** KEB rejects any provisioning or update request that sets `additionalVolumeGb` while using a deprecated concrete machine name. Users who want to set additional volume must first migrate to an agnostic machine name. This enforces a clean separation. Deprecated names always use the old plan default, agnostic names always use the computed default with optional additional.
-
-**Recommended approach:** Block `additionalVolumeGb` for deprecated machine names (third scenario). This eliminates both billing edge cases at the API boundary without any recalculation logic. The error message should clearly tell the user to migrate to an agnostic machine name first.
