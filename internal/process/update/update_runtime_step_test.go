@@ -75,7 +75,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		MachineType: ptr.String("new-machine-type"),
 	}
-	operation.NewOrUpdatedWorkers = []string{"cpu-worker-0"}
+	operation.NewOrUpdatedWorkers = []string{internal.KymaWorkerName}
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "AWS"}
 
 	// when
@@ -840,7 +840,7 @@ func TestUpdateRuntimeStep_UsesMachineVersionsForNewOrUpdatedWorkers(t *testing.
 				Provider: imv1.Provider{
 					Workers: []gardener.Worker{
 						{
-							Name: "cpu-worker-0",
+							Name: internal.KymaWorkerName,
 							Machine: gardener.Machine{
 								Type: "m6i.large",
 							},

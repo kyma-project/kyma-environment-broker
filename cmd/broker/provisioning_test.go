@@ -2695,7 +2695,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	assert.Len(t, workers, 1)
 	assert.Len(t, additionalWorkers, 2)
 
-	assert.Equal(t, "cpu-worker-0", workers[0].(map[string]interface{})["name"])
+	assert.Equal(t, internal.KymaWorkerName, workers[0].(map[string]interface{})["name"])
 	assert.Equal(t, "name-1", additionalWorkers[0].(map[string]interface{})["name"])
 	assert.Equal(t, "name-2", additionalWorkers[1].(map[string]interface{})["name"])
 

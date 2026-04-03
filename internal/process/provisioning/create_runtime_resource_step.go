@@ -208,7 +208,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		Type: values.ProviderType,
 		Workers: []gardener.Worker{
 			{
-				Name: "cpu-worker-0",
+				Name: internal.KymaWorkerName,
 				Machine: gardener.Machine{
 					Type: s.providerSpec.ResolveMachineType(
 						pkg.CloudProviderFromString(values.ProviderType),

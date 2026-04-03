@@ -15,6 +15,10 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
+const (
+	KymaWorkerName = "cpu-worker-0"
+)
+
 type EventHub struct {
 	Deleted bool `json:"event_hub_deleted"`
 }

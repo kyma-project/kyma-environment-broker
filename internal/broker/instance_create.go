@@ -1208,7 +1208,7 @@ func newAWSClientUsingCredentialsBinding(
 }
 
 func CollectWorkers(operation internal.Operation) []string {
-	workers := []string{"cpu-worker-0"}
+	workers := []string{internal.KymaWorkerName}
 	for _, worker := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
 		workers = append(workers, worker.Name)
 	}
