@@ -27,7 +27,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with zones from existing worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker-existing": {
 				Name:  "worker-existing",
@@ -50,6 +50,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -82,6 +83,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -112,6 +114,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -151,6 +154,7 @@ aws:
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -183,6 +187,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -227,6 +232,7 @@ aws:
 				"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 				"m5.large":  {"zone-i", "zone-j"},
 			},
+			[]string{},
 			log,
 		)
 
@@ -266,6 +272,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -298,6 +305,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -329,6 +337,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -358,6 +367,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 
@@ -391,6 +401,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			[]string{},
 			log,
 		)
 

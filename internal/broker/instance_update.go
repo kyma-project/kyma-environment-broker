@@ -345,6 +345,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	operation.NewOrUpdatedWorkers = DetectNewOrUpdatedWorkers(instance, operation, providerValues.DefaultMachineType)
+
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -882,4 +884,41 @@ func checkHAZonesUnchanged(currentAdditionalWorkerNodePools, newAdditionalWorker
 
 	message := fmt.Sprintf("HA zones setting is permanent and cannot be changed for additional worker node pools: %s.", strings.Join(poolsWithChangedHAZones, ", "))
 	return fmt.Errorf("%s", message)
+}
+
+func DetectNewOrUpdatedWorkers(
+	instance *internal.Instance,
+	operation internal.Operation,
+	defaultMachineType string,
+) []string {
+	var workers []string
+
+	operationMachineType := defaultMachineType
+	if operation.UpdatingParameters.MachineType != nil {
+		operationMachineType = *operation.UpdatingParameters.MachineType
+	}
+
+	instanceMachineType := defaultMachineType
+	if instance.Parameters.Parameters.MachineType != nil {
+		instanceMachineType = *instance.Parameters.Parameters.MachineType
+	}
+
+	if operationMachineType != instanceMachineType {
+		workers = append(workers, internal.KymaWorkerName)
+	}
+
+	instancePoolsByName := make(map[string]pkg.AdditionalWorkerNodePool, len(instance.Parameters.Parameters.AdditionalWorkerNodePools))
+
+	for _, pool := range instance.Parameters.Parameters.AdditionalWorkerNodePools {
+		instancePoolsByName[pool.Name] = pool
+	}
+
+	for _, opPool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
+		instancePool, exists := instancePoolsByName[opPool.Name]
+		if !exists || instancePool.MachineType != opPool.MachineType {
+			workers = append(workers, opPool.Name)
+		}
+	}
+
+	return workers
 }

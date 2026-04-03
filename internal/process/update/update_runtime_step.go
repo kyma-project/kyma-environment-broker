@@ -15,7 +15,9 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+	"golang.org/x/exp/slices"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -35,10 +37,11 @@ type UpdateRuntimeStep struct {
 	workersProvider                    *workers.Provider
 	valuesProvider                     broker.ValuesProvider
 	maxPodsWhitelistedGlobalAccountIds whitelist.Set
+	providerSpec                       *configuration.ProviderSpec
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                          k8sClient,
 		delay:                              delay,
@@ -46,6 +49,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		workersProvider:                    workersProvider,
 		valuesProvider:                     valuesProvider,
 		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
+		providerSpec:                       providerSpec,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -69,7 +73,26 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	// Update the runtime
 
-	runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = provisioning.DefaultIfParamNotSet(runtime.Spec.Shoot.Provider.Workers[0].Machine.Type, operation.UpdatingParameters.MachineType)
+	if slices.Contains(operation.NewOrUpdatedWorkers, internal.KymaWorkerName) {
+		oldType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+
+		newType := s.providerSpec.ResolveMachineType(
+			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
+			provisioning.DefaultIfParamNotSet(
+				oldType,
+				operation.UpdatingParameters.MachineType,
+			),
+		)
+
+		if oldType != newType {
+			log.Info(fmt.Sprintf("Machine type updated for cpu-worker-0: %s -> %s", oldType, newType))
+		} else {
+			log.Info(fmt.Sprintf("Machine type unchanged for cpu-worker-0: %s", oldType))
+		}
+
+		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = newType
+	}
+
 	runtime.Spec.Shoot.Provider.Workers[0].Minimum = int32(provisioning.DefaultIfParamNotSet(int(runtime.Spec.Shoot.Provider.Workers[0].Minimum), operation.UpdatingParameters.AutoScalerMin))
 	runtime.Spec.Shoot.Provider.Workers[0].Maximum = int32(provisioning.DefaultIfParamNotSet(int(runtime.Spec.Shoot.Provider.Workers[0].Maximum), operation.UpdatingParameters.AutoScalerMax))
 
@@ -91,7 +114,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		currentAdditionalWorkers := s.getCurrentAdditionalWorkers(runtime)
 
 		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
-			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, log)
+			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, operation.NewOrUpdatedWorkers, log)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
 		}
