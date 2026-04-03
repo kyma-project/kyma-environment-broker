@@ -24,7 +24,7 @@ Provisioning fails only after you attempt to create a cluster. Each attempt fail
 Update operations are not affected by the **enablePlans** property, so if a plan is disabled after provisioning, update operations for existing instances of that plan still work.
 Updating the plan to a disabled plan is allowed. To prevent this, use the **upgradableToPlans** property in the plan configuration to allow updates only to enabled plans. For example:
 
-If you want to prevent creation of new instances of a plan, disregarding whether you use provisioning or update operation, you need to remove the plan from the **enablePlans** list
+If you want to prevent creating new instances of a plan, whether you use a provisioning or update operation, you must remove the plan from the **enablePlans** list
 and all occurrences of the plan from the **upgradableToPlans** list.
 
 Deprovisioning is not affected by the **enablePlans** property, so if a plan is disabled after provisioning, deprovisioning operations for existing instances of that plan still work.
