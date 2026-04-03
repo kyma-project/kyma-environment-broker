@@ -5,7 +5,7 @@ which specifies allowed regions, zones, machine types, and their display names. 
 
 ## Available Plans
 Available plans (their names and IDs) are hard-wired in KEB (see [`plans.go`](../../internal/broker/plans.go)). 
-If you want to add a new plan, you need to implement it in KEB, i.e. define constants and extend `PlanIDsMapping` map.
+If you want to add a new plan, you must implement it in KEB by defining constants and extending the `PlanIDsMapping` map.
 
 ## Enabling Plans
 
