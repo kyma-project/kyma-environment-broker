@@ -894,8 +894,8 @@ func DetectNewOrUpdatedWorkers(
 	var workers []string
 
 	operationMachineType := defaultMachineType
-	if operation.ProvisioningParameters.Parameters.MachineType != nil {
-		operationMachineType = *operation.ProvisioningParameters.Parameters.MachineType
+	if operation.UpdatingParameters.MachineType != nil {
+		operationMachineType = *operation.UpdatingParameters.MachineType
 	}
 
 	instanceMachineType := defaultMachineType
@@ -913,7 +913,7 @@ func DetectNewOrUpdatedWorkers(
 		instancePoolsByName[pool.Name] = pool
 	}
 
-	for _, opPool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+	for _, opPool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
 		instancePool, exists := instancePoolsByName[opPool.Name]
 		if !exists || instancePool.MachineType != opPool.MachineType {
 			workers = append(workers, opPool.Name)

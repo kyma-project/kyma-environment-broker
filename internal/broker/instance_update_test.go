@@ -2819,13 +2819,11 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.large"),
-					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-						{Name: "pool-a", MachineType: "m6i.large"},
-						{Name: "pool-b", MachineType: "m6i.xlarge"},
-					},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.large"),
+				AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+					{Name: "pool-a", MachineType: "m6i.large"},
+					{Name: "pool-b", MachineType: "m6i.xlarge"},
 				},
 			},
 		}
@@ -2842,9 +2840,7 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{},
-			},
+			UpdatingParameters: internal.UpdatingParametersDTO{},
 		}
 
 		got := broker.DetectNewOrUpdatedWorkers(instance, operation, "m6i.large")
@@ -2861,10 +2857,8 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.xlarge"),
-				},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.xlarge"),
 			},
 		}
 
@@ -2880,10 +2874,8 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.xlarge"),
-				},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.xlarge"),
 			},
 		}
 
@@ -2904,13 +2896,11 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.large"),
-					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-						{Name: "pool-a", MachineType: "m6i.large"},
-						{Name: "pool-b", MachineType: "m6i.xlarge"},
-					},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.large"),
+				AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+					{Name: "pool-a", MachineType: "m6i.large"},
+					{Name: "pool-b", MachineType: "m6i.xlarge"},
 				},
 			},
 		}
@@ -2932,12 +2922,10 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.large"),
-					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-						{Name: "pool-a", MachineType: "m6i.xlarge"},
-					},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.large"),
+				AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+					{Name: "pool-a", MachineType: "m6i.xlarge"},
 				},
 			},
 		}
@@ -2959,13 +2947,11 @@ func TestDetectNewOrUpdatedWorkers(t *testing.T) {
 		}
 
 		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: pkg.ProvisioningParametersDTO{
-					MachineType: ptr.String("m6i.xlarge"),
-					AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-						{Name: "pool-a", MachineType: "m6i.xlarge"},
-						{Name: "pool-b", MachineType: "m6i.2xlarge"},
-					},
+			UpdatingParameters: internal.UpdatingParametersDTO{
+				MachineType: ptr.String("m6i.xlarge"),
+				AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+					{Name: "pool-a", MachineType: "m6i.xlarge"},
+					{Name: "pool-b", MachineType: "m6i.2xlarge"},
 				},
 			},
 		}
