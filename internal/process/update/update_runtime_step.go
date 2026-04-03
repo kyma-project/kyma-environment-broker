@@ -74,13 +74,23 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	// Update the runtime
 
 	if slices.Contains(operation.NewOrUpdatedWorkers, "cpu-worker-0") {
-		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = s.providerSpec.ResolveMachineType(
+		oldType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+
+		newType := s.providerSpec.ResolveMachineType(
 			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
 			provisioning.DefaultIfParamNotSet(
-				runtime.Spec.Shoot.Provider.Workers[0].Machine.Type,
+				oldType,
 				operation.UpdatingParameters.MachineType,
 			),
 		)
+
+		if oldType != newType {
+			log.Info(fmt.Sprintf("Machine type updated for cpu-worker-0: %s -> %s", oldType, newType))
+		} else {
+			log.Info(fmt.Sprintf("Machine type unchanged for cpu-worker-0: %s", oldType))
+		}
+
+		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = newType
 	}
 
 	runtime.Spec.Shoot.Provider.Workers[0].Minimum = int32(provisioning.DefaultIfParamNotSet(int(runtime.Spec.Shoot.Provider.Workers[0].Minimum), operation.UpdatingParameters.AutoScalerMin))
