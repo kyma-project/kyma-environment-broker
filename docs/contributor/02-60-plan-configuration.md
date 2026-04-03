@@ -19,7 +19,7 @@ This setting affects the services catalog, so only enabled plans are visible in 
 Moreover, if provisioning is triggered with a plan that is not enabled, it fails during schema validation with the message "plan-id not in the catalog".
 
 If a plan is not defined in KEB, an error is logged during Rules Service initialization, but KEB still starts and runs without issues. 
-Provisioning fails only when triggered, and each attempt fails with log message: `No valid ruleset or empty valid ruleset`.
+Provisioning fails only after you attempt to create a cluster. Each attempt fails with the log message: `No valid ruleset or empty valid ruleset`.
 
 Update operations are not affected by the **enablePlans** property, which means that if a plan is disabled after provisioning, the update operations for the existing instances of this plan still work.
 If update operation change plan to a disabled plan, it is allowed. To prevent this, you can use the **upgradableToPlans** property in the plan configuration, which defines allowed plan changes. For example:
