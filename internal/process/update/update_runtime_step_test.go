@@ -76,6 +76,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 		MachineType: ptr.String("new-machine-type"),
 	}
 	operation.NewOrUpdatedWorkers = []string{"cpu-worker-0"}
+	operation.ProviderValues = &internal.ProviderValues{ProviderType: "AWS"}
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -823,7 +824,7 @@ func TestUpdateRuntimeStep_GvisorOnMainAndAdditionalWorkers(t *testing.T) {
 	assert.Equal(t, []gardener.ContainerRuntime{{Type: "gvisor"}}, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].CRI.ContainerRuntimes)
 }
 
-func TestUpdateRuntimeStep_(t *testing.T) {
+func TestUpdateRuntimeStep_UsesMachineVersionsForNewOrUpdatedWorkers(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
@@ -853,6 +854,15 @@ func TestUpdateRuntimeStep_(t *testing.T) {
 							Name: "name-1",
 							Machine: gardener.Machine{
 								Type: "r8i.large",
+							},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+							Zones:          []string{"zone-a", "zone-b", "zone-c"},
+						},
+						{
+							Name: "name-2",
+							Machine: gardener.Machine{
+								Type: "m6i.large",
 							},
 							MaxSurge:       &maxSurge,
 							MaxUnavailable: &maxUnavailable,
@@ -893,7 +903,7 @@ aws:
 			},
 		},
 	}
-	operation.NewOrUpdatedWorkers = []string{}
+	operation.NewOrUpdatedWorkers = []string{"name-2", "name-3"}
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
