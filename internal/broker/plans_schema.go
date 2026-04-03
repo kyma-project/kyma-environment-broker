@@ -459,34 +459,6 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update, rejectU
 	return OIDCs
 }
 
-func NewOIDCSchema(rejectUnsupportedParameters bool) *OIDCType {
-	OIDCType := &OIDCType{
-		ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix"},
-		Type:          Type{Type: "object", Description: "OIDC configuration"},
-		Properties: OIDCProperties{
-			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-			IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-			GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-			UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames are prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
-			SigningAlgs: Type{
-				Type: "array",
-				Items: &Type{
-					Type: "string",
-				},
-				Description: "A comma-separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256.",
-			},
-		},
-		Required: []string{"clientID", "issuerURL"},
-	}
-	if rejectUnsupportedParameters {
-		OIDCType.Type.AdditionalProperties = false
-	}
-	OIDCType.Properties.EncodedJwksArray = Type{Type: "string", Description: "JWKS array encoded in base64. To remove a previously set value, enter a single dash character '-'."}
-	OIDCType.ControlsOrder = []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "encodedJwksArray"}
-	return OIDCType
-}
-
 func NewModulesSchema(rejectUnsupportedParameters bool, defaultChannel string) *Modules {
 	modules := &Modules{
 		Type: Type{
@@ -620,31 +592,6 @@ func NameProperty(update bool) NameType {
 	}
 
 	return nameType
-}
-
-func KubeconfigProperty() *Type {
-	return &Type{
-		Type:  "string",
-		Title: "Kubeconfig contents",
-	}
-}
-
-func ShootNameProperty() *Type {
-	return &Type{
-		Type:      "string",
-		Title:     "Shoot name",
-		Pattern:   "^[a-zA-Z0-9-]*$",
-		MinLength: 1,
-	}
-}
-
-func ShootDomainProperty() *Type {
-	return &Type{
-		Type:      "string",
-		Title:     "Shoot domain",
-		Pattern:   "^[a-zA-Z0-9-\\.]*$",
-		MinLength: 1,
-	}
 }
 
 func ColocateControlPlaneProperty() *Type {
