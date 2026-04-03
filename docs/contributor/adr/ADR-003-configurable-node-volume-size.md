@@ -14,6 +14,9 @@
     - [Option B: Chart defines an empty ConfigMap, KEB populates it at startup](#option-b-chart-defines-an-empty-configmap-keb-populates-it-at-startup)
     - [Option C: Use the existing ConfigMap owned by KCR](#option-c-use-the-existing-configmap-owned-by-kcr)
   - [Sub-approach 2: Extend the RuntimeCR](#sub-approach-2-extend-the-runtimecr)
+- [Migration of Existing Clusters](#migration-of-existing-clusters)
+  - [Option A: Cloud Orchestrator](#option-a-cloud-orchestrator)
+  - [Option B: Agnostic machine name cutover](#option-b-agnostic-machine-name-cutover)
 
 ## Status
 
@@ -315,7 +318,7 @@ The ConfigMap already contains all supported machine types. The default volume s
 
 ### Sub-approach 2: Extend the RuntimeCR
 
-The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the ShootCR, it is used by KCR solely for billing purposes.
+The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the RuntimeCR, it is used by KCR solely for billing purposes.
 
 The `additionalVolumeGb` field is placed inside the existing `volume` object. The `volume.size` field reflects the total disk size, which is the sum of the default size and `additionalVolumeGb`.
 
@@ -338,3 +341,48 @@ In this example, the default size is 80 GiB and the user requested 20 GiB of add
 - The RuntimeCR CRD must be extended.
 - 3 teams involved in implementation.
 - Less information available for KCR.
+
+## Migration of Existing Clusters
+
+Changing `volumeSizeGb` in a worker pool spec in the RuntimeCR triggers a Gardener rolling update. New clusters provisioned after this feature is enabled will automatically receive the correct computed volume size. For existing clusters, the current volume size is already set in the RuntimeCR.
+
+The problem is that if KEB automatically applies the new computed volume size during any update operation, users will receive a rolling update without being aware that the disk size changed. A controlled migration mechanism is therefore needed.
+
+### Option A: Cloud Orchestrator
+
+SRE uses Cloud Orchestrator to update the voluem size in RuntimeCRs
+
+**Pros:**
+- No user action required.
+- Maintenance window gating avoids unexpected disruption.
+
+**Cons:**
+- User communication is mandatory.
+- More work for external operators.
+
+### Option B: Agnostic machine name cutover
+
+ADR-002 introduces version-agnostic machine names (e.g. `mi.8xlarge`) alongside the deprecated concrete names (e.g. `m6i.8xlarge`). This boundary can be used as a natural migration point: KEB applies the computed volume size only to clusters using agnostic machine names. Clusters still using deprecated concrete names keep the old plan default volume size and are not affected.
+
+As users migrate their clusters to agnostic machine names they automatically receive the correct volume size. No proactive rolling update is triggered. The volume size migration happens alongside the machine name migration.
+
+**Pros:**
+- No surprise rolling updates for existing clusters.
+- No migration tooling or SRE action required.
+- No external operators action required.
+
+**Cons:**
+- Clusters that never migrate to agnostic names keep the old volume size indefinitely.
+- The feature is only fully deployed once all clusters have moved to agnostic machine names.
+
+**Billing edge cases:**
+
+Three scenarios arise when `additionalVolumeGb` interacts with deprecated machine names:
+
+- **Old machine + additionalVolumeGb where the sum is below the new computed default.** For example, a user on `m6i.8xlarge` (old default: 80 GiB) sets `additionalVolumeGb: 20`, resulting in a 100 GiB disk. The new computed default for that machine would be 148 GiB. The user is currently billed for 20 GiB that would be provided for free under the new default.
+
+- **User migrates from deprecated to agnostic machine name while additionalVolumeGb is set.** For example, the user migrates from `m6i.8xlarge` to `mi.8xlarge`. The new computed default jumps from 80 GiB to 148 GiB. The user had `additionalVolumeGb: 20`, so the total would become 168 GiB — larger than what the user originally intended, and the 20 GiB may now overlap with the free portion of the new default.
+
+- **Block additionalVolumeGb for deprecated machine names.** KEB rejects any provisioning or update request that sets `additionalVolumeGb` while using a deprecated concrete machine name. Users who want to set additional volume must first migrate to an agnostic machine name. This enforces a clean separation. Deprecated names always use the old plan default, agnostic names always use the computed default with optional additional.
+
+**Recommended approach:** Block `additionalVolumeGb` for deprecated machine names (third scenario). This eliminates both billing edge cases at the API boundary without any recalculation logic. The error message should clearly tell the user to migrate to an agnostic machine name first.
