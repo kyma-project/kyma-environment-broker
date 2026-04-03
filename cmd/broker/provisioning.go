@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,7 +33,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
-	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, awsClientFactory aws.ClientFactory) *process.Queue {
+	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, awsClientFactory aws.ClientFactory, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *process.Queue {
 
 	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
 
@@ -75,7 +76,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
 		{
-			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec),
+			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec, maxPodsWhitelistedGlobalAccountIds),
 		},
 		{
 			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),

@@ -59,11 +59,15 @@ type Config struct {
 	RejectUnsupportedParameters bool `envconfig:"default=false"`
 	EnablePlanUpgrades          bool `envconfig:"default=false"`
 	CheckQuotaLimit             bool `envconfig:"default=false"`
+	GvisorEnabled               bool `envconfig:"default=false"`
 
 	AllowedGlobalAccounts           StringList `envconfig:"optional"`
 	RestrictToAllowedGlobalAccounts bool
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
+
+	// enables Access-Control-List.
+	ACLEnabledPlans StringList `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
@@ -75,6 +79,13 @@ func (cfg *Config) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (cfg *Config) IsACLEnabledForPlanName(planName string) bool {
+	if cfg.ACLEnabledPlans.Contains("all") {
+		return true
+	}
+	return cfg.ACLEnabledPlans.Contains(planName)
 }
 
 func NewServicesConfigFromFile(path string) (ServicesConfig, error) {
@@ -160,4 +171,8 @@ func (m *StringList) Contains(name string) bool {
 		}
 	}
 	return false
+}
+
+func gvisorToBool(gvisor *pkg.GvisorDTO) bool {
+	return gvisor != nil && gvisor.Enabled
 }

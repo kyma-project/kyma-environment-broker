@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,7 +24,7 @@ import (
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
 	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
-	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *process.Queue {
+	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *process.Queue {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -56,7 +57,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, workersProvider, valuesProvider),
+			step:  update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, workersProvider, valuesProvider, maxPodsWhitelistedGlobalAccountIds),
 		},
 		{
 			stage: "check_runtime_resource",

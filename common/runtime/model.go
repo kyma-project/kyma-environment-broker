@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 )
 
@@ -100,6 +102,16 @@ type ProvisioningParametersDTO struct {
 	ColocateControlPlane      *bool                      `json:"colocateControlPlane,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
+	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
+	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
+}
+
+type GvisorDTO struct {
+	Enabled bool `json:"enabled"`
+}
+
+type AclDTO struct {
+	AllowedCIDRs []string `json:"allowedCIDRs,omitempty"`
 }
 
 const HAAutoscalerMinimumValue = 3
@@ -332,6 +344,19 @@ func (o *OIDCConnectDTO) validSigningAlgsSet() map[string]bool {
 	}
 
 	return signingAlgsSet
+}
+
+func (a *AclDTO) Validate() error {
+	if a == nil {
+		return nil
+	}
+	for _, cidr := range a.AllowedCIDRs {
+		_, err := networking.ValidateCidr(cidr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type NetworkingDTO struct {
@@ -576,6 +601,7 @@ type AdditionalWorkerNodePool struct {
 	AutoScalerMin int        `json:"autoScalerMin"`
 	AutoScalerMax int        `json:"autoScalerMax"`
 	Taints        []TaintDTO `json:"taints,omitempty"`
+	Gvisor        *GvisorDTO `json:"gvisor,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {

@@ -46,10 +46,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 				// If zones discovery is enabled, use zones resolved at runtime
 				workerZones = discoveredZones[additionalWorkerNodePool.MachineType]
 			} else {
-				customAvailableZones, err := p.providerSpec.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, values.Region, values.ProviderType)
-				if err != nil {
-					return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
-				}
+				customAvailableZones := p.providerSpec.AvailableZones(pkg.CloudProviderFromString(values.ProviderType), additionalWorkerNodePool.MachineType, values.Region)
 
 				// If custom zones are found, use them instead of the Kyma workload zones.
 				if len(customAvailableZones) > 0 {
@@ -97,10 +94,22 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			}
 		}
 
+		worker.CRI = ToGardenerCRI(additionalWorkerNodePool.Gvisor)
+
 		workers = append(workers, worker)
 	}
 
 	return workers, nil
+}
+
+func ToGardenerCRI(gvisor *pkg.GvisorDTO) *gardener.CRI {
+	if gvisor == nil || !gvisor.Enabled {
+		return nil
+	}
+	return &gardener.CRI{
+		Name:              gardener.CRINameContainerD,
+		ContainerRuntimes: []gardener.ContainerRuntime{{Type: "gvisor"}},
+	}
 }
 
 func toGardenerTaints(taints []pkg.TaintDTO) []corev1.Taint {

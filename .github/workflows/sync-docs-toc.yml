@@ -1,0 +1,10 @@
+name: Sync KEB docs structure to product-kyma-runtime
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-toc:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "placeholder"

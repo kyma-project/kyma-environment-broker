@@ -258,6 +258,7 @@ func fixConfig() *Config {
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		MaxPaginationPage:                         100,
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
+		MaxPodsWhitelistedGlobalAccountsFilePath:  "testdata/max-pods-whitelist.yaml",
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
@@ -278,5 +279,6 @@ func fixConfig() *Config {
 		SubscriptionGardenerResource:                 "secretbinding",
 		MachinesAvailabilityEndpoint:                 true,
 		BtpRegionsMigrationSapConvergedCloudFilePath: "testdata/btp-regions-migration-sap-converged-cloud.yaml",
+		GvisorWhitelistedGlobalAccountsFilePath:      "testdata/gvisor_whitelist.yaml",
 	}
 }

@@ -53,6 +53,18 @@ type UpdateProperties struct {
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
+	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
+	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
+}
+
+type GvisorProperties struct {
+	Enabled Type `json:"enabled"`
+}
+
+type GvisorType struct {
+	Type
+	Required   []string         `json:"required"`
+	Properties GvisorProperties `json:"properties"`
 }
 
 type NetworkingProperties struct {
@@ -66,6 +78,16 @@ type NetworkingType struct {
 	Type
 	Properties NetworkingProperties `json:"properties"`
 	Required   []string             `json:"required"`
+}
+
+type ACLProperties struct {
+	AllowedCIDRs Type `json:"allowedCIDRs"`
+}
+
+type ACLType struct {
+	Type
+	Properties ACLProperties `json:"properties"`
+	Required   []string      `json:"required"`
 }
 
 type OIDCProperties struct {
@@ -204,6 +226,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
 	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints        *TaintsType    `json:"taints,omitempty"`
+	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
 }
 
 type TaintsType struct {
@@ -751,7 +774,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "additionalWorkerNodePools", "modules", "networking", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -769,6 +792,29 @@ func AdministratorsProperty() *Type {
 		Description: "Specifies the list of runtime administrators.",
 		Items: &Type{
 			Type: "string",
+		},
+	}
+}
+
+func ACLProperty() *ACLType {
+	return &ACLType{
+		Type: Type{
+			Type:        "object",
+			Title:       "Access Control List",
+			Description: "Allows you to restrict access to Kubernetes API server.",
+		},
+		Required: []string{"allowedCIDRs"},
+		Properties: ACLProperties{
+			AllowedCIDRs: Type{
+				Type:        "array",
+				Title:       "Allowed CIDRs",
+				Description: "The whitelisted CIDRs allowed to access the Kubernetes API server. If you don't want to define Access Control List, provide an empty list.",
+				Items: &Type{
+					Type:    "string",
+					Example: "5.6.0.0/16",
+					Title:   "CIDR range",
+				},
+			},
 		},
 	}
 }
@@ -869,4 +915,21 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 		t.Items.Type.AdditionalProperties = false
 	}
 	return t
+}
+
+func GvisorProperty() *GvisorType {
+	return &GvisorType{
+		Type: Type{
+			Type:        "object",
+			Description: "Configures the gVisor container runtime for a worker pool",
+		},
+		Required: []string{"enabled"},
+		Properties: GvisorProperties{
+			Enabled: Type{
+				Type:    "boolean",
+				Title:   "Enable gVisor container runtime",
+				Default: false,
+			},
+		},
+	}
 }

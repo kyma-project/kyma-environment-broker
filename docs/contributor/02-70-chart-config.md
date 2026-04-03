@@ -20,21 +20,21 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.27.1` |
+| global.images.kyma_environment_<br>broker.version | - | `1.29.1` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.27.1` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.1` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.27.1` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.1` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.27.1` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.1` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.27.1` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.1` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.27.1` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.1` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.27.1` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.1` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.27.1` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.1` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -72,6 +72,7 @@
 | broker.freeDocsURL | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans | `https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud` |
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |
+| broker.gvisorEnabled | If true, includes the gVisor container runtime property in every plan schema. | `false` |
 | broker.<br>monitorAdditionalProperties | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. | `False` |
 | broker.<br>onlyOneFreePerGA | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. | `false` |
 | broker.<br>onlySingleTrialPerGA | If true, restricts each global account to only one active trial Kyma runtime at a time. When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned. | `true` |
@@ -86,6 +87,7 @@
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
 | broker.<br>allowedGlobalAccountIDs | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. | `` |
 | broker.<br>syncEmptyUpdateResponseEnabled | If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted". | `true` |
+| broker.<br>ACLEnabledPlans | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. | `no-plan` |
 | btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
 | provisioning.<br>workersAmount | Number of workers in provisioning queue. | `20` |
@@ -97,11 +99,12 @@
 | configPaths.<br>btpRegionsMigrationSapConvergedCloud | Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure. | `/config/btpRegionsMigrationSapConvergedCloud.yaml` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
+| configPaths.<br>maxPodsWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. | `/config/maxPodsWhitelistedGlobalAccountIds.yaml` |
+| configPaths.<br>gvisorWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use the gVisor container runtime. | `/config/gvisorWhitelistedGlobalAccountIds.yaml` |
 | configPaths.hapRule | Path to the rules for mapping plans and regions to hyperscaler account pools. | `/config/hapRule.yaml` |
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
 | configPaths.<br>quotaWhitelistedSubaccountIds | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. | `/config/quotaWhitelistedSubaccountIds.yaml` |
-| configPaths.<br>regionsSupportingMachine | Path to the list of regions that support machine-type selection. | `/config/regionsSupportingMachine.yaml` |
 | configPaths.<br>skrDNSProvidersValues | Path to the DNS providers values. | `/config/skrDNSProvidersValues.yaml` |
 | configPaths.<br>skrOIDCDefaultValues | Path to the default OIDC values. | `/config/skrOIDCDefaultValues.yaml` |
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
@@ -109,6 +112,8 @@
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
+| maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
+| gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
 | gardener.<br>kubeconfigPath | Path to the kubeconfig file for accessing the Gardener cluster. | `/gardener/kubeconfig/kubeconfig` |
 | gardener.project | Gardener project connected to SA for HAP credentials lookup. | `kyma-dev` |
 | gardener.secretName | Name of the Kubernetes Secret containing Gardener credentials. | `gardener-credentials` |

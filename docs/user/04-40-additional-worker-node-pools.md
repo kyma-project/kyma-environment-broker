@@ -1,7 +1,7 @@
 # Additional Worker Node Pools
 
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.
-To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**. Optionally, you can also configure [**taints**](#taints) for each pool.
+To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**. Optionally, you can also configure [**taints**](#taints) and [**gvisor**](04-70-gvisor-container-runtime.md) for each pool.
 
 See the example:
 

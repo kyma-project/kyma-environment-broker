@@ -48,28 +48,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.27.1
+      version: 1.29.1
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_expirator_job:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.27.1"
+      version: "1.29.1"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.27.1
+      version: 1.29.1
   ingress:
     domainName: localhost
   istio:
@@ -155,6 +155,8 @@ broker:
   freeExpirationPeriod: 720h
   # Name of the Kubernetes ConfigMap used as a cache for Gardener seeds.
   gardenerSeedsCache: "gardener-seeds-cache"
+  # If true, includes the gVisor container runtime property in every plan schema.
+  gvisorEnabled: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one freemium (free) Kyma runtime.
@@ -186,6 +188,8 @@ broker:
   allowedGlobalAccountIDs: ""
   # If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted".
   syncEmptyUpdateResponseEnabled: "true"
+  # A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans.
+  ACLEnabledPlans: "no-plan"
   
 # Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure.
 btpRegionsMigrationSapConvergedCloud: |-
@@ -218,6 +222,10 @@ configPaths:
   # Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
   # Only accounts listed here can provision more than the default limit of free environments.
   freemiumWhitelistedGlobalAccountIds: "/config/freemiumWhitelistedGlobalAccountIds.yaml"
+  # Path to the list of global account IDs that are allowed to use an increased maximum number of Pods.
+  maxPodsWhitelistedGlobalAccountIds: "/config/maxPodsWhitelistedGlobalAccountIds.yaml"
+  # Path to the list of global account IDs that are allowed to use the gVisor container runtime.
+  gvisorWhitelistedGlobalAccountIds: "/config/gvisorWhitelistedGlobalAccountIds.yaml"
   # Path to the rules for mapping plans and regions to hyperscaler account pools.
   hapRule: "/config/hapRule.yaml"
   # Path to the plans configuration file, which defines available service plans.
@@ -226,8 +234,6 @@ configPaths:
   providersConfig: "/config/providersConfig.yaml"
   # Path to the list of subaccount IDs that are allowed to bypass quota restrictions.
   quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
-  # Path to the list of regions that support machine-type selection.
-  regionsSupportingMachine: "/config/regionsSupportingMachine.yaml"
   # Path to the DNS providers values.
   skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
   # Path to the default OIDC values.
@@ -247,6 +253,15 @@ events:
 # List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes.
 # Only accounts listed here can provision more than the default limit of free environments.
 freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:
+
+# List of global account IDs that are allowed to use an increased maximum number of Pods.
+# For accounts listed here, the maximum number of Pods in all worker node pools is set to 250.
+maxPodsWhitelistedGlobalAccountIds: |-
+  whitelist:
+
+# List of global account IDs that are allowed to use the gVisor container runtime.
+gvisorWhitelistedGlobalAccountIds: |-
   whitelist:
 
 gardener:

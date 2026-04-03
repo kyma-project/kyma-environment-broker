@@ -12,6 +12,11 @@ const (
 
 type Set map[string]struct{}
 
+func IsWhitelisted(id string, whitelist Set) bool {
+	_, found := whitelist[id]
+	return found
+}
+
 func IsNotWhitelisted(id string, whitelist Set) bool {
 	_, found := whitelist[id]
 	return !found

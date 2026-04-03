@@ -102,6 +102,8 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
+            - name: APP_BROKER_ACL_ENABLED_PLANS
+              value: "{{ .Values.broker.ACLEnabledPlans }}"
             - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ .Values.broker.allowedGlobalAccountIDs }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
@@ -134,6 +136,8 @@ spec:
               value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
               value: "{{ .Values.broker.gardenerSeedsCache }}"
+            - name: APP_BROKER_GVISOR_ENABLED
+              value: "{{ .Values.broker.gvisorEnabled }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
@@ -220,6 +224,8 @@ spec:
               value: {{ .Values.gardener.project }}
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
+            - name: APP_GVISOR_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.gvisorWhitelistedGlobalAccountIds }}
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ join "," .Values.hap.multiHyperscalerAccount.allowedGlobalAccounts }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_ALICLOUD
@@ -264,6 +270,8 @@ spec:
               value: "{{ .Values.kymaDashboardConfig.landscapeURL }}"
             - name: APP_MACHINES_AVAILABILITY_ENDPOINT
               value: "{{ .Values.machinesAvailabilityEndpoint }}"
+            - name: APP_MAX_PODS_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.maxPodsWhitelistedGlobalAccountIds }}
             - name: APP_METRICS_AVAILABLE_CREDENTIALS_BINDINGS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.availableCredentialsBindingsPollingInterval }}"
             - name: APP_METRICS_CREDENTIALS_BINDINGS_POLLING_INTERVAL
@@ -310,8 +318,6 @@ spec:
               value: "{{ .Values.cis.entitlements.serviceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.quotaWhitelistedSubaccountIds }}
-            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
-              value: {{ .Values.configPaths.regionsSupportingMachine }}
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH

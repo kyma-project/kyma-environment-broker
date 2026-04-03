@@ -61,8 +61,11 @@ type (
 	}
 
 	ConfigurationProvider interface {
-		RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error)
 		ZonesDiscovery(cp pkg.CloudProvider) bool
+		IsRegionSupported(cp pkg.CloudProvider, region, machineType string) bool
+		SupportedRegions(cp pkg.CloudProvider, machineType string) []string
+		AvailableZones(cp pkg.CloudProvider, machineType, region string) []string
+		ResolveMachineType(cp pkg.CloudProvider, machineType string) string
 	}
 
 	QuotaClient interface {
@@ -87,6 +90,7 @@ type ProvisionEndpoint struct {
 	kcBuilder       kubeconfig.KcBuilder
 
 	freemiumWhiteList whitelist.Set
+	gvisorWhitelist   whitelist.Set
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
@@ -109,6 +113,7 @@ const (
 	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
 	maskedKubeconfig                                   = "*****"
+	GvisorNotAvailableForAccountMsg                    = "The gvisor parameter is not available for your account. Please contact us for further assistance."
 )
 
 func NewProvision(brokerConfig Config,
@@ -121,6 +126,7 @@ func NewProvision(brokerConfig Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
+	gvisorWhitelist whitelist.Set,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
 	valuesProvider ValuesProvider,
@@ -152,6 +158,7 @@ func NewProvision(brokerConfig Config,
 		shootDnsProviders:                    gardenerConfig.DNSProviders,
 		dashboardConfig:                      dashboardConfig,
 		freemiumWhiteList:                    freemiumWhitelist,
+		gvisorWhitelist:                      gvisorWhitelist,
 		kcBuilder:                            kcBuilder,
 		providerSpec:                         providerSpec,
 		valuesProvider:                       valuesProvider,
@@ -383,9 +390,17 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
+	err = b.validateACL(provisioningParameters)
+	if err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
 
 	if err := validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, logger); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := b.validateGvisorAccess(parameters, provisioningParameters.ErsContext.GlobalAccountID); err != nil {
+		return err
 	}
 
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
@@ -407,7 +422,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		logger.Info("EU Access restricted instance creation")
 	}
 
-	if err = b.validateTrialPlanContraints(details, parameters, provisioningParameters, logger); err != nil {
+	if err = b.validateTrialPlanConstraints(details, parameters, provisioningParameters, logger); err != nil {
 		return err
 	}
 
@@ -419,9 +434,13 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 }
 
 func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) error {
-	regionsSupportingMachine, err := b.regionsSupportingMachine(values, parameters)
-	if err != nil {
-		return err
+	if !b.providerSpec.IsRegionSupported(pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+		return fmt.Errorf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(parameters.Region),
+			valueOfPtr(parameters.MachineType),
+			strings.Join(b.providerSpec.SupportedRegions(pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.MachineType)), ", "),
+		)
 	}
 
 	discoveredZones, err := b.getDiscoveredZones(ctx, values, parameters, logger, provisioningParameters)
@@ -429,9 +448,10 @@ func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Contex
 		return err
 	}
 
-	if err = b.validateAddtionalWorkerNodePools(parameters, details, provisioningParameters, regionsSupportingMachine, logger, values, discoveredZones); err != nil {
+	if err = b.validateAdditionalWorkerNodePools(parameters, details, provisioningParameters, values, discoveredZones); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -447,23 +467,7 @@ func (b *ProvisionEndpoint) validateColocate(ctx context.Context, details domain
 	return nil
 }
 
-func (b *ProvisionEndpoint) regionsSupportingMachine(values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) (internal.RegionsSupporter, error) {
-	regionsSupportingMachine, err := b.providerSpec.RegionSupportingMachine(values.ProviderType)
-	if err != nil {
-		return nil, fmt.Errorf("while obtaining regions supporting machine: %w", err)
-	}
-	if !regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
-		return nil, fmt.Errorf(
-			"In the region %s, the machine type %s is not available, it is supported in the %v",
-			valueOfPtr(parameters.Region),
-			valueOfPtr(parameters.MachineType),
-			strings.Join(regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
-		)
-	}
-	return regionsSupportingMachine, nil
-}
-
-func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.ProvisionDetails, parameters pkg.ProvisioningParametersDTO, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
+func (b *ProvisionEndpoint) validateTrialPlanConstraints(details domain.ProvisionDetails, parameters pkg.ProvisioningParametersDTO, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
 	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
 		_, valid := validRegionsForTrial[TrialCloudRegion(*parameters.Region)]
 		if !valid {
@@ -481,6 +485,17 @@ func (b *ProvisionEndpoint) validateTrialPlanContraints(details domain.Provision
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
+	}
+	return nil
+}
+
+func (b *ProvisionEndpoint) validateGvisorAccess(parameters pkg.ProvisioningParametersDTO, globalAccountID string) error {
+	enabled := gvisorToBool(parameters.Gvisor)
+	for _, pool := range parameters.AdditionalWorkerNodePools {
+		enabled = enabled || gvisorToBool(pool.Gvisor)
+	}
+	if enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
+		return apiresponses.NewFailureResponse(errors.New(GvisorNotAvailableForAccountMsg), http.StatusBadRequest, GvisorNotAvailableForAccountMsg)
 	}
 	return nil
 }
@@ -569,10 +584,11 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			return nil, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
+
 	return discoveredZones, nil
 }
 
-func (b *ProvisionEndpoint) validateAddtionalWorkerNodePools(parameters pkg.ProvisioningParametersDTO, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, regionsSupportingMachine internal.RegionsSupporter, l *slog.Logger, values internal.ProviderValues, discoveredZones map[string]int) error {
+func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.ProvisioningParametersDTO, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, values internal.ProviderValues, discoveredZones map[string]int) error {
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
@@ -585,34 +601,35 @@ func (b *ProvisionEndpoint) validateAddtionalWorkerNodePools(parameters pkg.Prov
 		}
 
 		if IsExternalLicenseType(provisioningParameters.ErsContext) {
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
+			if err := checkGPUMachinesUsage(b.providerSpec, pkg.CloudProviderFromString(values.ProviderType), parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 
-		if err := checkUnsupportedMachines(regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
+		if err := checkUnsupportedMachines(b.providerSpec, pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 
 		if err := checkAutoScalerConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
+
 		if err := checkTaintsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
 		if err := checkAvailableZones(
-			l,
-			regionsSupportingMachine,
+			b.providerSpec,
+			pkg.CloudProviderFromString(values.ProviderType),
 			parameters.AdditionalWorkerNodePools,
 			valueOfPtr(parameters.Region),
-			details.PlanID,
 			b.providerSpec.ZonesDiscovery(pkg.CloudProviderFromString(values.ProviderType)),
 			discoveredZones,
 		); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
+
 	return nil
 }
 
@@ -664,7 +681,7 @@ func IsExternalLicenseType(ersContext internal.ERSContext) bool {
 	return *ersContext.ExternalLicenseType()
 }
 
-func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkGPUMachinesUsage(providerSpec ConfigurationProvider, provider pkg.CloudProvider, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	var GPUMachines = []string{
 		"g2-standard",
 		"g6",
@@ -677,7 +694,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 
 	for _, pool := range additionalWorkerNodePools {
 		for _, GPUMachine := range GPUMachines {
-			if strings.HasPrefix(pool.MachineType, GPUMachine) {
+			if strings.HasPrefix(providerSpec.ResolveMachineType(provider, pool.MachineType), GPUMachine) {
 				if _, exists := usedGPUMachines[pool.MachineType]; !exists {
 					orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
 				}
@@ -705,12 +722,12 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.CloudProvider, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	unsupportedMachines := make(map[string][]string)
 	var orderedMachineTypes []string
 
 	for _, pool := range additionalWorkerNodePools {
-		if !regionsSupportingMachine.IsSupported(region, pool.MachineType) {
+		if !providerSpec.IsRegionSupported(provider, region, pool.MachineType) {
 			if _, exists := unsupportedMachines[pool.MachineType]; !exists {
 				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
 			}
@@ -729,7 +746,7 @@ func checkUnsupportedMachines(regionsSupportingMachine internal.RegionsSupporter
 		if i > 0 {
 			errorMsg.WriteString("; ")
 		}
-		availableRegions := strings.Join(regionsSupportingMachine.SupportedRegions(machineType), ", ")
+		availableRegions := strings.Join(providerSpec.SupportedRegions(provider, machineType), ", ")
 		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
 	}
 
@@ -775,10 +792,10 @@ func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 }
 
 func checkAvailableZones(
-	log *slog.Logger,
-	regionsSupportingMachine internal.RegionsSupporter,
+	providerSpec ConfigurationProvider,
+	provider pkg.CloudProvider,
 	additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	region, planID string,
+	region string,
 	zonesDiscovery bool,
 	discoveredZones map[string]int,
 ) error {
@@ -797,11 +814,7 @@ func checkAvailableZones(
 				HAUnavailableMachines[additionalWorkerNodePool.MachineType] = append(HAUnavailableMachines[additionalWorkerNodePool.MachineType], additionalWorkerNodePool.Name)
 			}
 		} else {
-			zones, err := regionsSupportingMachine.AvailableZonesForAdditionalWorkers(additionalWorkerNodePool.MachineType, region, planID)
-			if err != nil {
-				log.Error(fmt.Sprintf("while getting available zones: %v", err))
-				return errors.New(FailedToValidateZonesMsg)
-			}
+			zones := providerSpec.AvailableZones(provider, additionalWorkerNodePool.MachineType, region)
 			if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
 				if _, exists := HAUnavailableMachines[additionalWorkerNodePool.MachineType]; !exists {
 					orderedMachineTypes = append(orderedMachineTypes, additionalWorkerNodePool.MachineType)
@@ -895,20 +908,6 @@ func (b *ProvisionEndpoint) createDashboardURL(planID, instanceID string) string
 	return fmt.Sprintf("%s/?kubeconfigID=%s", b.dashboardConfig.LandscapeURL, instanceID)
 }
 
-func validateCidr(cidr string) (*net.IPNet, error) {
-	ip, ipNet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return nil, err
-	}
-	// find cases like: 10.250.0.1/19
-	if ipNet != nil {
-		if !ipNet.IP.Equal(ip) {
-			return nil, fmt.Errorf("%s must be valid canonical CIDR", ip)
-		}
-	}
-	return ipNet, nil
-}
-
 func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParametersDTO) error {
 	var err, e error
 	if len(parameters.Zones) > 4 {
@@ -920,7 +919,7 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	var nodes, services, pods *net.IPNet
-	if nodes, e = validateCidr(parameters.Networking.NodesCidr); e != nil {
+	if nodes, e = networking.ValidateCidr(parameters.Networking.NodesCidr); e != nil {
 		err = multierror.Append(err, fmt.Errorf("while parsing nodes CIDR: %w", e))
 	}
 	// error is handled before, in the validate CIDR
@@ -931,14 +930,14 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	if parameters.Networking.PodsCidr != nil {
-		if pods, e = validateCidr(*parameters.Networking.PodsCidr); e != nil {
+		if pods, e = networking.ValidateCidr(*parameters.Networking.PodsCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("while parsing pods CIDR: %w", e))
 		}
 	} else {
 		_, pods, _ = net.ParseCIDR(networking.DefaultPodsCIDR)
 	}
 	if parameters.Networking.ServicesCidr != nil {
-		if services, e = validateCidr(*parameters.Networking.ServicesCidr); e != nil {
+		if services, e = networking.ValidateCidr(*parameters.Networking.ServicesCidr); e != nil {
 			err = multierror.Append(err, fmt.Errorf("while parsing services CIDR: %w", e))
 		}
 	} else {
@@ -1021,6 +1020,15 @@ func (b *ProvisionEndpoint) filterOutUnsupportedSeedRegions(supportedRegions, se
 		}
 	}
 	return supportedSeedRegions
+}
+
+func (b *ProvisionEndpoint) validateACL(parameters internal.ProvisioningParameters) error {
+	params := parameters.Parameters
+	if !b.config.IsACLEnabledForPlanName(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(parameters.PlanID))) && params.AccessControlList != nil {
+		return apiresponses.NewFailureResponse(errors.New("AccessControlList is not supported for this plan"), http.StatusBadRequest, "AccessControlList is not supported for this plan")
+	}
+
+	return params.AccessControlList.Validate()
 }
 
 func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {

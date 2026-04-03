@@ -4,6 +4,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
+| **APP_BROKER_ACL_&#x200b;ENABLED_PLANS** | <code>no-plan</code> | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
@@ -20,6 +21,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users. |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. |
+| **APP_BROKER_GVISOR_&#x200b;ENABLED** | <code>false</code> | If true, includes the gVisor container runtime property in every plan schema. |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. |
 | **APP_BROKER_ONLY_&#x200b;SINGLE_TRIAL_PER_GA** | <code>true</code> | If true, restricts each global account to only one active trial Kyma runtime at a time. When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned. |
@@ -52,6 +54,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_GARDENER_&#x200b;KUBECONFIG_PATH** | <code>/gardener/kubeconfig/kubeconfig</code> | Path to the kubeconfig file for accessing the Gardener cluster. |
 | **APP_GARDENER_PROJECT** | <code>kyma-dev</code> | Gardener project connected to SA for HAP credentials lookup. |
 | **APP_GARDENER_SHOOT_&#x200b;DOMAIN** | <code>kyma-dev.shoot.canary.k8s-hana.ondemand.com</code> | Default domain for shoots (clusters) created by Gardener. |
+| **APP_GVISOR_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/gvisorWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use the gVisor container runtime. |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;ALLOWED_GLOBAL_&#x200b;ACCOUNTS** | <code>[]</code> | Assigns multiple hyperscaler accounts per global account when capacity limits are reached - Empty array [] = feature disabled - Specific GAs = enabled only for listed global accounts - ["*"] = enabled for all global accounts |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_ALICLOUD** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AWS** | <code>999999</code> | - |
@@ -74,6 +77,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |
 | **APP_MACHINES_&#x200b;AVAILABILITY_&#x200b;ENDPOINT** | <code>false</code> | If true, the broker exposes the API endpoint that returns the availability of machine types. |
+| **APP_MAX_PODS_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/maxPodsWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. |
 | **APP_METRICS_&#x200b;AVAILABLE_&#x200b;CREDENTIALS_&#x200b;BINDINGS_POLLING_&#x200b;INTERVAL** | <code>1h</code> | Frequency of polling for available credentials bindings in Gardener. |
 | **APP_METRICS_&#x200b;CREDENTIALS_&#x200b;BINDINGS_POLLING_&#x200b;INTERVAL** | <code>1m</code> | Frequency of polling for credentials binding instance counts. |
 | **APP_METRICS_ENABLED** | <code>false</code> | If true, enables metrics collection and Prometheus exposure. |
@@ -93,7 +97,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_QUOTA_RETRIES** | <code>5</code> | The number of retry attempts made when the Entitlements API request fails. |
 | **APP_QUOTA_SERVICE_&#x200b;URL** | <code>TBD</code> | The base URL of the CIS Entitlements API endpoint, used for fetching quota assignments. |
 | **APP_QUOTA_&#x200b;WHITELISTED_&#x200b;SUBACCOUNTS_FILE_&#x200b;PATH** | <code>/config/quotaWhitelistedSubaccountIds.yaml</code> | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. |
-| **APP_REGIONS_&#x200b;SUPPORTING_MACHINE_&#x200b;FILE_PATH** | <code>/config/regionsSupportingMachine.yaml</code> | Path to the list of regions that support machine-type selection. |
 | **APP_RUNTIME_&#x200b;CONFIGURATION_&#x200b;CONFIG_MAP_NAME** | None | Name of the ConfigMap with the default KymaCR template. |
 | **APP_SKR_DNS_&#x200b;PROVIDERS_VALUES_&#x200b;YAML_FILE_PATH** | <code>/config/skrDNSProvidersValues.yaml</code> | Path to the DNS providers values. |
 | **APP_SKR_OIDC_&#x200b;DEFAULT_VALUES_YAML_&#x200b;FILE_PATH** | <code>/config/skrOIDCDefaultValues.yaml</code> | Path to the default OIDC values. |

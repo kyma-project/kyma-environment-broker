@@ -152,6 +152,63 @@ func TestProvisioningForAWS(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 }
 
+func TestProvisioningWithACL(t *testing.T) {
+	cfg := fixConfig()
+	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.0/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceLabels(opID)
+
+	// test validation
+	resp1 := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s-e?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"accessControlList": {
+                            "allowedCIDRs": ["1.2.3.333/24"]
+                        }
+					}
+		}`)
+	defer func() { _ = resp1.Body.Close() }()
+	assert.Equal(t, http.StatusBadRequest, resp1.StatusCode)
+}
+
 func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.AllowedGlobalAccounts = []string{"g-account-id"}
@@ -3552,6 +3609,114 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		// then - verify multi-account logic was applied (should use at least 2 different bindings with limit=2)
 		suite.verifyMultiAccountBehavior(t, instanceIDs, 2,
 			"Wildcard allowed global accounts should enable multi-account for any GA - expected at least 2 bindings with limit=2")
+	})
+}
+
+func TestProvisioningWithMaxPods(t *testing.T) {
+	t.Run("whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "m6i.large",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "m5.large",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByInstanceID(iid)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Equal(t, int32(250), *runtime.Spec.Shoot.Provider.Workers[0].Kubernetes.Kubelet.MaxPods)
+		for _, additionalWorker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			assert.Equal(t, int32(250), *additionalWorker.Kubernetes.Kubelet.MaxPods)
+		}
+	})
+
+	t.Run("not whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "not-whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "m6i.large",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "m5.large",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByInstanceID(iid)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		require.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Kubernetes)
+		for _, additionalWorker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			require.Nil(t, additionalWorker.Kubernetes)
+		}
 	})
 }
 

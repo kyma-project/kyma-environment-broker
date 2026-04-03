@@ -1,5 +1,10 @@
 package networking
 
+import (
+	"fmt"
+	"net"
+)
+
 const (
 	DefaultNodesCIDR    = "10.250.0.0/16"
 	DefaultPodsCIDR     = "10.96.0.0/13"
@@ -7,3 +12,17 @@ const (
 )
 
 var GardenerSeedCIDRs = []string{"10.243.128.0/17", "10.242.0.0/16", "10.243.0.0/17", "10.64.0.0/11", "10.254.0.0/16", "10.243.0.0/16", "192.168.123.0/24", "240.0.0.0/8"}
+
+func ValidateCidr(cidr string) (*net.IPNet, error) {
+	ip, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return nil, err
+	}
+	// find cases like: 10.250.0.1/19
+	if ipNet != nil {
+		if !ipNet.IP.Equal(ip) {
+			return nil, fmt.Errorf("%s must be valid canonical CIDR", ip)
+		}
+	}
+	return ipNet, nil
+}
