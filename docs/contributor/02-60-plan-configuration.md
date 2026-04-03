@@ -22,7 +22,7 @@ If a plan is not defined in KEB, an error is logged during Rules Service initial
 Provisioning fails only after you attempt to create a cluster. Each attempt fails with the log message: `No valid ruleset or empty valid ruleset`.
 
 Update operations are not affected by the **enablePlans** property, so if a plan is disabled after provisioning, update operations for existing instances of that plan still work.
-If update operation change plan to a disabled plan, it is allowed. To prevent this, you can use the **upgradableToPlans** property in the plan configuration, which defines allowed plan changes. For example:
+Updating the plan to a disabled plan is allowed. To prevent this, use the **upgradableToPlans** property in the plan configuration to allow updates only to enabled plans. For example:
 
 If you want to prevent creation of new instances of a plan, disregarding whether you use provisioning or update operation, you need to remove the plan from the **enablePlans** list
 and remove all occurrences of the plan from the **upgradableToPlans** list of other plans.
