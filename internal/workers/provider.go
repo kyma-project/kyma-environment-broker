@@ -73,7 +73,17 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		machineType := p.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(values.ProviderType), additionalWorkerNodePool.MachineType)
 		if exists && !slices.Contains(newOrUpdatedWorkers, additionalWorkerNodePool.Name) {
 			machineType = currentAdditionalWorker.Machine.Type
+			log.Info(fmt.Sprintf(
+				"Reusing existing machine type for unchanged additional worker node pool %s: %s",
+				additionalWorkerNodePool.Name,
+				machineType,
+			))
 		}
+		log.Info(fmt.Sprintf(
+			"Resolved machine type for additional worker node pool %s: %s",
+			additionalWorkerNodePool.Name,
+			machineType,
+		))
 
 		worker := gardener.Worker{
 			Name: additionalWorkerNodePool.Name,
