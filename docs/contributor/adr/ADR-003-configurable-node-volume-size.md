@@ -375,7 +375,7 @@ The migration is executed in four ordered steps:
 
 **Cons:**
 - User communication may be needed.
-- SRE involvement may be needed.
+- SRE involvement is required.
 - A maintenance window may be needed to roll out this change.
 - External KCP operators have additional work to do.
 - KEB needs a second feaure flag for only exposing the new parameter.
