@@ -257,6 +257,9 @@ func main() {
 		fatalOnError(fmt.Errorf("AvailablePlans is not initialized properly"), log)
 	}
 
+	err = cfg.Broker.Validate()
+	fatalOnError(err, log)
+
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
