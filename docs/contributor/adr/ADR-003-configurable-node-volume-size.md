@@ -361,15 +361,24 @@ The problem is that if KEB automatically applies the new computed volume size du
 
 ### Option A: Cloud Orchestrator
 
-SRE uses Cloud Orchestrator to update the voluem size in RuntimeCRs
+The migration is executed in four ordered steps:
+
+1. **KCR adds default disk sizes to the ConfigMap.** KCR extends their ConfigMap with a `default disk size` entry for every supported machine type.
+2. **KEB deploys with `kcrConfigMapEnabled: true`.** From this point, all newly provisioned clusters and worker pools receive the new computed default volume size. Update operations that change the machine type also apply the new volume size. Update operations that do not change the machine type, such as autoscaler adjustments, leave the existing volume size unchanged. Steps 2 and 3 are coordinated and executed together. KEB is deployed with `kcrConfigMapEnabled: true` immediately before Cloud Orchestrator is started.
+3. **SRE updates existing RuntimeCRs via Cloud Orchestrator.** SRE runs Cloud Orchestrator that applies the new computed volume size to the main and additional worker pool spec of every remaining RuntimeCR.
+4. **KEB exposes `additionalVolumeGb` configuration.** Only after all existing clusters have been updated to the new default volume size KEB enables a second feature flag that exposes the `additionalVolumeGb` parameter to users.
 
 **Pros:**
 - No user action required.
-- Maintenance window gating avoids unexpected disruption.
+- Clean cutoff from the old default size.
+- All users immediately receive the new, larger free default volume size.
 
 **Cons:**
-- User communication is mandatory.
-- More work for external operators.
+- User communication may be needed.
+- SRE involvement may be needed.
+- A maintenance window may be needed to roll out this change.
+- External KCP operators have additional work to do.
+- KEB needs a second feaure flag for only exposing the new parameter.
 
 ### Option B: Agnostic machine name cutover
 
