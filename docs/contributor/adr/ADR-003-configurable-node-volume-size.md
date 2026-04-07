@@ -14,6 +14,7 @@
     - [Option B: Chart defines an empty ConfigMap, KEB populates it at startup](#option-b-chart-defines-an-empty-configmap-keb-populates-it-at-startup)
     - [Option C: Use the existing ConfigMap owned by KCR](#option-c-use-the-existing-configmap-owned-by-kcr)
   - [Sub-approach 2: Extend the RuntimeCR](#sub-approach-2-extend-the-runtimecr)
+- [Implementation Decision](#implementation-decision)
 - [Migration of Existing Clusters](#migration-of-existing-clusters)
   - [Option A: Cloud Orchestrator](#option-a-cloud-orchestrator)
   - [Option B: Agnostic machine name cutover](#option-b-agnostic-machine-name-cutover)
@@ -298,10 +299,16 @@ The ConfigMap already contains all supported machine types. The default volume s
 
 **Startup and validation behaviour:**
 
-`kcrConfigMapEnabled` (default: `false`) — when `false`, KEB ignores the ConfigMap entirely and always uses the plan default. When `true`, KEB panics at startup if the ConfigMap is missing, and any provisioning or update request where the machine type or its disk size is not found in the ConfigMap fails immediately.
+`kcrConfigMapEnabled` (default: `false`) — when `false`, KEB ignores the ConfigMap entirely and always uses the plan default. When `true`, KEB panics at startup if any of the following conditions are met:
+
+- The ConfigMap itself is missing.
+- A machine type supported by KEB is missing from the ConfigMap.
+- A machine type supported by KEB is present in the ConfigMap but its `default volume size` entry is missing.
+
+Any provisioning or update request where the machine type or its disk size is not found in the ConfigMap also fails immediately.
 
 - On each provisioning or update request that changes the machine type, KEB looks up the machine type in the ConfigMap. If the machine type is not found, or is found but its disk size entry is missing, KEB fails the operation.
-- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports **must** be present in the ConfigMap when `kcrConfigMapEnabled` is `true`.
+- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports **must** be present in the ConfigMap with a valid `default volume size` value when `kcrConfigMapEnabled` is `true`.
 
 **Pros:**
 - Single source of truth shared by KEB and KCR.
@@ -312,7 +319,7 @@ The ConfigMap already contains all supported machine types. The default volume s
 - KEB has a new dependency on KCR.
 
 **Deployment plan:**
-1. KCR extends their ConfigMap to include the default volume size for every supported machine type.
+1. KCR extends their ConfigMap to include the default volume size for every supported machine type. From this point, KCR begins using the new default values in its billing calculations. During the transition period, before KEB starts provisioning clusters with the new default sizes, some existing clusters will have an actual disk size smaller than the new default (for example, 80 GiB on disk versus a new default of 148 GiB). This means KCR may observe that a cluster has less volume than the default defined in the ConfigMap. This behaviour is expected, as existing clusters must migrate to the new default volume size.
 2. Once KCR has confirmed that all machine types used by KEB are present in the ConfigMap, KEB is deployed with `kcrConfigMapEnabled: true`. From this point, KEB panics at startup if the ConfigMap is missing, and provisioning or update operations that request a machine type not present in the ConfigMap, or whose disk size entry is missing, are failed immediately.
 
 
@@ -341,6 +348,10 @@ In this example, the default size is 80 GiB and the user requested 20 GiB of add
 - The RuntimeCR CRD must be extended.
 - 3 teams involved in implementation.
 - Less information available for KCR.
+
+## Implementation Decision
+
+**Sub-approach 1, Option C** is chosen: KEB reads the default volume sizes from the existing ConfigMap owned by KCR. No new ConfigMap is introduced. KCR extends their ConfigMap with a `default disk size` field per machine type, and KEB reads that value at provisioning and update time.
 
 ## Migration of Existing Clusters
 
