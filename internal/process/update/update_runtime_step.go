@@ -14,13 +14,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-	"golang.org/x/exp/slices"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -73,24 +71,17 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	// Update the runtime
 
-	if slices.Contains(operation.NewOrUpdatedWorkers, internal.KymaWorkerName) {
-		oldType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
-
-		newType := s.providerSpec.ResolveMachineType(
+	newMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.UpdatingParameters.MachineType)
+	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
+	if newMachineType != oldMachineType {
+		log.Info(fmt.Sprintf("Machine type updated for Kyma worker: %s -> %s", oldMachineType, newMachineType))
+		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = s.providerSpec.ResolveMachineType(
 			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
-			provisioning.DefaultIfParamNotSet(
-				oldType,
-				operation.UpdatingParameters.MachineType,
-			),
+			newMachineType,
 		)
-
-		if oldType != newType {
-			log.Info(fmt.Sprintf("Machine type updated for cpu-worker-0: %s -> %s", oldType, newType))
-		} else {
-			log.Info(fmt.Sprintf("Machine type unchanged for cpu-worker-0: %s", oldType))
-		}
-
-		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = newType
+		log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+	} else {
+		log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 	}
 
 	runtime.Spec.Shoot.Provider.Workers[0].Minimum = int32(provisioning.DefaultIfParamNotSet(int(runtime.Spec.Shoot.Provider.Workers[0].Minimum), operation.UpdatingParameters.AutoScalerMin))
@@ -114,7 +105,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		currentAdditionalWorkers := s.getCurrentAdditionalWorkers(runtime)
 
 		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
-			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, operation.NewOrUpdatedWorkers, log)
+			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, &operation, log)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
 		}

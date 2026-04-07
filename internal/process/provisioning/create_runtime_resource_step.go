@@ -208,7 +208,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		Type: values.ProviderType,
 		Workers: []gardener.Worker{
 			{
-				Name: internal.KymaWorkerName,
+				Name: "cpu-worker-0",
 				Machine: gardener.Machine{
 					Type: s.providerSpec.ResolveMachineType(
 						pkg.CloudProviderFromString(values.ProviderType),
@@ -238,7 +238,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	provider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
 
 	additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools,
-		values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, operation.NewOrUpdatedWorkers, log)
+		values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, operation, log)
 	if err != nil {
 		return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
 	}

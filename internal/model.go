@@ -15,10 +15,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
-const (
-	KymaWorkerName = "cpu-worker-0"
-)
-
 type EventHub struct {
 	Deleted bool `json:"event_hub_deleted"`
 }
@@ -158,8 +154,8 @@ type Operation struct {
 	// DiscoveredZones stores availability zones per machine type, resolved at runtime
 	DiscoveredZones map[string][]string `json:"discovered_zones"`
 
-	// NewOrUpdatedWorkers lists workers that require a machine type update
-	NewOrUpdatedWorkers []string `json:"new_or_updated_workers"`
+	// PreviousParameters stores the instance parameters before the update
+	PreviousParameters ProvisioningParameters `json:"previous_parameters"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)
