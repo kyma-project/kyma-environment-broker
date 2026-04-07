@@ -18,8 +18,7 @@ enablePlans: "trial,aws,gcp"
 This setting affects the services catalog, so only enabled plans are visible in it and can be used for provisioning.
 Moreover, if provisioning is triggered with a plan that is not enabled, it fails during schema validation with the message "plan-id not in the catalog".
 
-If a plan is not defined in KEB, an error is logged during Rules Service initialization, but KEB still starts and runs without issues. 
-Provisioning fails only after you attempt to create a cluster. Each attempt fails with the log message: `No valid ruleset or empty valid ruleset`.
+If a plan is not defined in KEB, KEB startup fails with the log message: `unrecognized <undefined-plan-name> plan name`. 
 
 Update operations are not affected by the **enablePlans** property, so if a plan is disabled after provisioning, update operations for existing instances of that plan still work.
 Updating the plan to a disabled plan is allowed. To prevent this, use the **upgradableToPlans** property in the plan configuration to allow updates only to enabled plans. For example:
