@@ -52,3 +52,76 @@ sap-converged-cloud:
 	assert.False(t, spec.IsUpgradableBetween("plan1", "plan3-bis"))
 	assert.False(t, spec.IsUpgradableBetween("plan1-not-existing", "plan2"))
 }
+
+func TestPlanConfigurationWithBlocklist(t *testing.T) {
+	spec, err := NewPlanSpecifications(strings.NewReader(`
+plan1,plan2:
+        operationBlocklist:
+            provision: '"provisioning is blocked for this plan","GA=id","owner=team-alpha"'
+            update: '"update is blocked for this plan","GA=id2"'
+            planUpgrade: '"plan upgrade is blocked for this plan"'
+            addToSchema: '"adding to schema is blocked for this plan"'
+        regions:
+            cf-eu11:
+                - eu-central-1
+                - eu-west-2
+            default:
+                - eu-central-1
+                - eu-west-1
+                - us-east-1
+plan3:
+        upgradableToPlans: [plan3-bis]
+        regions:
+            cf-eu11:
+                - westeurope
+            default:
+                - japaneast
+                - easteurope
+sap-converged-cloud:
+      regions:
+        cf-eu20:
+          - "eu-de-1"
+`))
+	require.NoError(t, err)
+
+	// blocklist is parsed into a struct and shared across comma-separated plan names
+	for _, planName := range []string{"plan1", "plan2"} {
+		t.Run(planName, func(t *testing.T) {
+			bl := spec.OperationBlocklist(planName)
+			require.NotNil(t, bl)
+
+			assert.Equal(t, "provisioning is blocked for this plan", bl.Provision.Message)
+			assert.Equal(t, map[string]string{"GA": "id", "owner": "team-alpha"}, bl.Provision.Attributes)
+
+			assert.Equal(t, "update is blocked for this plan", bl.Update.Message)
+			assert.Equal(t, map[string]string{"GA": "id2"}, bl.Update.Attributes)
+
+			assert.Equal(t, "plan upgrade is blocked for this plan", bl.PlanUpgrade.Message)
+			assert.Nil(t, bl.PlanUpgrade.Attributes)
+
+			assert.Equal(t, "adding to schema is blocked for this plan", bl.AddToSchema.Message)
+			assert.Nil(t, bl.AddToSchema.Attributes)
+		})
+	}
+
+	// plans without a blocklist return nil
+	assert.Nil(t, spec.OperationBlocklist("plan3"))
+	assert.Nil(t, spec.OperationBlocklist("sap-converged-cloud"))
+	assert.Nil(t, spec.OperationBlocklist("non-existing-plan"))
+}
+
+func TestPlanConfigurationWithBlocklist_MissingMessage(t *testing.T) {
+	for _, entry := range []string{`'""'`, `''`} {
+		t.Run(entry, func(t *testing.T) {
+			_, err := NewPlanSpecifications(strings.NewReader(`
+plan1:
+        operationBlocklist:
+            provision: ` + entry + `
+        regions:
+            default:
+                - eu-central-1
+`))
+			assert.Error(t, err)
+		})
+	}
+}
