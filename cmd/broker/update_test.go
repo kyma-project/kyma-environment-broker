@@ -422,6 +422,172 @@ func TestUpdatePlan(t *testing.T) {
 	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
 }
 
+func TestUpdatePlanToNotEnabled(t *testing.T) {
+	// given
+	config := fixConfig()
+	config.Broker.EnablePlans = []string{"aws"}
+	suite := NewBrokerSuiteTestWithConfig(t, config)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.ServicePlanID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.Parameters.PlanID)
+	assert.Equal(t, "build-runtime-aws", gotInstance.ServicePlanName)
+
+	updateOperation := suite.GetOperation(updateOperationID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", updateOperation.ProvisioningParameters.PlanID)
+
+	suite.AssertRuntimeResourceLabels(updateOperationID)
+	suite.AssertKymaLabelsExist(updateOperationID, map[string]string{
+		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
+		customresources.PlanNameLabel: "build-runtime-aws",
+	})
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, pkg.PlanUpdateActionType)
+	assert.Equal(t, actions[0].Message, "Plan updated from aws (PlanID: 361c511f-f939-4621-b228-d0fb79a1fe15) to build-runtime-aws (PlanID: 6aae0ff3-89f7-4f12-86de-51466145422e).")
+	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
+	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
+}
+
+func TestUpdatePlanToNotAvailable(t *testing.T) {
+	// given
+	config := fixConfig()
+	config.Broker.EnablePlans = []string{"aws"}
+	suite := NewBrokerSuiteTestWithConfig(t, config)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+			}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	gotInstance := suite.GetInstance(iid)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.ServicePlanID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", gotInstance.Parameters.PlanID)
+	assert.Equal(t, "build-runtime-aws", gotInstance.ServicePlanName)
+
+	updateOperation := suite.GetOperation(updateOperationID)
+	assert.Equal(t, "6aae0ff3-89f7-4f12-86de-51466145422e", updateOperation.ProvisioningParameters.PlanID)
+
+	suite.AssertRuntimeResourceLabels(updateOperationID)
+	suite.AssertKymaLabelsExist(updateOperationID, map[string]string{
+		customresources.PlanIdLabel:   "6aae0ff3-89f7-4f12-86de-51466145422e",
+		customresources.PlanNameLabel: "build-runtime-aws",
+	})
+
+	actions, err := suite.db.Actions().ListActionsByInstanceID(iid)
+	assert.NoError(t, err)
+	require.Len(t, actions, 1)
+	assert.Equal(t, actions[0].Type, pkg.PlanUpdateActionType)
+	assert.Equal(t, actions[0].Message, "Plan updated from aws (PlanID: 361c511f-f939-4621-b228-d0fb79a1fe15) to build-runtime-aws (PlanID: 6aae0ff3-89f7-4f12-86de-51466145422e).")
+	assert.Equal(t, actions[0].OldValue, "361c511f-f939-4621-b228-d0fb79a1fe15")
+	assert.Equal(t, actions[0].NewValue, "6aae0ff3-89f7-4f12-86de-51466145422e")
+}
+
 func TestUpdateFailedInstance(t *testing.T) {
 	// given
 	cfg := fixConfig()
