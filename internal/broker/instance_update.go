@@ -479,7 +479,7 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 	}
 
 	if IsExternalLicenseType(ersContext) {
-		if err := checkGPUMachinesUsage(b.providerSpec, pkg.CloudProviderFromString(providerValues.ProviderType), params.AdditionalWorkerNodePools); err != nil {
+		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
