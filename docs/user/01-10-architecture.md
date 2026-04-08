@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Kyma Environment Broker Architecture
 
 ![KEB architecture](../assets/keb-arch.drawio.svg)

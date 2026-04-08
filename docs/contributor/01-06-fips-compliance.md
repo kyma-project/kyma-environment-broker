@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # FIPS 140-3 Compliance
 
 This document describes the current FIPS 140-3 compliance of Kyma Environment Broker (KEB).

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Check SAP BTP, Kyma Runtime Instance Details
 
 Get the SAP BTP, Kyma runtime instance details.

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Deprovision Retrigger CronJob
 
 Deprovision Retrigger CronJob is a Job that attempts to deprovision a SAP BTP, Kyma runtime instance again.

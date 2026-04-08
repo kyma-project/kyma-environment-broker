@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Kyma Environment Broker Metrics
 
 Kyma Environment Broker (KEB) metrics are exposed with the `/metrics` endpoint, which is called by Prometheus in a job manner every given duration of
