@@ -175,6 +175,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.gardenerClient,
 		b.awsClientFactory,
 		b.btpRegionsMigrationSapConvergedCloud,
+		nil,
 	)
 }
 

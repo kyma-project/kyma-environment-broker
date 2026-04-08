@@ -28,6 +28,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -97,6 +98,7 @@ type ProvisionEndpoint struct {
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           ConfigurationProvider
+	planSpec               *configuration.PlanSpecifications
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
@@ -137,6 +139,7 @@ func NewProvision(brokerConfig Config,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
 	btpRegionsMigrationSapConvergedCloud map[string]string,
+	planSpec *configuration.PlanSpecifications,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -164,6 +167,7 @@ func NewProvision(brokerConfig Config,
 		valuesProvider:                       valuesProvider,
 		schemaService:                        schemaService,
 		providerConfigProvider:               providerConfigProvider,
+		planSpec:                             planSpec,
 		quotaClient:                          quotaClient,
 		quotaWhitelist:                       quotaWhitelist,
 		rulesService:                         rulesService,
@@ -190,6 +194,14 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if !found {
 		err := fmt.Errorf("%s", "No provider specified in request.")
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
+	}
+
+	if b.planSpec != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if bl := b.planSpec.OperationBlocklist(planName); bl != nil && bl.Provision.Message != "" {
+			err := fmt.Errorf("%s", bl.Provision.Message)
+			return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "provisioning blocked for the plan")
+		}
 	}
 
 	// EXTRACT INPUT PARAMETERS / PROVISIONING PARAMETERS
