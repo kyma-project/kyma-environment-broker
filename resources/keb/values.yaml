@@ -221,6 +221,8 @@ configPaths:
   maxPodsWhitelistedGlobalAccountIds: "/config/maxPodsWhitelistedGlobalAccountIds.yaml"
   # Path to the list of global account IDs that are allowed to use the gVisor container runtime.
   gvisorWhitelistedGlobalAccountIds: "/config/gvisorWhitelistedGlobalAccountIds.yaml"
+  # Path to the list of global account IDs that are allowed to use Open Shell.
+  openShellWhitelistedGlobalAccountIds: "/config/openShellWhitelistedGlobalAccountIds.yaml"
   # Path to the rules for mapping plans and regions to hyperscaler account pools.
   hapRule: "/config/hapRule.yaml"
   # Path to the plans configuration file, which defines available service plans.
@@ -253,6 +255,10 @@ freemiumWhitelistedGlobalAccountIds: |-
 # List of global account IDs that are allowed to use an increased maximum number of Pods.
 # For accounts listed here, the maximum number of Pods in all worker node pools is set to 250.
 maxPodsWhitelistedGlobalAccountIds: |-
+  whitelist:
+
+# List of global account IDs that are allowed to use Open Shell.
+openShellWhitelistedGlobalAccountIds: |-
   whitelist:
 
 # List of global account IDs that are allowed to use the gVisor container runtime.
