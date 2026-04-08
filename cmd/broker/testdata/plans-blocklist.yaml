@@ -7,40 +7,61 @@ sap-converged-cloud:
     cf-eu20: ["eu-de-1"]
     default: ["eu-de-1"]
 
-gcp,build-runtime-gcp:
+gcp:
   volumeSizeGb: 80
-  regularMachines:
+  upgradableToPlans:
+    - build-runtime-gcp
+  regularMachines: &gcp_regular_machines
     - "n2-standard-2"
     - "n2-standard-4"
-  additionalMachines:
+  additionalMachines: &gcp_additional_machines
     - "c2d-highcpu-2"
     - "c2d-highcpu-4"
-  regions:
+  regions: &gcp_regions
     default:
       - "europe-west3"
       - "us-central1"
 
-preview,aws,build-runtime-aws:
-  upgradableToPlans:
-    - build-runtime-aws
+build-runtime-gcp:
+  volumeSizeGb: 80
+  operationBlocklist:
+    planUpgrade: '"upgrading to build-runtime-gcp is blocked"'
+  regularMachines: *gcp_regular_machines
+  additionalMachines: *gcp_additional_machines
+  regions: *gcp_regions
+
+aws:
   volumeSizeGb: 81
-  regularMachines:
+  operationBlocklist:
+    provision: '"aws provisioning is blocked"'
+  regularMachines: &aws_regular_machines
     - "m6i.large"
     - "m6i.xlarge"
     - "m6i.2xlarge"
-  additionalMachines:
+  additionalMachines: &aws_additional_machines
     - "c7i.large"
     - "c7i.xlarge"
-  regions:
+  regions: &aws_regions
     cf-eu11: ["eu-central-1"]
     default: ["eu-central-1", "eu-west-2", "us-east-1"]
+
+build-runtime-aws:
+  volumeSizeGb: 81
+  regularMachines: *aws_regular_machines
+  additionalMachines: *aws_additional_machines
+  regions: *aws_regions
+
+preview:
+  volumeSizeGb: 81
+  regularMachines: *aws_regular_machines
+  additionalMachines: *aws_additional_machines
+  regions: *aws_regions
 
 azure:
   volumeSizeGb: 82
   upgradableToPlans:
     - build-runtime-azure
   operationBlocklist:
-    provision: '"azure provisioning is blocked","GA=azure-ga"'
     update: '"azure update is blocked"'
   regularMachines: &azure_regular_machines
     - "Standard_D2s_v5"
@@ -55,8 +76,6 @@ azure:
 
 build-runtime-azure:
   volumeSizeGb: 80
-  operationBlocklist:
-    planUpgrade: '"upgrading to build-runtime-azure is blocked","GA=bra-ga"'
   regularMachines: *azure_regular_machines
   additionalMachines: *azure_additional_machines
   regions: *azure_regions
@@ -89,10 +108,3 @@ trial:
     - "m5.xlarge"
   regions:
     default: ["eu-west-1"]
-
-preview:
-  regularMachines:
-    - "m6i.large"
-  regions:
-    default: ["eu-central-1"]
-
