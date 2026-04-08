@@ -29,15 +29,15 @@ func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configurat
 }
 
 func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string, discoveredZones map[string][]string, log *slog.Logger) ([]gardener.Worker, error) {
+	zones []string, planID string, discoveredZones map[string][]string, operation *internal.Operation, log *slog.Logger) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
-		currentAdditionalWorker, exists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
+		currentAdditionalWorker, workerExists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
 
 		var workerZones []string
-		if exists {
+		if workerExists {
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
@@ -72,7 +72,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		worker := gardener.Worker{
 			Name: additionalWorkerNodePool.Name,
 			Machine: gardener.Machine{
-				Type: additionalWorkerNodePool.MachineType,
+				Type: p.ResolveMachineType(operation, additionalWorkerNodePool, workerExists, currentAdditionalWorker, log),
 				Image: &gardener.ShootMachineImage{
 					Name:    p.imConfig.MachineImage,
 					Version: &p.imConfig.MachineImageVersion,
@@ -100,6 +100,44 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 	}
 
 	return workers, nil
+}
+
+func (p *Provider) ResolveMachineType(
+	operation *internal.Operation,
+	additionalWorkerNodePool pkg.AdditionalWorkerNodePool,
+	workerExists bool,
+	currentAdditionalWorker gardener.Worker,
+	log *slog.Logger,
+) string {
+	if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) {
+		log.Info(fmt.Sprintf(
+			"Reusing existing machine type with version for unchanged additional worker node pool %s: %s",
+			additionalWorkerNodePool.Name,
+			currentAdditionalWorker.Machine.Type,
+		))
+		return currentAdditionalWorker.Machine.Type
+	}
+
+	machineType := p.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(operation.ProviderValues.ProviderType), additionalWorkerNodePool.MachineType)
+	log.Info(fmt.Sprintf(
+		"Resolved machine type with version for additional worker node pool %s: %s",
+		additionalWorkerNodePool.Name,
+		machineType,
+	))
+
+	return machineType
+}
+
+func isAdditionalWorkerPoolUnchanged(
+	operation *internal.Operation,
+	additionalWorkerNodePool pkg.AdditionalWorkerNodePool,
+) bool {
+	for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
+		if prev.Name == additionalWorkerNodePool.Name && prev.MachineType == additionalWorkerNodePool.MachineType {
+			return true
+		}
+	}
+	return false
 }
 
 func ToGardenerCRI(gvisor *pkg.GvisorDTO) *gardener.CRI {

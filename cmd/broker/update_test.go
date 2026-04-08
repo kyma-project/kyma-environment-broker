@@ -4970,3 +4970,85 @@ func TestUpdateWithMaxPods(t *testing.T) {
 		}
 	})
 }
+
+func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
+	// given
+	cfg := fixConfig()
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"machineType": "mi.large",
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "ri.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								}
+							]
+						}
+   			}`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	// OSB update:
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"machineType": "mi.16xlarge",
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "ri.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "name-2",
+									"machineType": "ri.16xlarge",
+									"haZones": false,
+									"autoScalerMin": 4,
+									"autoScalerMax": 21
+								}
+							]
+						}
+   			}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	upgradeOperationID := suite.DecodeOperationID(resp)
+
+	// then
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
+	assert.Equal(t, "m6i.16xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)
+	assert.Equal(t, "r8i.16xlarge", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[1].Machine.Type)
+}

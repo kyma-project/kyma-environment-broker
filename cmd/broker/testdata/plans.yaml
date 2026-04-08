@@ -77,6 +77,13 @@ preview,aws,build-runtime-aws:
     - "m6i.8xlarge"
     - "m6i.12xlarge"
     - "m6i.16xlarge"
+    - "mi.large"
+    - "mi.xlarge"
+    - "mi.2xlarge"
+    - "mi.4xlarge"
+    - "mi.8xlarge"
+    - "mi.12xlarge"
+    - "mi.16xlarge"
     - "m5.large"
     - "m5.xlarge"
     - "m5.2xlarge"
@@ -104,6 +111,13 @@ preview,aws,build-runtime-aws:
     - "g4dn.8xlarge"
     - "g4dn.12xlarge"
     - "g4dn.16xlarge"
+    - "ri.large"
+    - "ri.xlarge"
+    - "ri.2xlarge"
+    - "ri.4xlarge"
+    - "ri.8xlarge"
+    - "ri.12xlarge"
+    - "ri.16xlarge"
   regions:
     cf-eu11: [ "eu-central-1" ]
     default: [ "eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-2", "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2" ]

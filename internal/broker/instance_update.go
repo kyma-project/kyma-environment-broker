@@ -353,6 +353,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	operation.PreviousParameters = previousInstance.Parameters
+
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -485,7 +487,7 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 	}
 
 	if IsExternalLicenseType(ersContext) {
-		if err := checkGPUMachinesUsage(b.providerSpec, pkg.CloudProviderFromString(providerValues.ProviderType), params.AdditionalWorkerNodePools); err != nil {
+		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
