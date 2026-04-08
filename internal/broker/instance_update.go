@@ -851,7 +851,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 
 func (b *UpdateEndpoint) isPlanChangePossible(instance *internal.Instance, sourcePlanName string, targetPlanName string, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
 	if b.planSpec != nil {
-		if bl := b.planSpec.OperationBlocklist(sourcePlanName); bl != nil && bl.PlanUpgrade != nil {
+		if bl := b.planSpec.OperationBlocklist(targetPlanName); bl != nil && bl.PlanUpgrade != nil {
 			err := fmt.Errorf("%s", bl.PlanUpgrade.Message)
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "plan upgrade blocked")
 		}
