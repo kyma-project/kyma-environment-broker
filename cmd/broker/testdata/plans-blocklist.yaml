@@ -1,0 +1,98 @@
+sap-converged-cloud:
+  regularMachines:
+    - "g_c2_m8"
+    - "g_c4_m16"
+  additionalMachines:
+  regions:
+    cf-eu20: ["eu-de-1"]
+    default: ["eu-de-1"]
+
+gcp,build-runtime-gcp:
+  volumeSizeGb: 80
+  regularMachines:
+    - "n2-standard-2"
+    - "n2-standard-4"
+  additionalMachines:
+    - "c2d-highcpu-2"
+    - "c2d-highcpu-4"
+  regions:
+    default:
+      - "europe-west3"
+      - "us-central1"
+
+preview,aws,build-runtime-aws:
+  upgradableToPlans:
+    - build-runtime-aws
+  volumeSizeGb: 81
+  regularMachines:
+    - "m6i.large"
+    - "m6i.xlarge"
+    - "m6i.2xlarge"
+  additionalMachines:
+    - "c7i.large"
+    - "c7i.xlarge"
+  regions:
+    cf-eu11: ["eu-central-1"]
+    default: ["eu-central-1", "eu-west-2", "us-east-1"]
+
+azure:
+  volumeSizeGb: 82
+  upgradableToPlans:
+    - build-runtime-azure
+  operationBlocklist:
+    provision: '"azure provisioning is blocked","GA=azure-ga"'
+    update: '"azure update is blocked"'
+  regularMachines: &azure_regular_machines
+    - "Standard_D2s_v5"
+    - "Standard_D4s_v5"
+    - "Standard_D8s_v5"
+  additionalMachines: &azure_additional_machines
+    - "Standard_F2s_v2"
+    - "Standard_F4s_v2"
+  regions: &azure_regions
+    cf-ch20: ["switzerlandnorth"]
+    default: ["eastus","westeurope","northeurope"]
+
+build-runtime-azure:
+  volumeSizeGb: 80
+  operationBlocklist:
+    planUpgrade: '"upgrading to build-runtime-azure is blocked","GA=bra-ga"'
+  regularMachines: *azure_regular_machines
+  additionalMachines: *azure_additional_machines
+  regions: *azure_regions
+
+azure_lite:
+  volumeSizeGb: 50
+  regularMachines:
+    - "Standard_D2s_v5"
+    - "Standard_D4s_v5"
+  regions: *azure_regions
+
+alicloud,build-runtime-alicloud:
+  upgradableToPlans:
+    - build-runtime-alicloud
+  volumeSizeGb: 80
+  regularMachines:
+    - "ecs.g9i.large"
+    - "ecs.g9i.xlarge"
+  regions:
+    default: ["ap-southeast-1","eu-central-1"]
+
+free:
+  regularMachines:
+    - "m6i.large"
+  regions:
+    default: ["eu-central-1"]
+
+trial:
+  regularMachines:
+    - "m5.xlarge"
+  regions:
+    default: ["eu-west-1"]
+
+preview:
+  regularMachines:
+    - "m6i.large"
+  regions:
+    default: ["eu-central-1"]
+
