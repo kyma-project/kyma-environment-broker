@@ -64,6 +64,9 @@ type Config struct {
 	AllowedGlobalAccounts           StringList `envconfig:"optional"`
 	RestrictToAllowedGlobalAccounts bool
 
+	MaxPodsWhitelistedGlobalAccountsFilePath string
+	OpenShellWhitelistedGlobalAccountsFilePath    string
+
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
 	// enables Access-Control-List.

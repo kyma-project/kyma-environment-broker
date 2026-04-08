@@ -14,4 +14,5 @@ const (
 	KymaNameLabel        = "operator.kyma-project.io/kyma-name"
 	ManagedByLabel       = "operator.kyma-project.io/managed-by"
 	InternalLabel        = "operator.kyma-project.io/internal"
+	OpenShellLabel            = "kyma-project.io/open-shell"
 )

@@ -49,10 +49,11 @@ type CreateRuntimeResourceStep struct {
 	workersProvider                    *workers.Provider
 	providerSpec                       *configuration.ProviderSpec
 	maxPodsWhitelistedGlobalAccountIds whitelist.Set
+	openShellWhitelistedGlobalAccountIds    whitelist.Set
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, maxPodsWhitelistedGlobalAccountIds whitelist.Set, openShellWhitelistedGlobalAccountIds whitelist.Set) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:                    db.Instances(),
 		k8sClient:                          k8sClient,
@@ -61,6 +62,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		workersProvider:                    workersProvider,
 		providerSpec:                       providerSpec,
 		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
+		openShellWhitelistedGlobalAccountIds:    openShellWhitelistedGlobalAccountIds,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -162,7 +164,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 	labels := steps.SetCommonLabels(map[string]string{}, operation)
 	labels[customresources.RegionLabel] = region
 	labels[customresources.CloudProviderLabel] = cloudProvider
-
+	if whitelist.IsWhitelisted(operation.ProvisioningParameters.ErsContext.GlobalAccountID, s.openShellWhitelistedGlobalAccountIds) {
+		labels[customresources.OpenShellLabel] = "true"
+	}
 	return labels
 }
 
