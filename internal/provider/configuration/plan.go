@@ -77,9 +77,9 @@ func (e *OperationBlocklistEntryDTO) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type OperationBlocklistDTO struct {
-	Provision   OperationBlocklistEntryDTO `yaml:"provision"`
-	Update      OperationBlocklistEntryDTO `yaml:"update"`
-	PlanUpgrade OperationBlocklistEntryDTO `yaml:"planUpgrade"`
+	Provision   *OperationBlocklistEntryDTO `yaml:"provision"`
+	Update      *OperationBlocklistEntryDTO `yaml:"update"`
+	PlanUpgrade *OperationBlocklistEntryDTO `yaml:"planUpgrade"`
 }
 
 type planSpecificationDTO struct {

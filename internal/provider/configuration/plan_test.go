@@ -88,12 +88,15 @@ sap-converged-cloud:
 			bl := spec.OperationBlocklist(planName)
 			require.NotNil(t, bl)
 
+			require.NotNil(t, bl.Provision)
 			assert.Equal(t, "provisioning is blocked for this plan", bl.Provision.Message)
 			assert.Equal(t, map[string]string{"GA": "id", "owner": "team-alpha"}, bl.Provision.Attributes)
 
+			require.NotNil(t, bl.Update)
 			assert.Equal(t, "update is blocked for this plan", bl.Update.Message)
 			assert.Equal(t, map[string]string{"GA": "id2"}, bl.Update.Attributes)
 
+			require.NotNil(t, bl.PlanUpgrade)
 			assert.Equal(t, "plan upgrade is blocked for this plan", bl.PlanUpgrade.Message)
 			assert.Nil(t, bl.PlanUpgrade.Attributes)
 		})
@@ -102,6 +105,27 @@ sap-converged-cloud:
 	assert.Nil(t, spec.OperationBlocklist("plan3"))
 	assert.Nil(t, spec.OperationBlocklist("sap-converged-cloud"))
 	assert.Nil(t, spec.OperationBlocklist("non-existing-plan"))
+}
+
+func TestPlanConfigurationWithBlocklist_AbsentEntriesAreNil(t *testing.T) {
+	spec, err := NewPlanSpecifications(strings.NewReader(`
+plan1:
+        operationBlocklist:
+            provision: '"provisioning is blocked for this plan"'
+        regions:
+            default:
+                - eu-central-1
+`))
+	require.NoError(t, err)
+
+	bl := spec.OperationBlocklist("plan1")
+	require.NotNil(t, bl)
+
+	require.NotNil(t, bl.Provision)
+	assert.Equal(t, "provisioning is blocked for this plan", bl.Provision.Message)
+
+	assert.Nil(t, bl.Update)
+	assert.Nil(t, bl.PlanUpgrade)
 }
 
 func TestPlanConfigurationWithBlocklist_InlineCommentIsIgnored(t *testing.T) {
@@ -120,12 +144,15 @@ plan1:
 	bl := spec.OperationBlocklist("plan1")
 	require.NotNil(t, bl)
 
+	require.NotNil(t, bl.Provision)
 	assert.Equal(t, "provisioning is blocked", bl.Provision.Message)
 	assert.Equal(t, map[string]string{"GA": "id"}, bl.Provision.Attributes)
 
+	require.NotNil(t, bl.Update)
 	assert.Equal(t, "update is blocked", bl.Update.Message)
 	assert.Equal(t, map[string]string{"GA": "id2"}, bl.Update.Attributes)
 
+	require.NotNil(t, bl.PlanUpgrade)
 	assert.Equal(t, "plan upgrade is blocked", bl.PlanUpgrade.Message)
 	assert.Nil(t, bl.PlanUpgrade.Attributes)
 }

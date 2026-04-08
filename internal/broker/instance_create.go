@@ -198,7 +198,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	if b.planSpec != nil {
 		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
-		if bl := b.planSpec.OperationBlocklist(planName); bl != nil && bl.Provision.Message != "" {
+		if bl := b.planSpec.OperationBlocklist(planName); bl != nil && bl.Provision != nil {
 			err := fmt.Errorf("%s", bl.Provision.Message)
 			return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "provisioning blocked for the plan")
 		}

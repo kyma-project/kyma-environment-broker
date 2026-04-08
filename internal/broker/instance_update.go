@@ -293,6 +293,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.ErrAsyncRequired
 	}
 
+	if b.planSpec != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+		if bl := b.planSpec.OperationBlocklist(planName); bl != nil && bl.Update != nil {
+			err := fmt.Errorf("%s", bl.Update.Message)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "update blocked")
+		}
+	}
+
 	params, err := b.unmarshalParams(details, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -842,6 +850,13 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 }
 
 func (b *UpdateEndpoint) isPlanChangePossible(instance *internal.Instance, sourcePlanName string, targetPlanName string, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	if b.planSpec != nil {
+		if bl := b.planSpec.OperationBlocklist(sourcePlanName); bl != nil && bl.PlanUpgrade != nil {
+			err := fmt.Errorf("%s", bl.PlanUpgrade.Message)
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "plan upgrade blocked")
+		}
+	}
+
 	if !b.config.EnablePlanUpgrades || !b.planSpec.IsUpgradableBetween(sourcePlanName, targetPlanName) {
 		logger.Info("Plan change not allowed.")
 		errMsg := fmt.Sprintf("plan upgrade from %s (planID: %s) to %s (planID: %s) is not allowed", sourcePlanName, instance.ServicePlanID, targetPlanName, details.PlanID)
