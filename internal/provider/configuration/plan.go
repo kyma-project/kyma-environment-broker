@@ -53,6 +53,9 @@ type OperationBlocklistEntryDTO struct {
 
 func (e *OperationBlocklistEntryDTO) UnmarshalYAML(value *yaml.Node) error {
 	raw := value.Value
+	if idx := strings.Index(raw, "#"); idx != -1 {
+		raw = raw[:idx]
+	}
 	parts := strings.Split(raw, ",")
 	for i, p := range parts {
 		parts[i] = strings.TrimSpace(strings.Trim(strings.TrimSpace(p), `"`))
@@ -77,7 +80,6 @@ type OperationBlocklistDTO struct {
 	Provision   OperationBlocklistEntryDTO `yaml:"provision"`
 	Update      OperationBlocklistEntryDTO `yaml:"update"`
 	PlanUpgrade OperationBlocklistEntryDTO `yaml:"planUpgrade"`
-	AddToSchema OperationBlocklistEntryDTO `yaml:"addToSchema"`
 }
 
 type planSpecificationDTO struct {
