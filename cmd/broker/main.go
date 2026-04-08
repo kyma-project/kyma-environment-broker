@@ -102,6 +102,7 @@ type Config struct {
 	LogLevel string `envconfig:"default=info"`
 
 	FreemiumWhitelistedGlobalAccountsFilePath string
+	MaxPodsWhitelistedGlobalAccountsFilePath  string
 	GvisorWhitelistedGlobalAccountsFilePath   string
 
 	DomainName string
@@ -371,7 +372,7 @@ func main() {
 
 	awsClientFactory := aws.NewFactory(providerSpec)
 
-	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.Broker.MaxPodsWhitelistedGlobalAccountsFilePath)
+	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(maxPodsWhitelistedGlobalAccountIds)))
 

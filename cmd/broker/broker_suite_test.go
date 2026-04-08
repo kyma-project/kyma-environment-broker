@@ -198,7 +198,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	awsClientFactory := fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil)
 
-	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.Broker.MaxPodsWhitelistedGlobalAccountsFilePath)
+	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	require.NoError(t, err)
 
 	openShellWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.Broker.OpenShellWhitelistedGlobalAccountsFilePath)
