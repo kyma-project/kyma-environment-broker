@@ -55,6 +55,7 @@ func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans
 	}
 
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
+	// TODO: Caveat - err is wrongly set by the value from LoadFromFile
 	return rs, err
 }
 

@@ -4,12 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -24,18 +29,23 @@ func (m *mockEC2Client) DescribeInstanceTypeOfferings(ctx context.Context, param
 func TestAvailableZones_Success(t *testing.T) {
 	mock := &mockEC2Client{
 		describeFn: func(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, _ ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error) {
-			return &ec2.DescribeInstanceTypeOfferingsOutput{
-				InstanceTypeOfferings: []types.InstanceTypeOffering{
-					{Location: aws.String("ap-southeast-2a")},
-					{Location: aws.String("ap-southeast-2c")},
-				},
-			}, nil
+			for _, filter := range params.Filters {
+				if slices.Contains(filter.Values, "g6.xlarge") {
+					return &ec2.DescribeInstanceTypeOfferingsOutput{
+						InstanceTypeOfferings: []types.InstanceTypeOffering{
+							{Location: aws.String("ap-southeast-2a")},
+							{Location: aws.String("ap-southeast-2c")},
+						},
+					}, nil
+				}
+			}
+			return &ec2.DescribeInstanceTypeOfferingsOutput{}, nil
 		},
 	}
 
-	client := &AWSClient{ec2Client: mock}
+	client := &AWSClient{ec2Client: mock, providerSpec: newProviderSpec(t)}
 
-	zones, err := client.AvailableZones(context.Background(), "g6.xlarge")
+	zones, err := client.AvailableZones(context.Background(), "g.xlarge")
 	assert.NoError(t, err)
 	assert.ElementsMatch(t, []string{"ap-southeast-2a", "ap-southeast-2c"}, zones)
 }
@@ -47,9 +57,9 @@ func TestAvailableZones_Error(t *testing.T) {
 		},
 	}
 
-	client := &AWSClient{ec2Client: mock}
+	client := &AWSClient{ec2Client: mock, providerSpec: newProviderSpec(t)}
 
-	zones, err := client.AvailableZones(context.Background(), "g6.xlarge")
+	zones, err := client.AvailableZones(context.Background(), "g.xlarge")
 	assert.EqualError(t, err, "failed to describe offerings: AWS error")
 	assert.Nil(t, zones)
 }
@@ -65,11 +75,35 @@ func TestAvailableZones_NoLocations(t *testing.T) {
 		},
 	}
 
-	client := &AWSClient{ec2Client: mock}
+	client := &AWSClient{ec2Client: mock, providerSpec: newProviderSpec(t)}
 
-	zones, err := client.AvailableZones(context.Background(), "g6.xlarge")
+	zones, err := client.AvailableZones(context.Background(), "g.xlarge")
 	assert.NoError(t, err)
 	assert.Empty(t, zones)
+}
+
+func TestAvailableZonesCount_Success(t *testing.T) {
+	mock := &mockEC2Client{
+		describeFn: func(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, _ ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error) {
+			for _, filter := range params.Filters {
+				if slices.Contains(filter.Values, "g6.xlarge") {
+					return &ec2.DescribeInstanceTypeOfferingsOutput{
+						InstanceTypeOfferings: []types.InstanceTypeOffering{
+							{Location: aws.String("ap-southeast-2a")},
+							{Location: aws.String("ap-southeast-2c")},
+						},
+					}, nil
+				}
+			}
+			return &ec2.DescribeInstanceTypeOfferingsOutput{}, nil
+		},
+	}
+
+	client := &AWSClient{ec2Client: mock, providerSpec: newProviderSpec(t)}
+
+	zonesCount, err := client.AvailableZonesCount(context.Background(), "g.xlarge")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, zonesCount)
 }
 
 func TestExtractCredentials(t *testing.T) {
@@ -162,4 +196,14 @@ func TestExtractCredentials(t *testing.T) {
 			}
 		})
 	}
+}
+
+func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    "g.{size}": "g6.{size}"
+`))
+	require.NoError(t, err)
+	return providerSpec
 }

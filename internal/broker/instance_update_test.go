@@ -1609,6 +1609,11 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
+		"Version agnostic GPU machine type": {
+			planID:                    broker.AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: Standard_NC4as_T4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -1635,7 +1640,7 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newEmptyProviderSpec(), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil)
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{

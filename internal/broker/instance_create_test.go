@@ -2193,6 +2193,12 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
+		{
+			name:                      "Version Agnostic GPU machine type",
+			planID:                    broker.AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: Standard_NC4as_T4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -3519,11 +3525,6 @@ func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
 func newPlanSpec(t *testing.T) *configuration.PlanSpecifications {
 	spec, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	require.NoError(t, err)
-	return spec
-}
-
-func newEmptyProviderSpec() *configuration.ProviderSpec {
-	spec, _ := configuration.NewProviderSpec(strings.NewReader(""))
 	return spec
 }
 

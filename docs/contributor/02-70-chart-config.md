@@ -22,21 +22,21 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.29.0` |
+| global.images.kyma_environment_<br>broker.version | - | `1.29.2` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.0` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.2` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.0` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.2` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.0` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.2` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.0` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.2` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.0` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.2` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.0` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.2` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.0` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.2` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -107,7 +107,6 @@
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
 | configPaths.<br>quotaWhitelistedSubaccountIds | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. | `/config/quotaWhitelistedSubaccountIds.yaml` |
-| configPaths.<br>regionsSupportingMachine | Path to the list of regions that support machine-type selection. | `/config/regionsSupportingMachine.yaml` |
 | configPaths.<br>skrDNSProvidersValues | Path to the DNS providers values. | `/config/skrDNSProvidersValues.yaml` |
 | configPaths.<br>skrOIDCDefaultValues | Path to the default OIDC values. | `/config/skrOIDCDefaultValues.yaml` |
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |

@@ -172,3 +172,7 @@ func (m *StringList) Contains(name string) bool {
 	}
 	return false
 }
+
+func gvisorToBool(gvisor *pkg.GvisorDTO) bool {
+	return gvisor != nil && gvisor.Enabled
+}

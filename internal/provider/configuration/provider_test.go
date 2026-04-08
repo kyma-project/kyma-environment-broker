@@ -301,6 +301,237 @@ aws:
 	assert.ElementsMatch(t, []string{"m6i.large", "g6.xlarge", "g4dn.xlarge"}, machineTypes)
 }
 
+func TestIsRegionSupported(t *testing.T) {
+	// given
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  regionsSupportingMachine:
+    m8g:
+      ap-northeast-1: [a, b, c, d]
+      ap-southeast-1: []
+      ca-central-1: null
+    r8i:
+      ap-northeast-1: [a, b, c, d]
+  machinesVersions:
+    "ri.{size}": "r8i.{size}"
+gcp:
+  regionsSupportingMachine:
+    c2d-highmem:
+      us-central1: null
+      southamerica-east1: [a, b, c]
+azure:
+  regionsSupportingMachine:
+    Standard_L:
+      uksouth: [a]
+      japaneast: null
+      brazilsouth: [a, b]
+`))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		cloudProvider runtime.CloudProvider
+		region        string
+		machineType   string
+		expected      bool
+	}{
+		{"Supported m8g", runtime.AWS, "ap-northeast-1", "m8g.large", true},
+		{"Unsupported m8g", runtime.AWS, "us-central1", "m8g.2xlarge", false},
+		{"Supported ri", runtime.AWS, "ap-northeast-1", "ri.large", true},
+		{"Unsupported ri", runtime.AWS, "us-central1", "ri.large", false},
+		{"Supported c2d-highmem", runtime.GCP, "us-central1", "c2d-highmem-32", true},
+		{"Unsupported c2d-highmem", runtime.GCP, "ap-southeast-1", "c2d-highmem-64", false},
+		{"Supported Standard_L", runtime.Azure, "uksouth", "Standard_L8s_v3", true},
+		{"Unsupported Standard_L", runtime.Azure, "us-west", "Standard_L48s_v3", false},
+		{"Unknown machine type defaults to true", runtime.Azure, "any-region", "unknown-type", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result := providerSpec.IsRegionSupported(tt.cloudProvider, tt.region, tt.machineType)
+
+			// then
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestSupportedRegions(t *testing.T) {
+	// given
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  regionsSupportingMachine:
+    m8g:
+      ap-northeast-1: [a, b, c, d]
+      ap-southeast-1: []
+      ca-central-1: null
+    r8i:
+      ap-northeast-1: [a, b, c, d]
+  machinesVersions:
+    "ri.{size}": "r8i.{size}"
+gcp:
+  regionsSupportingMachine:
+    c2d-highmem:
+      us-central1: null
+      southamerica-east1: [a, b, c]
+azure:
+  regionsSupportingMachine:
+    Standard_L:
+      uksouth: [a]
+      japaneast: null
+      brazilsouth: [a, b]
+`))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		cloudProvider runtime.CloudProvider
+		machineType   string
+		expected      []string
+	}{
+		{"Supported m8g", runtime.AWS, "m8g.large", []string{"ap-northeast-1", "ap-southeast-1", "ca-central-1"}},
+		{"Supported ri", runtime.AWS, "ri.large", []string{"ap-northeast-1"}},
+		{"Supported c2d-highmem", runtime.GCP, "c2d-highmem-32", []string{"southamerica-east1", "us-central1"}},
+		{"Supported Standard_L", runtime.Azure, "Standard_L8s_v3", []string{"brazilsouth", "japaneast", "uksouth"}},
+		{"Unknown machine type", runtime.Azure, "unknown-type", []string{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result := providerSpec.SupportedRegions(tt.cloudProvider, tt.machineType)
+
+			// then
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAvailableZones(t *testing.T) {
+	// given
+	providerSpec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  regionsSupportingMachine:
+    m8g:
+      ap-northeast-1: [a, b, c, d]
+      ap-southeast-1: []
+      ca-central-1: null
+    r8i:
+      ap-northeast-1: [a, b, c, d]
+  machinesVersions:
+    "ri.{size}": "r8i.{size}"
+gcp:
+  regionsSupportingMachine:
+    c2d-highmem:
+      us-central1: null
+      southamerica-east1: [a, b, c]
+azure:
+  regionsSupportingMachine:
+    Standard_L:
+      uksouth: [a]
+      japaneast: null
+      brazilsouth: [a, b]
+`))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		cloudProvider runtime.CloudProvider
+		machineType   string
+		region        string
+		expected      []string
+	}{
+		{
+			name:          "AWS - region with 4 zones",
+			cloudProvider: runtime.AWS,
+			machineType:   "m8g.large",
+			region:        "ap-northeast-1",
+			expected:      []string{"a", "b", "c", "d"},
+		},
+		{
+			name:          "AWS - region with empty zones list",
+			cloudProvider: runtime.AWS,
+			machineType:   "m8g.large",
+			region:        "ap-southeast-1",
+			expected:      []string{},
+		},
+		{
+			name:          "AWS - region with null zones",
+			cloudProvider: runtime.AWS,
+			machineType:   "m8g.large",
+			region:        "ca-central-1",
+			expected:      []string{},
+		},
+		{
+			name:          "AWS - region with 4 zones (version-agnostic machine type)",
+			cloudProvider: runtime.AWS,
+			machineType:   "ri.large",
+			region:        "ap-northeast-1",
+			expected:      []string{"a", "b", "c", "d"},
+		},
+		{
+			name:          "GCP - region with null zones",
+			cloudProvider: runtime.GCP,
+			machineType:   "c2d-highmem-8",
+			region:        "us-central1",
+			expected:      []string{},
+		},
+		{
+			name:          "GCP - region with 3 zones",
+			cloudProvider: runtime.GCP,
+			machineType:   "c2d-highmem-8",
+			region:        "southamerica-east1",
+			expected:      []string{"a", "b", "c"},
+		},
+		{
+			name:          "Azure - region with 1 zone",
+			cloudProvider: runtime.Azure,
+			machineType:   "Standard_L8s_v3",
+			region:        "uksouth",
+			expected:      []string{"a"},
+		},
+		{
+			name:          "Azure - region with null zones",
+			cloudProvider: runtime.Azure,
+			machineType:   "Standard_L8s_v3",
+			region:        "japaneast",
+			expected:      []string{},
+		},
+		{
+			name:          "Azure - region with 2 zones",
+			cloudProvider: runtime.Azure,
+			machineType:   "Standard_L8s_v3",
+			region:        "brazilsouth",
+			expected:      []string{"a", "b"},
+		},
+		{
+			name:          "Azure - not supported region",
+			cloudProvider: runtime.Azure,
+			machineType:   "Standard_L8s_v3",
+			region:        "notSupportedRegion",
+			expected:      []string{},
+		},
+		{
+			name:          "Azure - not supported machine type",
+			cloudProvider: runtime.Azure,
+			machineType:   "notSupportedMachineType",
+			region:        "notSupportedRegion",
+			expected:      []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result := providerSpec.AvailableZones(tt.cloudProvider, tt.machineType, tt.region)
+
+			// then
+			assert.ElementsMatch(t, tt.expected, result)
+		})
+	}
+}
+
 func TestProviderSpec_ValidateMachinesVersions(t *testing.T) {
 	providerSpec, err := NewProviderSpec(strings.NewReader(`
 aws:

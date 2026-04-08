@@ -27,7 +27,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with zones from existing worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil)
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker-existing": {
 				Name:  "worker-existing",
@@ -50,6 +50,11 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -82,6 +87,11 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -112,6 +122,11 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -151,6 +166,11 @@ aws:
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -183,6 +203,11 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -227,6 +252,11 @@ aws:
 				"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 				"m5.large":  {"zone-i", "zone-j"},
 			},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -266,6 +296,11 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -298,6 +333,11 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -329,6 +369,11 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -358,6 +403,11 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -391,6 +441,11 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
 			log,
 		)
 
@@ -457,6 +512,268 @@ func TestToGardenerTaints(t *testing.T) {
 			{Key: "special", Value: "", Effect: corev1.TaintEffectNoExecute},
 		}, result)
 	})
+}
+
+func TestResolveMachineType(t *testing.T) {
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    "mi.{size}": "m7i.{size}"
+`))
+	require.NoError(t, err)
+
+	provider := NewProvider(broker.InfrastructureManager{}, providerSpec)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	tests := []struct {
+		name                     string
+		operation                *internal.Operation
+		additionalWorkerNodePool runtime.AdditionalWorkerNodePool
+		workerExists             bool
+		currentAdditionalWorker  gardener.Worker
+		want                     string
+	}{
+		{
+			name: "provision resolves machine type from provider spec",
+			operation: &internal.Operation{
+				Type: internal.OperationTypeProvision,
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{
+						ProviderType: "aws",
+					},
+				},
+			},
+			additionalWorkerNodePool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "mi.large",
+			},
+			workerExists: false,
+			want:         "m7i.large",
+		},
+		{
+			name: "update reuses existing machine type when worker exists and pool is unchanged",
+			operation: &internal.Operation{
+				Type: internal.OperationTypeUpdate,
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{
+						ProviderType: "aws",
+					},
+				},
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "mi.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerNodePool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "mi.large",
+			},
+			workerExists: true,
+			currentAdditionalWorker: gardener.Worker{
+				Machine: gardener.Machine{
+					Type: "m6i.large",
+				},
+			},
+			want: "m6i.large",
+		},
+		{
+			name: "update resolves machine type when worker exists but pool changed",
+			operation: &internal.Operation{
+				Type: internal.OperationTypeUpdate,
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{
+						ProviderType: "aws",
+					},
+				},
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "mi.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerNodePool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "mi.xlarge",
+			},
+			workerExists: true,
+			currentAdditionalWorker: gardener.Worker{
+				Machine: gardener.Machine{
+					Type: "m6i.large",
+				},
+			},
+			want: "m7i.xlarge",
+		},
+		{
+			name: "update resolves machine type when worker does not exist",
+			operation: &internal.Operation{
+				Type: internal.OperationTypeUpdate,
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{
+						ProviderType: "aws",
+					},
+				},
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "mi.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerNodePool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "mi.large",
+			},
+			workerExists: false,
+			want:         "m7i.large",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := provider.ResolveMachineType(
+				tt.operation,
+				tt.additionalWorkerNodePool,
+				tt.workerExists,
+				tt.currentAdditionalWorker,
+				log,
+			)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestIsAdditionalWorkerPoolUnchanged(t *testing.T) {
+	tests := []struct {
+		name                 string
+		operation            *internal.Operation
+		additionalWorkerPool runtime.AdditionalWorkerNodePool
+		want                 bool
+	}{
+		{
+			name: "returns true when matching name and machine type exists",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "m5.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "m5.large",
+			},
+			want: true,
+		},
+		{
+			name: "returns false when name matches but machine type differs",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "m5.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "m5.xlarge",
+			},
+			want: false,
+		},
+		{
+			name: "returns false when machine type matches but name differs",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "m5.large",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-b",
+				MachineType: "m5.large",
+			},
+			want: false,
+		},
+		{
+			name: "returns false when no previous pools exist",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: nil,
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-a",
+				MachineType: "m5.large",
+			},
+			want: false,
+		},
+		{
+			name: "returns true when one of multiple pools matches",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:        "pool-a",
+								MachineType: "m5.large",
+							},
+							{
+								Name:        "pool-b",
+								MachineType: "m5.xlarge",
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:        "pool-b",
+				MachineType: "m5.xlarge",
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isAdditionalWorkerPoolUnchanged(tt.operation, tt.additionalWorkerPool)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
 func newEmptyProviderSpec() *configuration.ProviderSpec {

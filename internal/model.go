@@ -153,6 +153,9 @@ type Operation struct {
 
 	// DiscoveredZones stores availability zones per machine type, resolved at runtime
 	DiscoveredZones map[string][]string `json:"discovered_zones"`
+
+	// PreviousParameters stores the instance parameters before the update
+	PreviousParameters ProvisioningParameters `json:"previous_parameters"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)
@@ -540,10 +543,4 @@ type RetryTuple struct {
 
 type ProviderConfig struct {
 	SeedRegions []string `json:"seedRegions" yaml:"seedRegions"`
-}
-
-type RegionsSupporter interface {
-	IsSupported(region string, machineType string) bool
-	SupportedRegions(machineType string) []string
-	AvailableZonesForAdditionalWorkers(machineType, region, planID string) ([]string, error)
 }

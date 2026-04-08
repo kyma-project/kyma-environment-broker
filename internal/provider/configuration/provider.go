@@ -12,7 +12,6 @@ import (
 	"unicode"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	"gopkg.in/yaml.v3"
 )
@@ -21,21 +20,21 @@ type ProviderSpec struct {
 	data dto
 }
 
+type dto map[runtime.CloudProvider]providerDTO
+
+type providerDTO struct {
+	Regions                  map[string]regionDTO           `yaml:"regions"`
+	MachineDisplayNames      map[string]string              `yaml:"machines"`
+	RegionsSupportingMachine map[string]map[string][]string `yaml:"regionsSupportingMachine,omitempty"`
+	ZonesDiscovery           bool                           `yaml:"zonesDiscovery"`
+	DualStack                bool                           `yaml:"dualStack,omitempty"`
+	MachinesVersions         map[string]string              `yaml:"machinesVersions,omitempty"`
+}
+
 type regionDTO struct {
 	DisplayName string   `yaml:"displayName"`
 	Zones       []string `yaml:"zones"`
 }
-
-type providerDTO struct {
-	Regions             map[string]regionDTO     `yaml:"regions"`
-	MachineDisplayNames map[string]string        `yaml:"machines"`
-	SupportingMachines  RegionsSupportingMachine `yaml:"regionsSupportingMachine,omitempty"`
-	ZonesDiscovery      bool                     `yaml:"zonesDiscovery"`
-	DualStack           bool                     `yaml:"dualStack,omitempty"`
-	MachinesVersions    map[string]string        `yaml:"machinesVersions,omitempty"`
-}
-
-type dto map[runtime.CloudProvider]providerDTO
 
 func NewProviderSpecFromFile(filePath string) (*ProviderSpec, error) {
 	// Open the file
@@ -85,28 +84,6 @@ func (p *ProviderSpec) Zones(cp runtime.CloudProvider, region string) []string {
 		return []string{}
 	}
 	return dto.Zones
-}
-
-func (p *ProviderSpec) AvailableZonesForAdditionalWorkers(machineType, region, providerType string) ([]string, error) {
-	providerData := p.findProviderDTO(runtime.CloudProviderFromString(providerType))
-	if providerData == nil {
-		return []string{}, nil
-	}
-
-	if providerData.SupportingMachines == nil {
-		return []string{}, nil
-	}
-
-	if !providerData.SupportingMachines.IsSupported(region, machineType) {
-		return []string{}, nil
-	}
-
-	zones, err := providerData.SupportingMachines.AvailableZonesForAdditionalWorkers(machineType, region, providerType)
-	if err != nil {
-		return []string{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
-	}
-
-	return zones, nil
 }
 
 func (p *ProviderSpec) RandomZones(cp runtime.CloudProvider, region string, zonesCount int) []string {
@@ -175,18 +152,6 @@ func (p *ProviderSpec) MachineDisplayNames(cp runtime.CloudProvider, machines []
 	return displayNames
 }
 
-func (p *ProviderSpec) RegionSupportingMachine(providerType string) (internal.RegionsSupporter, error) {
-	providerData := p.findProviderDTO(runtime.CloudProviderFromString(providerType))
-	if providerData == nil {
-		return RegionsSupportingMachine{}, nil
-	}
-
-	if providerData.SupportingMachines == nil {
-		return RegionsSupportingMachine{}, nil
-	}
-	return providerData.SupportingMachines, nil
-}
-
 func (p *ProviderSpec) ValidateZonesDiscovery() error {
 	for provider, providerDTO := range p.data {
 		if providerDTO.ZonesDiscovery {
@@ -200,7 +165,7 @@ func (p *ProviderSpec) ValidateZonesDiscovery() error {
 				}
 			}
 
-			for machineType, regionZones := range providerDTO.SupportingMachines {
+			for machineType, regionZones := range providerDTO.RegionsSupportingMachine {
 				for region, zones := range regionZones {
 					if len(zones) > 0 {
 						slog.Warn(fmt.Sprintf("Provider %s has zones discovery enabled, but machine type %s in region %s is configured with %d static zone(s), which will be ignored.", provider, machineType, region, len(zones)))
@@ -256,6 +221,73 @@ func (p *ProviderSpec) IsDualStackSupported(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.DualStack
+}
+
+func (p *ProviderSpec) IsRegionSupported(cp runtime.CloudProvider, region, machineType string) bool {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return true
+	}
+
+	machineType = p.ResolveMachineType(cp, machineType)
+
+	for machineFamily, regions := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
+		if strings.HasPrefix(machineType, machineFamily) {
+			if _, exists := regions[region]; exists {
+				return true
+			}
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *ProviderSpec) SupportedRegions(cp runtime.CloudProvider, machineType string) []string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return []string{}
+	}
+
+	machineType = p.ResolveMachineType(cp, machineType)
+
+	for machineFamily, regionsMap := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
+		if strings.HasPrefix(machineType, machineFamily) {
+			regions := make([]string, 0, len(regionsMap))
+			for region := range regionsMap {
+				regions = append(regions, region)
+			}
+			sort.Strings(regions)
+			return regions
+		}
+	}
+
+	return []string{}
+}
+
+func (p *ProviderSpec) AvailableZones(cp runtime.CloudProvider, machineType, region string) []string {
+	providerData := p.findProviderDTO(cp)
+	if providerData == nil {
+		return []string{}
+	}
+
+	machineType = p.ResolveMachineType(cp, machineType)
+
+	for machineFamily, regionsMap := range providerData.RegionsSupportingMachine {
+		// Keep in mind that machineType should match at most one machineFamily
+		if strings.HasPrefix(machineType, machineFamily) {
+			zones := regionsMap[region]
+			if len(zones) == 0 {
+				return []string{}
+			}
+			rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
+			return zones
+		}
+	}
+
+	return []string{}
 }
 
 func (p *ProviderSpec) ValidateMachinesVersions() error {
