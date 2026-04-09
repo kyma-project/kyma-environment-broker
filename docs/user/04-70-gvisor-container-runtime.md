@@ -4,7 +4,7 @@
 > The gVisor container runtime sandbox feature is available only to allowlisted global accounts.
 > Consequently, by default, gVisor is disabled.
 > An attempt to enable gVisor for a non-allowlisted account results in an error.
-> The gVisor parameter is validated against the global account allowlist on every field where it appears. If gVisor is set on any worker pool (main or additional) and the global account is not allowlisted, the entire request is rejected.
+> The **gvisor** parameter is validated against the global account allowlist on every field where it appears. If **gvisor** is set on any worker pool (main or additional) and the global account is not allowlisted, the entire request is rejected.
 
 For cloud-native container security and portability, you can enable the [gVisor](https://gvisor.dev/) container runtime sandbox on the main Kyma worker pool and on additional worker node pools when provisioning or updating SAP BTP, Kyma runtime.
 
