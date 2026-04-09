@@ -58,9 +58,12 @@ func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 
 	if !rs.IsRulesetValid() {
-		msgs := make([]string, 0, len(rs.ValidationInfo.All()))
-		for _, e := range rs.ValidationInfo.All() {
-			msgs = append(msgs, e.Error())
+		var msgs []string
+		if rs.ValidationInfo != nil {
+			msgs = make([]string, 0, len(rs.ValidationInfo.All()))
+			for _, e := range rs.ValidationInfo.All() {
+				msgs = append(msgs, e.Error())
+			}
 		}
 		return rs, fmt.Errorf("There are errors in subscription secret rules configuration: %s", strings.Join(msgs, "; "))
 	}
