@@ -201,9 +201,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	require.NoError(t, err)
 
+	openShellWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.Broker.OpenShellWhitelistedGlobalAccountsFilePath)
+	require.NoError(t, err)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds, openShellWhitelistedGlobalAccountIds)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)

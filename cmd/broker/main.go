@@ -373,10 +373,14 @@ func main() {
 	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(maxPodsWhitelistedGlobalAccountIds)))
 
+	openShellWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.Broker.OpenShellWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err, log)
+	log.Info(fmt.Sprintf("Number of globalAccountIds for open-shell label: %d", len(openShellWhitelistedGlobalAccountIds)))
+
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds, openShellWhitelistedGlobalAccountIds)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,

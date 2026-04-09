@@ -100,7 +100,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -145,7 +145,7 @@ func TestCreateRuntimeResourceStep_CreateACL(t *testing.T) {
 	}
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -204,7 +204,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -281,7 +281,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -334,7 +334,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -364,7 +364,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -409,7 +409,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -468,7 +468,7 @@ func TestCreateRuntimeResourceStep_HandleOIDCWithJwks(t *testing.T) {
 		}(),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -571,7 +571,7 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -609,7 +609,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -638,7 +638,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -667,7 +667,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithNoConfig(t *
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -696,7 +696,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithConfiguredNo
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -727,7 +727,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -775,7 +775,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -846,7 +846,7 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
 			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
 			operation.CloudProvider = string(testCase.cloudProvider)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, infrastructureManagerConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, infrastructureManagerConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 			_, repeat, err := step.Run(operation, fixLogger())
 
 			// then
@@ -889,7 +889,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin(t *testi
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -942,7 +942,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -993,7 +993,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1045,7 +1045,7 @@ func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1091,7 +1091,7 @@ func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1128,7 +1128,7 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1164,7 +1164,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1205,7 +1205,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1251,7 +1251,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *test
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1327,7 +1327,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
@@ -1379,7 +1379,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
@@ -1440,7 +1440,7 @@ func TestCreateRuntimeResourceStep_AWS_ZonesDiscovery(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1485,7 +1485,7 @@ func TestCreateRuntimeResourceStep_Free_ZonesDiscovery(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1519,7 +1519,7 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersNilHandling(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1552,7 +1552,7 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) 
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1606,7 +1606,7 @@ func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{})
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, whitelist.Set{})
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
@@ -1680,7 +1680,7 @@ func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
 
 			cli := getClientForTests(t)
 			providerSpec := fixture.NewProviderSpecWithZonesDiscovery(t, false)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec, whitelist.Set{})
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec, whitelist.Set{}, whitelist.Set{})
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
@@ -1720,6 +1720,66 @@ func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
 }
 
 // testing auxiliary functions
+
+func TestCreateRuntimeResourceStep_OpenShellLabelAddedForWhitelistedGlobalAccount(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{}
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	betaWhitelist := whitelist.Set{fixture.GlobalAccountId: struct{}{}}
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, betaWhitelist)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	require.NoError(t, err)
+	assert.Equal(t, "true", runtime.Labels[customresources.OpenShellLabel])
+}
+
+func TestCreateRuntimeResourceStep_OpenShellLabelNotAddedForNonWhitelistedGlobalAccount(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{}
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	betaWhitelist := whitelist.Set{"other-global-account-id": struct{}{}}
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), whitelist.Set{}, betaWhitelist)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	require.NoError(t, err)
+	_, hasOpenShellLabel := runtime.Labels[customresources.OpenShellLabel]
+	assert.False(t, hasOpenShellLabel)
+}
+
 
 func Test_Defaults(t *testing.T) {
 	nilToDefaultString := DefaultIfParamNotSet("default value", nil)

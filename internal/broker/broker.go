@@ -64,6 +64,8 @@ type Config struct {
 	AllowedGlobalAccounts           StringList `envconfig:"optional"`
 	RestrictToAllowedGlobalAccounts bool
 
+	OpenShellWhitelistedGlobalAccountsFilePath string
+
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
 	// enables Access-Control-List.
