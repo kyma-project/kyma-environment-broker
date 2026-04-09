@@ -405,3 +405,107 @@ Three scenarios arise when `additionalVolumeGb` interacts with deprecated machin
 - **User migrates from deprecated to agnostic machine name while additionalVolumeGb is set.** For example, the user migrates from `m6i.8xlarge` to `mi.8xlarge`. The new computed default jumps from 80 GiB to 148 GiB. The user had `additionalVolumeGb: 20`, so the total would become 168 GiB — larger than what the user originally intended, and the 20 GiB may now overlap with the free portion of the new default.
 
 - **Block additionalVolumeGb for deprecated machine names.** KEB rejects any provisioning or update request that sets `additionalVolumeGb` while using a deprecated concrete machine name. Users who want to set additional volume must first migrate to an agnostic machine name. This enforces a clean separation. Deprecated names always use the old plan default, agnostic names always use the computed default with optional additional.
+
+## Machine Type Volume Size Reference
+
+Computed volume sizes for all supported machine types using the formula with `volume_base=20`, `volume_factor=8`, capped at a minimum of **80 GiB** and a maximum of **250 GiB**:
+
+$$\text{volume\_size} = \max\!\left(80,\ \min\!\left(250,\ 20 + \max\!\left(\frac{\text{vCPUs}}{2},\ \frac{\text{RAM\_GiB}}{8}\right) \times 8\right)\right)$$
+
+### AWS
+
+| Machine Type | vCPU | RAM (GiB) | Raw (GiB) | Volume Size (GiB) |
+|---|---|---|---|---|
+| m6i.large | 2 | 8 | 28 | 80 *(min cap)* |
+| m6i.xlarge | 4 | 16 | 36 | 80 *(min cap)* |
+| m6i.2xlarge | 8 | 32 | 52 | 80 *(min cap)* |
+| m6i.4xlarge | 16 | 64 | 84 | **84** |
+| m6i.8xlarge | 32 | 128 | 148 | **148** |
+| m6i.12xlarge | 48 | 192 | 212 | **212** |
+| m6i.16xlarge | 64 | 256 | 276 | 250 *(max cap)* |
+| m5.large | 2 | 8 | 28 | 80 *(min cap)* |
+| m5.xlarge | 4 | 16 | 36 | 80 *(min cap)* |
+| m5.2xlarge | 8 | 32 | 52 | 80 *(min cap)* |
+| m5.4xlarge | 16 | 64 | 84 | **84** |
+| m5.8xlarge | 32 | 128 | 148 | **148** |
+| m5.12xlarge | 48 | 192 | 212 | **212** |
+| m5.16xlarge | 64 | 256 | 276 | 250 *(max cap)* |
+| c7i.large | 2 | 4 | 28 | 80 *(min cap)* |
+| c7i.xlarge | 4 | 8 | 36 | 80 *(min cap)* |
+| c7i.2xlarge | 8 | 16 | 52 | 80 *(min cap)* |
+| c7i.4xlarge | 16 | 32 | 84 | **84** |
+| c7i.8xlarge | 32 | 64 | 148 | **148** |
+| c7i.12xlarge | 48 | 96 | 212 | **212** |
+| c7i.16xlarge | 64 | 128 | 276 | 250 *(max cap)* |
+| g6.xlarge | 4 | 16 | 36 | 80 *(min cap)* |
+| g6.2xlarge | 8 | 32 | 52 | 80 *(min cap)* |
+| g6.4xlarge | 16 | 64 | 84 | **84** |
+| g6.8xlarge | 32 | 128 | 148 | **148** |
+| g6.12xlarge | 48 | 192 | 212 | **212** |
+| g6.16xlarge | 64 | 256 | 276 | 250 *(max cap)* |
+| g4dn.xlarge | 4 | 16 | 36 | 80 *(min cap)* |
+| g4dn.2xlarge | 8 | 32 | 52 | 80 *(min cap)* |
+| g4dn.4xlarge | 16 | 64 | 84 | **84** |
+| g4dn.8xlarge | 32 | 128 | 148 | **148** |
+| g4dn.12xlarge | 48 | 192 | 212 | **212** |
+| g4dn.16xlarge | 64 | 256 | 276 | 250 *(max cap)* |
+
+### Azure
+
+| Machine Type | vCPU | RAM (GiB) | Raw (GiB) | Volume Size (GiB) |
+|---|---|---|---|---|
+| Standard_D2s_v5 | 2 | 8 | 28 | 80 *(min cap)* |
+| Standard_D4s_v5 | 4 | 16 | 36 | 80 *(min cap)* |
+| Standard_D8s_v5 | 8 | 32 | 52 | 80 *(min cap)* |
+| Standard_D16s_v5 | 16 | 64 | 84 | **84** |
+| Standard_D32s_v5 | 32 | 128 | 148 | **148** |
+| Standard_D48s_v5 | 48 | 192 | 212 | **212** |
+| Standard_D64s_v5 | 64 | 256 | 276 | 250 *(max cap)* |
+| Standard_D4_v3 | 4 | 16 | 36 | 80 *(min cap)* |
+| Standard_D8_v3 | 8 | 32 | 52 | 80 *(min cap)* |
+| Standard_D16_v3 | 16 | 64 | 84 | **84** |
+| Standard_D32_v3 | 32 | 128 | 148 | **148** |
+| Standard_D48_v3 | 48 | 192 | 212 | **212** |
+| Standard_D64_v3 | 64 | 256 | 276 | 250 *(max cap)* |
+| Standard_F2s_v2 | 2 | 4 | 28 | 80 *(min cap)* |
+| Standard_F4s_v2 | 4 | 8 | 36 | 80 *(min cap)* |
+| Standard_F8s_v2 | 8 | 16 | 52 | 80 *(min cap)* |
+| Standard_F16s_v2 | 16 | 32 | 84 | **84** |
+| Standard_F32s_v2 | 32 | 64 | 148 | **148** |
+| Standard_F48s_v2 | 48 | 96 | 212 | **212** |
+| Standard_F64s_v2 | 64 | 128 | 276 | 250 *(max cap)* |
+| Standard_NC4as_T4_v3 | 4 | 28 | 48 | 80 *(min cap)* |
+| Standard_NC8as_T4_v3 | 8 | 56 | 76 | 80 *(min cap)* |
+| Standard_NC16as_T4_v3 | 16 | 110 | 130 | **130** |
+| Standard_NC64as_T4_v3 | 64 | 440 | 460 | 250 *(max cap)* |
+
+### GCP
+
+| Machine Type | vCPU | RAM (GiB) | Raw (GiB) | Volume Size (GiB) |
+|---|---|---|---|---|
+| n2-standard-2 | 2 | 8 | 28 | 80 *(min cap)* |
+| n2-standard-4 | 4 | 16 | 36 | 80 *(min cap)* |
+| n2-standard-8 | 8 | 32 | 52 | 80 *(min cap)* |
+| n2-standard-16 | 16 | 64 | 84 | **84** |
+| n2-standard-32 | 32 | 128 | 148 | **148** |
+| n2-standard-48 | 48 | 192 | 212 | **212** |
+| n2-standard-64 | 64 | 256 | 276 | 250 *(max cap)* |
+| c2d-highcpu-2 | 2 | 4 | 28 | 80 *(min cap)* |
+| c2d-highcpu-4 | 4 | 8 | 36 | 80 *(min cap)* |
+| c2d-highcpu-8 | 8 | 16 | 52 | 80 *(min cap)* |
+| c2d-highcpu-16 | 16 | 32 | 84 | **84** |
+| c2d-highcpu-32 | 32 | 64 | 148 | **148** |
+| c2d-highcpu-56 | 56 | 112 | 244 | **244** |
+| g2-standard-4 | 4 | 16 | 36 | 80 *(min cap)* |
+| g2-standard-8 | 8 | 32 | 52 | 80 *(min cap)* |
+| g2-standard-12 | 12 | 48 | 68 | 80 *(min cap)* |
+| g2-standard-16 | 16 | 64 | 84 | **84** |
+| g2-standard-24 | 24 | 96 | 116 | **116** |
+| g2-standard-32 | 32 | 128 | 148 | **148** |
+| g2-standard-48 | 48 | 192 | 212 | **212** |
+
+### Alicloud
+
+| Machine Type | vCPU | RAM (GiB) | Raw (GiB) | Volume Size (GiB) |
+|---|---|---|---|---|
+| ecs.g8i.large | 2 | 8 | 28 | 80 *(min cap)* |
