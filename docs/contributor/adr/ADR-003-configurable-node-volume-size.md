@@ -18,6 +18,8 @@
 - [Migration of Existing Clusters](#migration-of-existing-clusters)
   - [Option A: Cloud Orchestrator](#option-a-cloud-orchestrator)
   - [Option B: Agnostic machine name cutover](#option-b-agnostic-machine-name-cutover)
+- [Machine Type Volume Size Reference](#machine-type-volume-size-reference)
+- [Summary](#summary)
 
 ## Status
 
@@ -104,7 +106,7 @@ The dynamic volume size can be obtained using one of two sub-options for the cal
 **Sub-option B: Formula** - computes the volume size from the machine's resources:
 
 ```
-volume_size = volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor
+volume_size = clamp(volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor, min=80, max=250)
 ```
 
 Where the formula values come from:
@@ -161,7 +163,7 @@ The computed volume size is shown alongside vCPU and memory in the machine type 
 - The computed base volume size is included in the base machine price at no extra cost.
 - Only the `additionalVolumeGb` amount is charged, per GB, per node, per month.
 - The volume size is available as a status attribute on the Kubernetes node API, so the actual disk size per node can be detected at runtime for billing purposes.
-- The price calculator must be updated to include a `volumeSizeGb` input field showing the additional cost when the value exceeds the default.
+- The price calculator must be updated to include an `additionalVolumeGb` input field showing the additional cost.
 
 ### Pros
 
@@ -290,7 +292,7 @@ As an alternative to running the formula, KEB could extract the node size direct
 
 Instead of creating a new ConfigMap, KEB reads the default volume sizes from the existing ConfigMap managed by KCR.
 
-The ConfigMap already contains all supported machine types. The default volume size values for each machine type can be calculated using the formula (volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor) and added directly to this ConfigMap.
+The ConfigMap already contains all supported machine types. The default volume size values for each machine type are **manually pre-calculated** (using the formula `clamp(volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor, min=80, max=250)` as a reference) and declared in KCR's `values.yaml`, which is used to build the ConfigMap.
 
 **How KEB uses the ConfigMap:**
 - If a machine type is present in the ConfigMap, KEB uses the value from the map as the default volume size and ignores the plan default.
@@ -351,7 +353,7 @@ In this example, the default size is 80 GiB and the user requested 20 GiB of add
 
 ## Implementation Decision
 
-**Sub-approach 1, Option C** is chosen: KEB reads the default volume sizes from the existing ConfigMap owned by KCR. No new ConfigMap is introduced. KCR extends their ConfigMap with a `default disk size` field per machine type, and KEB reads that value at provisioning and update time.
+**Sub-approach 1, Option C** (use the existing ConfigMap owned by KCR) is chosen: KEB reads the default volume sizes from the existing ConfigMap owned by KCR. No new ConfigMap is introduced. KCR extends their ConfigMap with a `default disk size` field per machine type, and KEB reads that value at provisioning and update time.
 
 ## Migration of Existing Clusters
 
@@ -378,7 +380,7 @@ The migration is executed in four ordered steps:
 - SRE involvement is required.
 - A maintenance window may be needed to roll out this change.
 - External KCP operators have additional work to do.
-- KEB needs a second feaure flag for only exposing the new parameter.
+- KEB needs a second feature flag for exposing the new parameter.
 
 ### Option B: Agnostic machine name cutover
 
@@ -509,3 +511,14 @@ $$\text{volume\_size} = \max\!\left(80,\ \min\!\left(250,\ 20 + \max\!\left(\fra
 | Machine Type | vCPU | RAM (GiB) | Raw (GiB) | Volume Size (GiB) |
 |---|---|---|---|---|
 | ecs.g8i.large | 2 | 8 | 28 | 80 *(min cap)* |
+
+
+## Summary
+
+We chose **Approach 2** (dynamic volume size based on machine type) with **Sub-approach 1, Option C** (use the existing ConfigMap owned by KCR) for the implementation, and **Option A (Cloud Orchestrator)** for migrating existing clusters.
+
+The volume size is computed per machine type using the formula `volume_base + max(vCPUs / 2, RAM_GiB / 8) * volume_factor`, capped between 80 GiB and 250 GiB. This size is provided free of charge as part of the base machine price. Users can request additional storage on top via an optional `additionalVolumeGb` parameter, which is billed separately.
+
+KEB reads the default volume sizes from the existing ConfigMap owned by KCR. KCR extends that ConfigMap with a `default disk size` field per machine type. KEB is deployed with a `kcrConfigMapEnabled` flag; when enabled, it panics at startup if the ConfigMap is missing or incomplete.
+
+Existing clusters are migrated via Cloud Orchestrator. Once KCR has populated the ConfigMap and KEB is deployed with `kcrConfigMapEnabled: true`, SRE runs Cloud Orchestrator to apply the new computed volume sizes to all existing RuntimeCRs. The `additionalVolumeGb` parameter is only exposed to users after all clusters have been updated to the new default.
