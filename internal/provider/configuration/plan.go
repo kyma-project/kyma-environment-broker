@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -45,14 +46,52 @@ func NewPlanSpecifications(r io.Reader) (*PlanSpecifications, error) {
 
 type PlanSpecificationsDTO map[string]planSpecificationDTO
 
+type OperationBlocklistEntryDTO struct {
+	Message    string
+	Attributes map[string]string
+}
+
+func (e *OperationBlocklistEntryDTO) UnmarshalYAML(value *yaml.Node) error {
+	raw := value.Value
+	if idx := strings.Index(raw, "#"); idx != -1 {
+		raw = raw[:idx]
+	}
+	parts := strings.Split(raw, ",")
+	for i, p := range parts {
+		parts[i] = strings.TrimSpace(strings.Trim(strings.TrimSpace(p), `"`))
+	}
+	if len(parts) == 0 || parts[0] == "" {
+		return fmt.Errorf("operation blocklist entry message is mandatory")
+	}
+	e.Message = parts[0]
+	if len(parts) > 1 {
+		e.Attributes = make(map[string]string)
+		for _, attr := range parts[1:] {
+			k, v, found := strings.Cut(attr, "=")
+			if found {
+				e.Attributes[k] = v
+			}
+		}
+	}
+	return nil
+}
+
+type OperationBlocklistDTO struct {
+	Provision   *OperationBlocklistEntryDTO `yaml:"provision"`
+	Update      *OperationBlocklistEntryDTO `yaml:"update"`
+	PlanUpgrade *OperationBlocklistEntryDTO `yaml:"planUpgrade"`
+	Deprovision *OperationBlocklistEntryDTO `yaml:"deprovision"`
+}
+
 type planSpecificationDTO struct {
 	// platform region -> list of hyperscaler regions
 	Regions map[string][]string `yaml:"regions"`
 
-	RegularMachines    []string `yaml:"regularMachines"`
-	AdditionalMachines []string `yaml:"additionalMachines"`
-	VolumeSizeGb       int      `yaml:"volumeSizeGb"`
-	UpgradableToPlans  []string `yaml:"upgradableToPlans,omitempty"`
+	RegularMachines    []string               `yaml:"regularMachines"`
+	AdditionalMachines []string               `yaml:"additionalMachines"`
+	VolumeSizeGb       int                    `yaml:"volumeSizeGb"`
+	UpgradableToPlans  []string               `yaml:"upgradableToPlans,omitempty"`
+	OperationBlocklist *OperationBlocklistDTO `yaml:"operationBlocklist,omitempty"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -144,4 +183,12 @@ func (p *PlanSpecifications) DefaultMachineType(planName string) string {
 		return ""
 	}
 	return regularMachines[0]
+}
+
+func (p *PlanSpecifications) OperationBlocklist(planName string) *OperationBlocklistDTO {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return nil
+	}
+	return plan.OperationBlocklist
 }
