@@ -143,8 +143,8 @@ type Config struct {
 
 	MachinesAvailabilityEndpoint bool
 
-	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `ignored:"true"`
-	OpenShellWhitelistedGlobalAccountIds whitelist.Set `ignored:"true"`
+	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `envconfig:"-"`
+	OpenShellWhitelistedGlobalAccountIds whitelist.Set `envconfig:"-"`
 }
 
 func (c *Config) Initialise() error {
