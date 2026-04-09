@@ -103,8 +103,6 @@ type ProvisionEndpoint struct {
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
 	useCredentialsBindings bool
-
-	btpRegionsMigrationSapConvergedCloud map[string]string
 }
 
 const (
@@ -136,7 +134,6 @@ func NewProvision(brokerConfig Config,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
-	btpRegionsMigrationSapConvergedCloud map[string]string,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -145,31 +142,30 @@ func NewProvision(brokerConfig Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                               brokerConfig,
-		infrastructureManager:                imConfig,
-		operationsStorage:                    db.Operations(),
-		instanceStorage:                      db.Instances(),
-		instanceArchivedStorage:              db.InstancesArchived(),
-		queue:                                queue,
-		log:                                  log.With("service", "ProvisionEndpoint"),
-		enabledPlanIDs:                       enabledPlanIDs,
-		plansConfig:                          plansConfig,
-		shootDomain:                          gardenerConfig.ShootDomain,
-		shootDnsProviders:                    gardenerConfig.DNSProviders,
-		dashboardConfig:                      dashboardConfig,
-		freemiumWhiteList:                    freemiumWhitelist,
-		gvisorWhitelist:                      gvisorWhitelist,
-		kcBuilder:                            kcBuilder,
-		providerSpec:                         providerSpec,
-		valuesProvider:                       valuesProvider,
-		schemaService:                        schemaService,
-		providerConfigProvider:               providerConfigProvider,
-		quotaClient:                          quotaClient,
-		quotaWhitelist:                       quotaWhitelist,
-		rulesService:                         rulesService,
-		gardenerClient:                       gardenerClient,
-		awsClientFactory:                     awsClientFactory,
-		btpRegionsMigrationSapConvergedCloud: btpRegionsMigrationSapConvergedCloud,
+		config:                  brokerConfig,
+		infrastructureManager:   imConfig,
+		operationsStorage:       db.Operations(),
+		instanceStorage:         db.Instances(),
+		instanceArchivedStorage: db.InstancesArchived(),
+		queue:                   queue,
+		log:                     log.With("service", "ProvisionEndpoint"),
+		enabledPlanIDs:          enabledPlanIDs,
+		plansConfig:             plansConfig,
+		shootDomain:             gardenerConfig.ShootDomain,
+		shootDnsProviders:       gardenerConfig.DNSProviders,
+		dashboardConfig:         dashboardConfig,
+		freemiumWhiteList:       freemiumWhitelist,
+		gvisorWhitelist:         gvisorWhitelist,
+		kcBuilder:               kcBuilder,
+		providerSpec:            providerSpec,
+		valuesProvider:          valuesProvider,
+		schemaService:           schemaService,
+		providerConfigProvider:  providerConfigProvider,
+		quotaClient:             quotaClient,
+		quotaWhitelist:          quotaWhitelist,
+		rulesService:            rulesService,
+		gardenerClient:          gardenerClient,
+		awsClientFactory:        awsClientFactory,
 	}
 }
 
@@ -359,10 +355,6 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
-	if err = b.isSapConvergeCloudSupported(details, provisioningParameters, values); err != nil {
-		return err
-	}
-
 	if b.config.CheckQuotaLimit && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.SubAccountID, b.quotaWhitelist) {
 		if err := validateQuotaLimit(b.instanceStorage, b.quotaClient, provisioningParameters.ErsContext.SubAccountID, provisioningParameters.PlanID, false); err != nil {
 			return err
@@ -523,22 +515,6 @@ func (b *ProvisionEndpoint) validateFreePlanConstraints(details domain.Provision
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
-		}
-	}
-	return nil
-}
-
-func (b *ProvisionEndpoint) isSapConvergeCloudSupported(details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, values internal.ProviderValues) error {
-	if details.PlanID == SapConvergedCloudPlanID {
-		newPlatformRegion, exists := b.btpRegionsMigrationSapConvergedCloud[provisioningParameters.PlatformRegion]
-		if exists {
-			message := fmt.Sprintf(
-				"Cluster provisioning in the %s region is no longer supported under %s. Please use the %s BTP region.",
-				values.Region,
-				provisioningParameters.PlatformRegion,
-				newPlatformRegion,
-			)
-			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 	}
 	return nil
