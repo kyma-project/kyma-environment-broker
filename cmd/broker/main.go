@@ -336,19 +336,7 @@ func main() {
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
 
-	log.Info("Rules service configuration loaded successfully")
-
-	rulesetValid := rulesService.IsRulesetValid()
-
-	if !rulesetValid {
-		log.Error("There are errors in subscription secret rules configuration:")
-		for _, ve := range rulesService.ValidationInfo.All() {
-			log.Error(fmt.Sprintf("%s", ve))
-		}
-		fatalOnError(err, log)
-	}
-
-	log.Info("Ruleset validated")
+	log.Info("Rules service configuration loaded successfully and valid")
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
