@@ -80,6 +80,7 @@ type OperationBlocklistDTO struct {
 	Provision   *OperationBlocklistEntryDTO `yaml:"provision"`
 	Update      *OperationBlocklistEntryDTO `yaml:"update"`
 	PlanUpgrade *OperationBlocklistEntryDTO `yaml:"planUpgrade"`
+	Deprovision *OperationBlocklistEntryDTO `yaml:"deprovision"`
 }
 
 type planSpecificationDTO struct {

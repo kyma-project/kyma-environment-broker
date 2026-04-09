@@ -545,7 +545,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
 			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud, planSpec),
-		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
+		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs, planSpec),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
 			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient,

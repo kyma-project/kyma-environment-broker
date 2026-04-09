@@ -28,7 +28,7 @@ func TestDeprovisionEndpoint_DeprovisionNotExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), nil)
 
 	// when
 	_, err := svc.Deprovision(context.TODO(), "inst-0001", domain.DeprovisionDetails{}, true)
@@ -46,7 +46,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), nil)
 
 	// when
 	_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -70,7 +70,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), nil)
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -97,7 +97,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.Anything)
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), nil)
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)

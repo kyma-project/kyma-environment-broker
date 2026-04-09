@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 )
@@ -22,16 +22,17 @@ type DeprovisionEndpoint struct {
 	instancesStorage  storage.Instances
 	operationsStorage storage.Deprovisioning
 
-	queue Queue
+	queue    Queue
+	planSpec *configuration.PlanSpecifications
 }
 
-func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log *slog.Logger) *DeprovisionEndpoint {
+func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log *slog.Logger, planSpec *configuration.PlanSpecifications) *DeprovisionEndpoint {
 	return &DeprovisionEndpoint{
 		log:               log.With("service", "DeprovisionEndpoint"),
 		instancesStorage:  instancesStorage,
 		operationsStorage: operationsStorage,
-
-		queue: q,
+		queue:             q,
+		planSpec:          planSpec,
 	}
 }
 
@@ -56,6 +57,14 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	}
 
 	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
+
+	if b.planSpec != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+		if bl := b.planSpec.OperationBlocklist(planName); bl != nil && bl.Deprovision != nil {
+			err := fmt.Errorf("%s", bl.Deprovision.Message)
+			return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "deprovisioning blocked")
+		}
+	}
 
 	// check if operation with the same instance ID is already created
 	existingOperation, errStorage := b.operationsStorage.GetDeprovisioningOperationByInstanceID(instanceID)
