@@ -100,9 +100,10 @@ type Config struct {
 
 	LogLevel string `envconfig:"default=info"`
 
-	FreemiumWhitelistedGlobalAccountsFilePath string
-	MaxPodsWhitelistedGlobalAccountsFilePath  string
-	GvisorWhitelistedGlobalAccountsFilePath   string
+	FreemiumWhitelistedGlobalAccountsFilePath  string
+	MaxPodsWhitelistedGlobalAccountsFilePath   string
+	GvisorWhitelistedGlobalAccountsFilePath    string
+	OpenShellWhitelistedGlobalAccountsFilePath string
 
 	DomainName string
 
@@ -141,6 +142,26 @@ type Config struct {
 	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
+
+	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `envconfig:"-"`
+	OpenShellWhitelistedGlobalAccountIds whitelist.Set `envconfig:"-"`
+}
+
+func (c *Config) Initialise() error {
+	// read whitelisted global account ids for max pods and store it as a field which is not filled by envconfig.
+	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(c.MaxPodsWhitelistedGlobalAccountsFilePath)
+	if err != nil {
+		return fmt.Errorf("while reading max pods whitelisted global account ids from file: %w", err)
+	}
+	c.MaxPodsWhitelistedGlobalAccountIds = maxPodsWhitelistedGlobalAccountIds
+
+	openShellWhitelistedGlobalAccountsIDs, err := whitelist.ReadWhitelistedIdsFromFile(c.OpenShellWhitelistedGlobalAccountsFilePath)
+	if err != nil {
+		return fmt.Errorf("while reading open shell whitelisted global account ids from file: %w", err)
+	}
+	c.OpenShellWhitelistedGlobalAccountIds = openShellWhitelistedGlobalAccountsIDs
+
+	return nil
 }
 
 type ProfilerConfig struct {
@@ -243,6 +264,9 @@ func main() {
 	err = envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err, log)
 
+	err = cfg.Initialise()
+	fatalOnError(err, log)
+
 	if cfg.LogLevel != "" {
 		logLevel.Set(cfg.getLogLevel())
 	}
@@ -262,6 +286,7 @@ func main() {
 	log.Info(fmt.Sprintf("Available plans: %v", broker.AvailablePlans.GetAllPlanNamesAsStrings()))
 	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
 	log.Info(fmt.Sprintf("Access Control List enabled plans: %v", cfg.Broker.ACLEnabledPlans))
+	log.Info(fmt.Sprintf("Global Accounts configuration: %s", cfg.GlobalAccounts()))
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
@@ -357,21 +382,20 @@ func main() {
 
 	awsClientFactory := aws.NewFactory(providerSpec)
 
-	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, log)
-	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(maxPodsWhitelistedGlobalAccountIds)))
+	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -626,5 +650,12 @@ func (c *Config) getLogLevel() slog.Level {
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
+	}
+}
+
+func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
+	return kebConfig.GlobalAccountsConfig{
+		MaxPodsWhitelistedGlobalAccountIds:   c.MaxPodsWhitelistedGlobalAccountIds,
+		OpenShellWhitelistedGlobalAccountIds: c.OpenShellWhitelistedGlobalAccountIds,
 	}
 }
