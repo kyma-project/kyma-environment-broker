@@ -92,6 +92,10 @@ providersConfiguration:
       "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
       "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
       
+    # maps version-agnostic machine types to hyperscaler instance names
+    machinesVersions:
+      ri.{size}: r8i.{size}
+      
     # machine type families that are not universally available across all regions
     regionsSupportingMachine:
       g6:
@@ -115,6 +119,7 @@ For more information, see the following documents:
 
  * [Regions Configuration](03-60-regions-configuration.md)
  * [Machine Types Configuration](03-70-machines-configuration.md)
+ * [Machines Versions](03-72-machines-versions.md)
  * [Regions Supporting Machine Types](03-50-regions-supporting-machine.md)
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-83-plan-updates.md)
