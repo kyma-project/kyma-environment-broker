@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Kyma Bindings
 
 The Kyma binding is an abstraction of Kyma Environment Broker (KEB) that allows generating credentials for accessing an SAP BTP, Kyma runtime instance created by KEB. The credentials are generated as an administrator kubeconfig file that you can use to access the Kyma runtime. They are wrapped in a service binding object, as is known in the Open Service Broker API (OSB API) specification. The generated kubeconfig contains a TokenRequest tied to its custom ServiceAccount, which allows for revoking permissions, restricting privileges using Kubernetes RBAC, and generating short-lived tokens.

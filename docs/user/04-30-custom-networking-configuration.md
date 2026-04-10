@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Custom Networking Configuration
 
 With the **networking** section in the provisioning parameters, you can customize the following networking aspects of your Kyma runtime:

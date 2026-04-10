@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Machine Types Configuration
 
 Most Kyma plans require specifying a machine type in the request body as one of the provisioning parameters. By configuring the machine types, you can control which machine types are available for a Kyma plan and how they are displayed in the UI.

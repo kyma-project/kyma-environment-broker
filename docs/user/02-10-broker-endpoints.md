@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Kyma Environment Broker Endpoints
 
 Kyma Environment Broker (KEB) implements the [Open Service Broker API (OSB API)](https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md). All the OSB API endpoints are served with the following prefixes:

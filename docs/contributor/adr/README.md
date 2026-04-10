@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Architecture Decision Records
 
 Architecture Decision Records (ADRs) are a way to document important architectural decisions made during the development of the project. They provide a clear and concise record of the decision, the context in which it was made, the options considered, and the consequences of the decision.

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # GitHub Actions Workflows
 
 ## Markdown Link Check Workflow

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Assigning Kyma Instances to IaaS Provider Accounts
 
 Assignment rules for SAP BTP, Kyma runtime to IaaS provider accounts determine how Kyma instances are mapped to specific cloud provider account pools based on provider type, plan, and, in some cases, region.

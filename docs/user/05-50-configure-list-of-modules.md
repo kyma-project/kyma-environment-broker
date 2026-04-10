@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Configure List of Modules
 
 By default, Kyma Environment Broker (KEB) applies the Kyma custom resource, including the default modules selected by Kyma, to a cluster.

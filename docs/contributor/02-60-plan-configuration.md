@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Plan Configuration
 
 According to the Open Service Broker API (OSB API) specification, Kyma Environment Broker (KEB) supports multiple Kyma plans. Each plan has its own configuration, 

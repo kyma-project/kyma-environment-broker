@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Regions Supporting Machine
 
 ## Overview
