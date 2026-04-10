@@ -8,6 +8,7 @@ set -o pipefail # prevents errors in a pipeline from being masked
 
 VERSION=${1:-''}
 LOCAL_REGISTRY=${2:-false}
+LOCAL=${3:-false}
 
 # Create namespaces
 kubectl create namespace kcp-system || true
@@ -41,6 +42,16 @@ if [[ -n "$VERSION" ]]; then
   else
     scripts/bump_keb_chart.sh "$VERSION" "release"
   fi
+fi
+
+# If LOCAL mode, register a trap to revert values.yaml on exit (success or failure)
+if [[ "$LOCAL" == "true" && -n "$VERSION" ]]; then
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  cleanup_values() {
+    echo "LOCAL mode: reverting resources/keb/values.yaml to HEAD..."
+    git -C "$REPO_ROOT" checkout -- resources/keb/values.yaml
+  }
+  trap cleanup_values EXIT
 fi
 
 # Create custom resource definitions
