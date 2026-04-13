@@ -2,7 +2,7 @@
 
 Machine types can be specified either as concrete hyperscaler instance names, such as `m6i.large`, `Standard_D2s_v5`, or `n2-standard-2`, or as version-agnostic names.
 
-Using provider-specific instance names directly creates a tight coupling between a machine type and a specific generation. This causes a few issues:
+Using provider-specific instance names directly creates a tight coupling between a machine type and a specific generation. This causes the following issues:
 
 - Adopting a newer machine generation requires schema changes.
 - Older values must still be supported for backward compatibility.
