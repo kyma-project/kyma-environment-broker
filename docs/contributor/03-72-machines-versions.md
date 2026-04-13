@@ -58,7 +58,7 @@ providersConfiguration:
       m5.{size}: m6i.{size}
 ```
 
-## How resolution works
+## How Resolution Works
 
 Resolution is based on pattern matching:
 
