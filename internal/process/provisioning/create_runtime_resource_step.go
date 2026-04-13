@@ -157,6 +157,8 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(log *slog.Logger
 
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 
+	runtime.Spec.Shoot.EnableNvidiaOpenshell = ptr.Bool(s.globalAccounts.OpenShellWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID))
+
 	return nil
 }
 
@@ -164,11 +166,6 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 	labels := steps.SetCommonLabels(map[string]string{}, operation)
 	labels[customresources.RegionLabel] = region
 	labels[customresources.CloudProviderLabel] = cloudProvider
-
-	// todo: this is a temporary code which shows open shell setting
-	if s.globalAccounts.OpenShellWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID) {
-		labels["kyma-project.io/open-shell"] = "open-shell-enabled"
-	}
 
 	return labels
 }

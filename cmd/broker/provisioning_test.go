@@ -3644,8 +3644,7 @@ func TestProvisioningWithOpenShell(t *testing.T) {
 		// then
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		// todo: check the extension in the runtime
-		assert.Contains(t, runtime.Labels, "kyma-project.io/open-shell")
+		assert.True(t, *runtime.Spec.Shoot.EnableNvidiaOpenshell)
 	})
 
 	t.Run("not whitelisted global account ID", func(t *testing.T) {
@@ -3679,8 +3678,7 @@ func TestProvisioningWithOpenShell(t *testing.T) {
 		// then
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		// todo: check the extension in the runtime
-		assert.NotContains(t, runtime.Labels, "kyma-project.io/open-shell")
+		assert.False(t, *runtime.Spec.Shoot.EnableNvidiaOpenshell)
 	})
 }
 
