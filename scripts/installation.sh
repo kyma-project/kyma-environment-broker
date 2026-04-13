@@ -34,16 +34,8 @@ KCFG=$(kubectl config view --minify --raw \
        | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
 kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
-# Prepare chart for custom KEB version
-if [[ -n "$VERSION" ]]; then
-  if [[ "$VERSION" == PR* ]]; then
-    scripts/bump_keb_chart.sh "$VERSION" "pr"
-  else
-    scripts/bump_keb_chart.sh "$VERSION" "release"
-  fi
-fi
-
-# If a version bump occurred, register a trap to revert values.yaml on exit (success or failure)
+# If a version was provided, register a trap to revert values.yaml on exit (success or failure),
+# then bump the chart to the requested version
 if [[ -n "$VERSION" ]]; then
   REPO_ROOT=$(git rev-parse --show-toplevel)
   cleanup_values() {
@@ -51,6 +43,12 @@ if [[ -n "$VERSION" ]]; then
     git -C "$REPO_ROOT" checkout -- resources/keb/values.yaml
   }
   trap cleanup_values EXIT
+
+  if [[ "$VERSION" == PR* ]]; then
+    scripts/bump_keb_chart.sh "$VERSION" "pr"
+  else
+    scripts/bump_keb_chart.sh "$VERSION" "release"
+  fi
 fi
 
 # Create custom resource definitions
