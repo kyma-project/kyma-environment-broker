@@ -68,7 +68,7 @@ Resolution is based on pattern matching:
 
 This allows version-agnostic names such as `mi.large` to resolve to the current provider-specific instance names, while still accepting explicit values.
 
-### Resolution examples
+### Resolution Examples
 
 |     Input     | Input Template | Output Template |    Output     |
 |:-------------:|:--------------:|:---------------:|:-------------:|
