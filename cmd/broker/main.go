@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -145,6 +146,8 @@ type Config struct {
 
 	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `envconfig:"-"`
 	OpenShellWhitelistedGlobalAccountIds whitelist.Set `envconfig:"-"`
+
+	OperationBlocklistFilePath string `envconfig:"optional"`
 }
 
 func (c *Config) Initialise() error {
@@ -541,6 +544,13 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
+	var operationBlocklist blocklist.OperationBlocklist
+	if cfg.OperationBlocklistFilePath != "" {
+		operationBlocklist, err = blocklist.ReadFromFile(cfg.OperationBlocklistFilePath)
+		fatalOnError(err, logs)
+	}
+	operationBlocklist = operationBlocklist.WithPlanValidator(broker.AvailablePlans)
+
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig),
@@ -549,13 +559,13 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
-			rulesService, gardenerClient, awsClientFactory),
-		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
+			rulesService, gardenerClient, awsClientFactory, operationBlocklist),
+		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs, operationBlocklist),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
 			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient,
 			quotaWhitelistedSubaccountIds, gvisorWhitelistedGlobalAccountIds,
-			rulesService, gardenerClient, awsClientFactory),
+			rulesService, gardenerClient, awsClientFactory, operationBlocklist),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),

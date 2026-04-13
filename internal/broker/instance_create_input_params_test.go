@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
@@ -168,6 +169,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.rulesService,
 		b.gardenerClient,
 		b.awsClientFactory,
+		blocklist.OperationBlocklist{},
 	)
 }
 
