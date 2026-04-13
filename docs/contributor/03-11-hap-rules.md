@@ -1,4 +1,4 @@
-<!--{"metadata":{"publish":false}}-->
+<!--{"metadata":{"publish":true}}-->
 
 # HAP Rule Configuration
 
