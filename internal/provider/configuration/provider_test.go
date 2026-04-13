@@ -310,7 +310,7 @@ aws:
       ap-northeast-1: [a, b, c, d]
       ap-southeast-1: []
       ca-central-1: null
-    r8i:
+    ri:
       ap-northeast-1: [a, b, c, d]
   machinesVersions:
     "ri.{size}": "r8i.{size}"
@@ -366,7 +366,7 @@ aws:
       ap-northeast-1: [a, b, c, d]
       ap-southeast-1: []
       ca-central-1: null
-    r8i:
+    ri:
       ap-northeast-1: [a, b, c, d]
   machinesVersions:
     "ri.{size}": "r8i.{size}"
@@ -417,7 +417,7 @@ aws:
       ap-northeast-1: [a, b, c, d]
       ap-southeast-1: []
       ca-central-1: null
-    r8i:
+    ri:
       ap-northeast-1: [a, b, c, d]
   machinesVersions:
     "ri.{size}": "r8i.{size}"

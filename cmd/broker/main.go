@@ -19,7 +19,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
-	"github.com/kyma-project/kyma-environment-broker/internal/btpregionsmigration"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -142,8 +141,6 @@ type Config struct {
 	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
-
-	BtpRegionsMigrationSapConvergedCloudFilePath string
 }
 
 type ProfilerConfig struct {
@@ -339,19 +336,7 @@ func main() {
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
 
-	log.Info("Rules service configuration loaded successfully")
-
-	rulesetValid := rulesService.IsRulesetValid()
-
-	if !rulesetValid {
-		log.Error("There are errors in subscription secret rules configuration:")
-		for _, ve := range rulesService.ValidationInfo.All() {
-			log.Error(fmt.Sprintf("%s", ve))
-		}
-		fatalOnError(err, log)
-	}
-
-	log.Info("Ruleset validated")
+	log.Info("Rules service configuration loaded successfully and valid")
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
@@ -532,10 +517,6 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
-	btpRegionsMigrationSapConvergedCloud, err := btpregionsmigration.ReadFromFile(cfg.BtpRegionsMigrationSapConvergedCloudFilePath)
-	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("Number of deprecated BTP regions for SAP Converged Cloud: %d", len(btpRegionsMigrationSapConvergedCloud)))
-
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig),
@@ -544,7 +525,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
-			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud),
+			rulesService, gardenerClient, awsClientFactory),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,

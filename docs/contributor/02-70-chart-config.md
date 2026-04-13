@@ -22,21 +22,21 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.29.2` |
+| global.images.kyma_environment_<br>broker.version | - | `1.29.4` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.2` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.4` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.2` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.4` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.2` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.4` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.2` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.4` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.2` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.4` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.2` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.4` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.2` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.4` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -90,7 +90,6 @@
 | broker.<br>allowedGlobalAccountIDs | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. | `` |
 | broker.<br>syncEmptyUpdateResponseEnabled | If true, broker response to update requests with no changes is "200 OK" instead of "202 Accepted". | `true` |
 | broker.<br>ACLEnabledPlans | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. | `no-plan` |
-| btpRegionsMigrationSapConvergedCloud | Defines the mapping from deprecated BTP regions to their replacement regions for SAP Cloud Infrastructure. | `` |
 | provisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the provisioning queue. | `2m` |
 | provisioning.<br>workersAmount | Number of workers in provisioning queue. | `20` |
 | update.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the update queue. | `2m` |
@@ -98,7 +97,6 @@
 | deprovisioning.<br>maxStepProcessingTime | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. | `2m` |
 | deprovisioning.<br>workersAmount | Number of workers in deprovisioning queue. | `20` |
 | catalog.<br>documentationUrl | Documentation URL used in the service catalog metadata | `https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment` |
-| configPaths.<br>btpRegionsMigrationSapConvergedCloud | Path to the mapping of deprecated BTP regions to their corresponding replacement regions in SAP Cloud Infrastructure. | `/config/btpRegionsMigrationSapConvergedCloud.yaml` |
 | configPaths.catalog | Path to the service catalog configuration file. | `/config/catalog.yaml` |
 | configPaths.<br>freemiumWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `/config/freemiumWhitelistedGlobalAccountIds.yaml` |
 | configPaths.<br>maxPodsWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. | `/config/maxPodsWhitelistedGlobalAccountIds.yaml` |

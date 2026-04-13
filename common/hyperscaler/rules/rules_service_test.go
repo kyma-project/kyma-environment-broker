@@ -49,6 +49,154 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 }
 
+func TestNewRulesService(t *testing.T) {
+
+	t.Run("returns error for nil file", func(t *testing.T) {
+		rs, err := NewRulesService(nil, sets.New[string](), sets.New[string]())
+
+		require.Error(t, err)
+		assert.Nil(t, rs)
+		assert.Equal(t, "No HAP rules file provided", err.Error())
+	})
+
+	t.Run("returns valid service and no error for correct rules", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws\n  - azure\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws", "azure"), sets.New("aws", "azure"))
+
+		require.NoError(t, err)
+		require.NotNil(t, rs)
+		assert.True(t, rs.IsRulesetValid())
+		assert.NotNil(t, rs.ValidRules)
+		assert.Len(t, rs.ValidRules.Rules, 2)
+	})
+
+	t.Run("returns service with error and correct prefix for empty rules list", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New[string](), sets.New[string]())
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+	})
+
+	t.Run("returns service with error for parsing errors and error message contains all messages", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws(\n  - azure(\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws", "azure"), sets.New("aws", "azure"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.ParsingErrors, 2)
+		for _, parsingErr := range rs.ValidationInfo.ParsingErrors {
+			assert.Contains(t, err.Error(), parsingErr.Error())
+		}
+	})
+
+	t.Run("returns service with error for duplicate rules and error message contains all messages", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws\n  - aws\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.DuplicateErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.DuplicateErrors[0].Error())
+	})
+
+	t.Run("returns service with error for ambiguous rules and error message contains all messages", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws(PR=x)\n  - aws(HR=y)\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.AmbiguityErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.AmbiguityErrors[0].Error())
+	})
+
+	t.Run("returns service with error for plan errors and error message contains all messages", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws\n  - unknown-plan\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.PlanErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.PlanErrors[0].Error())
+	})
+
+	t.Run("error message contains all individual error messages joined", func(t *testing.T) {
+		tmpfile, err := CreateTempFile("rule:\n  - aws(\n  - azure(\n  - gcp(\n")
+		require.NoError(t, err)
+		defer func() { _ = os.Remove(tmpfile) }()
+
+		file, err := os.Open(tmpfile)
+		require.NoError(t, err)
+		defer func() { _ = file.Close() }()
+
+		rs, err := NewRulesService(file, sets.New("aws", "azure", "gcp"), sets.New[string]())
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+		require.NotNil(t, rs.ValidationInfo)
+		for _, e := range rs.ValidationInfo.All() {
+			assert.Contains(t, err.Error(), e.Error())
+		}
+	})
+}
+
 func TestPostParse(t *testing.T) {
 	testCases := []struct {
 		name               string
