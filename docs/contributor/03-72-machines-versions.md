@@ -23,7 +23,7 @@ Machine type resolution is applied in the following cases:
 - During updates of existing additional worker node pools, if the machine type is changed.
 
 > ### Note:
-> KEB does not automatically reconcile or update existing worker pools when the `machinesVersions` configuration changes.
+> Kyma Environment Broker (KEB) does not automatically reconcile or update existing worker pools when the `machinesVersions` configuration changes.
 > For example, if a user updates administrators after the `machinesVersions` configuration has changed, existing worker pools are not updated automatically and nodes are not restarted.
 > This behavior is intentional, to avoid unnecessary disruption, especially during periods of peak load.
 
