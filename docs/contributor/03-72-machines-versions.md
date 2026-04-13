@@ -12,7 +12,7 @@ The concrete instance name is then resolved through a version mapping.
 
 If an input machine type does not match any configured mapping pattern, it is preserved as-is.
 
-## When machine type resolution is used
+## Machine Type Resolution
 
 Machine type resolution is applied in the following cases:
 - In the AWS client, when fetching availability zones.
