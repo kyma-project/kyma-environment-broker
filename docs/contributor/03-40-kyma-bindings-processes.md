@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Kyma Binding Processes
 
 ## Creating a Kyma Binding

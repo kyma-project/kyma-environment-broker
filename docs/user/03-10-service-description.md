@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Service Description
 
 Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API (OSB API)](https://www.openservicebrokerapi.org/) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime in a cluster.

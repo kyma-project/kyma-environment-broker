@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Custom OpenID Connect Configuration
 
 During SAP BTP, Kyma runtime provisioning or update, you can provide your custom Open ID Connect (OIDC) configuration as a list of `oidc` objects or as a single `oidc` object. You can also have no OIDC configuration.

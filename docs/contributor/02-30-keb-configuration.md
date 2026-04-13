@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 ## Kyma Environment Broker Configuration
 
 Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Access Control List
 
 You can restrict access to the Kyma Kubernetes API using an Access Control List (ACL). Specify the IP ranges allowed to access the Kubernetes API. IPs that do not fall within any of the ranges are not allowed to access the API.

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Set a Custom List of SAP BTP, Kyma Runtime Administrators
 
 Kyma Environment Broker (KEB) allows you to set a custom list of runtime administrators during SAP BTP, Kyma runtime provisioning and update operations.

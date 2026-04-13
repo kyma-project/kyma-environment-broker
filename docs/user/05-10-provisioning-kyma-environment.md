@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Provision SAP BTP, Kyma Runtime Using Kyma Environment Broker
 
 Provision SAP BTP, Kyma runtime on Microsoft Azure using Kyma Environment Broker (KEB).

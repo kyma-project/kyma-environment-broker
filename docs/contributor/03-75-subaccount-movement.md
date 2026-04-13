@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Subaccount Movement
 
 Kyma Environment Broker (KEB) supports subaccount movement. With this feature, you can change the global account associated with a Kyma runtime without deprovisioning and recreating the instance.

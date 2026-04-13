@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Service Binding Cleanup CronJob
 
 Use Service Binding Cleanup CronJob to remove expired service bindings for SAP BTP, Kyma runtime instances.

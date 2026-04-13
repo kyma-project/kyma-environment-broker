@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Kubeconfig Endpoint
 
 ## Overview

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Runtime Reconciler
 
 Runtime Reconciler is an application that performs reconciliation tasks on SAP BTP, Kyma runtime.

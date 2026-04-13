@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # SAP BTP, Kyma Runtime Operations
 
 Kyma Environment Broker (KEB) allows you to configure operations you can run on SAP BTP, Kyma runtime. Each operation is processed by several single-step stages ordered in a queue. As every step can be re-launched multiple times, you should determine a behavior for each step in case of a processing failure. Choose one of the following options:

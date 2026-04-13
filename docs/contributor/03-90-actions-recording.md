@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Actions Recording
 
 Kyma Environment Broker (KEB) records actions as part of its audit logging and operational observability. These actions include subaccount movements and service plan updates, which are essential for tracking changes to Kyma runtimes over time.

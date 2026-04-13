@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # External Validations: Kyma Instances Quota
 
 Each service or environment is responsible for managing its own quota usage. During provisioning requests, Kyma Environment Broker (KEB) initiates a call 

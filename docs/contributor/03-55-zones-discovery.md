@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Zones Discovery
 
 ## Overview
