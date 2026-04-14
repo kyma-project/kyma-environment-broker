@@ -37,9 +37,9 @@ kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$K
 # If a version was provided, save values.yaml before bumping and register a trap to restore it
 # on exit (success or failure), then bump the chart to the requested version
 if [[ -n "$VERSION" ]]; then
-  VALUES_YAML="$(pwd)/resources/keb/values.yaml"
+  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  VALUES_YAML="${REPO_ROOT}/resources/keb/values.yaml"
   VALUES_BACKUP=$(mktemp)
-  cp "$VALUES_YAML" "$VALUES_BACKUP"
   cleanup_values() {
     if [[ -f "$VALUES_BACKUP" ]]; then
       echo "Restoring original resources/keb/values.yaml..."
@@ -47,7 +47,10 @@ if [[ -n "$VERSION" ]]; then
       rm -f "$VALUES_BACKUP"
     fi
   }
-  trap cleanup_values EXIT INT TERM
+  trap cleanup_values EXIT
+  trap 'cleanup_values; trap - INT;  kill -INT  $$' INT
+  trap 'cleanup_values; trap - TERM; kill -TERM $$' TERM
+  cp "$VALUES_YAML" "$VALUES_BACKUP"
 
   if [[ "$VERSION" == PR* ]]; then
     scripts/bump_keb_chart.sh "$VERSION" "pr"
