@@ -43,7 +43,7 @@ if [[ -n "$VERSION" ]]; then
   BACKUP_READY=false
   cleanup_values() {
     if [[ "$BACKUP_READY" == "true" && -f "$VALUES_BACKUP" ]]; then
-      echo "Restoring original resources/keb/values.yaml..."
+      echo "Restoring original ${VALUES_YAML}..."
       cp "$VALUES_BACKUP" "$VALUES_YAML"
     fi
     rm -f "$VALUES_BACKUP"
