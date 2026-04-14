@@ -39,18 +39,20 @@ kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$K
 if [[ -n "$VERSION" ]]; then
   REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   VALUES_YAML="${REPO_ROOT}/resources/keb/values.yaml"
-  VALUES_BACKUP=$(mktemp)
+  VALUES_BACKUP="$(mktemp "${TMPDIR:-/tmp}/keb-values.XXXXXX")"
+  BACKUP_READY=false
   cleanup_values() {
-    if [[ -f "$VALUES_BACKUP" ]]; then
+    if [[ "$BACKUP_READY" == "true" && -f "$VALUES_BACKUP" ]]; then
       echo "Restoring original resources/keb/values.yaml..."
       cp "$VALUES_BACKUP" "$VALUES_YAML"
-      rm -f "$VALUES_BACKUP"
     fi
+    rm -f "$VALUES_BACKUP"
   }
   trap cleanup_values EXIT
   trap 'cleanup_values; trap - INT;  kill -INT  $$' INT
   trap 'cleanup_values; trap - TERM; kill -TERM $$' TERM
   cp "$VALUES_YAML" "$VALUES_BACKUP"
+  BACKUP_READY=true
 
   if [[ "$VERSION" == PR* ]]; then
     scripts/bump_keb_chart.sh "$VERSION" "pr"
