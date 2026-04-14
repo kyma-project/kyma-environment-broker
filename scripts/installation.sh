@@ -44,9 +44,12 @@ if [[ -n "$VERSION" ]]; then
   cleanup_values() {
     if [[ "$BACKUP_READY" == "true" && -f "$VALUES_BACKUP" ]]; then
       echo "Restoring original ${VALUES_YAML}..."
-      cp "$VALUES_BACKUP" "$VALUES_YAML"
+      if cp "$VALUES_BACKUP" "$VALUES_YAML"; then
+        rm -f "$VALUES_BACKUP"
+      else
+        echo "Failed to restore ${VALUES_YAML} from backup. Backup kept at ${VALUES_BACKUP} for manual recovery." >&2
+      fi
     fi
-    rm -f "$VALUES_BACKUP"
   }
   trap cleanup_values EXIT
   trap 'cleanup_values; trap - INT;  kill -INT  $$' INT
