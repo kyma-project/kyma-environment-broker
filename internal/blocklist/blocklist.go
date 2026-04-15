@@ -269,7 +269,7 @@ func matchesIDList(expr, value string) bool {
 // matchesPR is implemented via matchesIDList — same semantics as HR/GA/SA.
 
 // formatMessage replaces {plan}, {GA}, {SA}, {HR}, {PR} placeholders.
-func LinformatMessage(msg, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) string {
+func formatMessage(msg, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) string {
 	msg = strings.ReplaceAll(msg, "{plan}", planName)
 	msg = strings.ReplaceAll(msg, "{GA}", globalAccountID)
 	msg = strings.ReplaceAll(msg, "{SA}", subAccountID)
