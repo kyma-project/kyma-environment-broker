@@ -205,7 +205,7 @@ func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccount
 		}
 	}
 	if hr, ok := r.Params["HR"]; ok {
-		if !matchesIDList(hr, hyperscalerRegion) {
+		if hyperscalerRegion == "" || !matchesIDList(hr, hyperscalerRegion) {
 			return false
 		}
 	}
@@ -263,7 +263,8 @@ func matchesIDList(expr, value string) bool {
 }
 
 // matchesHR is implemented via matchesIDList — HR rules use the same comma-separated
-// list and negation semantics as GA/SA. An empty hyperscalerRegion never matches.
+// list and negation semantics as GA/SA. An empty hyperscalerRegion never matches,
+// even with negation, so instances with an unknown region are never blocked by HR rules.
 
 // matchesPR is implemented via matchesIDList — same semantics as HR/GA/SA.
 

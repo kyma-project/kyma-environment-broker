@@ -139,6 +139,20 @@ func TestCheckProvision_WithHR_EmptyRegionDoesNotMatch(t *testing.T) {
 	assert.NoError(t, bl.CheckProvision("trial", "", "", "", ""))
 }
 
+func TestCheckProvision_WithHRNegation_EmptyRegionDoesNotMatch(t *testing.T) {
+	// negated HR rule must not fire when hyperscalerRegion is empty (e.g. older instances)
+	bl, err := parseInline("provision", `"blocked","HR=!eu-west-1"`)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("aws", "", "", "", ""))
+}
+
+func TestCheckDeprovision_WithHRNegation_EmptyRegionDoesNotMatch(t *testing.T) {
+	// same guard applies to deprovision — older instances without ProviderRegion must not be blocked
+	bl, err := parseInline("deprovision", `"blocked","HR=!eu-west-1"`)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckDeprovision("aws", "", "", "", ""))
+}
+
 func TestCheckProvision_WithHRNegation(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","HR=!eu-west-1"`)
 	require.NoError(t, err)
