@@ -233,6 +233,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/kyma-project/infrastructure-manager v0.0.0-20260410150638-a243f05db1fb h1:7gc7iFYWQurvOvaAo9JA9HK/M0jgnV5JLZlk2qTSCic=
 github.com/kyma-project/infrastructure-manager v0.0.0-20260410150638-a243f05db1fb/go.mod h1:YWQDotjYZtM2w6WJ5Wc65E62T2iG2RwCjB3a5JiEJtc=
+github.com/kyma-project/infrastructure-manager v0.0.0-20260413131433-4862da221a5e h1:wbQWXrRZfMctZm/tjdB6TdM3gT+NJfzL41NcaBAvHl8=
+github.com/kyma-project/infrastructure-manager v0.0.0-20260413131433-4862da221a5e/go.mod h1:YWQDotjYZtM2w6WJ5Wc65E62T2iG2RwCjB3a5JiEJtc=
 github.com/kyma-project/registry-cache v0.0.0-20251023124504-71bc19cf102a h1:F9wkaorCIEJHY54kCLTIugAkRr7e3nnbfaowh3KoLHY=
 github.com/kyma-project/registry-cache v0.0.0-20251023124504-71bc19cf102a/go.mod h1:AySDsfchpllj095nuMzGkf2m+WccbIwbRv99JxRz4Bg=
 github.com/labstack/gommon v0.4.2 h1:F8qTUNXgG1+6WQmqoUWnz8WiEU60mXVVw0P4ht1WRA0=
