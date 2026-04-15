@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Subaccount Cleanup CronJob
 
 Each SAP BTP, Kyma runtime instance in the Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.

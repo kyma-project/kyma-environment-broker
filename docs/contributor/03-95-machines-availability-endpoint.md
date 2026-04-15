@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Machines Availability Endpoint
 
 The Machines Availability endpoint provides information about which machine-type families (for example, `m6i`, `c7i`, or `g6`) can be provisioned in specific regions, 

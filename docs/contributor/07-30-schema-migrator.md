@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Schema Migrator
 
 Schema Migrator is responsible for Kyma Environment Broker's (KEB) database schema migrations.

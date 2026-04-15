@@ -199,5 +199,5 @@ if __name__ == "__main__":
     md_table = generate_markdown_table(entries)
     md_table = re.sub(r'`?TBD`?', 'None', md_table)
     with open(output_path, 'w') as f:
-        f.write(md_table)
+        f.write('<!--{"metadata":{"publish":false}}-->\n\n' + md_table)
     print(f"Documentation table written to {output_path}")

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Kyma Environment Broker Release Pipeline
 
 ## Overview

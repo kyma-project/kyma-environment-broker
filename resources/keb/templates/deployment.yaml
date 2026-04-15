@@ -164,8 +164,6 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_BROKER_URL
               value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
-            - name: APP_BTP_REGIONS_MIGRATION_SAP_CONVERGED_CLOUD_FILE_PATH
-              value: {{ .Values.configPaths.btpRegionsMigrationSapConvergedCloud }}
             - name: APP_CATALOG_FILE_PATH
               value: {{ .Values.configPaths.catalog }}
             - name: APP_DATABASE_HOST
@@ -286,6 +284,8 @@ spec:
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICS_OPERATION_STATS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
+            - name: APP_OPEN_SHELL_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.openShellWhitelistedGlobalAccountIds }}
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY

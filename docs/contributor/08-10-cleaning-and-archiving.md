@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Cleaning and Archiving
 
 ## Archiving

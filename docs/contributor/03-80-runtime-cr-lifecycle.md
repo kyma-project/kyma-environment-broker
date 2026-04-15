@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Runtime Custom Resource Lifecycle
 
 ## Overview

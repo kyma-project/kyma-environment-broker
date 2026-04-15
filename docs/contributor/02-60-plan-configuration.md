@@ -1,6 +1,13 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Plan Configuration
 
-According to the Open Service Broker API (OSB API) specification, Kyma Environment Broker (KEB) supports multiple Kyma plans. Each plan has its own configuration, which specifies allowed regions, zones, machine types, and their display names. This document describes an overview of the plan configuration.
+According to the Open Service Broker API (OSB API) specification, Kyma Environment Broker (KEB) supports multiple Kyma plans. Each plan has its own configuration, 
+which specifies allowed regions, zones, machine types, and their display names. This document provides an overview of the plan configuration.
+
+## Available Plans
+Available plans (their names and IDs) are hard-wired in KEB (see [`plans.go`](../../internal/broker/plans.go)). 
+If you want to add a new plan, you must implement it in KEB by defining constants and extending the `PlanIDsMapping` map.
 
 ## Enabling Plans
 
@@ -9,6 +16,19 @@ The **enablePlans** property contains a comma-separated list of supported plan n
 ```yaml
 enablePlans: "trial,aws,gcp"
 ```
+
+This setting affects the services catalog, so only enabled plans are visible in it and can be used for provisioning.
+Moreover, if provisioning is triggered with a plan that is not enabled, it fails during schema validation with the message "plan-id not in the catalog".
+
+If a plan is not defined in KEB, KEB startup fails with the log message: `unrecognized <undefined-plan-name> plan name`. 
+
+Update operations are not affected by the **enablePlans** property, so if a plan is disabled after provisioning, update operations for existing instances of that plan still work.
+Updating the plan to a disabled plan is allowed. To prevent this, use the **upgradableToPlans** property in the plan configuration to allow updates only to enabled plans. For example:
+
+If you want to prevent creating new instances of a plan, whether you use a provisioning or update operation, you must remove the plan from the **enablePlans** list
+and all occurrences of the plan from the **upgradableToPlans** list.
+
+Deprovisioning is not affected by the **enablePlans** property, so if a plan is disabled after provisioning, deprovisioning operations for existing instances of that plan still work.
 
 ## HAP Rules
 
@@ -74,6 +94,10 @@ providersConfiguration:
       "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
       "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
       
+    # maps version-agnostic machine types to hyperscaler instance names
+    machinesVersions:
+      ri.{size}: r8i.{size}
+      
     # machine type families that are not universally available across all regions
     regionsSupportingMachine:
       g6:
@@ -97,6 +121,7 @@ For more information, see the following documents:
 
  * [Regions Configuration](03-60-regions-configuration.md)
  * [Machine Types Configuration](03-70-machines-configuration.md)
+ * [Machines Versions](03-72-machines-versions.md)
  * [Regions Supporting Machine Types](03-50-regions-supporting-machine.md)
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-83-plan-updates.md)

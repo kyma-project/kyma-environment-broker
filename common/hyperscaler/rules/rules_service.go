@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -55,7 +56,18 @@ func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans
 	}
 
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
-	return rs, err
+
+	if !rs.IsRulesetValid() {
+		var msgs []string
+		if rs.ValidationInfo != nil {
+			msgs = make([]string, 0, len(rs.ValidationInfo.All()))
+			for _, e := range rs.ValidationInfo.All() {
+				msgs = append(msgs, e.Error())
+			}
+		}
+		return rs, fmt.Errorf("There are errors in subscription secret rules configuration: %s", strings.Join(msgs, "; "))
+	}
+	return rs, nil
 }
 
 func NewRulesServiceFromSlice(rules []string, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {

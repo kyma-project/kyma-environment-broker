@@ -20,27 +20,26 @@ import (
 )
 
 type fakeProvisionEndpointBuilder struct {
-	brokerConfig                         Config
-	gardenerConfig                       gardener.Config
-	imConfig                             InfrastructureManager
-	db                                   storage.BrokerStorage
-	queue                                Queue
-	plansConfig                          PlansConfig
-	log                                  *slog.Logger
-	dashboardConfig                      dashboard.Config
-	kcBuilder                            kubeconfig.KcBuilder
-	freemiumWhitelist                    whitelist.Set
-	gvisorWhitelist                      whitelist.Set
-	schemaService                        *SchemaService
-	providerSpec                         ConfigurationProvider
-	valuesProvider                       ValuesProvider
-	providerConfigProvider               config.ConfigMapConfigProvider
-	quotaClient                          QuotaClient
-	quotaWhitelist                       whitelist.Set
-	rulesService                         *rules.RulesService
-	gardenerClient                       *gardener.Client
-	awsClientFactory                     aws.ClientFactory
-	btpRegionsMigrationSapConvergedCloud map[string]string
+	brokerConfig           Config
+	gardenerConfig         gardener.Config
+	imConfig               InfrastructureManager
+	db                     storage.BrokerStorage
+	queue                  Queue
+	plansConfig            PlansConfig
+	log                    *slog.Logger
+	dashboardConfig        dashboard.Config
+	kcBuilder              kubeconfig.KcBuilder
+	freemiumWhitelist      whitelist.Set
+	gvisorWhitelist        whitelist.Set
+	schemaService          *SchemaService
+	providerSpec           ConfigurationProvider
+	valuesProvider         ValuesProvider
+	providerConfigProvider config.ConfigMapConfigProvider
+	quotaClient            QuotaClient
+	quotaWhitelist         whitelist.Set
+	rulesService           *rules.RulesService
+	gardenerClient         *gardener.Client
+	awsClientFactory       aws.ClientFactory
 }
 
 func NewFakeProvisionEndpointBuilder() *fakeProvisionEndpointBuilder {
@@ -147,11 +146,6 @@ func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFa
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithBtpRegionsMigrationSapConvergedCloud(m map[string]string) *fakeProvisionEndpointBuilder {
-	b.btpRegionsMigrationSapConvergedCloud = m
-	return b
-}
-
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
@@ -174,7 +168,6 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.rulesService,
 		b.gardenerClient,
 		b.awsClientFactory,
-		b.btpRegionsMigrationSapConvergedCloud,
 	)
 }
 

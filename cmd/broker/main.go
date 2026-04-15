@@ -19,7 +19,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
-	"github.com/kyma-project/kyma-environment-broker/internal/btpregionsmigration"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -101,9 +100,10 @@ type Config struct {
 
 	LogLevel string `envconfig:"default=info"`
 
-	FreemiumWhitelistedGlobalAccountsFilePath string
-	MaxPodsWhitelistedGlobalAccountsFilePath  string
-	GvisorWhitelistedGlobalAccountsFilePath   string
+	FreemiumWhitelistedGlobalAccountsFilePath  string
+	MaxPodsWhitelistedGlobalAccountsFilePath   string
+	GvisorWhitelistedGlobalAccountsFilePath    string
+	OpenShellWhitelistedGlobalAccountsFilePath string
 
 	DomainName string
 
@@ -143,7 +143,25 @@ type Config struct {
 
 	MachinesAvailabilityEndpoint bool
 
-	BtpRegionsMigrationSapConvergedCloudFilePath string
+	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `envconfig:"-"`
+	OpenShellWhitelistedGlobalAccountIds whitelist.Set `envconfig:"-"`
+}
+
+func (c *Config) Initialise() error {
+	// read whitelisted global account ids for max pods and store it as a field which is not filled by envconfig.
+	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(c.MaxPodsWhitelistedGlobalAccountsFilePath)
+	if err != nil {
+		return fmt.Errorf("while reading max pods whitelisted global account ids from file: %w", err)
+	}
+	c.MaxPodsWhitelistedGlobalAccountIds = maxPodsWhitelistedGlobalAccountIds
+
+	openShellWhitelistedGlobalAccountsIDs, err := whitelist.ReadWhitelistedIdsFromFile(c.OpenShellWhitelistedGlobalAccountsFilePath)
+	if err != nil {
+		return fmt.Errorf("while reading open shell whitelisted global account ids from file: %w", err)
+	}
+	c.OpenShellWhitelistedGlobalAccountIds = openShellWhitelistedGlobalAccountsIDs
+
+	return nil
 }
 
 type ProfilerConfig struct {
@@ -246,6 +264,9 @@ func main() {
 	err = envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err, log)
 
+	err = cfg.Initialise()
+	fatalOnError(err, log)
+
 	if cfg.LogLevel != "" {
 		logLevel.Set(cfg.getLogLevel())
 	}
@@ -257,10 +278,15 @@ func main() {
 		fatalOnError(fmt.Errorf("AvailablePlans is not initialized properly"), log)
 	}
 
+	err = cfg.Broker.Validate()
+	fatalOnError(err, log)
+
 	log.Info("Starting Kyma Environment Broker")
 
+	log.Info(fmt.Sprintf("Available plans: %v", broker.AvailablePlans.GetAllPlanNamesAsStrings()))
 	log.Info(fmt.Sprintf("Restrict to allowed GA IDS: %v", cfg.Broker.RestrictToAllowedGlobalAccounts))
 	log.Info(fmt.Sprintf("Access Control List enabled plans: %v", cfg.Broker.ACLEnabledPlans))
+	log.Info(fmt.Sprintf("Global Accounts configuration: %s", cfg.GlobalAccounts()))
 
 	log.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
@@ -335,15 +361,7 @@ func main() {
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New([]string(cfg.Broker.EnablePlans)...))
 	fatalOnError(err, log)
 
-	rulesetValid := rulesService.IsRulesetValid()
-
-	if !rulesetValid {
-		log.Error("There are errors in subscription secret rules configuration:")
-		for _, ve := range rulesService.ValidationInfo.All() {
-			log.Error(fmt.Sprintf("%s", ve))
-		}
-		fatalOnError(err, log)
-	}
+	log.Info("Rules service configuration loaded successfully and valid")
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
@@ -364,21 +382,20 @@ func main() {
 
 	awsClientFactory := aws.NewFactory(providerSpec)
 
-	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, log)
-	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(maxPodsWhitelistedGlobalAccountIds)))
+	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -524,10 +541,6 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of subaccountIds with unlimited quota: %d", len(quotaWhitelistedSubaccountIds)))
 
-	btpRegionsMigrationSapConvergedCloud, err := btpregionsmigration.ReadFromFile(cfg.BtpRegionsMigrationSapConvergedCloudFilePath)
-	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("Number of deprecated BTP regions for SAP Converged Cloud: %d", len(btpRegionsMigrationSapConvergedCloud)))
-
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, schemaService, servicesConfig),
@@ -536,7 +549,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
 			schemaService, providerSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
-			rulesService, gardenerClient, awsClientFactory, btpRegionsMigrationSapConvergedCloud),
+			rulesService, gardenerClient, awsClientFactory),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
@@ -614,6 +627,7 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 func fatalOnError(err error, log *slog.Logger) {
 	if err != nil {
 		log.Error(err.Error())
+		log.Error("Application will be terminated")
 		os.Exit(1)
 	}
 }
@@ -636,5 +650,12 @@ func (c *Config) getLogLevel() slog.Level {
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
+	}
+}
+
+func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
+	return kebConfig.GlobalAccountsConfig{
+		MaxPodsWhitelistedGlobalAccountIds:   c.MaxPodsWhitelistedGlobalAccountIds,
+		OpenShellWhitelistedGlobalAccountIds: c.OpenShellWhitelistedGlobalAccountIds,
 	}
 }

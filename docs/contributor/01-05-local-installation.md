@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Install Kyma Environment Broker Locally
 
 ## Local Architecture
