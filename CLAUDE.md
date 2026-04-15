@@ -66,6 +66,9 @@ Kyma Environment Broker (KEB) is an Open Service Broker that provisions SAP BTP,
 
 The overall flow: user sends provisioning request → KEB creates `Runtime` + `Kyma` CRs → KIM provisions cluster → KLM manages Kyma modules.
 
+In deployment definitions environment variables should be sorted alphabetically for easier readability and maintenance. This is checked in the `generate-env-docs` Make target, which generates documentation for environment variables from the code and ensures they are sorted.
+Check is invoked by the CI workflow at `run-verify-docs.yaml`.
+
 ### Commands
 
 ```bash
@@ -89,6 +92,9 @@ make fix
 
 # Check go.mod/go.sum consistency
 make checks
+
+# Generate documentation for environment variables
+make generate-env-docs
 ```
 
 ### Architecture
