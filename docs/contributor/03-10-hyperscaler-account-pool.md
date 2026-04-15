@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Hyperscaler Account Pool
 
 > ### Note:

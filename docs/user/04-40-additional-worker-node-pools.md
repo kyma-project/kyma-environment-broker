@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Additional Worker Node Pools
 
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.

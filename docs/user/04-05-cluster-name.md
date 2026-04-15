@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Cluster Name
 
 Kyma Environment Broker (KEB) enables you to set a cluster name during SAP BTP, Kyma runtime provisioning and update operations. 

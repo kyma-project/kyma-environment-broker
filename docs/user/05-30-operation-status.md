@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Check Operation Status
 
 Check the operation status for the provisioning and deprovisioning operations.

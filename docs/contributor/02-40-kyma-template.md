@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Kyma Custom Resource Template Configuration
 
 Kyma Environment Broker (KEB) provisioning process creates a Kyma custom resource (CR) based on the configured template. KEB requires a ConfigMap with the configuration.

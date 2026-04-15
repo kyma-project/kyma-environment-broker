@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # SAP BTP, Kyma Runtime Updates
 
 ## Overview

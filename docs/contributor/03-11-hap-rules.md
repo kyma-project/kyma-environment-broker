@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # HAP Rule Configuration
 
 With the Hyperscaler Account Pool (HAP) rule configuration functionality, you can control pool selection from a configurable helm property. 

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":false}}-->
+
 # Notable Changes
 
 Notable changes are Kyma Environment Broker (KEB) updates that require operator action. These changes can be classified according to the following dimensions:

@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Authorization
 
 Kyma Environment Broker (KEB) endpoints are secured by OAuth2 authorization. It is configured in the [authorization-policy](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/templates/authorization-policy.yaml) file.
