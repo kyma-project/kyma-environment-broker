@@ -286,6 +286,8 @@ spec:
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
             - name: APP_OPEN_SHELL_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.openShellWhitelistedGlobalAccountIds }}
+            - name: APP_OPERATION_BLOCKLIST_FILE_PATH
+              value: {{ .Values.configPaths.operationBlocklist }}
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY
@@ -318,8 +320,6 @@ spec:
               value: "{{ .Values.cis.entitlements.serviceURL }}"
             - name: APP_QUOTA_WHITELISTED_SUBACCOUNTS_FILE_PATH
               value: {{ .Values.configPaths.quotaWhitelistedSubaccountIds }}
-            - name: APP_OPERATION_BLOCKLIST_FILE_PATH
-              value: {{ .Values.configPaths.operationBlocklist }}
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH
