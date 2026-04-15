@@ -112,7 +112,7 @@ make checks
 - **`process/`** — Workflow orchestration via step-based state machines. Sub-packages: `provisioning/`, `deprovisioning/`, `update/`. Each operation is a sequence of steps run by a worker.
 - **`storage/`** — PostgreSQL persistence via `internal/storage/postsql/`. Main entities: `Instance`, `Operation`, `RuntimeState`, `Orchestration`, `Binding`.
 - **`provider/`** — Cloud provider abstractions. Each supported hyperscaler implements the provider interface.
-- **`hyperscalers/`** — AWS-specific hyperscaler account pool (HAP) logic.
+- **`hyperscalers/`** — Hyperscaler account pool (HAP) logic.
 - **`config/`** — Configuration loaded from ConfigMaps; uses `vrischmann/envconfig` for env vars.
 - **`events/`** — CloudEvent publishing for broker lifecycle events.
 - **`metrics/`** — Prometheus metrics registration and collection.
