@@ -168,7 +168,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 
 	planName := string(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)))
-	if err := b.operationBlocklist.CheckUpdate(planName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion); err != nil {
+	if err := b.operationBlocklist.CheckUpdate(planName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion, instance.Parameters.PlatformRegion); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -792,7 +792,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 
-		if err := b.operationBlocklist.CheckPlanUpgrade(string(targetPlanName), instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion); err != nil {
+		if err := b.operationBlocklist.CheckPlanUpgrade(targetPlanName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion, instance.Parameters.PlatformRegion); err != nil {
 			return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 

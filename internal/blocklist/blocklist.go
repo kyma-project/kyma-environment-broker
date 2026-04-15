@@ -28,7 +28,7 @@ type PlanValidator interface {
 //   - SA    — subaccount ID list (comma-separated; prefix "!" to negate)
 //   - HR    — hyperscaler region list (comma-separated; prefix "!" to negate)
 //     for provision, uses the caller-supplied region; empty region never matches
-//   - PR    — platform region (parsed, not yet checked)
+//   - PR    — platform region list (comma-separated; prefix "!" to negate)
 //
 // The message may contain {plan}, {GA}, {SA}, {HR}, {PR} placeholders.
 type Rule struct {
@@ -156,39 +156,39 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 	return bl, nil
 }
 
-// CheckProvision returns a non-nil error when a provision rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
+// CheckProvision returns a non-nil error when a provision rule matches planName, globalAccountID, subAccountID, hyperscalerRegion, or platformRegion.
 // hyperscalerRegion is the caller-supplied region; an empty string never matches an HR filter.
-func (b *OperationBlocklist) CheckProvision(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
-	return checkRules(b.Provision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
+func (b *OperationBlocklist) CheckProvision(planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) error {
+	return checkRules(b.Provision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion)
 }
 
-// CheckUpdate returns a non-nil error when an update rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
-func (b *OperationBlocklist) CheckUpdate(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
-	return checkRules(b.Update, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
+// CheckUpdate returns a non-nil error when an update rule matches planName, globalAccountID, subAccountID, hyperscalerRegion, or platformRegion.
+func (b *OperationBlocklist) CheckUpdate(planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) error {
+	return checkRules(b.Update, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion)
 }
 
-// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
-func (b *OperationBlocklist) CheckPlanUpgrade(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
-	return checkRules(b.PlanUpgrade, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
+// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches planName, globalAccountID, subAccountID, hyperscalerRegion, or platformRegion.
+func (b *OperationBlocklist) CheckPlanUpgrade(planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) error {
+	return checkRules(b.PlanUpgrade, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion)
 }
 
-// CheckDeprovision returns a non-nil error when a deprovision rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
-func (b *OperationBlocklist) CheckDeprovision(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
-	return checkRules(b.Deprovision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
+// CheckDeprovision returns a non-nil error when a deprovision rule matches planName, globalAccountID, subAccountID, hyperscalerRegion, or platformRegion.
+func (b *OperationBlocklist) CheckDeprovision(planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) error {
+	return checkRules(b.Deprovision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion)
 }
 
 // checkRules iterates rules and returns an error for the first matching one.
-func checkRules(rules []Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
+func checkRules(rules []Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) error {
 	for _, r := range rules {
-		if matchesRule(r, pv, planName, globalAccountID, subAccountID, hyperscalerRegion) {
-			return fmt.Errorf("%s", formatMessage(r.Message, planName, globalAccountID, subAccountID, hyperscalerRegion))
+		if matchesRule(r, pv, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion) {
+			return fmt.Errorf("%s", formatMessage(r.Message, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion))
 		}
 	}
 	return nil
 }
 
 // matchesRule returns true when all present filter params of the rule match.
-func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion string) bool {
+func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) bool {
 	if plan, ok := r.Params["plan"]; ok {
 		if !matchesPlan(pv, plan, planName) {
 			return false
@@ -209,8 +209,8 @@ func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccount
 			return false
 		}
 	}
-	if _, ok := r.Params["PR"]; ok {
-		if !matchesPR() {
+	if pr, ok := r.Params["PR"]; ok {
+		if !matchesIDList(pr, platformRegion) {
 			return false
 		}
 	}
@@ -265,16 +265,14 @@ func matchesIDList(expr, value string) bool {
 // matchesHR is implemented via matchesIDList — HR rules use the same comma-separated
 // list and negation semantics as GA/SA. An empty hyperscalerRegion never matches.
 
-// matchesPR checks the platform region filter. Not yet implemented.
-func matchesPR() bool {
-	return true
-}
+// matchesPR is implemented via matchesIDList — same semantics as HR/GA/SA.
 
 // formatMessage replaces {plan}, {GA}, {SA}, {HR}, {PR} placeholders.
-func formatMessage(msg, planName, globalAccountID, subAccountID, hyperscalerRegion string) string {
+func formatMessage(msg, planName, globalAccountID, subAccountID, hyperscalerRegion, platformRegion string) string {
 	msg = strings.ReplaceAll(msg, "{plan}", planName)
 	msg = strings.ReplaceAll(msg, "{GA}", globalAccountID)
 	msg = strings.ReplaceAll(msg, "{SA}", subAccountID)
 	msg = strings.ReplaceAll(msg, "{HR}", hyperscalerRegion)
+	msg = strings.ReplaceAll(msg, "{PR}", platformRegion)
 	return msg
 }

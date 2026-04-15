@@ -60,7 +60,7 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
 
 	planName := string(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)))
-	if err := b.operationBlocklist.CheckDeprovision(planName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion); err != nil {
+	if err := b.operationBlocklist.CheckDeprovision(planName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion, instance.Parameters.PlatformRegion); err != nil {
 		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 

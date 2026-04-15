@@ -64,62 +64,62 @@ func parseInline(op string, rules ...string) (blocklist.OperationBlocklist, erro
 func TestParseRule_MessageOnly(t *testing.T) {
 	bl, err := parseInline("provision", `"always blocked"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("any", "any", "", ""), "always blocked")
+	assert.EqualError(t, bl.CheckProvision("any", "any", "", "", ""), "always blocked")
 }
 
 func TestParseRule_WithPlan(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked {plan}","plan=aws"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "ga1", "", ""), "blocked aws")
-	assert.NoError(t, bl.CheckProvision("gcp", "ga1", "", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "ga1", "", "", ""), "blocked aws")
+	assert.NoError(t, bl.CheckProvision("gcp", "ga1", "", "", ""))
 }
 
 func TestParseRule_WithGAList(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked GA={GA}","GA=id1,id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", ""), "blocked GA=id1")
-	assert.EqualError(t, bl.CheckProvision("gcp", "id2", "", ""), "blocked GA=id2")
-	assert.NoError(t, bl.CheckProvision("aws", "id3", "", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", "", ""), "blocked GA=id1")
+	assert.EqualError(t, bl.CheckProvision("gcp", "id2", "", "", ""), "blocked GA=id2")
+	assert.NoError(t, bl.CheckProvision("aws", "id3", "", "", ""))
 }
 
 func TestParseRule_WithGANegation(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","GA=!id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", ""), "blocked")
-	assert.NoError(t, bl.CheckProvision("aws", "id2", "", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", "", ""), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws", "id2", "", "", ""))
 }
 
 func TestParseRule_PlanAndGA(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","plan=aws","GA=id1,id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", ""), "blocked")
-	assert.NoError(t, bl.CheckProvision("gcp", "id1", "", "")) // plan mismatch
-	assert.NoError(t, bl.CheckProvision("aws", "id3", "", "")) // GA mismatch
+	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", "", ""), "blocked")
+	assert.NoError(t, bl.CheckProvision("gcp", "id1", "", "", "")) // plan mismatch
+	assert.NoError(t, bl.CheckProvision("aws", "id3", "", "", "")) // GA mismatch
 }
 
 func TestParseRule_PlanList(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","plan=aws,gcp","GA=id1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", ""), "blocked")
-	assert.EqualError(t, bl.CheckProvision("gcp", "id1", "", ""), "blocked")
-	assert.NoError(t, bl.CheckProvision("azure", "id1", "", "")) // plan mismatch
-	assert.NoError(t, bl.CheckProvision("aws", "id2", "", ""))   // GA mismatch
+	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", "", ""), "blocked")
+	assert.EqualError(t, bl.CheckProvision("gcp", "id1", "", "", ""), "blocked")
+	assert.NoError(t, bl.CheckProvision("azure", "id1", "", "", "")) // plan mismatch
+	assert.NoError(t, bl.CheckProvision("aws", "id2", "", "", ""))   // GA mismatch
 }
 
 func TestParseRule_SANegation(t *testing.T) {
 	bl, err := parseInline("update", `"update blocked for {SA}","SA=!id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckUpdate("aws", "", "id1", ""), "update blocked for id1")
-	assert.NoError(t, bl.CheckUpdate("aws", "", "id2", ""))
+	assert.EqualError(t, bl.CheckUpdate("aws", "", "id1", "", ""), "update blocked for id1")
+	assert.NoError(t, bl.CheckUpdate("aws", "", "id2", "", ""))
 }
 
-func TestParseRule_HRAndPRParsedButNotChecked(t *testing.T) {
+func TestParseRule_HRAndPR(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","plan=aws","HR=eu-west-1","PR=cf-eu10"`)
 	require.NoError(t, err)
-	// HR now filters on the passed hyperscalerRegion; PR is still not checked
-	assert.EqualError(t, bl.CheckProvision("aws", "ga1", "", "eu-west-1"), "blocked")
-	assert.NoError(t, bl.CheckProvision("aws", "ga1", "", "us-east-1")) // HR mismatch
-	assert.NoError(t, bl.CheckProvision("gcp", "ga1", "", "eu-west-1")) // plan mismatch
+	assert.EqualError(t, bl.CheckProvision("aws", "ga1", "", "eu-west-1", "cf-eu10"), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws", "ga1", "", "us-east-1", "cf-eu10")) // HR mismatch
+	assert.NoError(t, bl.CheckProvision("aws", "ga1", "", "eu-west-1", "cf-us10")) // PR mismatch
+	assert.NoError(t, bl.CheckProvision("gcp", "ga1", "", "eu-west-1", "cf-eu10")) // plan mismatch
 }
 
 // --- hyperscaler region checks ---
@@ -127,44 +127,82 @@ func TestParseRule_HRAndPRParsedButNotChecked(t *testing.T) {
 func TestCheckProvision_WithHR(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked HR={HR}","HR=eu-west-1,eu-central-1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "", "", "eu-west-1"), "blocked HR=eu-west-1")
-	assert.EqualError(t, bl.CheckProvision("gcp", "", "", "eu-central-1"), "blocked HR=eu-central-1")
-	assert.NoError(t, bl.CheckProvision("aws", "", "", "us-east-1"))
+	assert.EqualError(t, bl.CheckProvision("aws", "", "", "eu-west-1", ""), "blocked HR=eu-west-1")
+	assert.EqualError(t, bl.CheckProvision("gcp", "", "", "eu-central-1", ""), "blocked HR=eu-central-1")
+	assert.NoError(t, bl.CheckProvision("aws", "", "", "us-east-1", ""))
 }
 
 func TestCheckProvision_WithHR_EmptyRegionDoesNotMatch(t *testing.T) {
 	// trial/freemium have no user-supplied region — empty string must not fire HR rules
 	bl, err := parseInline("provision", `"blocked","HR=eu-west-1"`)
 	require.NoError(t, err)
-	assert.NoError(t, bl.CheckProvision("trial", "", "", ""))
+	assert.NoError(t, bl.CheckProvision("trial", "", "", "", ""))
 }
 
 func TestCheckProvision_WithHRNegation(t *testing.T) {
 	bl, err := parseInline("provision", `"blocked","HR=!eu-west-1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "", "", "us-east-1"), "blocked")
-	assert.NoError(t, bl.CheckProvision("aws", "", "", "eu-west-1"))
+	assert.EqualError(t, bl.CheckProvision("aws", "", "", "us-east-1", ""), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws", "", "", "eu-west-1", ""))
 }
 
 func TestCheckUpdate_WithHR(t *testing.T) {
 	bl, err := parseInline("update", `"update blocked HR={HR}","HR=eu-west-1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckUpdate("aws", "", "", "eu-west-1"), "update blocked HR=eu-west-1")
-	assert.NoError(t, bl.CheckUpdate("aws", "", "", "us-east-1"))
+	assert.EqualError(t, bl.CheckUpdate("aws", "", "", "eu-west-1", ""), "update blocked HR=eu-west-1")
+	assert.NoError(t, bl.CheckUpdate("aws", "", "", "us-east-1", ""))
 }
 
 func TestCheckPlanUpgrade_WithHR(t *testing.T) {
 	bl, err := parseInline("planUpgrade", `"plan upgrade blocked HR={HR}","HR=eu-west-1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", "eu-west-1"), "plan upgrade blocked HR=eu-west-1")
-	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "", "us-east-1"))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", "eu-west-1", ""), "plan upgrade blocked HR=eu-west-1")
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "", "us-east-1", ""))
 }
 
 func TestCheckDeprovision_WithHR(t *testing.T) {
 	bl, err := parseInline("deprovision", `"deprovision blocked HR={HR}","HR=eu-west-1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckDeprovision("aws", "", "", "eu-west-1"), "deprovision blocked HR=eu-west-1")
-	assert.NoError(t, bl.CheckDeprovision("aws", "", "", "us-east-1"))
+	assert.EqualError(t, bl.CheckDeprovision("aws", "", "", "eu-west-1", ""), "deprovision blocked HR=eu-west-1")
+	assert.NoError(t, bl.CheckDeprovision("aws", "", "", "us-east-1", ""))
+}
+
+// --- platform region checks ---
+
+func TestCheckProvision_WithPR(t *testing.T) {
+	bl, err := parseInline("provision", `"blocked PR={PR}","PR=cf-eu10,cf-eu11"`)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckProvision("aws", "", "", "", "cf-eu10"), "blocked PR=cf-eu10")
+	assert.EqualError(t, bl.CheckProvision("gcp", "", "", "", "cf-eu11"), "blocked PR=cf-eu11")
+	assert.NoError(t, bl.CheckProvision("aws", "", "", "", "cf-us10"))
+}
+
+func TestCheckProvision_WithPRNegation(t *testing.T) {
+	bl, err := parseInline("provision", `"blocked","PR=!cf-eu10"`)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckProvision("aws", "", "", "", "cf-us10"), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws", "", "", "", "cf-eu10"))
+}
+
+func TestCheckUpdate_WithPR(t *testing.T) {
+	bl, err := parseInline("update", `"update blocked PR={PR}","PR=cf-eu10"`)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckUpdate("aws", "", "", "", "cf-eu10"), "update blocked PR=cf-eu10")
+	assert.NoError(t, bl.CheckUpdate("aws", "", "", "", "cf-us10"))
+}
+
+func TestCheckPlanUpgrade_WithPR(t *testing.T) {
+	bl, err := parseInline("planUpgrade", `"plan upgrade blocked PR={PR}","PR=cf-eu10"`)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", "", "cf-eu10"), "plan upgrade blocked PR=cf-eu10")
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "", "", "cf-us10"))
+}
+
+func TestCheckDeprovision_WithPR(t *testing.T) {
+	bl, err := parseInline("deprovision", `"deprovision blocked PR={PR}","PR=cf-eu10"`)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckDeprovision("aws", "", "", "", "cf-eu10"), "deprovision blocked PR=cf-eu10")
+	assert.NoError(t, bl.CheckDeprovision("aws", "", "", "", "cf-us10"))
 }
 
 // --- operation-type checks ---
@@ -172,74 +210,74 @@ func TestCheckDeprovision_WithHR(t *testing.T) {
 func TestCheckPlanUpgrade(t *testing.T) {
 	bl, err := parseInline("planUpgrade", `"plan upgrade blocked for {plan}","plan=aws"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", ""), "plan upgrade blocked for aws")
-	assert.NoError(t, bl.CheckPlanUpgrade("gcp", "", "", ""))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", "", ""), "plan upgrade blocked for aws")
+	assert.NoError(t, bl.CheckPlanUpgrade("gcp", "", "", "", ""))
 }
 
 func TestCheckPlanUpgrade_WithGA(t *testing.T) {
 	bl, err := parseInline("planUpgrade", `"plan upgrade blocked GA={GA}","GA=id1,id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "id1", "", ""), "plan upgrade blocked GA=id1")
-	assert.EqualError(t, bl.CheckPlanUpgrade("gcp", "id2", "", ""), "plan upgrade blocked GA=id2")
-	assert.NoError(t, bl.CheckPlanUpgrade("aws", "id3", "", ""))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "id1", "", "", ""), "plan upgrade blocked GA=id1")
+	assert.EqualError(t, bl.CheckPlanUpgrade("gcp", "id2", "", "", ""), "plan upgrade blocked GA=id2")
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "id3", "", "", ""))
 }
 
 func TestCheckPlanUpgrade_WithSA(t *testing.T) {
 	bl, err := parseInline("planUpgrade", `"plan upgrade blocked SA={SA}","SA=sa1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "sa1", ""), "plan upgrade blocked SA=sa1")
-	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "sa2", ""))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "sa1", "", ""), "plan upgrade blocked SA=sa1")
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "sa2", "", ""))
 }
 
 func TestCheckPlanUpgrade_WithGANegation(t *testing.T) {
 	bl, err := parseInline("planUpgrade", `"plan upgrade blocked","GA=!id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "id1", "", ""), "plan upgrade blocked")
-	assert.NoError(t, bl.CheckPlanUpgrade("aws", "id2", "", ""))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "id1", "", "", ""), "plan upgrade blocked")
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "id2", "", "", ""))
 }
 
 func TestCheckDeprovision(t *testing.T) {
 	bl, err := parseInline("deprovision", `"deprovision blocked plan={plan} GA={GA}","plan=gcp","GA=id1,id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckDeprovision("gcp", "id1", "", ""), "deprovision blocked plan=gcp GA=id1")
-	assert.NoError(t, bl.CheckDeprovision("aws", "id1", "", ""))
-	assert.NoError(t, bl.CheckDeprovision("gcp", "id3", "", ""))
+	assert.EqualError(t, bl.CheckDeprovision("gcp", "id1", "", "", ""), "deprovision blocked plan=gcp GA=id1")
+	assert.NoError(t, bl.CheckDeprovision("aws", "id1", "", "", ""))
+	assert.NoError(t, bl.CheckDeprovision("gcp", "id3", "", "", ""))
 }
 
 func TestCheckDeprovision_WithSA(t *testing.T) {
 	bl, err := parseInline("deprovision", `"deprovision blocked SA={SA}","SA=sa1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckDeprovision("aws", "", "sa1", ""), "deprovision blocked SA=sa1")
-	assert.NoError(t, bl.CheckDeprovision("aws", "", "sa2", ""))
+	assert.EqualError(t, bl.CheckDeprovision("aws", "", "sa1", "", ""), "deprovision blocked SA=sa1")
+	assert.NoError(t, bl.CheckDeprovision("aws", "", "sa2", "", ""))
 }
 
 func TestCheckProvision_WithSA(t *testing.T) {
 	bl, err := parseInline("provision", `"provision blocked SA={SA}","SA=sa1"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "", "sa1", ""), "provision blocked SA=sa1")
-	assert.NoError(t, bl.CheckProvision("aws", "", "sa2", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "", "sa1", "", ""), "provision blocked SA=sa1")
+	assert.NoError(t, bl.CheckProvision("aws", "", "sa2", "", ""))
 }
 
 func TestCheckUpdate_WithGA(t *testing.T) {
 	bl, err := parseInline("update", `"update blocked GA={GA}","GA=id1,id2"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckUpdate("aws", "id1", "", ""), "update blocked GA=id1")
-	assert.EqualError(t, bl.CheckUpdate("gcp", "id2", "", ""), "update blocked GA=id2")
-	assert.NoError(t, bl.CheckUpdate("aws", "id3", "", ""))
+	assert.EqualError(t, bl.CheckUpdate("aws", "id1", "", "", ""), "update blocked GA=id1")
+	assert.EqualError(t, bl.CheckUpdate("gcp", "id2", "", "", ""), "update blocked GA=id2")
+	assert.NoError(t, bl.CheckUpdate("aws", "id3", "", "", ""))
 }
 
 func TestCheckRules_MultipleRules_FirstMatchWins(t *testing.T) {
 	bl, err := parseInline("provision", `"first","plan=aws"`, `"second","plan=aws"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "ga", "", ""), "first")
+	assert.EqualError(t, bl.CheckProvision("aws", "ga", "", "", ""), "first")
 }
 
 func TestCheckRules_EmptyBlocklist(t *testing.T) {
 	var bl blocklist.OperationBlocklist
-	assert.NoError(t, bl.CheckProvision("aws", "ga", "", ""))
-	assert.NoError(t, bl.CheckUpdate("aws", "", "sa", ""))
-	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "", ""))
-	assert.NoError(t, bl.CheckDeprovision("aws", "ga", "", ""))
+	assert.NoError(t, bl.CheckProvision("aws", "ga", "", "", ""))
+	assert.NoError(t, bl.CheckUpdate("aws", "", "sa", "", ""))
+	assert.NoError(t, bl.CheckPlanUpgrade("aws", "", "", "", ""))
+	assert.NoError(t, bl.CheckDeprovision("aws", "ga", "", "", ""))
 }
 
 // --- YAML: single string vs list ---
@@ -259,36 +297,36 @@ deprovision: '"deprovisioning is blocked for this {plan} and global accounts {GA
 	bl = bl.WithPlanValidator(testPlans)
 
 	// provision list
-	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", ""), "provisioning is blocked for aws plan and global accounts id1")
-	assert.EqualError(t, bl.CheckProvision("gcp", "id2", "", ""), "provisioning is blocked for gcp plan and global accounts id2")
-	assert.NoError(t, bl.CheckProvision("azure", "id1", "", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "id1", "", "", ""), "provisioning is blocked for aws plan and global accounts id1")
+	assert.EqualError(t, bl.CheckProvision("gcp", "id2", "", "", ""), "provisioning is blocked for gcp plan and global accounts id2")
+	assert.NoError(t, bl.CheckProvision("azure", "id1", "", "", ""))
 
 	// update single string — blocks all except SA=id2
-	assert.EqualError(t, bl.CheckUpdate("any", "", "id1", ""), "update is blocked for subaccount not being id1")
-	assert.NoError(t, bl.CheckUpdate("any", "", "id2", ""))
+	assert.EqualError(t, bl.CheckUpdate("any", "", "id1", "", ""), "update is blocked for subaccount not being id1")
+	assert.NoError(t, bl.CheckUpdate("any", "", "id2", "", ""))
 
 	// planUpgrade single string
-	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", ""), "plan upgrade is blocked for plan aws")
-	assert.NoError(t, bl.CheckPlanUpgrade("gcp", "", "", ""))
+	assert.EqualError(t, bl.CheckPlanUpgrade("aws", "", "", "", ""), "plan upgrade is blocked for plan aws")
+	assert.NoError(t, bl.CheckPlanUpgrade("gcp", "", "", "", ""))
 
 	// deprovision single string
-	assert.EqualError(t, bl.CheckDeprovision("gcp", "id1", "", ""), "deprovisioning is blocked for this gcp and global accounts id1")
-	assert.NoError(t, bl.CheckDeprovision("aws", "id1", "", ""))
+	assert.EqualError(t, bl.CheckDeprovision("gcp", "id1", "", "", ""), "deprovisioning is blocked for this gcp and global accounts id1")
+	assert.NoError(t, bl.CheckDeprovision("aws", "id1", "", "", ""))
 }
 
 func TestMatchesPlan_UnknownPlanInRuleDoesNotMatch(t *testing.T) {
 	// "notaplan" is not in testPlans, so the rule should never fire
 	bl, err := parseInline("provision", `"blocked","plan=notaplan"`)
 	require.NoError(t, err)
-	assert.NoError(t, bl.CheckProvision("notaplan", "ga", "", ""))
+	assert.NoError(t, bl.CheckProvision("notaplan", "ga", "", "", ""))
 }
 
 func TestMatchesPlan_UnknownPlanInListDoesNotMatch(t *testing.T) {
 	// "notaplan" is not in testPlans; "aws" is — only aws should match
 	bl, err := parseInline("provision", `"blocked","plan=aws,notaplan"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws", "ga", "", ""), "blocked")
-	assert.NoError(t, bl.CheckProvision("notaplan", "ga", "", ""))
+	assert.EqualError(t, bl.CheckProvision("aws", "ga", "", "", ""), "blocked")
+	assert.NoError(t, bl.CheckProvision("notaplan", "ga", "", "", ""))
 }
 
 // --- error cases ---
