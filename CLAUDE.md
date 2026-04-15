@@ -134,5 +134,6 @@ Loaded at startup from environment variables via `vrischmann/envconfig`. Extensi
 ### Testing Conventions
 
 - Tests use `testify/assert` and `testify/require` — not Ginkgo..
-- Integration-style tests that need a database use the in-memory storage from `internal/storage/driver/memory/`.
+- Integration-style tests that need a database use PostgreSQL.
+- Fast, short unit tests use the in-memory storage from `internal/storage/driver/memory/`.
 - Test suites use `TestMain` or `suite_test.go` files for shared setup.
