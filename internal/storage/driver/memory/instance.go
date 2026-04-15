@@ -208,7 +208,8 @@ func (s *instances) GetCredentialsBindingStats() (internal.CredentialsBindingSta
 		CredentialsBindingToGA:         make(map[string]string),
 	}
 	for _, inst := range s.instances {
-		if inst.DeletedAt.IsZero() && inst.SubscriptionSecretName != "" {
+		if inst.DeletedAt.IsZero() && inst.SubscriptionSecretName != "" &&
+			(inst.Parameters.ErsContext.Active == nil || *inst.Parameters.ErsContext.Active) {
 			bindingName := inst.SubscriptionSecretName
 			result.InstancesPerCredentialsBinding[bindingName]++
 			result.CredentialsBindingToGA[bindingName] = inst.GlobalAccountID

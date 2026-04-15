@@ -71,6 +71,15 @@ func TestCredentialsBindingsCollector(t *testing.T) {
 		assert.Equal(t, float64(2), gaugeValue(collector, bindingAzure, ga1))
 		assert.Equal(t, float64(1), gaugeValue(collector, bindingAzure2, ga1))
 	})
+
+	t.Run("suspended instance is not counted", func(t *testing.T) {
+		suspended := fixSuspendedCredentialInstance("i-10", ga1, bindingAzure)
+		require.NoError(t, instances.Insert(suspended))
+
+		collector.updateInstancesMetrics()
+
+		assert.Equal(t, float64(2), gaugeValue(collector, bindingAzure, ga1), "GA1/azure: suspended instance must not be counted")
+	})
 }
 
 func gaugeValue(c *CredentialsBindingsCollector, binding, globalAccountID string) float64 {
@@ -85,6 +94,20 @@ func fixCredentialInstance(id, globalAccountID, subscriptionSecretName string) i
 		InstanceID:             id,
 		GlobalAccountID:        globalAccountID,
 		SubscriptionSecretName: subscriptionSecretName,
+	}
+}
+
+func fixSuspendedCredentialInstance(id, globalAccountID, subscriptionSecretName string) internal.Instance {
+	active := false
+	return internal.Instance{
+		InstanceID:             id,
+		GlobalAccountID:        globalAccountID,
+		SubscriptionSecretName: subscriptionSecretName,
+		Parameters: internal.ProvisioningParameters{
+			ErsContext: internal.ERSContext{
+				Active: &active,
+			},
+		},
 	}
 }
 

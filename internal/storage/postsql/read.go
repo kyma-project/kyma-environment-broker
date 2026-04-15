@@ -564,6 +564,7 @@ func (r readSession) GetCredentialsBindingStats() ([]dbmodel.InstanceByCredentia
 		From(InstancesTableName).
 		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
 		Where("subscription_secret_name != ''").
+		Where("((provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS NOT false").
 		GroupBy("global_account_id", "subscription_secret_name").
 		Load(&rows)
 	return rows, err
