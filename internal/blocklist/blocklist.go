@@ -23,10 +23,11 @@ type PlanValidator interface {
 // Within a quoted value, commas are literal (e.g. "GA=id1,id2").
 //
 // Allowed keys:
-//   - plan  — plan name (e.g. "aws"); matched via PlanValidator
+//   - plan  — plan name (e.g. "aws"); comma-separated list supported; matched via PlanValidator
 //   - GA    — global account ID list (comma-separated; prefix "!" to negate)
 //   - SA    — subaccount ID list (comma-separated; prefix "!" to negate)
-//   - HR    — hyperscaler region (parsed, not yet checked)
+//   - HR    — hyperscaler region list (comma-separated; prefix "!" to negate)
+//     for provision, uses the caller-supplied region; empty region never matches
 //   - PR    — platform region (parsed, not yet checked)
 //
 // The message may contain {plan}, {GA}, {SA}, {HR}, {PR} placeholders.
@@ -155,38 +156,39 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 	return bl, nil
 }
 
-// CheckProvision returns a non-nil error when a provision rule matches planName and globalAccountID.
-func (b *OperationBlocklist) CheckProvision(planName, globalAccountID string) error {
-	return checkRules(b.Provision, b.planValidator, planName, globalAccountID, "")
+// CheckProvision returns a non-nil error when a provision rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
+// hyperscalerRegion is the caller-supplied region; an empty string never matches an HR filter.
+func (b *OperationBlocklist) CheckProvision(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
+	return checkRules(b.Provision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
 }
 
-// CheckUpdate returns a non-nil error when an update rule matches planName and subAccountID.
-func (b *OperationBlocklist) CheckUpdate(planName, subAccountID string) error {
-	return checkRules(b.Update, b.planValidator, planName, "", subAccountID)
+// CheckUpdate returns a non-nil error when an update rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
+func (b *OperationBlocklist) CheckUpdate(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
+	return checkRules(b.Update, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
 }
 
-// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches the target planName.
-func (b *OperationBlocklist) CheckPlanUpgrade(planName string) error {
-	return checkRules(b.PlanUpgrade, b.planValidator, planName, "", "")
+// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
+func (b *OperationBlocklist) CheckPlanUpgrade(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
+	return checkRules(b.PlanUpgrade, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
 }
 
-// CheckDeprovision returns a non-nil error when a deprovision rule matches planName and globalAccountID.
-func (b *OperationBlocklist) CheckDeprovision(planName, globalAccountID string) error {
-	return checkRules(b.Deprovision, b.planValidator, planName, globalAccountID, "")
+// CheckDeprovision returns a non-nil error when a deprovision rule matches planName, globalAccountID, subAccountID, or hyperscalerRegion.
+func (b *OperationBlocklist) CheckDeprovision(planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
+	return checkRules(b.Deprovision, b.planValidator, planName, globalAccountID, subAccountID, hyperscalerRegion)
 }
 
 // checkRules iterates rules and returns an error for the first matching one.
-func checkRules(rules []Rule, pv PlanValidator, planName, globalAccountID, subAccountID string) error {
+func checkRules(rules []Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion string) error {
 	for _, r := range rules {
-		if matchesRule(r, pv, planName, globalAccountID, subAccountID) {
-			return fmt.Errorf("%s", formatMessage(r.Message, planName, globalAccountID, subAccountID))
+		if matchesRule(r, pv, planName, globalAccountID, subAccountID, hyperscalerRegion) {
+			return fmt.Errorf("%s", formatMessage(r.Message, planName, globalAccountID, subAccountID, hyperscalerRegion))
 		}
 	}
 	return nil
 }
 
 // matchesRule returns true when all present filter params of the rule match.
-func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccountID string) bool {
+func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccountID, hyperscalerRegion string) bool {
 	if plan, ok := r.Params["plan"]; ok {
 		if !matchesPlan(pv, plan, planName) {
 			return false
@@ -202,8 +204,8 @@ func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccount
 			return false
 		}
 	}
-	if _, ok := r.Params["HR"]; ok {
-		if !matchesHR() {
+	if hr, ok := r.Params["HR"]; ok {
+		if !matchesIDList(hr, hyperscalerRegion) {
 			return false
 		}
 	}
@@ -216,14 +218,24 @@ func matchesRule(r Rule, pv PlanValidator, planName, globalAccountID, subAccount
 }
 
 // matchesPlan checks whether the rule's plan value matches the operation's plan name.
-// When a PlanValidator is available it is used to canonicalize the rule value so
-// that e.g. "AWS" in a rule correctly matches the canonical name "aws".
+// rulePlan may be a comma-separated list (e.g. "aws,gcp"); the operation matches if
+// any entry in the list matches. When a PlanValidator is available it is used to
+// validate each entry so that unknown plan names never match.
 // Falls back to case-insensitive string comparison when no validator is set.
 func matchesPlan(pv PlanValidator, rulePlan, operationPlan string) bool {
-	if pv != nil {
-		return pv.IsPlanName(rulePlan) && strings.EqualFold(rulePlan, operationPlan)
+	for _, p := range strings.Split(rulePlan, ",") {
+		p = strings.TrimSpace(p)
+		if pv != nil {
+			if pv.IsPlanName(p) && strings.EqualFold(p, operationPlan) {
+				return true
+			}
+		} else {
+			if strings.EqualFold(p, operationPlan) {
+				return true
+			}
+		}
 	}
-	return strings.EqualFold(rulePlan, operationPlan)
+	return false
 }
 
 // matchesIDList checks whether value satisfies the id list expression.
@@ -250,10 +262,8 @@ func matchesIDList(expr, value string) bool {
 	return inList
 }
 
-// matchesHR checks the hyperscaler region filter. Not yet implemented.
-func matchesHR() bool {
-	return true
-}
+// matchesHR is implemented via matchesIDList — HR rules use the same comma-separated
+// list and negation semantics as GA/SA. An empty hyperscalerRegion never matches.
 
 // matchesPR checks the platform region filter. Not yet implemented.
 func matchesPR() bool {
@@ -261,9 +271,10 @@ func matchesPR() bool {
 }
 
 // formatMessage replaces {plan}, {GA}, {SA}, {HR}, {PR} placeholders.
-func formatMessage(msg, planName, globalAccountID, subAccountID string) string {
+func formatMessage(msg, planName, globalAccountID, subAccountID, hyperscalerRegion string) string {
 	msg = strings.ReplaceAll(msg, "{plan}", planName)
 	msg = strings.ReplaceAll(msg, "{GA}", globalAccountID)
 	msg = strings.ReplaceAll(msg, "{SA}", subAccountID)
+	msg = strings.ReplaceAll(msg, "{HR}", hyperscalerRegion)
 	return msg
 }
