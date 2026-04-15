@@ -29,7 +29,7 @@ func writeYAML(t *testing.T, content string) string {
 	t.Helper()
 	f, err := os.CreateTemp("", "blocklist-*.yaml")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.Remove(f.Name()) })
+	t.Cleanup(func() { _ = os.Remove(f.Name()) })
 	_, err = f.WriteString(content)
 	require.NoError(t, err)
 	require.NoError(t, f.Close())
@@ -47,11 +47,13 @@ func parseInline(op string, rules ...string) (blocklist.OperationBlocklist, erro
 	if err != nil {
 		return blocklist.OperationBlocklist{}, err
 	}
-	defer os.Remove(f.Name())
+	defer func() { _ = os.Remove(f.Name()) }()
 	if _, err = f.WriteString(yaml); err != nil {
 		return blocklist.OperationBlocklist{}, err
 	}
-	f.Close()
+	if err = f.Close(); err != nil {
+		return blocklist.OperationBlocklist{}, err
+	}
 	bl, err := blocklist.ReadFromFile(f.Name())
 	if err != nil {
 		return blocklist.OperationBlocklist{}, err
