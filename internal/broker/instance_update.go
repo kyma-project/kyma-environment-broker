@@ -167,7 +167,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 
-	planName := string(AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID)))
+	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 	if err := b.operationBlocklist.CheckUpdate(planName, instance.GlobalAccountID, instance.SubAccountID, instance.ProviderRegion, instance.Parameters.PlatformRegion); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
