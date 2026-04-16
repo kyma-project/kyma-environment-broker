@@ -97,7 +97,7 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 
 ## Approach 2: Dynamic Volume Based on Machine Type + `additionalVolumeGb`
 
-KEB computes a volume size automatically based on the selected machine type. The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top via an optional `additionalVolumeGb` parameter, which is billed separately per GB above the computed base.
+KEB computes the volume size automatically based on the selected machine type. The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top using an optional **additionalVolumeGb** parameter, which is billed separately per GB above the computed base.
 
 The dynamic volume size can be obtained using one of two sub-options for the calculation:
 
@@ -187,13 +187,13 @@ Approach 2 is chosen.
 
 Two sub-approaches are considered for how the computed volume size is stored and shared between KEB and KCR.
 
-### Sub-approach 1: New ConfigMap
+### Sub-Approach 1: New ConfigMap
 
 A dedicated ConfigMap stores machine type characteristics and the computed default disk size for each machine type. KCR reads the ConfigMap to look up the default disk size for a given machine type and uses it to calculate the billable additional size set by the user.
 
 Two options are considered for how the ConfigMap is populated.
 
-#### Option A: Static ConfigMap defined in values.yaml
+#### Option A: Static ConfigMap Defined in `values.yaml`
 
 The machine characteristics are defined in `values.yaml` in a structured, nested format. A new section `machineCharacteristics` (name to be discussed) lists every supported machine type with its properties as nested keys:
 
@@ -288,7 +288,7 @@ As an alternative to running the formula, KEB could extract the node size direct
 - If Argo CD manages the ConfigMap and detects drift between the chart definition (empty) and the live state (populated by KEB), it may revert the ConfigMap to the empty state on the next sync. This would require annotating the ConfigMap with `argocd.argoproj.io/compare-options: IgnoreExtraneous` (see [Argo CD compare options](https://argo-cd.readthedocs.io/en/stable/user-guide/compare-options/)).
 - Most complex solution to implement.
 
-#### Option C: Use the existing ConfigMap owned by KCR
+#### Option C: Use the Existing ConfigMap Owned by KCR
 
 Instead of creating a new ConfigMap, KEB reads the default volume sizes from the existing ConfigMap managed by KCR.
 
@@ -325,11 +325,11 @@ Any provisioning or update request where the machine type or its disk size is no
 2. Once KCR has confirmed that all machine types used by KEB are present in the ConfigMap, KEB is deployed with `kcrConfigMapEnabled: true`. From this point, KEB panics at startup if the ConfigMap is missing, and provisioning or update operations that request a machine type not present in the ConfigMap, or whose disk size entry is missing, are failed immediately.
 
 
-### Sub-approach 2: Extend the RuntimeCR
+### Sub-Approach 2: Extend the RuntimeCR
 
 The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the RuntimeCR, it is used by KCR solely for billing purposes.
 
-The `additionalVolumeGb` field is placed inside the existing `volume` object. The `volume.size` field reflects the total disk size, which is the sum of the default size and `additionalVolumeGb`.
+The **additionalVolumeGb** field is placed inside the existing `volume` object. The `volume.size` field reflects the total disk size, which is the sum of the default size and `additionalVolumeGb`.
 
 ```json
 "volume": {
@@ -368,7 +368,7 @@ The migration is executed in four ordered steps:
 1. **KCR adds default disk sizes to the ConfigMap.** KCR extends their ConfigMap with a `default disk size` entry for every supported machine type.
 2. **KEB deploys with `kcrConfigMapEnabled: true`.** From this point, all newly provisioned clusters and worker pools receive the new computed default volume size. Update operations that change the machine type also apply the new volume size. Update operations that do not change the machine type, such as autoscaler adjustments, leave the existing volume size unchanged. Steps 2 and 3 are coordinated and executed together. KEB is deployed with `kcrConfigMapEnabled: true` immediately before Cloud Orchestrator is started.
 3. **SRE updates existing RuntimeCRs via Cloud Orchestrator.** SRE runs Cloud Orchestrator that applies the new computed volume size to the main and additional worker pool spec of every remaining RuntimeCR.
-4. **KEB exposes `additionalVolumeGb` configuration.** Only after all existing clusters have been updated to the new default volume size KEB enables a second feature flag that exposes the `additionalVolumeGb` parameter to users.
+4. **KEB exposes `additionalVolumeGb` configuration.** Only after all existing clusters have been updated to the new default volume size, KEB enables a second feature flag that exposes the **additionalVolumeGb** parameter to users.
 
 **Pros:**
 - No user action required.
@@ -382,7 +382,7 @@ The migration is executed in four ordered steps:
 - External KCP operators have additional work to do.
 - KEB needs a second feature flag for exposing the new parameter.
 
-### Option B: Agnostic machine name cutover
+### Option B: Agnostic Machine Name Cutover
 
 ADR-002 introduces version-agnostic machine names (e.g. `mi.8xlarge`) alongside the deprecated concrete names (e.g. `m6i.8xlarge`). This boundary can be used as a natural migration point: KEB applies the computed volume size only to clusters using agnostic machine names. Clusters still using deprecated concrete names keep the old plan default volume size and are not affected.
 
@@ -517,8 +517,8 @@ $$\text{volume\_size} = \max\!\left(80,\ \min\!\left(250,\ 20 + \max\!\left(\fra
 
 We chose **Approach 2** (dynamic volume size based on machine type) with **Sub-approach 1, Option C** (use the existing ConfigMap owned by KCR) for the implementation, and **Option A (Cloud Orchestrator)** for migrating existing clusters.
 
-The volume size is computed per machine type using the formula `volume_base + max(vCPUs / 2, RAM_GiB / 8) * volume_factor`, capped between 80 GiB and 250 GiB. This size is provided free of charge as part of the base machine price. Users can request additional storage on top via an optional `additionalVolumeGb` parameter, which is billed separately.
+The volume size is computed per machine type using the formula `volume_base + max(vCPUs / 2, RAM_GiB / 8) * volume_factor`, capped between 80 GiB and 250 GiB. This size is provided free of charge as part of the base machine price. Users can request additional storage on top via an optional **additionalVolumeGb** parameter, which is billed separately.
 
 KEB reads the default volume sizes from the existing ConfigMap owned by KCR. KCR extends that ConfigMap with a `default disk size` field per machine type. KEB is deployed with a `kcrConfigMapEnabled` flag; when enabled, it panics at startup if the ConfigMap is missing or incomplete.
 
-Existing clusters are migrated via Cloud Orchestrator. Once KCR has populated the ConfigMap and KEB is deployed with `kcrConfigMapEnabled: true`, SRE runs Cloud Orchestrator to apply the new computed volume sizes to all existing RuntimeCRs. The `additionalVolumeGb` parameter is only exposed to users after all clusters have been updated to the new default.
+Existing clusters are migrated via Cloud Orchestrator. Once KCR has populated the ConfigMap and KEB is deployed with `kcrConfigMapEnabled: true`, SRE runs Cloud Orchestrator to apply the new computed volume sizes to all existing RuntimeCRs. The **additionalVolumeGb** parameter is only exposed to users after all clusters have been updated to the new default.
