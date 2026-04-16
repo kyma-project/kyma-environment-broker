@@ -106,6 +106,7 @@
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
 | configPaths.<br>quotaWhitelistedSubaccountIds | Path to the list of subaccount IDs that are allowed to bypass quota restrictions. | `/config/quotaWhitelistedSubaccountIds.yaml` |
+| configPaths.<br>operationBlocklist | Path to the operation blocklist configuration file. | `/config/operationBlocklist.yaml` |
 | configPaths.<br>skrDNSProvidersValues | Path to the DNS providers values. | `/config/skrDNSProvidersValues.yaml` |
 | configPaths.<br>skrOIDCDefaultValues | Path to the default OIDC values. | `/config/skrOIDCDefaultValues.yaml` |
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
@@ -152,6 +153,7 @@
 | quotaLimitCheck.<br>interval | The interval between requests to the Entitlements API in case of errors. | `1s` |
 | quotaLimitCheck.<br>retries | The number of retry attempts made when the Entitlements API request fails. | `5` |
 | quotaWhitelistedSubaccountIds | List of subaccount IDs that have unlimited quota for Kyma runtimes. Only subaccounts listed here can provision beyond their assigned quota limits. | `whitelist:` |
+| operationBlocklist | Defines which operations (provision, update, planUpgrade, deprovision) are blocked. Each rule is a compact string: '"message","plan=name"' A comma-separated list of plan names is supported: "plan=aws,gcp" The {plan} placeholder in the message is replaced with the actual plan name. | `provision:      - '"provisioning is blocked for {plan} plan","plan=trial"'` |
 | regionsSupportingMachine | Defines which machine type families are available in which regions (and optionally, zones). Restricts provisioning of listed machine types to the specified regions/zones only. If a machine type is not listed, it is considered available in all regions. | `` |
 | runtimeConfiguration | Defines the default KymaCR template. | `default: \|-      kyma-template: \|-        apiVersion: operator.kyma-project.io/v1beta2        kind: Kyma        metadata:          labels:            "operator.kyma-project.io/managed-by": "lifecycle-manager"          name: tbd          namespace: kcp-system        spec:          channel: fast          modules:            - name: api-gateway            - name: istio            - name: btp-operator      additional-components: []` |
 | skrDNSProvidersValues | Contains DNS provider configuration for Kyma clusters. | `providers: []` |
