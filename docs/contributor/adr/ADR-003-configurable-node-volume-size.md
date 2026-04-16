@@ -365,6 +365,7 @@ The problem is that if KEB automatically applies the new computed volume size du
 
 The migration is executed in four ordered steps:
 
+0. **SRE checks for outliers and adjusts formula if needed.** SRE checks for any SKRs that have a different than default node volume size configured and adjusts the formula so the detected outliers are not shrunk.
 1. **KCR adds default disk sizes to the ConfigMap.** KCR extends their ConfigMap with a `default disk size` entry for every supported machine type.
 2. **KEB deploys with `kcrConfigMapEnabled: true`.** From this point, all newly provisioned clusters and worker pools receive the new computed default volume size. Update operations that change the machine type also apply the new volume size. Update operations that do not change the machine type, such as autoscaler adjustments, leave the existing volume size unchanged. Steps 2 and 3 are coordinated and executed together. KEB is deployed with `kcrConfigMapEnabled: true` immediately before Cloud Orchestrator is started.
 3. **SRE updates existing RuntimeCRs via Cloud Orchestrator.** SRE runs Cloud Orchestrator that applies the new computed volume size to the main and additional worker pool spec of every remaining RuntimeCR.
