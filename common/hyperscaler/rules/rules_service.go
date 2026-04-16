@@ -26,6 +26,7 @@ func NewRulesServiceFromFile(rulesFilePath string, allowedPlans sets.Set[string]
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %s", err)
 	}
+	defer file.Close()
 	rulesConfig := &RulesConfig{}
 	if err := rulesConfig.LoadFromFile(file); err != nil {
 		return nil, err
