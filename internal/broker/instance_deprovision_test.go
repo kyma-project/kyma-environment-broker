@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -28,7 +29,7 @@ func TestDeprovisionEndpoint_DeprovisionNotExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	_, err := svc.Deprovision(context.TODO(), "inst-0001", domain.DeprovisionDetails{}, true)
@@ -46,7 +47,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -70,7 +71,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -97,7 +98,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.Anything)
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
