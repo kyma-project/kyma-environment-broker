@@ -153,7 +153,7 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 	if err != nil {
 		return OperationBlocklist{}, fmt.Errorf("while reading operation blocklist: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	dec := yaml.NewDecoder(f)
 	dec.KnownFields(true)
