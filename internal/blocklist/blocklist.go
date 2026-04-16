@@ -2,9 +2,10 @@ package blocklist
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/utils"
+	"gopkg.in/yaml.v3"
 )
 
 // PlanValidator validates plan names. Implemented by broker.AvailablePlansType
@@ -142,9 +143,20 @@ func (b OperationBlocklist) WithPlanValidator(v PlanValidator) OperationBlocklis
 //
 //	provision:
 //	  - '"message","plan=trial"'
+//
+// Unknown top-level keys are rejected to catch typos (e.g. "planUpgarde").
 func ReadFromFile(path string) (OperationBlocklist, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return OperationBlocklist{}, fmt.Errorf("while reading operation blocklist: %w", err)
+	}
+	defer f.Close()
+
+	dec := yaml.NewDecoder(f)
+	dec.KnownFields(true)
+
 	var bl OperationBlocklist
-	if err := utils.UnmarshalYamlFile(path, &bl); err != nil {
+	if err := dec.Decode(&bl); err != nil {
 		return OperationBlocklist{}, fmt.Errorf("while reading operation blocklist: %w", err)
 	}
 	return bl, nil

@@ -194,3 +194,10 @@ func TestParseRule_UnknownKey(t *testing.T) {
 	_, err := blocklist.ReadFromFile(path)
 	assert.Error(t, err)
 }
+
+func TestReadFromFile_UnknownTopLevelKey(t *testing.T) {
+	// "planUpgarde" is a typo — must fail fast rather than silently ignore.
+	path := writeYAML(t, "planUpgarde:\n  - '\"msg\",\"plan=aws\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
