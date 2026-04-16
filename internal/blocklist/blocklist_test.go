@@ -201,3 +201,18 @@ func TestReadFromFile_UnknownTopLevelKey(t *testing.T) {
 	_, err := blocklist.ReadFromFile(path)
 	assert.Error(t, err)
 }
+
+func TestParseRule_TrailingComma(t *testing.T) {
+	// A trailing comma would silently drop the incomplete token, turning a
+	// scoped rule into a global "match all plans" rule — must be a parse error.
+	path := writeYAML(t, "provision:\n  - '\"msg\",'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyToken(t *testing.T) {
+	// An empty quoted token "" is meaningless and must be rejected.
+	path := writeYAML(t, "provision:\n  - '\"msg\",\"\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}

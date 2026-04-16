@@ -87,6 +87,9 @@ func splitQuotedTokens(s string) ([]string, error) {
 				return nil, fmt.Errorf("expected ',' between tokens but got %q", string(s[0]))
 			}
 			s = strings.TrimSpace(s[1:])
+			if s == "" {
+				return nil, fmt.Errorf("trailing comma in rule")
+			}
 		}
 	}
 	return tokens, nil
