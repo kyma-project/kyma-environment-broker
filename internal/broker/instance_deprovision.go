@@ -59,11 +59,6 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 
 	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
 
-	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-	if err := b.operationBlocklist.CheckDeprovision(planName); err != nil {
-		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-	}
-
 	// check if operation with the same instance ID is already created
 	existingOperation, errStorage := b.operationsStorage.GetDeprovisioningOperationByInstanceID(instanceID)
 	if errStorage != nil && !dberr.IsNotFound(errStorage) {
@@ -92,6 +87,11 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	}
 
 	// create and save new operation
+	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+	if err := b.operationBlocklist.CheckDeprovision(planName); err != nil {
+		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	operationID := uuid.New().String()
 	logger = logger.With("operationID", operationID)
 	operation, err := internal.NewDeprovisioningOperationWithID(operationID, instance)
