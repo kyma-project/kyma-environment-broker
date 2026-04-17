@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Machines Versions
 
 Machine types can be specified either as concrete hyperscaler instance names, such as `m6i.large`, `Standard_D2s_v5`, or `n2-standard-2`, or as version-agnostic names.
@@ -7,7 +9,7 @@ Using provider-specific instance names directly creates a tight coupling between
 - Adopting a newer machine generation requires schema changes.
 - Older values must still be supported for backward compatibility.
 
-To reduce this coupling, machine names can be partially abstracted. Instead of requiring full provider-specific instance names, the configuration can use version-agnostic names. 
+To reduce this coupling, machine names are partially abstracted. Instead of requiring full provider-specific instance names, the configuration can use version-agnostic names. 
 The concrete instance name is then resolved through a version mapping.
 
 If an input machine type does not match any configured mapping pattern, it is preserved as-is.
