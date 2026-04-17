@@ -87,6 +87,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_METRICS_&#x200b;OPERATION_RESULT_&#x200b;RETENTION_PERIOD** | <code>1h</code> | Duration of retaining operation results. |
 | **APP_METRICS_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics. |
 | **APP_OPEN_SHELL_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/openShellWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use Open Shell. |
+| **APP_OPERATION_&#x200b;BLOCKLIST_FILE_PATH** | <code>/config/operationBlocklist.yaml</code> | Path to the operation blocklist configuration file. |
 | **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/plansConfig.yaml</code> | Path to the plans configuration file, which defines available service plans. |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false). |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings. |

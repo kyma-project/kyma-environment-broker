@@ -34,6 +34,10 @@ data:
 {{- with .Values.quotaWhitelistedSubaccountIds }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  operationBlocklist.yaml: |-
+{{- with .Values.operationBlocklist }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
   maxPodsWhitelistedGlobalAccountIds.yaml: |-
 {{- with .Values.maxPodsWhitelistedGlobalAccountIds }}
 {{ tpl . $ | indent 4 }}
