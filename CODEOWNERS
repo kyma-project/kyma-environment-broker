@@ -3,3 +3,6 @@
 
 # Owners of all .md files in the repository
 *.md @kyma-project/technical-writers
+
+# CLAUDE.md is also reviewed by gophers
+CLAUDE.md @kyma-project/technical-writers @kyma-project/gopher

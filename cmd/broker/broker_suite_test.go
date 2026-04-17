@@ -37,7 +37,6 @@ import (
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	"code.cloudfoundry.org/lager"
@@ -198,19 +197,19 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	awsClientFactory := fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil)
 
-	maxPodsWhitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.MaxPodsWhitelistedGlobalAccountsFilePath)
+	err = cfg.Initialise()
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
-		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory, maxPodsWhitelistedGlobalAccountIds)
+		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 

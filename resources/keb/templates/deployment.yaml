@@ -284,6 +284,8 @@ spec:
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICS_OPERATION_STATS_POLLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPollingInterval }}"
+            - name: APP_OPEN_SHELL_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: {{ .Values.configPaths.openShellWhitelistedGlobalAccountIds }}
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: {{ .Values.configPaths.plansConfig }}
             - name: APP_PROFILER_MEMORY

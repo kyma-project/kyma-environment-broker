@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -21,7 +23,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -41,26 +42,27 @@ const (
 var MaxPods int32 = 250
 
 type CreateRuntimeResourceStep struct {
-	operationManager                   *process.OperationManager
-	instanceStorage                    storage.Instances
-	k8sClient                          client.Client
-	config                             broker.InfrastructureManager
-	oidcDefaultValues                  pkg.OIDCConfigDTO
-	workersProvider                    *workers.Provider
-	providerSpec                       *configuration.ProviderSpec
-	maxPodsWhitelistedGlobalAccountIds whitelist.Set
+	operationManager  *process.OperationManager
+	instanceStorage   storage.Instances
+	k8sClient         client.Client
+	config            broker.InfrastructureManager
+	oidcDefaultValues pkg.OIDCConfigDTO
+	workersProvider   *workers.Provider
+	providerSpec      *configuration.ProviderSpec
+
+	globalAccounts config.GlobalAccountsConfig
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, maxPodsWhitelistedGlobalAccountIds whitelist.Set) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:                    db.Instances(),
-		k8sClient:                          k8sClient,
-		config:                             infrastructureManagerConfig,
-		oidcDefaultValues:                  oidcDefaultValues,
-		workersProvider:                    workersProvider,
-		providerSpec:                       providerSpec,
-		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
+		instanceStorage:   db.Instances(),
+		k8sClient:         k8sClient,
+		config:            infrastructureManagerConfig,
+		oidcDefaultValues: oidcDefaultValues,
+		workersProvider:   workersProvider,
+		providerSpec:      providerSpec,
+		globalAccounts:    gaCfg,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -155,6 +157,8 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(log *slog.Logger
 
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 
+	runtime.Spec.Shoot.EnableNvidiaOpenshell = ptr.Bool(s.globalAccounts.OpenShellWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID))
+
 	return nil
 }
 
@@ -244,7 +248,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	}
 	provider.AdditionalWorkers = &additionalWorkers
 
-	if whitelist.IsWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+	if s.globalAccounts.MaxPodsWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID) {
 		provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 			Kubelet: &gardener.KubeletConfig{
 				MaxPods: &MaxPods,
