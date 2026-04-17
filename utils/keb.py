@@ -164,7 +164,7 @@ def deprovision(instance_id, plan_id):
 
 
 def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", plan="aws",
-              user_id="testing@script.sap", region="", parameters={}):
+              user_id="testing@script.sap", region="", parameters={}, validate=False):
     if instance_id == "":
         instance_id = str(uuid.uuid4())
 
@@ -180,7 +180,8 @@ def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", 
         suffix = str(uuid.uuid4())[:4]
         parameters["name"] = "testing-cluster-" + suffix
 
-    _validate_parameters(plan_info["create_schema"], parameters)
+    if validate:
+        _validate_parameters(plan_info["create_schema"], parameters)
 
     payload = {
         "service_id": KEB_SERVICE_ID,
