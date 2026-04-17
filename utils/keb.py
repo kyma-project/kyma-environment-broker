@@ -109,8 +109,8 @@ class Runtime:
     def deprovision(self):
         deprovision(self.instance_id, self.plan_id)
 
-    def update(self, parameters={}):
-        update(self.instance_id, self.plan_id, self.plan_name, parameters)
+    def update(self, parameters={}, validate=False):
+        update(self.instance_id, self.plan_id, self.plan_name, parameters, validate=validate)
 
     def get_instance(self):
         url = f"{KEB_BASE_URL}/oauth/v2/service_instances/{self.instance_id}"
@@ -128,9 +128,10 @@ class Runtime:
             return None
 
 
-def update(instance_id, plan_id, plan_name, parameters={}):
+def update(instance_id, plan_id, plan_name, parameters={}, validate=False):
     plan = _get_plan(plan_name)
-    _validate_parameters(plan["update_schema"], parameters)
+    if validate:
+        _validate_parameters(plan["update_schema"], parameters)
 
     payload = {
         "service_id": KEB_SERVICE_ID,
