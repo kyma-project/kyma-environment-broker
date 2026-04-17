@@ -17,6 +17,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -77,6 +78,7 @@ type UpdateEndpoint struct {
 
 	useCredentialsBindings         bool
 	syncEmptyUpdateResponseEnabled bool
+	operationBlocklist             blocklist.OperationBlocklist
 }
 
 func NewUpdate(cfg Config,
@@ -102,6 +104,7 @@ func NewUpdate(cfg Config,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
+	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -130,6 +133,7 @@ func NewUpdate(cfg Config,
 		gardenerClient:                           gardenerClient,
 		awsClientFactory:                         awsClientFactory,
 		syncEmptyUpdateResponseEnabled:           cfg.SyncEmptyUpdateResponseEnabled,
+		operationBlocklist:                       operationBlocklist,
 	}
 }
 
@@ -162,6 +166,12 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}
 
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
+
+	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+	if err := b.operationBlocklist.CheckUpdate(planName); err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
@@ -781,6 +791,10 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 
 		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+
+		if err := b.operationBlocklist.CheckPlanUpgrade(targetPlanName); err != nil {
+			return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 
 		err := b.isPlanChangePossible(instance, sourcePlanName, targetPlanName, logger, details, ersContext)
 		if err != nil {

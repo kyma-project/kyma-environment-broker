@@ -104,6 +104,13 @@ func (ap AvailablePlansType) GetPlanIDByName(planName PlanNameType) (PlanIDType,
 	return planID, exists
 }
 
+// IsPlanName implements blocklist.PlanValidator.
+// Returns true when name is a recognised plan name (case-insensitive).
+func (ap AvailablePlansType) IsPlanName(name string) bool {
+	_, exists := ap.nameToID[PlanNameType(strings.ToLower(name))]
+	return exists
+}
+
 func (ap AvailablePlansType) GetAllPlanIDs() []PlanIDType {
 	ids := make([]PlanIDType, 0, len(ap.idToName))
 	for id := range ap.idToName {

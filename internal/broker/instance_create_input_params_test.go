@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
@@ -40,6 +41,7 @@ type fakeProvisionEndpointBuilder struct {
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
+	operationBlocklist     blocklist.OperationBlocklist
 }
 
 func NewFakeProvisionEndpointBuilder() *fakeProvisionEndpointBuilder {
@@ -146,6 +148,11 @@ func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFa
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithOperationBlocklist(bl blocklist.OperationBlocklist) *fakeProvisionEndpointBuilder {
+	b.operationBlocklist = bl
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 	return NewProvision(
 		b.brokerConfig,
@@ -168,6 +175,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.rulesService,
 		b.gardenerClient,
 		b.awsClientFactory,
+		b.operationBlocklist,
 	)
 }
 
