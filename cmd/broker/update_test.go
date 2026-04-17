@@ -1971,6 +1971,33 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+			"oidc": {
+				"clientID": "id-ooo",
+				"signingAlgs": ["ES384"],
+				"issuerURL": "https://issuer.url.com",
+				"groupsClaim": "new-groups-claim"
+			},
+			"administrators":[]
+		}
+   }`)
+	defer func() { _ = resp.Body.Close() }()
+
+	// then
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+
+	fmt.Println("Runtime after empty admins update: ", runtime.Spec.Security.Administrators)
+
 }
 
 func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
