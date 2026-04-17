@@ -22,12 +22,18 @@ type CheckRuntimeResourceDeletionStep struct {
 	operationManager                        *process.OperationManager
 	kcpClient                               client.Client
 	checkRuntimeResourceDeletionStepTimeout time.Duration
+	retryInterval                           time.Duration
 }
 
 func NewCheckRuntimeResourceDeletionStep(db storage.BrokerStorage, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
+	retryInterval := checkRuntimeResourceDeletionStepTimeout / 10
+	if retryInterval < time.Millisecond {
+		retryInterval = time.Millisecond
+	}
 	step := &CheckRuntimeResourceDeletionStep{
 		kcpClient:                               kcpClient,
 		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
+		retryInterval:                           retryInterval,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -67,7 +73,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 
 	if err == nil {
 		logger.Info("Runtime resource still exists")
-		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, step.checkRuntimeResourceDeletionStepTimeout, logger)
+		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, step.retryInterval, step.checkRuntimeResourceDeletionStepTimeout, logger)
 	}
 
 	if !errors.IsNotFound(err) {
