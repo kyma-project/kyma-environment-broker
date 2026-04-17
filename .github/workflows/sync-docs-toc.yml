@@ -16,6 +16,7 @@ env:
   PRODUCT_RUNTIME_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}"
   PRODUCT_RUNTIME_CLONE_URL: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
   MGMT_CHARTS_CLONE_URL: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git"
+  MGMT_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts"
   GH_ENTERPRISE_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
 
 on:
@@ -136,11 +137,42 @@ jobs:
       - name: Resolve chart version
         id: chart
         if: steps.detect.outputs.has_changes == 'true'
+        env:
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
           KEB_TAG="${{ steps.versions.outputs.KEB_TAG }}"
-          git clone --depth 1 --branch "keb-${KEB_TAG}" ${MGMT_CHARTS_CLONE_URL} mgmt-charts 2>/dev/null || \
+
+          # Fast path: branch still exists (typical at release time)
+          git clone --depth 1 --branch "keb-${KEB_TAG}" ${MGMT_CHARTS_CLONE_URL} mgmt-charts 2>/dev/null || true
+          CHART_VERSION=$(grep '^version:' mgmt-charts/keb-sap/Chart.yaml 2>/dev/null | awk '{print $2}' || true)
+
+          if [ -z "$CHART_VERSION" ]; then
+            # Branch was deleted after merge — find via merged PR title
+            echo "Branch keb-${KEB_TAG} not found, searching merged PRs..."
+            rm -rf mgmt-charts
             git clone --depth 1 ${MGMT_CHARTS_CLONE_URL} mgmt-charts
-          CHART_VERSION=$(grep '^version:' mgmt-charts/keb-sap/Chart.yaml | awk '{print $2}')
+
+            MERGE_SHA=$(gh pr list \
+              -R "${MGMT_CHARTS_REPO_URL}" \
+              --state merged \
+              --search "Bump keb to ${KEB_TAG} in:title" \
+              --json mergeCommit \
+              --limit 1 | jq -r '.[0].mergeCommit.oid // empty')
+
+            if [ -n "$MERGE_SHA" ]; then
+              echo "Found merge commit: ${MERGE_SHA}"
+              cd mgmt-charts
+              git fetch --depth 1 origin "${MERGE_SHA}"
+              CHART_VERSION=$(git show "${MERGE_SHA}:keb-sap/Chart.yaml" | grep '^version:' | awk '{print $2}')
+              cd ..
+            fi
+          fi
+
+          if [ -z "$CHART_VERSION" ]; then
+            echo "ERROR: Could not resolve chart version for KEB ${KEB_TAG}"
+            exit 1
+          fi
+
           echo "CHART_VERSION=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Chart version: ${CHART_VERSION}"
 
@@ -214,16 +246,3 @@ jobs:
             --body-file /tmp/pr_body.md)
 
           echo "${PR_URL}" | tee "$GITHUB_STEP_SUMMARY"
-
-          # Add label (create it first if it doesn't exist)
-          LABEL="keb-docs-update-${CHART_VERSION}"
-          gh label create "${LABEL}" \
-            -R "${PRODUCT_RUNTIME_REPO_URL}" \
-            --color "0075ca" \
-            --description "Automated KEB doc sync for chart ${CHART_VERSION}" \
-            2>/dev/null || true
-
-          PR_NUMBER=$(echo "${PR_URL}" | grep -oE '[0-9]+$')
-          gh pr edit "${PR_NUMBER}" \
-            -R "${PRODUCT_RUNTIME_REPO_URL}" \
-            --add-label "${LABEL}"
