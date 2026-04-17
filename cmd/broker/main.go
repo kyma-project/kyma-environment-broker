@@ -212,6 +212,7 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 		if err != nil {
 			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
 		}
+		profFile.Close()
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
 	}
