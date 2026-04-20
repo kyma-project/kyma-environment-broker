@@ -23,7 +23,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
