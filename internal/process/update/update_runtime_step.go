@@ -71,17 +71,18 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	// Update the runtime
 
-	newMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.UpdatingParameters.MachineType)
-	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
-	if newMachineType != oldMachineType {
-		log.Info(fmt.Sprintf("Machine type updated for Kyma worker: %s -> %s", oldMachineType, newMachineType))
-		runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = s.providerSpec.ResolveMachineType(
-			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
-			newMachineType,
-		)
-		log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
-	} else {
-		log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+	if operation.UpdatingParameters.MachineType != nil {
+		oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
+		if *operation.UpdatingParameters.MachineType != oldMachineType {
+			log.Info(fmt.Sprintf("Machine type updated for Kyma worker: %s -> %s", oldMachineType, *operation.UpdatingParameters.MachineType))
+			runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = s.providerSpec.ResolveMachineType(
+				pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
+				*operation.UpdatingParameters.MachineType,
+			)
+			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+		} else {
+			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+		}
 	}
 
 	runtime.Spec.Shoot.Provider.Workers[0].Minimum = int32(provisioning.DefaultIfParamNotSet(int(runtime.Spec.Shoot.Provider.Workers[0].Minimum), operation.UpdatingParameters.AutoScalerMin))
