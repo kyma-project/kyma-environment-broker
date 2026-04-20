@@ -216,3 +216,81 @@ func TestParseRule_EmptyToken(t *testing.T) {
 	_, err := blocklist.ReadFromFile(path)
 	assert.Error(t, err)
 }
+
+// --- hardening: empty/blank string rules are no-ops ---
+
+func TestReadFromFile_EmptyFile(t *testing.T) {
+	// Empty file → no-op blocklist, no error.
+	path := writeYAML(t, "")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckUpdate("trial"))
+	assert.NoError(t, bl.CheckPlanUpgrade("trial"))
+	assert.NoError(t, bl.CheckDeprovision("trial"))
+}
+
+func TestReadFromFile_EmptyKeysAreNoOp(t *testing.T) {
+	// Keys present but with no rules → no-op.
+	path := writeYAML(t, "provision:\ndeprovision:\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckDeprovision("trial"))
+}
+
+func TestParseRule_EmptyStringSingleIsNoOp(t *testing.T) {
+	// provision: '' → no rules loaded, no error.
+	path := writeYAML(t, "provision: ''\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+}
+
+func TestParseRule_EmptyStringInListIsNoOp(t *testing.T) {
+	// Empty string entry in a list is skipped; valid rule still works.
+	path := writeYAML(t, "provision:\n  - ''\n  - '\"blocked\",\"plan=trial\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	bl = bl.WithPlanValidator(testPlans)
+	assert.EqualError(t, bl.CheckProvision("trial"), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws"))
+}
+
+// --- hardening: empty message is a parse error ---
+
+func TestParseRule_EmptyMessageSingleIsError(t *testing.T) {
+	// provision: '""' → empty message, must fail loading.
+	path := writeYAML(t, "provision: '\"\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyMessageWithPlanIsError(t *testing.T) {
+	// provision: '"","plan=trial"' → empty message, must fail loading.
+	path := writeYAML(t, "provision: '\"\",\"plan=trial\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+// --- hardening: message only (no plan filter) triggers for all operations ---
+
+func TestParseRule_MessageOnlyTriggersAlways(t *testing.T) {
+	// provision: '"msg"' → no plan filter, triggers for every plan.
+	path := writeYAML(t, "provision: '\"blocked\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	bl = bl.WithPlanValidator(testPlans)
+	assert.EqualError(t, bl.CheckProvision("trial"), "blocked")
+	assert.EqualError(t, bl.CheckProvision("aws"), "blocked")
+	assert.EqualError(t, bl.CheckProvision("gcp"), "blocked")
+}
+
+// --- hardening: trailing comma is a parse error ---
+
+func TestParseRule_TrailingCommaAfterMessageIsError(t *testing.T) {
+	// provision: '"msg",' → trailing comma, must fail loading.
+	path := writeYAML(t, "provision: '\"msg\",'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}

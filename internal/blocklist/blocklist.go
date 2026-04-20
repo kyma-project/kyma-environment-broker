@@ -1,7 +1,9 @@
 package blocklist
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -36,12 +38,18 @@ type Rule struct {
 //	'"message","plan=aws"'
 //	'"message","plan=aws,gcp"'
 func parseRule(s string) (Rule, error) {
+	if strings.TrimSpace(s) == "" {
+		return Rule{}, nil // empty string is a no-op, caller must skip
+	}
 	tokens, err := splitQuotedTokens(s)
 	if err != nil {
 		return Rule{}, fmt.Errorf("invalid rule %q: %w", s, err)
 	}
 	if len(tokens) == 0 {
 		return Rule{}, fmt.Errorf("empty rule")
+	}
+	if tokens[0] == "" {
+		return Rule{}, fmt.Errorf("empty message in rule %q", s)
 	}
 
 	r := Rule{Message: tokens[0]}
@@ -107,6 +115,9 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if err != nil {
 				return err
 			}
+			if strings.TrimSpace(s) == "" {
+				continue // empty string entry is a no-op
+			}
 			rules = append(rules, r)
 		}
 		*rl = rules
@@ -116,6 +127,10 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var single string
 	if err := unmarshal(&single); err != nil {
 		return fmt.Errorf("blocklist rule must be a string or list of strings: %w", err)
+	}
+	if strings.TrimSpace(single) == "" {
+		*rl = nil
+		return nil // empty string is a no-op
 	}
 	r, err := parseRule(single)
 	if err != nil {
@@ -160,6 +175,9 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 
 	var bl OperationBlocklist
 	if err := dec.Decode(&bl); err != nil {
+		if errors.Is(err, io.EOF) {
+			return OperationBlocklist{}, nil
+		}
 		return OperationBlocklist{}, fmt.Errorf("while reading operation blocklist: %w", err)
 	}
 	return bl, nil
