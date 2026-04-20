@@ -42,3 +42,7 @@ data:
 {{- with .Values.gvisorWhitelistedGlobalAccountIds }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  openShellWhitelistedGlobalAccountIds.yaml: |-
+{{- with .Values.openShellWhitelistedGlobalAccountIds }}
+{{ tpl . $ | indent 4 }}
+{{- end }}

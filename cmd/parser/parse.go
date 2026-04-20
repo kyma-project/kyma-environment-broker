@@ -74,7 +74,7 @@ func (cmd *ParseCommand) Run() error {
 		rulesService, err = rules.NewRulesServiceFromSlice(strings.Split(cmd.rule, ";"), allowedPlans, requiredPlans)
 	}
 
-	if err != nil {
+	if err != nil && rulesService == nil {
 		cmd.cobraCmd.Printf("Error: %s\n", err)
 		return ErrUsage
 	}

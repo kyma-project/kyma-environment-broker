@@ -34,13 +34,31 @@ KCFG=$(kubectl config view --minify --raw \
        | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
 kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
-# Prepare chart for custom KEB version
-if [[ -n "$VERSION" ]]; then
-  if [[ "$VERSION" == PR* ]]; then
-    scripts/bump_keb_chart.sh "$VERSION" "pr"
-  else
-    scripts/bump_keb_chart.sh "$VERSION" "release"
-  fi
+# For PR versions, save values.yaml before bumping and register a trap to restore it
+# on exit (success or failure). Release bumps intentionally persist all file changes.
+if [[ "$VERSION" == PR* ]]; then
+  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  VALUES_YAML="${REPO_ROOT}/resources/keb/values.yaml"
+  VALUES_BACKUP="$(mktemp "${TMPDIR:-/tmp}/keb-values.XXXXXX")"
+  BACKUP_READY=false
+  cleanup_values() {
+    if [[ "$BACKUP_READY" == "true" && -f "$VALUES_BACKUP" ]]; then
+      echo "Restoring original ${VALUES_YAML}..."
+      if cp "$VALUES_BACKUP" "$VALUES_YAML"; then
+        rm -f "$VALUES_BACKUP"
+      else
+        echo "Failed to restore ${VALUES_YAML} from backup. Backup kept at ${VALUES_BACKUP} for manual recovery." >&2
+      fi
+    fi
+  }
+  trap cleanup_values EXIT
+  trap 'cleanup_values; trap - INT;  kill -INT  $$' INT
+  trap 'cleanup_values; trap - TERM; kill -TERM $$' TERM
+  cp "$VALUES_YAML" "$VALUES_BACKUP"
+  BACKUP_READY=true
+  scripts/bump_keb_chart.sh "$VERSION" "pr"
+elif [[ -n "$VERSION" ]]; then
+  scripts/bump_keb_chart.sh "$VERSION" "release"
 fi
 
 # Create custom resource definitions

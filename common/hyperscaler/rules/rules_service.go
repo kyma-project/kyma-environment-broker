@@ -19,18 +19,19 @@ type RulesService struct {
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
-
 	if rulesFilePath == "" {
 		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
-
 	file, err := os.Open(rulesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %s", err)
 	}
-
-	rs, err := NewRulesService(file, allowedPlans, requiredPlans)
-	return rs, err
+	defer func() { _ = file.Close() }()
+	rulesConfig := &RulesConfig{}
+	if err := rulesConfig.LoadFromFile(file); err != nil {
+		return nil, err
+	}
+	return newRulesServiceFromConfig(rulesConfig, allowedPlans, requiredPlans)
 }
 
 func (rs *RulesService) IsRulesetValid() bool {
@@ -38,25 +39,27 @@ func (rs *RulesService) IsRulesetValid() bool {
 }
 
 func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
-	rulesConfig := &RulesConfig{}
-
 	if file == nil {
 		return nil, fmt.Errorf("No HAP rules file provided")
 	}
-
-	err := rulesConfig.LoadFromFile(file)
-	if err != nil {
+	rulesConfig := &RulesConfig{}
+	if err := rulesConfig.LoadFromFile(file); err != nil {
 		return nil, err
 	}
+	return newRulesServiceFromConfig(rulesConfig, allowedPlans, requiredPlans)
+}
 
+func NewRulesServiceFromSlice(rules []string, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
+	return newRulesServiceFromConfig(&RulesConfig{Rules: rules}, allowedPlans, requiredPlans)
+}
+
+func newRulesServiceFromConfig(rulesConfig *RulesConfig, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
 	rs := &RulesService{
 		parser:        &SimpleParser{},
 		requiredPlans: requiredPlans,
 		allowedPlans:  allowedPlans,
 	}
-
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
-
 	if !rs.IsRulesetValid() {
 		var msgs []string
 		if rs.ValidationInfo != nil {
@@ -67,22 +70,6 @@ func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans
 		}
 		return rs, fmt.Errorf("There are errors in subscription secret rules configuration: %s", strings.Join(msgs, "; "))
 	}
-	return rs, nil
-}
-
-func NewRulesServiceFromSlice(rules []string, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
-
-	rulesConfig := &RulesConfig{
-		Rules: rules,
-	}
-
-	rs := &RulesService{
-		parser: &SimpleParser{},
-	}
-
-	rs.requiredPlans = requiredPlans
-	rs.allowedPlans = allowedPlans
-	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 

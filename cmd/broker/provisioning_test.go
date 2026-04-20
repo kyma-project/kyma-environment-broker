@@ -3612,6 +3612,76 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	})
 }
 
+func TestProvisioningWithOpenShell(t *testing.T) {
+	t.Run("whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "openshell-whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByInstanceID(iid)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, *runtime.Spec.Shoot.EnableNvidiaOpenshell)
+	})
+
+	t.Run("not whitelisted global account ID", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "not-whitelisted-global-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+		defer func() { _ = resp.Body.Close() }()
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByInstanceID(iid)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, *runtime.Spec.Shoot.EnableNvidiaOpenshell)
+	})
+}
+
 func TestProvisioningWithMaxPods(t *testing.T) {
 	t.Run("whitelisted global account ID", func(t *testing.T) {
 		// given
