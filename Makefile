@@ -69,7 +69,7 @@ build-hap:
 
 .PHONY: install
 install:
-	./scripts/installation.sh $(VERSION) $(LOCAL_REGISTRY)
+	./scripts/installation.sh "$(VERSION)" "$(LOCAL_REGISTRY)"
 
 .PHONY: install-with-monitoring
 install-with-monitoring: install

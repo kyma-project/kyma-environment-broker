@@ -82,11 +82,11 @@ func TestPubSub_WhenHandlerReturnsError(t *testing.T) {
 	// when
 	svc.Publish(context.TODO(), eventA{msg: "first event"})
 
-	time.Sleep(1 * time.Millisecond)
-
 	// then
-	require.Equal(t, 1, len(cw.entries))
-	require.Contains(t, cw.entries[0], "error while calling pubsub event handler: some error")
+	require.NoError(t, wait.PollUntilContextTimeout(context.Background(), 20*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
+		return cw.len() == 1, nil
+	}))
+	require.Contains(t, cw.get(0), "error while calling pubsub event handler: some error")
 }
 
 func containsA(slice []eventA, item eventA) bool {
@@ -116,11 +116,25 @@ type eventB struct {
 }
 
 type captureWriter struct {
+	mu      sync.Mutex
 	entries []string
 }
 
 func (c *captureWriter) Write(p []byte) (n int, err error) {
-	entry := string(p)
-	c.entries = append(c.entries, entry)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.entries = append(c.entries, string(p))
 	return len(p), nil
+}
+
+func (c *captureWriter) len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.entries)
+}
+
+func (c *captureWriter) get(i int) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.entries[i]
 }

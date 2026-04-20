@@ -197,6 +197,72 @@ func TestNewRulesService(t *testing.T) {
 	})
 }
 
+func TestNewRulesServiceFromSlice(t *testing.T) {
+	t.Run("valid rules returns service and no error", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{"aws", "azure"}, sets.New("aws", "azure"), sets.New("aws", "azure"))
+
+		require.NoError(t, err)
+		require.NotNil(t, rs)
+		assert.True(t, rs.IsRulesetValid())
+		assert.Len(t, rs.ValidRules.Rules, 2)
+	})
+
+	t.Run("empty rules returns non-nil service with error", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{}, sets.New[string](), sets.New[string]())
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		assert.Contains(t, err.Error(), "There are errors in subscription secret rules configuration:")
+	})
+
+	t.Run("invalid rules returns non-nil service with parsing errors", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{"aws(", "azure("}, sets.New("aws", "azure"), sets.New("aws", "azure"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.ParsingErrors, 2)
+		for _, parsingErr := range rs.ValidationInfo.ParsingErrors {
+			assert.Contains(t, err.Error(), parsingErr.Error())
+		}
+	})
+
+	t.Run("duplicate rules returns non-nil service with duplicate errors", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{"aws", "aws"}, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.DuplicateErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.DuplicateErrors[0].Error())
+	})
+
+	t.Run("ambiguous rules returns non-nil service with ambiguity errors", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{"aws(PR=x)", "aws(HR=y)"}, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.AmbiguityErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.AmbiguityErrors[0].Error())
+	})
+
+	t.Run("unknown plan returns non-nil service with plan errors", func(t *testing.T) {
+		rs, err := NewRulesServiceFromSlice([]string{"aws", "unknown-plan"}, sets.New("aws"), sets.New("aws"))
+
+		require.Error(t, err)
+		require.NotNil(t, rs)
+		assert.False(t, rs.IsRulesetValid())
+		require.NotNil(t, rs.ValidationInfo)
+		assert.Len(t, rs.ValidationInfo.PlanErrors, 1)
+		assert.Contains(t, err.Error(), rs.ValidationInfo.PlanErrors[0].Error())
+	})
+}
+
 func TestPostParse(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -214,7 +280,26 @@ func TestPostParse(t *testing.T) {
 			inputRuleset:       []string{"aws("},
 			expectedErrorCount: 1,
 		},
-		//TODO cover more cases
+		{
+			name:               "multiple valid rules",
+			inputRuleset:       []string{"aws", "azure", "gcp"},
+			expectedErrorCount: 0,
+		},
+		{
+			name:               "multiple parsing errors",
+			inputRuleset:       []string{"aws(", "azure(", "gcp("},
+			expectedErrorCount: 3,
+		},
+		{
+			name:               "mixed valid and invalid rules — valid ones are dropped on any error",
+			inputRuleset:       []string{"aws", "azure("},
+			expectedErrorCount: 1,
+		},
+		{
+			name:               "rule with attributes",
+			inputRuleset:       []string{"aws(PR=cf-eu11)->EU"},
+			expectedErrorCount: 0,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
