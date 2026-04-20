@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -22,16 +23,17 @@ type DeprovisionEndpoint struct {
 	instancesStorage  storage.Instances
 	operationsStorage storage.Deprovisioning
 
-	queue Queue
+	queue              Queue
+	operationBlocklist blocklist.OperationBlocklist
 }
 
-func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log *slog.Logger) *DeprovisionEndpoint {
+func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log *slog.Logger, operationBlocklist blocklist.OperationBlocklist) *DeprovisionEndpoint {
 	return &DeprovisionEndpoint{
-		log:               log.With("service", "DeprovisionEndpoint"),
-		instancesStorage:  instancesStorage,
-		operationsStorage: operationsStorage,
-
-		queue: q,
+		log:                log.With("service", "DeprovisionEndpoint"),
+		instancesStorage:   instancesStorage,
+		operationsStorage:  operationsStorage,
+		queue:              q,
+		operationBlocklist: operationBlocklist,
 	}
 }
 
@@ -85,6 +87,11 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	}
 
 	// create and save new operation
+	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+	if err := b.operationBlocklist.CheckDeprovision(planName); err != nil {
+		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	operationID := uuid.New().String()
 	logger = logger.With("operationID", operationID)
 	operation, err := internal.NewDeprovisioningOperationWithID(operationID, instance)

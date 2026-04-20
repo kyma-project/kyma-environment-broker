@@ -231,6 +231,8 @@ configPaths:
   providersConfig: "/config/providersConfig.yaml"
   # Path to the list of subaccount IDs that are allowed to bypass quota restrictions.
   quotaWhitelistedSubaccountIds: "/config/quotaWhitelistedSubaccountIds.yaml"
+  # Path to the operation blocklist configuration file.
+  operationBlocklist: "/config/operationBlocklist.yaml"
   # Path to the DNS providers values.
   skrDNSProvidersValues: "/config/skrDNSProvidersValues.yaml"
   # Path to the default OIDC values.
@@ -378,6 +380,14 @@ quotaLimitCheck:
 # Only subaccounts listed here can provision beyond their assigned quota limits.
 quotaWhitelistedSubaccountIds: |-
   whitelist:
+
+# Defines which operations (provision, update, planUpgrade, deprovision) are blocked.
+# Each rule is a compact string: '"message","plan=name"'
+# A comma-separated list of plan names is supported: "plan=aws,gcp"
+# The {plan} placeholder in the message is replaced with the actual plan name.
+operationBlocklist: |-
+  provision:
+    - '"provisioning is blocked for {plan} plan","plan=trial"'
 
 # Defines which machine type families are available in which regions (and optionally, zones).
 # Restricts provisioning of listed machine types to the specified regions/zones only.
