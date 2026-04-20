@@ -1371,3 +1371,33 @@ func TestGetInstanceCountPerBinding_SubaccountMovement(t *testing.T) {
 		assert.Equal(t, 1, counts["binding-moved"], "GA2 owns the binding, so it counts against GA2")
 	})
 }
+
+func TestGetCredentialsBindingStats_ExcludesSuspended(t *testing.T) {
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+	require.NoError(t, err)
+	require.NotNil(t, brokerStorage)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	active := fixture.FixInstance("active-inst")
+	active.SubscriptionSecretName = "binding-1"
+	require.NoError(t, brokerStorage.Instances().Insert(active))
+
+	suspended := fixture.FixInstance("suspended-inst")
+	suspended.SubscriptionSecretName = "binding-1"
+	suspended.Parameters.ErsContext.Active = ptr.Bool(false)
+	require.NoError(t, brokerStorage.Instances().Insert(suspended))
+
+	noActive := fixture.FixInstance("no-active-inst")
+	noActive.SubscriptionSecretName = "binding-2"
+	noActive.Parameters.ErsContext.Active = nil
+	require.NoError(t, brokerStorage.Instances().Insert(noActive))
+
+	stats, err := brokerStorage.Instances().GetCredentialsBindingStats()
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, stats.InstancesPerCredentialsBinding["binding-1"], "suspended instance must not be counted")
+	assert.Equal(t, 1, stats.InstancesPerCredentialsBinding["binding-2"], "instance with no active field must be counted")
+}
