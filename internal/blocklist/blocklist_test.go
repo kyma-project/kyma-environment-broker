@@ -164,6 +164,16 @@ deprovision: '"deprovisioning is blocked for {plan}","plan=gcp"'
 	assert.NoError(t, bl.CheckDeprovision("aws"))
 }
 
+func TestReadFromFile_EmptyFile(t *testing.T) {
+	path := writeYAML(t, "")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckUpdate("trial"))
+	assert.NoError(t, bl.CheckPlanUpgrade("trial"))
+	assert.NoError(t, bl.CheckDeprovision("trial"))
+}
+
 // --- error cases ---
 
 func TestReadFromFile_NotFound(t *testing.T) {

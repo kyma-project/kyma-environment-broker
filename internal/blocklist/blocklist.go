@@ -1,7 +1,9 @@
 package blocklist
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -160,6 +162,9 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 
 	var bl OperationBlocklist
 	if err := dec.Decode(&bl); err != nil {
+		if errors.Is(err, io.EOF) {
+			return OperationBlocklist{}, nil
+		}
 		return OperationBlocklist{}, fmt.Errorf("while reading operation blocklist: %w", err)
 	}
 	return bl, nil
