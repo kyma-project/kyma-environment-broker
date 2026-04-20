@@ -102,6 +102,7 @@
 | configPaths.<br>maxPodsWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use an increased maximum number of Pods. | `/config/maxPodsWhitelistedGlobalAccountIds.yaml` |
 | configPaths.<br>gvisorWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use the gVisor container runtime. | `/config/gvisorWhitelistedGlobalAccountIds.yaml` |
 | configPaths.<br>openShellWhitelistedGlobalAccountIds | Path to the list of global account IDs that are allowed to use Open Shell. | `/config/openShellWhitelistedGlobalAccountIds.yaml` |
+| configPaths.<br>operationBlocklist | Path to the operation blocklist configuration file. | `/config/operationBlocklist.yaml` |
 | configPaths.hapRule | Path to the rules for mapping plans and regions to hyperscaler account pools. | `/config/hapRule.yaml` |
 | configPaths.<br>plansConfig | Path to the plans configuration file, which defines available service plans. | `/config/plansConfig.yaml` |
 | configPaths.<br>providersConfig | Path to the providers configuration file, which defines hyperscaler/provider settings. | `/config/providersConfig.yaml` |
@@ -115,6 +116,7 @@
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
 | maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
 | openShellWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use Open Shell. | `whitelist:` |
+| operationBlocklist | Rules for blocking specific operations (provision, update, planUpgrade, deprovision) per plan. Leave empty to disable all blocking. See internal/blocklist/blocklist.go for format. | `` |
 | gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
 | gardener.<br>kubeconfigPath | Path to the kubeconfig file for accessing the Gardener cluster. | `/gardener/kubeconfig/kubeconfig` |
 | gardener.project | Gardener project connected to SA for HAP credentials lookup. | `kyma-dev` |
