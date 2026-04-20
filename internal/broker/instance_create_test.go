@@ -3433,7 +3433,6 @@ func TestProvisionBlocklist(t *testing.T) {
 	})
 }
 
-
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
