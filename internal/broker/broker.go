@@ -11,9 +11,11 @@ import (
 )
 
 const (
-	KymaServiceID   = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	KymaServiceName = "kymaruntime"
-	KcpNamespace    = "kcp-system"
+	KymaServiceID       = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	KymaServiceName     = "kymaruntime"
+	KcpNamespace        = "kcp-system"
+	AllPlansSpecialName = "all"
+	NoPlanSpecialName   = "no-plan"
 )
 
 type KymaEnvironmentBroker struct {
@@ -72,17 +74,43 @@ type Config struct {
 
 type ServicesConfig map[string]Service
 
-func (cfg *Config) Validate() error {
-	for _, name := range cfg.EnablePlans {
-		if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
-			return fmt.Errorf("unrecognized %v plan name", name)
+func validatePlanList(plans StringList, fieldName string, allowedSpecialNames ...string) error {
+	for _, name := range plans {
+		isSpecial := false
+		for _, special := range allowedSpecialNames {
+			if strings.EqualFold(name, special) {
+				isSpecial = true
+				break
+			}
+		}
+		if !isSpecial {
+			if _, exists := AvailablePlans.GetPlanIDByName(PlanNameType(name)); !exists {
+				return fmt.Errorf("unrecognized %v plan name in %v", name, fieldName)
+			}
 		}
 	}
 	return nil
 }
 
+func (cfg *Config) Validate() error {
+	if err := validatePlanList(cfg.EnablePlans, "EnablePlans"); err != nil {
+		return err
+	}
+	if err := validatePlanList(cfg.ACLEnabledPlans, "ACLEnabledPlans", NoPlanSpecialName, AllPlansSpecialName); err != nil {
+		return err
+	}
+	if err := validatePlanList(cfg.Binding.BindablePlans, "BindablePlans"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cfg *InfrastructureManager) Validate() error {
+	return validatePlanList(cfg.IngressFilteringPlans, "IngressFilteringPlans", NoPlanSpecialName)
+}
+
 func (cfg *Config) IsACLEnabledForPlanName(planName string) bool {
-	if cfg.ACLEnabledPlans.Contains("all") {
+	if cfg.ACLEnabledPlans.Contains(AllPlansSpecialName) {
 		return true
 	}
 	return cfg.ACLEnabledPlans.Contains(planName)

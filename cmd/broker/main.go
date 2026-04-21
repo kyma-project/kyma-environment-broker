@@ -285,6 +285,8 @@ func main() {
 
 	err = cfg.Broker.Validate()
 	fatalOnError(err, log)
+	err = cfg.InfrastructureManager.Validate()
+	fatalOnError(err, log)
 
 	log.Info("Starting Kyma Environment Broker")
 
