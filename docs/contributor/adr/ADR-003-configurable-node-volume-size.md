@@ -183,7 +183,7 @@ Approach 2 is chosen.
 
 ## Implementation
 
-Two sub-approaches are considered for how the computed volume size is stored and shared between KEB and KCR.
+Two sub-approaches are considered for how the computed volume size is stored and shared between KEB and Kyma Consumption Reporter (KCR).
 
 ### Sub-Approach 1: New ConfigMap
 
