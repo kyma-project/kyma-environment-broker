@@ -41,7 +41,8 @@ Each rule is a compact string with up to two quoted tokens separated by a comma:
 provision: '"Provisioning is temporarily disabled"'
 ```
 
-> **Note:** This rule has no plan filter and is therefore a no-op. A plan filter is required for a rule to take effect.
+> ### Note:
+> This rule has no plan filter and is therefore a no-op. A plan filter is required for a rule to take effect.
 
 ```yaml
 # Block provisioning for trial only
