@@ -156,7 +156,8 @@ func TestDeprovisionBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `deprovision: '"azure deprovisioning is blocked","plan=azure"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(AvailablePlans)
+		bl, err = bl.WithPlanValidator(AvailablePlans)
+		require.NoError(t, err)
 
 		svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), bl)
 
@@ -181,7 +182,8 @@ func TestDeprovisionBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `deprovision: '"blocked","plan=gcp"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(AvailablePlans)
+		bl, err = bl.WithPlanValidator(AvailablePlans)
+		require.NoError(t, err)
 
 		svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), bl)
 

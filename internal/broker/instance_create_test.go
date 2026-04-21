@@ -3356,7 +3356,8 @@ func TestProvisionBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `provision: '"azure provisioning is blocked","plan=azure"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(broker.AvailablePlans)
+		bl, err = bl.WithPlanValidator(broker.AvailablePlans)
+		require.NoError(t, err)
 
 		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
 			WithConfig(broker.Config{EnablePlans: []string{"azure"}, URL: brokerURL}).
@@ -3400,7 +3401,8 @@ func TestProvisionBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `provision: '"blocked","plan=gcp"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(broker.AvailablePlans)
+		bl, err = bl.WithPlanValidator(broker.AvailablePlans)
+		require.NoError(t, err)
 
 		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
 			WithConfig(broker.Config{EnablePlans: []string{"azure"}, URL: brokerURL}).
