@@ -1,0 +1,81 @@
+<!--{"metadata":{"publish":false}}-->
+
+# Operation Blocklist
+
+## Overview
+
+You can configure Kyma Environment Broker (KEB) to block specific operations (provisioning, deprovisioning, update, plan upgrade) for selected service plans. When a blocked operation is attempted, KEB rejects the request with an HTTP 400 error and the configured message.
+
+## Configuration
+
+The blocklist is defined in a YAML file and pointed to by the `APP_OPERATION_BLOCKLIST_FILE_PATH` environment variable. In the Helm chart, set the `operationBlocklist` value:
+
+```yaml
+operationBlocklist: |-
+  provision:
+    - '"Provisioning of the trial plan is currently blocked","plan=trial"'
+  deprovision:
+    - '"Deprovisioning of the trial plan is currently blocked","plan=trial"'
+```
+
+The file is served from the existing `/config` volume via the `kcp-kyma-environment-broker` ConfigMap.
+
+If `operationBlocklist` is empty or not set, no operations are blocked.
+
+## Rule Format
+
+Each rule is a compact string with up to two quoted tokens separated by a comma:
+
+```
+'"<message>"'
+'"<message>","plan=<plan1>,<plan2>"'
+```
+
+- **message** — required, non-empty. Returned to the caller when the rule matches. Supports the `{plan}` placeholder, which is replaced with the actual plan name at runtime.
+- **plan filter** — optional. A comma-separated list of plan names to match. If omitted, the rule matches all plans.
+
+### Examples
+
+```yaml
+# Block provisioning for all plans
+provision: '"Provisioning is temporarily disabled"'
+
+# Block provisioning for trial only
+provision: '"Provisioning of the {plan} plan is blocked","plan=trial"'
+
+# Block update for multiple plans
+update:
+  - '"Updates are blocked for {plan}","plan=trial,free"'
+
+# Block plan upgrade and deprovision for trial
+planUpgrade: '"Plan upgrade is not allowed for {plan}","plan=trial"'
+deprovision: '"Deprovisioning is blocked for {plan}","plan=trial"'
+```
+
+## Supported Operations
+
+| Key | Operation blocked |
+|---|---|
+| `provision` | New instance provisioning |
+| `update` | Instance update |
+| `planUpgrade` | Plan upgrade |
+| `deprovision` | Instance deprovisioning |
+
+## Validation
+
+KEB validates the blocklist at startup. The following configurations are rejected with an error:
+
+| Invalid input | Error |
+|---|---|
+| `'""'` | Empty message |
+| `'"msg","plan="'` | Empty plan filter |
+| `'"msg","plan=aws,,gcp"'` | Empty segment in plan list |
+| `'"msg",'` | Trailing comma |
+| Unknown top-level key (e.g. `planUpgarde`) | Typo detection |
+| Unknown plan name (e.g. `trail`) | Caught by plan validator at startup |
+
+An empty string rule `''` or an empty key (e.g. `provision:`) is a no-op and does not cause an error.
+
+## Plan Names
+
+Valid plan names are the same as those enabled via `broker.enablePlans`, for example: `aws`, `azure`, `gcp`, `trial`, `free`. A typo in a plan name (e.g. `trail` instead of `trial`) causes a startup error.
