@@ -31,6 +31,8 @@ Each rule is a compact string with up to two quoted tokens separated by a comma:
 '"<message>","plan=<plan1>,<plan2>"'
 ```
 
+Use the following rule components:
+
 - message — required, non-empty text string returned to the caller when the rule matches. Supports the `{plan}` placeholder, which is replaced with the actual plan name at runtime.
 - plan filter — required comma-separated list of plan names to match. A rule without a plan filter is a no-op.
 
