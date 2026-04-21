@@ -1025,6 +1025,33 @@ aws:
 	assert.Equal(t, "r8i.large", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)
 }
 
+func TestUpdateRuntimeStep_SkipMachineTypeUpdateWhenMachineTypeParameterIsNil(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{})
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		MachineType: nil,
+	}
+	operation.ProviderValues = &internal.ProviderValues{}
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Equal(t, "original-type", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+}
+
 // fixtures
 
 func fixRuntimeResource(name string) runtime.Object {
