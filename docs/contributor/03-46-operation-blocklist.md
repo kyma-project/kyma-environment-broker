@@ -79,7 +79,7 @@ KEB validates the blocklist at startup. The following configurations are rejecte
 | Unknown top-level key (for example, `planUpgarde`) | Typo detection |
 | Unknown plan name (for example, `trail`) | Caught by plan validator at startup |
 
-A rule with no plan filter (`'"msg"'`) or an empty string rule (`''`) or an empty key (e.g. `provision:`) is a no-op and does not cause an error.
+A rule with no plan filter (`'"msg"'`) or an empty string rule (`''`) or an empty key (for example, `provision:`) is a no-op and does not cause an error.
 
 ## Plan Names
 
