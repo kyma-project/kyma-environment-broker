@@ -29,29 +29,29 @@ Accepted
 
 If the disk (volume) attached to Kubernetes worker nodes fills up, it can render the node unusable and cause workload disruptions.
 
-Users running large machine types with many pods can encounter disk-full conditions because the current default volume size (80 GiB) is insufficient for high-density nodes. Today, `volumeSizeGb` is an internal KEB setting per plan and users cannot configure it.
+Users running large machine types with many Pods can encounter disk-full conditions because the current default volume size (80 GiB) is insufficient for high-density nodes. Today, **volumeSizeGb** is an internal KEB setting per plan, and users cannot configure it.
 
 ### Current State
 
-- `volumeSizeGb` is defined per plan in the KEB plans configuration.
+- **volumeSizeGb** is defined per plan in the KEB plans configuration.
 - The value is not exposed to users, neither for the main worker pool nor for additional worker pools.
 - `sap-converged-cloud` does not set any volume configuration.
 
-## Approach 1: Static `volumeSizeGb` per Worker Pool
+## Approach 1: Static volumeSizeGb per Worker Pool
 
 There are two variants for what we could expose to the user:
 
-**Variant A: Expose `volumeSizeGb` directly** - the user sets the total volume size. The schema shows the default and minimum (equal to the plan default). Users see and manage the full size. When the parameter is not provided in the payload, the plan default is applied for backwards compatibility.
+- Variant A: Expose **volumeSizeGb** directly - the user sets the total volume size. The schema shows the default and minimum (equal to the plan default). Users see and manage the full size. When the parameter is not provided in the payload, the plan default is applied for backward compatibility.
 
-**Variant B: Expose only `additionalVolumeGb`** - the user sets only the extra GB on top of the plan default. The input defaults to 0. The plan default base is transparent to the user and always included for free. The input directly represents what the user pays for.
+- Variant B: Expose only **additionalVolumeGb** - the user sets only the extra GB on top of the plan default. The input defaults to 0. The plan default base is transparent to the user and always included for free. The input directly represents what the user pays for.
 
-The screenshots below show Variant A. For Variant B the UI looks almost the same, but the default value would be 0 and the label would be `Additional Volume Gb`.
+The screenshots below show Variant A. For Variant B, the UI looks almost the same, but the default value would be 0, and the label would be **Additional Volume GB**.
 
-**BTP cockpit - main worker pool:**
+BTP cockpit - main Kyma worker pool:
 
 ![volumeSizeGb in main worker pool](../../assets/adr-003-volume-size-main-worker-pool.png)
 
-**BTP cockpit - additional worker node pool:**
+BTP cockpit - additional worker node pool:
 
 ![volumeSizeGb in additional worker node pool](../../assets/adr-003-volume-size-additional-worker-pool.png)
 
@@ -80,9 +80,9 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 ### Billing
 
 - The plan default volume size is included in the base machine price with no additional charge.
-- Any `volumeSizeGb` value above the plan default is charged.
+- Any **volumeSizeGb** value above the plan default is charged.
 - The volume size is available as a status attribute on the Kubernetes node API, so the actual disk size per node can be detected at runtime for billing purposes.
-- The price calculator must be updated to include a `volumeSizeGb` input field showing the additional cost when the value exceeds the default.
+- The price calculator must be updated to include the **volumeSizeGb** input field showing the additional cost when the value exceeds the default.
 
 ### Pros
 
@@ -95,30 +95,28 @@ The schema declares `minimum` and `maximum` constraints as static values. The de
 
 - TBD
 
-## Approach 2: Dynamic Volume Based on Machine Type + `additionalVolumeGb`
+## Approach 2: Dynamic Volume Based on Machine Type and additionalVolumeGb
 
 KEB computes the volume size automatically based on the selected machine type. The computed size is included in the base machine price at no extra cost. Users can additionally request extra GB on top using an optional **additionalVolumeGb** parameter, which is billed separately per GB above the computed base.
 
 The dynamic volume size can be obtained using one of two sub-options for the calculation:
 
-**Sub-option A: Configurable mapping table** — maps machine size ranges (e.g., by vCPU count) to fixed volume sizes. Easier to reason about but requires maintaining the table as new machine types are added.
+- Sub-option A: Configurable mapping table maps machine size ranges (for example, by vCPU count) to fixed volume sizes. Easier to reason about, but requires maintaining the table as new machine types are added.
 
-**Sub-option B: Formula** - computes the volume size from the machine's resources:
+- Sub-option B: Formula computes the volume size from the machine's resources:
 
-```
-volume_size = clamp(volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor, min=80, max=250)
-```
+    
 
 Where the formula values come from:
 
 | Value | Source |
 |-------|--------|
-| `volume_base` | Configurable base amount per landscape |
-| `vCPUs` | Machine type metadata from the provider (e.g., 32 vCPUs for `m6i.8xlarge`) |
-| `memory_GiB` | Machine type metadata from the provider (e.g., 128 GiB for `m6i.8xlarge`) |
-| `volume_factor` | Normalized resource multiplier for total volume size set per landscape |
+| **volume_base** | Configurable base amount per landscape |
+| **vCPUs** | Machine type metadata from the provider (for example, 32 vCPUs for `m6i.8xlarge`) |
+| **memory_GiB** | Machine type metadata from the provider (for example, 128 GiB for `m6i.8xlarge`) |
+| **volume_factor** | Normalized resource multiplier for total volume size set per landscape |
 
-**Example producing 148 GiB** for a 32 vCPU / 128 GiB RAM machine (e.g., `m6i.8xlarge`) on a GardenLinux landscape (`volume_base=20`, `volume_factor=8`):
+See an example producing 148 GiB for a 32 vCPU / 128 GiB RAM machine (for example, `m6i.8xlarge`) on a GardenLinux landscape (`volume_base=20`, `volume_factor=8`):
 
 ```
 volume_size = 20 + max(32/2, 128/8) * 8
@@ -128,17 +126,17 @@ volume_size = 20 + max(32/2, 128/8) * 8
            = 148 GiB
 ```
 
-The computed volume size is shown alongside vCPU and memory in the machine type display name in the BTP cockpit, e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`.
+The computed volume size is shown alongside vCPU and memory in the machine type display name in the BTP cockpit, for example, `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`.
 
-**BTP cockpit - main worker pool:**
+BTP cockpit - main worker pool:
 
 ![Approach 2 - dynamic volume size in BTP cockpit main worker pool](../../assets/adr-003-volume-size-approach2-dynamic-main-worker-pool.png)
 
-**BTP cockpit - additional worker node pool:**
+BTP cockpit - additional worker node pool:
 
 ![Approach 2 - dynamic volume size in BTP cockpit additional worker node pool](../../assets/adr-003-volume-size-approach2-dynamic-additional-worker-pool.png)
 
-**Provisioning request example:**
+Provisioning request example:
 ```json
 {
   "parameters": {
@@ -161,9 +159,9 @@ The computed volume size is shown alongside vCPU and memory in the machine type 
 ### Billing
 
 - The computed base volume size is included in the base machine price at no extra cost.
-- Only the `additionalVolumeGb` amount is charged, per GB, per node, per month.
+- Only the **additionalVolumeGb** amount is charged, per GB, per node, per month.
 - The volume size is available as a status attribute on the Kubernetes node API, so the actual disk size per node can be detected at runtime for billing purposes.
-- The price calculator must be updated to include an `additionalVolumeGb` input field showing the additional cost.
+- The price calculator must be updated to include an **additionalVolumeGb** input field showing the additional cost.
 
 ### Pros
 
@@ -195,7 +193,7 @@ Two options are considered for how the ConfigMap is populated.
 
 #### Option A: Static ConfigMap Defined in `values.yaml`
 
-The machine characteristics are defined in `values.yaml` in a structured, nested format. A new section `machineCharacteristics` (name to be discussed) lists every supported machine type with its properties as nested keys:
+The machine characteristics are defined in `values.yaml` in a structured, nested format. A new section **machineCharacteristics** (name to be discussed) lists every supported machine type with its properties as nested keys:
 
 ```yaml
 # values.yaml
@@ -271,14 +269,14 @@ data:
 - Some machine type data is duplicated in `values.yaml`.
 - `values.yaml` length will grow significantly.
 
-#### Option B: Chart defines an empty ConfigMap, KEB populates it at startup
+#### Option B: Chart Defines an Empty ConfigMap, KEB Populates It at Startup
 
-The Helm chart defines the ConfigMap with no data entries. When KEB starts, it reads the existing machine type definitions from `providersConfig`, applies the volume size formula for each machine type, and writes the results into the ConfigMap. The final structure of the keys in the ConfigMap is identical to Option A.
+The Helm chart defines the ConfigMap with no data entries. When KEB starts, it reads the existing machine type definitions from **providersConfig**, applies the volume size formula for each machine type, and writes the results into the ConfigMap. The final structure of the keys in the ConfigMap is identical to Option A.
 
-As an alternative to running the formula, KEB could extract the node size directly from the existing enum display name (e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). The volume value would be embedded in the display name. However, this would also require the operators to update the display name, as the display name does not currently contain the volume size.
+As an alternative to running the formula, KEB could extract the node size directly from the existing enum display name (for example, `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). The volume value would be embedded in the display name. However, this would also require the operators to update the display name, as it currently does not include the volume size.
 
 **Pros:**
-- Machine type data has a single source of truth: the existing `providersConfig` in KEB.
+- Machine type data has a single source of truth: the existing **providersConfig** in KEB.
 - New machine types are picked up automatically.
 - More details available for KCR.
 
@@ -292,16 +290,16 @@ As an alternative to running the formula, KEB could extract the node size direct
 
 Instead of creating a new ConfigMap, KEB reads the default volume sizes from the existing ConfigMap managed by KCR.
 
-The ConfigMap already contains all supported machine types. The default volume size values for each machine type are **manually pre-calculated** (using the formula `clamp(volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor, min=80, max=250)` as a reference) and declared in KCR's `values.yaml`, which is used to build the ConfigMap.
+The ConfigMap already contains all supported machine types. The default volume size values for each machine type are manually pre-calculated (using the formula `clamp(volume_base + max(vCPUs / 2, memory_GiB / 8) * volume_factor, min=80, max=250)` as a reference) and declared in KCR's `values.yaml`, which is used to build the ConfigMap.
 
 **How KEB uses the ConfigMap:**
 - If a machine type is present in the ConfigMap, KEB uses the value from the map as the default volume size and ignores the plan default.
 - If a machine type is not present in the ConfigMap, or is present but its disk size entry is missing, KEB fails the operation.
-- The volume size read from the ConfigMap is appended to the machine type display name shown in the BTP cockpit (e.g. `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). If the existing display name does not follow the bracket format (e.g. `test 80gb disk`), a consistent insertion strategy must be defined.
+- The volume size read from the ConfigMap is appended to the machine type display name shown in the BTP cockpit (for example, `m6i.8xlarge (32 vCPU, 128 GiB RAM, 148 GiB volume)`). If the existing display name does not follow the bracket format (for example, `test 80gb disk`), a consistent insertion strategy must be defined.
 
 **Startup and validation behaviour:**
 
-`kcrConfigMapEnabled` (default: `false`) — when `false`, KEB ignores the ConfigMap entirely and always uses the plan default. When `true`, KEB panics at startup if any of the following conditions are met:
+**kcrConfigMapEnabled** (default: `false`) — when `false`, KEB ignores the ConfigMap entirely and always uses the plan default. When `true`, KEB panics at startup if any of the following conditions are met:
 
 - The ConfigMap itself is missing.
 - A machine type supported by KEB is missing from the ConfigMap.
@@ -310,7 +308,7 @@ The ConfigMap already contains all supported machine types. The default volume s
 Any provisioning or update request where the machine type or its disk size is not found in the ConfigMap also fails immediately.
 
 - On each provisioning or update request that changes the machine type, KEB looks up the machine type in the ConfigMap. If the machine type is not found, or is found but its disk size entry is missing, KEB fails the operation.
-- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports **must** be present in the ConfigMap with a valid `default volume size` value when `kcrConfigMapEnabled` is `true`.
+- The KCR ConfigMap may contain machine types that KEB does not use. However, every machine type that KEB supports must be present in the ConfigMap with a valid `default volume size` value when **kcrConfigMapEnabled** is `true`.
 
 **Pros:**
 - Single source of truth shared by KEB and KCR.
@@ -327,9 +325,9 @@ Any provisioning or update request where the machine type or its disk size is no
 
 ### Sub-Approach 2: Extend the RuntimeCR
 
-The existing RuntimeCR is extended with a new field that stores the `additionalVolumeGb` for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the RuntimeCR, it is used by KCR solely for billing purposes.
+The existing RuntimeCR is extended with a new field that stores the **additionalVolumeGb** for the main worker pool and each additional worker pool. The field is optional. If not present, it is interpreted as 0 (no additional volume set). The field is purely informational and must not be propagated to the RuntimeCR; it is used by KCR solely for billing purposes.
 
-The **additionalVolumeGb** field is placed inside the existing `volume` object. The `volume.size` field reflects the total disk size, which is the sum of the default size and `additionalVolumeGb`.
+The **additionalVolumeGb** field is placed inside the existing `volume` object. The **volume.size** field reflects the total disk size, which is the sum of the default size and **additionalVolumeGb**.
 
 ```json
 "volume": {
@@ -339,7 +337,7 @@ The **additionalVolumeGb** field is placed inside the existing `volume` object. 
 }
 ```
 
-In this example, the default size is 80 GiB and the user requested 20 GiB of additional volume, so `volume.size` is set to 100 GiB. KEB is responsible for computing this sum.
+In this example, the default size is 80 GiB, and the user requested 20 GiB of additional volume, so **volume.size** is set to `100 GiB`. KEB is responsible for computing this sum.
 
 **Pros:**
 - Uses the already existing RuntimeCR.
@@ -353,11 +351,11 @@ In this example, the default size is 80 GiB and the user requested 20 GiB of add
 
 ## Implementation Decision
 
-**Sub-approach 1, Option C** (use the existing ConfigMap owned by KCR) is chosen: KEB reads the default volume sizes from the existing ConfigMap owned by KCR. No new ConfigMap is introduced. KCR extends their ConfigMap with a `default disk size` field per machine type, and KEB reads that value at provisioning and update time.
+Sub-approach 1, Option C (use the existing ConfigMap owned by KCR) is chosen: KEB reads the default volume sizes from the existing ConfigMap owned by KCR. No new ConfigMap is introduced. KCR extends their ConfigMap with the **default disk size** field per machine type, and KEB reads that value at provisioning and update time.
 
 ## Migration of Existing Clusters
 
-Changing `volumeSizeGb` in a worker pool spec in the RuntimeCR triggers a Gardener rolling update. New clusters provisioned after this feature is enabled will automatically receive the correct computed volume size. For existing clusters, the current volume size is already set in the RuntimeCR.
+Changing **volumeSizeGb** in a worker pool spec in the RuntimeCR triggers a Gardener rolling update. New clusters provisioned after this feature is enabled will automatically receive the correct computed volume size. For existing clusters, the current volume size is already set in the RuntimeCR.
 
 The problem is that if KEB automatically applies the new computed volume size during any update operation, users will receive a rolling update without being aware that the disk size changed. A controlled migration mechanism is therefore needed.
 
@@ -365,11 +363,11 @@ The problem is that if KEB automatically applies the new computed volume size du
 
 The migration is executed in four ordered steps:
 
-0. **SRE checks for outliers and adjusts formula if needed.** SRE checks for any SKRs that have a different than default node volume size configured and adjusts the formula so the detected outliers are not shrunk.
-1. **KCR adds default disk sizes to the ConfigMap.** KCR extends their ConfigMap with a `default disk size` entry for every supported machine type.
-2. **KEB deploys with `kcrConfigMapEnabled: true`.** From this point, all newly provisioned clusters and worker pools receive the new computed default volume size. Update operations that change the machine type also apply the new volume size. Update operations that do not change the machine type, such as autoscaler adjustments, leave the existing volume size unchanged. Steps 2 and 3 are coordinated and executed together. KEB is deployed with `kcrConfigMapEnabled: true` immediately before Cloud Orchestrator is started.
-3. **SRE updates existing RuntimeCRs via Cloud Orchestrator.** SRE runs Cloud Orchestrator that applies the new computed volume size to the main and additional worker pool spec of every remaining RuntimeCR.
-4. **KEB exposes `additionalVolumeGb` configuration.** Only after all existing clusters have been updated to the new default volume size, KEB enables a second feature flag that exposes the **additionalVolumeGb** parameter to users.
+0. SRE checks for outliers and adjusts the formula if needed. SRE checks for any Kyma instances with a node volume size other than the default configuration and adjusts the formula so the detected outliers are not shrunk.
+1. KCR adds default disk sizes to the ConfigMap. KCR extends their ConfigMap with the **default disk size** entry for every supported machine type.
+2. KEB deploys with `kcrConfigMapEnabled: true`. From this point, all newly provisioned clusters and worker pools receive the new computed default volume size. Update operations that change the machine type also apply the new volume size. Update operations that do not change the machine type, such as autoscaler adjustments, leave the existing volume size unchanged. Steps 2 and 3 are coordinated and executed together. KEB is deployed with `kcrConfigMapEnabled: true` immediately before Cloud Orchestrator is started.
+3. SRE updates existing RuntimeCRs using Cloud Orchestrator. SRE runs Cloud Orchestrator, which applies the new computed volume size to the main and additional worker pool spec of every remaining RuntimeCR.
+4. KEB exposes `additionalVolumeGb` configuration. After all existing clusters have been updated to the new default volume size, KEB enables a second feature flag that exposes the **additionalVolumeGb** parameter to users.
 
 **Pros:**
 - No user action required.
@@ -516,10 +514,10 @@ $$\text{volume\_size} = \max\!\left(80,\ \min\!\left(250,\ 20 + \max\!\left(\fra
 
 ## Summary
 
-We chose **Approach 2** (dynamic volume size based on machine type) with **Sub-approach 1, Option C** (use the existing ConfigMap owned by KCR) for the implementation, and **Option A (Cloud Orchestrator)** for migrating existing clusters.
+We chose Approach 2 (dynamic volume size based on machine type) with Sub-approach 1, Option C (use the existing ConfigMap owned by KCR) for the implementation, and Option A (Cloud Orchestrator) for migrating existing clusters.
 
-The volume size is computed per machine type using the formula `volume_base + max(vCPUs / 2, RAM_GiB / 8) * volume_factor`, capped between 80 GiB and 250 GiB. This size is provided free of charge as part of the base machine price. Users can request additional storage on top via an optional **additionalVolumeGb** parameter, which is billed separately.
+The volume size is computed per machine type using the formula `volume_base + max(vCPUs / 2, RAM_GiB / 8) * volume_factor`, capped between 80 GiB and 250 GiB. This size is provided free of charge as part of the base machine price. Users can request additional storage on top using an optional **additionalVolumeGb** parameter, which is billed separately.
 
-KEB reads the default volume sizes from the existing ConfigMap owned by KCR. KCR extends that ConfigMap with a `default disk size` field per machine type. KEB is deployed with a `kcrConfigMapEnabled` flag; when enabled, it panics at startup if the ConfigMap is missing or incomplete.
+KEB reads the default volume sizes from the existing ConfigMap owned by KCR. KCR extends that ConfigMap with a **default disk size** field per machine type. KEB is deployed with a `kcrConfigMapEnabled` flag; when enabled, it panics at startup if the ConfigMap is missing or incomplete.
 
-Existing clusters are migrated via Cloud Orchestrator. Once KCR has populated the ConfigMap and KEB is deployed with `kcrConfigMapEnabled: true`, SRE runs Cloud Orchestrator to apply the new computed volume sizes to all existing RuntimeCRs. The **additionalVolumeGb** parameter is only exposed to users after all clusters have been updated to the new default.
+Existing clusters are migrated using Cloud Orchestrator. Once KCR has populated the ConfigMap and KEB is deployed with `kcrConfigMapEnabled: true`, SRE runs Cloud Orchestrator to apply the new computed volume sizes to all existing RuntimeCRs. The **additionalVolumeGb** parameter is only exposed to users after all clusters have been updated to the new default.
