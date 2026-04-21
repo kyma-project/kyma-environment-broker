@@ -18,7 +18,7 @@ operationBlocklist: |-
     - '"Deprovisioning of the trial plan is currently blocked","plan=trial"'
 ```
 
-The file is served from the existing `/config` volume via the `kcp-kyma-environment-broker` ConfigMap.
+The file is served from the existing `/config` volume through the `kcp-kyma-environment-broker` ConfigMap.
 
 If `operationBlocklist` is empty or not set, no operations are blocked.
 
