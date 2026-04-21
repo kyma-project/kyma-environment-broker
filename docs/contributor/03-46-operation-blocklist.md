@@ -8,7 +8,7 @@ You can configure Kyma Environment Broker (KEB) to block specific operations (pr
 
 ## Configuration
 
-The blocklist is defined in a YAML file and pointed to by the `APP_OPERATION_BLOCKLIST_FILE_PATH` environment variable. In the Helm chart, set the `operationBlocklist` value:
+The **APP_OPERATION_BLOCKLIST_FILE_PATH** environment variable points to the blocklist defined in a YAML file. In the Helm chart, set the **operationBlocklist** value.
 
 ```yaml
 operationBlocklist: |-
