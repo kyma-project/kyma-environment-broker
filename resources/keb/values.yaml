@@ -48,28 +48,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.29.5
+      version: 1.29.6
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_expirator_job:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.29.5"
+      version: "1.29.6"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.29.5
+      version: 1.29.6
   ingress:
     domainName: localhost
   istio:
@@ -223,6 +223,8 @@ configPaths:
   gvisorWhitelistedGlobalAccountIds: "/config/gvisorWhitelistedGlobalAccountIds.yaml"
   # Path to the list of global account IDs that are allowed to use Open Shell.
   openShellWhitelistedGlobalAccountIds: "/config/openShellWhitelistedGlobalAccountIds.yaml"
+  # Path to the operation blocklist configuration file.
+  operationBlocklist: "/config/operationBlocklist.yaml"
   # Path to the rules for mapping plans and regions to hyperscaler account pools.
   hapRule: "/config/hapRule.yaml"
   # Path to the plans configuration file, which defines available service plans.
@@ -260,6 +262,10 @@ maxPodsWhitelistedGlobalAccountIds: |-
 # List of global account IDs that are allowed to use Open Shell.
 openShellWhitelistedGlobalAccountIds: |-
   whitelist:
+
+# Rules for blocking specific operations (provision, update, planUpgrade, deprovision) per plan.
+# Leave empty to disable all blocking. See internal/blocklist/blocklist.go for format.
+operationBlocklist: |-
 
 # List of global account IDs that are allowed to use the gVisor container runtime.
 gvisorWhitelistedGlobalAccountIds: |-

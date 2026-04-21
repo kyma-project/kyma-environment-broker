@@ -20,6 +20,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -103,6 +104,7 @@ type ProvisionEndpoint struct {
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
 	useCredentialsBindings bool
+	operationBlocklist     blocklist.OperationBlocklist
 }
 
 const (
@@ -134,6 +136,7 @@ func NewProvision(brokerConfig Config,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
 	awsClientFactory aws.ClientFactory,
+	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -166,6 +169,7 @@ func NewProvision(brokerConfig Config,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
 		awsClientFactory:        awsClientFactory,
+		operationBlocklist:      operationBlocklist,
 	}
 }
 
@@ -336,6 +340,11 @@ func valueOfBoolPtr(ptr *bool) bool {
 }
 
 func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
+	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID))
+	if err := b.operationBlocklist.CheckProvision(planName); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	if b.config.RestrictToAllowedGlobalAccounts && !b.config.AllowedGlobalAccounts.Contains(provisioningParameters.ErsContext.GlobalAccountID) {
 		message := fmt.Sprintf("The Global Account %s is not allowed to provision a Kyma runtime", provisioningParameters.ErsContext.GlobalAccountID)
 		logger.Info(message)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -28,7 +29,7 @@ func TestDeprovisionEndpoint_DeprovisionNotExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	_, err := svc.Deprovision(context.TODO(), "inst-0001", domain.DeprovisionDetails{}, true)
@@ -46,7 +47,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -70,7 +71,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -97,7 +98,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.Anything)
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), blocklist.OperationBlocklist{})
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -129,4 +130,65 @@ func fixLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+}
+
+func TestDeprovisionBlocklist(t *testing.T) {
+	writeBlocklistYAML := func(t *testing.T, content string) string {
+		t.Helper()
+		f, err := os.CreateTemp("", "blocklist-*.yaml")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = os.Remove(f.Name()) })
+		_, err = f.WriteString(content)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+		return f.Name()
+	}
+
+	t.Run("deprovision is blocked for azure plan", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = AzurePlanID
+		require.NoError(t, memoryStorage.Instances().Insert(instance))
+
+		queue := &automock.Queue{}
+
+		path := writeBlocklistYAML(t, `deprovision: '"azure deprovisioning is blocked","plan=azure"'`)
+		bl, err := blocklist.ReadFromFile(path)
+		require.NoError(t, err)
+		bl = bl.WithPlanValidator(AvailablePlans)
+
+		svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), bl)
+
+		// when
+		_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
+
+		// then
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "azure deprovisioning is blocked")
+	})
+
+	t.Run("deprovision is allowed for non-blocked plan", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = AzurePlanID
+		require.NoError(t, memoryStorage.Instances().Insert(instance))
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		path := writeBlocklistYAML(t, `deprovision: '"blocked","plan=gcp"'`)
+		bl, err := blocklist.ReadFromFile(path)
+		require.NoError(t, err)
+		bl = bl.WithPlanValidator(AvailablePlans)
+
+		svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger(), bl)
+
+		// when
+		_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
+
+		// then
+		require.NoError(t, err)
+	})
 }

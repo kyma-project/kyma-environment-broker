@@ -1,3 +1,5 @@
+<!--{"metadata":{"publish":true}}-->
+
 # Machines Versions
 
 Machine types can be specified either as concrete hyperscaler instance names, such as `m6i.large`, `Standard_D2s_v5`, or `n2-standard-2`, or as version-agnostic names.

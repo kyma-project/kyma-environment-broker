@@ -18,6 +18,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -3329,6 +3330,107 @@ func TestGvisorProvisioning(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestProvisionBlocklist(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	writeBlocklistYAML := func(t *testing.T, content string) string {
+		t.Helper()
+		f, err := os.CreateTemp("", "blocklist-*.yaml")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = os.Remove(f.Name()) })
+		_, err = f.WriteString(content)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+		return f.Name()
+	}
+
+	t.Run("provision is blocked for azure plan", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		queue := &automock.Queue{}
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+		path := writeBlocklistYAML(t, `provision: '"azure provisioning is blocked","plan=azure"'`)
+		bl, err := blocklist.ReadFromFile(path)
+		require.NoError(t, err)
+		bl = bl.WithPlanValidator(broker.AvailablePlans)
+
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{EnablePlans: []string{"azure"}, URL: brokerURL}).
+			WithGardenerConfig(fixGardenerConfig()).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithOperationBlocklist(bl).
+			Build()
+
+		// when
+		_, err = provisionEndpoint.Provision(
+			fixRequestContext(t, "req-region"),
+			instanceID,
+			domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AzurePlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+			}, true)
+
+		// then
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "azure provisioning is blocked")
+	})
+
+	t.Run("provision is allowed for non-blocked plan", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+		path := writeBlocklistYAML(t, `provision: '"blocked","plan=gcp"'`)
+		bl, err := blocklist.ReadFromFile(path)
+		require.NoError(t, err)
+		bl = bl.WithPlanValidator(broker.AvailablePlans)
+
+		provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+			WithConfig(broker.Config{EnablePlans: []string{"azure"}, URL: brokerURL}).
+			WithGardenerConfig(fixGardenerConfig()).
+			WithInfrastructureManager(imConfigFixture).
+			WithStorage(memoryStorage).
+			WithQueue(queue).
+			WithLogger(log).
+			WithDashboardConfig(dashboardConfig).
+			WithKubeconfigBuilder(kcBuilder).
+			WithSchemaService(newSchemaService(t)).
+			WithConfigurationProvider(newProviderSpec(t)).
+			WithValuesProvider(fixValueProvider(t)).
+			WithOperationBlocklist(bl).
+			Build()
+
+		// when
+		_, err = provisionEndpoint.Provision(
+			fixRequestContext(t, "req-region"),
+			instanceID,
+			domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AzurePlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+			}, true)
+
+		// then
+		require.NoError(t, err)
+	})
 }
 
 func fixExistOperation() internal.Operation {

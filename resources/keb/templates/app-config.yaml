@@ -46,3 +46,7 @@ data:
 {{- with .Values.openShellWhitelistedGlobalAccountIds }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  operationBlocklist.yaml: |-
+{{- with .Values.operationBlocklist }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
