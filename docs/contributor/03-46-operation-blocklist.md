@@ -20,7 +20,7 @@ operationBlocklist: |-
 
 The file is served from the existing `/config` volume through the `kcp-kyma-environment-broker` ConfigMap.
 
-If `operationBlocklist` is empty or not set, no operations are blocked.
+If you don't set **operationBlocklist** or leave it empty, no operations are blocked.
 
 ## Rule Format
 
