@@ -83,4 +83,4 @@ A rule with no plan filter (`'"msg"'`) or an empty string rule (`''`) or an empt
 
 ## Plan Names
 
-Valid plan names are the same as those enabled via `broker.enablePlans`, for example: `aws`, `azure`, `gcp`, `trial`, `free`. A typo in a plan name (e.g. `trail` instead of `trial`) causes a startup error.
+Valid plan names are the same as those enabled using **broker.enablePlans**, for example, `aws`, `azure`, `gcp`, `trial`, `free`. A typo in a plan name (for example, `trail` instead of `trial`) causes a startup error.
