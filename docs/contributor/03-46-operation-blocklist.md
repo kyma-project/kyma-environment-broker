@@ -61,10 +61,10 @@ deprovision: '"Deprovisioning is blocked for {plan}","plan=trial"'
 
 | Key | Operation blocked |
 |---|---|
-| `provision` | New instance provisioning |
-| `update` | Instance update |
-| `planUpgrade` | Plan upgrade |
-| `deprovision` | Instance deprovisioning |
+| **provision** | New instance provisioning |
+| **update** | Instance update |
+| **planUpgrade** | Plan upgrade |
+| **deprovision** | Instance deprovisioning |
 
 ## Validation
 
