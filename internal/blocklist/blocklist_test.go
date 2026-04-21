@@ -60,9 +60,10 @@ func parseInline(op string, rules ...string) (blocklist.OperationBlocklist, erro
 // --- parser ---
 
 func TestParseRule_MessageOnly(t *testing.T) {
+	// A rule with no plan filter is a no-op — plan filter is required to block.
 	bl, err := parseInline("provision", `"always blocked"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("any"), "always blocked")
+	assert.NoError(t, bl.CheckProvision("any"))
 }
 
 func TestParseRule_WithPlan(t *testing.T) {
@@ -227,16 +228,16 @@ func TestParseRule_EmptyMessageWithPlanIsError(t *testing.T) {
 
 // --- hardening: message only (no plan filter) triggers for all operations ---
 
-func TestParseRule_MessageOnlyTriggersAlways(t *testing.T) {
-	// provision: '"msg"' → no plan filter, triggers for every plan.
+func TestParseRule_MessageOnlyIsNoOp(t *testing.T) {
+	// No plan filter → no-op, does not block any plan.
 	path := writeYAML(t, "provision: '\"blocked\"'\n")
 	bl, err := blocklist.ReadFromFile(path)
 	require.NoError(t, err)
 	bl, err = bl.WithPlanValidator(testPlans)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("trial"), "blocked")
-	assert.EqualError(t, bl.CheckProvision("aws"), "blocked")
-	assert.EqualError(t, bl.CheckProvision("gcp"), "blocked")
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckProvision("aws"))
+	assert.NoError(t, bl.CheckProvision("gcp"))
 }
 
 // --- hardening: WithPlanValidator rejects unknown plan names ---

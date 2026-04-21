@@ -53,6 +53,9 @@ func parseRule(s string) (Rule, error) {
 	}
 
 	r := Rule{Message: tokens[0]}
+	if len(tokens) == 1 {
+		return Rule{}, nil // no plan filter — no-op, caller must skip
+	}
 	for _, tok := range tokens[1:] {
 		idx := strings.IndexByte(tok, '=')
 		if idx == -1 {
@@ -123,8 +126,8 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if err != nil {
 				return err
 			}
-			if strings.TrimSpace(s) == "" {
-				continue // empty string entry is a no-op
+			if r.Message == "" {
+				continue // empty string or message-only rule is a no-op
 			}
 			rules = append(rules, r)
 		}
@@ -136,13 +139,13 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&single); err != nil {
 		return fmt.Errorf("blocklist rule must be a string or list of strings: %w", err)
 	}
-	if strings.TrimSpace(single) == "" {
-		*rl = nil
-		return nil // empty string is a no-op
-	}
 	r, err := parseRule(single)
 	if err != nil {
 		return err
+	}
+	if r.Message == "" {
+		*rl = nil
+		return nil // empty string or message-only rule is a no-op
 	}
 	*rl = []Rule{r}
 	return nil

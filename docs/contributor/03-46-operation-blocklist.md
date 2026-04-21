@@ -32,14 +32,18 @@ Each rule is a compact string with up to two quoted tokens separated by a comma:
 ```
 
 - **message** — required, non-empty. Returned to the caller when the rule matches. Supports the `{plan}` placeholder, which is replaced with the actual plan name at runtime.
-- **plan filter** — optional. A comma-separated list of plan names to match. If omitted, the rule matches all plans.
+- **plan filter** — required. A comma-separated list of plan names to match. A rule without a plan filter is a no-op.
 
 ### Examples
 
 ```yaml
 # Block provisioning for all plans
 provision: '"Provisioning is temporarily disabled"'
+```
 
+> **Note:** This rule has no plan filter and is therefore a no-op. A plan filter is required for a rule to take effect.
+
+```yaml
 # Block provisioning for trial only
 provision: '"Provisioning of the {plan} plan is blocked","plan=trial"'
 
@@ -74,7 +78,7 @@ KEB validates the blocklist at startup. The following configurations are rejecte
 | Unknown top-level key (e.g. `planUpgarde`) | Typo detection |
 | Unknown plan name (e.g. `trail`) | Caught by plan validator at startup |
 
-An empty string rule `''` or an empty key (e.g. `provision:`) is a no-op and does not cause an error.
+A rule with no plan filter (`'"msg"'`) or an empty string rule (`''`) or an empty key (e.g. `provision:`) is a no-op and does not cause an error.
 
 ## Plan Names
 
