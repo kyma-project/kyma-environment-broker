@@ -411,7 +411,7 @@ Three scenarios arise when `additionalVolumeGb` interacts with deprecated machin
 
 Computed volume sizes for all supported machine types using the formula with `volume_base=20`, `volume_factor=8`, capped at a minimum of **80 GiB** and a maximum of **250 GiB**:
 
-$$\text{volume\_size} = \max\!\left(80,\ \min\!\left(250,\ 20 + \max\!\left(\frac{\text{vCPUs}}{2},\ \frac{\text{RAM\_GiB}}{8}\right) \times 8\right)\right)$$
+`clamp(20 + max(vCPUs / 2, RAM_GiB / 8) * 8, min=80, max=250)`
 
 ### AWS
 
