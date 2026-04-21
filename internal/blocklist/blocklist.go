@@ -38,12 +38,18 @@ type Rule struct {
 //	'"message","plan=aws"'
 //	'"message","plan=aws,gcp"'
 func parseRule(s string) (Rule, error) {
+	if strings.TrimSpace(s) == "" {
+		return Rule{}, nil // empty string is a no-op, caller must skip
+	}
 	tokens, err := splitQuotedTokens(s)
 	if err != nil {
 		return Rule{}, fmt.Errorf("invalid rule %q: %w", s, err)
 	}
 	if len(tokens) == 0 {
 		return Rule{}, fmt.Errorf("empty rule")
+	}
+	if tokens[0] == "" {
+		return Rule{}, fmt.Errorf("empty message in rule %q", s)
 	}
 
 	r := Rule{Message: tokens[0]}
@@ -109,6 +115,9 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if err != nil {
 				return err
 			}
+			if strings.TrimSpace(s) == "" {
+				continue // empty string entry is a no-op
+			}
 			rules = append(rules, r)
 		}
 		*rl = rules
@@ -118,6 +127,10 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var single string
 	if err := unmarshal(&single); err != nil {
 		return fmt.Errorf("blocklist rule must be a string or list of strings: %w", err)
+	}
+	if strings.TrimSpace(single) == "" {
+		*rl = nil
+		return nil // empty string is a no-op
 	}
 	r, err := parseRule(single)
 	if err != nil {
@@ -138,9 +151,29 @@ type OperationBlocklist struct {
 }
 
 // WithPlanValidator returns a copy of the blocklist with the given PlanValidator set.
-func (b OperationBlocklist) WithPlanValidator(v PlanValidator) OperationBlocklist {
+// It also validates all plan names in rules against the validator, returning an error
+// for any unrecognised plan name (e.g. typos like "trail" instead of "trial").
+func (b OperationBlocklist) WithPlanValidator(v PlanValidator) (OperationBlocklist, error) {
 	b.planValidator = v
-	return b
+	for op, rules := range map[string]ruleList{
+		"provision":   b.Provision,
+		"update":      b.Update,
+		"planUpgrade": b.PlanUpgrade,
+		"deprovision": b.Deprovision,
+	} {
+		for _, r := range rules {
+			if r.Plan == "" {
+				continue
+			}
+			for _, p := range strings.Split(r.Plan, ",") {
+				p = strings.TrimSpace(p)
+				if !v.IsPlanName(p) {
+					return OperationBlocklist{}, fmt.Errorf("unknown plan name %q in %s rule", p, op)
+				}
+			}
+		}
+	}
+	return b, nil
 }
 
 // ReadFromFile loads an OperationBlocklist from a YAML file.

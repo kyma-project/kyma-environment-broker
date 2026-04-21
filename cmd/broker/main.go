@@ -551,7 +551,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		operationBlocklist, err = blocklist.ReadFromFile(cfg.OperationBlocklistFilePath)
 		fatalOnError(err, logs)
 	}
-	operationBlocklist = operationBlocklist.WithPlanValidator(broker.AvailablePlans)
+	operationBlocklist, err = operationBlocklist.WithPlanValidator(broker.AvailablePlans)
+	fatalOnError(err, logs)
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
