@@ -63,6 +63,14 @@ func parseRule(s string) (Rule, error) {
 		if key != "plan" {
 			return Rule{}, fmt.Errorf("unknown key %q in rule %q (only \"plan\" is allowed)", key, s)
 		}
+		if val == "" {
+			return Rule{}, fmt.Errorf("empty plan filter in rule %q", s)
+		}
+		for _, p := range strings.Split(val, ",") {
+			if strings.TrimSpace(p) == "" {
+				return Rule{}, fmt.Errorf("empty plan segment in rule %q", s)
+			}
+		}
 		r.Plan = val
 	}
 	return r, nil
@@ -155,20 +163,24 @@ type OperationBlocklist struct {
 // for any unrecognised plan name (e.g. typos like "trail" instead of "trial").
 func (b OperationBlocklist) WithPlanValidator(v PlanValidator) (OperationBlocklist, error) {
 	b.planValidator = v
-	for op, rules := range map[string]ruleList{
-		"provision":   b.Provision,
-		"update":      b.Update,
-		"planUpgrade": b.PlanUpgrade,
-		"deprovision": b.Deprovision,
+	type opRules struct {
+		name  string
+		rules ruleList
+	}
+	for _, op := range []opRules{
+		{"provision", b.Provision},
+		{"update", b.Update},
+		{"planUpgrade", b.PlanUpgrade},
+		{"deprovision", b.Deprovision},
 	} {
-		for _, r := range rules {
+		for _, r := range op.rules {
 			if r.Plan == "" {
 				continue
 			}
 			for _, p := range strings.Split(r.Plan, ",") {
 				p = strings.TrimSpace(p)
 				if !v.IsPlanName(p) {
-					return OperationBlocklist{}, fmt.Errorf("unknown plan name %q in %s rule", p, op)
+					return OperationBlocklist{}, fmt.Errorf("unknown plan name %q in %s rule", p, op.name)
 				}
 			}
 		}

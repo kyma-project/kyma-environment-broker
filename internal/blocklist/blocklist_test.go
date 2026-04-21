@@ -317,3 +317,17 @@ func TestParseRule_EmptyToken(t *testing.T) {
 	_, err := blocklist.ReadFromFile(path)
 	assert.Error(t, err)
 }
+
+func TestParseRule_EmptyPlanFilter(t *testing.T) {
+	// plan= with no value must be rejected — would silently match nothing but looks like a filter.
+	path := writeYAML(t, "provision: '\"msg\",\"plan=\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyPlanSegment(t *testing.T) {
+	// plan=aws,,gcp has an empty segment — must be rejected.
+	path := writeYAML(t, "provision: '\"msg\",\"plan=aws,,gcp\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
