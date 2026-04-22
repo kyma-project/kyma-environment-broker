@@ -285,6 +285,8 @@ func main() {
 
 	err = cfg.Broker.Validate()
 	fatalOnError(err, log)
+	err = cfg.InfrastructureManager.Validate()
+	fatalOnError(err, log)
 
 	log.Info("Starting Kyma Environment Broker")
 
@@ -551,7 +553,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		operationBlocklist, err = blocklist.ReadFromFile(cfg.OperationBlocklistFilePath)
 		fatalOnError(err, logs)
 	}
-	operationBlocklist = operationBlocklist.WithPlanValidator(broker.AvailablePlans)
+	operationBlocklist, err = operationBlocklist.WithPlanValidator(broker.AvailablePlans)
+	fatalOnError(err, logs)
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{

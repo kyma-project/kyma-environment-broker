@@ -104,3 +104,51 @@ func TestConfigValidate_ErrorMessageContainsUnrecognizedPlanName(t *testing.T) {
 	err := cfg.Validate()
 	assert.ErrorContains(t, err, "no-such-plan")
 }
+
+func TestConfigValidate_ACLEnabledPlans_AllowsSpecialNameNoPlan(t *testing.T) {
+	cfg := Config{ACLEnabledPlans: StringList{NoPlanSpecialName}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestConfigValidate_ACLEnabledPlans_AllowsSpecialNameAll(t *testing.T) {
+	cfg := Config{ACLEnabledPlans: StringList{AllPlansSpecialName}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestConfigValidate_ACLEnabledPlans_AllowsValidPlanNames(t *testing.T) {
+	cfg := Config{ACLEnabledPlans: StringList{AWSPlanName, AzurePlanName}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestConfigValidate_ACLEnabledPlans_ReturnsErrorForUnknownPlan(t *testing.T) {
+	cfg := Config{ACLEnabledPlans: StringList{"unknown-plan"}}
+	err := cfg.Validate()
+	assert.ErrorContains(t, err, "unknown-plan")
+}
+
+func TestConfigValidate_BindablePlans_AllowsValidPlanNames(t *testing.T) {
+	cfg := Config{Binding: BindingConfig{BindablePlans: StringList{AWSPlanName, AzurePlanName}}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestConfigValidate_BindablePlans_ReturnsErrorForUnknownPlan(t *testing.T) {
+	cfg := Config{Binding: BindingConfig{BindablePlans: StringList{"unknown-plan"}}}
+	err := cfg.Validate()
+	assert.ErrorContains(t, err, "unknown-plan")
+}
+
+func TestInfrastructureManagerValidate_AllowsSpecialNameNoPlan(t *testing.T) {
+	cfg := InfrastructureManager{IngressFilteringPlans: StringList{NoPlanSpecialName}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestInfrastructureManagerValidate_AllowsValidPlanNames(t *testing.T) {
+	cfg := InfrastructureManager{IngressFilteringPlans: StringList{AWSPlanName, AzurePlanName}}
+	assert.NoError(t, cfg.Validate())
+}
+
+func TestInfrastructureManagerValidate_ReturnsErrorForUnknownPlan(t *testing.T) {
+	cfg := InfrastructureManager{IngressFilteringPlans: StringList{"unknown-plan"}}
+	err := cfg.Validate()
+	assert.ErrorContains(t, err, "unknown-plan")
+}
