@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KEB Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .chart-container { max-width: 800px; margin: 2rem 0; }
+    h2 { margin-top: 2rem; }
+    #error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>KEB Parameter Usage Analytics</h1>
+  <p id="total"></p>
+  <p id="error"></p>
+
+  <h2>Provisioning Parameters</h2>
+  <div class="chart-container"><canvas id="provChart"></canvas></div>
+
+  <h2>Update Parameters</h2>
+  <div class="chart-container"><canvas id="updateChart"></canvas></div>
+
+  <h2>Value Distributions</h2>
+  <div id="distributions"></div>
+
+  <script>
+    async function load() {
+      let data;
+      try {
+        const resp = await fetch('/api/stats');
+        data = await resp.json();
+      } catch(e) {
+        document.getElementById('error').textContent = 'Failed to load stats: ' + e;
+        return;
+      }
+
+      document.getElementById('total').textContent =
+        'Total active instances: ' + data.total_instances;
+
+      function renderBar(canvasId, stats) {
+        if (!stats || !stats.parameters || stats.parameters.length === 0) return;
+        const labels = stats.parameters.map(p => p.parameter);
+        const pct = stats.parameters.map(p =>
+          p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
+        );
+        new Chart(document.getElementById(canvasId), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{ label: '% instances with parameter set', data: pct,
+              backgroundColor: 'rgba(54,162,235,0.6)' }]
+          },
+          options: { indexAxis: 'y', scales: { x: { max: 100 } } }
+        });
+      }
+
+      renderBar('provChart', data.provisioning);
+      renderBar('updateChart', data.updates);
+
+      const distDiv = document.getElementById('distributions');
+      (data.distributions || []).forEach(dist => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chart-container';
+        const title = document.createElement('h3');
+        title.textContent = dist.parameter;
+        const canvas = document.createElement('canvas');
+        canvas.id = 'dist_' + dist.parameter;
+        wrapper.appendChild(title);
+        wrapper.appendChild(canvas);
+        distDiv.appendChild(wrapper);
+
+        const labels = Object.keys(dist.values);
+        const vals = Object.values(dist.values);
+        new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{ label: 'count', data: vals,
+              backgroundColor: 'rgba(255,159,64,0.6)' }]
+          }
+        });
+      });
+    }
+    load();
+  </script>
+</body>
+</html>

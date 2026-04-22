@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -16,6 +17,9 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
 )
+
+//go:embed static/index.html
+var indexHTML string
 
 type Config struct {
 	Database struct {
@@ -124,7 +128,6 @@ func buildStats(reader *analytics.DBReader) (analytics.StatsResponse, error) {
 	}, nil
 }
 
-// indexHTMLReader is replaced with an embedded file in Task 5.
 func indexHTMLReader() *strings.Reader {
-	return strings.NewReader("<html><body>KEB Analytics — UI coming soon</body></html>")
+	return strings.NewReader(indexHTML)
 }
