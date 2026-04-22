@@ -52,7 +52,11 @@ func main() {
 		slog.Error("failed to open DB connection", "error", err)
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			slog.Error("failed to close DB connection", "error", err)
+		}
+	}()
 
 	if err := conn.Ping(); err != nil {
 		slog.Error("failed to ping DB", "error", err)
