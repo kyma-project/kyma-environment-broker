@@ -1,0 +1,67 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.analytics.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.analytics.name }}
+    app.kubernetes.io/instance: {{ .Values.namePrefix }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.analytics.name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Values.analytics.name }}
+        app.kubernetes.io/instance: {{ .Values.namePrefix }}
+    spec:
+      {{- if ne .Values.imagePullSecret "" }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.analytics.name }}
+          image: "{{ .Values.analytics.image.repository }}:{{ .Values.analytics.image.tag }}"
+          imagePullPolicy: Always
+          env:
+            - name: APP_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.hostSecretKey }}
+            - name: APP_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.nameSecretKey }}
+            - name: APP_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.passwordSecretKey }}
+            - name: APP_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.portSecretKey }}
+            - name: APP_DATABASE_SSLMODE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.sslModeSecretKey }}
+            - name: APP_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.userSecretKey }}
+            - name: APP_PORT
+              value: "{{ .Values.analytics.port }}"
+            - name: APP_REFRESH_INTERVAL
+              value: "{{ .Values.analytics.refreshInterval }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.analytics.port }}
+              protocol: TCP
+{{- end }}

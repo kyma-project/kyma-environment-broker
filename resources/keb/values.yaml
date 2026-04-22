@@ -125,6 +125,32 @@ swagger:
 
 
 # =================================================
+# keb-analytics
+# =================================================
+analytics:
+  enabled: false
+  name: keb-analytics
+  port: 8080
+  refreshInterval: "1h"
+  image:
+    repository: ""
+    tag: ""
+  # DB credentials for keb-analytics — separate from KEB broker credentials.
+  # In Phase 1 these reference the same Secret as KEB; in Phase 2 swap to a
+  # dedicated read-only user.
+  database:
+    secretName: "kcp-postgresql"
+    hostSecretKey: "postgresql-serviceName"
+    portSecretKey: "postgresql-servicePort"
+    nameSecretKey: "postgresql-broker-db-name"
+    userSecretKey: "postgresql-broker-username"
+    passwordSecretKey: "postgresql-broker-password"
+    sslModeSecretKey: "postgresql-sslMode"
+# =================================================
+
+
+
+# =================================================
 # Kyma Environment Broker (KEB) Deployment Settings
 # =================================================
 broker:

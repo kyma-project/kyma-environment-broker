@@ -1,0 +1,17 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.analytics.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.analytics.name }}
+    app.kubernetes.io/instance: {{ .Values.namePrefix }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .Values.analytics.name }}
+  ports:
+    - name: http
+      port: {{ .Values.analytics.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}
