@@ -1,0 +1,26 @@
+{{- if .Capabilities.APIVersions.Has "networking.istio.io/v1beta1" }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: website
+spec:
+  gateways:
+    - {{ .Values.global.istio.gateway | required "Please specify .global.istio.gateway" }}
+  hosts:
+    - {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
+  http:
+    - corsPolicy:
+        allowHeaders:
+          - Content-Type
+        allowMethods: ["GET"]
+        allowOrigins:
+          - regex: ".*"
+      match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: website
+            port:
+              number: 80
+{{- end }}

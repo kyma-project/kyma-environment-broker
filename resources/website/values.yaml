@@ -1,0 +1,13 @@
+global:
+  ingress:
+    domainName: cp.dev.kyma.cloud.sap
+  istio:
+    gateway: istio-system/kcp-gateway
+
+host: website
+
+image:
+  repository: nginx
+  tag: alpine
+
+replicaCount: 1
