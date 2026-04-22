@@ -146,7 +146,7 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 
 // BuildDistributions computes value breakdowns for selected distribution fields.
 func BuildDistributions(params []internal.ProvisioningParameters) []DistributionStat {
-	distributionFields := []string{"MachineType", "AutoScalerMin", "AutoScalerMax"}
+	distributionFields := []string{"MachineType", "Region", "AutoScalerMin", "AutoScalerMax"}
 	counts := make(map[string]map[string]int)
 	for _, p := range params {
 		walkFields(p.Parameters, provisioningFieldConfig, counts)

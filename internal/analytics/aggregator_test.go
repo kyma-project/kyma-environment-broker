@@ -73,4 +73,39 @@ func TestAggregateProvisioning_RanksParameters(t *testing.T) {
 	assert.True(t, found)
 }
 
+func TestAggregateUpdates_CountsSetFields(t *testing.T) {
+	params := []internal.UpdatingParametersDTO{
+		{MachineType: strPtr("m6i.xlarge")},
+		{MachineType: strPtr("m5.xlarge")},
+		{},
+	}
+	stats := AggregateUpdates(params)
+	assert.Equal(t, 3, stats.Parameters[0].Total)
+	found := false
+	for _, p := range stats.Parameters {
+		if p.Parameter == "MachineType" {
+			assert.Equal(t, 2, p.SetCount)
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestBuildDistributions_IncludesRegion(t *testing.T) {
+	region := "eu-central-1"
+	params := []internal.ProvisioningParameters{
+		{Parameters: pkg.ProvisioningParametersDTO{Region: &region}},
+		{Parameters: pkg.ProvisioningParametersDTO{Region: &region}},
+	}
+	dists := BuildDistributions(params)
+	found := false
+	for _, d := range dists {
+		if d.Parameter == "Region" {
+			assert.Equal(t, 2, d.Values["eu-central-1"])
+			found = true
+		}
+	}
+	assert.True(t, found, "Region should appear in distributions")
+}
+
 func strPtr(s string) *string { return &s }
