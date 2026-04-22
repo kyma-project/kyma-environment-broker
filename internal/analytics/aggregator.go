@@ -104,14 +104,18 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 	}
 }
 
-// AggregateProvisioning computes parameter usage stats from a slice of ProvisioningParameters.
-func AggregateProvisioning(params []internal.ProvisioningParameters) ParameterStats {
+// buildCounts walks all params once and returns field-value occurrence counts.
+func buildCounts(params []internal.ProvisioningParameters) map[string]map[string]int {
 	counts := make(map[string]map[string]int)
-	total := len(params)
 	for _, p := range params {
 		walkFields(p.Parameters, provisioningFieldConfig, counts)
 	}
-	return toParameterStats(counts, total)
+	return counts
+}
+
+// AggregateProvisioning computes parameter usage stats from a slice of ProvisioningParameters.
+func AggregateProvisioning(params []internal.ProvisioningParameters) ParameterStats {
+	return toParameterStats(buildCounts(params), len(params))
 }
 
 // AggregateUpdates computes parameter usage stats from a slice of UpdatingParametersDTO.
@@ -138,8 +142,11 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 			Total:     total,
 		})
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].SetCount > result[j].SetCount
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].SetCount != result[j].SetCount {
+			return result[i].SetCount > result[j].SetCount
+		}
+		return result[i].Parameter < result[j].Parameter
 	})
 	return ParameterStats{Parameters: result}
 }
@@ -147,10 +154,7 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 // BuildDistributions computes value breakdowns for selected distribution fields.
 func BuildDistributions(params []internal.ProvisioningParameters) []DistributionStat {
 	distributionFields := []string{"MachineType", "Region", "AutoScalerMin", "AutoScalerMax"}
-	counts := make(map[string]map[string]int)
-	for _, p := range params {
-		walkFields(p.Parameters, provisioningFieldConfig, counts)
-	}
+	counts := buildCounts(params)
 	var result []DistributionStat
 	for _, field := range distributionFields {
 		if values, ok := counts[field]; ok {
