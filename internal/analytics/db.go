@@ -3,6 +3,7 @@ package analytics
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -20,9 +21,13 @@ func NewDBReader(session *dbr.Session) *DBReader {
 
 // FetchActiveProvisioningParams returns ProvisioningParameters for all active instances.
 // Active = has a succeeded provision op and no succeeded deprovision op.
+//
+// Note: the provisioning_parameters column stores encrypted SMOperatorCredentials
+// and Kubeconfig values. Analytics only reads non-encrypted parameter fields
+// (machineType, region, autoscaler settings, etc.) — encrypted fields are ignored.
 func (r *DBReader) FetchActiveProvisioningParams() ([]internal.ProvisioningParameters, error) {
 	var rows []struct {
-		Data string `db:"provisioning_parameters"`
+		ProvisioningParameters string `db:"provisioning_parameters"`
 	}
 	_, err := r.session.SelectBySql(`
 SELECT o.provisioning_parameters
@@ -40,9 +45,10 @@ WHERE o.type = 'provision'
 
 	result := make([]internal.ProvisioningParameters, 0, len(rows))
 	for _, row := range rows {
-		p, err := parseProvisioningParameters(row.Data)
+		p, err := parseProvisioningParameters(row.ProvisioningParameters)
 		if err != nil {
-			continue // skip malformed rows
+			slog.Warn("analytics: skipping malformed provisioning_parameters row", "error", err)
+			continue
 		}
 		result = append(result, p)
 	}
@@ -72,6 +78,7 @@ WHERE o.type = 'update'
 	for _, row := range rows {
 		var op internal.Operation
 		if err := json.Unmarshal([]byte(row.Data), &op); err != nil {
+			slog.Warn("analytics: skipping malformed operation data row", "error", err)
 			continue
 		}
 		result = append(result, op.UpdatingParameters)
