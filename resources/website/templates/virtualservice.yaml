@@ -9,18 +9,12 @@ spec:
   hosts:
     - {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
   http:
-    - corsPolicy:
-        allowHeaders:
-          - Content-Type
-        allowMethods: ["GET"]
-        allowOrigins:
-          - regex: ".*"
-      match:
+    - match:
         - uri:
             prefix: /
       route:
         - destination:
             host: website
             port:
-              number: 80
+              number: 4180
 {{- end }}

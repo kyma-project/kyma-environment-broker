@@ -10,12 +10,6 @@ spec:
         - source:
             namespaces:
               - istio-system
-      to:
-        - operation:
-            methods:
-              - GET
-            paths:
-              - /*
   selector:
     matchLabels:
       app.kubernetes.io/name: website
