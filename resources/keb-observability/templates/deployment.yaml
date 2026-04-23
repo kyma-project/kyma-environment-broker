@@ -35,6 +35,10 @@ spec:
             - --upstream=http://localhost:8080
             - --http-address=0.0.0.0:4180
             - --code-challenge-method=S256
+            - --scope=openid email groups
+            - --allowed-group={{ .Values.oidc.groups.admin }}
+            - --allowed-group={{ .Values.oidc.groups.operator }}
+            - --allowed-group={{ .Values.oidc.groups.viewer }}
             - --email-domain=*
             - --cookie-secure=true
             - --cookie-refresh=1h

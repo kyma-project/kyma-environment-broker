@@ -14,6 +14,10 @@ replicaCount: 1
 
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com
+  groups:
+    admin: runtimeAdmin
+    operator: runtimeOperator
+    viewer: runtimeViewer
 
 oauth2Proxy:
   image:
