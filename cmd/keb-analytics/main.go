@@ -71,7 +71,7 @@ func main() {
 	)
 
 	refresh := func() {
-		resp, err := buildStats(reader)
+		resp, err := buildStats(reader, analytics.TimeRange{})
 		if err != nil {
 			slog.Error("failed to build stats", "error", err)
 			return
@@ -94,9 +94,24 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
-		mu.RLock()
-		data := cache
-		mu.RUnlock()
+		tr, err := parseTimeRange(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		var data analytics.StatsResponse
+		if tr.From.IsZero() && tr.To.IsZero() {
+			mu.RLock()
+			data = cache
+			mu.RUnlock()
+		} else {
+			data, err = buildStats(reader, tr)
+			if err != nil {
+				slog.Error("failed to build stats for range", "error", err)
+				http.Error(w, "failed to build stats", http.StatusInternalServerError)
+				return
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(data); err != nil {
 			slog.Error("failed to encode stats", "error", err)
@@ -124,12 +139,12 @@ func main() {
 	}
 }
 
-func buildStats(reader *analytics.DBReader) (analytics.StatsResponse, error) {
-	provParams, err := reader.FetchActiveProvisioningParams()
+func buildStats(reader *analytics.DBReader, tr analytics.TimeRange) (analytics.StatsResponse, error) {
+	provParams, err := reader.FetchActiveProvisioningParamsInRange(tr)
 	if err != nil {
 		return analytics.StatsResponse{}, err
 	}
-	updateParams, err := reader.FetchUpdateParams()
+	updateParams, err := reader.FetchUpdateParamsInRange(tr)
 	if err != nil {
 		return analytics.StatsResponse{}, err
 	}
@@ -139,6 +154,26 @@ func buildStats(reader *analytics.DBReader) (analytics.StatsResponse, error) {
 		Updates:        analytics.AggregateUpdates(updateParams),
 		Distributions:  analytics.BuildDistributions(provParams),
 	}, nil
+}
+
+// parseTimeRange reads optional ?from=YYYY-MM-DD and ?to=YYYY-MM-DD query params.
+func parseTimeRange(r *http.Request) (analytics.TimeRange, error) {
+	var tr analytics.TimeRange
+	if s := r.URL.Query().Get("from"); s != "" {
+		t, err := time.Parse("2006-01-02", s)
+		if err != nil {
+			return tr, fmt.Errorf("invalid 'from' date %q, expected YYYY-MM-DD", s)
+		}
+		tr.From = t.UTC()
+	}
+	if s := r.URL.Query().Get("to"); s != "" {
+		t, err := time.Parse("2006-01-02", s)
+		if err != nil {
+			return tr, fmt.Errorf("invalid 'to' date %q, expected YYYY-MM-DD", s)
+		}
+		tr.To = t.UTC()
+	}
+	return tr, nil
 }
 
 func indexHTMLReader() *strings.Reader {

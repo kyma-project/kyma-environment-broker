@@ -9,10 +9,23 @@
     .chart-container { max-width: 800px; margin: 2rem 0; }
     h2 { margin-top: 2rem; }
     #error { color: red; }
+    #controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    #controls label { font-weight: bold; }
   </style>
 </head>
 <body>
   <h1>KEB Parameter Usage Analytics</h1>
+
+  <div id="controls">
+    <label for="period">Period:</label>
+    <select id="period">
+      <option value="7">Last 7 days</option>
+      <option value="30">Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="">All time</option>
+    </select>
+  </div>
+
   <p id="total"></p>
   <p id="error"></p>
 
@@ -26,10 +39,30 @@
   <div id="distributions"></div>
 
   <script>
+    const charts = [];
+
+    function destroyCharts() {
+      charts.forEach(c => c.destroy());
+      charts.length = 0;
+    }
+
     async function load() {
+      destroyCharts();
+      document.getElementById('distributions').innerHTML = '';
+      document.getElementById('error').textContent = '';
+
+      const days = document.getElementById('period').value;
+      let url = '/api/stats';
+      if (days) {
+        const from = new Date();
+        from.setUTCDate(from.getUTCDate() - parseInt(days));
+        const fromStr = from.toISOString().slice(0, 10);
+        url += '?from=' + fromStr;
+      }
+
       let data;
       try {
-        const resp = await fetch('/api/stats');
+        const resp = await fetch(url);
         data = await resp.json();
       } catch(e) {
         document.getElementById('error').textContent = 'Failed to load stats: ' + e;
@@ -45,7 +78,7 @@
         const pct = stats.parameters.map(p =>
           p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
         );
-        new Chart(document.getElementById(canvasId), {
+        const chart = new Chart(document.getElementById(canvasId), {
           type: 'bar',
           data: {
             labels,
@@ -54,6 +87,7 @@
           },
           options: { indexAxis: 'y', scales: { x: { max: 100 } } }
         });
+        charts.push(chart);
       }
 
       renderBar('provChart', data.provisioning);
@@ -73,7 +107,7 @@
 
         const labels = Object.keys(dist.values);
         const vals = Object.values(dist.values);
-        new Chart(canvas, {
+        const chart = new Chart(canvas, {
           type: 'bar',
           data: {
             labels,
@@ -82,8 +116,11 @@
           },
           options: { scales: { y: { ticks: { stepSize: 1, precision: 0 } } } }
         });
+        charts.push(chart);
       });
     }
+
+    document.getElementById('period').addEventListener('change', load);
     load();
   </script>
 </body>
