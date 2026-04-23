@@ -7,7 +7,7 @@ global:
 host: keb-observability
 
 image:
-  repository: nginx
+  repository: python
   tag: alpine
 
 replicaCount: 1

@@ -17,12 +17,13 @@ spec:
       containers:
         - name: keb-observability
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["python3", "/app/server.py"]
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
           volumeMounts:
             - name: keb-observability-content
-              mountPath: /usr/share/nginx/html
+              mountPath: /app
         - name: oauth2-proxy
           image: "{{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}"
           args:
@@ -31,7 +32,7 @@ spec:
             - --client-id={{ .Values.oauth2Proxy.clientID }}
             - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
             - --redirect-url=https://{{ .Values.host }}.{{ .Values.global.ingress.domainName }}/oauth2/callback
-            - --upstream=http://localhost:80
+            - --upstream=http://localhost:8080
             - --http-address=0.0.0.0:4180
             - --code-challenge-method=S256
             - --email-domain=*

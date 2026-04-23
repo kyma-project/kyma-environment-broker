@@ -3,8 +3,20 @@ kind: ConfigMap
 metadata:
   name: keb-observability-content
 data:
-  index.html: |
-    <!DOCTYPE html>
+  server.py: |
+    import http.server
+    import random
+    import json
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/random':
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'number': random.randint(1, 1000)}).encode())
+            elif self.path == '/':
+                page = '''<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -12,9 +24,34 @@ data:
       <style>
         body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
         h1 { color: #333; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 24px; }
       </style>
     </head>
     <body>
       <h1>KEB Observability</h1>
+      <button onclick="fetchRandom()">Get Random Number</button>
+      <div id="result"></div>
+      <script>
+        function fetchRandom() {
+          fetch('/random')
+            .then(r => r.json())
+            .then(data => document.getElementById('result').textContent = data.number);
+        }
+      </script>
     </body>
-    </html>
+    </html>'''
+                encoded = page.encode()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html')
+                self.send_header('Content-Length', str(len(encoded)))
+                self.end_headers()
+                self.wfile.write(encoded)
+            else:
+                self.send_response(404)
+                self.end_headers()
+
+        def log_message(self, format, *args):
+            pass
+
+    http.server.HTTPServer(('0.0.0.0', 8080), Handler).serve_forever()
