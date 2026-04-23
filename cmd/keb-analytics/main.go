@@ -103,6 +103,15 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/api/refresh", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		refresh()
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "index.html", time.Time{}, indexHTMLReader())
 	})
