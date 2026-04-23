@@ -79,7 +79,8 @@
             labels,
             datasets: [{ label: 'count', data: vals,
               backgroundColor: 'rgba(255,159,64,0.6)' }]
-          }
+          },
+          options: { scales: { y: { ticks: { stepSize: 1, precision: 0 } } } }
         });
       });
     }
