@@ -9,7 +9,6 @@ import (
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
-
 // DBReader wraps a raw dbr session for analytics queries.
 type DBReader struct {
 	session *dbr.Session
@@ -39,11 +38,11 @@ WHERE o.type = 'provision'
   )`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += fmt.Sprintf(" AND o.created_at >= $%d", len(args)+1)
+		q += " AND o.created_at >= ?"
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += fmt.Sprintf(" AND o.created_at < $%d", len(args)+1)
+		q += " AND o.created_at < ?"
 		args = append(args, tr.To)
 	}
 
@@ -94,11 +93,11 @@ WHERE o.type = 'update'
   )`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += fmt.Sprintf(" AND o.created_at >= $%d", len(args)+1)
+		q += " AND o.created_at >= ?"
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += fmt.Sprintf(" AND o.created_at < $%d", len(args)+1)
+		q += " AND o.created_at < ?"
 		args = append(args, tr.To)
 	}
 
