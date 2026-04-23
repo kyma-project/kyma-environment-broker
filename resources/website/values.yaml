@@ -20,5 +20,4 @@ oauth2Proxy:
     repository: quay.io/oauth2-proxy/oauth2-proxy
     tag: v7.7.1
   clientID: clientID
-  clientSecret: clientSecret
   cookieSecret: cookieSecret

@@ -26,7 +26,7 @@ spec:
             - --provider=oidc
             - --oidc-issuer-url={{ .Values.oidc.issuer }}
             - --client-id={{ .Values.oauth2Proxy.clientID }}
-            - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
+            - --client-secret=unused
             - --redirect-url=https://{{ .Values.host }}.{{ .Values.global.ingress.domainName }}/oauth2/callback
             - --upstream=http://localhost:80
             - --http-address=0.0.0.0:4180
@@ -36,11 +36,6 @@ spec:
             - --cookie-refresh=1h
             - --skip-provider-button=true
           env:
-            - name: OAUTH2_PROXY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: website-oauth2-proxy
-                  key: client-secret
             - name: OAUTH2_PROXY_COOKIE_SECRET
               valueFrom:
                 secretKeyRef:
