@@ -20,6 +20,9 @@ spec:
           ports:
             - name: http
               containerPort: 80
+          volumeMounts:
+            - name: website-content
+              mountPath: /usr/share/nginx/html
         - name: oauth2-proxy
           image: "{{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}"
           args:
@@ -49,3 +52,7 @@ spec:
           ports:
             - name: oauth2-proxy
               containerPort: 4180
+      volumes:
+        - name: website-content
+          configMap:
+            name: website-content

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: website-content
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>KEB Observability</title>
+      <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
+        h1 { color: #333; }
+      </style>
+    </head>
+    <body>
+      <h1>KEB Observability</h1>
+    </body>
+    </html>
