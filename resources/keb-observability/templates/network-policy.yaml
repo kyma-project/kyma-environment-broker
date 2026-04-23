@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: kyma-project.io--allow-ingressgateway-to-website
+  name: kyma-project.io--allow-ingressgateway-to-keb-observability
 spec:
   ingress:
     - from:
@@ -16,6 +16,6 @@ spec:
           protocol: TCP
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: website
+      app.kubernetes.io/name: keb-observability
   policyTypes:
     - Ingress

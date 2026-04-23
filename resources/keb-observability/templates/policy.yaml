@@ -1,11 +1,11 @@
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
-  name: website
+  name: keb-observability
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: website
+      app.kubernetes.io/name: keb-observability
   mtls:
     mode: PERMISSIVE

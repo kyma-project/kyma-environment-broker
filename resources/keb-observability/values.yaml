@@ -4,7 +4,7 @@ global:
   istio:
     gateway: istio-system/kcp-gateway
 
-host: website
+host: keb-observability
 
 image:
   repository: nginx
