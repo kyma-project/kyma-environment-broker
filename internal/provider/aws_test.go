@@ -106,7 +106,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 		DefaultMachineType:   "m5.xlarge",
 		Region:               "eu-central-1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 		FailureTolerance:     nil,
 	}, values)
@@ -141,7 +141,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 		DefaultMachineType:   "m5.xlarge",
 		Region:               "ap-southeast-1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 		FailureTolerance:     nil,
 	}, values)
