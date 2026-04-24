@@ -50,6 +50,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -87,6 +88,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -122,6 +124,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -166,6 +169,7 @@ aws:
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -203,6 +207,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -252,6 +257,7 @@ aws:
 				"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 				"m5.large":  {"zone-i", "zone-j"},
 			},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -296,6 +302,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -333,6 +340,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -369,6 +377,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -403,6 +412,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -441,6 +451,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},

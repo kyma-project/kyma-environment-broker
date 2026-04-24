@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -36,10 +37,11 @@ type UpdateRuntimeStep struct {
 	valuesProvider                     broker.ValuesProvider
 	maxPodsWhitelistedGlobalAccountIds whitelist.Set
 	providerSpec                       *configuration.ProviderSpec
+	kcrVolumeProvider                  *provider.KCRVolumeProvider
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec, kcrVolumeProvider *provider.KCRVolumeProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                          k8sClient,
 		delay:                              delay,
@@ -48,6 +50,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		valuesProvider:                     valuesProvider,
 		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
 		providerSpec:                       providerSpec,
+		kcrVolumeProvider:                  kcrVolumeProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -80,6 +83,20 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				*operation.UpdatingParameters.MachineType,
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+
+			if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.ProviderValues.ProviderType) &&
+				runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+					pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
+					*operation.UpdatingParameters.MachineType)
+				if err != nil {
+					if kebError.IsTemporaryError(err) {
+						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", *operation.UpdatingParameters.MachineType), err, 10*time.Second, 1*time.Minute, log)
+					}
+					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", *operation.UpdatingParameters.MachineType), err, log)
+				}
+				runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
+			}
 		} else {
 			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 		}
@@ -105,9 +122,31 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 		currentAdditionalWorkers := s.getCurrentAdditionalWorkers(runtime)
 
+		var volumeOverrides map[string]int
+		if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.ProviderValues.ProviderType) {
+			volumeOverrides = make(map[string]int)
+			cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
+			for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
+				if _, ok := volumeOverrides[pool.MachineType]; ok {
+					continue
+				}
+				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, pool.MachineType)
+				if err != nil {
+					if kebError.IsTemporaryError(err) {
+						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", pool.MachineType), err, 10*time.Second, 1*time.Minute, log)
+					}
+					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", pool.MachineType), err, log)
+				}
+				volumeOverrides[pool.MachineType] = volGb
+			}
+		}
+
 		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
-			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, &operation, log)
+			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, volumeOverrides, &operation, log)
 		if err != nil {
+			if kebError.IsTemporaryError(err) {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("while creating additional workers: %s", err), err, 10*time.Second, 1*time.Minute, log)
+			}
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
 		}
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers

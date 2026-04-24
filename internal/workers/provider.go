@@ -3,9 +3,7 @@ package workers
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -29,7 +27,7 @@ func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configurat
 }
 
 func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
-	zones []string, planID string, discoveredZones map[string][]string, operation *internal.Operation, log *slog.Logger) ([]gardener.Worker, error) {
+	zones []string, planID string, discoveredZones map[string][]string, volumeOverrides map[string]int, operation *internal.Operation, log *slog.Logger) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -87,10 +85,13 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		}
 
 		if values.ProviderType != "openstack" {
-			volumeSize := strconv.Itoa(values.VolumeSizeGb)
+			volGb := values.VolumeSizeGb
+			if volumeOverrides != nil {
+				volGb = volumeOverrides[additionalWorkerNodePool.MachineType]
+			}
 			worker.Volume = &gardener.Volume{
 				Type:       ptr.String(values.DiskType),
-				VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+				VolumeSize: fmt.Sprintf("%dGi", volGb),
 			}
 		}
 
