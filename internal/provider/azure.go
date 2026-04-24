@@ -168,7 +168,7 @@ func (p *AzureFreemiumInputProvider) Provide() internal.ProviderValues {
 		Region:               region,
 		Purpose:              PurposeEvaluation,
 		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		FailureTolerance:     nil,
 	}
 }
