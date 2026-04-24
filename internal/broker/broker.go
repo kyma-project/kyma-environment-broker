@@ -68,6 +68,9 @@ type Config struct {
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
+	DynamicVolumeSizeEnabled bool   `envconfig:"default=false"`
+	KCRConfigMapName         string `envconfig:"default=consumption-reporter-config"`
+
 	// enables Access-Control-List.
 	ACLEnabledPlans StringList `envconfig:"default=false"`
 }
