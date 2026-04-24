@@ -465,6 +465,38 @@ aws:
 		assert.Len(t, workers, 1)
 		assert.Nil(t, workers[0].Taints)
 	})
+
+	t.Run("should use volume override when volumeOverrides map is provided", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "m6i.large", HAZones: true},
+		}
+		volumeOverrides := map[string]int{"m6i.large": 200}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 80},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			volumeOverrides,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			log,
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "200Gi", workers[0].Volume.VolumeSize)
+	})
 }
 
 func TestToGardenerTaints(t *testing.T) {

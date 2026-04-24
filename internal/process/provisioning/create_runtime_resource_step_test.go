@@ -27,6 +27,8 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	coreV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -1960,4 +1962,54 @@ gcp:
 `
 	providerSpec, _ := configuration.NewProviderSpec(strings.NewReader(providerConfigYAML))
 	return providerSpec
+}
+
+func TestCreateRuntimeResourceStep_WithKCRVolumeProvider(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	// use a machine type present in the KCR ConfigMap (m6i.4xlarge → 84Gi)
+	operation.ProvisioningParameters.Parameters.MachineType = ptr.String("m6i.4xlarge")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "consumption-reporter-config", Namespace: "kcp-system"},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+
+	cli := getClientForTests(t)
+	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	var gotRuntime imv1.Runtime
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &gotRuntime)
+	require.NoError(t, err)
+	require.Len(t, gotRuntime.Spec.Shoot.Provider.Workers, 1)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
