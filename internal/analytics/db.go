@@ -9,6 +9,7 @@ import (
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
+
 // DBReader wraps a raw dbr session for analytics queries.
 type DBReader struct {
 	session *dbr.Session
