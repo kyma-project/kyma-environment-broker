@@ -1,0 +1,28 @@
+global:
+  ingress:
+    domainName: cp.dev.kyma.cloud.sap
+  istio:
+    gateway: istio-system/kcp-gateway
+
+host: keb-observability
+
+image:
+  repository: python
+  tag: alpine
+
+replicaCount: 1
+
+oidc:
+  issuer: https://kymatest.accounts400.ondemand.com
+  groups:
+    admin: runtimeAdmin
+    operator: runtimeOperator
+    viewer: runtimeViewer
+
+oauth2Proxy:
+  image:
+    repository: quay.io/oauth2-proxy/oauth2-proxy
+    tag: v7.7.1
+  clientID: clientID
+  clientSecret: clientSecret
+  cookieSecret: cookieSecret

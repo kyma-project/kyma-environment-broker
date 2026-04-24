@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kyma-project.io--allow-ingressgateway-to-keb-observability
+spec:
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+          podSelector:
+            matchLabels:
+              app: istio-ingressgateway
+      ports:
+        - port: 4180
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: keb-observability
+  policyTypes:
+    - Ingress
