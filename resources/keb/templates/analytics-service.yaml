@@ -11,7 +11,8 @@ spec:
     app.kubernetes.io/name: {{ .Values.analytics.name }}
   ports:
     - name: http
-      port: {{ .Values.analytics.port }}
-      targetPort: http
+      port: 4180
+      targetPort: oauth2-proxy
       protocol: TCP
 {{- end }}
+

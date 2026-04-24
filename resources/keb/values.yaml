@@ -48,28 +48,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.29.8
+      version: PR-3115
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_expirator_job:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.29.8"
+      version: "PR-3115"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.29.8
+      version: PR-3115
   ingress:
     domainName: localhost
   istio:
@@ -146,6 +146,20 @@ analytics:
     userSecretKey: "postgresql-broker-username"
     passwordSecretKey: "postgresql-broker-password"
     sslModeSecretKey: "postgresql-sslMode"
+  host: keb-analytics
+  oidc:
+    issuerURL: "https://kymatest.accounts400.ondemand.com"
+    groups:
+      admin: runtimeAdmin
+      operator: runtimeOperator
+      viewer: runtimeViewer
+  oauth2Proxy:
+    image:
+      repository: quay.io/oauth2-proxy/oauth2-proxy
+      tag: v7.7.1
+    clientID: ""
+    clientSecret: ""
+    cookieSecret: ""
 # =================================================
 
 
