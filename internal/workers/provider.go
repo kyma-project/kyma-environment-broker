@@ -3,7 +3,8 @@ package workers
 import (
 	"fmt"
 	"log/slog"
-gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"

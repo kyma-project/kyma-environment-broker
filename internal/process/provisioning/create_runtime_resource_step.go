@@ -50,7 +50,7 @@ type CreateRuntimeResourceStep struct {
 	workersProvider   *workers.Provider
 	providerSpec      *configuration.ProviderSpec
 
-	globalAccounts   config.GlobalAccountsConfig
+	globalAccounts    config.GlobalAccountsConfig
 	kcrVolumeProvider *provider.KCRVolumeProvider
 }
 

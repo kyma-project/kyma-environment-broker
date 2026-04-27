@@ -8,9 +8,9 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"gopkg.in/yaml.v3"
 	coreV1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"gopkg.in/yaml.v3"
 )
 
 const (
