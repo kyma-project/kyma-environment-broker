@@ -80,15 +80,15 @@ def insert_in_lines(lines: list, new_toc_path: str) -> tuple:
     Algorithm:
     1. Determine type: contributor or user.
     2. Determine the canonical top-level indentation from the first operations-keb
-       entry – only entries at that indentation are considered as anchors, so the
-       new line is never inserted inside a subnav block.
-    3. Among top-level lines of the same type whose first number matches the new
-       file's first number, pick the one with the largest second number strictly
-       less than the new file's second number → insert after it.
-    4. If no such line exists but the major group is present, insert before the
-       first entry of that major group (new file is the smallest in the group).
-    5. Fallback: insert after the last top-level operations-keb line found
-       (major group doesn't exist yet).
+       entry – used as a filter in Phase 1 to avoid inserting inside subnav blocks.
+    3. Phase 1 (canonical indent only): among top-level lines of the same type
+       whose major matches, pick the largest minor < new_minor → insert after it.
+       If no smaller minor exists but major is present → insert before first of that major.
+    4. Phase 2 (any indent, same type): when Phase 1 finds nothing (all same-type
+       entries live in a subnav), repeat the search without the indent filter.
+       The new line inherits the anchor line's own indentation so it lands inside
+       the correct subnav block.
+    5. Fallback: insert after the last top-level operations-keb line found.
 
     Returns (new_lines, inserted: bool).
     """
@@ -105,9 +105,6 @@ def insert_in_lines(lines: list, new_toc_path: str) -> tuple:
     else:
         file_type = None
 
-    # Determine the canonical indentation for top-level operations-keb entries.
-    # Only anchors at this indentation level are considered to avoid inserting
-    # inside a subnav block.
     canonical_indent = None
     for line in lines:
         m = FILENAME_RE.match(line)
@@ -115,60 +112,62 @@ def insert_in_lines(lines: list, new_toc_path: str) -> tuple:
             canonical_indent = len(line) - len(line.lstrip())
             break
 
-    best_line_idx = -1
-    best_minor = -1
-    first_same_major_idx = -1  # first entry with same major (for insert-before)
-    last_keb_line_idx = -1     # fallback when major group doesn't exist yet
+    def search(lines, indent_filter):
+        best_idx = -1
+        best_minor = -1
+        first_major_idx = -1
+        last_keb_idx = -1
+        for i, line in enumerate(lines):
+            m = FILENAME_RE.match(line)
+            if not m:
+                continue
+            fname = m.group(2).strip()
+            if not fname.startswith('operations-keb/'):
+                continue
+            if indent_filter is not None and (len(line) - len(line.lstrip())) != indent_filter:
+                continue
+            last_keb_idx = i
+            if file_type == 'contributor' and '/contributor/' not in fname:
+                continue
+            if file_type == 'user' and '/user/' not in fname:
+                continue
+            prefix = parse_numeric_prefix(fname)
+            if prefix is None:
+                continue
+            entry_major, entry_minor = prefix
+            if entry_major != new_major:
+                continue
+            if first_major_idx < 0:
+                first_major_idx = i
+            if entry_minor < new_minor and entry_minor > best_minor:
+                best_minor = entry_minor
+                best_idx = i
+        return best_idx, first_major_idx, last_keb_idx
 
-    for i, line in enumerate(lines):
-        m = FILENAME_RE.match(line)
-        if not m:
-            continue
-        fname = m.group(2).strip()
-        if not fname.startswith('operations-keb/'):
-            continue
+    best_idx, first_major_idx, last_keb_idx = search(lines, canonical_indent)
 
-        # Skip subnav children – only anchor to top-level entries
-        if canonical_indent is not None and (len(line) - len(line.lstrip())) != canonical_indent:
-            continue
+    # Phase 2: relax indent when Phase 1 found no same-major entry
+    if best_idx < 0 and first_major_idx < 0:
+        best_idx, first_major_idx, _ = search(lines, None)
+        # Use anchor line's indentation so the entry lands inside the correct subnav
+        if best_idx >= 0 or first_major_idx >= 0:
+            anchor = best_idx if best_idx >= 0 else first_major_idx
+            anchor_indent = len(lines[anchor]) - len(lines[anchor].lstrip())
+            new_line = f'{" " * anchor_indent}- filename: "{new_toc_path}"\n'
+            if best_idx >= 0:
+                return lines[:best_idx + 1] + [new_line] + lines[best_idx + 1:], True
+            return lines[:first_major_idx] + [new_line] + lines[first_major_idx:], True
 
-        last_keb_line_idx = i
+    new_line = f'{" " * (canonical_indent if canonical_indent is not None else 6)}- filename: "{new_toc_path}"\n'
 
-        if file_type == 'contributor' and '/contributor/' not in fname:
-            continue
-        if file_type == 'user' and '/user/' not in fname:
-            continue
+    if best_idx >= 0:
+        return lines[:best_idx + 1] + [new_line] + lines[best_idx + 1:], True
 
-        prefix = parse_numeric_prefix(fname)
-        if prefix is None:
-            continue
+    if first_major_idx >= 0:
+        return lines[:first_major_idx] + [new_line] + lines[first_major_idx:], True
 
-        entry_major, entry_minor = prefix
-        if entry_major != new_major:
-            continue
-
-        if first_same_major_idx < 0:
-            first_same_major_idx = i
-
-        if entry_minor < new_minor and entry_minor > best_minor:
-            best_minor = entry_minor
-            best_line_idx = i
-
-    indent = canonical_indent if canonical_indent is not None else 6
-
-    new_line = f'{" " * indent}- filename: "{new_toc_path}"\n'
-
-    if best_line_idx >= 0:
-        # Insert after the largest minor that is still smaller than new_minor
-        return lines[:best_line_idx + 1] + [new_line] + lines[best_line_idx + 1:], True
-
-    if first_same_major_idx >= 0:
-        # New file is the smallest in this major group → insert before the first entry
-        return lines[:first_same_major_idx] + [new_line] + lines[first_same_major_idx:], True
-
-    if last_keb_line_idx >= 0:
-        # Major group doesn't exist yet → append after the last top-level keb entry
-        return lines[:last_keb_line_idx + 1] + [new_line] + lines[last_keb_line_idx + 1:], True
+    if last_keb_idx >= 0:
+        return lines[:last_keb_idx + 1] + [new_line] + lines[last_keb_idx + 1:], True
 
     print("WARNING: could not find an anchor line – appending at end of file")
     return lines + [new_line], True
