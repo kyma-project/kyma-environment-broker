@@ -437,6 +437,8 @@ func NewProviderSpecWithZonesDiscovery(t *testing.T, zonesDiscovery bool) *confi
 	spec := fmt.Sprintf(`
 aws:
   zonesDiscovery: %t
+  machinesVersions:
+    mi.{size}: m7i.{size}
 `, zonesDiscovery)
 	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
 	require.NoError(t, err)
