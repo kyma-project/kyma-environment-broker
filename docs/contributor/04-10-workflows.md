@@ -89,6 +89,22 @@ The workflow performs the following steps:
 4. Uploads the downloaded logs as assets to the current GitHub release
 5. Uploads the downloaded logs to a GCP bucket
 
+## Sync KEB Docs Structure Workflow
+
+The [`sync-docs-toc`](/.github/workflows/sync-docs-toc.yml) workflow automatically opens a PR to the `product-kyma-runtime` repository whenever a new or renamed file in KEB's `docs/` directory contains the `<!--{"metadata":{"publish":true}}-->` metadata.
+These documents are published to the Restricted Markets documentation. Content edits to existing files require no action — `product-kyma-runtime` pulls the latest content automatically using a `fileTree` reference in its `manifest.yaml`.
+The workflow is triggered after every successful [Promote KEB to DEV](#promote-keb-to-dev-workflow) workflow run.
+
+The workflow performs the following steps:
+
+1. Resolves the current and previous KEB release tags to determine the diff range
+2. Detects added or renamed `.md` files in `docs/` between the two releases, filtered by `publish:true` metadata
+3. Fetches the corresponding chart version from `management-plane-charts` (falls back to searching merged PRs if the release branch was already deleted)
+4. Updates `docs/toc.yaml` in `product-kyma-runtime` using the [`scripts/python/update_toc.py`](../../scripts/python/update_toc.py) script, which inserts new entries in numeric-prefix order and updates the renamed ones
+5. Opens a PR to `product-kyma-runtime` with the title `docs(keb): sync doc structure changes [chart@<version>]`
+
+If no relevant changes are detected, the workflow exits early and no PR is created.
+
 ## Reusable Workflows
 
 There are reusable workflows created. Anyone with access to a reusable workflow can call it from another workflow.
