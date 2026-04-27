@@ -102,7 +102,7 @@ func TestGCPTrial_Defaults(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "europe-west3",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -132,7 +132,7 @@ func TestGCPTrial_AbstractRegion(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "us-central1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -163,7 +163,7 @@ func TestGCPTrial_PlatformRegion(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "us-central1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -194,7 +194,7 @@ func TestGCPTrial_PlatformRegionNotInMapping(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "europe-west3",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -225,7 +225,7 @@ func TestGCPTrial_PlatformRegionNotInMapping_AbstractRegion(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "us-central1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -255,7 +255,7 @@ func TestGCPTrial_InvalidAbstractRegion(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "europe-west3",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -289,7 +289,7 @@ func TestGCPTrial_RegionNotConsistentWithPlatformRegion(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "asia-south1",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }
@@ -323,7 +323,7 @@ func TestGCPTrial_KSA(t *testing.T) {
 		DefaultMachineType:   "n2-standard-4",
 		Region:               "me-central2",
 		Purpose:              "evaluation",
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 	}, values)
 }

@@ -1378,7 +1378,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:          "m5.xlarge",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
-			expectedVolumeSize:           "50Gi",
+			expectedVolumeSize:           "80Gi",
 		},
 		"Regular trial with smaller machines": {
 			planID:                 broker.TrialPlanID,

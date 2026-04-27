@@ -197,7 +197,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("AWS trial provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 50
+		const defaultVolumeSizeGb = 80
 
 		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, irrelevantMachine)
@@ -252,7 +252,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("AWS free provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 50
+		const defaultVolumeSizeGb = 80
 
 		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.FreemiumPlanName, irrelevantMachine)
@@ -389,7 +389,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("Azure trial provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 50
+		const defaultVolumeSizeGb = 80
 
 		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, irrelevantMachine)
@@ -444,7 +444,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("Azure free provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 50
+		const defaultVolumeSizeGb = 80
 
 		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.FreemiumPlanName, irrelevantMachine)
@@ -653,7 +653,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 
 	t.Run("GCP trial provider", func(t *testing.T) {
 		// given
-		const defaultVolumeSizeGb = 30
+		const defaultVolumeSizeGb = 80
 
 		planConfig := newFakeInMemoryPlanConfigProvider().
 			withMachineType(broker.TrialPlanName, irrelevantMachine)
