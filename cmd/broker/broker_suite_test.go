@@ -1037,6 +1037,8 @@ func fixSecrets() []runtime.Object {
 
 func fixDiscoveredZones() map[string][]string {
 	return map[string][]string{
+		"mi.large":  {"zone-h", "zone-i", "zone-j", "zone-k"},
+		"mi.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-g"},
 		"m5.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"c7i.large": {"zone-l", "zone-m"},

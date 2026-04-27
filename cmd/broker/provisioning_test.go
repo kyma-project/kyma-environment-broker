@@ -111,7 +111,7 @@ func TestProvisioningForTrial(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 
 	runtimeResource := suite.GetUnstructuredRuntimeResource(opID)
-	suite.AssertRuntimeResourceWorkers(runtimeResource, "m5.xlarge", 1, 1)
+	suite.AssertRuntimeResourceWorkers(runtimeResource, "m7i.xlarge", 1, 1)
 
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)
@@ -1375,7 +1375,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
-			expectedMachineType:          "m5.xlarge",
+			expectedMachineType:          "m7i.xlarge",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
 			expectedVolumeSize:           "80Gi",
@@ -1386,7 +1386,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
-			expectedMachineType:          "m6i.large",
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
 		},
@@ -1399,7 +1399,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMaximumNumberOfNodes: 1,
 			expectedProvider:             "aws",
 
-			expectedMachineType:      "m5.xlarge",
+			expectedMachineType:      "m7i.xlarge",
 			expectedSubscriptionName: "sb-aws",
 		},
 		"Freemium aws with smaller machines": {
@@ -1411,7 +1411,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
 			expectedProvider:             "aws",
-			expectedMachineType:          "m6i.large",
+			expectedMachineType:          "m7i.large",
 			expectedSubscriptionName:     "sb-aws",
 		},
 		"Freemium azure": {
@@ -1474,7 +1474,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:           ptr.Integer(1),
 			expectedMinimalNumberOfNodes: 3,
 			expectedMaximumNumberOfNodes: 20,
-			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 
 			expectedSubscriptionName: "sb-aws",
@@ -1488,7 +1488,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:           ptr.Integer(3),
 			expectedMinimalNumberOfNodes: 3,
 			expectedMaximumNumberOfNodes: 20,
-			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws",
 			expectedZones:                []string{"sa-east-1a", "sa-east-1b", "sa-east-1c"},
@@ -3839,7 +3839,7 @@ func TestProvisioningWithVersionAgnosticMachineTypes(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Equal(t, "m6i.large", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	assert.Equal(t, "m7i.large", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)

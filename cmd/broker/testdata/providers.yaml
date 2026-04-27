@@ -56,7 +56,7 @@ aws:
     "ri.12xlarge": "ri.12xlarge (48vCPU, 384GB RAM)"
     "ri.16xlarge": "ri.16xlarge (64vCPU, 512GB RAM)"
   machinesVersions:
-    mi.{size}: m6i.{size}
+    mi.{size}: m7i.{size}
     ri.{size}: r8i.{size}
   regions:
     eu-central-1:

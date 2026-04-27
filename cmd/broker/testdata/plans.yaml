@@ -70,13 +70,6 @@ preview,aws,build-runtime-aws:
     - build-runtime-aws
   volumeSizeGb: 81
   regularMachines:
-    - "m6i.large"
-    - "m6i.xlarge"
-    - "m6i.2xlarge"
-    - "m6i.4xlarge"
-    - "m6i.8xlarge"
-    - "m6i.12xlarge"
-    - "m6i.16xlarge"
     - "mi.large"
     - "mi.xlarge"
     - "mi.2xlarge"
@@ -84,6 +77,13 @@ preview,aws,build-runtime-aws:
     - "mi.8xlarge"
     - "mi.12xlarge"
     - "mi.16xlarge"
+    - "m6i.large"
+    - "m6i.xlarge"
+    - "m6i.2xlarge"
+    - "m6i.4xlarge"
+    - "m6i.8xlarge"
+    - "m6i.12xlarge"
+    - "m6i.16xlarge"
     - "m5.large"
     - "m5.xlarge"
     - "m5.2xlarge"
