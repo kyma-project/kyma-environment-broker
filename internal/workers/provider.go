@@ -88,7 +88,9 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		if values.ProviderType != "openstack" {
 			volGb := values.VolumeSizeGb
 			if volumeOverrides != nil {
-				volGb = volumeOverrides[additionalWorkerNodePool.MachineType]
+				if override, ok := volumeOverrides[additionalWorkerNodePool.MachineType]; ok {
+					volGb = override
+				}
 			}
 			worker.Volume = &gardener.Volume{
 				Type:       ptr.String(values.DiskType),

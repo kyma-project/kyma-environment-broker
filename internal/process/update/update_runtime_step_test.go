@@ -1524,3 +1524,89 @@ meters:
 	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
 	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
 }
+
+func TestUpdateRuntimeStep_KCRVolumeProvider_AutoscalerOnlyUpdate(t *testing.T) {
+	// given — KCR provider enabled, but only autoscaler parameters change (no machine type change)
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	runtimeResource := &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      runtimeResourceName,
+			Namespace: kcpSystemNamespace,
+		},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine: gardener.Machine{Type: "m6i.4xlarge"},
+							Volume: &gardener.Volume{
+								Type:       ptr.String("gp3"),
+								VolumeSize: "84Gi",
+							},
+							Minimum:        2,
+							Maximum:        4,
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
+	db := storage.NewMemoryStorage()
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider)
+
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType:       "aws",
+		DefaultMachineType: "m6i.large",
+	}
+	// only autoscaler parameters — no MachineType change
+	autoScalerMin := 3
+	autoScalerMax := 6
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AutoScalerParameters: pkg.AutoScalerParameters{
+			AutoScalerMin: &autoScalerMin,
+			AutoScalerMax: &autoScalerMax,
+		},
+	}
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then — step succeeds and volume size is unchanged
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: runtimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+	assert.Equal(t, int32(3), gotRuntime.Spec.Shoot.Provider.Workers[0].Minimum)
+	assert.Equal(t, int32(6), gotRuntime.Spec.Shoot.Provider.Workers[0].Maximum)
+}

@@ -169,6 +169,17 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
+			// only look up KCR when the pool is new or its machine type changed
+			unchanged := false
+			for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
+				if prev.Name == pool.Name && prev.MachineType == pool.MachineType {
+					unchanged = true
+					break
+				}
+			}
+			if unchanged {
+				continue
+			}
 			if _, ok := volumeOverrides[pool.MachineType]; ok {
 				continue
 			}

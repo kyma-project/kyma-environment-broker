@@ -123,7 +123,7 @@ func parseNodemeterYAML(data string) (map[string]map[string]int, error) {
 	}
 	result := make(map[string]map[string]int)
 	for providerName, machines := range dto.Meters.Node.MachineTypes {
-		result[providerName] = make(map[string]int)
+		result[strings.ToLower(providerName)] = make(map[string]int)
 		for machineName, entry := range machines {
 			if entry.DefaultVolumeSize == "" {
 				continue
@@ -133,7 +133,7 @@ func parseNodemeterYAML(data string) (map[string]map[string]int, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid default_volume_size %q for machine %s/%s: %w", entry.DefaultVolumeSize, providerName, machineName, err)
 			}
-			result[providerName][machineName] = size
+			result[strings.ToLower(providerName)][strings.ToLower(machineName)] = size
 		}
 	}
 	return result, nil
