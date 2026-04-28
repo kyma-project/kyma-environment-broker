@@ -1,4 +1,4 @@
-broker:
+Stribroker:
   subaccountMovementEnabled: "true"
   updateCustomResourcesLabelsOnAccountMove: "true"
   

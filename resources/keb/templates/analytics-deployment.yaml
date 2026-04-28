@@ -1,0 +1,149 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.analytics.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.analytics.name }}
+    app.kubernetes.io/instance: {{ .Values.namePrefix }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.analytics.name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Values.analytics.name }}
+        app.kubernetes.io/instance: {{ .Values.namePrefix }}
+    spec:
+      {{- if .Values.analytics.serviceAccountName }}
+      serviceAccountName: {{ .Values.analytics.serviceAccountName }}
+      {{- end }}
+      {{- if ne .Values.imagePullSecret "" }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      initContainers:
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) }}
+        - name: cloudsql-proxy
+          restartPolicy: Always
+          image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
+          {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
+                    "--private-ip"]
+          {{- else }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--private-ip",
+                    "--exit-zero-on-sigterm",
+                    "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql-instance-credentials
+              readOnly: true
+          {{- end }}
+        {{- end }}
+      containers:
+        - name: {{ .Values.analytics.name }}
+          image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.keb_analytics.dir }}keb-analytics:{{ .Values.global.images.keb_analytics.version }}"
+          imagePullPolicy: Always
+          env:
+            - name: APP_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.hostSecretKey }}
+            - name: APP_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.nameSecretKey }}
+            - name: APP_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.passwordSecretKey }}
+            - name: APP_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.portSecretKey }}
+            - name: APP_DATABASE_SSLMODE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.sslModeSecretKey }}
+            - name: APP_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.database.secretName }}
+                  key: {{ .Values.analytics.database.userSecretKey }}
+            - name: APP_PORT
+              value: "{{ .Values.analytics.port }}"
+            - name: APP_REFRESH_INTERVAL
+              value: "{{ .Values.analytics.refreshInterval }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.analytics.port }}
+              protocol: TCP
+          {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false) }}
+          volumeMounts:
+            - name: cloudsql-sslrootcert
+              mountPath: /secrets/cloudsql-sslrootcert
+              readOnly: true
+          {{- end }}
+        - name: oauth2-proxy
+          image: "{{ .Values.analytics.oauth2Proxy.image.repository }}:{{ .Values.analytics.oauth2Proxy.image.tag }}"
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url={{ .Values.analytics.oidc.issuerURL }}
+            - --client-id={{ .Values.analytics.oauth2Proxy.clientID }}
+            - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
+            - --redirect-url=https://{{ .Values.analytics.host }}.{{ .Values.global.ingress.domainName }}/oauth2/callback
+            - --upstream=http://localhost:{{ .Values.analytics.port }}
+            - --http-address=0.0.0.0:4180
+            - --code-challenge-method=S256
+            - --scope=openid email groups
+            - --allowed-group={{ .Values.analytics.oidc.groups.admin }}
+            - --allowed-group={{ .Values.analytics.oidc.groups.operator }}
+            - --allowed-group={{ .Values.analytics.oidc.groups.viewer }}
+            - --email-domain=*
+            - --cookie-secure=true
+            - --cookie-refresh=1h
+            - --skip-provider-button=true
+          env:
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.name }}-oauth2-proxy
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.name }}-oauth2-proxy
+                  key: cookie-secret
+          ports:
+            - name: oauth2-proxy
+              containerPort: 4180
+              protocol: TCP
+      {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false) }}
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+      {{- end }}
+      {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false) }}
+      volumes:
+        - name: cloudsql-sslrootcert
+          secret:
+            secretName: kcp-postgresql
+            items:
+              - key: postgresql-sslRootCert
+                path: server-ca.pem
+            optional: true
+      {{- end }}
+{{- end }}
+
