@@ -14,8 +14,8 @@ func TestWalkFields_SkipsConfiguredFields(t *testing.T) {
 	}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	_, found := counts["Zones"]
-	assert.False(t, found, "Zones should be skipped")
+	_, found := counts["zones"]
+	assert.False(t, found, "zones should be skipped")
 }
 
 func TestWalkFields_CountsArrayLength(t *testing.T) {
@@ -24,7 +24,7 @@ func TestWalkFields_CountsArrayLength(t *testing.T) {
 	}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	assert.Equal(t, 1, counts["RuntimeAdministrators"]["2"])
+	assert.Equal(t, 1, counts["administrators"]["2"])
 }
 
 func TestWalkFields_EmitsStringValue(t *testing.T) {
@@ -34,14 +34,14 @@ func TestWalkFields_EmitsStringValue(t *testing.T) {
 	}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	assert.Equal(t, 1, counts["MachineType"]["m6i.xlarge"])
+	assert.Equal(t, 1, counts["machineType"]["m6i.xlarge"])
 }
 
 func TestWalkFields_SkipsNilPointers(t *testing.T) {
 	dto := pkg.ProvisioningParametersDTO{}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	_, found := counts["MachineType"]
+	_, found := counts["machineType"]
 	assert.False(t, found, "nil pointer fields should not be recorded")
 }
 
@@ -52,7 +52,7 @@ func TestWalkFields_EmitsNumericValue(t *testing.T) {
 	}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	assert.Equal(t, 1, counts["AutoScalerMin"]["3"])
+	assert.Equal(t, 1, counts["autoScalerMin"]["3"])
 }
 
 func TestAggregateProvisioning_RanksParameters(t *testing.T) {
@@ -65,7 +65,7 @@ func TestAggregateProvisioning_RanksParameters(t *testing.T) {
 	assert.Equal(t, 3, stats.Parameters[0].Total)
 	found := false
 	for _, p := range stats.Parameters {
-		if p.Parameter == "MachineType" {
+		if p.Parameter == "machineType" {
 			assert.Equal(t, 2, p.SetCount)
 			found = true
 		}
@@ -83,7 +83,7 @@ func TestAggregateUpdates_CountsSetFields(t *testing.T) {
 	assert.Equal(t, 3, stats.Parameters[0].Total)
 	found := false
 	for _, p := range stats.Parameters {
-		if p.Parameter == "MachineType" {
+		if p.Parameter == "machineType" {
 			assert.Equal(t, 2, p.SetCount)
 			found = true
 		}
@@ -100,12 +100,12 @@ func TestBuildDistributions_IncludesRegion(t *testing.T) {
 	dists := BuildDistributions(params)
 	found := false
 	for _, d := range dists {
-		if d.Parameter == "Region" {
+		if d.Parameter == "region" {
 			assert.Equal(t, 2, d.Values["eu-central-1"])
 			found = true
 		}
 	}
-	assert.True(t, found, "Region should appear in distributions")
+	assert.True(t, found, "region should appear in distributions")
 }
 
 func strPtr(s string) *string { return &s }

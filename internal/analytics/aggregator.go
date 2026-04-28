@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -17,26 +18,26 @@ const (
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
-// Fields not listed default to behaviorValue.
+// Fields not listed default to behaviorValue. Keys are JSON tag names.
 var provisioningFieldConfig = map[string]fieldBehavior{
-	"Zones":                     behaviorSkip,
-	"TargetSecret":              behaviorSkip,
-	"Kubeconfig":                behaviorSkip,
-	"ShootName":                 behaviorSkip,
-	"ShootDomain":               behaviorSkip,
-	"RuntimeAdministrators":     behaviorCount,
-	"AdditionalWorkerNodePools": behaviorCount,
+	"zones":                     behaviorSkip,
+	"targetSecret":              behaviorSkip,
+	"kubeconfig":                behaviorSkip,
+	"shootName":                 behaviorSkip,
+	"shootDomain":               behaviorSkip,
+	"administrators":            behaviorCount,
+	"additionalWorkerNodePools": behaviorCount,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
 var updatingFieldConfig = map[string]fieldBehavior{
-	"RuntimeAdministrators":     behaviorCount,
-	"AdditionalWorkerNodePools": behaviorCount,
+	"administrators":            behaviorCount,
+	"additionalWorkerNodePools": behaviorCount,
 }
 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
 //
-//	counts[fieldName][value] = occurrenceCount
+//	counts[jsonName][value] = occurrenceCount
 func walkFields(v interface{}, config map[string]fieldBehavior, counts map[string]map[string]int) {
 	rv := reflect.ValueOf(v)
 	rt := rv.Type()
@@ -51,7 +52,15 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			continue
 		}
 
-		behavior, ok := config[field.Name]
+		// Derive key from JSON tag, falling back to field name
+		jsonName := field.Name
+		if tag, ok := field.Tag.Lookup("json"); ok {
+			if name := strings.Split(tag, ",")[0]; name != "" && name != "-" {
+				jsonName = name
+			}
+		}
+
+		behavior, ok := config[jsonName]
 		if !ok {
 			behavior = behaviorValue
 		}
@@ -97,10 +106,10 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			}
 		}
 
-		if _, ok := counts[field.Name]; !ok {
-			counts[field.Name] = make(map[string]int)
+		if _, ok := counts[jsonName]; !ok {
+			counts[jsonName] = make(map[string]int)
 		}
-		counts[field.Name][value]++
+		counts[jsonName][value]++
 	}
 }
 
@@ -153,7 +162,7 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 
 // BuildDistributions computes value breakdowns for selected distribution fields.
 func BuildDistributions(params []internal.ProvisioningParameters) []DistributionStat {
-	distributionFields := []string{"MachineType", "Region", "AutoScalerMin", "AutoScalerMax"}
+	distributionFields := []string{"machineType", "region", "autoScalerMin", "autoScalerMax"}
 	counts := buildCounts(params)
 	var result []DistributionStat
 	for _, field := range distributionFields {
