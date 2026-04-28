@@ -1,10 +1,266 @@
 name: Sync KEB docs structure to product-kyma-runtime
 
+# Triggered after a successful "Promote KEB to DEV" run (i.e. after every KEB release).
+# Compares docs/ between the released KEB version and the previous one.
+# Only files with <!--{"metadata":{"publish":true}}--> are considered.
+#
+# Two structural changes are handled:
+#   1. A new .md file with publish:true was added             → add it to operations-keb in toc.yaml
+#   2. A published .md file was renamed                       → update the filename in toc.yaml
+#   3. An existing .md file changed from publish:false to true → add it to operations-keb in toc.yaml
+#
+# The resulting PR to product-kyma-runtime carries:
+#   - title:  docs(keb): sync doc structure changes [chart@<CHART_VERSION>]
+
+env:
+  PRODUCT_RUNTIME_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}"
+  PRODUCT_RUNTIME_CLONE_URL: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
+  MGMT_CHARTS_CLONE_URL: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git"
+  MGMT_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts"
+  GH_ENTERPRISE_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
+
 on:
+  workflow_run:
+    workflows: ["Promote KEB to dev"]
+    types: [completed]
   workflow_dispatch:
+    inputs:
+      keb_version:
+        description: "KEB version tag for chart lookup (e.g. 1.29.0) — required"
+        required: true
+      base_sha:
+        description: "Base SHA to diff against HEAD (for branch testing). Leave empty to diff real tags."
+        required: false
+        default: ''
 
 jobs:
   sync-toc:
     runs-on: ubuntu-latest
+    # For workflow_run: only proceed when the upstream workflow succeeded.
+    # For workflow_dispatch: always run (manual trigger implies intent).
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+
     steps:
-      - run: echo "placeholder"
+      - name: Validate required variables
+        run: |
+          [ -z "${{ vars.GIT_USER_EMAIL }}" ]       && echo "GIT_USER_EMAIL is required"       && exit 1
+          [ -z "${{ vars.GIT_USER_NAME }}" ]        && echo "GIT_USER_NAME is required"        && exit 1
+          [ -z "${{ vars.GH_TOOLS_HOST }}" ]        && echo "GH_TOOLS_HOST is required"        && exit 1
+          [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ] && echo "PK_RUNTIME_REPO_NAME is required" && exit 1
+          echo "Validated"
+
+      - name: Checkout KEB
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # For workflow_run: pin to the exact commit that triggered the upstream workflow.
+          # For workflow_dispatch: empty string → checkout the default branch HEAD.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+
+      - name: Resolve diff range
+        id: versions
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            KEB_TAG="${{ inputs.keb_version }}"
+            if [ -n "${{ inputs.base_sha }}" ]; then
+              # Branch testing mode: diff base_sha..HEAD, use keb_version for chart lookup only
+              echo "PREV_SHA=${{ inputs.base_sha }}" >> "$GITHUB_OUTPUT"
+              echo "CURRENT_SHA=HEAD"                >> "$GITHUB_OUTPUT"
+              echo "KEB_TAG=${KEB_TAG}"              >> "$GITHUB_OUTPUT"
+              echo "Branch test mode: ${{ inputs.base_sha }}..HEAD  chart lookup: ${KEB_TAG}"
+            else
+              # Pure tag mode: diff two real KEB tags
+              PREV_TAG=$(git describe --tags --abbrev=0 "${KEB_TAG}^")
+              echo "PREV_SHA=${PREV_TAG}"   >> "$GITHUB_OUTPUT"
+              echo "CURRENT_SHA=${KEB_TAG}" >> "$GITHUB_OUTPUT"
+              echo "KEB_TAG=${KEB_TAG}"     >> "$GITHUB_OUTPUT"
+              echo "Tag mode: ${PREV_TAG}..${KEB_TAG}"
+            fi
+          else
+            # workflow_run mode: resolve tag from head_sha
+            CURRENT_TAG=$(git describe --tags --exact-match "${{ github.event.workflow_run.head_sha }}" 2>/dev/null || true)
+            if [ -z "$CURRENT_TAG" ]; then
+              echo "No exact tag found on head_sha – nothing to sync."
+              exit 0
+            fi
+            PREV_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^")
+            echo "PREV_SHA=${PREV_TAG}"       >> "$GITHUB_OUTPUT"
+            echo "CURRENT_SHA=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
+            echo "KEB_TAG=${CURRENT_TAG}"     >> "$GITHUB_OUTPUT"
+            echo "Tag mode: ${PREV_TAG}..${CURRENT_TAG}"
+          fi
+
+      - name: Detect structural changes in docs/
+        id: detect
+        run: |
+          PREV="${{ steps.versions.outputs.PREV_SHA }}"
+          CURRENT="${{ steps.versions.outputs.CURRENT_SHA }}"
+
+          # Added files with publish:true
+          git diff --diff-filter=A --name-only "${PREV}" "${CURRENT}" -- 'docs/**/*.md' \
+            | grep -v '^docs/assets/' \
+            | while IFS= read -r doc_file; do
+                git show "${CURRENT}:${doc_file}" 2>/dev/null \
+                  | head -3 \
+                  | grep -q '<!--{"metadata":{"publish":true}}-->' \
+                  && echo "$doc_file"
+              done > /tmp/added_files.txt || true
+
+          # Modified files where metadata changed from publish:false to publish:true
+          git diff --diff-filter=M --name-only "${PREV}" "${CURRENT}" -- 'docs/**/*.md' \
+            | grep -v '^docs/assets/' \
+            | while IFS= read -r doc_file; do
+                old_pub=$(git show "${PREV}:${doc_file}"    2>/dev/null | head -3 | grep -c '<!--{"metadata":{"publish":true}}-->' || true)
+                new_pub=$(git show "${CURRENT}:${doc_file}" 2>/dev/null | head -3 | grep -c '<!--{"metadata":{"publish":true}}-->' || true)
+                if [ "$old_pub" -eq 0 ] && [ "$new_pub" -gt 0 ]; then
+                  echo "$doc_file"
+                fi
+              done >> /tmp/added_files.txt || true
+
+          # Renamed files – include when the old or new path has publish:true
+          git diff -M --diff-filter=R --name-status "${PREV}" "${CURRENT}" -- 'docs/**/*.md' \
+            | grep -v 'docs/assets/' \
+            | while IFS=$'\t' read -r _status old new; do
+                old_pub=$(git show "${PREV}:${old}"    2>/dev/null | head -3 | grep -c '<!--{"metadata":{"publish":true}}-->' || true)
+                new_pub=$(git show "${CURRENT}:${new}" 2>/dev/null | head -3 | grep -c '<!--{"metadata":{"publish":true}}-->' || true)
+                if [ "$old_pub" -gt 0 ] || [ "$new_pub" -gt 0 ]; then
+                  printf '%s\t%s\t%s\n' "$_status" "$old" "$new"
+                fi
+              done > /tmp/renamed_files.txt || true
+
+          echo "=== Added (publish:true) ==="
+          cat /tmp/added_files.txt
+          echo "=== Renamed (publish:true on old or new path) ==="
+          cat /tmp/renamed_files.txt
+
+          if [ -s /tmp/added_files.txt ] || [ -s /tmp/renamed_files.txt ]; then
+            has_changes=true
+          else
+            has_changes=false
+          fi
+          echo "has_changes=${has_changes}" >> "$GITHUB_OUTPUT"
+          if [ "$has_changes" = "false" ]; then
+            echo "No structural doc changes detected – nothing to sync."
+          fi
+
+      - name: Resolve chart version
+        id: chart
+        if: steps.detect.outputs.has_changes == 'true'
+        env:
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          KEB_TAG="${{ steps.versions.outputs.KEB_TAG }}"
+
+          # Fast path: branch still exists (typical at release time)
+          git clone --depth 1 --branch "keb-${KEB_TAG}" ${MGMT_CHARTS_CLONE_URL} mgmt-charts 2>/dev/null || true
+          CHART_VERSION=$(grep '^version:' mgmt-charts/keb-sap/Chart.yaml 2>/dev/null | awk '{print $2}' || true)
+
+          if [ -z "$CHART_VERSION" ]; then
+            # Branch was deleted after merge — find via merged PR title
+            echo "Branch keb-${KEB_TAG} not found, searching merged PRs..."
+            rm -rf mgmt-charts
+            git clone --depth 1 ${MGMT_CHARTS_CLONE_URL} mgmt-charts
+
+            MERGE_SHA=$(gh pr list \
+              -R "${MGMT_CHARTS_REPO_URL}" \
+              --state merged \
+              --search "Bump keb to ${KEB_TAG} in:title" \
+              --json mergeCommit \
+              --limit 1 | jq -r '.[0].mergeCommit.oid // empty')
+
+            if [ -n "$MERGE_SHA" ]; then
+              echo "Found merge commit: ${MERGE_SHA}"
+              cd mgmt-charts
+              git fetch --depth 1 origin "${MERGE_SHA}"
+              CHART_VERSION=$(git show "${MERGE_SHA}:keb-sap/Chart.yaml" | grep '^version:' | awk '{print $2}')
+              cd ..
+            fi
+          fi
+
+          if [ -z "$CHART_VERSION" ]; then
+            echo "ERROR: Could not resolve chart version for KEB ${KEB_TAG}"
+            exit 1
+          fi
+
+          echo "CHART_VERSION=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Chart version: ${CHART_VERSION}"
+
+      - name: Setup git
+        if: steps.detect.outputs.has_changes == 'true'
+        run: |
+          git config --global user.email "${{ vars.GIT_USER_EMAIL }}"
+          git config --global user.name "${{ vars.GIT_USER_NAME }}"
+
+      - name: Clone product-kyma-runtime
+        if: steps.detect.outputs.has_changes == 'true'
+        run: git clone ${PRODUCT_RUNTIME_CLONE_URL} product-kyma-runtime
+
+      - name: Update toc.yaml
+        if: steps.detect.outputs.has_changes == 'true'
+        run: |
+          python3 scripts/python/update_toc.py \
+            --toc     product-kyma-runtime/docs/toc.yaml \
+            --added   /tmp/added_files.txt \
+            --renamed /tmp/renamed_files.txt
+
+      - name: Commit and push
+        id: commit
+        if: steps.detect.outputs.has_changes == 'true'
+        working-directory: product-kyma-runtime
+        run: |
+          BRANCH_NAME="keb-docs-sync-${GITHUB_SHA:0:8}"
+          git checkout -B "${BRANCH_NAME}"
+          git add docs/toc.yaml
+          if git diff --staged --quiet; then
+            echo "toc.yaml is unchanged after update_toc.py – skipping commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "docs(keb): sync doc structure changes to toc.yaml
+
+          Triggered by kyma-environment-broker@${GITHUB_SHA}"
+          git remote set-url origin ${PRODUCT_RUNTIME_CLONE_URL}
+          git push origin "${BRANCH_NAME}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR
+        if: steps.commit.outputs.pushed == 'true'
+        working-directory: product-kyma-runtime
+        env:
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          CHART_VERSION="${{ steps.chart.outputs.CHART_VERSION }}"
+
+          # Skip if PR already exists for this branch
+          prs=$(gh pr list \
+            -R "${PRODUCT_RUNTIME_REPO_URL}" \
+            -A "${{ vars.GIT_USER_NAME }}" \
+            --state open \
+            --json headRefName \
+            | jq -r '.[] | .headRefName')
+
+          if echo "$prs" | tr " " '\n' | grep -F -q -x "${BRANCH_NAME}"; then
+            echo "PR already exists – skipping creation."
+            exit 0
+          fi
+
+          ADDED_LIST=$(sed 's/^/- /' /tmp/added_files.txt)
+          [ -z "$ADDED_LIST" ] && ADDED_LIST="_none_"
+          RENAMED_LIST=$(awk -F'\t' '{print "- `" $2 "` → `" $3 "`"}' /tmp/renamed_files.txt)
+          [ -z "$RENAMED_LIST" ] && RENAMED_LIST="_none_"
+
+          printf '## Automated sync from kyma-environment-broker\n\nThis PR was created automatically after structural changes were detected\nin the `docs/` directory of kyma-environment-broker.\n\n**KEB version:** `%s`  **Chart version:** `%s`\n\n### Added files\n%s\n\n### Renamed files\n%s\n\n> [!NOTE]\n> New entries are placed by numeric prefix order.\n> Please review their position in `toc.yaml` and adjust nesting if needed.\n' \
+            "${{ steps.versions.outputs.KEB_TAG }}" "${CHART_VERSION}" "${ADDED_LIST}" "${RENAMED_LIST}" \
+            > /tmp/pr_body.md
+
+          PR_URL=$(gh pr create \
+            -B main \
+            -H "${BRANCH_NAME}" \
+            -R "${PRODUCT_RUNTIME_REPO_URL}" \
+            --title "docs(keb): sync doc structure changes [chart@${CHART_VERSION}]" \
+            --body-file /tmp/pr_body.md)
+
+          echo "${PR_URL}" | tee "$GITHUB_STEP_SUMMARY"
