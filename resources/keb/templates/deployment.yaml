@@ -124,6 +124,8 @@ spec:
               value: "{{ .Values.quotaLimitCheck.enabled }}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
+            - name: APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED
+              value: "{{ .Values.broker.dynamicVolumeSizeEnabled }}"
             - name: APP_BROKER_DUAL_STACK_DOCS_URL
               value: "{{ .Values.broker.dualStackDocsURL }}"
             - name: APP_BROKER_ENABLE_PLANS
@@ -138,6 +140,8 @@ spec:
               value: "{{ .Values.broker.gardenerSeedsCache }}"
             - name: APP_BROKER_GVISOR_ENABLED
               value: "{{ .Values.broker.gvisorEnabled }}"
+            - name: APP_BROKER_KCR_CONFIG_MAP_NAME
+              value: "{{ .Values.broker.kcrConfigMapName }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA

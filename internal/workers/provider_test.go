@@ -563,7 +563,6 @@ aws:
 	})
 }
 
-
 func TestToGardenerTaints(t *testing.T) {
 	t.Run("nil input returns nil", func(t *testing.T) {
 		result := toGardenerTaints(nil)

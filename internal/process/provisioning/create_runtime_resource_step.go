@@ -242,7 +242,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		if s.kcrVolumeProvider != nil {
 			looked, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
 				pkg.CloudProviderFromString(values.ProviderType),
-				DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType))
+				provider.Workers[0].Machine.Type)
 			if err != nil {
 				return imv1.Provider{}, err
 			}
@@ -264,7 +264,8 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 			if _, ok := volumeOverrides[pool.MachineType]; ok {
 				continue
 			}
-			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, pool.MachineType)
+			resolvedType := s.providerSpec.ResolveMachineType(cp, pool.MachineType)
+			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, resolvedType)
 			if err != nil {
 				return imv1.Provider{}, err
 			}

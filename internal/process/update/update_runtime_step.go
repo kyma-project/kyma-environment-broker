@@ -121,14 +121,15 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 
 			if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.ProviderValues.ProviderType) &&
 				runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+				resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
 				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
 					pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
-					*operation.UpdatingParameters.MachineType)
+					resolvedMachineType)
 				if err != nil {
 					if kebError.IsTemporaryError(err) {
-						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", *operation.UpdatingParameters.MachineType), err, 10*time.Second, 1*time.Minute, log)
+						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
 					}
-					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", *operation.UpdatingParameters.MachineType), err, log)
+					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
 				}
 				runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
 			}
@@ -183,12 +184,13 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 			if _, ok := volumeOverrides[pool.MachineType]; ok {
 				continue
 			}
-			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, pool.MachineType)
+			resolvedType := s.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(operation.ProviderValues.ProviderType), pool.MachineType)
+			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, resolvedType)
 			if err != nil {
 				if kebError.IsTemporaryError(err) {
-					return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", pool.MachineType), err, 10*time.Second, 1*time.Minute, log)
+					return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedType), err, 10*time.Second, 1*time.Minute, log)
 				}
-				return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", pool.MachineType), err, log)
+				return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedType), err, log)
 			}
 			volumeOverrides[pool.MachineType] = volGb
 		}

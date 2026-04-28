@@ -2013,3 +2013,62 @@ meters:
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
 	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
+
+func TestCreateRuntimeResourceStep_WithKCRVolumeProvider_UsesResolvedMachineType(t *testing.T) {
+	// KCR ConfigMap is keyed by resolved machine types (e.g. "m7i.4xlarge").
+	// When the customer requests an alias ("mi.4xlarge"), providerSpec resolves it
+	// before the KCR lookup; without the fix the lookup would fail.
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.MachineType = ptr.String("mi.4xlarge")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	// ConfigMap only has the resolved type; the raw alias "mi.4xlarge" is absent.
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "consumption-reporter-config", Namespace: "kcp-system"},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m7i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    mi.{size}: m7i.{size}
+`))
+	require.NoError(t, err)
+
+	cli := getClientForTests(t)
+	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, providerSpec, config.GlobalAccountsConfig{}, kcrProvider)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	var gotRuntime imv1.Runtime
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &gotRuntime)
+	require.NoError(t, err)
+	require.Len(t, gotRuntime.Spec.Shoot.Provider.Workers, 1)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+}

@@ -1610,3 +1610,162 @@ meters:
 	assert.Equal(t, int32(3), gotRuntime.Spec.Shoot.Provider.Workers[0].Minimum)
 	assert.Equal(t, int32(6), gotRuntime.Spec.Shoot.Provider.Workers[0].Maximum)
 }
+
+func TestUpdateRuntimeStep_KCRVolumeProvider_UsesResolvedMachineType(t *testing.T) {
+	// KCR ConfigMap is keyed by resolved machine types (e.g. "m7i.4xlarge").
+	// When the customer requests an alias ("mi.4xlarge"), providerSpec resolves it
+	// before the KCR lookup; without the fix the lookup would fail.
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	runtimeResource := &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{Name: runtimeResourceName, Namespace: kcpSystemNamespace},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine:        gardener.Machine{Type: "old-type"},
+							Volume:         &gardener.Volume{Type: ptr.String("gp3"), VolumeSize: "80Gi"},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// ConfigMap only has the resolved type; the raw alias "mi.4xlarge" is absent.
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m7i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    mi.{size}: m7i.{size}
+`))
+	require.NoError(t, err)
+
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
+	db := storage.NewMemoryStorage()
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider)
+
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws", DefaultMachineType: "m7i.large"}
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		MachineType: ptr.String("mi.4xlarge"),
+	}
+	operation.PreviousParameters = internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{MachineType: ptr.String("old-type")},
+	}
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: runtimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+}
+
+func TestUpdateRuntimeStep_KCRVolumeProvider_AdditionalWorkers_UsesResolvedMachineType(t *testing.T) {
+	// KCR ConfigMap is keyed by resolved machine types.
+	// Additional worker pool requests alias "mi.4xlarge" → resolves to "m7i.4xlarge" → KCR lookup succeeds.
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m7i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+	baseRuntime := &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{Name: runtimeResourceName, Namespace: kcpSystemNamespace},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine:        gardener.Machine{Type: "original-type"},
+							Zones:          []string{"zone-a"},
+							MaxSurge:       func() *intstr.IntOrString { v := intstr.FromInt32(1); return &v }(),
+							MaxUnavailable: func() *intstr.IntOrString { v := intstr.FromInt32(0); return &v }(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+aws:
+  machinesVersions:
+    mi.{size}: m7i.{size}
+`))
+	require.NoError(t, err)
+
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(baseRuntime).WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
+	db := storage.NewMemoryStorage()
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider)
+
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+			{Name: "extra", MachineType: "mi.4xlarge", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3},
+		},
+	}
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: runtimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
+	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
+}
