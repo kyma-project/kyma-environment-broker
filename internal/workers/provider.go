@@ -86,15 +86,19 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		}
 
 		if values.ProviderType != "openstack" {
-			volGb := values.VolumeSizeGb
-			if volumeOverrides != nil {
-				if override, ok := volumeOverrides[additionalWorkerNodePool.MachineType]; ok {
-					volGb = override
+			if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) && currentAdditionalWorker.Volume != nil {
+				worker.Volume = currentAdditionalWorker.Volume
+			} else {
+				volGb := values.VolumeSizeGb
+				if volumeOverrides != nil {
+					if override, ok := volumeOverrides[additionalWorkerNodePool.MachineType]; ok {
+						volGb = override
+					}
 				}
-			}
-			worker.Volume = &gardener.Volume{
-				Type:       ptr.String(values.DiskType),
-				VolumeSize: fmt.Sprintf("%dGi", volGb),
+				worker.Volume = &gardener.Volume{
+					Type:       ptr.String(values.DiskType),
+					VolumeSize: fmt.Sprintf("%dGi", volGb),
+				}
 			}
 		}
 

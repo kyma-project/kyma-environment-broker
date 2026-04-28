@@ -466,28 +466,44 @@ aws:
 		assert.Nil(t, workers[0].Taints)
 	})
 
-	t.Run("should use volume override when volumeOverrides map is provided", func(t *testing.T) {
+	t.Run("should preserve existing volume when pool is unchanged (autoscaler-only update)", func(t *testing.T) {
 		// given
 		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
-		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
-			{Name: "worker", MachineType: "m6i.large", HAZones: true},
+		currentAdditionalWorkers := map[string]gardener.Worker{
+			"worker": {
+				Name:  "worker",
+				Zones: []string{"zone-a"},
+				Volume: &gardener.Volume{
+					VolumeSize: "80Gi",
+				},
+			},
 		}
-		volumeOverrides := map[string]int{"m6i.large": 200}
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "m5.large", HAZones: true, AutoScalerMin: 5},
+		}
+		operation := &internal.Operation{
+			InstanceDetails: internal.InstanceDetails{
+				ProviderValues: &internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			},
+			PreviousParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+						{Name: "worker", MachineType: "m5.large", AutoScalerMin: 3},
+					},
+				},
+			},
+		}
 
 		// when
 		workers, err := p.CreateAdditionalWorkers(
-			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 80},
-			nil,
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 999},
+			currentAdditionalWorkers,
 			additionalWorkerNodePools,
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
-			volumeOverrides,
-			&internal.Operation{
-				InstanceDetails: internal.InstanceDetails{
-					ProviderValues: &internal.ProviderValues{},
-				},
-			},
+			nil,
+			operation,
 			log,
 		)
 
@@ -495,9 +511,58 @@ aws:
 		require.NoError(t, err)
 		require.Len(t, workers, 1)
 		require.NotNil(t, workers[0].Volume)
-		assert.Equal(t, "200Gi", workers[0].Volume.VolumeSize)
+		assert.Equal(t, "80Gi", workers[0].Volume.VolumeSize)
+	})
+
+	t.Run("should update volume when machine type changes", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		currentAdditionalWorkers := map[string]gardener.Worker{
+			"worker": {
+				Name:  "worker",
+				Zones: []string{"zone-a"},
+				Volume: &gardener.Volume{
+					VolumeSize: "80Gi",
+				},
+			},
+		}
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "m5.xlarge", HAZones: true},
+		}
+		operation := &internal.Operation{
+			InstanceDetails: internal.InstanceDetails{
+				ProviderValues: &internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			},
+			PreviousParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+						{Name: "worker", MachineType: "m5.large"},
+					},
+				},
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 999},
+			currentAdditionalWorkers,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			map[string]int{"m5.xlarge": 120},
+			operation,
+			log,
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "120Gi", workers[0].Volume.VolumeSize)
 	})
 }
+
 
 func TestToGardenerTaints(t *testing.T) {
 	t.Run("nil input returns nil", func(t *testing.T) {
