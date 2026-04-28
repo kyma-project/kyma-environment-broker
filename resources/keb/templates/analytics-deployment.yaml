@@ -100,7 +100,7 @@ spec:
           args:
             - --provider=oidc
             - --oidc-issuer-url={{ .Values.analytics.oidc.issuerURL }}
-            - --client-id={{ .Values.analytics.oauth2Proxy.clientID }}
+            - --client-id=$(OAUTH2_PROXY_CLIENT_ID)
             - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
             - --redirect-url=https://{{ .Values.analytics.host }}.{{ .Values.global.ingress.domainName }}/oauth2/callback
             - --upstream=http://localhost:{{ .Values.analytics.port }}
@@ -115,6 +115,11 @@ spec:
             - --cookie-refresh=1h
             - --skip-provider-button=true
           env:
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.analytics.name }}-oauth2-proxy
+                  key: client-id
             - name: OAUTH2_PROXY_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
