@@ -126,6 +126,7 @@ func parseNodemeterYAML(data string) (map[string]map[string]int, error) {
 		result[strings.ToLower(providerName)] = make(map[string]int)
 		for machineName, entry := range machines {
 			if entry.DefaultVolumeSize == "" {
+				result[strings.ToLower(providerName)][strings.ToLower(machineName)] = 0
 				continue
 			}
 			sizeStr := strings.TrimSuffix(entry.DefaultVolumeSize, "Gi")

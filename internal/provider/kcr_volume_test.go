@@ -157,3 +157,22 @@ meters:
 	_, err := parseNodemeterYAML(badYAML)
 	require.Error(t, err)
 }
+
+func TestKCRVolumeProvider_EmptyDefaultVolumeSize_ReturnsDescriptiveError(t *testing.T) {
+	// A machine entry with an empty default_volume_size should yield a clear
+	// "zero or missing" error, not the misleading "machine type not found".
+	yamlWithEmptySize := `
+meters:
+  node:
+    machine_types:
+      aws:
+        m5.xlarge:
+          default_volume_size: ""
+`
+	data, err := parseNodemeterYAML(yamlWithEmptySize)
+	require.NoError(t, err)
+
+	_, err = lookupVolumeSize(data, pkg.AWS, "m5.xlarge")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "zero or missing default_volume_size")
+}
