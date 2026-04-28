@@ -82,7 +82,6 @@
 | analytics.oidc.groups.<br>viewer | - | `runtimeViewer` |
 | analytics.oauth2Proxy.<br>image.repository | - | `quay.io/oauth2-proxy/oauth2-proxy` |
 | analytics.oauth2Proxy.<br>image.tag | - | `v7.7.1` |
-| analytics.oauth2Proxy.<br>clientID | - | `` |
 | analytics.oauth2Proxy.<br>clientSecret | - | `` |
 | analytics.oauth2Proxy.<br>cookieSecret | - | `` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
@@ -306,9 +305,10 @@
 | vsoSecrets.secrets.cis-entitlements.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.keys.id | - | `entitlements_id` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.keys.<br>secret | - | `entitlements_secret` |
-| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>path | - | `keb-analytics` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>path | - | `ias` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>secretName | - | `keb-analytics-oauth2-proxy` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': 'keb-analytics'}` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.enabled | - | `True` |
-| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-secret | - | `analytics_client_secret` |
-| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>cookie-secret | - | `analytics_cookie_secret` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-id | - | `keb_analytics_client_id` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-secret | - | `keb_analytics_client_secret` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>cookie-secret | - | `keb_analytics_biscuit_secret` |
