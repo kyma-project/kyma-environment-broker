@@ -1,6 +1,8 @@
 # =================================================
 # Common Settings
 # =================================================
+
+
 deployment:
   image:
     pullPolicy: Always
@@ -70,6 +72,11 @@ global:
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.29.10
+    keb_analytics:
+      dir:
+      version: "1.29.9"
+      repository: ""
+      tag: ""
   ingress:
     domainName: localhost
   istio:
@@ -120,6 +127,44 @@ serviceAccount:
 swagger:
   virtualService:
     enabled: true
+# =================================================
+
+
+
+# =================================================
+# keb-analytics
+# =================================================
+analytics:
+  enabled: false
+  name: keb-analytics
+  port: 8080
+  refreshInterval: "1h"
+  # DB credentials for keb-analytics — separate from KEB broker credentials.
+  # In Phase 1 these reference the same Secret as KEB; in Phase 2 swap to a
+  # dedicated read-only user.
+  database:
+    secretName: "kcp-postgresql"
+    hostSecretKey: "postgresql-serviceName"
+    portSecretKey: "postgresql-servicePort"
+    nameSecretKey: "postgresql-broker-db-name"
+    userSecretKey: "postgresql-broker-username"
+    passwordSecretKey: "postgresql-broker-password"
+    sslModeSecretKey: "postgresql-sslMode"
+  serviceAccountName: "kcp-kyma-environment-broker"
+  host: keb-analytics
+  oidc:
+    issuerURL: "https://kymatest.accounts400.ondemand.com"
+    groups:
+      admin: runtimeAdmin
+      operator: runtimeOperator
+      viewer: runtimeViewer
+  oauth2Proxy:
+    enabled: true
+    image:
+      repository: quay.io/oauth2-proxy/oauth2-proxy
+      tag: v7.7.1
+    clientSecret: ""
+    cookieSecret: ""
 # =================================================
 
 
@@ -776,4 +821,20 @@ vsoSecrets:
         data:
           id: {}
           secret: {}
+    keb-analytics-oauth2-proxy:
+      path: ias
+      secretName: keb-analytics-oauth2-proxy
+      restartTargets:
+        - kind: Deployment
+          name: keb-analytics
+      templating:
+        enabled: true
+        keys:
+          client-id: keb_analytics_client_id
+          client-secret: keb_analytics_client_secret
+          cookie-secret: keb_analytics_biscuit_secret
+        data:
+          client-id: {}
+          client-secret: {}
+          cookie-secret: {}
 # =================================================

@@ -81,3 +81,11 @@ jobs:
          dockerfile: Dockerfile.job
          context: .
          build-args: BIN=servicebindingcleanup
+
+   keb-analytics-image:
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      with:
+         name: keb-analytics
+         dockerfile: Dockerfile.keb-analytics
+         context: .
+         build-args: VERSION=PR-${{ github.event.pull_request.number }}

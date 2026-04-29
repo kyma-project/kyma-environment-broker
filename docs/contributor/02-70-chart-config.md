@@ -37,6 +37,10 @@
 | global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.10` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.10` |
+| global.images.keb_analytics.<br>dir | - | None |
+| global.images.keb_analytics.<br>version | - | `1.29.9` |
+| global.images.keb_analytics.<br>repository | - | `` |
+| global.images.keb_analytics.<br>tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -61,6 +65,28 @@
 | service.port | - | `80` |
 | service.type | - | `ClusterIP` |
 | swagger.virtualService.<br>enabled | - | `True` |
+| analytics.enabled | - | `False` |
+| analytics.name | - | `keb-analytics` |
+| analytics.port | - | `8080` |
+| analytics.<br>refreshInterval | - | `1h` |
+| analytics.database.<br>secretName | - | `kcp-postgresql` |
+| analytics.database.<br>hostSecretKey | - | `postgresql-serviceName` |
+| analytics.database.<br>portSecretKey | - | `postgresql-servicePort` |
+| analytics.database.<br>nameSecretKey | - | `postgresql-broker-db-name` |
+| analytics.database.<br>userSecretKey | - | `postgresql-broker-username` |
+| analytics.database.<br>passwordSecretKey | - | `postgresql-broker-password` |
+| analytics.database.<br>sslModeSecretKey | - | `postgresql-sslMode` |
+| analytics.<br>serviceAccountName | - | `kcp-kyma-environment-broker` |
+| analytics.host | - | `keb-analytics` |
+| analytics.oidc.<br>issuerURL | - | `https://kymatest.accounts400.ondemand.com` |
+| analytics.oidc.groups.<br>admin | - | `runtimeAdmin` |
+| analytics.oidc.groups.<br>operator | - | `runtimeOperator` |
+| analytics.oidc.groups.<br>viewer | - | `runtimeViewer` |
+| analytics.oauth2Proxy.<br>enabled | - | `True` |
+| analytics.oauth2Proxy.<br>image.repository | - | `quay.io/oauth2-proxy/oauth2-proxy` |
+| analytics.oauth2Proxy.<br>image.tag | - | `v7.7.1` |
+| analytics.oauth2Proxy.<br>clientSecret | - | `` |
+| analytics.oauth2Proxy.<br>cookieSecret | - | `` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |
@@ -282,3 +308,10 @@
 | vsoSecrets.secrets.cis-entitlements.<br>templating.enabled | - | `True` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.keys.id | - | `entitlements_id` |
 | vsoSecrets.secrets.cis-entitlements.<br>templating.keys.<br>secret | - | `entitlements_secret` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>path | - | `ias` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>secretName | - | `keb-analytics-oauth2-proxy` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': 'keb-analytics'}` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.enabled | - | `True` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-id | - | `keb_analytics_client_id` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-secret | - | `keb_analytics_client_secret` |
+| vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>cookie-secret | - | `keb_analytics_biscuit_secret` |
