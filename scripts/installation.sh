@@ -89,13 +89,13 @@ HELM_COMMON_ARGS=(
   --set global.database.embedded.enabled=false
   --set testConfig.kebDeployment.useAnnotations=true
   --set global.secrets.mechanism=secrets
-  --set analytics.enabled=true
-  --set analytics.oauth2Proxy.enabled=false
   --debug --wait
 )
 
 if [[ -n "$ANALYTICS_IMAGE" ]]; then
   HELM_COMMON_ARGS+=(
+    --set analytics.enabled=true
+    --set analytics.oauth2Proxy.enabled=false
     --set "global.images.keb_analytics.repository=${ANALYTICS_IMAGE%:*}"
     --set "global.images.keb_analytics.tag=${ANALYTICS_IMAGE##*:}"
   )
