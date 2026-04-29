@@ -19,13 +19,10 @@ kubectl create namespace garden-kyma-dev || true
 # Install Istio
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update
-helm install istio-base istio/base -n istio-system --set defaultRevision=default
-
-# Install Prometheus Operator for ServiceMonitor
-kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
+helm upgrade --install istio-base istio/base -n istio-system --set defaultRevision=default
 
 # Install Postgres
-kubectl create -f scripts/testing/yaml/postgres -n kcp-system
+kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
 
 # Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | awk '$1=="inet" {print $2}' || ifconfig eth0 | awk '$1=="inet" {print $2}')
@@ -33,7 +30,7 @@ KCFG=$(kubectl config view --minify --raw \
       | sed "s|https://0\.0\.0\.0|https://${KUBE_SERVER_IP}|" \
       | sed "s|https://127\.0\.0\.1|https://${KUBE_SERVER_IP}|" \
        | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
-kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
+kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system --dry-run=client -o yaml | kubectl apply -f -
 
 # For PR versions, save values.yaml before bumping and register a trap to restore it
 # on exit (success or failure). Release bumps intentionally persist all file changes.
@@ -103,19 +100,19 @@ fi
 
 if [[ "$LOCAL_REGISTRY" == "true" ]]; then
   # For PR workflows, use local k3s registry
-  helm install keb ../keb \
+  helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
     --set global.images.container_registry.path="localhost:5000"
 
 elif [[ "$VERSION" == PR* ]]; then
   # For local testing, use the dev registry
-  helm install keb ../keb \
+  helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
     --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev"
 
 else
   # For release versions, use the production registry (from values.yaml default)
-  helm install keb ../keb \
+  helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}"
 fi
 
