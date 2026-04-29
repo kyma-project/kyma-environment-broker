@@ -66,7 +66,7 @@ func (p *KCRVolumeProvider) readAndParse(ctx context.Context) (map[string]map[st
 	}
 	nodemeterYAML, ok := cm.Data[kcrNodemeterKey]
 	if !ok {
-		return nil, fmt.Errorf("key %q missing from KCR ConfigMap %s", kcrNodemeterKey, p.configMapName)
+		return nil, fmt.Errorf("key %q missing from KCR ConfigMap %s/%s", kcrNodemeterKey, kcrConfigMapNamespace, p.configMapName)
 	}
 	return parseNodemeterYAML(nodemeterYAML)
 }
