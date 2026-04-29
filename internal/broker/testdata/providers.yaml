@@ -262,8 +262,6 @@ alicloud:
     "ecs.g9i.8xlarge": "ecs.g9i.8xlarge (32vCPU, 128GB RAM)"
     "ecs.g9i.12xlarge": "ecs.g9i.12xlarge (48vCPU, 192GB RAM)"
     "ecs.g9i.16xlarge": "ecs.g9i.16xlarge (64vCPU, 256GB RAM)"
-    "ecs.g8i.large": "ecs.g8i.large (2vCPU, 8GB RAM)"
-    "ecs.g8i.xlarge": "ecs.g8i.xlarge (4vCPU, 16GB RAM)"
 
   regions:
     ap-southeast-1:
