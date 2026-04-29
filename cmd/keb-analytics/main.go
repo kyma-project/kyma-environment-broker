@@ -58,9 +58,13 @@ func main() {
 		}
 	}()
 
-	if err := conn.Ping(); err != nil {
-		slog.Error("failed to ping DB", "error", err)
-		os.Exit(1)
+	for {
+		if err := conn.Ping(); err != nil {
+			slog.Warn("DB not ready, retrying in 5s", "error", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		break
 	}
 
 	reader := analytics.NewDBReader(conn.NewSession(nil))
