@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -48,12 +49,17 @@ func (p *KCRVolumeProvider) ValidateAllMachineTypes(ctx context.Context, machine
 	if err != nil {
 		return err
 	}
+	var missing []string
 	for cp, machineList := range machines {
 		for _, mt := range machineList {
 			if _, err := lookupVolumeSize(data, cp, mt); err != nil {
-				return fmt.Errorf("validation failed for provider %s, machine %s: %w", cp, mt, err)
+				missing = append(missing, fmt.Sprintf("%s/%s", cp, mt))
 			}
 		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		return fmt.Errorf("missing KCR volume sizes for: %s", strings.Join(missing, ", "))
 	}
 	return nil
 }
