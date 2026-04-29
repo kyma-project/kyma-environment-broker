@@ -903,6 +903,10 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
 		return
 	}
+	s.WaitFor(func() bool {
+		a := s.metrics.OperationResult.Metrics().With(metrics.GetLabels(operation))
+		return a != nil && testutil.ToFloat64(a) == float64(expected)
+	})
 	a := s.metrics.OperationResult.Metrics().With(metrics.GetLabels(operation))
 	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
