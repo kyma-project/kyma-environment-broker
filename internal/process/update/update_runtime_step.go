@@ -119,7 +119,7 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 
-			if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.ProviderValues.ProviderType) &&
+			if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud &&
 				runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
 				resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
 				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
@@ -166,7 +166,7 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 	currentAdditionalWorkers := s.getCurrentAdditionalWorkers(*runtime)
 
 	var volumeOverrides map[string]int
-	if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.ProviderValues.ProviderType) {
+	if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud {
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {

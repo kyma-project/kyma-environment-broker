@@ -1525,6 +1525,99 @@ meters:
 	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
 }
 
+func TestUpdateRuntimeStep_KCRVolumeProvider_AdditionalWorkers_AutoscalerOnlyUpdate(t *testing.T) {
+	// When only autoscaler parameters change (name and machine type are unchanged),
+	// the existing volume must be preserved — KCR must NOT be consulted.
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	// KCR has a different value (999Gi) to prove it is not queried for unchanged pools.
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.4xlarge:
+          default_volume_size: "999Gi"
+`,
+		},
+	}
+	existingVolume := &gardener.Volume{Type: ptr.String("gp3"), VolumeSize: "80Gi"}
+	baseRuntime := &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{Name: runtimeResourceName, Namespace: kcpSystemNamespace},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine:        gardener.Machine{Type: "m6i.large"},
+							Zones:          []string{"zone-a"},
+							MaxSurge:       func() *intstr.IntOrString { v := intstr.FromInt32(1); return &v }(),
+							MaxUnavailable: func() *intstr.IntOrString { v := intstr.FromInt32(0); return &v }(),
+						},
+					},
+					AdditionalWorkers: &[]gardener.Worker{
+						{
+							Name:           "extra",
+							Machine:        gardener.Machine{Type: "m6i.4xlarge"},
+							Volume:         existingVolume,
+							Minimum:        1,
+							Maximum:        3,
+							MaxSurge:       func() *intstr.IntOrString { v := intstr.FromInt32(1); return &v }(),
+							MaxUnavailable: func() *intstr.IntOrString { v := intstr.FromInt32(0); return &v }(),
+						},
+					},
+				},
+			},
+		},
+	}
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(baseRuntime).WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
+	db := storage.NewMemoryStorage()
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider)
+
+	autoScalerMax := 10
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+	operation.PreviousParameters = internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{
+			AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+				{Name: "extra", MachineType: "m6i.4xlarge", AutoScalerMin: 1, AutoScalerMax: 3},
+			},
+		},
+	}
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
+			{Name: "extra", MachineType: "m6i.4xlarge", AutoScalerMin: 1, AutoScalerMax: autoScalerMax},
+		},
+	}
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: runtimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+	worker := (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0]
+	require.NotNil(t, worker.Volume)
+	assert.Equal(t, "80Gi", worker.Volume.VolumeSize, "volume must be preserved, not fetched from KCR")
+	assert.Equal(t, int32(10), worker.Maximum)
+}
+
 func TestUpdateRuntimeStep_KCRVolumeProvider_AutoscalerOnlyUpdate(t *testing.T) {
 	// given — KCR provider enabled, but only autoscaler parameters change (no machine type change)
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -1768,4 +1861,73 @@ aws:
 	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
 	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
 	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
+}
+
+func TestUpdateRuntimeStep_KCRVolumeProvider_SkipsForSapConvergedCloud(t *testing.T) {
+	// SapConvergedCloud (openstack) workers have no Volume; KCR must not be consulted
+	// even when the machine type changes. Before the fix, IsNotSapConvergedCloud("openstack")
+	// returned true (wrong) and a missing ConfigMap entry would fail the operation.
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	runtimeResource := &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{Name: runtimeResourceName, Namespace: kcpSystemNamespace},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine:        gardener.Machine{Type: "old-type"},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// ConfigMap exists but has NO openstack entry — lookup would fail if attempted.
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
+	db := storage.NewMemoryStorage()
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider)
+
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = runtimeResourceName
+	operation.KymaResourceNamespace = kcpSystemNamespace
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType:       "openstack",
+		DefaultMachineType: "g_c4_m16",
+	}
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		MachineType: ptr.String("g_c8_m32"),
+	}
+	operation.PreviousParameters = internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{MachineType: ptr.String("old-type")},
+	}
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then — succeeds without KCR lookup
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
 }

@@ -2014,6 +2014,61 @@ meters:
 	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
 
+func TestCreateRuntimeResourceStep_WithKCRVolumeProvider_AdditionalWorkers(t *testing.T) {
+	// Additional worker pools must also get their volume size from KCR (fix G).
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	operation.ProvisioningParameters.Parameters.MachineType = ptr.String("m6i.large")
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{Name: "extra", MachineType: "m6i.4xlarge", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3},
+	}
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "consumption-reporter-config", Namespace: "kcp-system"},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.large:
+          default_volume_size: "80Gi"
+        m6i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+
+	cli := getClientForTests(t)
+	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, false)), fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	var gotRuntime imv1.Runtime
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
+	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
+}
+
 func TestCreateRuntimeResourceStep_WithKCRVolumeProvider_UsesResolvedMachineType(t *testing.T) {
 	// KCR ConfigMap is keyed by resolved machine types (e.g. "m7i.4xlarge").
 	// When the customer requests an alias ("mi.4xlarge"), providerSpec resolves it
