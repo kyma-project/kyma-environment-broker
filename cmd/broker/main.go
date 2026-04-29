@@ -381,10 +381,7 @@ func main() {
 	var kcrVolumeProvider *provider.KCRVolumeProvider
 	if cfg.Broker.DynamicVolumeSizeEnabled {
 		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
-		machinesToValidate := map[pkg.CloudProvider][]string{}
-		for _, cp := range []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud} {
-			machinesToValidate[cp] = providerSpec.MachineTypes(cp)
-		}
+		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud})
 		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
 		log.Info("KCR volume sizes validated successfully")
 	}
@@ -685,4 +682,19 @@ func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
 		MaxPodsWhitelistedGlobalAccountIds:   c.MaxPodsWhitelistedGlobalAccountIds,
 		OpenShellWhitelistedGlobalAccountIds: c.OpenShellWhitelistedGlobalAccountIds,
 	}
+}
+
+func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, providers []pkg.CloudProvider) map[pkg.CloudProvider][]string {
+	result := map[pkg.CloudProvider][]string{}
+	for _, cp := range providers {
+		seen := make(map[string]struct{})
+		for _, mt := range providerSpec.MachineTypes(cp) {
+			resolved := providerSpec.ResolveMachineType(cp, mt)
+			if _, ok := seen[resolved]; !ok {
+				seen[resolved] = struct{}{}
+				result[cp] = append(result[cp], resolved)
+			}
+		}
+	}
+	return result
 }
