@@ -3730,9 +3730,9 @@ func TestProvisioningWithMaxPods(t *testing.T) {
 		// then
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		assert.Equal(t, int32(250), *runtime.Spec.Shoot.Provider.Workers[0].Kubernetes.Kubelet.MaxPods)
+		assert.Equal(t, int32(200), *runtime.Spec.Shoot.Provider.Workers[0].Kubernetes.Kubelet.MaxPods)
 		for _, additionalWorker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
-			assert.Equal(t, int32(250), *additionalWorker.Kubernetes.Kubelet.MaxPods)
+			assert.Equal(t, int32(200), *additionalWorker.Kubernetes.Kubelet.MaxPods)
 		}
 	})
 
