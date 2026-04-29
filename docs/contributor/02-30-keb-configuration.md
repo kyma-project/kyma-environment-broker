@@ -18,12 +18,14 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified. |
 | **APP_BROKER_DUAL_&#x200b;STACK_DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support</code> | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. |
+| **APP_BROKER_DYNAMIC_&#x200b;VOLUME_SIZE_ENABLED** | <code>false</code> | If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default. |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,azure_lite,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB. |
 | **APP_BROKER_ENABLE_&#x200b;PLAN_UPGRADES** | <code>false</code> | If true, allows users to upgrade their plans (if a plan supports upgrades). |
 | **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/btp/sap-business-technology-platform/using-free-service-plans?version=Cloud</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users. |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. |
 | **APP_BROKER_GVISOR_&#x200b;ENABLED** | <code>false</code> | If true, includes the gVisor container runtime property in every plan schema. |
+| **APP_BROKER_KCR_&#x200b;CONFIG_MAP_NAME** | <code>consumption-reporter-config</code> | Name of the ConfigMap in kcp-system that provides per-machine-type volume sizes (used when dynamicVolumeSizeEnabled is true). |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. |
 | **APP_BROKER_ONLY_&#x200b;SINGLE_TRIAL_PER_GA** | <code>true</code> | If true, restricts each global account to only one active trial Kyma runtime at a time. When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned. |
