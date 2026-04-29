@@ -16,10 +16,12 @@ kubectl create namespace kyma-system || true
 kubectl create namespace istio-system || true
 kubectl create namespace garden-kyma-dev || true
 
-# Install Istio
+# Install Istio CRDs (needed for AuthorizationPolicy/VirtualService in the helm chart)
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update
-helm upgrade --install istio-base istio/base -n istio-system --set defaultRevision=default
+helm upgrade --install istio-base istio/base -n istio-system --set defaultRevision=default --wait
+# Remove Istio validating webhook — istiod is not running locally
+kubectl delete validatingwebhookconfiguration istio-validator-istio-system --ignore-not-found
 
 # Install Postgres
 kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
