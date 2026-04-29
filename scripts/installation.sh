@@ -8,6 +8,7 @@ set -o pipefail # prevents errors in a pipeline from being masked
 
 VERSION=${1:-''}
 LOCAL_REGISTRY=${2:-false}
+ANALYTICS_IMAGE=${3:-''}
 
 # Create namespaces
 kubectl create namespace kcp-system || true
@@ -88,8 +89,17 @@ HELM_COMMON_ARGS=(
   --set global.database.embedded.enabled=false
   --set testConfig.kebDeployment.useAnnotations=true
   --set global.secrets.mechanism=secrets
+  --set analytics.enabled=true
+  --set analytics.oauth2Proxy.enabled=false
   --debug --wait
 )
+
+if [[ -n "$ANALYTICS_IMAGE" ]]; then
+  HELM_COMMON_ARGS+=(
+    --set "global.images.keb_analytics.repository=${ANALYTICS_IMAGE%:*}"
+    --set "global.images.keb_analytics.tag=${ANALYTICS_IMAGE##*:}"
+  )
+fi
 
 if [[ "$LOCAL_REGISTRY" == "true" ]]; then
   # For PR workflows, use local k3s registry

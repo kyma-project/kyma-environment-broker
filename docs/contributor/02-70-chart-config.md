@@ -39,6 +39,8 @@
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.9` |
 | global.images.keb_analytics.<br>dir | - | None |
 | global.images.keb_analytics.<br>version | - | `1.29.9` |
+| global.images.keb_analytics.<br>repository | - | `` |
+| global.images.keb_analytics.<br>tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -80,6 +82,7 @@
 | analytics.oidc.groups.<br>admin | - | `runtimeAdmin` |
 | analytics.oidc.groups.<br>operator | - | `runtimeOperator` |
 | analytics.oidc.groups.<br>viewer | - | `runtimeViewer` |
+| analytics.oauth2Proxy.<br>enabled | - | `True` |
 | analytics.oauth2Proxy.<br>image.repository | - | `quay.io/oauth2-proxy/oauth2-proxy` |
 | analytics.oauth2Proxy.<br>image.tag | - | `v7.7.1` |
 | analytics.oauth2Proxy.<br>clientSecret | - | `` |

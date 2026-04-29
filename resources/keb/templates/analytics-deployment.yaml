@@ -48,7 +48,11 @@ spec:
         {{- end }}
       containers:
         - name: {{ .Values.analytics.name }}
+          {{- if .Values.global.images.keb_analytics.repository }}
+          image: "{{ .Values.global.images.keb_analytics.repository }}:{{ .Values.global.images.keb_analytics.tag }}"
+          {{- else }}
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.keb_analytics.dir }}keb-analytics:{{ .Values.global.images.keb_analytics.version }}"
+          {{- end }}
           imagePullPolicy: Always
           env:
             - name: APP_DATABASE_HOST
@@ -95,6 +99,7 @@ spec:
               mountPath: /secrets/cloudsql-sslrootcert
               readOnly: true
           {{- end }}
+        {{- if .Values.analytics.oauth2Proxy.enabled }}
         - name: oauth2-proxy
           image: "{{ .Values.analytics.oauth2Proxy.image.repository }}:{{ .Values.analytics.oauth2Proxy.image.tag }}"
           args:
@@ -134,6 +139,7 @@ spec:
             - name: oauth2-proxy
               containerPort: 4180
               protocol: TCP
+        {{- end }}
       {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false) }}
       volumes:
         - name: cloudsql-instance-credentials
