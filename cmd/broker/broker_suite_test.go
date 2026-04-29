@@ -889,6 +889,10 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 }
 
 func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan broker.PlanIDType, expected int) {
+	s.WaitFor(func() bool {
+		metric := s.metrics.OperationStats.GetCounter(operationType, state, plan)
+		return metric != nil && testutil.ToFloat64(metric) == float64(expected)
+	})
 	metric := s.metrics.OperationStats.GetCounter(operationType, state, plan)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
@@ -899,6 +903,10 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
 		return
 	}
+	s.WaitFor(func() bool {
+		a := s.metrics.OperationResult.Metrics().With(metrics.GetLabels(operation))
+		return a != nil && testutil.ToFloat64(a) == float64(expected)
+	})
 	a := s.metrics.OperationResult.Metrics().With(metrics.GetLabels(operation))
 	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
