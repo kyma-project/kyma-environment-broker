@@ -175,3 +175,90 @@ func BuildDistributions(params []internal.ProvisioningParameters) []Distribution
 	}
 	return result
 }
+
+// BuildPlanRegionIndex builds a map of plan name → sorted distinct regions,
+// plus a sorted list of all plan names. planIDToName maps plan UUID → plan name.
+// The special key "" in the returned map contains all regions across all plans.
+func BuildPlanRegionIndex(params []internal.ProvisioningParameters, planIDToName map[string]string) ([]string, map[string][]string) {
+	planSet := make(map[string]struct{})
+	// plan → region → present
+	byPlan := make(map[string]map[string]struct{})
+
+	for _, p := range params {
+		name := planIDToName[p.PlanID]
+		if name == "" {
+			name = p.PlanID // fallback to raw ID
+		}
+		planSet[name] = struct{}{}
+
+		region := ""
+		if p.Parameters.Region != nil {
+			region = *p.Parameters.Region
+		}
+
+		if _, ok := byPlan[name]; !ok {
+			byPlan[name] = make(map[string]struct{})
+		}
+		if region != "" {
+			byPlan[name][region] = struct{}{}
+		}
+	}
+
+	// sorted plan list
+	plans := make([]string, 0, len(planSet))
+	for name := range planSet {
+		plans = append(plans, name)
+	}
+	sort.Strings(plans)
+
+	// build regionsByPlan with sorted slices; also collect all regions
+	allRegions := make(map[string]struct{})
+	regionsByPlan := make(map[string][]string, len(byPlan)+1)
+	for plan, regions := range byPlan {
+		sorted := make([]string, 0, len(regions))
+		for r := range regions {
+			sorted = append(sorted, r)
+			allRegions[r] = struct{}{}
+		}
+		sort.Strings(sorted)
+		regionsByPlan[plan] = sorted
+	}
+
+	// "" key = all regions
+	all := make([]string, 0, len(allRegions))
+	for r := range allRegions {
+		all = append(all, r)
+	}
+	sort.Strings(all)
+	regionsByPlan[""] = all
+
+	return plans, regionsByPlan
+}
+
+// FilterByPlan returns only params matching the given plan name.
+// planIDToName maps plan UUID → plan name.
+func FilterByPlan(params []internal.ProvisioningParameters, plan string, planIDToName map[string]string) []internal.ProvisioningParameters {
+	result := params[:0:0]
+	for _, p := range params {
+		name := planIDToName[p.PlanID]
+		if name == "" {
+			name = p.PlanID
+		}
+		if name == plan {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// FilterByRegion returns only params where Parameters.Region matches the given region.
+func FilterByRegion(params []internal.ProvisioningParameters, region string) []internal.ProvisioningParameters {
+	result := params[:0:0]
+	for _, p := range params {
+		if p.Parameters.Region != nil && *p.Parameters.Region == region {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+

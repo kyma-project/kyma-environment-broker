@@ -9,7 +9,7 @@
     .chart-container { max-width: 800px; margin: 2rem 0; }
     h2 { margin-top: 2rem; }
     #error { color: red; }
-    #controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    #controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
     #controls label { font-weight: bold; }
   </style>
 </head>
@@ -23,6 +23,16 @@
       <option value="30">Last 30 days</option>
       <option value="90">Last 90 days</option>
       <option value="">All time</option>
+    </select>
+
+    <label for="plan">Plan:</label>
+    <select id="plan">
+      <option value="">All plans</option>
+    </select>
+
+    <label for="region">Region:</label>
+    <select id="region">
+      <option value="">All regions</option>
     </select>
   </div>
 
@@ -40,34 +50,61 @@
 
   <script>
     const charts = [];
+    let currentData = null; // last fetched StatsResponse (full, unfiltered by plan/region)
 
     function destroyCharts() {
       charts.forEach(c => c.destroy());
       charts.length = 0;
     }
 
-    async function load() {
-      destroyCharts();
-      document.getElementById('distributions').innerHTML = '';
-      document.getElementById('error').textContent = '';
-
+    function buildUrl() {
       const days = document.getElementById('period').value;
+      const plan = document.getElementById('plan').value;
+      const region = document.getElementById('region').value;
       let url = '/api/stats';
+      const params = [];
       if (days) {
         const from = new Date();
         from.setUTCDate(from.getUTCDate() - parseInt(days));
-        const fromStr = from.toISOString().slice(0, 10);
-        url += '?from=' + fromStr;
+        params.push('from=' + from.toISOString().slice(0, 10));
       }
+      if (plan)   params.push('plan='   + encodeURIComponent(plan));
+      if (region) params.push('region=' + encodeURIComponent(region));
+      if (params.length) url += '?' + params.join('&');
+      return url;
+    }
 
-      let data;
-      try {
-        const resp = await fetch(url);
-        data = await resp.json();
-      } catch(e) {
-        document.getElementById('error').textContent = 'Failed to load stats: ' + e;
-        return;
-      }
+    function populatePlanDropdown(plans) {
+      const sel = document.getElementById('plan');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">All plans</option>';
+      (plans || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        if (p === current) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function populateRegionDropdown(regionsByPlan, selectedPlan) {
+      const sel = document.getElementById('region');
+      const current = sel.value;
+      const regions = (regionsByPlan || {})[selectedPlan] || (regionsByPlan || {})[''] || [];
+      sel.innerHTML = '<option value="">All regions</option>';
+      regions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        if (r === current) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderCharts(data) {
+      destroyCharts();
+      document.getElementById('distributions').innerHTML = '';
+      document.getElementById('error').textContent = '';
 
       document.getElementById('total').textContent =
         'Total active instances: ' + data.total_instances;
@@ -120,7 +157,41 @@
       });
     }
 
+    async function load() {
+      document.getElementById('error').textContent = '';
+      let data;
+      try {
+        const resp = await fetch(buildUrl());
+        data = await resp.json();
+      } catch(e) {
+        document.getElementById('error').textContent = 'Failed to load stats: ' + e;
+        return;
+      }
+      currentData = data;
+
+      // Always repopulate plan dropdown from fresh data.
+      populatePlanDropdown(data.plans);
+
+      // Repopulate region dropdown for currently selected plan.
+      const selectedPlan = document.getElementById('plan').value;
+      populateRegionDropdown(data.regions_by_plan, selectedPlan);
+
+      renderCharts(data);
+    }
+
+    function onPlanChange() {
+      // Update region dropdown to match selected plan, then re-fetch.
+      if (currentData) {
+        populateRegionDropdown(currentData.regions_by_plan, document.getElementById('plan').value);
+        // Reset region to "All regions" when plan changes.
+        document.getElementById('region').value = '';
+      }
+      load();
+    }
+
     document.getElementById('period').addEventListener('change', load);
+    document.getElementById('plan').addEventListener('change', onPlanChange);
+    document.getElementById('region').addEventListener('change', load);
     load();
   </script>
 </body>
