@@ -20,10 +20,10 @@ type DistributionStat struct {
 
 // StatsResponse is the top-level JSON returned by GET /api/stats.
 type StatsResponse struct {
-	TotalInstances int                   `json:"total_instances"`
-	Provisioning   ParameterStats        `json:"provisioning"`
-	Updates        ParameterStats        `json:"updates"`
-	Distributions  []DistributionStat    `json:"distributions"`
-	Plans          []string              `json:"plans"`
-	RegionsByPlan  map[string][]string   `json:"regions_by_plan"`
+	TotalInstances int                 `json:"total_instances"`
+	Provisioning   ParameterStats      `json:"provisioning"`
+	Updates        ParameterStats      `json:"updates"`
+	Distributions  []DistributionStat  `json:"distributions"`
+	Plans          []string            `json:"plans"`
+	RegionsByPlan  map[string][]string `json:"regions_by_plan"`
 }

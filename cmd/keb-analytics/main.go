@@ -86,8 +86,8 @@ func main() {
 	}
 
 	var (
-		mu    sync.RWMutex
-		c     cache
+		mu sync.RWMutex
+		c  cache
 	)
 
 	refresh := func() {
