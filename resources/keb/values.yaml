@@ -72,7 +72,7 @@ global:
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.29.11
-    keb_analytics:
+    kyma_environment_analytics:
       dir:
       version: "1.29.11"
       repository: ""
@@ -163,8 +163,6 @@ analytics:
     image:
       repository: quay.io/oauth2-proxy/oauth2-proxy
       tag: v7.7.1
-    clientSecret: ""
-    cookieSecret: ""
 # =================================================
 
 
