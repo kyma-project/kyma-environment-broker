@@ -10,8 +10,8 @@ The feature is controlled by two environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
-| `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` | `false` | Enables dynamic volume size lookup. When `false`, the static plan default is used. |
-| `APP_BROKER_KCR_CONFIG_MAP_NAME` | `consumption-reporter-config` | Name of the ConfigMap in the `kcp-system` namespace that provides the volume sizes. |
+| **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** | `false` | Enables dynamic volume size lookup. When `false`, the static plan default is used. |
+| **APP_BROKER_KCR_CONFIG_MAP_NAME** | `consumption-reporter-config` | Name of the ConfigMap in the `kcp-system` namespace that provides the volume sizes. |
 
 > ### Note:
 > This feature is not applied to SAP Converged Cloud (OpenStack) plans, which do not configure node volumes.
@@ -24,14 +24,14 @@ When a new runtime is provisioned, the volume size for the Kyma worker pool and 
 
 ### Update
 
-When an existing runtime is updated:
+When an existing runtime is updated, the following actions take place:
 
-- **Kyma worker pool**: if the machine type changes, the new volume size is read from the ConfigMap and applied. If the machine type is unchanged, the existing volume is preserved.
-- **Additional worker pools**: the ConfigMap is consulted only for pools where the machine type is new or changed compared to the previous operation. Unchanged pools preserve their existing volume.
+- Kyma worker pool: If the machine type changes, the new volume size is read from the ConfigMap and applied. If the machine type is unchanged, the existing volume is preserved.
+- Additional worker pools: The ConfigMap is consulted only for pools where the machine type is new or changed compared to the previous operation. Unchanged pools preserve their existing volume.
 
 ## Error Handling
 
-KEB reads the ConfigMap on every provisioning and update operation — there is no caching, so configuration changes take effect without a restart.
+KEB reads the ConfigMap on every provisioning and update operation. There is no caching, so configuration changes take effect without a restart.
 
 | Condition | Result |
 |---|---|
@@ -40,4 +40,4 @@ KEB reads the ConfigMap on every provisioning and update operation — there is 
 
 ## Startup Validation
 
-When `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` is `true`, KEB reads the ConfigMap at startup and verifies that every machine type in the providers configuration (AWS, Azure, GCP, Alicloud) has a valid entry. If any machine types are missing, KEB exits with a fatal error that lists all missing entries at once.
+When **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** is `true`, KEB reads the ConfigMap at startup and verifies that every machine type in the providers' configuration (AWS, Azure, GCP, Alicloud) has a valid entry. If any machine types are missing, KEB exits with a fatal error that lists all missing entries at once.
