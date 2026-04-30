@@ -50,11 +50,12 @@ type CreateRuntimeResourceStep struct {
 	workersProvider   *workers.Provider
 	providerSpec      *configuration.ProviderSpec
 
-	globalAccounts config.GlobalAccountsConfig
+	globalAccounts    config.GlobalAccountsConfig
+	kcrVolumeProvider *provider.KCRVolumeProvider
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig, kcrVolumeProvider *provider.KCRVolumeProvider) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   db.Instances(),
 		k8sClient:         k8sClient,
@@ -63,6 +64,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		workersProvider:   workersProvider,
 		providerSpec:      providerSpec,
 		globalAccounts:    gaCfg,
+		kcrVolumeProvider: kcrVolumeProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -94,6 +96,9 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		var backoff time.Duration
 		err = s.updateRuntimeResourceObject(log, *operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
+			if kebError.IsTemporaryError(err) {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, kcpRetryInterval, kcpRetryTimeout, log)
+			}
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}
 		err = s.k8sClient.Create(context.Background(), runtimeCR)
@@ -233,16 +238,43 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	}
 
 	if steps.IsNotSapConvergedCloud(operation.CloudProvider) {
+		volGb := values.VolumeSizeGb
+		if s.kcrVolumeProvider != nil {
+			looked, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+				pkg.CloudProviderFromString(values.ProviderType),
+				provider.Workers[0].Machine.Type)
+			if err != nil {
+				return imv1.Provider{}, err
+			}
+			volGb = looked
+		}
 		provider.Workers[0].Volume = &gardener.Volume{
 			Type:       ptr.String(values.DiskType),
-			VolumeSize: fmt.Sprintf("%dGi", values.VolumeSizeGb),
+			VolumeSize: fmt.Sprintf("%dGi", volGb),
 		}
 	}
 
 	provider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
 
+	var volumeOverrides map[string]int
+	if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.CloudProvider) {
+		volumeOverrides = make(map[string]int)
+		cp := pkg.CloudProviderFromString(values.ProviderType)
+		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+			if _, ok := volumeOverrides[pool.MachineType]; ok {
+				continue
+			}
+			resolvedType := s.providerSpec.ResolveMachineType(cp, pool.MachineType)
+			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, resolvedType)
+			if err != nil {
+				return imv1.Provider{}, err
+			}
+			volumeOverrides[pool.MachineType] = volGb
+		}
+	}
+
 	additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools,
-		values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, operation, log)
+		values.Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, volumeOverrides, operation, log)
 	if err != nil {
 		return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
 	}

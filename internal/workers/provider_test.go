@@ -50,6 +50,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -87,6 +88,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -122,6 +124,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -166,6 +169,7 @@ aws:
 			[]string{"zone-x", "zone-y", "zone-z"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -203,6 +207,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -252,6 +257,7 @@ aws:
 				"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-h"},
 				"m5.large":  {"zone-i", "zone-j"},
 			},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -296,6 +302,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -333,6 +340,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -369,6 +377,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -403,6 +412,7 @@ aws:
 			[]string{"zone-a"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -441,6 +451,7 @@ aws:
 			[]string{"zone-a", "zone-b", "zone-c"},
 			broker.AWSPlanID,
 			map[string][]string{},
+			nil,
 			&internal.Operation{
 				InstanceDetails: internal.InstanceDetails{
 					ProviderValues: &internal.ProviderValues{},
@@ -453,6 +464,102 @@ aws:
 		assert.NoError(t, err)
 		assert.Len(t, workers, 1)
 		assert.Nil(t, workers[0].Taints)
+	})
+
+	t.Run("should preserve existing volume when pool is unchanged (autoscaler-only update)", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		currentAdditionalWorkers := map[string]gardener.Worker{
+			"worker": {
+				Name:  "worker",
+				Zones: []string{"zone-a"},
+				Volume: &gardener.Volume{
+					VolumeSize: "80Gi",
+				},
+			},
+		}
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "m5.large", HAZones: true, AutoScalerMin: 5},
+		}
+		operation := &internal.Operation{
+			InstanceDetails: internal.InstanceDetails{
+				ProviderValues: &internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			},
+			PreviousParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+						{Name: "worker", MachineType: "m5.large", AutoScalerMin: 3},
+					},
+				},
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 999},
+			currentAdditionalWorkers,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			operation,
+			log,
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "80Gi", workers[0].Volume.VolumeSize)
+	})
+
+	t.Run("should update volume when machine type changes", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		currentAdditionalWorkers := map[string]gardener.Worker{
+			"worker": {
+				Name:  "worker",
+				Zones: []string{"zone-a"},
+				Volume: &gardener.Volume{
+					VolumeSize: "80Gi",
+				},
+			},
+		}
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "m5.xlarge", HAZones: true},
+		}
+		operation := &internal.Operation{
+			InstanceDetails: internal.InstanceDetails{
+				ProviderValues: &internal.ProviderValues{ProviderType: provider2.AWSProviderType},
+			},
+			PreviousParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+						{Name: "worker", MachineType: "m5.large"},
+					},
+				},
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: provider2.AWSProviderType, VolumeSizeGb: 999},
+			currentAdditionalWorkers,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			map[string]int{"m5.xlarge": 120},
+			operation,
+			log,
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "120Gi", workers[0].Volume.VolumeSize)
 	})
 }
 

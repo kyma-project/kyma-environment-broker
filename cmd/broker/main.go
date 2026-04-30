@@ -15,6 +15,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
@@ -377,6 +378,14 @@ func main() {
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
 	fatalOnError(providerSpec.ValidateMachinesVersions(), log)
 
+	var kcrVolumeProvider *provider.KCRVolumeProvider
+	if cfg.Broker.DynamicVolumeSizeEnabled {
+		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
+		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud})
+		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
+		log.Info("KCR volume sizes validated successfully")
+	}
+
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
@@ -395,14 +404,14 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, kcrVolumeProvider)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory)
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory, kcrVolumeProvider)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -673,4 +682,19 @@ func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
 		MaxPodsWhitelistedGlobalAccountIds:   c.MaxPodsWhitelistedGlobalAccountIds,
 		OpenShellWhitelistedGlobalAccountIds: c.OpenShellWhitelistedGlobalAccountIds,
 	}
+}
+
+func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, providers []pkg.CloudProvider) map[pkg.CloudProvider][]string {
+	result := map[pkg.CloudProvider][]string{}
+	for _, cp := range providers {
+		seen := make(map[string]struct{})
+		for _, mt := range providerSpec.MachineTypes(cp) {
+			resolved := providerSpec.ResolveMachineType(cp, mt)
+			if _, ok := seen[resolved]; !ok {
+				seen[resolved] = struct{}{}
+				result[cp] = append(result[cp], resolved)
+			}
+		}
+	}
+	return result
 }

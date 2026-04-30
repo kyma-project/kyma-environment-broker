@@ -200,6 +200,8 @@ broker:
   gardenerSeedsCache: "gardener-seeds-cache"
   # If true, includes the gVisor container runtime property in every plan schema.
   gvisorEnabled: "false"
+  # Name of the ConfigMap in kcp-system that provides per-machine-type volume sizes (used when dynamicVolumeSizeEnabled is true).
+  kcrConfigMapName: "consumption-reporter-config"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one freemium (free) Kyma runtime.
@@ -223,6 +225,8 @@ broker:
   trialDocsURL: "https://help.sap.com/docs/"
   # URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema.
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
+  # If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default.
+  dynamicVolumeSizeEnabled: "false"
   # If true, updates runtimeCR labels when moving subaccounts.
   updateCustomResourcesLabelsOnAccountMove: "false"
   # If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs.

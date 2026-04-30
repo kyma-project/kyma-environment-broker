@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -36,10 +37,11 @@ type UpdateRuntimeStep struct {
 	valuesProvider                     broker.ValuesProvider
 	maxPodsWhitelistedGlobalAccountIds whitelist.Set
 	providerSpec                       *configuration.ProviderSpec
+	kcrVolumeProvider                  *provider.KCRVolumeProvider
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec, kcrVolumeProvider *provider.KCRVolumeProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                          k8sClient,
 		delay:                              delay,
@@ -48,6 +50,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		valuesProvider:                     valuesProvider,
 		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
 		providerSpec:                       providerSpec,
+		kcrVolumeProvider:                  kcrVolumeProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -58,8 +61,6 @@ func (s *UpdateRuntimeStep) Name() string {
 }
 
 func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	// Check if the runtime exists
-
 	var runtime = imv1.Runtime{}
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: operation.GetRuntimeResourceName(), Namespace: operation.GetRuntimeResourceNamespace()}, &runtime)
 	if err != nil {
@@ -69,8 +70,45 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)
 	}
 
-	// Update the runtime
+	if op, backoff, err := s.updateKymaWorker(operation, &runtime, log); backoff > 0 || err != nil {
+		return op, backoff, err
+	}
 
+	if op, backoff, err := s.updateAdditionalWorkerPools(operation, &runtime, log); backoff > 0 || err != nil {
+		return op, backoff, err
+	}
+
+	s.updateACL(operation, &runtime)
+	s.updateOIDCConfig(operation, &runtime)
+
+	runtime.Spec.Security.Administrators = s.getAdministrators(operation)
+
+	external := broker.IsExternalLicenseType(operation.ProvisioningParameters.ErsContext)
+	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
+
+	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) && operation.UpdatingParameters.IngressFiltering != nil {
+		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
+	}
+
+	if operation.UpdatedPlanID != "" {
+		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
+	}
+
+	s.applyMaxPodsConfig(operation, &runtime)
+
+	err = s.k8sClient.Update(context.Background(), &runtime)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)
+	}
+
+	// this sleep is needed to wait for the runtime to be updated by the infrastructure manager with state PENDING,
+	// then we can wait for the state READY in the next step
+	time.Sleep(s.delay)
+
+	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.UpdatingParameters.MachineType != nil {
 		oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
 		if *operation.UpdatingParameters.MachineType != oldMachineType {
@@ -80,6 +118,21 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				*operation.UpdatingParameters.MachineType,
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+
+			if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud &&
+				runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+				resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+					pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
+					resolvedMachineType)
+				if err != nil {
+					if kebError.IsTemporaryError(err) {
+						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
+					}
+					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
+				}
+				runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
+			}
 		} else {
 			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 		}
@@ -97,110 +150,141 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.Workers[0].CRI = workers.ToGardenerCRI(operation.UpdatingParameters.Gvisor)
 	}
 
-	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
-		values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
-		if err != nil {
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
-		}
+	return operation, 0, nil
+}
 
-		currentAdditionalWorkers := s.getCurrentAdditionalWorkers(runtime)
-
-		additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
-			runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, &operation, log)
-		if err != nil {
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
-		}
-		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
+func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if operation.UpdatingParameters.AdditionalWorkerNodePools == nil {
+		return operation, 0, nil
 	}
 
-	if operation.UpdatingParameters.AccessControlList != nil {
-		if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL == nil {
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = &imv1.ACL{AllowedCIDRs: []string{}}
-		}
-		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs = operation.UpdatingParameters.AccessControlList.AllowedCIDRs
-		if len(operation.UpdatingParameters.AccessControlList.AllowedCIDRs) == 0 {
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = nil
-		}
-	}
-
-	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
-		if oidc.List != nil {
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = s.getOIDCConfigs(oidc)
-		} else if dto := oidc.OIDCConfigDTO; dto != nil {
-			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
-			}
-			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
-			assignIfNotEmpty := func(target **string, value string) {
-				if value != "" {
-					*target = &value
-				}
-			}
-
-			config.SigningAlgs = dto.SigningAlgs
-			assignIfNotEmpty(&config.ClientID, dto.ClientID)
-			assignIfNotEmpty(&config.IssuerURL, dto.IssuerURL)
-			assignIfNotEmpty(&config.GroupsClaim, dto.GroupsClaim)
-			assignIfNotEmpty(&config.UsernamePrefix, dto.UsernamePrefix)
-			assignIfNotEmpty(&config.UsernameClaim, dto.UsernameClaim)
-			assignIfNotEmpty(&config.GroupsPrefix, dto.GroupsPrefix)
-
-			if len(dto.RequiredClaims) > 0 {
-				config.RequiredClaims = s.getRequiredClaims(dto)
-			}
-
-			switch dto.EncodedJwksArray {
-			case "-":
-				config.JWKS = nil
-			case "":
-				// Do nothing
-			default:
-				config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
-			}
-		}
-	}
-
-	runtime.Spec.Security.Administrators = s.getAdministrators(operation)
-
-	external := broker.IsExternalLicenseType(operation.ProvisioningParameters.ErsContext)
-	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
-
-	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) && operation.UpdatingParameters.IngressFiltering != nil {
-		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
-	}
-
-	if operation.UpdatedPlanID != "" {
-		runtime.SetLabels(steps.UpdatePlanLabels(runtime.GetLabels(), operation.UpdatedPlanID))
-	}
-
-	if whitelist.IsWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
-		runtime.Spec.Shoot.Provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
-			Kubelet: &gardener.KubeletConfig{
-				MaxPods: &provisioning.MaxPods,
-			},
-		}
-
-		if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
-			for i := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
-				(*runtime.Spec.Shoot.Provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
-					Kubelet: &gardener.KubeletConfig{
-						MaxPods: &provisioning.MaxPods,
-					},
-				}
-			}
-		}
-	}
-
-	err = s.k8sClient.Update(context.Background(), &runtime)
+	values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 	}
 
-	// this sleep is needed to wait for the runtime to be updated by the infrastructure manager with state PENDING,
-	// then we can wait for the state READY in the next step
-	time.Sleep(s.delay)
+	currentAdditionalWorkers := s.getCurrentAdditionalWorkers(*runtime)
+
+	var volumeOverrides map[string]int
+	if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud {
+		volumeOverrides = make(map[string]int)
+		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
+		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
+			// only look up KCR when the pool is new or its machine type changed
+			unchanged := false
+			for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
+				if prev.Name == pool.Name && prev.MachineType == pool.MachineType {
+					unchanged = true
+					break
+				}
+			}
+			if unchanged {
+				continue
+			}
+			if _, ok := volumeOverrides[pool.MachineType]; ok {
+				continue
+			}
+			resolvedType := s.providerSpec.ResolveMachineType(pkg.CloudProviderFromString(operation.ProviderValues.ProviderType), pool.MachineType)
+			volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(), cp, resolvedType)
+			if err != nil {
+				if kebError.IsTemporaryError(err) {
+					return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedType), err, 10*time.Second, 1*time.Minute, log)
+				}
+				return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedType), err, log)
+			}
+			volumeOverrides[pool.MachineType] = volGb
+		}
+	}
+
+	additionalWorkers, err := s.workersProvider.CreateAdditionalWorkers(values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools,
+		runtime.Spec.Shoot.Provider.Workers[0].Zones, operation.ProvisioningParameters.PlanID, operation.DiscoveredZones, volumeOverrides, &operation, log)
+	if err != nil {
+		if kebError.IsTemporaryError(err) {
+			return s.operationManager.RetryOperation(operation, fmt.Sprintf("while creating additional workers: %s", err), err, 10*time.Second, 1*time.Minute, log)
+		}
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
+	}
+	runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 
 	return operation, 0, nil
+}
+
+func (s *UpdateRuntimeStep) updateACL(operation internal.Operation, runtime *imv1.Runtime) {
+	if operation.UpdatingParameters.AccessControlList == nil {
+		return
+	}
+	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL == nil {
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = &imv1.ACL{AllowedCIDRs: []string{}}
+	}
+	runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL.AllowedCIDRs = operation.UpdatingParameters.AccessControlList.AllowedCIDRs
+	if len(operation.UpdatingParameters.AccessControlList.AllowedCIDRs) == 0 {
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL = nil
+	}
+}
+
+func (s *UpdateRuntimeStep) updateOIDCConfig(operation internal.Operation, runtime *imv1.Runtime) {
+	oidc := operation.UpdatingParameters.OIDC
+	if oidc == nil {
+		return
+	}
+	if oidc.List != nil {
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = s.getOIDCConfigs(oidc)
+		return
+	}
+	dto := oidc.OIDCConfigDTO
+	if dto == nil {
+		return
+	}
+	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]imv1.OIDCConfig{{}}
+	}
+	config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+	assignIfNotEmpty := func(target **string, value string) {
+		if value != "" {
+			*target = &value
+		}
+	}
+
+	config.SigningAlgs = dto.SigningAlgs
+	assignIfNotEmpty(&config.ClientID, dto.ClientID)
+	assignIfNotEmpty(&config.IssuerURL, dto.IssuerURL)
+	assignIfNotEmpty(&config.GroupsClaim, dto.GroupsClaim)
+	assignIfNotEmpty(&config.UsernamePrefix, dto.UsernamePrefix)
+	assignIfNotEmpty(&config.UsernameClaim, dto.UsernameClaim)
+	assignIfNotEmpty(&config.GroupsPrefix, dto.GroupsPrefix)
+
+	if len(dto.RequiredClaims) > 0 {
+		config.RequiredClaims = s.getRequiredClaims(dto)
+	}
+
+	switch dto.EncodedJwksArray {
+	case "-":
+		config.JWKS = nil
+	case "":
+		// Do nothing
+	default:
+		config.JWKS, _ = base64.StdEncoding.DecodeString(dto.EncodedJwksArray)
+	}
+}
+
+func (s *UpdateRuntimeStep) applyMaxPodsConfig(operation internal.Operation, runtime *imv1.Runtime) {
+	if !whitelist.IsWhitelisted(operation.GlobalAccountID, s.maxPodsWhitelistedGlobalAccountIds) {
+		return
+	}
+	runtime.Spec.Shoot.Provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
+		Kubelet: &gardener.KubeletConfig{
+			MaxPods: &provisioning.MaxPods,
+		},
+	}
+	if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
+		for i := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			(*runtime.Spec.Shoot.Provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
+				Kubelet: &gardener.KubeletConfig{
+					MaxPods: &provisioning.MaxPods,
+				},
+			}
+		}
+	}
 }
 
 func (s *UpdateRuntimeStep) getOIDCConfigs(oidc *pkg.OIDCConnectDTO) *[]imv1.OIDCConfig {
