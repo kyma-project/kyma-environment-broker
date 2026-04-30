@@ -753,7 +753,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
 
@@ -801,7 +801,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
 
@@ -914,7 +914,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin(t *testi
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
 
@@ -966,7 +966,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkersWithVolume(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}, "80Gi", "gp3")
+	assertWorkersWithVolume(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}, "80Gi", "gp3")
 	assertNetworking(t, imv1.Networking{
 		Nodes:    "192.168.48.0/20",
 		Pods:     "10.104.0.0/24",
@@ -1017,7 +1017,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 	assert.Equal(t, "any-string", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
@@ -1229,7 +1229,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 
@@ -1275,7 +1275,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *test
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	// then retry
 	_, repeat, err = step.Run(operation, fixLogger())
@@ -1295,7 +1295,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *test
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m7i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 
@@ -1368,7 +1368,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 		  zone provider is mocked, always returns: a, b, c
 		*/
 		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"a", "b", "c"}},
-		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
+		{"aws", pkg.AWS, "aws", "m7i.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			memoryStorage := storage.NewMemoryStorage()
@@ -1480,7 +1480,7 @@ func TestCreateRuntimeResourceStep_Free_ZonesDiscovery(t *testing.T) {
 
 	instance, operation := fixInstanceAndOperation(broker.FreemiumPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
 	operation.DiscoveredZones = map[string][]string{
-		"m5.xlarge": {"zone-i", "zone-j", "zone-k", "zone-l"},
+		"mi.xlarge": {"zone-i", "zone-j", "zone-k", "zone-l"},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 

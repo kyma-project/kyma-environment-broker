@@ -70,6 +70,13 @@ preview,aws,build-runtime-aws:
   upgradableToPlans:
     - build-runtime-aws
   regularMachines:
+    - "mi.large"
+    - "mi.xlarge"
+    - "mi.2xlarge"
+    - "mi.4xlarge"
+    - "mi.8xlarge"
+    - "mi.12xlarge"
+    - "mi.16xlarge"
     - "m6i.large"
     - "m6i.xlarge"
     - "m6i.2xlarge"

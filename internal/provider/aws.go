@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	DefaultAWSRegion              = "eu-central-1"
-	DefaultAWSTrialRegion         = "eu-west-1"
-	DefaultEuAccessAWSRegion      = "eu-central-1"
-	DefaultAWSMultiZoneCount      = 3
-	DefaultAWSMachineType         = "m6i.large"
-	DefaultOldAWSTrialMachineType = "m5.xlarge"
+	DefaultAWSRegion                      = "eu-central-1"
+	DefaultAWSTrialRegion                 = "eu-west-1"
+	DefaultEuAccessAWSRegion              = "eu-central-1"
+	DefaultAWSMultiZoneCount              = 3
+	DefaultSmallerAWSFreeTrialMachineType = "mi.large"
+	DefaultAWSFreeTrialMachineType        = "mi.xlarge"
 )
 
 var europeAWS = "eu-west-1"
@@ -77,9 +77,9 @@ func (p *AWSInputProvider) zonesCount() int {
 }
 
 func (p *AWSTrialInputProvider) Provide() internal.ProviderValues {
-	machineType := DefaultOldAWSTrialMachineType
+	machineType := DefaultAWSFreeTrialMachineType
 	if p.UseSmallerMachineTypes {
-		machineType = DefaultAWSMachineType
+		machineType = DefaultSmallerAWSFreeTrialMachineType
 	}
 	region := p.region()
 
@@ -121,9 +121,9 @@ func (p *AWSTrialInputProvider) region() string {
 }
 
 func (p *AWSFreemiumInputProvider) Provide() internal.ProviderValues {
-	machineType := DefaultOldAWSTrialMachineType
+	machineType := DefaultAWSFreeTrialMachineType
 	if p.UseSmallerMachineTypes {
-		machineType = DefaultAWSMachineType
+		machineType = DefaultSmallerAWSFreeTrialMachineType
 	}
 	region := p.region()
 	return internal.ProviderValues{

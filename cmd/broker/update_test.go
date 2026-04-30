@@ -5046,7 +5046,7 @@ func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Equal(t, "m6i.16xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	assert.Equal(t, "m7i.16xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)
