@@ -90,6 +90,7 @@ HELM_COMMON_ARGS=(
   --set global.secrets.mechanism=secrets
   --set analytics.enabled=true
   --set analytics.oauth2Proxy.enabled=false
+  --timeout 10m
   --debug --wait
 )
 
@@ -104,28 +105,53 @@ if [[ "$LOCAL_REGISTRY" == "true" ]]; then
   # For PR workflows, use local k3s registry
   helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
-    --set global.images.container_registry.path="localhost:5000"
+    --set global.images.container_registry.path="localhost:5000" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    kubectl describe pods -n kcp-system -l app.kubernetes.io/name=keb-analytics 2>/dev/null || true
+    exit 1
+  }
 
 elif [[ "$VERSION" == PR* ]]; then
   # For local testing, use the dev registry
   helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
-    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev"
+    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    kubectl describe pods -n kcp-system -l app.kubernetes.io/name=keb-analytics 2>/dev/null || true
+    exit 1
+  }
 
 else
   # For release versions, use the production registry (from values.yaml default)
   helm upgrade --install keb ../keb \
-    "${HELM_COMMON_ARGS[@]}"
+    "${HELM_COMMON_ARGS[@]}" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    exit 1
+  }
 fi
 
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod to be in READY state..."
-kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
+kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=120s
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo "The kyma-environment-broker pod did not become READY within the timeout."
-  echo "Fetching the logs from the pod..."
-  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-  kubectl logs $POD_NAME -n kcp-system
+  echo "All pods in kcp-system:"
+  kubectl get pods -n kcp-system
+  echo "Fetching broker pod logs..."
+  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$POD_NAME" ]]; then
+    kubectl logs $POD_NAME -n kcp-system
+  else
+    echo "No broker pod found."
+  fi
+  echo "Fetching analytics pod logs..."
+  ANALYTICS_POD=$(kubectl get pod -l app.kubernetes.io/name=keb-analytics -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$ANALYTICS_POD" ]]; then
+    kubectl logs $ANALYTICS_POD -n kcp-system
+  fi
   exit 1
 fi
