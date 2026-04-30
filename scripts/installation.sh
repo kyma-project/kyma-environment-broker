@@ -95,8 +95,8 @@ HELM_COMMON_ARGS=(
 
 if [[ -n "$ANALYTICS_IMAGE" ]]; then
   HELM_COMMON_ARGS+=(
-    --set "global.images.kyma_environment_keb_analytics.repository=${ANALYTICS_IMAGE%:*}"
-    --set "global.images.kyma_environment_keb_analytics.tag=${ANALYTICS_IMAGE##*:}"
+    --set "global.images.kyma_environment_analytics.repository=${ANALYTICS_IMAGE%:*}"
+    --set "global.images.kyma_environment_analytics.tag=${ANALYTICS_IMAGE##*:}"
   )
 fi
 
