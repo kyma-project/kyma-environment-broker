@@ -15,6 +15,8 @@ import sys
 import os
 import random
 import argparse
+import time
+import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
 import keb
@@ -223,6 +225,59 @@ def build_parameters(plan, rng):
     return params
 
 
+def poll_until_done(runtimes, label, poll_interval=2, timeout=300):
+    """Poll last_operation for each runtime until all reach a terminal state (succeeded/failed)."""
+    pending = {
+        r.instance_id: r
+        for r in runtimes
+        if r is not None and r.provisioning_operation_id is not None
+    }
+    if not pending:
+        return
+
+    headers = {"X-Broker-API-Version": "2.14"}
+    succeeded = failed = 0
+    deadline = time.time() + timeout
+    last_print = time.time()
+
+    print(f"\n=== Waiting for {len(pending)} {label} operations to complete (timeout={timeout}s) ===")
+
+    while pending and time.time() < deadline:
+        done = []
+        for instance_id, runtime in pending.items():
+            url = (
+                f"{keb.KEB_BASE_URL}/oauth/v2/service_instances/{instance_id}"
+                f"/last_operation?operation={runtime.provisioning_operation_id}"
+            )
+            try:
+                resp = requests.get(url, headers=headers, timeout=5)
+                if resp.status_code == 200:
+                    state = resp.json().get("state", "")
+                    if state == "succeeded":
+                        succeeded += 1
+                        done.append(instance_id)
+                    elif state == "failed":
+                        failed += 1
+                        done.append(instance_id)
+            except requests.RequestException:
+                pass
+        for iid in done:
+            del pending[iid]
+
+        now = time.time()
+        if now - last_print >= 10 or not pending:
+            total = succeeded + failed + len(pending)
+            print(f"  succeeded={succeeded}  failed={failed}  pending={len(pending)}  total={total}")
+            last_print = now
+
+        if pending:
+            time.sleep(poll_interval)
+
+    if pending:
+        print(f"  WARNING: {len(pending)} operations still pending after timeout")
+    print(f"  Final: succeeded={succeeded}  failed={failed}  timed_out={len(pending)}")
+
+
 def build_update_parameters(plan, rng):
     """Generate randomised update parameters."""
     updates = {}
@@ -258,6 +313,7 @@ def main():
     parser.add_argument("--count", type=int, default=1000, help="Number of instances to provision (default: 1000)")
     parser.add_argument("--seed",  type=int, default=42,   help="Random seed for reproducibility (default: 42)")
     parser.add_argument("--skip-updates", action="store_true", help="Skip the update phase")
+    parser.add_argument("--poll-timeout", type=int, default=600, help="Seconds to wait for operations to complete (default: 600)")
     args = parser.parse_args()
 
     rng = random.Random(args.seed)
@@ -287,6 +343,8 @@ def main():
     provisioned = sum(1 for r in runtimes if r is not None)
     print(f"\nProvisioned: {provisioned}/{count}")
 
+    poll_until_done(runtimes, "provisioning", timeout=args.poll_timeout)
+
     if args.skip_updates:
         print("\n=== Updates skipped ===")
         print("\n=== Done ===")
@@ -304,7 +362,11 @@ def main():
             continue
         if (i + 1) % 100 == 0 or i == 0:
             print(f"  [{i+1}/{len(update_targets)}] instance_id={runtime.instance_id}")
-        runtime.update(params)
+        op_id = runtime.update(params)
+        if op_id:
+            runtime.provisioning_operation_id = op_id
+
+    poll_until_done(update_targets, "update", timeout=args.poll_timeout)
 
     print(f"\n=== Done ===")
     print(f"Provisioned: {provisioned}/{count}")
