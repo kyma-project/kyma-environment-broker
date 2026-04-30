@@ -138,9 +138,9 @@ WORKER_POOLS = {
 # Plan → regions with realistic distribution weights (common regions heavier)
 PLAN_REGIONS = {
     "aws": [
-        ("eu-central-1", 25), ("us-east-1", 20), ("eu-west-1", 12),
-        ("us-west-2", 10), ("ap-southeast-1", 8), ("ap-northeast-1", 8),
-        ("eu-west-2", 6), ("ca-central-1", 5), ("ap-south-1", 4), ("sa-east-1", 2),
+        ("eu-central-1", 25), ("us-east-1", 22), ("eu-west-2", 12),
+        ("us-west-2", 12), ("ap-southeast-1", 10), ("ap-northeast-1", 8),
+        ("ca-central-1", 6), ("ap-south-1", 5),
     ],
     "azure": [
         ("eastus", 22), ("westeurope", 18), ("northeurope", 14),
@@ -149,49 +149,33 @@ PLAN_REGIONS = {
         ("brazilsouth", 3), ("canadacentral", 2),
     ],
     "gcp": [
-        ("europe-west3", 28), ("us-central1", 22), ("us-east4", 12),
-        ("europe-west4", 10), ("asia-south1", 8), ("asia-northeast1", 8),
-        ("europe-west1", 7), ("us-west1", 5),
+        ("europe-west3", 30), ("us-central1", 25), ("us-east4", 15),
+        ("europe-west4", 12), ("asia-south1", 10), ("asia-northeast1", 8),
     ],
     "azure_lite": [
         ("eastus", 30), ("westeurope", 25), ("northeurope", 20),
         ("centralus", 15), ("uksouth", 10),
     ],
-    "free": [
-        ("eu-central-1", 40), ("us-east-1", 30), ("eastus", 20), ("europe-west3", 10),
-    ],
     "trial": [
-        ("eu-west-1", 50), ("us-east-1", 30), ("ap-southeast-1", 20),
-    ],
-    "preview": [
-        ("eu-central-1", 60), ("us-east-1", 40),
-    ],
-    "sap-converged-cloud": [
-        ("eu-de-1", 50), ("na-us-1", 25), ("ap-au-1", 15), ("ap-jp-1", 10),
+        ("eu-central-1", 50), ("us-east-1", 30), ("eu-west-2", 20),
     ],
 }
 
 MACHINE_TYPES = {
-    "aws":               ["m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m5.xlarge", "c7i.2xlarge"],
-    "azure":             ["Standard_D2s_v5", "Standard_D4s_v5", "Standard_D8s_v5", "Standard_D16s_v5", "Standard_D4_v3", "Standard_D8_v3"],
-    "gcp":               ["n2-standard-2", "n2-standard-4", "n2-standard-8", "n2-standard-16", "c2d-highcpu-4", "c2d-highcpu-8"],
-    "azure_lite":        ["Standard_D2s_v5", "Standard_D4s_v5"],
-    "free":              ["m6i.large", "Standard_D2s_v5", "n2-standard-2"],
-    "trial":             ["m5.xlarge", "Standard_D4s_v5", "n2-standard-2"],
-    "preview":           ["m6i.large", "m6i.xlarge", "m6i.2xlarge"],
-    "sap-converged-cloud": ["g_c2_m8", "g_c4_m16", "g_c8_m32"],
+    "aws":        ["m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m5.xlarge"],
+    "azure":      ["Standard_D2s_v5", "Standard_D4s_v5", "Standard_D8s_v5", "Standard_D16s_v5", "Standard_D4_v3", "Standard_D8_v3"],
+    "gcp":        ["n2-standard-2", "n2-standard-4", "n2-standard-8", "n2-standard-16"],
+    "azure_lite": ["Standard_D2s_v5", "Standard_D4s_v5"],
+    "trial":      ["m5.xlarge", "Standard_D4s_v5", "n2-standard-2"],
 }
 
-# Plan distribution: (plan_name, weight)
+# Plan distribution: (plan_name, weight) — only plans available in local catalog
 PLAN_WEIGHTS = [
-    ("aws",                40),
-    ("azure",              30),
-    ("gcp",                12),
-    ("azure_lite",          6),
-    ("free",                4),
-    ("trial",               3),
-    ("preview",             3),
-    ("sap-converged-cloud", 2),
+    ("aws",        45),
+    ("azure",      33),
+    ("gcp",        14),
+    ("azure_lite",  5),
+    ("trial",       3),
 ]
 
 
