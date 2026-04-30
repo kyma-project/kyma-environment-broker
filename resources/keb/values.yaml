@@ -72,7 +72,7 @@ global:
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.29.11
-    keb_analytics:
+    kyma_environment_keb_analytics:
       dir:
       version: "1.29.11"
       repository: ""

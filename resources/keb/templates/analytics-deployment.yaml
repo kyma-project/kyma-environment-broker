@@ -48,10 +48,10 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Values.analytics.name }}
-          {{- if .Values.global.images.keb_analytics.repository }}
-          image: "{{ .Values.global.images.keb_analytics.repository }}:{{ .Values.global.images.keb_analytics.tag }}"
+          {{- if .Values.global.images.kyma_environment_keb_analytics.repository }}
+          image: "{{ .Values.global.images.kyma_environment_keb_analytics.repository }}:{{ .Values.global.images.kyma_environment_keb_analytics.tag }}"
           {{- else }}
-          image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.keb_analytics.dir }}keb-analytics:{{ .Values.global.images.keb_analytics.version }}"
+          image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_keb_analytics.dir }}keb-analytics:{{ .Values.global.images.kyma_environment_keb_analytics.version }}"
           {{- end }}
           imagePullPolicy: Always
           env:
