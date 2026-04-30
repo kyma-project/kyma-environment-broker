@@ -52,7 +52,7 @@ jobs:
           echo "Validated"
 
       - name: Checkout KEB
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           # For workflow_run: pin to the exact commit that triggered the upstream workflow.
