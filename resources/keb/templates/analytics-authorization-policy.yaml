@@ -1,0 +1,17 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ .Values.analytics.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces:
+              - istio-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.analytics.name }}
+{{- end }}

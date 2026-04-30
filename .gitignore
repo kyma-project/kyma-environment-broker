@@ -19,3 +19,4 @@ debug
 # Python
 __pycache__/
 .pytest_cache/
+docs/superpowers/

@@ -71,6 +71,10 @@ build-hap:
 install:
 	./scripts/installation.sh "$(VERSION)" "$(LOCAL_REGISTRY)"
 
+.PHONY: install-with-analytics-private
+install-with-analytics-private:
+	./scripts/installation.sh "$(VERSION)" "$(LOCAL_REGISTRY)" "$(ANALYTICS_IMAGE)"
+
 .PHONY: install-with-monitoring
 install-with-monitoring: install
 	./utils/local-monitoring/setup.sh
