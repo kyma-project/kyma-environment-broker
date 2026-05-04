@@ -2840,7 +2840,8 @@ func TestUpdateBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `update: '"aws updates are blocked","plan=aws"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(broker.AvailablePlans)
+		bl, err = bl.WithPlanValidator(broker.AvailablePlans)
+		require.NoError(t, err)
 
 		svc := newUpdateSvc(t, st, bl)
 
@@ -2870,7 +2871,8 @@ func TestUpdateBlocklist(t *testing.T) {
 		path := writeBlocklistYAML(t, `update: '"blocked","plan=gcp"'`)
 		bl, err := blocklist.ReadFromFile(path)
 		require.NoError(t, err)
-		bl = bl.WithPlanValidator(broker.AvailablePlans)
+		bl, err = bl.WithPlanValidator(broker.AvailablePlans)
+		require.NoError(t, err)
 
 		svc := newUpdateSvc(t, st, bl)
 

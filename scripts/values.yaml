@@ -185,7 +185,7 @@ plansConfiguration:
 
   alicloud:
     regularMachines:
-      - "ecs.g8i.large"
+      - "ecs.g9i.large"
     regions:
       default:
         - "eu-central-1"
@@ -456,7 +456,7 @@ providersConfiguration:
         zones: [a, b]
   alicloud:
     machines:
-      "ecs.g8i.large": "ecs.g8i.large (2vCPU, 8GB RAM)"
+      "ecs.g9i.large": "ecs.g9i.large (2vCPU, 8GB RAM)"
     regions:
       eu-central-1:
         displayName: eu-central-1 (Europe, Frankfurt)

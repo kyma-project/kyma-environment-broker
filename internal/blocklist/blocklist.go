@@ -38,6 +38,9 @@ type Rule struct {
 //	'"message","plan=aws"'
 //	'"message","plan=aws,gcp"'
 func parseRule(s string) (Rule, error) {
+	if strings.TrimSpace(s) == "" {
+		return Rule{}, nil // empty string is a no-op, caller must skip
+	}
 	tokens, err := splitQuotedTokens(s)
 	if err != nil {
 		return Rule{}, fmt.Errorf("invalid rule %q: %w", s, err)
@@ -45,8 +48,14 @@ func parseRule(s string) (Rule, error) {
 	if len(tokens) == 0 {
 		return Rule{}, fmt.Errorf("empty rule")
 	}
+	if tokens[0] == "" {
+		return Rule{}, fmt.Errorf("empty message in rule %q", s)
+	}
 
 	r := Rule{Message: tokens[0]}
+	if len(tokens) == 1 {
+		return Rule{}, nil // no plan filter — no-op, caller must skip
+	}
 	for _, tok := range tokens[1:] {
 		idx := strings.IndexByte(tok, '=')
 		if idx == -1 {
@@ -56,6 +65,14 @@ func parseRule(s string) (Rule, error) {
 		val := strings.TrimSpace(tok[idx+1:])
 		if key != "plan" {
 			return Rule{}, fmt.Errorf("unknown key %q in rule %q (only \"plan\" is allowed)", key, s)
+		}
+		if val == "" {
+			return Rule{}, fmt.Errorf("empty plan filter in rule %q", s)
+		}
+		for _, p := range strings.Split(val, ",") {
+			if strings.TrimSpace(p) == "" {
+				return Rule{}, fmt.Errorf("empty plan segment in rule %q", s)
+			}
 		}
 		r.Plan = val
 	}
@@ -109,6 +126,9 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			if err != nil {
 				return err
 			}
+			if r.Message == "" {
+				continue // empty string or message-only rule is a no-op
+			}
 			rules = append(rules, r)
 		}
 		*rl = rules
@@ -122,6 +142,10 @@ func (rl *ruleList) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	r, err := parseRule(single)
 	if err != nil {
 		return err
+	}
+	if r.Message == "" {
+		*rl = nil
+		return nil // empty string or message-only rule is a no-op
 	}
 	*rl = []Rule{r}
 	return nil
@@ -138,9 +162,33 @@ type OperationBlocklist struct {
 }
 
 // WithPlanValidator returns a copy of the blocklist with the given PlanValidator set.
-func (b OperationBlocklist) WithPlanValidator(v PlanValidator) OperationBlocklist {
+// It also validates all plan names in rules against the validator, returning an error
+// for any unrecognised plan name (e.g. typos like "trail" instead of "trial").
+func (b OperationBlocklist) WithPlanValidator(v PlanValidator) (OperationBlocklist, error) {
 	b.planValidator = v
-	return b
+	type opRules struct {
+		name  string
+		rules ruleList
+	}
+	for _, op := range []opRules{
+		{"provision", b.Provision},
+		{"update", b.Update},
+		{"planUpgrade", b.PlanUpgrade},
+		{"deprovision", b.Deprovision},
+	} {
+		for _, r := range op.rules {
+			if r.Plan == "" {
+				continue
+			}
+			for _, p := range strings.Split(r.Plan, ",") {
+				p = strings.TrimSpace(p)
+				if !v.IsPlanName(p) {
+					return OperationBlocklist{}, fmt.Errorf("unknown plan name %q in %s rule", p, op.name)
+				}
+			}
+		}
+	}
+	return b, nil
 }
 
 // ReadFromFile loads an OperationBlocklist from a YAML file.

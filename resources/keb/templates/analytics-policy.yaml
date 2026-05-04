@@ -1,0 +1,13 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ .Values.analytics.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.analytics.name }}
+  mtls:
+    mode: PERMISSIVE
+{{- end }}

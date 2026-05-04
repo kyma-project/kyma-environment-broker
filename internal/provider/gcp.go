@@ -92,7 +92,7 @@ func (p *GCPTrialInputProvider) Provide() internal.ProviderValues {
 		DefaultMachineType:   DefaultGCPTrialMachineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
-		VolumeSizeGb:         30,
+		VolumeSizeGb:         80,
 		DiskType:             "pd-standard",
 		FailureTolerance:     nil,
 	}

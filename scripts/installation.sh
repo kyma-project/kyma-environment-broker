@@ -8,6 +8,7 @@ set -o pipefail # prevents errors in a pipeline from being masked
 
 VERSION=${1:-''}
 LOCAL_REGISTRY=${2:-false}
+ANALYTICS_IMAGE=${3:-''}
 
 # Create namespaces
 kubectl create namespace kcp-system || true
@@ -15,16 +16,16 @@ kubectl create namespace kyma-system || true
 kubectl create namespace istio-system || true
 kubectl create namespace garden-kyma-dev || true
 
-# Install Istio
+# Install Istio CRDs (needed for AuthorizationPolicy/VirtualService in the helm chart)
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update
-helm install istio-base istio/base -n istio-system --set defaultRevision=default
-
-# Install Prometheus Operator for ServiceMonitor
-kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
+helm upgrade --install istio-base istio/base -n istio-system --set defaultRevision=default --wait
+# Remove Istio validating webhooks — istiod is not running locally
+kubectl delete validatingwebhookconfiguration istio-validator-istio-system --ignore-not-found
+kubectl delete validatingwebhookconfiguration istiod-default-validator --ignore-not-found
 
 # Install Postgres
-kubectl create -f scripts/testing/yaml/postgres -n kcp-system
+kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
 
 # Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | awk '$1=="inet" {print $2}' || ifconfig eth0 | awk '$1=="inet" {print $2}')
@@ -32,7 +33,7 @@ KCFG=$(kubectl config view --minify --raw \
       | sed "s|https://0\.0\.0\.0|https://${KUBE_SERVER_IP}|" \
       | sed "s|https://127\.0\.0\.1|https://${KUBE_SERVER_IP}|" \
        | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
-kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
+kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system --dry-run=client -o yaml | kubectl apply -f -
 
 # For PR versions, save values.yaml before bumping and register a trap to restore it
 # on exit (success or failure). Release bumps intentionally persist all file changes.
@@ -88,35 +89,70 @@ HELM_COMMON_ARGS=(
   --set global.database.embedded.enabled=false
   --set testConfig.kebDeployment.useAnnotations=true
   --set global.secrets.mechanism=secrets
+  --set analytics.enabled=true
+  --set analytics.oauth2Proxy.enabled=false
+  --timeout 10m
   --debug --wait
 )
 
+if [[ -n "$ANALYTICS_IMAGE" ]]; then
+  HELM_COMMON_ARGS+=(
+    --set "global.images.kyma_environment_analytics.repository=${ANALYTICS_IMAGE%:*}"
+    --set "global.images.kyma_environment_analytics.tag=${ANALYTICS_IMAGE##*:}"
+  )
+fi
+
 if [[ "$LOCAL_REGISTRY" == "true" ]]; then
   # For PR workflows, use local k3s registry
-  helm install keb ../keb \
+  helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
-    --set global.images.container_registry.path="localhost:5000"
+    --set global.images.container_registry.path="localhost:5000" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    kubectl describe pods -n kcp-system -l app.kubernetes.io/name=keb-analytics 2>/dev/null || true
+    exit 1
+  }
 
 elif [[ "$VERSION" == PR* ]]; then
   # For local testing, use the dev registry
-  helm install keb ../keb \
+  helm upgrade --install keb ../keb \
     "${HELM_COMMON_ARGS[@]}" \
-    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev"
+    --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    kubectl describe pods -n kcp-system -l app.kubernetes.io/name=keb-analytics 2>/dev/null || true
+    exit 1
+  }
 
 else
   # For release versions, use the production registry (from values.yaml default)
-  helm install keb ../keb \
-    "${HELM_COMMON_ARGS[@]}"
+  helm upgrade --install keb ../keb \
+    "${HELM_COMMON_ARGS[@]}" || {
+    echo "Helm install failed. Pod state in kcp-system:"
+    kubectl get pods -n kcp-system
+    exit 1
+  }
 fi
 
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod to be in READY state..."
-kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
+kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=120s
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
   echo "The kyma-environment-broker pod did not become READY within the timeout."
-  echo "Fetching the logs from the pod..."
-  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-  kubectl logs $POD_NAME -n kcp-system
+  echo "All pods in kcp-system:"
+  kubectl get pods -n kcp-system
+  echo "Fetching broker pod logs..."
+  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$POD_NAME" ]]; then
+    kubectl logs $POD_NAME -n kcp-system
+  else
+    echo "No broker pod found."
+  fi
+  echo "Fetching analytics pod logs..."
+  ANALYTICS_POD=$(kubectl get pod -l app.kubernetes.io/name=keb-analytics -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$ANALYTICS_POD" ]]; then
+    kubectl logs $ANALYTICS_POD -n kcp-system
+  fi
   exit 1
 fi

@@ -1,0 +1,38 @@
+# Build image
+FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine3.22 AS build
+
+WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY cmd cmd
+COPY common common
+COPY internal internal
+
+RUN mkdir /user && \
+    echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
+    echo 'appuser:x:2000:' > /user/group
+
+ARG TARGETOS TARGETARCH VERSION
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    CGO_ENABLED=0 GOFIPS140=v1.0.0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -ldflags "-X main.Version=${VERSION}" \
+    -o /bin/keb-analytics ./cmd/keb-analytics/
+
+# Get latest CA certs
+FROM alpine:3.23.4 AS certs
+RUN apk --update add ca-certificates
+
+# Final image
+FROM scratch
+ENV GODEBUG=fips140=only,tlsmlkem=0
+LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
+
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /bin/keb-analytics /bin/keb-analytics
+COPY --from=build /user/group /user/passwd /etc/
+USER appuser:appuser
+
+CMD ["/bin/keb-analytics"]

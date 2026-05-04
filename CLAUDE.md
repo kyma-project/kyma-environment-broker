@@ -68,6 +68,21 @@ The overall flow: user sends provisioning request → KEB creates `Runtime` + `K
 
 In deployment definitions environment variables should be sorted alphabetically.
 
+### Documentation Metadata
+
+Every `.md` file in `docs/` (excluding `docs/assets/`) must have a metadata comment on the first line:
+
+```
+<!--{"metadata":{"publish":true}}-->   ← document is included in the Restricted Markets documentation
+<!--{"metadata":{"publish":false}}-->  ← document is not included in the Restricted Markets documentation
+```
+
+Set `publish:true` when the document should be available in the Restricted Markets documentation. Set `publish:false` if not.
+
+The [`sync-docs-toc`](/.github/workflows/sync-docs-toc.yml) workflow uses this metadata to detect structural changes after each KEB release and automatically sync them to `product-kyma-runtime`.
+
+Scripts that regenerate documentation files (such as `generate_values_doc.py`) must preserve this metadata comment when writing output.
+
 ### Commands
 
 ```bash

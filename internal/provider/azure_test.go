@@ -70,7 +70,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 		Region:               "switzerlandnorth",
 		Purpose:              "evaluation",
 		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		FailureTolerance:     nil,
 	}, values)
 }
@@ -176,7 +176,7 @@ func TestAzureTrialSpecific(t *testing.T) {
 		Region:               "southeastasia",
 		Purpose:              "evaluation",
 		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		FailureTolerance:     nil,
 	}, values)
 }

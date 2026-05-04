@@ -39,7 +39,7 @@ const (
 	dbRetryTimeout   = 1 * time.Minute
 )
 
-var MaxPods int32 = 250
+var MaxPods int32 = 200
 
 type CreateRuntimeResourceStep struct {
 	operationManager  *process.OperationManager

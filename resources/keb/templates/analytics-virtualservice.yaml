@@ -1,0 +1,23 @@
+{{- if .Values.analytics.enabled }}
+{{- if .Capabilities.APIVersions.Has "networking.istio.io/v1beta1" }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.analytics.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  gateways:
+    - {{ .Values.global.istio.gateway | required "Please specify .Values.global.istio.gateway" }}
+  hosts:
+    - {{ .Values.analytics.host }}.{{ .Values.global.ingress.domainName }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ .Values.analytics.name }}
+            port:
+              number: 4180
+{{- end }}
+{{- end }}

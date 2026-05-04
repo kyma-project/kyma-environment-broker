@@ -25,6 +25,7 @@ declare -a IMAGES=(
     "kyma-environment-subaccount-sync:Dockerfile.subaccountsync:BIN=subaccount-sync"
     "kyma-environment-broker-schema-migrator:Dockerfile.schemamigrator:"
     "kyma-environment-service-binding-cleanup-job:Dockerfile.job:BIN=servicebindingcleanup"
+    "keb-analytics:Dockerfile.keb-analytics:VERSION=${VERSION}"
 )
 
 for IMAGE_SPEC in "${IMAGES[@]}"; do

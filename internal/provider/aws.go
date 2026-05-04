@@ -92,7 +92,7 @@ func (p *AWSTrialInputProvider) Provide() internal.ProviderValues {
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 		FailureTolerance:     nil,
 	}
@@ -135,7 +135,7 @@ func (p *AWSFreemiumInputProvider) Provide() internal.ProviderValues {
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
-		VolumeSizeGb:         50,
+		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 		FailureTolerance:     nil,
 	}

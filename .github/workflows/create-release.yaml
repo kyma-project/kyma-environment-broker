@@ -179,9 +179,19 @@ jobs:
       build-args: BIN=servicebindingcleanup
       tags: ${{ inputs.name }}
 
+  build-keb-analytics-image:
+    needs: [ validate-release ]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: keb-analytics
+      dockerfile: Dockerfile.keb-analytics
+      context: .
+      build-args: VERSION=${{ inputs.name }}
+      tags: ${{ inputs.name }}
+
   run-keb-chart-integration-tests:
     name: Validate KEB chart
-    needs: [build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image]
+    needs: [build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image]
     uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     secrets: inherit
     with:
@@ -191,7 +201,7 @@ jobs:
       
   run-performance-tests:
     name: Performance tests
-    needs: [ build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image ]
+    needs: [ build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image ]
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:

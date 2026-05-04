@@ -54,15 +54,16 @@ func parseInline(op string, rules ...string) (blocklist.OperationBlocklist, erro
 	if err != nil {
 		return blocklist.OperationBlocklist{}, err
 	}
-	return bl.WithPlanValidator(testPlans), nil
+	return bl.WithPlanValidator(testPlans)
 }
 
 // --- parser ---
 
 func TestParseRule_MessageOnly(t *testing.T) {
+	// A rule with no plan filter is a no-op — plan filter is required to block.
 	bl, err := parseInline("provision", `"always blocked"`)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("any"), "always blocked")
+	assert.NoError(t, bl.CheckProvision("any"))
 }
 
 func TestParseRule_WithPlan(t *testing.T) {
@@ -119,19 +120,22 @@ func TestCheckRules_EmptyBlocklist(t *testing.T) {
 	assert.NoError(t, bl.CheckDeprovision("aws"))
 }
 
-// --- PlanValidator ---
+// --- PlanValidator: unknown plan names are rejected at validation time ---
 
-func TestMatchesPlan_UnknownPlanInRuleDoesNotMatch(t *testing.T) {
-	bl, err := parseInline("provision", `"blocked","plan=notaplan"`)
+func TestMatchesPlan_UnknownPlanInRuleIsError(t *testing.T) {
+	path := writeYAML(t, "provision:\n  - '\"blocked\",\"plan=notaplan\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
 	require.NoError(t, err)
-	assert.NoError(t, bl.CheckProvision("notaplan"))
+	_, err = bl.WithPlanValidator(testPlans)
+	assert.ErrorContains(t, err, "notaplan")
 }
 
-func TestMatchesPlan_UnknownPlanInListDoesNotMatch(t *testing.T) {
-	bl, err := parseInline("provision", `"blocked","plan=aws,notaplan"`)
+func TestMatchesPlan_UnknownPlanInListIsError(t *testing.T) {
+	path := writeYAML(t, "provision:\n  - '\"blocked\",\"plan=aws,notaplan\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
 	require.NoError(t, err)
-	assert.EqualError(t, bl.CheckProvision("aws"), "blocked")
-	assert.NoError(t, bl.CheckProvision("notaplan"))
+	_, err = bl.WithPlanValidator(testPlans)
+	assert.ErrorContains(t, err, "notaplan")
 }
 
 // --- YAML: single string vs list ---
@@ -148,7 +152,8 @@ deprovision: '"deprovisioning is blocked for {plan}","plan=gcp"'
 	path := writeYAML(t, yaml)
 	bl, err := blocklist.ReadFromFile(path)
 	require.NoError(t, err)
-	bl = bl.WithPlanValidator(testPlans)
+	bl, err = bl.WithPlanValidator(testPlans)
+	require.NoError(t, err)
 
 	assert.EqualError(t, bl.CheckProvision("aws"), "provisioning is blocked for aws plan")
 	assert.EqualError(t, bl.CheckProvision("gcp"), "provisioning is blocked for gcp plan")
@@ -164,7 +169,10 @@ deprovision: '"deprovisioning is blocked for {plan}","plan=gcp"'
 	assert.NoError(t, bl.CheckDeprovision("aws"))
 }
 
+// --- hardening: empty/blank string rules are no-ops ---
+
 func TestReadFromFile_EmptyFile(t *testing.T) {
+	// Empty file → no-op blocklist, no error.
 	path := writeYAML(t, "")
 	bl, err := blocklist.ReadFromFile(path)
 	require.NoError(t, err)
@@ -172,6 +180,83 @@ func TestReadFromFile_EmptyFile(t *testing.T) {
 	assert.NoError(t, bl.CheckUpdate("trial"))
 	assert.NoError(t, bl.CheckPlanUpgrade("trial"))
 	assert.NoError(t, bl.CheckDeprovision("trial"))
+}
+
+func TestReadFromFile_EmptyKeysAreNoOp(t *testing.T) {
+	// Keys present but with no rules → no-op.
+	path := writeYAML(t, "provision:\ndeprovision:\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckDeprovision("trial"))
+}
+
+func TestParseRule_EmptyStringSingleIsNoOp(t *testing.T) {
+	// provision: '' → no rules loaded, no error.
+	path := writeYAML(t, "provision: ''\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+}
+
+func TestParseRule_EmptyStringInListIsNoOp(t *testing.T) {
+	// Empty string entry in a list is skipped; valid rule still works.
+	path := writeYAML(t, "provision:\n  - ''\n  - '\"blocked\",\"plan=trial\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	bl, err = bl.WithPlanValidator(testPlans)
+	require.NoError(t, err)
+	assert.EqualError(t, bl.CheckProvision("trial"), "blocked")
+	assert.NoError(t, bl.CheckProvision("aws"))
+}
+
+// --- hardening: empty message is a parse error ---
+
+func TestParseRule_EmptyMessageSingleIsError(t *testing.T) {
+	// provision: '""' → empty message, must fail loading.
+	path := writeYAML(t, "provision: '\"\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyMessageWithPlanIsError(t *testing.T) {
+	// provision: '"","plan=trial"' → empty message, must fail loading.
+	path := writeYAML(t, "provision: '\"\",\"plan=trial\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+// --- hardening: message only (no plan filter) triggers for all operations ---
+
+func TestParseRule_MessageOnlyIsNoOp(t *testing.T) {
+	// No plan filter → no-op, does not block any plan.
+	path := writeYAML(t, "provision: '\"blocked\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	bl, err = bl.WithPlanValidator(testPlans)
+	require.NoError(t, err)
+	assert.NoError(t, bl.CheckProvision("trial"))
+	assert.NoError(t, bl.CheckProvision("aws"))
+	assert.NoError(t, bl.CheckProvision("gcp"))
+}
+
+// --- hardening: WithPlanValidator rejects unknown plan names ---
+
+func TestWithPlanValidator_UnknownPlanNameIsError(t *testing.T) {
+	// "trail" is a typo for "trial" — must be rejected at validation time.
+	path := writeYAML(t, "provision: '\"blocked\",\"plan=trail\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	_, err = bl.WithPlanValidator(testPlans)
+	assert.ErrorContains(t, err, "trail")
+}
+
+func TestWithPlanValidator_KnownPlanNameIsAccepted(t *testing.T) {
+	path := writeYAML(t, "provision: '\"blocked\",\"plan=trial\"'\n")
+	bl, err := blocklist.ReadFromFile(path)
+	require.NoError(t, err)
+	_, err = bl.WithPlanValidator(testPlans)
+	assert.NoError(t, err)
 }
 
 // --- error cases ---
@@ -220,9 +305,30 @@ func TestParseRule_TrailingComma(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParseRule_TrailingCommaAfterMessageIsError(t *testing.T) {
+	// provision: '"msg",' → trailing comma, must fail loading.
+	path := writeYAML(t, "provision: '\"msg\",'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
 func TestParseRule_EmptyToken(t *testing.T) {
 	// An empty quoted token "" is meaningless and must be rejected.
 	path := writeYAML(t, "provision:\n  - '\"msg\",\"\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyPlanFilter(t *testing.T) {
+	// plan= with no value must be rejected — would silently match nothing but looks like a filter.
+	path := writeYAML(t, "provision: '\"msg\",\"plan=\"'\n")
+	_, err := blocklist.ReadFromFile(path)
+	assert.Error(t, err)
+}
+
+func TestParseRule_EmptyPlanSegment(t *testing.T) {
+	// plan=aws,,gcp has an empty segment — must be rejected.
+	path := writeYAML(t, "provision: '\"msg\",\"plan=aws,,gcp\"'\n")
 	_, err := blocklist.ReadFromFile(path)
 	assert.Error(t, err)
 }

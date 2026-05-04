@@ -110,7 +110,7 @@ class Runtime:
         deprovision(self.instance_id, self.plan_id)
 
     def update(self, parameters={}, validate=False):
-        update(self.instance_id, self.plan_id, self.plan_name, parameters, validate=validate)
+        return update(self.instance_id, self.plan_id, self.plan_name, parameters, validate=validate)
 
     def get_instance(self):
         url = f"{KEB_BASE_URL}/oauth/v2/service_instances/{self.instance_id}"
@@ -146,10 +146,12 @@ def update(instance_id, plan_id, plan_name, parameters={}, validate=False):
     response = execute_request("PATCH", url, payload=payload)
     if response.status_code == 200 or response.status_code == 202:
         print("Update request successful.")
+        return response.json().get("operation")
     else:
         print("Failed to update the instance.")
         print("Status Code:", response.status_code)
         print("Response:", response.text)
+        return None
 
 
 def deprovision(instance_id, plan_id):
