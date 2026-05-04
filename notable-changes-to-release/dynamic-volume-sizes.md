@@ -16,3 +16,5 @@ The feature is controlled by a new environment variable:
 | `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` | `false` | Enables dynamic volume size lookup. |
 
 SAP Converged Cloud (OpenStack) plans are not affected — they do not configure node volumes.
+
+Once enabled, this feature will also be used as part of the migration of existing clusters to machine-type-appropriate node volume sizes.
