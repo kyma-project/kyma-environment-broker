@@ -20,8 +20,9 @@ kubectl create namespace garden-kyma-dev || true
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update
 helm upgrade --install istio-base istio/base -n istio-system --set defaultRevision=default --wait
-# Remove Istio validating webhook — istiod is not running locally
+# Remove Istio validating webhooks — istiod is not running locally
 kubectl delete validatingwebhookconfiguration istio-validator-istio-system --ignore-not-found
+kubectl delete validatingwebhookconfiguration istiod-default-validator --ignore-not-found
 
 # Install Postgres
 kubectl apply -f scripts/testing/yaml/postgres -n kcp-system

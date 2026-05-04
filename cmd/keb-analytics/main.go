@@ -15,7 +15,9 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vrischmann/envconfig"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
 //go:embed static/index.html
@@ -32,6 +34,14 @@ type Config struct {
 	}
 	Port            string        `envconfig:"default=8080"`
 	RefreshInterval time.Duration `envconfig:"default=1h"`
+}
+
+type cache struct {
+	resp          analytics.StatsResponse
+	provParams    []internal.ProvisioningParameters
+	updateParams  []internal.UpdatingParametersDTO
+	plans         []string
+	regionsByPlan map[string][]string
 }
 
 func main() {
@@ -69,19 +79,47 @@ func main() {
 
 	reader := analytics.NewDBReader(conn.NewSession(nil))
 
+	// Build planID → planName lookup from broker constants.
+	planIDToName := make(map[string]string, len(broker.PlanIDsMapping))
+	for name, id := range broker.PlanIDsMapping {
+		planIDToName[string(id)] = string(name)
+	}
+
 	var (
-		mu    sync.RWMutex
-		cache analytics.StatsResponse
+		mu sync.RWMutex
+		c  cache
 	)
 
 	refresh := func() {
-		resp, err := buildStats(reader, analytics.TimeRange{})
+		provParams, err := reader.FetchActiveProvisioningParamsInRange(analytics.TimeRange{})
 		if err != nil {
-			slog.Error("failed to build stats", "error", err)
+			slog.Error("failed to fetch provisioning params", "error", err)
 			return
 		}
+		updateParams, err := reader.FetchUpdateParamsInRange(analytics.TimeRange{})
+		if err != nil {
+			slog.Error("failed to fetch update params", "error", err)
+			return
+		}
+
+		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+		resp := analytics.StatsResponse{
+			TotalInstances: len(provParams),
+			Provisioning:   analytics.AggregateProvisioning(provParams),
+			Updates:        analytics.AggregateUpdates(updateParams),
+			Distributions:  analytics.BuildDistributions(provParams),
+			Plans:          plans,
+			RegionsByPlan:  regionsByPlan,
+		}
+
 		mu.Lock()
-		cache = resp
+		c = cache{
+			resp:          resp,
+			provParams:    provParams,
+			updateParams:  updateParams,
+			plans:         plans,
+			regionsByPlan: regionsByPlan,
+		}
 		mu.Unlock()
 		slog.Info("stats cache refreshed", "total_instances", resp.TotalInstances)
 	}
@@ -103,19 +141,41 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		planFilter := r.URL.Query().Get("plan")
+		regionFilter := r.URL.Query().Get("region")
+
 		var data analytics.StatsResponse
+
 		if tr.From.IsZero() && tr.To.IsZero() {
+			// Use cached full dataset; filter in memory if needed.
 			mu.RLock()
-			data = cache
+			snapshot := c
 			mu.RUnlock()
+
+			if planFilter == "" && regionFilter == "" {
+				data = snapshot.resp
+			} else {
+				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
+			}
 		} else {
-			data, err = buildStats(reader, tr)
+			// Time-range query: fetch from DB, then filter.
+			provParams, err := reader.FetchActiveProvisioningParamsInRange(tr)
 			if err != nil {
-				slog.Error("failed to build stats for range", "error", err)
+				slog.Error("failed to fetch provisioning params for range", "error", err)
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
 				return
 			}
+			updateParams, err := reader.FetchUpdateParamsInRange(tr)
+			if err != nil {
+				slog.Error("failed to fetch update params for range", "error", err)
+				http.Error(w, "failed to build stats", http.StatusInternalServerError)
+				return
+			}
+			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+			data = buildFilteredStats(provParams, updateParams, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(data); err != nil {
 			slog.Error("failed to encode stats", "error", err)
@@ -143,21 +203,31 @@ func main() {
 	}
 }
 
-func buildStats(reader *analytics.DBReader, tr analytics.TimeRange) (analytics.StatsResponse, error) {
-	provParams, err := reader.FetchActiveProvisioningParamsInRange(tr)
-	if err != nil {
-		return analytics.StatsResponse{}, err
+// buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
+// plans and regionsByPlan are always the full unfiltered index (for dropdown population).
+func buildFilteredStats(
+	provParams []internal.ProvisioningParameters,
+	updateParams []internal.UpdatingParametersDTO,
+	planFilter, regionFilter string,
+	planIDToName map[string]string,
+	plans []string,
+	regionsByPlan map[string][]string,
+) analytics.StatsResponse {
+	filtered := provParams
+	if planFilter != "" {
+		filtered = analytics.FilterByPlan(filtered, planFilter, planIDToName)
 	}
-	updateParams, err := reader.FetchUpdateParamsInRange(tr)
-	if err != nil {
-		return analytics.StatsResponse{}, err
+	if regionFilter != "" {
+		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
 	return analytics.StatsResponse{
-		TotalInstances: len(provParams),
-		Provisioning:   analytics.AggregateProvisioning(provParams),
+		TotalInstances: len(filtered),
+		Provisioning:   analytics.AggregateProvisioning(filtered),
 		Updates:        analytics.AggregateUpdates(updateParams),
-		Distributions:  analytics.BuildDistributions(provParams),
-	}, nil
+		Distributions:  analytics.BuildDistributions(filtered),
+		Plans:          plans,
+		RegionsByPlan:  regionsByPlan,
+	}
 }
 
 // parseTimeRange reads optional ?from=YYYY-MM-DD and ?to=YYYY-MM-DD query params.

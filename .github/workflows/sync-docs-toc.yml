@@ -1,6 +1,6 @@
 name: Sync KEB docs structure to product-kyma-runtime
 
-# Triggered after a successful "Promote KEB to DEV" run (i.e. after every KEB release).
+# Triggered after a successful "Create and promote release" or "Promote KEB to dev" run.
 # Compares docs/ between the released KEB version and the previous one.
 # Only files with <!--{"metadata":{"publish":true}}--> are considered.
 #
@@ -21,7 +21,7 @@ env:
 
 on:
   workflow_run:
-    workflows: ["Promote KEB to dev"]
+    workflows: ["Create and promote release", "Promote KEB to dev"]
     types: [completed]
   workflow_dispatch:
     inputs:
