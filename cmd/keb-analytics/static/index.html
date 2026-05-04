@@ -7,10 +7,24 @@
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     .chart-container { max-width: 800px; margin: 2rem 0; }
-    h2 { margin-top: 2rem; }
     #error { color: red; }
     #controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
     #controls label { font-weight: bold; }
+    .tab-btn {
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: -2px;
+    }
+    .tab-btn.active {
+      color: #0070f3;
+      border-bottom-color: #0070f3;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -39,18 +53,37 @@
   <p id="total"></p>
   <p id="error"></p>
 
-  <h2>Provisioning Parameters</h2>
-  <div class="chart-container"><canvas id="provChart"></canvas></div>
+  <div id="tab-bar" style="display:flex;gap:0;border-bottom:2px solid #ccc;margin-bottom:1rem">
+    <button class="tab-btn active" data-tab="provisioning">Provisioning</button>
+    <button class="tab-btn"        data-tab="update">Update</button>
+    <button class="tab-btn"        data-tab="combined">Combined</button>
+    <button class="tab-btn"        data-tab="distribution">Value Distribution</button>
+  </div>
 
-  <h2>Update Parameters</h2>
-  <div class="chart-container"><canvas id="updateChart"></canvas></div>
+  <div id="tab-provisioning" class="tab-pane">
+    <div class="chart-container"><canvas id="provChart"></canvas></div>
+  </div>
 
-  <h2>Value Distributions</h2>
-  <div id="distributions"></div>
+  <div id="tab-update" class="tab-pane" style="display:none">
+    <div class="chart-container"><canvas id="updateChart"></canvas></div>
+  </div>
+
+  <div id="tab-combined" class="tab-pane" style="display:none">
+    <div class="chart-container"><canvas id="combinedChart"></canvas></div>
+  </div>
+
+  <div id="tab-distribution" class="tab-pane" style="display:none">
+    <div id="dist-controls" style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+      <label for="distParam" style="font-weight:bold">Parameter:</label>
+      <select id="distParam"></select>
+    </div>
+    <div class="chart-container"><canvas id="distChart"></canvas></div>
+  </div>
 
   <script>
     const charts = [];
     let currentData = null; // last fetched StatsResponse (full, unfiltered by plan/region)
+    let activeTab = 'provisioning';
 
     function destroyCharts() {
       charts.forEach(c => c.destroy());
@@ -101,61 +134,124 @@
       });
     }
 
-    function renderCharts(data) {
-      destroyCharts();
-      document.getElementById('distributions').innerHTML = '';
-      document.getElementById('error').textContent = '';
+    function renderBar(canvasId, stats) {
+      if (!stats || !stats.parameters || stats.parameters.length === 0) return;
+      const labels = stats.parameters.map(p => p.parameter);
+      const pct = stats.parameters.map(p =>
+        p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
+      );
+      const chart = new Chart(document.getElementById(canvasId), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: '% instances with parameter set', data: pct,
+            backgroundColor: 'rgba(54,162,235,0.6)' }]
+        },
+        options: { indexAxis: 'y', scales: { x: { max: 100 } } }
+      });
+      charts.push(chart);
+    }
 
+    // mergeStats merges two ParameterStats objects into one.
+    // Parameters present in both have set_count and total summed.
+    // Result is sorted by descending set_count, then alphabetically.
+    function mergeStats(prov, upd) {
+      const map = {};
+      function absorb(stats) {
+        (stats.parameters || []).forEach(p => {
+          if (!map[p.parameter]) map[p.parameter] = { set_count: 0, total: 0 };
+          map[p.parameter].set_count += p.set_count;
+          map[p.parameter].total    += p.total;
+        });
+      }
+      absorb(prov);
+      absorb(upd);
+      const parameters = Object.entries(map)
+        .map(([parameter, v]) => ({ parameter, set_count: v.set_count, total: v.total }))
+        .sort((a, b) =>
+          b.set_count !== a.set_count
+            ? b.set_count - a.set_count
+            : a.parameter.localeCompare(b.parameter)
+        );
+      return { parameters };
+    }
+
+    function populateDistParam(distributions) {
+      const sel = document.getElementById('distParam');
+      const current = sel.value;
+      sel.innerHTML = '';
+      (distributions || []).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.parameter;
+        opt.textContent = d.parameter;
+        if (d.parameter === current) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      // Default to first if previous selection no longer exists
+      if (!sel.value && distributions && distributions.length) {
+        sel.value = distributions[0].parameter;
+      }
+    }
+
+    function renderDistTab(data) {
+      populateDistParam(data.distributions);
+      const sel = document.getElementById('distParam');
+      const chosen = sel.value;
+      const dist = (data.distributions || []).find(d => d.parameter === chosen);
+      if (!dist) return;
+
+      const labels = Object.keys(dist.values);
+      const vals   = Object.values(dist.values);
+      const chart  = new Chart(document.getElementById('distChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'count', data: vals,
+            backgroundColor: 'rgba(255,159,64,0.6)' }]
+        },
+        options: { scales: { y: { ticks: { stepSize: 1, precision: 0 } } } }
+      });
+      charts.push(chart);
+    }
+
+    function renderActiveTab(data) {
+      destroyCharts();
+      document.getElementById('error').textContent = '';
       document.getElementById('total').textContent =
         'Total active instances: ' + data.total_instances;
 
-      function renderBar(canvasId, stats) {
-        if (!stats || !stats.parameters || stats.parameters.length === 0) return;
-        const labels = stats.parameters.map(p => p.parameter);
-        const pct = stats.parameters.map(p =>
-          p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
-        );
-        const chart = new Chart(document.getElementById(canvasId), {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{ label: '% instances with parameter set', data: pct,
-              backgroundColor: 'rgba(54,162,235,0.6)' }]
-          },
-          options: { indexAxis: 'y', scales: { x: { max: 100 } } }
-        });
-        charts.push(chart);
+      if (activeTab === 'provisioning') {
+        renderBar('provChart', data.provisioning);
+      } else if (activeTab === 'update') {
+        renderBar('updateChart', data.updates);
+      } else if (activeTab === 'combined') {
+        renderBar('combinedChart', mergeStats(data.provisioning, data.updates));
+      } else if (activeTab === 'distribution') {
+        renderDistTab(data);
       }
-
-      renderBar('provChart', data.provisioning);
-      renderBar('updateChart', data.updates);
-
-      const distDiv = document.getElementById('distributions');
-      (data.distributions || []).forEach(dist => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'chart-container';
-        const title = document.createElement('h3');
-        title.textContent = dist.parameter;
-        const canvas = document.createElement('canvas');
-        canvas.id = 'dist_' + dist.parameter;
-        wrapper.appendChild(title);
-        wrapper.appendChild(canvas);
-        distDiv.appendChild(wrapper);
-
-        const labels = Object.keys(dist.values);
-        const vals = Object.values(dist.values);
-        const chart = new Chart(canvas, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{ label: 'count', data: vals,
-              backgroundColor: 'rgba(255,159,64,0.6)' }]
-          },
-          options: { scales: { y: { ticks: { stepSize: 1, precision: 0 } } } }
-        });
-        charts.push(chart);
-      });
     }
+
+    function switchTab(name) {
+      activeTab = name;
+      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      document.getElementById('tab-' + name).style.display = '';
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === name);
+      });
+      if (currentData) renderActiveTab(currentData);
+    }
+
+    document.getElementById('tab-bar').addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (btn) switchTab(btn.dataset.tab);
+    });
+
+    document.getElementById('distParam').addEventListener('change', () => {
+      if (currentData) {
+        destroyCharts();
+        renderDistTab(currentData);
+      }
+    });
 
     async function load() {
       document.getElementById('error').textContent = '';
@@ -176,7 +272,7 @@
       const selectedPlan = document.getElementById('plan').value;
       populateRegionDropdown(data.regions_by_plan, selectedPlan);
 
-      renderCharts(data);
+      renderActiveTab(data);
     }
 
     function onPlanChange() {
