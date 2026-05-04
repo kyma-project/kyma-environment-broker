@@ -17,4 +17,4 @@ The feature is controlled by a new environment variable:
 
 SAP Converged Cloud (OpenStack) plans are not affected — they do not configure node volumes.
 
-Once enabled, this feature will also be used as part of the migration of existing clusters to machine-type-appropriate node volume sizes.
+The feature is disabled by default. Once KCR and the cluster volume migration tooling are ready, a separate mandatory notable change will be published to enable it. The migration tool will be used to migrate existing clusters to the new machine-type-appropriate volume sizes.
