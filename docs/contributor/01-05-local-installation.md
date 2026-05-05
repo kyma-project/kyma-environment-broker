@@ -125,6 +125,64 @@ The diagram illustrates the architecture based on an example provisioning reques
    }'
    ```
 
+## Seeding Analytics Data Locally
+
+To populate the local cluster with test data for the KEB Analytics dashboard, use the following workflow.
+
+### Prerequisites
+
+* `python3` with `psycopg2` and `requests` packages:
+
+  ```bash
+  pip install psycopg2-binary requests
+  ```
+
+### Procedure
+
+1. If you have an existing local cluster, recreate it to start clean:
+
+   ```bash
+   ./scripts/recreate-local-cluster.sh
+   ```
+
+2. Install KEB:
+
+   ```bash
+   make install
+   ```
+
+3. Create dummy CredentialsBinding CRs in `garden-kyma-dev` to support seeding large numbers of instances without exhausting the HAP pool (the local `aws` limit is 3 instances per binding):
+
+   ```bash
+   ./scripts/create-local-hap-bindings.sh --instances 1000
+   ```
+
+4. Port-forward the KEB service and the database:
+
+   ```bash
+   kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432
+   ```
+
+5. Seed instances using the analytics seed script. Adjust `--instances` as needed:
+
+   ```bash
+   python3 utils/seed_analytics.py --instances 1000
+   ```
+
+6. Spread the `created_at` timestamps over the past 90 days so that time-based charts show meaningful data:
+
+   ```bash
+   python3 utils/backdate_operations.py --days 90
+   ```
+
+7. Port-forward the analytics service:
+
+   ```bash
+   kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8081:8081
+   ```
+
+8. Open `http://localhost:8081` to view the KEB Analytics dashboard. Use the **Refresh** button to reload aggregated data after seeding.
+
 ### Kyma Control Plane (KCP) CLI
 
 To list, filter, and observe runtimes and their various attributes and states using the KCP CLI, set the **keb-api-url** to `http://localhost:8080` in the KCP configuration file.
