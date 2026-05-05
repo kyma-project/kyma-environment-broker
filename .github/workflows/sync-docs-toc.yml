@@ -55,6 +55,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          fetch-tags: true
           # For workflow_run: pin to the exact commit that triggered the upstream workflow.
           # For workflow_dispatch: empty string → checkout the default branch HEAD.
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}

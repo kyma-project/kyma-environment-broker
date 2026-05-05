@@ -145,11 +145,26 @@ Packages shared across binaries: `common/gardener/`, `common/runtime/`, `common/
 
 #### Storage Layer
 
-PostgreSQL accessed through `internal/storage/`. The `postsql/` sub-package contains the real implementations; `memory/` contains in-memory implementations used in tests. Storage interfaces are defined in `internal/storage/driver.go` (or similar root files).
+PostgreSQL accessed through `internal/storage/`. The `postsql/` sub-package contains the real implementations; `memory/` contains in-memory implementations used in tests. Storage interfaces are defined in `internal/storage/storage.go` and compose multiple sub-interfaces (`Instances`, `Operations`, `Provisioning`, `Deprovisioning`, etc.). All storage access goes through these interfaces — never import drivers directly.
 
 #### Configuration
 
-Loaded at startup from environment variables via `vrischmann/envconfig`. Extensive configuration is documented in `docs/contributor/02-30-keb-configuration.md`.
+Loaded at startup from environment variables via `vrischmann/envconfig`. Extensive configuration is documented in `docs/contributor/02-30-keb-configuration.md`. ConfigMaps can inject runtime overrides, but most settings require an app restart to take effect.
+
+#### Operation/Step State Machine
+
+Operations (provisioning, deprovisioning, update) are **pull-based**: a worker fetches an operation from the DB, runs it through stages/steps, then either completes it or re-queues it. Steps return `(operation, retryAfter, error)`:
+- `retryAfter == 0` → step succeeded, continue to next step
+- `retryAfter > 0` → step needs to retry after that duration (e.g., waiting for infra)
+- `error != nil` → operation fails
+
+Steps are registered in `cmd/broker/{provisioning,deprovisioning,update}.go` as a slice of anonymous structs with `step`, `disabled`, and optional `condition` fields — **not** via any auto-discovery. To add a new step, implement the `Step` interface in `internal/process/` and register it in the appropriate `cmd/broker/` file.
+
+Wrapper steps (`HolderStep`, `SkipForTrialPlanStep`, etc.) modify execution without changing business logic. Use `StepCondition` functions for plan-specific or config-driven conditional execution.
+
+#### Provider System
+
+Providers are selected by plan ID (not cloud provider name) in `internal/provider/`. Adding a new hyperscaler requires: (1) implementing provider interfaces, (2) adding a case in the provider selection function, (3) extending YAML configuration.
 
 ### Testing Conventions
 
@@ -157,3 +172,4 @@ Loaded at startup from environment variables via `vrischmann/envconfig`. Extensi
 - Integration-style tests that need a database use PostgreSQL.
 - Fast, short unit tests use the in-memory storage from `internal/storage/driver/memory/`.
 - Test suites use `TestMain` or `suite_test.go` files for shared setup.
+- `make test` runs tests with FIPS140 enforcement (`GODEBUG=fips140=only`). All cryptographic operations must be FIPS-compliant.
