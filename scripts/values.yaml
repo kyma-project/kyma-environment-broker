@@ -467,5 +467,6 @@ hap:
     allowedGlobalAccounts: ["*"]
     limits:
       default: 999999
+      aws: 3
 
 subscriptionGardenerResource: CredentialsBinding
