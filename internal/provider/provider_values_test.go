@@ -682,7 +682,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 	})
 
 	t.Run("SAP Converged Cloud provider", func(t *testing.T) {
-		const defaultVolumeSizeGb = 0
+		const defaultVolumeSizeGb = 80
 
 		changedDefaultMachineType := "g_c64_m256"
 

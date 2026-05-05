@@ -186,7 +186,7 @@ aws:
 		assert.ElementsMatch(t, []string{"eu-west-1a", "eu-west-1b", "eu-west-1c"}, workers[0].Zones)
 	})
 
-	t.Run("should skip volume for openstack provider", func(t *testing.T) {
+	t.Run("should set volume for openstack provider without type", func(t *testing.T) {
 		// given
 		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
@@ -201,6 +201,7 @@ aws:
 		workers, err := provider.CreateAdditionalWorkers(
 			internal.ProviderValues{
 				ProviderType: "openstack",
+				VolumeSizeGb: 80,
 			},
 			nil,
 			additionalWorkerNodePools,
@@ -218,9 +219,11 @@ aws:
 
 		// then
 		assert.NoError(t, err)
-		assert.Len(t, workers, 1)
+		require.Len(t, workers, 1)
 		assert.Equal(t, "worker", workers[0].Name)
-		assert.Nil(t, workers[0].Volume)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "80Gi", workers[0].Volume.VolumeSize)
+		assert.Nil(t, workers[0].Volume.Type)
 	})
 
 	t.Run("should use discovered zones", func(t *testing.T) {

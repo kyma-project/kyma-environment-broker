@@ -119,8 +119,7 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 
-			if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud &&
-				runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+			if s.kcrVolumeProvider != nil {
 				resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
 				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
 					pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
@@ -131,7 +130,13 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 					}
 					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
 				}
-				runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
+				if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+					runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
+				} else {
+					runtime.Spec.Shoot.Provider.Workers[0].Volume = &gardener.Volume{
+						VolumeSize: fmt.Sprintf("%dGi", volGb),
+					}
+				}
 			}
 		} else {
 			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
@@ -166,7 +171,7 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 	currentAdditionalWorkers := s.getCurrentAdditionalWorkers(*runtime)
 
 	var volumeOverrides map[string]int
-	if s.kcrVolumeProvider != nil && pkg.CloudProviderFromString(operation.ProviderValues.ProviderType) != pkg.SapConvergedCloud {
+	if s.kcrVolumeProvider != nil {
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {

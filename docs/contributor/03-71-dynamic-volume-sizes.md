@@ -13,9 +13,6 @@ The feature is controlled by two environment variables:
 | **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** | `false` | Enables dynamic volume size lookup. When `false`, the static plan default is used. |
 | **APP_BROKER_KCR_CONFIG_MAP_NAME** | `consumption-reporter-config` | Name of the ConfigMap in the `kcp-system` namespace that provides the volume sizes. |
 
-> ### Note:
-> This feature is not applied to SAP Converged Cloud (OpenStack) plans, which do not configure node volumes.
-
 ## Behavior
 
 ### Provisioning
@@ -40,4 +37,4 @@ KEB reads the ConfigMap on every provisioning and update operation. There is no 
 
 ## Startup Validation
 
-When **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** is `true`, KEB reads the ConfigMap at startup and verifies that every machine type in the providers' configuration (AWS, Azure, GCP, Alicloud) has a valid entry. If any machine types are missing, KEB exits with a fatal error that lists all missing entries at once.
+When **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** is `true`, KEB reads the ConfigMap at startup and verifies that every machine type in the providers' configuration (AWS, Azure, GCP, Alicloud, SAP Converged Cloud) has a valid entry. If any machine types are missing, KEB exits with a fatal error that lists all missing entries at once.

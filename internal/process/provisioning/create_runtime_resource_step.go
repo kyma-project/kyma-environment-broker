@@ -237,27 +237,26 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		},
 	}
 
-	if steps.IsNotSapConvergedCloud(operation.CloudProvider) {
-		volGb := values.VolumeSizeGb
-		if s.kcrVolumeProvider != nil {
-			looked, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
-				pkg.CloudProviderFromString(values.ProviderType),
-				provider.Workers[0].Machine.Type)
-			if err != nil {
-				return imv1.Provider{}, err
-			}
-			volGb = looked
+	volGb := values.VolumeSizeGb
+	if s.kcrVolumeProvider != nil {
+		looked, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+			pkg.CloudProviderFromString(values.ProviderType),
+			provider.Workers[0].Machine.Type)
+		if err != nil {
+			return imv1.Provider{}, err
 		}
-		provider.Workers[0].Volume = &gardener.Volume{
-			Type:       ptr.String(values.DiskType),
-			VolumeSize: fmt.Sprintf("%dGi", volGb),
-		}
+		volGb = looked
 	}
+	vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
+	if values.DiskType != "" {
+		vol.Type = ptr.String(values.DiskType)
+	}
+	provider.Workers[0].Volume = vol
 
 	provider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
 
 	var volumeOverrides map[string]int
-	if s.kcrVolumeProvider != nil && steps.IsNotSapConvergedCloud(operation.CloudProvider) {
+	if s.kcrVolumeProvider != nil {
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(values.ProviderType)
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {

@@ -381,7 +381,7 @@ func main() {
 	var kcrVolumeProvider *provider.KCRVolumeProvider
 	if cfg.Broker.DynamicVolumeSizeEnabled {
 		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
-		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud})
+		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud, pkg.SapConvergedCloud})
 		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
 		log.Info("KCR volume sizes validated successfully")
 	}

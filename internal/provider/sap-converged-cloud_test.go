@@ -36,7 +36,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 		Region:               "eu-de-1",
 		Purpose:              "production",
 		DiskType:             "",
-		VolumeSizeGb:         0,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -70,7 +70,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 		Region:               "eu-de-2",
 		Purpose:              "production",
 		DiskType:             "",
-		VolumeSizeGb:         0,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -104,7 +104,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 		Region:               "ap-jp-1",
 		Purpose:              "production",
 		DiskType:             "",
-		VolumeSizeGb:         0,
+		VolumeSizeGb:         80,
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }

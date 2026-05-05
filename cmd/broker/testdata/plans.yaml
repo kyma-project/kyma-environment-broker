@@ -1,4 +1,5 @@
 sap-converged-cloud:
+  volumeSizeGb: 80
   regularMachines:
     - "g_c2_m8"
     - "g_c4_m16"

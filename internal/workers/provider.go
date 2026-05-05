@@ -85,21 +85,20 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
 		}
 
-		if values.ProviderType != "openstack" {
-			if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) && currentAdditionalWorker.Volume != nil {
-				worker.Volume = currentAdditionalWorker.Volume
-			} else {
-				volGb := values.VolumeSizeGb
-				if volumeOverrides != nil {
-					if override, ok := volumeOverrides[additionalWorkerNodePool.MachineType]; ok {
-						volGb = override
-					}
-				}
-				worker.Volume = &gardener.Volume{
-					Type:       ptr.String(values.DiskType),
-					VolumeSize: fmt.Sprintf("%dGi", volGb),
+		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) && currentAdditionalWorker.Volume != nil {
+			worker.Volume = currentAdditionalWorker.Volume
+		} else {
+			volGb := values.VolumeSizeGb
+			if volumeOverrides != nil {
+				if override, ok := volumeOverrides[additionalWorkerNodePool.MachineType]; ok {
+					volGb = override
 				}
 			}
+			vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
+			if values.DiskType != "" {
+				vol.Type = ptr.String(values.DiskType)
+			}
+			worker.Volume = vol
 		}
 
 		worker.CRI = ToGardenerCRI(additionalWorkerNodePool.Gvisor)

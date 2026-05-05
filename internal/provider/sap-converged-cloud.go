@@ -43,6 +43,7 @@ func (p *SapConvergedCloudInputProvider) Provide() internal.ProviderValues {
 		ProviderType:         OpenstackProviderType,
 		Region:               region,
 		Purpose:              p.Purpose,
+		VolumeSizeGb:         80,
 		DiskType:             "",
 		FailureTolerance:     &p.FailureTolerance,
 	}

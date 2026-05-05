@@ -1863,10 +1863,9 @@ aws:
 	assert.Equal(t, "84Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
 }
 
-func TestUpdateRuntimeStep_KCRVolumeProvider_SkipsForSapConvergedCloud(t *testing.T) {
-	// SapConvergedCloud (openstack) workers have no Volume; KCR must not be consulted
-	// even when the machine type changes. Before the fix, IsNotSapConvergedCloud("openstack")
-	// returned true (wrong) and a missing ConfigMap entry would fail the operation.
+func TestUpdateRuntimeStep_KCRVolumeProvider_SapConvergedCloud(t *testing.T) {
+	// SapConvergedCloud (openstack) now uses KCR volume sizing like other providers.
+	// Existing clusters have Volume == nil; the update step must create it on machine type change.
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
@@ -1889,7 +1888,6 @@ func TestUpdateRuntimeStep_KCRVolumeProvider_SkipsForSapConvergedCloud(t *testin
 		},
 	}
 
-	// ConfigMap exists but has NO openstack entry — lookup would fail if attempted.
 	kcrConfigMap := &coreV1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: "consumption-reporter-config", Namespace: kcpSystemNamespace},
 		Data: map[string]string{
@@ -1897,9 +1895,9 @@ func TestUpdateRuntimeStep_KCRVolumeProvider_SkipsForSapConvergedCloud(t *testin
 meters:
   node:
     machine_types:
-      aws:
-        m6i.4xlarge:
-          default_volume_size: "84Gi"
+      openstack:
+        g_c8_m32:
+          default_volume_size: "80Gi"
 `,
 		},
 	}
@@ -1927,7 +1925,14 @@ meters:
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
 
-	// then — succeeds without KCR lookup
+	// then — volume created from KCR, no Type (openstack omits disk type)
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: runtimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
+	require.NoError(t, err)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	assert.Equal(t, "80Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
 }

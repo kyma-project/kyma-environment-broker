@@ -1347,7 +1347,9 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assert.Equal(t, operation.RuntimeID, runtime.Name)
 			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
-			assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Volume)
+			require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].Volume)
+			assert.Equal(t, "80Gi", runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+			assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Volume.Type)
 			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 20, 3, testCase.expectedZonesCount, 0, testCase.expectedZonesCount, testCase.possibleZones)
 
 			assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
