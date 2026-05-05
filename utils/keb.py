@@ -221,10 +221,20 @@ def update_runtime_status(instance_id, state):
     try:
         if VERBOSE:
             print(f"Patching Runtime '{instance_id}' in namespace 'kcp-system' to state '{state}'...")
-        runtimeNameResult = subprocess.run(
-            ["kubectl", "get", "runtime", "-n", "kcp-system", "-l", f"kyma-project.io/instance-id={instance_id}", "-o",
-             "name"], stdout=subprocess.PIPE)
-        runtimeName = runtimeNameResult.stdout.decode().strip()
+        # Wait for the Runtime CR to be created (KEB creates it asynchronously)
+        import time
+        runtimeName = ""
+        for _ in range(30):
+            result = subprocess.run(
+                ["kubectl", "get", "runtime", "-n", "kcp-system", "-l", f"kyma-project.io/instance-id={instance_id}", "-o", "name"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            runtimeName = result.stdout.decode().strip()
+            if runtimeName:
+                break
+            time.sleep(1)
+        if not runtimeName:
+            print(f"Runtime CR for instance '{instance_id}' not found after 30s, skipping patch.")
+            return
         patch_command = [
             "kubectl", "patch", runtimeName,
             "-n", "kcp-system",
