@@ -82,14 +82,15 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 		}
 
 		var value string
-		switch behavior {
-		case behaviorCount:
-			if fv.Kind() == reflect.Slice || fv.Kind() == reflect.Array {
-				value = fmt.Sprintf("%d", fv.Len())
-			} else {
-				continue
-			}
-		default: // behaviorValue
+		switch {
+		case fv.Kind() == reflect.Slice || fv.Kind() == reflect.Array:
+			value = fmt.Sprintf("%d", fv.Len())
+		case fv.Kind() == reflect.Struct:
+			value = "1"
+		case behavior == behaviorCount:
+			// behaviorCount on a non-slice/non-struct: skip
+			continue
+		default: // behaviorValue on scalar
 			switch fv.Kind() {
 			case reflect.String:
 				value = fv.String()
@@ -101,8 +102,7 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			case reflect.Bool:
 				value = fmt.Sprintf("%t", fv.Bool())
 			default:
-				// struct (e.g. OIDCConnectDTO dereferenced) — treat as set/present
-				value = "set"
+				continue
 			}
 		}
 
