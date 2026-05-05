@@ -22,25 +22,25 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.29.11` |
+| global.images.kyma_environment_<br>broker.version | - | `1.29.13` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.11` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.29.13` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.11` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.29.13` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.11` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.29.13` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.11` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.29.13` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.11` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.29.13` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.11` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.29.13` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.11` |
-| global.images.keb_analytics.<br>dir | - | None |
-| global.images.keb_analytics.<br>version | - | `1.29.11` |
-| global.images.keb_analytics.<br>repository | - | `` |
-| global.images.keb_analytics.<br>tag | - | `` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.29.13` |
+| global.images.kyma_environment_<br>analytics.dir | - | None |
+| global.images.kyma_environment_<br>analytics.version | - | `1.29.13` |
+| global.images.kyma_environment_<br>analytics.repository | - | `` |
+| global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
@@ -85,8 +85,6 @@
 | analytics.oauth2Proxy.<br>enabled | - | `True` |
 | analytics.oauth2Proxy.<br>image.repository | - | `quay.io/oauth2-proxy/oauth2-proxy` |
 | analytics.oauth2Proxy.<br>image.tag | - | `v7.7.1` |
-| analytics.oauth2Proxy.<br>clientSecret | - | `` |
-| analytics.oauth2Proxy.<br>cookieSecret | - | `` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |
