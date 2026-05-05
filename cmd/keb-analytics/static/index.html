@@ -10,6 +10,8 @@
     #error { color: red; }
     #controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
     #controls label { font-weight: bold; }
+    #refresh-btn { padding: 0.3rem 0.9rem; cursor: pointer; font-size: 0.95rem; }
+    #refresh-btn:disabled { opacity: 0.5; cursor: default; }
     .tab-btn {
       padding: 0.5rem 1.2rem;
       border: none;
@@ -48,6 +50,8 @@
     <select id="region">
       <option value="">All regions</option>
     </select>
+
+    <button id="refresh-btn">Refresh</button>
   </div>
 
   <p id="total"></p>
@@ -288,6 +292,19 @@
     document.getElementById('period').addEventListener('change', load);
     document.getElementById('plan').addEventListener('change', onPlanChange);
     document.getElementById('region').addEventListener('change', load);
+    document.getElementById('refresh-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true;
+      btn.textContent = 'Refreshing…';
+      try {
+        await fetch('/api/refresh', { method: 'POST' });
+      } catch(e) {
+        document.getElementById('error').textContent = 'Refresh failed: ' + e;
+      }
+      await load();
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    });
     load();
   </script>
 </body>
