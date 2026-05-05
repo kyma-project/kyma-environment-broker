@@ -166,7 +166,7 @@ To populate the local cluster with test data for the KEB Analytics dashboard, us
 5. Seed instances using the analytics seed script. Adjust `--instances` as needed:
 
    ```bash
-   python3 utils/seed_analytics.py --instances 1000
+   python3 utils/seed_analytics.py --count 1000
    ```
 
 6. Spread the `created_at` timestamps over the past 90 days so that time-based charts show meaningful data:
