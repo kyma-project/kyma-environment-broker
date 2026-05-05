@@ -173,9 +173,12 @@ NETWORKING_CONFIGS = [
 MODULES_CONFIGS = [
     None,  # ~55% default modules
     {"default": True},
-    {"default": False, "list": [{"name": "keda"}, {"name": "istio"}]},
-    {"default": True,  "list": [{"name": "keda"}, {"name": "serverless"}, {"name": "eventing"}]},
-    {"default": False, "list": [{"name": "keda"}, {"name": "istio"}, {"name": "serverless"}, {"name": "eventing"}]},
+    {"default": True, "channel": "fast"},
+    {"default": True, "channel": "regular"},
+    {"list": [{"name": "keda"}, {"name": "istio"}]},
+    {"list": [{"name": "keda"}, {"name": "serverless"}, {"name": "eventing"}]},
+    {"list": [{"name": "keda"}, {"name": "istio"}, {"name": "serverless"}, {"name": "eventing"}]},
+    {"channel": "fast", "list": [{"name": "keda"}, {"name": "istio"}]},
 ]
 
 ACL_CONFIGS = [
@@ -250,7 +253,7 @@ def build_parameters(plan, rng):
         params["networking"] = networking
 
     # modules — set for ~45% of instances
-    modules = weighted_choice([(None, 55)] + [(m, 11) for m in MODULES_CONFIGS[1:]])
+    modules = weighted_choice([(None, 55)] + [(m, 6) for m in MODULES_CONFIGS[1:]])
     if modules is not None:
         params["modules"] = modules
 
@@ -258,18 +261,9 @@ def build_parameters(plan, rng):
     if rng.random() < 0.15:
         params["colocateControlPlane"] = rng.choice([True, False])
 
-    # ingressFiltering — set for ~20% of instances
-    if rng.random() < 0.20:
-        params["ingressFiltering"] = rng.choice([True, False])
-
-    # accessControlList — set for ~30% of instances
-    acl = weighted_choice([(None, 70)] + [(a, 10) for a in ACL_CONFIGS[1:]])
-    if acl is not None:
-        params["accessControlList"] = acl
-
-    # gvisor — set for ~10% of instances (aws/gcp only)
-    if plan in ("aws", "gcp") and rng.random() < 0.10:
-        params["gvisor"] = {"enabled": True}
+    # ingressFiltering — set for ~20% of instances (not available in local env, skip provisioning)
+    # accessControlList — not supported for all plans, skip provisioning
+    # gvisor — not available in local env, skip provisioning
 
     return params
 
