@@ -163,6 +163,28 @@ PLAN_REGIONS = {
     ],
 }
 
+NETWORKING_CONFIGS = [
+    None,  # ~60% no custom networking
+    {"nodes": "10.250.0.0/16"},
+    {"nodes": "10.250.0.0/16", "pods": "10.96.0.0/13", "services": "10.104.0.0/13"},
+    {"nodes": "10.250.0.0/16", "pods": "10.96.0.0/13", "services": "10.104.0.0/13", "dualStack": True},
+]
+
+MODULES_CONFIGS = [
+    None,  # ~55% default modules
+    {"default": True},
+    {"default": False, "list": [{"name": "keda"}, {"name": "istio"}]},
+    {"default": True,  "list": [{"name": "keda"}, {"name": "serverless"}, {"name": "eventing"}]},
+    {"default": False, "list": [{"name": "keda"}, {"name": "istio"}, {"name": "serverless"}, {"name": "eventing"}]},
+]
+
+ACL_CONFIGS = [
+    None,  # ~70% no ACL
+    {"allowedCIDRs": ["10.0.0.0/8"]},
+    {"allowedCIDRs": ["10.0.0.0/8", "192.168.0.0/16"]},
+    {"allowedCIDRs": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]},
+]
+
 MACHINE_TYPES = {
     "aws":        ["m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m5.xlarge"],
     "azure":      ["Standard_D2s_v5", "Standard_D4s_v5", "Standard_D8s_v5", "Standard_D16s_v5", "Standard_D4_v3", "Standard_D8_v3"],
@@ -221,6 +243,33 @@ def build_parameters(plan, rng):
         pool_count = rng.choice([1, 1, 2])
         pools = rng.sample(WORKER_POOLS[plan], min(pool_count, len(WORKER_POOLS[plan])))
         params["additionalWorkerNodePools"] = pools
+
+    # networking — set for ~20% of instances
+    networking = weighted_choice([(None, 60)] + [(n, 13) for n in NETWORKING_CONFIGS[1:]])
+    if networking is not None:
+        params["networking"] = networking
+
+    # modules — set for ~45% of instances
+    modules = weighted_choice([(None, 55)] + [(m, 11) for m in MODULES_CONFIGS[1:]])
+    if modules is not None:
+        params["modules"] = modules
+
+    # colocateControlPlane — set for ~15% of instances
+    if rng.random() < 0.15:
+        params["colocateControlPlane"] = rng.choice([True, False])
+
+    # ingressFiltering — set for ~20% of instances
+    if rng.random() < 0.20:
+        params["ingressFiltering"] = rng.choice([True, False])
+
+    # accessControlList — set for ~30% of instances
+    acl = weighted_choice([(None, 70)] + [(a, 10) for a in ACL_CONFIGS[1:]])
+    if acl is not None:
+        params["accessControlList"] = acl
+
+    # gvisor — set for ~10% of instances (aws/gcp only)
+    if plan in ("aws", "gcp") and rng.random() < 0.10:
+        params["gvisor"] = {"enabled": True}
 
     return params
 
@@ -300,6 +349,19 @@ def build_update_parameters(plan, rng):
         pool_count = rng.choice([1, 2])
         pools = rng.sample(WORKER_POOLS[plan], min(pool_count, len(WORKER_POOLS[plan])))
         updates["additionalWorkerNodePools"] = pools
+
+    # ingressFiltering — set for ~15% of updates
+    if rng.random() < 0.15:
+        updates["ingressFiltering"] = rng.choice([True, False])
+
+    # accessControlList — set for ~20% of updates
+    acl = weighted_choice([(None, 80)] + [(a, 7) for a in ACL_CONFIGS[1:]])
+    if acl is not None:
+        updates["accessControlList"] = acl
+
+    # gvisor — set for ~10% of updates (aws/gcp only)
+    if plan in ("aws", "gcp") and rng.random() < 0.10:
+        updates["gvisor"] = {"enabled": rng.choice([True, False])}
 
     return updates
 
