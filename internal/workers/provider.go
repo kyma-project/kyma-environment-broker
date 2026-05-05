@@ -85,7 +85,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
 		}
 
-		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) && currentAdditionalWorker.Volume != nil {
+		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) {
 			worker.Volume = currentAdditionalWorker.Volume
 		} else {
 			volGb := values.VolumeSizeGb

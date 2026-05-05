@@ -517,6 +517,51 @@ aws:
 		assert.Equal(t, "80Gi", workers[0].Volume.VolumeSize)
 	})
 
+	t.Run("should preserve nil volume when legacy pool is unchanged (autoscaler-only update)", func(t *testing.T) {
+		// given — simulates a legacy SCC cluster where the worker had no volume
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		currentAdditionalWorkers := map[string]gardener.Worker{
+			"worker": {
+				Name:   "worker",
+				Zones:  []string{"zone-a"},
+				Volume: nil,
+			},
+		}
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{Name: "worker", MachineType: "g_c8_m32", HAZones: true, AutoScalerMin: 5},
+		}
+		operation := &internal.Operation{
+			InstanceDetails: internal.InstanceDetails{
+				ProviderValues: &internal.ProviderValues{ProviderType: "openstack"},
+			},
+			PreviousParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+						{Name: "worker", MachineType: "g_c8_m32", AutoScalerMin: 3},
+					},
+				},
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{ProviderType: "openstack", VolumeSizeGb: 80},
+			currentAdditionalWorkers,
+			additionalWorkerNodePools,
+			[]string{"zone-a"},
+			broker.SapConvergedCloudPlanID,
+			map[string][]string{},
+			nil,
+			operation,
+			log,
+		)
+
+		// then — volume must remain nil to avoid triggering an unintended rolling update
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Nil(t, workers[0].Volume)
+	})
+
 	t.Run("should update volume when machine type changes", func(t *testing.T) {
 		// given
 		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())

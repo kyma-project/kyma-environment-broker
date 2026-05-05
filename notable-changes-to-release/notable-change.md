@@ -16,3 +16,5 @@ The feature is controlled by a new environment variable:
 | `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` | `false` | Enables dynamic volume size lookup. |
 
 The feature is disabled by default. Once KCR and the cluster volume migration tooling are ready, a separate mandatory notable change will be published to enable it. The migration tool will be used to migrate existing clusters to the new machine-type-appropriate volume sizes.
+
+Additionally, new SAP Converged Cloud (OpenStack) runtimes now always receive an explicit 80 GiB node volume. Previously, SAP Converged Cloud workers had no volume configured. This change takes effect regardless of the `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` flag.
