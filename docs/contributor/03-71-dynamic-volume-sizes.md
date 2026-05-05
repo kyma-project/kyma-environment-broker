@@ -4,9 +4,9 @@
 
 ## Overview
 
-By default, the node volume size for every plan is a static value defined in the plan configuration. When the Dynamic Volume Sizes feature is enabled, Kyma Environment Broker (KEB) reads the volume size per machine type from the KCR (Kyma Consumption Reporter) ConfigMap instead, so that larger machines automatically receive appropriately sized disks.
+By default, the node volume size for every plan is a static value defined in the plan configuration. When the Dynamic Volume Sizes feature is enabled, Kyma Environment Broker (KEB) reads the volume size per machine type from the Kyma Consumption Reporter (KCR) ConfigMap instead, so that larger machines automatically receive appropriately sized disks.
 
-The feature is controlled by two environment variables:
+The feature is controlled by the following environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
