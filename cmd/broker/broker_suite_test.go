@@ -69,8 +69,8 @@ const (
 // BrokerSuiteTest is a helper which allows to write simple tests of any KEB processes (provisioning, deprovisioning, update).
 // The starting point of a test could be an HTTP call to Broker API.
 type BrokerSuiteTest struct {
-	db             storage.BrokerStorage
-	storageCleanup func() error
+	db              storage.BrokerStorage
+	storageCleanup  func() error
 	analyticsReader *analytics.DBReader
 
 	httpServer *httptest.Server
@@ -252,7 +252,36 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	runtimeHandler.AttachRoutes(ts.router)
 
 	if ts.analyticsReader != nil {
-		ts.router.HandleFunc("/analytics/stats", analytics.NewStatsHandler(ts.analyticsReader))
+		reader := ts.analyticsReader
+		planIDToName := make(map[string]string, len(broker.PlanIDsMapping))
+		for name, id := range broker.PlanIDsMapping {
+			planIDToName[string(id)] = string(name)
+		}
+		ts.router.HandleFunc("/analytics/stats", func(w http.ResponseWriter, r *http.Request) {
+			provParams, err := reader.FetchActiveProvisioningParams()
+			if err != nil {
+				http.Error(w, "failed to fetch provisioning params", http.StatusInternalServerError)
+				return
+			}
+			updateParams, err := reader.FetchUpdateParams()
+			if err != nil {
+				http.Error(w, "failed to fetch update params", http.StatusInternalServerError)
+				return
+			}
+			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+			resp := analytics.StatsResponse{
+				TotalInstances: len(provParams),
+				Provisioning:   analytics.AggregateProvisioning(provParams),
+				Updates:        analytics.AggregateUpdates(updateParams),
+				Distributions:  analytics.BuildDistributions(provParams),
+				Plans:          plans,
+				RegionsByPlan:  regionsByPlan,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, "failed to encode response", http.StatusInternalServerError)
+			}
+		})
 	}
 
 	ts.httpServer = httptest.NewServer(ts.router)
@@ -405,7 +434,7 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 	s.t.Helper()
 	resp := s.CallAPI("GET", "analytics/stats", "")
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	require.Equal(s.t, http.StatusOK, resp.StatusCode)
 	var stats analytics.StatsResponse
 	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(&stats))
