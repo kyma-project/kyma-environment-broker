@@ -7,14 +7,19 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 type fieldBehavior int
 
 const (
-	behaviorValue fieldBehavior = iota // emit field value as string (default)
-	behaviorSkip                       // ignore field entirely
-	behaviorCount                      // emit slice/array length as value
+	behaviorValue   fieldBehavior = iota // emit field value as string (default)
+	behaviorSkip                         // ignore field entirely
+	behaviorCount                        // emit slice/array length as value
+	behaviorModules                      // emit "default" or "custom" for ModulesDTO
+	behaviorGvisor                       // emit "true" or "false" from GvisorDTO.Enabled
+	behaviorACL                          // emit AllowedCIDRs count from AclDTO
+	behaviorNetworking                   // emit optional fields set + dualStack value
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
@@ -27,12 +32,19 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"shootDomain":               behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
+	"networking":                behaviorNetworking,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
 var updatingFieldConfig = map[string]fieldBehavior{
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
 }
 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
@@ -83,6 +95,50 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 
 		var value string
 		switch behavior {
+		case behaviorNetworking:
+			n, ok := fv.Interface().(pkg.NetworkingDTO)
+			if !ok {
+				continue
+			}
+			var parts []string
+			if n.NodesCidr != "" {
+				parts = append(parts, "nodes")
+			}
+			if n.PodsCidr != nil && *n.PodsCidr != "" {
+				parts = append(parts, "pods")
+			}
+			if n.ServicesCidr != nil && *n.ServicesCidr != "" {
+				parts = append(parts, "services")
+			}
+			if n.DualStack != nil {
+				parts = append(parts, fmt.Sprintf("dualStack:%t", *n.DualStack))
+			}
+			value = strings.Join(parts, "+")
+			if value == "" {
+				continue
+			}
+		case behaviorModules:
+			m, ok := fv.Interface().(pkg.ModulesDTO)
+			if !ok {
+				continue
+			}
+			if m.Default != nil && *m.Default {
+				value = "default"
+			} else {
+				value = "custom"
+			}
+		case behaviorGvisor:
+			g, ok := fv.Interface().(pkg.GvisorDTO)
+			if !ok {
+				continue
+			}
+			value = fmt.Sprintf("%t", g.Enabled)
+		case behaviorACL:
+			a, ok := fv.Interface().(pkg.AclDTO)
+			if !ok {
+				continue
+			}
+			value = fmt.Sprintf("%d", len(a.AllowedCIDRs))
 		case behaviorCount:
 			if fv.Kind() == reflect.Slice || fv.Kind() == reflect.Array {
 				value = fmt.Sprintf("%d", fv.Len())

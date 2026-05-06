@@ -108,4 +108,89 @@ func TestBuildDistributions_IncludesRegion(t *testing.T) {
 	assert.True(t, found, "region should appear in distributions")
 }
 
+func TestWalkFields_NetworkingNodesOnly(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		Networking: &pkg.NetworkingDTO{NodesCidr: "10.250.0.0/16"},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["networking"]["nodes"])
+}
+
+func TestWalkFields_NetworkingWithPodsAndServices(t *testing.T) {
+	pods := "10.96.0.0/13"
+	services := "10.104.0.0/13"
+	dto := pkg.ProvisioningParametersDTO{
+		Networking: &pkg.NetworkingDTO{NodesCidr: "10.250.0.0/16", PodsCidr: &pods, ServicesCidr: &services},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["networking"]["nodes+pods+services"])
+}
+
+func TestWalkFields_NetworkingWithDualStack(t *testing.T) {
+	dualStack := true
+	dto := pkg.ProvisioningParametersDTO{
+		Networking: &pkg.NetworkingDTO{NodesCidr: "10.250.0.0/16", DualStack: &dualStack},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["networking"]["nodes+dualStack:true"])
+}
+
+func TestWalkFields_GvisorEnabled(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		Gvisor: &pkg.GvisorDTO{Enabled: true},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["gvisor"]["true"])
+}
+
+func TestWalkFields_GvisorDisabled(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		Gvisor: &pkg.GvisorDTO{Enabled: false},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["gvisor"]["false"])
+}
+
+func TestWalkFields_ACLWithCIDRs(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		AccessControlList: &pkg.AclDTO{AllowedCIDRs: []string{"1.2.3.0/24", "4.5.6.0/24"}},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["accessControlList"]["2"])
+}
+
+func TestWalkFields_ACLEmpty(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		AccessControlList: &pkg.AclDTO{},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["accessControlList"]["0"])
+}
+
+func TestWalkFields_ModulesDefault(t *testing.T) {
+	defaultTrue := true
+	dto := pkg.ProvisioningParametersDTO{
+		Modules: &pkg.ModulesDTO{Default: &defaultTrue},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["modules"]["default"])
+}
+
+func TestWalkFields_ModulesCustom(t *testing.T) {
+	dto := pkg.ProvisioningParametersDTO{
+		Modules: &pkg.ModulesDTO{List: []pkg.ModuleDTO{{Name: "istio"}}},
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	assert.Equal(t, 1, counts["modules"]["custom"])
+}
+
 func strPtr(s string) *string { return &s }
