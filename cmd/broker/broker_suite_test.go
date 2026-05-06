@@ -16,7 +16,6 @@ import (
 
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 
-	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -72,7 +71,7 @@ const (
 type BrokerSuiteTest struct {
 	db             storage.BrokerStorage
 	storageCleanup func() error
-	dbConn         *dbr.Connection
+	analyticsReader *analytics.DBReader
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -166,6 +165,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	storageCleanup, db, dbConn, err := GetStorageForE2ETestsWithConn()
 	assert.NoError(t, err)
 
+	var analyticsReader *analytics.DBReader
+	if dbConn != nil {
+		analyticsReader = analytics.NewDBReader(dbConn.NewSession(nil))
+	}
+
 	require.NoError(t, err)
 
 	gardenerClient := gardener.NewDynamicFakeClient(fixSecrets()...)
@@ -225,14 +229,14 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 
 	ts := &BrokerSuiteTest{
-		db:             db,
-		storageCleanup: storageCleanup,
-		dbConn:         dbConn,
-		router:         httputil.NewRouter(),
-		t:              t,
-		k8sKcp:         cli,
-		k8sSKR:         fakeK8sSKRClient,
-		eventBroker:    eventBroker,
+		db:              db,
+		storageCleanup:  storageCleanup,
+		analyticsReader: analyticsReader,
+		router:          httputil.NewRouter(),
+		t:               t,
+		k8sKcp:          cli,
+		k8sSKR:          fakeK8sSKRClient,
+		eventBroker:     eventBroker,
 
 		k8sDeletionObjectTracker: ot,
 		gardenerClient:           gardenerClient,
@@ -247,9 +251,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.Broker.DefaultRequestRegion, cli, log)
 	runtimeHandler.AttachRoutes(ts.router)
 
-	if dbConn != nil {
-		reader := analytics.NewDBReader(dbConn.NewSession(nil))
-		ts.router.HandleFunc("/analytics/stats", analytics.NewStatsHandler(reader))
+	if ts.analyticsReader != nil {
+		ts.router.HandleFunc("/analytics/stats", analytics.NewStatsHandler(ts.analyticsReader))
 	}
 
 	ts.httpServer = httptest.NewServer(ts.router)
