@@ -55,6 +55,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
+	AdditionalVolumeGb        *Type                          `json:"additionalVolumeGb,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -220,13 +221,14 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name          Type           `json:"name,omitempty"`
-	MachineType   Type           `json:"machineType,omitempty"`
-	HAZones       *Type          `json:"haZones,omitempty"`
-	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
-	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
-	Taints        *TaintsType    `json:"taints,omitempty"`
-	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
+	Name               Type           `json:"name,omitempty"`
+	MachineType        Type           `json:"machineType,omitempty"`
+	HAZones            *Type          `json:"haZones,omitempty"`
+	AutoScalerMin      AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax      AutoscalerType `json:"autoScalerMax,omitempty"`
+	Taints             *TaintsType    `json:"taints,omitempty"`
+	Gvisor             *GvisorType    `json:"gvisor,omitempty"`
+	AdditionalVolumeGb *Type          `json:"additionalVolumeGb,omitempty"`
 }
 
 type TaintsType struct {
@@ -774,7 +776,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalVolumeGb", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -931,5 +933,15 @@ func GvisorProperty() *GvisorType {
 				Default: false,
 			},
 		},
+	}
+}
+
+func AdditionalVolumeGbProperty() *Type {
+	return &Type{
+		Type:        "integer",
+		Title:       "Additional Volume Size (GB)",
+		Description: "Additional disk space in GiB added on top of the default volume size for the worker pool.",
+		Maximum:     1000,
+		Default:     0,
 	}
 }
