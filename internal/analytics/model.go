@@ -12,8 +12,8 @@ type ParameterStats struct {
 	Parameters []ParameterStat `json:"parameters"`
 }
 
-// SetCountFor returns the SetCount for the named parameter, or 0 if not present.
-func (ps ParameterStats) SetCountFor(name string) int {
+// CountFor returns the SetCount for the named parameter, or 0 if not present.
+func (ps ParameterStats) CountFor(name string) int {
 	for _, p := range ps.Parameters {
 		if p.Parameter == name {
 			return p.SetCount

@@ -107,8 +107,8 @@ func TestUpdate(t *testing.T) {
 
 	stats := suite.GetAnalyticsStats()
 	assert.Equal(t, 1, stats.TotalInstances)
-	assert.Equal(t, 1, stats.Provisioning.SetCountFor("oidc"))
-	assert.Equal(t, 1, stats.Updates.SetCountFor("oidc"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("oidc"))
+	assert.Equal(t, 1, stats.Updates.CountFor("oidc"))
 }
 
 func TestUpdateWithACL(t *testing.T) {
@@ -221,10 +221,10 @@ func TestUpdateWithACL(t *testing.T) {
 
 	stats := suite.GetAnalyticsStats()
 	assert.Equal(t, 1, stats.TotalInstances)
-	assert.Equal(t, 1, stats.Provisioning.SetCountFor("region"))
-	assert.Equal(t, 1, stats.Provisioning.SetCountFor("accessControlList"))
-	assert.Equal(t, 2, stats.Updates.SetCountFor("accessControlList"))
-	assert.Equal(t, 1, stats.Updates.SetCountFor("oidc"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("accessControlList"))
+	assert.Equal(t, 2, stats.Updates.CountFor("accessControlList"))
+	assert.Equal(t, 1, stats.Updates.CountFor("oidc"))
 }
 
 func TestAddACL(t *testing.T) {
