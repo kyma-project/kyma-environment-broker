@@ -6,15 +6,20 @@ import (
 	"sort"
 	"strings"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 type fieldBehavior int
 
 const (
-	behaviorValue fieldBehavior = iota // emit field value as string (default)
-	behaviorSkip                       // ignore field entirely
-	behaviorCount                      // emit slice/array length as value
+	behaviorValue      fieldBehavior = iota // emit field value as string (default)
+	behaviorSkip                            // ignore field entirely
+	behaviorCount                           // emit slice/array length as value
+	behaviorModules                         // emit "default" or "custom"
+	behaviorGvisor                          // emit "true" or "false"
+	behaviorACL                             // emit CIDR count as string
+	behaviorNetworking                      // emit set CIDR fields as "+" joined string with dualStack suffix
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
@@ -27,12 +32,53 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"shootDomain":               behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
+	"networking":                behaviorNetworking,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
 var updatingFieldConfig = map[string]fieldBehavior{
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
+}
+
+// handleStructBehavior handles typed struct behaviors (modules, gvisor, acl, networking)
+// by type-asserting the reflect.Value directly. Returns true if the field was handled.
+func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, counts map[string]map[string]int) bool {
+	if fv.Kind() != reflect.Ptr || fv.IsNil() {
+		return behavior == behaviorModules || behavior == behaviorGvisor ||
+			behavior == behaviorACL || behavior == behaviorNetworking
+	}
+	switch behavior {
+	case behaviorModules:
+		if m, ok := fv.Interface().(*pkg.ModulesDTO); ok {
+			record(counts, key, modulesValue(m))
+		}
+		return true
+	case behaviorGvisor:
+		if g, ok := fv.Interface().(*pkg.GvisorDTO); ok {
+			record(counts, key, fmt.Sprintf("%t", g.Enabled))
+		}
+		return true
+	case behaviorACL:
+		if a, ok := fv.Interface().(*pkg.AclDTO); ok {
+			record(counts, key, fmt.Sprintf("%d", len(a.AllowedCIDRs)))
+		}
+		return true
+	case behaviorNetworking:
+		if n, ok := fv.Interface().(*pkg.NetworkingDTO); ok {
+			if v := networkingValue(n); v != "" {
+				record(counts, key, v)
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
@@ -65,6 +111,11 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			behavior = behaviorValue
 		}
 		if behavior == behaviorSkip {
+			continue
+		}
+
+		// Handle typed behaviors that work directly on the pointer before dereferencing
+		if handled := handleStructBehavior(behavior, fv, jsonName, counts); handled {
 			continue
 		}
 
@@ -106,11 +157,44 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			}
 		}
 
-		if _, ok := counts[jsonName]; !ok {
-			counts[jsonName] = make(map[string]int)
-		}
-		counts[jsonName][value]++
+		record(counts, jsonName, value)
 	}
+}
+
+// modulesValue returns "default" if modules.Default is true, otherwise "custom".
+func modulesValue(m *pkg.ModulesDTO) string {
+	if m.Default != nil && *m.Default {
+		return "default"
+	}
+	return "custom"
+}
+
+// networkingValue returns a "+" joined string of the CIDR fields that are set,
+// with "dualStack:<bool>" appended if dualStack is explicitly configured.
+// nodes is mandatory in the schema but may be empty in tests; if nothing is set, returns "".
+func networkingValue(n *pkg.NetworkingDTO) string {
+	var parts []string
+	if n.NodesCidr != "" {
+		parts = append(parts, "nodes")
+	}
+	if n.PodsCidr != nil {
+		parts = append(parts, "pods")
+	}
+	if n.ServicesCidr != nil {
+		parts = append(parts, "services")
+	}
+	if n.DualStack != nil {
+		parts = append(parts, fmt.Sprintf("dualStack:%t", *n.DualStack))
+	}
+	return strings.Join(parts, "+")
+}
+
+// record adds value to counts[key], initialising the inner map if needed.
+func record(counts map[string]map[string]int, key, value string) {
+	if _, ok := counts[key]; !ok {
+		counts[key] = make(map[string]int)
+	}
+	counts[key][value]++
 }
 
 // buildCounts walks all params once and returns field-value occurrence counts.
