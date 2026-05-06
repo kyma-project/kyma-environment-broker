@@ -16,10 +16,12 @@ import (
 
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
@@ -70,6 +72,7 @@ const (
 type BrokerSuiteTest struct {
 	db             storage.BrokerStorage
 	storageCleanup func() error
+	dbConn         *dbr.Connection
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -160,7 +163,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	storageCleanup, db, err := GetStorageForE2ETests()
+	storageCleanup, db, dbConn, err := GetStorageForE2ETestsWithConn()
 	assert.NoError(t, err)
 
 	require.NoError(t, err)
@@ -224,6 +227,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts := &BrokerSuiteTest{
 		db:             db,
 		storageCleanup: storageCleanup,
+		dbConn:         dbConn,
 		router:         httputil.NewRouter(),
 		t:              t,
 		k8sKcp:         cli,
@@ -242,6 +246,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.Broker.DefaultRequestRegion, cli, log)
 	runtimeHandler.AttachRoutes(ts.router)
+
+	if dbConn != nil {
+		reader := analytics.NewDBReader(dbConn.NewSession(nil))
+		ts.router.HandleFunc("/analytics/stats", analytics.NewStatsHandler(reader))
+	}
 
 	ts.httpServer = httptest.NewServer(ts.router)
 
@@ -386,6 +395,18 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	resp, err := cli.Do(req)
 	require.NoError(s.t, err)
 	return resp
+}
+
+// GetAnalyticsStats calls GET /analytics/stats and returns the decoded response.
+// Only available when the suite is backed by a real PostgreSQL database.
+func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
+	s.t.Helper()
+	resp := s.CallAPI("GET", "analytics/stats", "")
+	defer resp.Body.Close()
+	require.Equal(s.t, http.StatusOK, resp.StatusCode)
+	var stats analytics.StatsResponse
+	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(&stats))
+	return stats
 }
 
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,

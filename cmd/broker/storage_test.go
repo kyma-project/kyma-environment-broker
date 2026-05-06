@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
@@ -75,6 +76,13 @@ func GetStorageForE2ETests() (func() error, storage.BrokerStorage, error) {
 		return nil, storage.NewMemoryStorage(), nil
 	}
 	return storage.GetStorageForTests(brokerStorageE2ETestConfig())
+}
+
+func GetStorageForE2ETestsWithConn() (func() error, storage.BrokerStorage, *dbr.Connection, error) {
+	if dbInMemoryForE2ETests() {
+		return nil, storage.NewMemoryStorage(), nil, nil
+	}
+	return storage.GetTestStorageWithConn(brokerStorageE2ETestConfig())
 }
 
 func dbInMemoryForE2ETests() bool {
