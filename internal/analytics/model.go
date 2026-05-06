@@ -12,6 +12,16 @@ type ParameterStats struct {
 	Parameters []ParameterStat `json:"parameters"`
 }
 
+// SetCountFor returns the SetCount for the named parameter, or 0 if not present.
+func (ps ParameterStats) SetCountFor(name string) int {
+	for _, p := range ps.Parameters {
+		if p.Parameter == name {
+			return p.SetCount
+		}
+	}
+	return 0
+}
+
 // DistributionStat holds value breakdown for a single parameter.
 type DistributionStat struct {
 	Parameter string         `json:"parameter"`

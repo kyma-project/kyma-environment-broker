@@ -150,6 +150,11 @@ func TestProvisioningForAWS(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("administrators"))
 }
 
 func TestProvisioningWithACL(t *testing.T) {
@@ -186,6 +191,11 @@ func TestProvisioningWithACL(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("accessControlList"))
 
 	// test validation
 	resp1 := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s-e?accepts_incomplete=true", iid),
