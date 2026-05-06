@@ -74,11 +74,11 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 				continue
 			}
 			fv = fv.Elem()
-		}
-
-		// Skip zero/empty values
-		if fv.IsZero() {
-			continue
+		} else {
+			// Skip zero/empty values for non-pointer fields
+			if fv.IsZero() {
+				continue
+			}
 		}
 
 		var value string
