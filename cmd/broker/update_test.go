@@ -104,6 +104,11 @@ func TestUpdate(t *testing.T) {
 		"kyma-project.io/region":          "eu-west-1",
 		"kyma-project.io/platform-region": "cf-eu10",
 	})
+
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("oidc"))
+	assert.Equal(t, 1, stats.Updates.SetCountFor("oidc"))
 }
 
 func TestUpdateWithACL(t *testing.T) {
@@ -214,6 +219,12 @@ func TestUpdateWithACL(t *testing.T) {
 	runtime = suite.GetRuntimeResourceByInstanceID(iid)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
 
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.SetCountFor("accessControlList"))
+	assert.Equal(t, 2, stats.Updates.SetCountFor("accessControlList"))
+	assert.Equal(t, 1, stats.Updates.SetCountFor("oidc"))
 }
 
 func TestAddACL(t *testing.T) {
