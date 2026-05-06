@@ -72,6 +72,7 @@ type BrokerSuiteTest struct {
 	db              storage.BrokerStorage
 	storageCleanup  func() error
 	analyticsReader *analytics.DBReader
+	cancelMetrics   context.CancelFunc
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -103,6 +104,9 @@ func (s *BrokerSuiteTest) TearDown() {
 		assert.NoError(s.t, err)
 		panic(r)
 	}
+	if s.cancelMetrics != nil {
+		s.cancelMetrics()
+	}
 	s.httpServer.Close()
 	if s.storageCleanup != nil {
 		err := s.storageCleanup()
@@ -128,7 +132,9 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 	}))
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
 	gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
-	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
+	metricsCtx, cancel := context.WithCancel(context.Background())
+	broker.cancelMetrics = cancel
+	broker.metrics = metrics.Register(metricsCtx, broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
