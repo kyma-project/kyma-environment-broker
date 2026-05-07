@@ -6,15 +6,28 @@ The `keb-analytics` binary provides a self-contained analytics UI that shows whi
 
 ## Architecture
 
-`keb-analytics` is a separate Go binary deployed alongside KEB in the same Helm chart. It connects directly to the KEB PostgreSQL database, aggregates parameter usage statistics, and caches them in memory. It exposes a web UI and a JSON API — both without authentication, as network access is restricted to the cluster.
+`keb-analytics` is a separate Go binary deployed alongside KEB in the same Helm chart. It connects directly to the KEB PostgreSQL database, aggregates parameter usage statistics, and caches them in memory. It exposes a web UI and a JSON API protected by an oauth2-proxy sidecar.
 
 ```
 Browser
-  └─► GET /   → embedded HTML+JS UI
-  └─► GET /api/stats → cached aggregation JSON
-                            └─► every 60 min: queries PostgreSQL directly
-                                    └─► active instances only
+  └─► Istio ingress gateway
+        └─► VirtualService → Service :4180
+              └─► oauth2-proxy sidecar (OIDC auth against SAP Accounts Service)
+                    └─► keb-analytics :8080 (HTML+JS UI, /api/stats)
+                              └─► every 60 min: queries PostgreSQL directly
+                                      └─► active instances only
 ```
+
+## Authentication
+
+External access is protected by an **oauth2-proxy** sidecar running in the same pod as `keb-analytics`. All requests pass through oauth2-proxy on port 4180 before reaching the analytics application on port 8080.
+
+- **Identity provider**: SAP Accounts Service (`https://kymatest.accounts400.ondemand.com`)
+- **Protocol**: OIDC with PKCE (S256)
+- **Access control**: Group-based — only members of the `runtimeAdmin`, `runtimeOperator`, or `runtimeViewer` OIDC groups are allowed in
+- **Credentials**: Managed via Vault Secret Operator (VSO); the `keb-analytics-oauth2-proxy` Kubernetes Secret is automatically synced from Vault path `ias` using the fields `keb_analytics_client_id`, `keb_analytics_client_secret`, and `keb_analytics_biscuit_secret`
+
+The Istio `AuthorizationPolicy` restricts pod ingress to the `istio-system` namespace only, and a `NetworkPolicy` limits traffic to the Istio ingress gateway.
 
 ## Configuration
 
@@ -35,7 +48,7 @@ Browser
 
 ### `GET /`
 
-Serves the embedded single-page analytics UI. No authentication required.
+Serves the embedded single-page analytics UI. Requires OIDC authentication via oauth2-proxy.
 
 ### `GET /api/stats`
 
