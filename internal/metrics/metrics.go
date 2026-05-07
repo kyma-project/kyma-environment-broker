@@ -118,5 +118,6 @@ func GetLabels(op internal.Operation) map[string]string {
 	labels["error_category"] = string(op.LastError.GetComponent())
 	labels["error_reason"] = string(op.LastError.GetReason())
 	labels["error"] = op.LastError.Error()
+	labels["provider"] = op.CloudProvider
 	return labels
 }
