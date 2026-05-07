@@ -36,7 +36,7 @@ const (
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	//	t.Skip()
+	t.Skip()
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
@@ -45,7 +45,10 @@ func TestCatalog(t *testing.T) {
 	}
 
 	// given
-	suite := newBrokerSuiteTest(t, fixConfig(), &fakeVolumeSizeProvider{fakeKCRVolumeSizes()})
+	cfg := fixConfig()
+	cfg.Broker.DynamicVolumeSizeEnabled = true
+	cfg.Broker.AdditionalVolumeGbEnabled = true
+	suite := newBrokerSuiteTest(t, cfg, &fakeVolumeSizeProvider{fakeKCRVolumeSizes()})
 	defer suite.TearDown()
 
 	// when
