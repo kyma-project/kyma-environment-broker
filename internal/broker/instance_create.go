@@ -193,8 +193,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 
 	// EXTRACT INPUT PARAMETERS / PROVISIONING PARAMETERS
-	const maxRawParametersSize = 64 * 1024 // 64 KB — ~20x the max valid provisioning payload
-	if len(details.RawParameters) > maxRawParametersSize {
+	if len(details.RawParameters) > MaxRawParametersSize {
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(
 			fmt.Errorf("request parameters too large"), http.StatusBadRequest, "request parameters too large")
 	}

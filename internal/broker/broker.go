@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	KymaServiceID       = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	KymaServiceName     = "kymaruntime"
-	KcpNamespace        = "kcp-system"
-	AllPlansSpecialName = "all"
-	NoPlanSpecialName   = "no-plan"
+	KymaServiceID        = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	KymaServiceName      = "kymaruntime"
+	KcpNamespace         = "kcp-system"
+	AllPlansSpecialName  = "all"
+	NoPlanSpecialName    = "no-plan"
+	MaxRawParametersSize = 64 * 1024 // 64 KB — ~20x the max valid provisioning/update payload
 )
 
 type KymaEnvironmentBroker struct {

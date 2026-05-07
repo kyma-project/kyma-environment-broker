@@ -159,8 +159,7 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
 
-	const maxRawParametersSize = 64 * 1024 // 64 KB — ~20x the max valid update payload
-	if len(details.RawParameters) > maxRawParametersSize {
+	if len(details.RawParameters) > MaxRawParametersSize {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
 			fmt.Errorf("request parameters too large"), http.StatusBadRequest, "request parameters too large")
 	}
