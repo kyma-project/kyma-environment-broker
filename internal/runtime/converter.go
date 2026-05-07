@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/json"
 	"reflect"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -73,7 +74,13 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.Description = source.Description
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
-		target.Parameters = source.ProvisioningParameters.Parameters
+		if len(source.RawParameters) > 0 {
+			target.RawParameters = sanitizeRawParams(source.RawParameters)
+			_ = json.Unmarshal(target.RawParameters, &target.Parameters)
+		} else {
+			// fallback for operations created before this fix
+			target.Parameters = source.ProvisioningParameters.Parameters
+		}
 		target.Parameters.TargetSecret = nil
 		target.Parameters.Kubeconfig = ""
 		if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
@@ -83,6 +90,21 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 			target.UpdatedPlanName = broker.AvailablePlans.GetPlanNameOrEmpty(broker.PlanIDType(source.UpdatedPlanID))
 		}
 	}
+}
+
+// sanitizeRawParams returns the raw JSON with sensitive fields stripped.
+func sanitizeRawParams(raw json.RawMessage) json.RawMessage {
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return raw
+	}
+	delete(m, "targetSecret")
+	delete(m, "kubeconfig")
+	out, err := json.Marshal(m)
+	if err != nil {
+		return raw
+	}
+	return out
 }
 
 func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
