@@ -68,7 +68,7 @@ type Config struct {
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
-	AdditionalVolumeGbEnabled bool `envconfig:"default=false"`
+	AdditionalVolumeGbPlans StringList `envconfig:"optional"`
 
 	DynamicVolumeSizeEnabled bool   `envconfig:"default=false"`
 	KCRConfigMapName         string `envconfig:"default=consumption-reporter-config"`
@@ -107,8 +107,8 @@ func (cfg *Config) Validate() error {
 	if err := validatePlanList(cfg.Binding.BindablePlans, "BindablePlans"); err != nil {
 		return err
 	}
-	if cfg.AdditionalVolumeGbEnabled && !cfg.DynamicVolumeSizeEnabled {
-		return fmt.Errorf("APP_BROKER_ADDITIONAL_VOLUME_GB_ENABLED requires APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED to be true")
+	if len(cfg.AdditionalVolumeGbPlans) > 0 && !cfg.DynamicVolumeSizeEnabled {
+		return fmt.Errorf("APP_BROKER_ADDITIONAL_VOLUME_GB_PLANS requires APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED to be true")
 	}
 	return nil
 }

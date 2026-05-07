@@ -225,9 +225,9 @@ broker:
   trialDocsURL: "https://help.sap.com/docs/"
   # URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema.
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
-  # If true, exposes additionalVolumeGb parameter in the schema, allowing users to request extra disk on top of the default volume size.
-  # Requires dynamicVolumeSizeEnabled to be true.
-  additionalVolumeGbEnabled: "false"
+  # Plans for which the additionalVolumeGb parameter is exposed in the schema.
+  # Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature.
+  additionalVolumeGbPlans: ""
   # If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default.
   dynamicVolumeSizeEnabled: "false"
   # If true, updates runtimeCR labels when moving subaccounts.

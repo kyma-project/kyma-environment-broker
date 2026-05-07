@@ -387,18 +387,17 @@ func createSchemaServiceWithAdditionalVolumeGb(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-		AdditionalVolumeGbEnabled:   true,
+		AdditionalVolumeGbPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
 	})
 }
 
-func TestSchemaService_AdditionalVolumeGbPropertyPresentInAllPlans(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGbPropertyPresentOnEnabledPlans(t *testing.T) {
 	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
 	expected := additionalVolumeGbProperty()
 
 	for _, tc := range planSchemaCases(schemaService,
-		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		AWSPlanName, AzurePlanName, GCPPlanName,
 		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
-		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
@@ -414,7 +413,24 @@ func TestSchemaService_AdditionalVolumeGbPropertyPresentInAllPlans(t *testing.T)
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentWhenFeatureFlagDisabled(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGbPropertyAbsentOnExcludedPlans(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AzureLitePlanName, freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+			assert.NotContains(t, props, "additionalVolumeGb")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeGbAbsentWhenNoPlansConfigured(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
@@ -438,7 +454,7 @@ func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemP
 	expected := additionalVolumeGbProperty()
 
 	for _, tc := range planSchemaCases(schemaService,
-		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		AWSPlanName, AzurePlanName, GCPPlanName,
 		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -453,7 +469,7 @@ func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemP
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPropertiesWhenNoPlansConfigured(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
@@ -470,11 +486,25 @@ func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPr
 	}
 }
 
+func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPropertiesForAzureLite(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
+
+	for _, tc := range planSchemaCases(schemaService, AzureLitePlanName) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+			assert.NotContains(t, itemProps, "additionalVolumeGb")
+		})
+	}
+}
+
 func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
 	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
 
 	for _, tc := range planSchemaCases(schemaService,
-		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		AWSPlanName, AzurePlanName, GCPPlanName,
 		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
