@@ -22,6 +22,31 @@ Browser
 
 External access is protected by an **oauth2-proxy** sidecar running in the same pod as `keb-analytics`. All requests pass through oauth2-proxy on port 4180 before reaching the analytics application on port 8080.
 
+```
+Browser ──► keb-analytics.<domain>
+                │
+                ▼
+        Istio ingress gateway
+                │
+                ▼
+          oauth2-proxy :4180
+                │
+         [no valid session?]
+                │
+        yes     │      no
+         ┌──────┘      └──────────────────────────┐
+         ▼                                         ▼
+  redirect to SAP                         keb-analytics :8080
+  Accounts Service  ◄──── OIDC login ────►  (serves UI / API)
+         │
+         ▼
+  /oauth2/callback
+  (set session cookie)
+         │
+         ▼
+  original request
+```
+
 - **Identity provider**: SAP Accounts Service (`https://kymatest.accounts400.ondemand.com`)
 - **Protocol**: OIDC with PKCE (S256)
 - **Access control**: Group-based — only members of the `runtimeAdmin`, `runtimeOperator`, or `runtimeViewer` OIDC groups are allowed in
