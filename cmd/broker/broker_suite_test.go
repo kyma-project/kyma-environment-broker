@@ -85,6 +85,7 @@ type BrokerSuiteTest struct {
 	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
 	gardenerClient           *dynamicFake.FakeDynamicClient
+	kcrVolumeProvider        broker.VolumeSizeProvider
 }
 
 func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
@@ -113,6 +114,10 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
+func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	return newBrokerSuiteTest(t, cfg, nil, version...)
+}
+
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	defer func() {
 		if r := recover(); r != nil {
@@ -131,7 +136,7 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 	return broker
 }
 
-func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.VolumeSizeProvider, version ...string) *BrokerSuiteTest {
 	defer func() {
 		if r := recover(); r != nil {
 			err := cleanupContainer()
@@ -182,7 +187,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
-	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, kcrVolumeProvider)
 	fatalOnError(err, log)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -232,6 +237,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 		k8sDeletionObjectTracker: ot,
 		gardenerClient:           gardenerClient,
+		kcrVolumeProvider:        kcrVolumeProvider,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
@@ -447,13 +453,21 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
-	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
+	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, s.kcrVolumeProvider)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
 		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)
+}
+
+type fakeVolumeSizeProvider struct {
+	sizes map[pkg.CloudProvider]map[string]int
+}
+
+func (f *fakeVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (map[pkg.CloudProvider]map[string]int, error) {
+	return f.sizes, nil
 }
 
 func (s *BrokerSuiteTest) CreateProvisionedRuntime(options RuntimeOptions) string {

@@ -2,6 +2,7 @@ package broker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path"
@@ -513,6 +514,94 @@ func additionalVolumeGbProperty() map[string]interface{} {
 	}
 }
 
+func TestSchemaService_MachineTypeDisplayNamesEnrichedWithDiskSize(t *testing.T) {
+	kcrVolumeSizes := map[pkg.CloudProvider]map[string]int{
+		pkg.AWS: {"m6i.large": 100, "g4dn.xlarge": 125},
+		pkg.GCP: {"n2-standard-2": 200},
+	}
+	svc := createSchemaServiceWithConfig(t, Config{
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
+	})
+	svc.kcrVolumeProvider = &fixedVolumeSizeProvider{sizes: kcrVolumeSizes}
+
+	t.Run("aws regular machine type display name includes disk size", func(t *testing.T) {
+		create, _, available := svc.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["m6i.large"].(string)
+		require.True(t, ok, "expected 'm6i.large' in enumDisplayName")
+		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM, 100GB volume)", name)
+	})
+
+	t.Run("gpu machine type with trailing asterisk has disk size inside parentheses", func(t *testing.T) {
+		create, _, available := svc.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		additionalWorkerPools, ok := props["additionalWorkerNodePools"].(map[string]interface{})
+		require.True(t, ok)
+		items, ok := additionalWorkerPools["items"].(map[string]interface{})
+		require.True(t, ok)
+		itemProps, ok := items["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := itemProps["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["g4dn.xlarge"].(string)
+		require.True(t, ok, "expected 'g4dn.xlarge' in enumDisplayName")
+		assert.Equal(t, "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM, 125GB volume)*", name)
+	})
+
+	t.Run("gcp regular machine type display name includes disk size", func(t *testing.T) {
+		create, _, available := svc.GCPSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["n2-standard-2"].(string)
+		require.True(t, ok, "expected 'n2-standard-2' in enumDisplayName")
+		assert.Equal(t, "n2-standard-2 (2vCPU, 8GB RAM, 200GB volume)", name)
+	})
+
+	t.Run("display names unchanged when kcrVolumeSizes is nil", func(t *testing.T) {
+		svcNil := createSchemaService(t)
+		create, _, available := svcNil.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["m6i.large"].(string)
+		require.True(t, ok)
+		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM)", name)
+	})
+}
+
 func validateSchema(t *testing.T, actual []byte, file string) {
 	var prettyExpected bytes.Buffer
 	expected := readJsonFile(t, file)
@@ -623,5 +712,13 @@ func createSchemaServiceWithConfig(t *testing.T, cfg Config) *SchemaService {
 
 	return NewSchemaService(provider, plans, nil, cfg,
 		StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName},
-		channelResolver)
+		channelResolver, nil)
+}
+
+type fixedVolumeSizeProvider struct {
+	sizes map[pkg.CloudProvider]map[string]int
+}
+
+func (f *fixedVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (map[pkg.CloudProvider]map[string]int, error) {
+	return f.sizes, nil
 }

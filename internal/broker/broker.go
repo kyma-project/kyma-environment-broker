@@ -107,6 +107,9 @@ func (cfg *Config) Validate() error {
 	if err := validatePlanList(cfg.Binding.BindablePlans, "BindablePlans"); err != nil {
 		return err
 	}
+	if cfg.AdditionalVolumeGbEnabled && !cfg.DynamicVolumeSizeEnabled {
+		return fmt.Errorf("APP_BROKER_ADDITIONAL_VOLUME_GB_ENABLED requires APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED to be true")
+	}
 	return nil
 }
 

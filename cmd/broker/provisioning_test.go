@@ -36,11 +36,7 @@ const (
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	t.Skip()
-	catalogTestFile := "catalog-test.json"
-	catalogTestFilePerm := os.FileMode.Perm(0666)
-	outputToFile := true
-	prettyJson := true
+	//	t.Skip()
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
@@ -49,7 +45,7 @@ func TestCatalog(t *testing.T) {
 	}
 
 	// given
-	suite := NewBrokerSuiteTest(t)
+	suite := newBrokerSuiteTest(t, fixConfig(), &fakeVolumeSizeProvider{fakeKCRVolumeSizes()})
 	defer suite.TearDown()
 
 	// when
@@ -59,20 +55,109 @@ func TestCatalog(t *testing.T) {
 	assert.NoError(t, err)
 	defer func() { _ = resp.Body.Close() }()
 
-	if outputToFile {
-		if prettyJson {
-			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
-			assert.NoError(t, err)
-		} else {
-			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
-			assert.NoError(t, err)
-		}
-	} else {
-		if prettyJson {
-			fmt.Println(prettify(content).String())
-		} else {
-			fmt.Println(string(content))
-		}
+	err = os.WriteFile("catalog-test.json", prettify(content).Bytes(), os.FileMode(0666))
+	assert.NoError(t, err)
+}
+
+func fakeKCRVolumeSizes() map[pkg.CloudProvider]map[string]int {
+	return map[pkg.CloudProvider]map[string]int{
+		pkg.AWS: {
+			"m6i.large":     50,
+			"m6i.xlarge":    80,
+			"m6i.2xlarge":   100,
+			"m6i.4xlarge":   150,
+			"m6i.8xlarge":   200,
+			"m6i.12xlarge":  250,
+			"m6i.16xlarge":  300,
+			"m5.large":      50,
+			"m5.xlarge":     80,
+			"m5.2xlarge":    100,
+			"m5.4xlarge":    150,
+			"m5.8xlarge":    200,
+			"m5.12xlarge":   250,
+			"m5.16xlarge":   300,
+			"c7i.large":     50,
+			"c7i.xlarge":    80,
+			"c7i.2xlarge":   100,
+			"c7i.4xlarge":   150,
+			"c7i.8xlarge":   200,
+			"c7i.12xlarge":  250,
+			"c7i.16xlarge":  300,
+			"g6.xlarge":     125,
+			"g6.2xlarge":    125,
+			"g6.4xlarge":    125,
+			"g6.8xlarge":    250,
+			"g6.12xlarge":   250,
+			"g6.16xlarge":   250,
+			"g4dn.xlarge":   125,
+			"g4dn.2xlarge":  125,
+			"g4dn.4xlarge":  125,
+			"g4dn.8xlarge":  250,
+			"g4dn.12xlarge": 250,
+			"g4dn.16xlarge": 250,
+		},
+		pkg.Azure: {
+			"standard_d2s_v5":  50,
+			"standard_d4s_v5":  80,
+			"standard_d8s_v5":  100,
+			"standard_d16s_v5": 150,
+			"standard_d32s_v5": 200,
+			"standard_d48s_v5": 250,
+			"standard_d64s_v5": 300,
+			"standard_d4_v3":   80,
+			"standard_d8_v3":   100,
+			"standard_d16_v3":  150,
+			"standard_d32_v3":  200,
+			"standard_d48_v3":  250,
+			"standard_d64_v3":  300,
+			"standard_f2s_v2":  50,
+			"standard_f4s_v2":  80,
+			"standard_f8s_v2":  100,
+			"standard_f16s_v2": 150,
+			"standard_f32s_v2": 200,
+			"standard_f48s_v2": 250,
+		},
+		pkg.GCP: {
+			"n2-standard-2":  50,
+			"n2-standard-4":  80,
+			"n2-standard-8":  100,
+			"n2-standard-16": 150,
+			"n2-standard-32": 200,
+			"n2-standard-48": 250,
+			"n2-standard-64": 300,
+			"c2d-highcpu-2":  50,
+			"c2d-highcpu-4":  80,
+			"c2d-highcpu-8":  100,
+			"c2d-highcpu-16": 150,
+			"c2d-highcpu-32": 200,
+			"c2d-highcpu-56": 250,
+			"g2-standard-4":  100,
+			"g2-standard-8":  100,
+			"g2-standard-12": 100,
+			"g2-standard-16": 100,
+			"g2-standard-24": 200,
+			"g2-standard-32": 200,
+			"g2-standard-48": 200,
+		},
+		pkg.SapConvergedCloud: {
+			"g_c2_m8":    50,
+			"g_c4_m16":   80,
+			"g_c6_m24":   100,
+			"g_c8_m32":   120,
+			"g_c12_m48":  150,
+			"g_c16_m64":  200,
+			"g_c32_m128": 300,
+			"g_c64_m256": 500,
+		},
+		pkg.Alicloud: {
+			"ecs.g9i.large":    50,
+			"ecs.g9i.xlarge":   80,
+			"ecs.g9i.2xlarge":  100,
+			"ecs.g9i.4xlarge":  150,
+			"ecs.g9i.8xlarge":  200,
+			"ecs.g9i.12xlarge": 250,
+			"ecs.g9i.16xlarge": 300,
+		},
 	}
 }
 

@@ -152,3 +152,14 @@ func TestInfrastructureManagerValidate_ReturnsErrorForUnknownPlan(t *testing.T) 
 	err := cfg.Validate()
 	assert.ErrorContains(t, err, "unknown-plan")
 }
+
+func TestConfigValidate_AdditionalVolumeGb_RequiresDynamicVolumeSize(t *testing.T) {
+	cfg := Config{AdditionalVolumeGbEnabled: true, DynamicVolumeSizeEnabled: false}
+	err := cfg.Validate()
+	assert.ErrorContains(t, err, "APP_BROKER_ADDITIONAL_VOLUME_GB_ENABLED")
+}
+
+func TestConfigValidate_AdditionalVolumeGb_AllowedWhenDynamicVolumeSizeEnabled(t *testing.T) {
+	cfg := Config{AdditionalVolumeGbEnabled: true, DynamicVolumeSizeEnabled: true}
+	assert.NoError(t, cfg.Validate())
+}
