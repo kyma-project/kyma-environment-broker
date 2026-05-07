@@ -104,6 +104,8 @@ spec:
           env:
             - name: APP_BROKER_ACL_ENABLED_PLANS
               value: "{{ .Values.broker.ACLEnabledPlans }}"
+            - name: APP_BROKER_ADDITIONAL_VOLUME_GB_ENABLED
+              value: "{{ .Values.broker.additionalVolumeGbEnabled }}"
             - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNTS
               value: "{{ .Values.broker.allowedGlobalAccountIDs }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS

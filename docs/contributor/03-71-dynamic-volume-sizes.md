@@ -6,25 +6,31 @@
 
 By default, the node volume size for every plan is a static value defined in the plan configuration. When the Dynamic Volume Sizes feature is enabled, Kyma Environment Broker (KEB) reads the volume size per machine type from the Kyma Consumption Reporter (KCR) ConfigMap instead, so that larger machines automatically receive appropriately sized disks.
 
+Users can also request extra disk space on top of the default by setting the optional `additionalVolumeGb` parameter. KEB computes the total volume size as `defaultVolumeSize + additionalVolumeGb`.
+
 The feature is controlled by the following environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
 | **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** | `false` | Enables dynamic volume size lookup. When `false`, the static plan default is used. |
 | **APP_BROKER_KCR_CONFIG_MAP_NAME** | `consumption-reporter-config` | Name of the ConfigMap in the `kcp-system` namespace that provides the volume sizes. |
+| **APP_BROKER_ADDITIONAL_VOLUME_GB_ENABLED** | `false` | When `true`, exposes the `additionalVolumeGb` parameter in provisioning and update schemas. When `false`, the parameter is absent from the schema. |
 
 ## Behavior
 
 ### Provisioning
 
-When a new runtime is provisioned, the volume size for the Kyma worker pool and all additional worker pools is read from the ConfigMap for each machine type.
+When a new runtime is provisioned, the volume size for the Kyma worker pool and all additional worker pools is computed as follows:
+
+1. The base volume size is read from the KCR ConfigMap for each machine type (when `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` is `true`), or the static plan default is used.
+2. If `additionalVolumeGb` is set in the request, it is added to the base volume size.
 
 ### Update
 
 When an existing runtime is updated, the following actions take place:
 
-- Kyma worker pool: If the machine type changes, the new volume size is read from the ConfigMap and applied. If the machine type is unchanged, the existing volume is preserved.
-- Additional worker pools: The ConfigMap is consulted only for pools where the machine type is new or changed compared to the previous operation. Unchanged pools preserve their existing volume.
+- Kyma worker pool: If the machine type changes or `additionalVolumeGb` changes, the volume is recomputed as `base + additionalVolumeGb`. If neither changes, the existing volume is preserved.
+- Additional worker pools: The volume is recomputed for pools where the machine type or `additionalVolumeGb` is new or changed compared to the previous operation. Unchanged pools preserve their existing volume.
 
 ## Error Handling
 
