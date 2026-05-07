@@ -31,12 +31,10 @@ func (r *DBReader) fetchProvisioningParams(tr TimeRange) ([]internal.Provisionin
 	q := `
 SELECT o.provisioning_parameters
 FROM operations o
+JOIN instances i ON i.instance_id = o.instance_id
 WHERE o.type = 'provision'
   AND o.state = 'succeeded'
-  AND o.instance_id NOT IN (
-      SELECT instance_id FROM operations
-      WHERE type = 'deprovision' AND state = 'succeeded'
-  )`
+  AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
 		q += " AND o.created_at >= ?"
@@ -68,11 +66,8 @@ WHERE o.type = 'provision'
 }
 
 // FetchActiveProvisioningParams returns ProvisioningParameters for all active instances.
-// Active = has a succeeded provision op and no succeeded deprovision op.
-//
-// Note: the provisioning_parameters column stores encrypted SMOperatorCredentials
-// and Kubeconfig values. Analytics only reads non-encrypted parameter fields
-// (machineType, region, autoscaler settings, etc.) — encrypted fields are ignored.
+// Active = row exists in instances table with deleted_at = zero (not permanently deprovisioned,
+// not failed-deprovision). Temporary deprovisioned instances are considered active.
 func (r *DBReader) FetchActiveProvisioningParams() ([]internal.ProvisioningParameters, error) {
 	return r.fetchProvisioningParams(TimeRange{})
 }
@@ -86,12 +81,10 @@ func (r *DBReader) fetchUpdateParams(tr TimeRange) ([]internal.UpdatingParameter
 	q := `
 SELECT o.data
 FROM operations o
+JOIN instances i ON i.instance_id = o.instance_id
 WHERE o.type = 'update'
   AND o.state = 'succeeded'
-  AND o.instance_id NOT IN (
-      SELECT instance_id FROM operations
-      WHERE type = 'deprovision' AND state = 'succeeded'
-  )`
+  AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
 		q += " AND o.created_at >= ?"
