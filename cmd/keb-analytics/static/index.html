@@ -69,6 +69,7 @@
   </div>
 
   <div id="tab-update" class="tab-pane" style="display:none">
+    <p id="update-total"></p>
     <div class="chart-container"><canvas id="updateChart"></canvas></div>
   </div>
 
@@ -140,7 +141,11 @@
 
     function renderBar(canvasId, stats) {
       if (!stats || !stats.parameters || stats.parameters.length === 0) return;
-      const labels = stats.parameters.map(p => p.parameter);
+      const labels = stats.parameters.map(p =>
+        p.total > 0
+          ? p.parameter + '  (' + p.set_count + ')'
+          : p.parameter
+      );
       const pct = stats.parameters.map(p =>
         p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
       );
@@ -227,6 +232,10 @@
       if (activeTab === 'provisioning') {
         renderBar('provChart', data.provisioning);
       } else if (activeTab === 'update') {
+        const updateTotal = (data.updates.parameters && data.updates.parameters.length > 0)
+          ? data.updates.parameters[0].total : 0;
+        document.getElementById('update-total').textContent =
+          'Total update operations: ' + updateTotal;
         renderBar('updateChart', data.updates);
       } else if (activeTab === 'combined') {
         renderBar('combinedChart', mergeStats(data.provisioning, data.updates));
@@ -242,6 +251,7 @@
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === name);
       });
+      if (name !== 'update') document.getElementById('update-total').textContent = '';
       if (currentData) renderActiveTab(currentData);
     }
 
