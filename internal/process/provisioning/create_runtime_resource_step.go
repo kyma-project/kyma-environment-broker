@@ -247,7 +247,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		}
 		volGb = looked
 	}
-	if add := operation.ProvisioningParameters.Parameters.AdditionalVolumeGb; add != nil {
+	if add := operation.ProvisioningParameters.Parameters.AdditionalVolumeGiB; add != nil {
 		volGb += *add
 	}
 	vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}

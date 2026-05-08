@@ -382,18 +382,18 @@ func gvisorProperty() map[string]interface{} {
 	}
 }
 
-func createSchemaServiceWithAdditionalVolumeGb(t *testing.T) *SchemaService {
+func createSchemaServiceWithAdditionalVolumeGiB(t *testing.T) *SchemaService {
 	return createSchemaServiceWithConfig(t, Config{
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-		AdditionalVolumeGbPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
+		AdditionalVolumeGiBPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
 	})
 }
 
-func TestSchemaService_AdditionalVolumeGbPropertyPresentOnEnabledPlans(t *testing.T) {
-	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
-	expected := additionalVolumeGbProperty()
+func TestSchemaService_AdditionalVolumeGiBPropertyPresentOnEnabledPlans(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGiB(t)
+	expected := additionalVolumeGiBProperty()
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, GCPPlanName,
@@ -406,15 +406,15 @@ func TestSchemaService_AdditionalVolumeGbPropertyPresentOnEnabledPlans(t *testin
 			props, ok := (*schema)["properties"].(map[string]interface{})
 			require.True(t, ok, "schema has no 'properties' key")
 
-			got, ok := props["additionalVolumeGb"]
-			require.True(t, ok, "expected 'additionalVolumeGb' property to be present in schema")
+			got, ok := props["additionalVolumeGiB"]
+			require.True(t, ok, "expected 'additionalVolumeGiB' property to be present in schema")
 			assert.Equal(t, expected, got)
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbPropertyAbsentOnExcludedPlans(t *testing.T) {
-	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
+func TestSchemaService_AdditionalVolumeGiBPropertyAbsentOnExcludedPlans(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGiB(t)
 
 	for _, tc := range planSchemaCases(schemaService,
 		AzureLitePlanName, freeAWSPlanName, freeAzurePlanName, TrialPlanName,
@@ -425,12 +425,12 @@ func TestSchemaService_AdditionalVolumeGbPropertyAbsentOnExcludedPlans(t *testin
 
 			props, ok := (*schema)["properties"].(map[string]interface{})
 			require.True(t, ok, "schema has no 'properties' key")
-			assert.NotContains(t, props, "additionalVolumeGb")
+			assert.NotContains(t, props, "additionalVolumeGiB")
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentWhenNoPlansConfigured(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGiBAbsentWhenNoPlansConfigured(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
@@ -444,14 +444,14 @@ func TestSchemaService_AdditionalVolumeGbAbsentWhenNoPlansConfigured(t *testing.
 
 			props, ok := (*schema)["properties"].(map[string]interface{})
 			require.True(t, ok, "schema has no 'properties' key")
-			assert.NotContains(t, props, "additionalVolumeGb")
+			assert.NotContains(t, props, "additionalVolumeGiB")
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
-	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
-	expected := additionalVolumeGbProperty()
+func TestSchemaService_AdditionalVolumeGiBPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGiB(t)
+	expected := additionalVolumeGiBProperty()
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, GCPPlanName,
@@ -462,14 +462,14 @@ func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemP
 			require.NotNil(t, schema)
 
 			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
-			got, ok := itemProps["additionalVolumeGb"]
-			require.True(t, ok, "expected 'additionalVolumeGb' to be present in additionalWorkerNodePools item properties")
+			got, ok := itemProps["additionalVolumeGiB"]
+			require.True(t, ok, "expected 'additionalVolumeGiB' to be present in additionalWorkerNodePools item properties")
 			assert.Equal(t, expected, got)
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPropertiesWhenNoPlansConfigured(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGiBAbsentInAdditionalWorkerNodePoolsItemPropertiesWhenNoPlansConfigured(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
@@ -481,13 +481,13 @@ func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPr
 			require.NotNil(t, schema)
 
 			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
-			assert.NotContains(t, itemProps, "additionalVolumeGb")
+			assert.NotContains(t, itemProps, "additionalVolumeGiB")
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPropertiesForAzureLite(t *testing.T) {
-	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
+func TestSchemaService_AdditionalVolumeGiBAbsentInAdditionalWorkerNodePoolsItemPropertiesForAzureLite(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGiB(t)
 
 	for _, tc := range planSchemaCases(schemaService, AzureLitePlanName) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -495,13 +495,13 @@ func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemPr
 			require.NotNil(t, schema)
 
 			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
-			assert.NotContains(t, itemProps, "additionalVolumeGb")
+			assert.NotContains(t, itemProps, "additionalVolumeGiB")
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
-	schemaService := createSchemaServiceWithAdditionalVolumeGb(t)
+func TestSchemaService_AdditionalVolumeGiBPresentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeGiB(t)
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, GCPPlanName,
@@ -512,12 +512,12 @@ func TestSchemaService_AdditionalVolumeGbPresentInAdditionalWorkerNodePoolsItemC
 			require.NotNil(t, schema)
 
 			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
-			assert.Contains(t, order, "additionalVolumeGb")
+			assert.Contains(t, order, "additionalVolumeGiB")
 		})
 	}
 }
 
-func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+func TestSchemaService_AdditionalVolumeGiBAbsentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
 	schemaService := createSchemaService(t)
 
 	for _, tc := range planSchemaCases(schemaService,
@@ -529,12 +529,12 @@ func TestSchemaService_AdditionalVolumeGbAbsentInAdditionalWorkerNodePoolsItemCo
 			require.NotNil(t, schema)
 
 			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
-			assert.NotContains(t, order, "additionalVolumeGb")
+			assert.NotContains(t, order, "additionalVolumeGiB")
 		})
 	}
 }
 
-func additionalVolumeGbProperty() map[string]interface{} {
+func additionalVolumeGiBProperty() map[string]interface{} {
 	return map[string]interface{}{
 		"type":        "integer",
 		"title":       "Additional Volume Size (GB)",

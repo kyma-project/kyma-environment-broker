@@ -2130,7 +2130,7 @@ aws:
 	assert.Equal(t, "84Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
 
-func TestCreateRuntimeResourceStep_AdditionalVolumeGb(t *testing.T) {
+func TestCreateRuntimeResourceStep_AdditionalVolumeGiB(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
@@ -2139,8 +2139,8 @@ func TestCreateRuntimeResourceStep_AdditionalVolumeGb(t *testing.T) {
 	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true}
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
-	additionalVolumeGb := 50
-	operation.ProvisioningParameters.Parameters.AdditionalVolumeGb = &additionalVolumeGb
+	additionalVolumeGiB := 50
+	operation.ProvisioningParameters.Parameters.AdditionalVolumeGiB = &additionalVolumeGiB
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
@@ -2161,6 +2161,6 @@ func TestCreateRuntimeResourceStep_AdditionalVolumeGb(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, gotRuntime.Spec.Shoot.Provider.Workers, 1)
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
-	// AWS base volume is 80Gi; AdditionalVolumeGb = 50 → expected 130Gi
+	// AWS base volume is 80Gi; AdditionalVolumeGiB = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }

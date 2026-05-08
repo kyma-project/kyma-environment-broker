@@ -112,9 +112,9 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
 	machineTypeChanged := operation.UpdatingParameters.MachineType != nil && *operation.UpdatingParameters.MachineType != oldMachineType
 
-	newAdditionalVolumeGb := operation.UpdatingParameters.AdditionalVolumeGb
-	prevAdditionalVolumeGb := operation.PreviousParameters.Parameters.AdditionalVolumeGb
-	additionalVolumeChanged := newAdditionalVolumeGb != nil && (prevAdditionalVolumeGb == nil || *newAdditionalVolumeGb != *prevAdditionalVolumeGb)
+	newAdditionalVolumeGiB := operation.UpdatingParameters.AdditionalVolumeGiB
+	prevAdditionalVolumeGiB := operation.PreviousParameters.Parameters.AdditionalVolumeGiB
+	additionalVolumeChanged := newAdditionalVolumeGiB != nil && (prevAdditionalVolumeGiB == nil || *newAdditionalVolumeGiB != *prevAdditionalVolumeGiB)
 
 	if operation.UpdatingParameters.MachineType != nil {
 		if machineTypeChanged {
@@ -129,8 +129,8 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 		}
 	}
 
-	if newAdditionalVolumeGb != nil {
-		operation.ProvisioningParameters.Parameters.AdditionalVolumeGb = newAdditionalVolumeGb
+	if newAdditionalVolumeGiB != nil {
+		operation.ProvisioningParameters.Parameters.AdditionalVolumeGiB = newAdditionalVolumeGiB
 	}
 
 	if machineTypeChanged || additionalVolumeChanged {
@@ -138,7 +138,7 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 		if backoff > 0 || err != nil {
 			return operation, backoff, err
 		}
-		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeGb; v != nil {
+		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeGiB; v != nil {
 			volGb += *v
 		}
 		if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
@@ -206,10 +206,10 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			// only look up KCR when the pool is new, its machine type changed, or additionalVolumeGb changed
+			// only look up KCR when the pool is new, its machine type changed, or additionalVolumeGiB changed
 			unchanged := false
 			for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
-				if prev.Name == pool.Name && prev.MachineType == pool.MachineType && prev.AdditionalVolumeGb == pool.AdditionalVolumeGb {
+				if prev.Name == pool.Name && prev.MachineType == pool.MachineType && prev.AdditionalVolumeGiB == pool.AdditionalVolumeGiB {
 					unchanged = true
 					break
 				}

@@ -62,7 +62,7 @@ type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
 	gvisorEnabled               bool
 	rejectUnsupportedParameters bool
-	additionalVolumeGbEnabled   bool
+	additionalVolumeGiBEnabled   bool
 }
 
 type AvailablePlansType struct {
@@ -128,12 +128,12 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeGbEnabled bool) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeGiBEnabled bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		gvisorEnabled:               gvisorEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
-		additionalVolumeGbEnabled:   additionalVolumeGbEnabled,
+		additionalVolumeGiBEnabled:   additionalVolumeGiBEnabled,
 	}
 }
 
@@ -178,12 +178,12 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
 	}
-	if flags.additionalVolumeGbEnabled {
-		properties.AdditionalVolumeGb = AdditionalVolumeGbProperty()
+	if flags.additionalVolumeGiBEnabled {
+		properties.AdditionalVolumeGiB = AdditionalVolumeGiBProperty()
 		if properties.AdditionalWorkerNodePools != nil {
-			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeGb = AdditionalVolumeGbProperty()
+			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeGiB = AdditionalVolumeGiBProperty()
 			properties.AdditionalWorkerNodePools.Items.ControlsOrder = append(
-				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "additionalVolumeGb",
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "additionalVolumeGiB",
 			)
 		}
 	}

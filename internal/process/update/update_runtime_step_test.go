@@ -1937,7 +1937,7 @@ meters:
 	assert.Nil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
 }
 
-func TestUpdateRuntimeStep_AdditionalVolumeGbOnMainWorker(t *testing.T) {
+func TestUpdateRuntimeStep_AdditionalVolumeGiBOnMainWorker(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
@@ -1948,9 +1948,9 @@ func TestUpdateRuntimeStep_AdditionalVolumeGbOnMainWorker(t *testing.T) {
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
-	additionalVolumeGb := 50
+	additionalVolumeGiB := 50
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		AdditionalVolumeGb: &additionalVolumeGb,
+		AdditionalVolumeGiB: &additionalVolumeGiB,
 	}
 
 	// when
@@ -1964,14 +1964,14 @@ func TestUpdateRuntimeStep_AdditionalVolumeGbOnMainWorker(t *testing.T) {
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
-	// Azure base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGb = 50 → expected 130Gi
+	// Azure base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGiB = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
 
-func TestUpdateRuntimeStep_AdditionalVolumeGbOnAdditionalWorkers(t *testing.T) {
-	// AdditionalVolumeGb change on an additional worker pool triggers a volume recompute.
-	// The isAdditionalWorkerPoolUnchanged check considers AdditionalVolumeGb, so a pool
-	// with a changed AdditionalVolumeGb is treated as changed and its volume is recalculated.
+func TestUpdateRuntimeStep_AdditionalVolumeGiBOnAdditionalWorkers(t *testing.T) {
+	// AdditionalVolumeGiB change on an additional worker pool triggers a volume recompute.
+	// The isAdditionalWorkerPoolUnchanged check considers AdditionalVolumeGiB, so a pool
+	// with a changed AdditionalVolumeGiB is treated as changed and its volume is recalculated.
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
@@ -1990,14 +1990,14 @@ func TestUpdateRuntimeStep_AdditionalVolumeGbOnAdditionalWorkers(t *testing.T) {
 	operation.PreviousParameters = internal.ProvisioningParameters{
 		Parameters: pkg.ProvisioningParametersDTO{
 			AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-				{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGb: 0},
+				{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGiB: 0},
 			},
 		},
 	}
-	additionalVolumeGb := 50
+	additionalVolumeGiB := 50
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-			{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGb: additionalVolumeGb},
+			{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGiB: additionalVolumeGiB},
 		},
 	}
 
@@ -2014,6 +2014,6 @@ func TestUpdateRuntimeStep_AdditionalVolumeGbOnAdditionalWorkers(t *testing.T) {
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
 	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
-	// AWS base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGb = 50 → expected 130Gi
+	// AWS base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGiB = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
 }

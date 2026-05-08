@@ -55,7 +55,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
-	AdditionalVolumeGb        *Type                          `json:"additionalVolumeGb,omitempty"`
+	AdditionalVolumeGiB        *Type                          `json:"additionalVolumeGiB,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -228,7 +228,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMax      AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints             *TaintsType    `json:"taints,omitempty"`
 	Gvisor             *GvisorType    `json:"gvisor,omitempty"`
-	AdditionalVolumeGb *Type          `json:"additionalVolumeGb,omitempty"`
+	AdditionalVolumeGiB *Type          `json:"additionalVolumeGiB,omitempty"`
 }
 
 type TaintsType struct {
@@ -776,7 +776,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalVolumeGb", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalVolumeGiB", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -936,7 +936,7 @@ func GvisorProperty() *GvisorType {
 	}
 }
 
-func AdditionalVolumeGbProperty() *Type {
+func AdditionalVolumeGiBProperty() *Type {
 	return &Type{
 		Type:        "integer",
 		Title:       "Additional Volume Size (GB)",
