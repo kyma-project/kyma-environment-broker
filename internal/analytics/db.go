@@ -20,6 +20,11 @@ func NewDBReader(session *dbr.Session) *DBReader {
 	return &DBReader{session: session}
 }
 
+const (
+	sqlCreatedAtGte = " AND o.created_at >= ?"
+	sqlCreatedAtLt  = " AND o.created_at < ?"
+)
+
 // TimeRange optionally constrains queries to operations created within [From, To).
 // Zero values mean unbounded on that side.
 type TimeRange struct {
@@ -49,11 +54,11 @@ WHERE o.type = 'provision'
   AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += " AND o.created_at >= ?"
+		q += sqlCreatedAtGte
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += " AND o.created_at < ?"
+		q += sqlCreatedAtLt
 		args = append(args, tr.To)
 	}
 
@@ -100,11 +105,11 @@ WHERE o.type = 'update'
   AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += " AND o.created_at >= ?"
+		q += sqlCreatedAtGte
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += " AND o.created_at < ?"
+		q += sqlCreatedAtLt
 		args = append(args, tr.To)
 	}
 
@@ -160,11 +165,11 @@ WHERE o.type IN ('provision', 'update')
   AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += " AND o.created_at >= ?"
+		q += sqlCreatedAtGte
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += " AND o.created_at < ?"
+		q += sqlCreatedAtLt
 		args = append(args, tr.To)
 	}
 	q += " ORDER BY o.created_at ASC"
