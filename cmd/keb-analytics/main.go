@@ -39,9 +39,13 @@ type cache struct {
 	resp          analytics.StatsResponse
 	provParams    []analytics.ProvisioningParamsWithID
 	updateParams  []analytics.UpdateParamsWithID
+	opEvents      []analytics.OpEvent
 	plans         []string
 	regionsByPlan map[string][]string
 }
+
+// trendParams are the parameters for which trend lines are computed (same set as AC4 distributions).
+var trendParams = []string{"machineType", "region", "autoScalerMin", "autoScalerMax"}
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -100,6 +104,11 @@ func main() {
 			slog.Error("failed to fetch update params", "error", err)
 			return
 		}
+		opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
+		if err != nil {
+			slog.Error("failed to fetch op events", "error", err)
+			return
+		}
 
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 		resp := analytics.StatsResponse{
@@ -109,6 +118,7 @@ func main() {
 			Updates:        analytics.AggregateUpdates(updateParams),
 			Combined:       analytics.AggregateCombined(provParams, updateParams),
 			Distributions:  analytics.BuildDistributions(provParams),
+			Trends:         analytics.BuildTrends(opEvents, trendParams),
 			Plans:          plans,
 			RegionsByPlan:  regionsByPlan,
 		}
@@ -118,6 +128,7 @@ func main() {
 			resp:          resp,
 			provParams:    provParams,
 			updateParams:  updateParams,
+			opEvents:      opEvents,
 			plans:         plans,
 			regionsByPlan: regionsByPlan,
 		}
@@ -157,7 +168,7 @@ func main() {
 			if planFilter == "" && regionFilter == "" {
 				data = snapshot.resp
 			} else {
-				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
+				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
 			}
 		} else {
 			// Time-range query: fetch from DB, then filter.
@@ -173,8 +184,14 @@ func main() {
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
 				return
 			}
+			opEvents, err := reader.FetchOpEventsInRange(tr)
+			if err != nil {
+				slog.Error("failed to fetch op events for range", "error", err)
+				http.Error(w, "failed to build stats", http.StatusInternalServerError)
+				return
+			}
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-			data = buildFilteredStats(provParams, updateParams, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
+			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -206,9 +223,11 @@ func main() {
 
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
+// opEvents are unfiltered (trends are not affected by plan/region filter).
 func buildFilteredStats(
 	provParams []analytics.ProvisioningParamsWithID,
 	updateParams []analytics.UpdateParamsWithID,
+	opEvents []analytics.OpEvent,
 	planFilter, regionFilter string,
 	planIDToName map[string]string,
 	plans []string,
@@ -228,6 +247,7 @@ func buildFilteredStats(
 		Updates:        analytics.AggregateUpdates(updateParams),
 		Combined:       analytics.AggregateCombined(filtered, updateParams),
 		Distributions:  analytics.BuildDistributions(filtered),
+		Trends:         analytics.BuildTrends(opEvents, trendParams),
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
 	}

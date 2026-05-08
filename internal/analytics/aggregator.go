@@ -1,12 +1,14 @@
 package analytics
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 type fieldBehavior int
@@ -393,6 +395,95 @@ func FilterByRegion(params []ProvisioningParamsWithID, region string) []Provisio
 		if p.Params.Parameters.Region != nil && *p.Params.Parameters.Region == region {
 			result = append(result, p)
 		}
+	}
+	return result
+}
+
+// isParamSet returns true if the given parameter name has any recorded value when
+// walking the struct with the given field config. Uses the same walkFields logic as
+// all other aggregation, so null/zero values are treated consistently.
+func isParamSet(v interface{}, config map[string]fieldBehavior, param string) bool {
+	counts := make(map[string]map[string]int)
+	walkFields(v, config, counts)
+	_, ok := counts[param]
+	return ok
+}
+
+// BuildTrend computes the daily cumulative count of active instances that have the
+// given parameter set, derived from the ordered sequence of op events.
+// Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
+// For each instance the function tracks whether the parameter is currently set,
+// emits +1 / -1 / 0 deltas, buckets them by day, and returns the running total.
+func BuildTrend(events []OpEvent, param string) TrendStat {
+	// per-instance: is the param currently set?
+	instanceState := make(map[string]bool)
+
+	// day → net delta for that day
+	dayDelta := make(map[string]int)
+	var days []string
+
+	for _, ev := range events {
+		wasSet := instanceState[ev.InstanceID]
+		var nowSet bool
+
+		switch ev.Type {
+		case "provision":
+			p, err := parseProvisioningParameters(ev.RawParams)
+			if err != nil {
+				continue
+			}
+			nowSet = isParamSet(p.Parameters, provisioningFieldConfig, param)
+		case "update":
+			var op internal.Operation
+			if err := json.Unmarshal([]byte(ev.RawParams), &op); err != nil {
+				continue
+			}
+			if isParamSet(op.UpdatingParameters, updatingFieldConfig, param) {
+				nowSet = true
+			} else if _, inConfig := updatingFieldConfig[param]; inConfig {
+				// param is updatable and absent from this op → nullified
+				nowSet = false
+			} else {
+				// param not updatable — state unchanged
+				nowSet = wasSet
+			}
+		default:
+			continue
+		}
+
+		instanceState[ev.InstanceID] = nowSet
+
+		delta := 0
+		if nowSet && !wasSet {
+			delta = 1
+		} else if !nowSet && wasSet {
+			delta = -1
+		}
+		if delta != 0 {
+			if _, seen := dayDelta[ev.CreatedAt]; !seen {
+				days = append(days, ev.CreatedAt)
+			}
+			dayDelta[ev.CreatedAt] += delta
+		}
+	}
+
+	sort.Strings(days)
+
+	points := make([]TrendPoint, 0, len(days))
+	running := 0
+	for _, day := range days {
+		running += dayDelta[day]
+		points = append(points, TrendPoint{Date: day, Count: running})
+	}
+
+	return TrendStat{Parameter: param, Points: points}
+}
+
+// BuildTrends computes daily trend lines for each of the given parameters.
+func BuildTrends(events []OpEvent, params []string) []TrendStat {
+	result := make([]TrendStat, 0, len(params))
+	for _, p := range params {
+		result = append(result, BuildTrend(events, p))
 	}
 	return result
 }
