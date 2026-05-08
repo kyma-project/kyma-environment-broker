@@ -834,6 +834,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		updateStorage = append(updateStorage, "Machine type")
 	}
 
+	if params.AdditionalVolumeGiB != nil {
+		instance.Parameters.Parameters.AdditionalVolumeGiB = params.AdditionalVolumeGiB
+		updateStorage = append(updateStorage, "Additional Volume GiB")
+	}
+
 	if params.Gvisor != nil {
 		instance.Parameters.Parameters.Gvisor = params.Gvisor
 		updateStorage = append(updateStorage, "Gvisor")

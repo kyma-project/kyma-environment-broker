@@ -2888,6 +2888,51 @@ func TestUpdateBlocklist(t *testing.T) {
 	})
 }
 
+func TestUpdateEndpoint_AdditionalVolumeGiBPersistedToInstance(t *testing.T) {
+	// A first update sets additionalVolumeGiB. A second update changes only the machine type.
+	// The second update must carry the persisted additionalVolumeGiB from instance.Parameters,
+	// otherwise the step cannot add it to the recomputed base volume.
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AWSPlanID,
+			ErsContext: internal.ERSContext{
+				Active: ptr.Bool(true),
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instance))
+	require.NoError(t, st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01")))
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewUpdate(
+		broker.Config{},
+		st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
+		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
+	)
+
+	additionalVolumeGiB := 20
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:      "",
+		PlanID:         broker.AWSPlanID,
+		RawParameters:  json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeGiB":20}`),
+		RawContext:     json.RawMessage(`{"active":true}`),
+	}, true)
+	require.NoError(t, err)
+
+	updated, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	require.NotNil(t, updated.Parameters.Parameters.AdditionalVolumeGiB, "additionalVolumeGiB must be persisted to instance after first update")
+	assert.Equal(t, additionalVolumeGiB, *updated.Parameters.Parameters.AdditionalVolumeGiB)
+}
+
 func fixValueProvider(t *testing.T) broker.ValuesProvider {
 	planSpec := newPlanSpec(t)
 	return provider.NewPlanSpecificValuesProvider(
