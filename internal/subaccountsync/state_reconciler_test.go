@@ -40,17 +40,19 @@ var logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 var useInMemoryStorage, _ = strconv.ParseBool(os.Getenv("DB_IN_MEMORY_FOR_E2E_TESTS"))
 
+var (
+	containerOnce    sync.Once
+	containerCleanup func()
+)
+
 func TestMain(m *testing.M) {
 	exitVal := 0
 	defer func() {
+		if containerCleanup != nil {
+			containerCleanup()
+		}
 		os.Exit(exitVal)
 	}()
-
-	if !useInMemoryStorage {
-		cleanup := setupStorageContainer()
-		defer cleanup()
-	}
-
 	exitVal = m.Run()
 }
 
@@ -1596,6 +1598,9 @@ func getStorageForTests() (func() error, storage.BrokerStorage, error) {
 	if useInMemoryStorage {
 		return nil, storage.NewMemoryStorage(), nil
 	}
+	containerOnce.Do(func() {
+		containerCleanup = setupStorageContainer()
+	})
 	return storage.GetStorageForTests(brokerStorageTestConfig())
 }
 
