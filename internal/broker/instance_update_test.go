@@ -2920,10 +2920,10 @@ func TestUpdateEndpoint_AdditionalVolumeGiBPersistedToInstance(t *testing.T) {
 
 	additionalVolumeGiB := 20
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-		ServiceID:      "",
-		PlanID:         broker.AWSPlanID,
-		RawParameters:  json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeGiB":20}`),
-		RawContext:     json.RawMessage(`{"active":true}`),
+		ServiceID:     "",
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeGiB":20}`),
+		RawContext:    json.RawMessage(`{"active":true}`),
 	}, true)
 	require.NoError(t, err)
 

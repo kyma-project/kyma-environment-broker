@@ -351,6 +351,11 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if params.AdditionalVolumeGiB != nil && *params.AdditionalVolumeGiB < 0 {
+		err := fmt.Errorf("additionalVolumeGiB must be >= 0, got %d", *params.AdditionalVolumeGiB)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}

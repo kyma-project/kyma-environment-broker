@@ -386,6 +386,10 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 
+	if err := parameters.ValidateAdditionalVolumeGiB(); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
 	if parameters.OIDC.IsProvided() {
 		if err := parameters.OIDC.Validate(nil); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())

@@ -615,9 +615,9 @@ aws:
 		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
-				Name:               "worker",
-				MachineType:        "standard",
-				HAZones:            true,
+				Name:                "worker",
+				MachineType:         "standard",
+				HAZones:             true,
 				AdditionalVolumeGiB: 50,
 			},
 		}
@@ -967,8 +967,8 @@ func TestIsAdditionalWorkerPoolUnchanged(t *testing.T) {
 					Parameters: runtime.ProvisioningParametersDTO{
 						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
 							{
-								Name:               "pool-a",
-								MachineType:        "m5.large",
+								Name:                "pool-a",
+								MachineType:         "m5.large",
 								AdditionalVolumeGiB: 0,
 							},
 						},
@@ -976,8 +976,8 @@ func TestIsAdditionalWorkerPoolUnchanged(t *testing.T) {
 				},
 			},
 			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
-				Name:               "pool-a",
-				MachineType:        "m5.large",
+				Name:                "pool-a",
+				MachineType:         "m5.large",
 				AdditionalVolumeGiB: 50,
 			},
 			want: false,

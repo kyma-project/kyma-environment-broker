@@ -387,7 +387,7 @@ func createSchemaServiceWithAdditionalVolumeGiB(t *testing.T) *SchemaService {
 		RejectUnsupportedParameters: true,
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
-		AdditionalVolumeGiBPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
+		AdditionalVolumeGiBPlans:    StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
 	})
 }
 

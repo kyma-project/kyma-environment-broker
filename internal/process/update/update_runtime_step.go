@@ -134,9 +134,13 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 	}
 
 	if machineTypeChanged || additionalVolumeChanged {
-		volGb, backoff, err := s.computeMainWorkerBaseVolumeGb(operation, runtime, log)
-		if backoff > 0 || err != nil {
-			return operation, backoff, err
+		resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+		volGb, err := s.computeMainWorkerBaseVolumeGb(operation, runtime)
+		if err != nil {
+			if kebError.IsTemporaryError(err) {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
+			}
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
 		}
 		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeGiB; v != nil {
 			volGb += *v
@@ -165,28 +169,18 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 	return operation, 0, nil
 }
 
-func (s *UpdateRuntimeStep) computeMainWorkerBaseVolumeGb(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (int, time.Duration, error) {
+func (s *UpdateRuntimeStep) computeMainWorkerBaseVolumeGb(operation internal.Operation, runtime *imv1.Runtime) (int, error) {
 	if s.kcrVolumeProvider != nil {
 		resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
-		volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+		return s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
 			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
 			resolvedMachineType)
-		if err != nil {
-			if kebError.IsTemporaryError(err) {
-				_, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
-				return 0, backoff, retryErr
-			}
-			_, _, failErr := s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
-			return 0, 0, failErr
-		}
-		return volGb, 0, nil
 	}
 	values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 	if err != nil {
-		_, _, failErr := s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
-		return 0, 0, failErr
+		return 0, err
 	}
-	return values.VolumeSizeGb, 0, nil
+	return values.VolumeSizeGb, nil
 }
 
 func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {

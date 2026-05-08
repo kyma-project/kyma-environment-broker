@@ -104,7 +104,14 @@ type ProvisioningParametersDTO struct {
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
-	AdditionalVolumeGiB        *int                       `json:"additionalVolumeGiB,omitempty"`
+	AdditionalVolumeGiB       *int                       `json:"additionalVolumeGiB,omitempty"`
+}
+
+func (p ProvisioningParametersDTO) ValidateAdditionalVolumeGiB() error {
+	if p.AdditionalVolumeGiB != nil && *p.AdditionalVolumeGiB < 0 {
+		return fmt.Errorf("additionalVolumeGiB must be >= 0, got %d", *p.AdditionalVolumeGiB)
+	}
+	return nil
 }
 
 type GvisorDTO struct {
@@ -596,13 +603,13 @@ type TaintDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	Name               string     `json:"name"`
-	MachineType        string     `json:"machineType"`
-	HAZones            bool       `json:"haZones"`
-	AutoScalerMin      int        `json:"autoScalerMin"`
-	AutoScalerMax      int        `json:"autoScalerMax"`
-	Taints             []TaintDTO `json:"taints,omitempty"`
-	Gvisor             *GvisorDTO `json:"gvisor,omitempty"`
+	Name                string     `json:"name"`
+	MachineType         string     `json:"machineType"`
+	HAZones             bool       `json:"haZones"`
+	AutoScalerMin       int        `json:"autoScalerMin"`
+	AutoScalerMax       int        `json:"autoScalerMax"`
+	Taints              []TaintDTO `json:"taints,omitempty"`
+	Gvisor              *GvisorDTO `json:"gvisor,omitempty"`
 	AdditionalVolumeGiB int        `json:"additionalVolumeGiB,omitempty"`
 }
 
