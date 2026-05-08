@@ -15,7 +15,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vrischmann/envconfig"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
@@ -38,8 +37,8 @@ type Config struct {
 
 type cache struct {
 	resp          analytics.StatsResponse
-	provParams    []internal.ProvisioningParameters
-	updateParams  []internal.UpdatingParametersDTO
+	provParams    []analytics.ProvisioningParamsWithID
+	updateParams  []analytics.UpdateParamsWithID
 	plans         []string
 	regionsByPlan map[string][]string
 }
@@ -105,8 +104,10 @@ func main() {
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 		resp := analytics.StatsResponse{
 			TotalInstances: len(provParams),
+			TotalUpdates:   len(updateParams),
 			Provisioning:   analytics.AggregateProvisioning(provParams),
 			Updates:        analytics.AggregateUpdates(updateParams),
+			Combined:       analytics.AggregateCombined(provParams, updateParams),
 			Distributions:  analytics.BuildDistributions(provParams),
 			Plans:          plans,
 			RegionsByPlan:  regionsByPlan,
@@ -206,8 +207,8 @@ func main() {
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
 func buildFilteredStats(
-	provParams []internal.ProvisioningParameters,
-	updateParams []internal.UpdatingParametersDTO,
+	provParams []analytics.ProvisioningParamsWithID,
+	updateParams []analytics.UpdateParamsWithID,
 	planFilter, regionFilter string,
 	planIDToName map[string]string,
 	plans []string,
@@ -222,8 +223,10 @@ func buildFilteredStats(
 	}
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),
+		TotalUpdates:   len(updateParams),
 		Provisioning:   analytics.AggregateProvisioning(filtered),
 		Updates:        analytics.AggregateUpdates(updateParams),
+		Combined:       analytics.AggregateCombined(filtered, updateParams),
 		Distributions:  analytics.BuildDistributions(filtered),
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
