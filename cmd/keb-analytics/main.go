@@ -44,7 +44,6 @@ type cache struct {
 	regionsByPlan map[string][]string
 }
 
-
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
