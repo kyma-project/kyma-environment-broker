@@ -159,6 +159,11 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
 	logger := b.log.With("instanceID", instanceID)
 
+	if len(details.RawParameters) > MaxRawParametersSize {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(
+			fmt.Errorf("request parameters too large"), http.StatusBadRequest, "request parameters too large")
+	}
+
 	instance, err := b.instanceStorage.GetByID(instanceID)
 	err = b.handleGetInstanceError(err, logger, instanceID)
 	if err != nil {
@@ -345,6 +350,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
 	operation.ProviderValues = &providerValues
+	operation.RawParameters = details.RawParameters
 
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"slices"
@@ -440,6 +441,7 @@ type Operation struct {
 	FinishedStages               []string                  `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
+	RawParameters                json.RawMessage           `json:"rawParameters,omitempty"`
 	Error                        *kebError.LastError       `json:"error,omitempty"`
 	UpdatedPlanName              string                    `json:"updatedPlanName,omitempty"`
 }
