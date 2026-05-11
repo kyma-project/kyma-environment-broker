@@ -21,6 +21,7 @@ const (
 	behaviorGvisor                          // emit "true" or "false"
 	behaviorACL                             // emit CIDR count as string
 	behaviorNetworking                      // emit set CIDR fields as "+" joined string with dualStack suffix
+	behaviorOIDC                            // emit 0 (nil), 1 (single), or len(List) (multi)
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
@@ -37,13 +38,15 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"gvisor":                    behaviorGvisor,
 	"accessControlList":         behaviorACL,
 	"networking":                behaviorNetworking,
+	"oidc":                      behaviorOIDC,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
+// Only fields that exist on UpdatingParametersDTO and whose absence in an update op
+// genuinely means the parameter was nullified should appear here.
 var updatingFieldConfig = map[string]fieldBehavior{
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
-	"modules":                   behaviorModules,
 	"gvisor":                    behaviorGvisor,
 	"accessControlList":         behaviorACL,
 }
@@ -53,7 +56,7 @@ var updatingFieldConfig = map[string]fieldBehavior{
 func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, counts map[string]map[string]int) bool {
 	if fv.Kind() != reflect.Ptr || fv.IsNil() {
 		return behavior == behaviorModules || behavior == behaviorGvisor ||
-			behavior == behaviorACL || behavior == behaviorNetworking
+			behavior == behaviorACL || behavior == behaviorNetworking || behavior == behaviorOIDC
 	}
 	switch behavior {
 	case behaviorModules:
@@ -76,6 +79,11 @@ func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, 
 			if v := networkingValue(n); v != "" {
 				record(counts, key, v)
 			}
+		}
+		return true
+	case behaviorOIDC:
+		if o, ok := fv.Interface().(*pkg.OIDCConnectDTO); ok {
+			record(counts, key, fmt.Sprintf("%d", oidcCount(o)))
 		}
 		return true
 	}
@@ -168,6 +176,21 @@ func modulesValue(m *pkg.ModulesDTO) string {
 		return "default"
 	}
 	return "custom"
+}
+
+// oidcCount returns the number of OIDC providers configured:
+// 0 if nil, 1 for the legacy single-provider form, len(List) for the multi-provider form.
+func oidcCount(o *pkg.OIDCConnectDTO) int {
+	if o == nil {
+		return 0
+	}
+	if len(o.List) > 0 {
+		return len(o.List)
+	}
+	if o.OIDCConfigDTO != nil {
+		return 1
+	}
+	return 0
 }
 
 // networkingValue returns a "+" joined string of the CIDR fields that are set,

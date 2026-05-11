@@ -296,7 +296,16 @@
         },
         options: {
           scales: {
-            x: { ticks: { maxTicksLimit: 12, maxRotation: 45 } },
+            x: {
+              ticks: {
+                maxTicksLimit: 12,
+                maxRotation: 45,
+                callback: function(value, index) {
+                  const date = labels[index];
+                  return date ? date.slice(8, 10) : '';
+                }
+              }
+            },
             y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
           }
         }
