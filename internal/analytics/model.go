@@ -32,6 +32,7 @@ type DistributionStat struct {
 type TrendPoint struct {
 	Date  string `json:"date"`  // YYYY-MM-DD
 	Count int    `json:"count"` // cumulative count of active instances with param set
+	Total int    `json:"total"` // cumulative count of active instances provisioned by this day
 }
 
 // TrendStat holds the daily trend for a single parameter.
@@ -42,13 +43,14 @@ type TrendStat struct {
 
 // StatsResponse is the top-level JSON returned by GET /api/stats.
 type StatsResponse struct {
-	TotalInstances int                 `json:"total_instances"`
-	TotalUpdates   int                 `json:"total_updates"`
-	Provisioning   ParameterStats      `json:"provisioning"`
-	Updates        ParameterStats      `json:"updates"`
-	Combined       ParameterStats      `json:"combined"`
-	Distributions  []DistributionStat  `json:"distributions"`
-	Trends         []TrendStat         `json:"trends"`
-	Plans          []string            `json:"plans"`
-	RegionsByPlan  map[string][]string `json:"regions_by_plan"`
+	TotalInstances  int                 `json:"total_instances"`
+	TotalUpdates    int                 `json:"total_updates"`
+	Provisioning    ParameterStats      `json:"provisioning"`
+	Updates         ParameterStats      `json:"updates"`
+	Combined        ParameterStats      `json:"combined"`
+	Distributions   []DistributionStat  `json:"distributions"`
+	Trends          []TrendStat         `json:"trends"`
+	AdoptionTrends  []TrendStat         `json:"adoption_trends"`
+	Plans           []string            `json:"plans"`
+	RegionsByPlan   map[string][]string `json:"regions_by_plan"`
 }

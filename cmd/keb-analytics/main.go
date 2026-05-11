@@ -111,6 +111,7 @@ func main() {
 		}
 
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+		trends := analytics.BuildTrends(opEvents, trendParams)
 		resp := analytics.StatsResponse{
 			TotalInstances: len(provParams),
 			TotalUpdates:   len(updateParams),
@@ -118,7 +119,8 @@ func main() {
 			Updates:        analytics.AggregateUpdates(updateParams),
 			Combined:       analytics.AggregateCombined(provParams, updateParams),
 			Distributions:  analytics.BuildDistributions(provParams),
-			Trends:         analytics.BuildTrends(opEvents, trendParams),
+			Trends:         trends,
+			AdoptionTrends: trends,
 			Plans:          plans,
 			RegionsByPlan:  regionsByPlan,
 		}
@@ -240,6 +242,7 @@ func buildFilteredStats(
 	if regionFilter != "" {
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
+	trends := analytics.BuildTrends(opEvents, trendParams)
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),
 		TotalUpdates:   len(updateParams),
@@ -247,7 +250,8 @@ func buildFilteredStats(
 		Updates:        analytics.AggregateUpdates(updateParams),
 		Combined:       analytics.AggregateCombined(filtered, updateParams),
 		Distributions:  analytics.BuildDistributions(filtered),
-		Trends:         analytics.BuildTrends(opEvents, trendParams),
+		Trends:         trends,
+		AdoptionTrends: trends,
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
 	}

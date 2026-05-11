@@ -437,13 +437,15 @@ func isParamSet(v interface{}, config map[string]fieldBehavior, param string) bo
 // Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
 // For each instance the function tracks whether the parameter is currently set,
 // emits +1 / -1 / 0 deltas, buckets them by day, and returns the running total.
+// TrendPoint.Total holds the cumulative count of active instances provisioned by that day.
 func BuildTrend(events []OpEvent, param string) TrendStat {
 	// per-instance: is the param currently set?
 	instanceState := make(map[string]bool)
 
 	// day → net delta for that day
 	dayDelta := make(map[string]int)
-	var days []string
+	// day → new instances provisioned on that day
+	dayProvisioned := make(map[string]int)
 
 	for _, ev := range events {
 		wasSet := instanceState[ev.InstanceID]
@@ -456,6 +458,7 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 				continue
 			}
 			nowSet = isParamSet(p.Parameters, provisioningFieldConfig, param)
+			dayProvisioned[ev.CreatedAt]++
 		case "update":
 			var op internal.Operation
 			if err := json.Unmarshal([]byte(ev.RawParams), &op); err != nil {
@@ -483,20 +486,31 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 			delta = -1
 		}
 		if delta != 0 {
-			if _, seen := dayDelta[ev.CreatedAt]; !seen {
-				days = append(days, ev.CreatedAt)
-			}
 			dayDelta[ev.CreatedAt] += delta
 		}
 	}
 
-	sort.Strings(days)
+	// Collect all days with either a param delta or a provisioning event.
+	allDays := make(map[string]struct{})
+	for d := range dayDelta {
+		allDays[d] = struct{}{}
+	}
+	for d := range dayProvisioned {
+		allDays[d] = struct{}{}
+	}
+	sortedDays := make([]string, 0, len(allDays))
+	for d := range allDays {
+		sortedDays = append(sortedDays, d)
+	}
+	sort.Strings(sortedDays)
 
-	points := make([]TrendPoint, 0, len(days))
+	points := make([]TrendPoint, 0, len(sortedDays))
 	running := 0
-	for _, day := range days {
+	runningTotal := 0
+	for _, day := range sortedDays {
 		running += dayDelta[day]
-		points = append(points, TrendPoint{Date: day, Count: running})
+		runningTotal += dayProvisioned[day]
+		points = append(points, TrendPoint{Date: day, Count: running, Total: runningTotal})
 	}
 
 	return TrendStat{Parameter: param, Points: points}
