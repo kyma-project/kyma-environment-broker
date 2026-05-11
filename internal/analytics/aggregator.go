@@ -524,3 +524,13 @@ func BuildTrends(events []OpEvent, params []string) []TrendStat {
 	}
 	return result
 }
+
+// TrendParamsFrom returns the sorted list of parameter names from combined stats.
+// Used to compute trends for all parameters that actually appear in the data.
+func TrendParamsFrom(combined ParameterStats) []string {
+	params := make([]string, 0, len(combined.Parameters))
+	for _, p := range combined.Parameters {
+		params = append(params, p.Parameter)
+	}
+	return params
+}

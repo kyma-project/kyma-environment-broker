@@ -44,8 +44,6 @@ type cache struct {
 	regionsByPlan map[string][]string
 }
 
-// trendParams are the parameters for which trend lines are computed (same set as AC4 distributions).
-var trendParams = []string{"machineType", "region", "autoScalerMin", "autoScalerMax"}
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -111,13 +109,17 @@ func main() {
 		}
 
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+		provisioning := analytics.AggregateProvisioning(provParams)
+		updates := analytics.AggregateUpdates(updateParams)
+		combined := analytics.AggregateCombined(provParams, updateParams)
+		trendParams := analytics.TrendParamsFrom(combined)
 		trends := analytics.BuildTrends(opEvents, trendParams)
 		resp := analytics.StatsResponse{
 			TotalInstances: len(provParams),
 			TotalUpdates:   len(updateParams),
-			Provisioning:   analytics.AggregateProvisioning(provParams),
-			Updates:        analytics.AggregateUpdates(updateParams),
-			Combined:       analytics.AggregateCombined(provParams, updateParams),
+			Provisioning:   provisioning,
+			Updates:        updates,
+			Combined:       combined,
 			Distributions:  analytics.BuildDistributions(provParams),
 			Trends:         trends,
 			AdoptionTrends: trends,
@@ -242,13 +244,15 @@ func buildFilteredStats(
 	if regionFilter != "" {
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
+	combined := analytics.AggregateCombined(filtered, updateParams)
+	trendParams := analytics.TrendParamsFrom(combined)
 	trends := analytics.BuildTrends(opEvents, trendParams)
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),
 		TotalUpdates:   len(updateParams),
 		Provisioning:   analytics.AggregateProvisioning(filtered),
 		Updates:        analytics.AggregateUpdates(updateParams),
-		Combined:       analytics.AggregateCombined(filtered, updateParams),
+		Combined:       combined,
 		Distributions:  analytics.BuildDistributions(filtered),
 		Trends:         trends,
 		AdoptionTrends: trends,
