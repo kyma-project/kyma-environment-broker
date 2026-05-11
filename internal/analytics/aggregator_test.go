@@ -158,10 +158,10 @@ func TestWalkFields_NetworkingWithDualStack(t *testing.T) {
 }
 
 func TestAggregateProvisioning_RanksParameters(t *testing.T) {
-	params := []internal.ProvisioningParameters{
-		{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr("m6i.xlarge")}},
-		{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr("m6i.xlarge")}},
-		{Parameters: pkg.ProvisioningParametersDTO{}},
+	params := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr("m6i.xlarge")}}},
+		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr("m6i.xlarge")}}},
+		{InstanceID: "i3", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 	}
 	stats := AggregateProvisioning(params)
 	assert.Equal(t, 3, stats.Parameters[0].Total)
@@ -176,10 +176,10 @@ func TestAggregateProvisioning_RanksParameters(t *testing.T) {
 }
 
 func TestAggregateUpdates_CountsSetFields(t *testing.T) {
-	params := []internal.UpdatingParametersDTO{
-		{MachineType: strPtr("m6i.xlarge")},
-		{MachineType: strPtr("m5.xlarge")},
-		{},
+	params := []UpdateParamsWithID{
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m6i.xlarge")}},
+		{InstanceID: "i2", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m5.xlarge")}},
+		{InstanceID: "i3", Params: internal.UpdatingParametersDTO{}},
 	}
 	stats := AggregateUpdates(params)
 	assert.Equal(t, 3, stats.Parameters[0].Total)
@@ -195,9 +195,9 @@ func TestAggregateUpdates_CountsSetFields(t *testing.T) {
 
 func TestBuildDistributions_IncludesRegion(t *testing.T) {
 	region := "eu-central-1"
-	params := []internal.ProvisioningParameters{
-		{Parameters: pkg.ProvisioningParametersDTO{Region: &region}},
-		{Parameters: pkg.ProvisioningParametersDTO{Region: &region}},
+	params := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
+		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
 	}
 	dists := BuildDistributions(params)
 	found := false

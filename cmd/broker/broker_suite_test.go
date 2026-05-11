@@ -160,7 +160,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).
 		WithObjectTracker(ot).Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: slog.LevelWarn,
 	}))
 
 	configProvider := kebConfig.NewConfigProvider(
@@ -277,8 +277,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 			resp := analytics.StatsResponse{
 				TotalInstances: len(provParams),
+				TotalUpdates:   len(updateParams),
 				Provisioning:   analytics.AggregateProvisioning(provParams),
 				Updates:        analytics.AggregateUpdates(updateParams),
+				Combined:       analytics.AggregateCombined(provParams, updateParams),
 				Distributions:  analytics.BuildDistributions(provParams),
 				Plans:          plans,
 				RegionsByPlan:  regionsByPlan,
