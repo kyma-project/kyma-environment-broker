@@ -106,6 +106,11 @@ func TestUpdate(t *testing.T) {
 		"kyma-project.io/region":          "eu-west-1",
 		"kyma-project.io/platform-region": "cf-eu10",
 	})
+
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.CountFor("oidc"))
+	assert.Equal(t, 1, stats.Updates.CountFor("oidc"))
 }
 
 func TestUpdateWithACL(t *testing.T) {
@@ -216,6 +221,12 @@ func TestUpdateWithACL(t *testing.T) {
 	runtime = suite.GetRuntimeResourceByInstanceID(iid)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.ACL)
 
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.CountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("accessControlList"))
+	assert.Equal(t, 2, stats.Updates.CountFor("accessControlList"))
+	assert.Equal(t, 1, stats.Updates.CountFor("oidc"))
 }
 
 func TestAddACL(t *testing.T) {
@@ -5048,7 +5059,7 @@ func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Equal(t, "m6i.16xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	assert.Equal(t, "m7i.16xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)

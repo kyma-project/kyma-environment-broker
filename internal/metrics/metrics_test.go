@@ -41,6 +41,7 @@ func TestGetLabels(t *testing.T) {
 		assert.Contains(t, labels, "error_category")
 		assert.Contains(t, labels, "error_reason")
 		assert.Contains(t, labels, "error")
+		assert.Contains(t, labels, "provider")
 	})
 
 	t.Run("returns empty strings for zero-value fields", func(t *testing.T) {
@@ -57,13 +58,32 @@ func TestGetLabels(t *testing.T) {
 		assert.Equal(t, "", labels["error_category"])
 		assert.Equal(t, "", labels["error_reason"])
 		assert.Equal(t, "", labels["error"])
+		assert.Equal(t, "unknown", labels["provider"])
 	})
 
-	t.Run("returns map with exactly 11 keys", func(t *testing.T) {
+	t.Run("returns map with exactly 12 keys", func(t *testing.T) {
 		op := internal.Operation{}
 
 		labels := GetLabels(op)
 
-		assert.Len(t, labels, 11)
+		assert.Len(t, labels, 12)
 	})
+}
+
+func TestNormalizeProvider(t *testing.T) {
+	for _, tc := range []struct {
+		input    string
+		expected string
+	}{
+		{"AWS", "aws"},
+		{"Azure", "azure"},
+		{"GCP", "gcp"},
+		{"SapConvergedCloud", "sap-converged-cloud"},
+		{"Alicloud", "alicloud"},
+		{"unknown", "unknown"},
+		{"", "unknown"},
+		{"something-unexpected", "unknown"},
+	} {
+		assert.Equal(t, tc.expected, normalizeProvider(tc.input), "input: %q", tc.input)
+	}
 }

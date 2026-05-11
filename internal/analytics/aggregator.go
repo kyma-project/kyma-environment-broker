@@ -6,15 +6,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 type fieldBehavior int
 
 const (
-	behaviorValue fieldBehavior = iota // emit field value as string (default)
-	behaviorSkip                       // ignore field entirely
-	behaviorCount                      // emit slice/array length as value
+	behaviorValue      fieldBehavior = iota // emit field value as string (default)
+	behaviorSkip                            // ignore field entirely
+	behaviorCount                           // emit slice/array length as value
+	behaviorModules                         // emit "default" or "custom"
+	behaviorGvisor                          // emit "true" or "false"
+	behaviorACL                             // emit CIDR count as string
+	behaviorNetworking                      // emit set CIDR fields as "+" joined string with dualStack suffix
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
@@ -27,12 +31,53 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"shootDomain":               behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
+	"networking":                behaviorNetworking,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
 var updatingFieldConfig = map[string]fieldBehavior{
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
+	"modules":                   behaviorModules,
+	"gvisor":                    behaviorGvisor,
+	"accessControlList":         behaviorACL,
+}
+
+// handleStructBehavior handles typed struct behaviors (modules, gvisor, acl, networking)
+// by type-asserting the reflect.Value directly. Returns true if the field was handled.
+func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, counts map[string]map[string]int) bool {
+	if fv.Kind() != reflect.Ptr || fv.IsNil() {
+		return behavior == behaviorModules || behavior == behaviorGvisor ||
+			behavior == behaviorACL || behavior == behaviorNetworking
+	}
+	switch behavior {
+	case behaviorModules:
+		if m, ok := fv.Interface().(*pkg.ModulesDTO); ok {
+			record(counts, key, modulesValue(m))
+		}
+		return true
+	case behaviorGvisor:
+		if g, ok := fv.Interface().(*pkg.GvisorDTO); ok {
+			record(counts, key, fmt.Sprintf("%t", g.Enabled))
+		}
+		return true
+	case behaviorACL:
+		if a, ok := fv.Interface().(*pkg.AclDTO); ok {
+			record(counts, key, fmt.Sprintf("%d", len(a.AllowedCIDRs)))
+		}
+		return true
+	case behaviorNetworking:
+		if n, ok := fv.Interface().(*pkg.NetworkingDTO); ok {
+			if v := networkingValue(n); v != "" {
+				record(counts, key, v)
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
@@ -68,17 +113,22 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			continue
 		}
 
+		// Handle typed behaviors that work directly on the pointer before dereferencing
+		if handled := handleStructBehavior(behavior, fv, jsonName, counts); handled {
+			continue
+		}
+
 		// Dereference pointers; skip nil
 		if fv.Kind() == reflect.Ptr {
 			if fv.IsNil() {
 				continue
 			}
 			fv = fv.Elem()
-		}
-
-		// Skip zero/empty values
-		if fv.IsZero() {
-			continue
+		} else {
+			// Skip zero/empty values for non-pointer fields
+			if fv.IsZero() {
+				continue
+			}
 		}
 
 		var value string
@@ -106,35 +156,120 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 			}
 		}
 
-		if _, ok := counts[jsonName]; !ok {
-			counts[jsonName] = make(map[string]int)
-		}
-		counts[jsonName][value]++
+		record(counts, jsonName, value)
 	}
 }
 
+// modulesValue returns "default" if modules.Default is true, otherwise "custom".
+func modulesValue(m *pkg.ModulesDTO) string {
+	if m.Default != nil && *m.Default {
+		return "default"
+	}
+	return "custom"
+}
+
+// networkingValue returns a "+" joined string of the CIDR fields that are set,
+// with "dualStack:<bool>" appended if dualStack is explicitly configured.
+// nodes is mandatory in the schema but may be empty in tests; if nothing is set, returns "".
+func networkingValue(n *pkg.NetworkingDTO) string {
+	var parts []string
+	if n.NodesCidr != "" {
+		parts = append(parts, "nodes")
+	}
+	if n.PodsCidr != nil {
+		parts = append(parts, "pods")
+	}
+	if n.ServicesCidr != nil {
+		parts = append(parts, "services")
+	}
+	if n.DualStack != nil {
+		parts = append(parts, fmt.Sprintf("dualStack:%t", *n.DualStack))
+	}
+	return strings.Join(parts, "+")
+}
+
+// record adds value to counts[key], initialising the inner map if needed.
+func record(counts map[string]map[string]int, key, value string) {
+	if _, ok := counts[key]; !ok {
+		counts[key] = make(map[string]int)
+	}
+	counts[key][value]++
+}
+
 // buildCounts walks all params once and returns field-value occurrence counts.
-func buildCounts(params []internal.ProvisioningParameters) map[string]map[string]int {
+func buildCounts(params []ProvisioningParamsWithID) map[string]map[string]int {
 	counts := make(map[string]map[string]int)
 	for _, p := range params {
-		walkFields(p.Parameters, provisioningFieldConfig, counts)
+		walkFields(p.Params.Parameters, provisioningFieldConfig, counts)
 	}
 	return counts
 }
 
 // AggregateProvisioning computes parameter usage stats from a slice of ProvisioningParameters.
-func AggregateProvisioning(params []internal.ProvisioningParameters) ParameterStats {
-	return toParameterStats(buildCounts(params), len(params))
+func AggregateProvisioning(params []ProvisioningParamsWithID) ParameterStats {
+	plain := PlainProvisioningParams(params)
+	counts := make(map[string]map[string]int)
+	for _, p := range plain {
+		walkFields(p.Parameters, provisioningFieldConfig, counts)
+	}
+	return toParameterStats(counts, len(plain))
 }
 
-// AggregateUpdates computes parameter usage stats from a slice of UpdatingParametersDTO.
-func AggregateUpdates(params []internal.UpdatingParametersDTO) ParameterStats {
+// AggregateUpdates computes parameter usage stats from a slice of UpdateParamsWithID.
+func AggregateUpdates(params []UpdateParamsWithID) ParameterStats {
 	counts := make(map[string]map[string]int)
-	total := len(params)
 	for _, p := range params {
-		walkFields(p, updatingFieldConfig, counts)
+		walkFields(p.Params, updatingFieldConfig, counts)
 	}
-	return toParameterStats(counts, total)
+	return toParameterStats(counts, len(params))
+}
+
+// AggregateCombined computes per-instance parameter usage: an instance is counted as
+// "using" a parameter if it was set in its provisioning operation OR in any update operation.
+// total = number of unique active instances (from provParams).
+func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
+	// instancesWithParam[param] = set of instance IDs that have the param set
+	instancesWithParam := make(map[string]map[string]struct{})
+
+	record := func(instanceID, param string) {
+		if _, ok := instancesWithParam[param]; !ok {
+			instancesWithParam[param] = make(map[string]struct{})
+		}
+		instancesWithParam[param][instanceID] = struct{}{}
+	}
+
+	for _, p := range provParams {
+		counts := make(map[string]map[string]int)
+		walkFields(p.Params.Parameters, provisioningFieldConfig, counts)
+		for param := range counts {
+			record(p.InstanceID, param)
+		}
+	}
+
+	for _, p := range updateParams {
+		counts := make(map[string]map[string]int)
+		walkFields(p.Params, updatingFieldConfig, counts)
+		for param := range counts {
+			record(p.InstanceID, param)
+		}
+	}
+
+	total := len(provParams)
+	var result []ParameterStat
+	for param, instances := range instancesWithParam {
+		result = append(result, ParameterStat{
+			Parameter: param,
+			SetCount:  len(instances),
+			Total:     total,
+		})
+	}
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].SetCount != result[j].SetCount {
+			return result[i].SetCount > result[j].SetCount
+		}
+		return result[i].Parameter < result[j].Parameter
+	})
+	return ParameterStats{Parameters: result}
 }
 
 // toParameterStats converts raw counts into a ranked ParameterStats list.
@@ -161,7 +296,7 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 }
 
 // BuildDistributions computes value breakdowns for selected distribution fields.
-func BuildDistributions(params []internal.ProvisioningParameters) []DistributionStat {
+func BuildDistributions(params []ProvisioningParamsWithID) []DistributionStat {
 	distributionFields := []string{"machineType", "region", "autoScalerMin", "autoScalerMax"}
 	counts := buildCounts(params)
 	var result []DistributionStat
@@ -179,21 +314,21 @@ func BuildDistributions(params []internal.ProvisioningParameters) []Distribution
 // BuildPlanRegionIndex builds a map of plan name → sorted distinct regions,
 // plus a sorted list of all plan names. planIDToName maps plan UUID → plan name.
 // The special key "" in the returned map contains all regions across all plans.
-func BuildPlanRegionIndex(params []internal.ProvisioningParameters, planIDToName map[string]string) ([]string, map[string][]string) {
+func BuildPlanRegionIndex(params []ProvisioningParamsWithID, planIDToName map[string]string) ([]string, map[string][]string) {
 	planSet := make(map[string]struct{})
 	// plan → region → present
 	byPlan := make(map[string]map[string]struct{})
 
 	for _, p := range params {
-		name := planIDToName[p.PlanID]
+		name := planIDToName[p.Params.PlanID]
 		if name == "" {
-			name = p.PlanID // fallback to raw ID
+			name = p.Params.PlanID // fallback to raw ID
 		}
 		planSet[name] = struct{}{}
 
 		region := ""
-		if p.Parameters.Region != nil {
-			region = *p.Parameters.Region
+		if p.Params.Parameters.Region != nil {
+			region = *p.Params.Parameters.Region
 		}
 
 		if _, ok := byPlan[name]; !ok {
@@ -237,12 +372,12 @@ func BuildPlanRegionIndex(params []internal.ProvisioningParameters, planIDToName
 
 // FilterByPlan returns only params matching the given plan name.
 // planIDToName maps plan UUID → plan name.
-func FilterByPlan(params []internal.ProvisioningParameters, plan string, planIDToName map[string]string) []internal.ProvisioningParameters {
+func FilterByPlan(params []ProvisioningParamsWithID, plan string, planIDToName map[string]string) []ProvisioningParamsWithID {
 	result := params[:0:0]
 	for _, p := range params {
-		name := planIDToName[p.PlanID]
+		name := planIDToName[p.Params.PlanID]
 		if name == "" {
-			name = p.PlanID
+			name = p.Params.PlanID
 		}
 		if name == plan {
 			result = append(result, p)
@@ -252,10 +387,10 @@ func FilterByPlan(params []internal.ProvisioningParameters, plan string, planIDT
 }
 
 // FilterByRegion returns only params where Parameters.Region matches the given region.
-func FilterByRegion(params []internal.ProvisioningParameters, region string) []internal.ProvisioningParameters {
+func FilterByRegion(params []ProvisioningParamsWithID, region string) []ProvisioningParamsWithID {
 	result := params[:0:0]
 	for _, p := range params {
-		if p.Parameters.Region != nil && *p.Parameters.Region == region {
+		if p.Params.Parameters.Region != nil && *p.Params.Parameters.Region == region {
 			result = append(result, p)
 		}
 	}

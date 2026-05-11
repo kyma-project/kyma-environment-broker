@@ -1,7 +1,7 @@
 name: Sync KEB docs structure to product-kyma-runtime
 
 # Triggered after a successful "Create and promote release" or "Promote KEB to dev" run.
-# Compares docs/ between the released KEB version and the previous one.
+# Compares docs/ between the two most recent KEB releases (via gh release list).
 # Only files with <!--{"metadata":{"publish":true}}--> are considered.
 #
 # Two structural changes are handled:
@@ -25,13 +25,13 @@ on:
     types: [completed]
   workflow_dispatch:
     inputs:
-      keb_version:
-        description: "KEB version tag for chart lookup (e.g. 1.29.0) — required"
-        required: true
-      base_sha:
-        description: "Base SHA to diff against HEAD (for branch testing). Leave empty to diff real tags."
+      current_tag:
+        description: "Newer tag to compare (default: latest release)"
         required: false
         default: ''
+      prev_tag:
+        description: "Older tag to compare against — required"
+        required: true
 
 jobs:
   sync-toc:
@@ -56,45 +56,65 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          # For workflow_run: pin to the exact commit that triggered the upstream workflow.
-          # For workflow_dispatch: empty string → checkout the default branch HEAD.
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          ref: ''
 
       - name: Resolve diff range
         id: versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "should_continue=true" >> "$GITHUB_OUTPUT"
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            KEB_TAG="${{ inputs.keb_version }}"
-            if [ -n "${{ inputs.base_sha }}" ]; then
-              # Branch testing mode: diff base_sha..HEAD, use keb_version for chart lookup only
-              echo "PREV_SHA=${{ inputs.base_sha }}" >> "$GITHUB_OUTPUT"
-              echo "CURRENT_SHA=HEAD"                >> "$GITHUB_OUTPUT"
-              echo "KEB_TAG=${KEB_TAG}"              >> "$GITHUB_OUTPUT"
-              echo "Branch test mode: ${{ inputs.base_sha }}..HEAD  chart lookup: ${KEB_TAG}"
+            PREV_TAG="${{ inputs.prev_tag }}"
+            if [ -n "${{ inputs.current_tag }}" ]; then
+              CURRENT_TAG="${{ inputs.current_tag }}"
             else
-              # Pure tag mode: diff two real KEB tags
-              PREV_TAG=$(git describe --tags --abbrev=0 "${KEB_TAG}^")
-              echo "PREV_SHA=${PREV_TAG}"   >> "$GITHUB_OUTPUT"
-              echo "CURRENT_SHA=${KEB_TAG}" >> "$GITHUB_OUTPUT"
-              echo "KEB_TAG=${KEB_TAG}"     >> "$GITHUB_OUTPUT"
-              echo "Tag mode: ${PREV_TAG}..${KEB_TAG}"
+              CURRENT_TAG=$(gh release list \
+                --repo "$GITHUB_REPOSITORY" \
+                --limit 1 \
+                --json tagName \
+                --jq '.[0].tagName')
+              if [ -z "$CURRENT_TAG" ]; then
+                echo "ERROR: current_tag not provided and no releases found."
+                exit 1
+              fi
             fi
-          else
-            # workflow_run mode: resolve tag from head_sha
-            CURRENT_TAG=$(git describe --tags --exact-match "${{ github.event.workflow_run.head_sha }}" 2>/dev/null || true)
-            if [ -z "$CURRENT_TAG" ]; then
-              echo "No exact tag found on head_sha – nothing to sync."
-              exit 0
-            fi
-            PREV_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^")
             echo "PREV_SHA=${PREV_TAG}"       >> "$GITHUB_OUTPUT"
             echo "CURRENT_SHA=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
             echo "KEB_TAG=${CURRENT_TAG}"     >> "$GITHUB_OUTPUT"
             echo "Tag mode: ${PREV_TAG}..${CURRENT_TAG}"
+          else
+            # workflow_run mode: find the two most recent GH releases
+            CURRENT_TAG=$(gh release list \
+              --repo "$GITHUB_REPOSITORY" \
+              --limit 1 \
+              --json tagName \
+              --jq '.[0].tagName')
+            if [ -z "$CURRENT_TAG" ]; then
+              echo "No releases found – nothing to sync."
+              echo "should_continue=false" >> "$GITHUB_OUTPUT"
+            else
+              PREV_TAG=$(gh release list \
+                --repo "$GITHUB_REPOSITORY" \
+                --limit 2 \
+                --json tagName \
+                --jq '.[1].tagName')
+              if [ -z "$PREV_TAG" ]; then
+                echo "Only one release found – nothing to diff against."
+                echo "should_continue=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "PREV_SHA=${PREV_TAG}"       >> "$GITHUB_OUTPUT"
+                echo "CURRENT_SHA=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
+                echo "KEB_TAG=${CURRENT_TAG}"     >> "$GITHUB_OUTPUT"
+                echo "Tag mode: ${PREV_TAG}..${CURRENT_TAG}"
+              fi
+            fi
           fi
 
       - name: Detect structural changes in docs/
         id: detect
+        if: steps.versions.outputs.should_continue == 'true'
         run: |
           PREV="${{ steps.versions.outputs.PREV_SHA }}"
           CURRENT="${{ steps.versions.outputs.CURRENT_SHA }}"
@@ -265,3 +285,13 @@ jobs:
             --body-file /tmp/pr_body.md)
 
           echo "${PR_URL}" | tee "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify slack channel about failure
+        if: ${{ !success() }}
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: kyma-gopher-private-alerts
+            text: "sync-docs-toc failed. Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
