@@ -1,12 +1,14 @@
 package analytics
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 type fieldBehavior int
@@ -19,6 +21,7 @@ const (
 	behaviorGvisor                          // emit "true" or "false"
 	behaviorACL                             // emit CIDR count as string
 	behaviorNetworking                      // emit set CIDR fields as "+" joined string with dualStack suffix
+	behaviorOIDC                            // emit 0 (nil), 1 (single), or len(List) (multi)
 )
 
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
@@ -35,13 +38,15 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"gvisor":                    behaviorGvisor,
 	"accessControlList":         behaviorACL,
 	"networking":                behaviorNetworking,
+	"oidc":                      behaviorOIDC,
 }
 
 // updatingFieldConfig controls per-field behavior for UpdatingParametersDTO.
+// Only fields that exist on UpdatingParametersDTO and whose absence in an update op
+// genuinely means the parameter was nullified should appear here.
 var updatingFieldConfig = map[string]fieldBehavior{
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
-	"modules":                   behaviorModules,
 	"gvisor":                    behaviorGvisor,
 	"accessControlList":         behaviorACL,
 }
@@ -51,7 +56,7 @@ var updatingFieldConfig = map[string]fieldBehavior{
 func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, counts map[string]map[string]int) bool {
 	if fv.Kind() != reflect.Ptr || fv.IsNil() {
 		return behavior == behaviorModules || behavior == behaviorGvisor ||
-			behavior == behaviorACL || behavior == behaviorNetworking
+			behavior == behaviorACL || behavior == behaviorNetworking || behavior == behaviorOIDC
 	}
 	switch behavior {
 	case behaviorModules:
@@ -74,6 +79,11 @@ func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, 
 			if v := networkingValue(n); v != "" {
 				record(counts, key, v)
 			}
+		}
+		return true
+	case behaviorOIDC:
+		if o, ok := fv.Interface().(*pkg.OIDCConnectDTO); ok {
+			record(counts, key, fmt.Sprintf("%d", oidcCount(o)))
 		}
 		return true
 	}
@@ -166,6 +176,21 @@ func modulesValue(m *pkg.ModulesDTO) string {
 		return "default"
 	}
 	return "custom"
+}
+
+// oidcCount returns the number of OIDC providers configured:
+// 0 if nil, 1 for the legacy single-provider form, len(List) for the multi-provider form.
+func oidcCount(o *pkg.OIDCConnectDTO) int {
+	if o == nil {
+		return 0
+	}
+	if len(o.List) > 0 {
+		return len(o.List)
+	}
+	if o.OIDCConfigDTO != nil {
+		return 1
+	}
+	return 0
 }
 
 // networkingValue returns a "+" joined string of the CIDR fields that are set,
@@ -395,4 +420,117 @@ func FilterByRegion(params []ProvisioningParamsWithID, region string) []Provisio
 		}
 	}
 	return result
+}
+
+// isParamSet returns true if the given parameter name has any recorded value when
+// walking the struct with the given field config. Uses the same walkFields logic as
+// all other aggregation, so null/zero values are treated consistently.
+func isParamSet(v interface{}, config map[string]fieldBehavior, param string) bool {
+	counts := make(map[string]map[string]int)
+	walkFields(v, config, counts)
+	_, ok := counts[param]
+	return ok
+}
+
+// BuildTrend computes the daily cumulative count of active instances that have the
+// given parameter set, derived from the ordered sequence of op events.
+// Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
+// For each instance the function tracks whether the parameter is currently set,
+// emits +1 / -1 / 0 deltas, buckets them by day, and returns the running total.
+// TrendPoint.Total holds the cumulative count of active instances provisioned by that day.
+func BuildTrend(events []OpEvent, param string) TrendStat {
+	// per-instance: is the param currently set?
+	instanceState := make(map[string]bool)
+
+	// day → net delta for that day
+	dayDelta := make(map[string]int)
+	// day → new instances provisioned on that day
+	dayProvisioned := make(map[string]int)
+
+	for _, ev := range events {
+		wasSet := instanceState[ev.InstanceID]
+		var nowSet bool
+
+		switch ev.Type {
+		case "provision":
+			p, err := parseProvisioningParameters(ev.RawParams)
+			if err != nil {
+				continue
+			}
+			nowSet = isParamSet(p.Parameters, provisioningFieldConfig, param)
+			dayProvisioned[ev.CreatedAt]++
+		case "update":
+			var op internal.Operation
+			if err := json.Unmarshal([]byte(ev.RawParams), &op); err != nil {
+				continue
+			}
+			if isParamSet(op.UpdatingParameters, updatingFieldConfig, param) {
+				nowSet = true
+			} else if _, inConfig := updatingFieldConfig[param]; inConfig {
+				// param is updatable and absent from this op → nullified
+				nowSet = false
+			} else {
+				// param not updatable — state unchanged
+				nowSet = wasSet
+			}
+		default:
+			continue
+		}
+
+		instanceState[ev.InstanceID] = nowSet
+
+		delta := 0
+		if nowSet && !wasSet {
+			delta = 1
+		} else if !nowSet && wasSet {
+			delta = -1
+		}
+		if delta != 0 {
+			dayDelta[ev.CreatedAt] += delta
+		}
+	}
+
+	// Collect all days with either a param delta or a provisioning event.
+	allDays := make(map[string]struct{})
+	for d := range dayDelta {
+		allDays[d] = struct{}{}
+	}
+	for d := range dayProvisioned {
+		allDays[d] = struct{}{}
+	}
+	sortedDays := make([]string, 0, len(allDays))
+	for d := range allDays {
+		sortedDays = append(sortedDays, d)
+	}
+	sort.Strings(sortedDays)
+
+	points := make([]TrendPoint, 0, len(sortedDays))
+	running := 0
+	runningTotal := 0
+	for _, day := range sortedDays {
+		running += dayDelta[day]
+		runningTotal += dayProvisioned[day]
+		points = append(points, TrendPoint{Date: day, Count: running, Total: runningTotal})
+	}
+
+	return TrendStat{Parameter: param, Points: points}
+}
+
+// BuildTrends computes daily trend lines for each of the given parameters.
+func BuildTrends(events []OpEvent, params []string) []TrendStat {
+	result := make([]TrendStat, 0, len(params))
+	for _, p := range params {
+		result = append(result, BuildTrend(events, p))
+	}
+	return result
+}
+
+// TrendParamsFrom returns the sorted list of parameter names from combined stats.
+// Used to compute trends for all parameters that actually appear in the data.
+func TrendParamsFrom(combined ParameterStats) []string {
+	params := make([]string, 0, len(combined.Parameters))
+	for _, p := range combined.Parameters {
+		params = append(params, p.Parameter)
+	}
+	return params
 }

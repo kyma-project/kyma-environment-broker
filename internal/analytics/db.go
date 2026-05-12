@@ -20,6 +20,11 @@ func NewDBReader(session *dbr.Session) *DBReader {
 	return &DBReader{session: session}
 }
 
+const (
+	sqlCreatedAtGte = " AND o.created_at >= ?"
+	sqlCreatedAtLt  = " AND o.created_at < ?"
+)
+
 // TimeRange optionally constrains queries to operations created within [From, To).
 // Zero values mean unbounded on that side.
 type TimeRange struct {
@@ -49,11 +54,11 @@ WHERE o.type = 'provision'
   AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += " AND o.created_at >= ?"
+		q += sqlCreatedAtGte
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += " AND o.created_at < ?"
+		q += sqlCreatedAtLt
 		args = append(args, tr.To)
 	}
 
@@ -100,11 +105,11 @@ WHERE o.type = 'update'
   AND i.deleted_at = '0001-01-01 00:00:00+00'`
 	args := []interface{}{}
 	if !tr.From.IsZero() {
-		q += " AND o.created_at >= ?"
+		q += sqlCreatedAtGte
 		args = append(args, tr.From)
 	}
 	if !tr.To.IsZero() {
-		q += " AND o.created_at < ?"
+		q += sqlCreatedAtLt
 		args = append(args, tr.To)
 	}
 
@@ -137,6 +142,59 @@ func (r *DBReader) FetchUpdateParams() ([]UpdateParamsWithID, error) {
 // FetchUpdateParamsInRange is like FetchUpdateParams but scoped to tr.
 func (r *DBReader) FetchUpdateParamsInRange(tr TimeRange) ([]UpdateParamsWithID, error) {
 	return r.fetchUpdateParams(tr)
+}
+
+// OpEvent is a single provisioning or update operation used for trend computation.
+type OpEvent struct {
+	InstanceID string
+	CreatedAt  string // YYYY-MM-DD
+	Type       string // "provision" or "update"
+	RawParams  string // provisioning_parameters for provision ops; operation data JSON for update ops
+}
+
+// FetchOpEventsInRange returns all succeeded provisioning and update operations on active
+// instances within tr, ordered by created_at ASC. Used for trend (AC6) computation.
+func (r *DBReader) FetchOpEventsInRange(tr TimeRange) ([]OpEvent, error) {
+	q := `
+SELECT o.instance_id, DATE(o.created_at) AS created_date, o.type,
+       CASE WHEN o.type = 'provision' THEN o.provisioning_parameters ELSE o.data END AS raw_params
+FROM operations o
+JOIN instances i ON i.instance_id = o.instance_id
+WHERE o.type IN ('provision', 'update')
+  AND o.state = 'succeeded'
+  AND i.deleted_at = '0001-01-01 00:00:00+00'`
+	args := []interface{}{}
+	if !tr.From.IsZero() {
+		q += sqlCreatedAtGte
+		args = append(args, tr.From)
+	}
+	if !tr.To.IsZero() {
+		q += sqlCreatedAtLt
+		args = append(args, tr.To)
+	}
+	q += " ORDER BY o.created_at ASC"
+
+	var rows []struct {
+		InstanceID  string `db:"instance_id"`
+		CreatedDate string `db:"created_date"`
+		Type        string `db:"type"`
+		RawParams   string `db:"raw_params"`
+	}
+	_, err := r.session.SelectBySql(q, args...).Load(&rows)
+	if err != nil {
+		return nil, fmt.Errorf("fetching op events: %w", err)
+	}
+
+	result := make([]OpEvent, len(rows))
+	for i, row := range rows {
+		result[i] = OpEvent{
+			InstanceID: row.InstanceID,
+			CreatedAt:  row.CreatedDate,
+			Type:       row.Type,
+			RawParams:  row.RawParams,
+		}
+	}
+	return result, nil
 }
 
 func parseProvisioningParameters(raw string) (internal.ProvisioningParameters, error) {

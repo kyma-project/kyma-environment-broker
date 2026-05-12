@@ -7,6 +7,18 @@ regions, then applies updates to ~40% of them.
 Usage:
     cd utils/
     python seed_analytics.py [--count N] [--skip-updates]
+                             [--param-cutoff PARAM:DAYS_AGO ...]
+
+--param-cutoff simulates a parameter that was introduced at a specific point in
+time. Pass one or more PARAM:DAYS_AGO pairs, e.g.:
+
+    --param-cutoff ingressFiltering:30
+
+This means ingressFiltering was introduced 30 days ago. Instances are spread
+uniformly over --backdate-days (default 90) days. Only instances whose
+simulated provisioning date falls on or after the cutoff will have the
+parameter set. The fraction of instances that receive the parameter is
+approximately (cutoff_days / backdate_days), e.g. 30/90 ≈ 33%.
 
 Requires KEB running locally on http://localhost:8080.
 """
@@ -370,7 +382,33 @@ def main():
     parser.add_argument("--seed",  type=int, default=42,   help="Random seed for reproducibility (default: 42)")
     parser.add_argument("--skip-updates", action="store_true", help="Skip the update phase")
     parser.add_argument("--poll-timeout", type=int, default=600, help="Seconds to wait for operations to complete (default: 600)")
+    parser.add_argument("--backdate-days", type=int, default=90,
+                        help="Total time window in days that backdating will spread instances across (default: 90). "
+                             "Used to compute the cutoff fraction for --param-cutoff.")
+    parser.add_argument("--param-cutoff", action="append", default=[], metavar="PARAM:DAYS_AGO",
+                        help="Simulate a parameter introduced DAYS_AGO days ago. "
+                             "Only instances assigned to dates on or after the cutoff will have the parameter set. "
+                             "Can be specified multiple times, e.g. --param-cutoff ingressFiltering:30")
     args = parser.parse_args()
+
+    # Parse --param-cutoff entries into {param: fraction_of_instances_that_get_it}
+    # Instances are provisioned in order 0..count-1; we treat index as a proxy for time.
+    # The cutoff fraction = cutoff_days / backdate_days, so the last (cutoff_days/backdate_days)*count
+    # instances are considered "after the cutoff" and receive the parameter.
+    param_cutoffs = {}  # param -> cutoff_days
+    for entry in args.param_cutoff:
+        if ":" not in entry:
+            parser.error(f"--param-cutoff must be PARAM:DAYS_AGO, got: {entry!r}")
+        param, _, days_str = entry.partition(":")
+        try:
+            cutoff_days = int(days_str)
+        except ValueError:
+            parser.error(f"--param-cutoff days must be an integer, got: {days_str!r}")
+        if cutoff_days <= 0 or cutoff_days > args.backdate_days:
+            parser.error(f"--param-cutoff days must be in range 1..{args.backdate_days}, got: {cutoff_days}")
+        param_cutoffs[param.strip()] = cutoff_days
+        print(f"  param-cutoff: {param.strip()} introduced {cutoff_days} days ago "
+              f"(~{cutoff_days/args.backdate_days*100:.0f}% of instances will have it)")
 
     rng = random.Random(args.seed)
     count = args.count
@@ -384,6 +422,17 @@ def main():
         plan = weighted_choice(PLAN_WEIGHTS)
         region = weighted_choice(PLAN_REGIONS[plan])
         parameters = build_parameters(plan, rng)
+
+        # Apply param cutoffs: instance i is treated as being provisioned at a
+        # simulated age of (1 - i/count) * backdate_days days ago (i=0 is oldest).
+        simulated_age_days = (1.0 - i / max(count - 1, 1)) * args.backdate_days
+        for param, cutoff_days in param_cutoffs.items():
+            if simulated_age_days <= cutoff_days:
+                # This instance is "after" the cutoff — set the parameter.
+                parameters[param] = True
+            else:
+                # Before the cutoff — ensure the parameter is absent.
+                parameters.pop(param, None)
 
         if (i + 1) % 100 == 0 or i == 0:
             print(f"  [{i+1}/{count}] plan={plan} region={region}")
