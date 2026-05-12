@@ -56,6 +56,7 @@ Read `.github/pull-request-template.md` and use it as the body structure. Fill i
 Rules:
 - Never include `Closes #<issue>`, `Fixes #<issue>`, or any issue-closing keywords unless the user explicitly asks.
 - Keep bullets factual and concise — derived from the actual diff, not paraphrased vaguely.
+- Start each bullet with an infinitive verb (e.g. "Add...", "Rename...", "Update...", "Remove...", "Fix...").
 
 ### 4. Ask about related issues
 
