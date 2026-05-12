@@ -110,7 +110,7 @@
 | broker.<br>subaccountMovementEnabled | If true, enables subaccount movement (allows changing global account for an instance). | `false` |
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>dualStackDocsURL | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. | `https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support` |
-| broker.<br>additionalVolumeGiBPlans | Plans for which the additionalVolumeGiB parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. | `` |
+| broker.<br>additionalVolumeGiPlans | Plans for which the additionalVolumeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. | `` |
 | broker.<br>dynamicVolumeSizeEnabled | If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default. | `false` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |

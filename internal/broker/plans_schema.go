@@ -56,7 +56,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
-	AdditionalVolumeGiB       *Type                          `json:"additionalVolumeGiB,omitempty"`
+	AdditionalVolumeGi       *Type                          `json:"additionalVolumeGi,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -229,7 +229,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMax       AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints              *TaintsType    `json:"taints,omitempty"`
 	Gvisor              *GvisorType    `json:"gvisor,omitempty"`
-	AdditionalVolumeGiB *Type          `json:"additionalVolumeGiB,omitempty"`
+	AdditionalVolumeGi *Type          `json:"additionalVolumeGi,omitempty"`
 }
 
 type TaintsType struct {
@@ -777,7 +777,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalVolumeGiB", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalVolumeGi", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -937,11 +937,11 @@ func GvisorProperty() *GvisorType {
 	}
 }
 
-func AdditionalVolumeGiBProperty() *Type {
+func AdditionalVolumeGiProperty() *Type {
 	return &Type{
 		Type:        "integer",
-		Title:       "Additional Volume Size (GiB)",
-		Description: "Additional disk space in GiB added on top of the default volume size for the worker pool.",
+		Title:       "Additional Volume Size (Gi)",
+		Description: "Additional disk space in Gi added on top of the default volume size for the worker pool.",
 		Minimum:     ptr.Integer(0),
 		Maximum:     1000,
 		Default:     0,

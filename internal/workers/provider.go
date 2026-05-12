@@ -94,7 +94,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 					volGb = override
 				}
 			}
-			volGb += additionalWorkerNodePool.AdditionalVolumeGiB
+			volGb += additionalWorkerNodePool.AdditionalVolumeGi
 			vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
 			if values.DiskType != "" {
 				vol.Type = ptr.String(values.DiskType)
@@ -143,7 +143,7 @@ func isAdditionalWorkerPoolUnchanged(
 	for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
 		if prev.Name == additionalWorkerNodePool.Name &&
 			prev.MachineType == additionalWorkerNodePool.MachineType &&
-			prev.AdditionalVolumeGiB == additionalWorkerNodePool.AdditionalVolumeGiB {
+			prev.AdditionalVolumeGi == additionalWorkerNodePool.AdditionalVolumeGi {
 			return true
 		}
 	}

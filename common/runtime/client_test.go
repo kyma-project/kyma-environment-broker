@@ -189,26 +189,26 @@ func respondRuntimes(w http.ResponseWriter, runtimes []RuntimeDTO, totalCount in
 	return err
 }
 
-func TestAdditionalWorkerNodePool_Validate_NegativeAdditionalVolumeGiB(t *testing.T) {
+func TestAdditionalWorkerNodePool_Validate_NegativeAdditionalVolumeGi(t *testing.T) {
 	pool := AdditionalWorkerNodePool{
 		Name:                "pool-a",
 		MachineType:         "m5.large",
 		AutoScalerMin:       1,
 		AutoScalerMax:       3,
-		AdditionalVolumeGiB: -1,
+		AdditionalVolumeGi: -1,
 	}
 	err := pool.Validate()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "AdditionalVolumeGiB")
+	assert.Contains(t, err.Error(), "AdditionalVolumeGi")
 }
 
-func TestAdditionalWorkerNodePool_Validate_ZeroAdditionalVolumeGiB(t *testing.T) {
+func TestAdditionalWorkerNodePool_Validate_ZeroAdditionalVolumeGi(t *testing.T) {
 	pool := AdditionalWorkerNodePool{
 		Name:                "pool-a",
 		MachineType:         "m5.large",
 		AutoScalerMin:       1,
 		AutoScalerMax:       3,
-		AdditionalVolumeGiB: 0,
+		AdditionalVolumeGi: 0,
 	}
 	err := pool.Validate()
 	assert.NoError(t, err)

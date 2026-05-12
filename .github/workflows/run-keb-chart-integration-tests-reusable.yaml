@@ -174,38 +174,38 @@ jobs:
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
 
       - name: Update the instance
-        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m5.xlarge","additionalVolumeGiB":20}' http://localhost:8080
+        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m5.xlarge","additionalVolumeGi":20}' http://localhost:8080
 
       - name: Wait for updating to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
       - name: Assert update totalCount is 1
         run: scripts/testing/assert_runtime_count.sh aws-cluster 1 http://localhost:8080 update
 
-      - name: Assert volume size after update with additionalVolumeGiB
+      - name: Assert volume size after update with additionalVolumeGi
         run: |
           VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
           echo "Volume size after update: $VOLUME_SIZE"
           if [ "$VOLUME_SIZE" != "100Gi" ]; then
-            echo "Error: Expected 100Gi (80Gi from KCR for m5.xlarge + 20Gi additionalVolumeGiB) but got $VOLUME_SIZE"
+            echo "Error: Expected 100Gi (80Gi from KCR for m5.xlarge + 20Gi additionalVolumeGi) but got $VOLUME_SIZE"
             exit 1
           fi
-          echo "additionalVolumeGiB sum assertion passed"
+          echo "additionalVolumeGi sum assertion passed"
 
-      - name: Update machine type while additionalVolumeGiB is persisted
+      - name: Update machine type while additionalVolumeGi is persisted
         run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m6i.4xlarge"}' http://localhost:8080
 
       - name: Wait for machine type change update to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
 
-      - name: Assert volume size recalculated for new machine with persisted additionalVolumeGiB
+      - name: Assert volume size recalculated for new machine with persisted additionalVolumeGi
         run: |
           VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
           echo "Volume size after machine type change: $VOLUME_SIZE"
           if [ "$VOLUME_SIZE" != "170Gi" ]; then
-            echo "Error: Expected 170Gi (150Gi from KCR for m6i.4xlarge + 20Gi persisted additionalVolumeGiB) but got $VOLUME_SIZE"
+            echo "Error: Expected 170Gi (150Gi from KCR for m6i.4xlarge + 20Gi persisted additionalVolumeGi) but got $VOLUME_SIZE"
             exit 1
           fi
-          echo "Machine type change with persisted additionalVolumeGiB assertion passed"
+          echo "Machine type change with persisted additionalVolumeGi assertion passed"
 
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"

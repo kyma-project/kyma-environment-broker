@@ -351,15 +351,15 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if params.AdditionalVolumeGiB != nil && *params.AdditionalVolumeGiB < 0 {
-		err := fmt.Errorf("additionalVolumeGiB must be >= 0, got %d", *params.AdditionalVolumeGiB)
+	if params.AdditionalVolumeGi != nil && *params.AdditionalVolumeGi < 0 {
+		err := fmt.Errorf("additionalVolumeGi must be >= 0, got %d", *params.AdditionalVolumeGi)
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if params.AdditionalVolumeGiB != nil {
+	if params.AdditionalVolumeGi != nil {
 		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-		if !b.config.AdditionalVolumeGIBPlans.Contains(planName) {
-			err := fmt.Errorf("additionalVolumeGiB is not available for plan %s", planName)
+		if !b.config.AdditionalVolumeGIPlans.Contains(planName) {
+			err := fmt.Errorf("additionalVolumeGi is not available for plan %s", planName)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
@@ -847,8 +847,8 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		updateStorage = append(updateStorage, "Machine type")
 	}
 
-	if params.AdditionalVolumeGiB != nil {
-		instance.Parameters.Parameters.AdditionalVolumeGiB = params.AdditionalVolumeGiB
+	if params.AdditionalVolumeGi != nil {
+		instance.Parameters.Parameters.AdditionalVolumeGi = params.AdditionalVolumeGi
 		updateStorage = append(updateStorage, "Additional Volume GiB")
 	}
 
