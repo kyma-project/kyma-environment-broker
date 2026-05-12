@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 
 	"net/http"
 	"testing"
@@ -5062,4 +5064,96 @@ func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)
 	assert.Equal(t, "r8i.16xlarge", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[1].Machine.Type)
+}
+
+func TestUpdateAutoScalerMinReflectedInRuntimes(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// provision with autoScalerMin=4
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"region": "eu-central-1",
+				"autoScalerMin": 4,
+				"autoScalerMax": 10
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// update autoScalerMin to 5
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {},
+			"parameters": {
+				"autoScalerMin": 5
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	updateOpID1 := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID1, domain.Succeeded)
+
+	// update autoScalerMin to 6
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {},
+			"parameters": {
+				"autoScalerMin": 6
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	updateOpID2 := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID2, domain.Succeeded)
+
+	// when: call runtimes endpoint
+	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?instance_id=%s", iid), "")
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var runtimes pkg.RuntimesPage
+	err = json.Unmarshal(body, &runtimes)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, runtimes.TotalCount)
+	rt := runtimes.Data[0]
+
+	// then: instance-level parameters reflect the latest updated value
+	require.NotNil(t, rt.Parameters.AutoScalerMin)
+	assert.Equal(t, 6, *rt.Parameters.AutoScalerMin)
+
+	// provisioning operation carries the initial value
+	require.NotNil(t, rt.Status.Provisioning)
+	require.NotNil(t, rt.Status.Provisioning.Parameters.AutoScalerMin)
+	assert.Equal(t, 4, *rt.Status.Provisioning.Parameters.AutoScalerMin)
+
+	// two update operations with values set at each update
+	require.NotNil(t, rt.Status.Update)
+	require.Equal(t, 2, rt.Status.Update.Count)
+
+	// operations returned newest-first
+	require.NotNil(t, rt.Status.Update.Data[0].Parameters.AutoScalerMin)
+	assert.Equal(t, 6, *rt.Status.Update.Data[0].Parameters.AutoScalerMin)
+	require.NotNil(t, rt.Status.Update.Data[1].Parameters.AutoScalerMin)
+	assert.Equal(t, 5, *rt.Status.Update.Data[1].Parameters.AutoScalerMin)
 }

@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConverting_Provisioning(t *testing.T) {
@@ -317,4 +319,148 @@ func fixProvisioningOperationWithStagesAndVersion(state domain.LastOperationStat
 			FinishedStages: []string{"start", "create_runtime", "check_kyma", "post_actions"},
 		},
 	}
+}
+
+func TestApplyOperation_RawParametersUsedWhenSet(t *testing.T) {
+	// given
+	instance := fixInstance()
+	svc := NewConverter("eu")
+	dto, _ := svc.NewDTO(instance)
+
+	rawParams := json.RawMessage(`{"autoScalerMax":21}`)
+	op := &internal.ProvisioningOperation{
+		Operation: internal.Operation{
+			CreatedAt:     time.Now(),
+			ID:            "op-id",
+			State:         domain.Succeeded,
+			RawParameters: rawParams,
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					Name: "should-not-appear",
+				},
+			},
+		},
+	}
+
+	// when
+	svc.ApplyProvisioningOperation(&dto, op)
+
+	// then
+	require.NotNil(t, dto.Status.Provisioning)
+	assert.Equal(t, json.RawMessage(`{"autoScalerMax":21}`), dto.Status.Provisioning.RawParameters)
+	assert.Equal(t, "", dto.Status.Provisioning.Parameters.Name, "typed Parameters should reflect raw payload, not merged state")
+}
+
+func TestApplyOperation_FallbackToMergedStateWhenRawParametersEmpty(t *testing.T) {
+	// given
+	instance := fixInstance()
+	svc := NewConverter("eu")
+	dto, _ := svc.NewDTO(instance)
+
+	op := &internal.ProvisioningOperation{
+		Operation: internal.Operation{
+			CreatedAt: time.Now(),
+			ID:        "op-id",
+			State:     domain.Succeeded,
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					Name: "from-merged-state",
+				},
+			},
+		},
+	}
+
+	// when
+	svc.ApplyProvisioningOperation(&dto, op)
+
+	// then
+	require.NotNil(t, dto.Status.Provisioning)
+	assert.Nil(t, dto.Status.Provisioning.RawParameters)
+	assert.Equal(t, "from-merged-state", dto.Status.Provisioning.Parameters.Name)
+}
+
+func TestApplyOperation_SensitiveFieldsStrippedFromRawParameters(t *testing.T) {
+	// given
+	instance := fixInstance()
+	svc := NewConverter("eu")
+	dto, _ := svc.NewDTO(instance)
+
+	rawParams := json.RawMessage(`{"name":"test","kubeconfig":"secret","targetSecret":"also-secret"}`)
+	op := &internal.ProvisioningOperation{
+		Operation: internal.Operation{
+			CreatedAt:     time.Now(),
+			ID:            "op-id",
+			State:         domain.Succeeded,
+			RawParameters: rawParams,
+		},
+	}
+
+	// when
+	svc.ApplyProvisioningOperation(&dto, op)
+
+	// then
+	require.NotNil(t, dto.Status.Provisioning)
+	var got map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(dto.Status.Provisioning.RawParameters, &got))
+	assert.Equal(t, json.RawMessage(`"test"`), got["name"])
+	assert.NotContains(t, got, "kubeconfig")
+	assert.NotContains(t, got, "targetSecret")
+}
+
+func TestApplyOperation_UpdateRawParametersShowsOnlySubmittedFields(t *testing.T) {
+	// given
+	instance := fixInstance()
+	svc := NewConverter("eu")
+	dto, _ := svc.NewDTO(instance)
+	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
+
+	rawUpdateParams := json.RawMessage(`{"autoScalerMax":21}`)
+	updateOp := internal.UpdatingOperation{
+		Operation: internal.Operation{
+			CreatedAt:     time.Now().Add(time.Second),
+			ID:            "upd-id",
+			State:         domain.Succeeded,
+			RawParameters: rawUpdateParams,
+			ProvisioningParameters: internal.ProvisioningParameters{
+				Parameters: runtime.ProvisioningParametersDTO{
+					// merged state contains more fields than submitted
+					Name: "merged-name",
+				},
+			},
+		},
+	}
+
+	// when
+	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{updateOp}, 1)
+
+	// then
+	require.Len(t, dto.Status.Update.Data, 1)
+	got := dto.Status.Update.Data[0]
+	assert.Equal(t, json.RawMessage(`{"autoScalerMax":21}`), got.RawParameters)
+	assert.Equal(t, "", got.Parameters.Name, "Parameters should reflect raw payload, not merged state")
+}
+
+func TestSanitizeRawParams(t *testing.T) {
+	t.Run("removes kubeconfig and targetSecret", func(t *testing.T) {
+		raw := json.RawMessage(`{"name":"x","kubeconfig":"k","targetSecret":"s","region":"eu"}`)
+		got := sanitizeRawParams(raw)
+		var m map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(got, &m))
+		assert.NotContains(t, m, "kubeconfig")
+		assert.NotContains(t, m, "targetSecret")
+		assert.Contains(t, m, "name")
+		assert.Contains(t, m, "region")
+	})
+
+	t.Run("returns original on invalid JSON", func(t *testing.T) {
+		raw := json.RawMessage(`not-json`)
+		got := sanitizeRawParams(raw)
+		assert.Equal(t, raw, got)
+	})
+
+	t.Run("handles empty input", func(t *testing.T) {
+		raw := json.RawMessage(`{}`)
+		got := sanitizeRawParams(raw)
+		assert.Equal(t, json.RawMessage(`{}`), got)
+	})
 }
