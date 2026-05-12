@@ -191,10 +191,10 @@ func respondRuntimes(w http.ResponseWriter, runtimes []RuntimeDTO, totalCount in
 
 func TestAdditionalWorkerNodePool_Validate_NegativeAdditionalVolumeGi(t *testing.T) {
 	pool := AdditionalWorkerNodePool{
-		Name:                "pool-a",
-		MachineType:         "m5.large",
-		AutoScalerMin:       1,
-		AutoScalerMax:       3,
+		Name:               "pool-a",
+		MachineType:        "m5.large",
+		AutoScalerMin:      1,
+		AutoScalerMax:      3,
 		AdditionalVolumeGi: -1,
 	}
 	err := pool.Validate()
@@ -204,10 +204,10 @@ func TestAdditionalWorkerNodePool_Validate_NegativeAdditionalVolumeGi(t *testing
 
 func TestAdditionalWorkerNodePool_Validate_ZeroAdditionalVolumeGi(t *testing.T) {
 	pool := AdditionalWorkerNodePool{
-		Name:                "pool-a",
-		MachineType:         "m5.large",
-		AutoScalerMin:       1,
-		AutoScalerMax:       3,
+		Name:               "pool-a",
+		MachineType:        "m5.large",
+		AutoScalerMin:      1,
+		AutoScalerMax:      3,
 		AdditionalVolumeGi: 0,
 	}
 	err := pool.Validate()

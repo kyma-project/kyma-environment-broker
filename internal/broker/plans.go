@@ -62,7 +62,7 @@ type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
 	gvisorEnabled               bool
 	rejectUnsupportedParameters bool
-	additionalVolumeGiEnabled  bool
+	additionalVolumeGiEnabled   bool
 }
 
 type AvailablePlansType struct {
@@ -133,7 +133,7 @@ func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsuppo
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		gvisorEnabled:               gvisorEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
-		additionalVolumeGiEnabled:  additionalVolumeGiEnabled,
+		additionalVolumeGiEnabled:   additionalVolumeGiEnabled,
 	}
 }
 

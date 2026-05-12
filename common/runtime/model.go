@@ -104,7 +104,7 @@ type ProvisioningParametersDTO struct {
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
-	AdditionalVolumeGi       *int                       `json:"additionalVolumeGi,omitempty"`
+	AdditionalVolumeGi        *int                       `json:"additionalVolumeGi,omitempty"`
 }
 
 func (p ProvisioningParametersDTO) ValidateAdditionalVolumeGi() error {
@@ -603,13 +603,13 @@ type TaintDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	Name                string     `json:"name"`
-	MachineType         string     `json:"machineType"`
-	HAZones             bool       `json:"haZones"`
-	AutoScalerMin       int        `json:"autoScalerMin"`
-	AutoScalerMax       int        `json:"autoScalerMax"`
-	Taints              []TaintDTO `json:"taints,omitempty"`
-	Gvisor              *GvisorDTO `json:"gvisor,omitempty"`
+	Name               string     `json:"name"`
+	MachineType        string     `json:"machineType"`
+	HAZones            bool       `json:"haZones"`
+	AutoScalerMin      int        `json:"autoScalerMin"`
+	AutoScalerMax      int        `json:"autoScalerMax"`
+	Taints             []TaintDTO `json:"taints,omitempty"`
+	Gvisor             *GvisorDTO `json:"gvisor,omitempty"`
 	AdditionalVolumeGi int        `json:"additionalVolumeGi,omitempty"`
 }
 
