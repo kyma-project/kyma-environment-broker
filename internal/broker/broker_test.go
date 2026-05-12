@@ -163,3 +163,9 @@ func TestConfigValidate_AdditionalVolumeGiB_AllowedWhenDynamicVolumeSizeEnabled(
 	cfg := Config{AdditionalVolumeGiBPlans: StringList{"aws"}, DynamicVolumeSizeEnabled: true}
 	assert.NoError(t, cfg.Validate())
 }
+
+func TestConfigValidate_AdditionalVolumeGiBPlans_InvalidPlanName(t *testing.T) {
+	cfg := Config{AdditionalVolumeGiBPlans: StringList{"not-a-real-plan"}, DynamicVolumeSizeEnabled: true}
+	err := cfg.Validate()
+	assert.ErrorContains(t, err, "AdditionalVolumeGiBPlans")
+}
