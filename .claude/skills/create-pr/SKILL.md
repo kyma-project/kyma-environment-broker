@@ -34,11 +34,10 @@ Stop if they say no.
 Run the following to understand what this branch adds on top of main:
 
 ```bash
-git log main..HEAD --oneline
 git diff main..HEAD
 ```
 
-Use the commit log and diff to generate a concise bullet-list summary of changes for the PR description.
+Read the diff carefully and summarize the most important changes as bullet points. Base the summary entirely on what the code actually changed.
 
 ### 3. Draft the PR body
 
@@ -69,7 +68,7 @@ Apply exactly one of these labels. No other labels unless the user explicitly re
 
 ### 6. Draft the PR title
 
-Derive the title from the commits / diff:
+Derive the title from the diff:
 
 - Imperative mood, title case, no trailing period, ≤72 chars.
 - No `feat:`, `fix:`, `chore:` prefixes.
