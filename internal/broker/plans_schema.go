@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
 const (
@@ -125,7 +126,7 @@ type Type struct {
 	Type        string `json:"type"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
-	Minimum     int    `json:"minimum,omitempty"`
+	Minimum     *int   `json:"minimum,omitempty"`
 	Maximum     int    `json:"maximum,omitempty"`
 	MinLength   int    `json:"minLength,omitempty"`
 	MaxLength   int    `json:"maxLength,omitempty"`
@@ -939,8 +940,9 @@ func GvisorProperty() *GvisorType {
 func AdditionalVolumeGiBProperty() *Type {
 	return &Type{
 		Type:        "integer",
-		Title:       "Additional Volume Size (GB)",
+		Title:       "Additional Volume Size (GiB)",
 		Description: "Additional disk space in GiB added on top of the default volume size for the worker pool.",
+		Minimum:     ptr.Integer(0),
 		Maximum:     1000,
 		Default:     0,
 	}

@@ -110,6 +110,9 @@ func (cfg *Config) Validate() error {
 	if len(cfg.AdditionalVolumeGiBPlans) > 0 && !cfg.DynamicVolumeSizeEnabled {
 		return fmt.Errorf("APP_BROKER_ADDITIONAL_VOLUME_GIB_PLANS requires APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED to be true")
 	}
+	if err := validatePlanList(cfg.AdditionalVolumeGiBPlans, "AdditionalVolumeGiBPlans"); err != nil {
+		return err
+	}
 	return nil
 }
 

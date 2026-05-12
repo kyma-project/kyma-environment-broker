@@ -2911,7 +2911,7 @@ func TestUpdateEndpoint_AdditionalVolumeGiBPersistedToInstance(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
-		broker.Config{},
+		broker.Config{AdditionalVolumeGiBPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),

@@ -537,8 +537,9 @@ func TestSchemaService_AdditionalVolumeGiBAbsentInAdditionalWorkerNodePoolsItemC
 func additionalVolumeGiBProperty() map[string]interface{} {
 	return map[string]interface{}{
 		"type":        "integer",
-		"title":       "Additional Volume Size (GB)",
+		"title":       "Additional Volume Size (GiB)",
 		"description": "Additional disk space in GiB added on top of the default volume size for the worker pool.",
+		"minimum":     float64(0),
 		"maximum":     float64(1000),
 		"default":     float64(0),
 	}
