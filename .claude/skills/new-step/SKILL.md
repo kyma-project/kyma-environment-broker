@@ -81,10 +81,16 @@ func (s *{{StepName}}Step) Run(operation internal.Operation, log *slog.Logger) (
 
 Use this template:
 
+Use the fixture function that matches the operation type:
+- provisioning → `fixture.FixProvisioningOperation("op-id", "instance-id")`
+- deprovisioning → `fixture.FixDeprovisioningOperation("op-id", "instance-id")`
+- update → `fixture.FixUpdatingOperation("op-id", "instance-id")`
+
 ```go
 package {{package}}
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -98,11 +104,11 @@ func Test{{StepName}}Step_HappyPath(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	step := New{{StepName}}Step(st.Operations())
 
-	op := fixture.FixProvisioningOperation("op-id", "instance-id")
+	op := fixture.Fix{{OperationType}}Operation("op-id", "instance-id")
 	require.NoError(t, st.Operations().InsertOperation(op))
 
 	// when
-	result, retry, err := step.Run(op, fixLogger())
+	result, retry, err := step.Run(op, slog.Default())
 
 	// then
 	assert.NoError(t, err)
@@ -114,7 +120,7 @@ func Test{{StepName}}Step_HappyPath(t *testing.T) {
 **Key rules:**
 - Use `fixture.FixProvisioningOperation` / `fixture.FixDeprovisioningOperation` / `fixture.FixInstance` from `internal/fixture/`.
 - Use `storage.NewMemoryStorage()` — never PostgreSQL in unit tests.
-- Use `fixLogger()` — it is already defined in other `_test.go` files in the same package; don't redefine it.
+- Use `slog.Default()` for the logger. If the package already defines a `fixLogger()` helper (check other `_test.go` files in the same package), use that instead — but do not redefine it.
 - Use `require` for setup (fatal on failure), `assert` for outcome checks.
 
 ### 3. Registration reminder
