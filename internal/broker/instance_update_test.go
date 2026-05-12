@@ -2911,7 +2911,7 @@ func TestUpdateEndpoint_AdditionalVolumeGiBPersistedToInstance(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGiBPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeGIBPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
@@ -2955,7 +2955,7 @@ func TestUpdateEndpoint_AdditionalVolumeGiB_NegativeValueRejected(t *testing.T) 
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGiBPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeGIBPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
@@ -2995,9 +2995,9 @@ func TestUpdateEndpoint_AdditionalVolumeGiB_RejectedForExcludedPlan(t *testing.T
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	// AdditionalVolumeGiBPlans contains only aws — azure_lite is excluded
+	// AdditionalVolumeGIBPlans contains only aws — azure_lite is excluded
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGiBPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeGIBPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),

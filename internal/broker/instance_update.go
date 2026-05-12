@@ -358,7 +358,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 
 	if params.AdditionalVolumeGiB != nil {
 		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-		if !b.config.AdditionalVolumeGiBPlans.Contains(planName) {
+		if !b.config.AdditionalVolumeGIBPlans.Contains(planName) {
 			err := fmt.Errorf("additionalVolumeGiB is not available for plan %s", planName)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
