@@ -32,7 +32,7 @@ Create a git commit for staged or unstaged changes in the KEB repository.
 
 5. **Commit** once confirmed.
 
-6. **Ask about pushing** — after a successful commit, ask: "Would you like to push the changes?"  If yes, run `git push -u origin HEAD`.
+6. **Ask about pushing** — after a successful commit, ask: "Would you like to push the changes to `<current-branch>`?" If yes, run `git push -u origin HEAD`. If no, ask which branch to push to and run `git push -u origin HEAD:<target-branch>`.
 
 ---
 
