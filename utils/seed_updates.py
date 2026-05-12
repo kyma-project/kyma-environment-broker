@@ -7,6 +7,8 @@ PATCH /oauth/v2/service_instances/<id> to KEB for ~40% of them.
 Usage:
     cd utils/
     python seed_updates.py [--fraction 0.4] [--seed 42]
+                           [--db-host HOST] [--db-port PORT]
+                           [--db-name NAME] [--db-user USER] [--db-password PWD]
 """
 
 import sys
@@ -21,8 +23,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 import keb
 
 keb.VERBOSE = False
-
-DB_DSN = "host=localhost port=5432 dbname=postgresdb user=postgresadmin password=admin12345678901#"
 
 MACHINE_TYPES = {
     "aws":        ["m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m5.xlarge"],
@@ -73,11 +73,19 @@ def main():
     parser.add_argument("--fraction", type=float, default=0.4,
                         help="Fraction of instances to update (default: 0.4)")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--db-host",     default="localhost")
+    parser.add_argument("--db-port",     type=int, default=5432)
+    parser.add_argument("--db-name",     default="postgresdb")
+    parser.add_argument("--db-user",     default="postgresadmin")
+    parser.add_argument("--db-password", default="password")
     args = parser.parse_args()
+
+    db_dsn = (f"host={args.db_host} port={args.db_port} dbname={args.db_name} "
+              f"user={args.db_user} password={args.db_password}")
 
     rng = random.Random(args.seed)
 
-    conn = psycopg2.connect(DB_DSN)
+    conn = psycopg2.connect(db_dsn)
     cur = conn.cursor()
     cur.execute("""
         SELECT instance_id, service_plan_id
@@ -115,7 +123,7 @@ def main():
     deadline = time.time() + timeout
     while time.time() < deadline and pending_ops:
         time.sleep(10)
-        conn = psycopg2.connect(DB_DSN)
+        conn = psycopg2.connect(db_dsn)
         cur = conn.cursor()
         cur.execute("""
             SELECT instance_id, state FROM operations
@@ -128,7 +136,7 @@ def main():
         if not pending_ops:
             break
 
-    conn = psycopg2.connect(DB_DSN)
+    conn = psycopg2.connect(db_dsn)
     cur = conn.cursor()
     cur.execute("SELECT count(*) FROM operations WHERE type='update' AND state='succeeded'")
     count = cur.fetchone()[0]
