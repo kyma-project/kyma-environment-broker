@@ -31,10 +31,20 @@ Stop if they say no.
 
 ### 2. Gather changes
 
-Run the following to understand what this branch adds on top of main:
+The local `main` branch may be stale. Always diff against the upstream remote to get only the changes this branch uniquely introduces:
 
 ```bash
-git diff main..HEAD
+git fetch upstream main
+git diff upstream/main...HEAD
+```
+
+The three-dot syntax (`...`) diffs from the merge-base, so only commits unique to this branch are shown — not unrelated upstream commits that the local branch happens to include.
+
+If no `upstream` remote exists, fall back to `origin/main`:
+
+```bash
+git fetch origin main
+git diff origin/main...HEAD
 ```
 
 Read the diff carefully and summarize the most important changes as bullet points. Base the summary entirely on what the code actually changed.
