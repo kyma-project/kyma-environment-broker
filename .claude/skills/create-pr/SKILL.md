@@ -64,7 +64,7 @@ Ask the user:
 
 > Would you like to reference any related issues? (e.g. `See also #123`) If yes, provide the issue number(s).
 
-If yes, append the references to the **Related issue(s)** section. Use `See also #<n>` unless the user explicitly asks for a closing keyword.
+If yes, place the reference on the line immediately after `**Related issue(s)**` with no blank line between them. Use `See also #<n>` unless the user explicitly asks for a closing keyword.
 
 ### 5. Ask about the changelog label
 
