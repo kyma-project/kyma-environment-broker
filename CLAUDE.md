@@ -180,7 +180,7 @@ Skills for Claude Code are stored in `.claude/skills/`. Each skill is a director
 
 Available skills:
 - **`new-step`** — Scaffolds a new provisioning/deprovisioning/update step with implementation and test file.
-- **`pr-review`** — Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
+- **`review-pr`** — Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
 - **`commit`** — Drafts and creates a git commit following KEB commit message conventions.
 - **`create-pr`** — Creates a pull request from a fork branch to `kyma-project/kyma-environment-broker:main`.
 

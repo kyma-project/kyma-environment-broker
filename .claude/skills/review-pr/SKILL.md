@@ -1,5 +1,5 @@
 ---
-name: pr-review
+name: review-pr
 description: Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
 ---
 
