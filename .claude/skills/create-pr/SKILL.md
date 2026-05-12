@@ -79,6 +79,15 @@ Show the user the full title + body and ask: "Shall I open the PR with this titl
 
 ### 7. Create the PR
 
+To determine `<fork-owner>` and the PR creator's GitHub username, run:
+
+```bash
+git remote get-url origin
+gh api user --jq .login
+```
+
+Extract `<fork-owner>` from the origin URL. The PR creator's GitHub username comes from `gh api user`.
+
 ```bash
 gh pr create \
   --repo kyma-project/kyma-environment-broker \
@@ -86,19 +95,12 @@ gh pr create \
   --head <fork-owner>:<current-branch> \
   --title "<title>" \
   --label "<chosen-label>" \
+  --assignee "<github-username>" \
   --body "$(cat <<'EOF'
 <body>
 EOF
 )"
 ```
-
-To determine `<fork-owner>`, run:
-
-```bash
-git remote get-url origin
-```
-
-and extract the GitHub username from the URL.
 
 Return the PR URL to the user once created.
 
