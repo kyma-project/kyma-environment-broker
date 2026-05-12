@@ -173,3 +173,14 @@ Providers are selected by plan ID (not cloud provider name) in `internal/provide
 - Fast, short unit tests use the in-memory storage from `internal/storage/driver/memory/`.
 - Test suites use `TestMain` or `suite_test.go` files for shared setup.
 - `make test` runs tests with FIPS140 enforcement (`GODEBUG=fips140=only`). All cryptographic operations must be FIPS-compliant.
+
+### Claude Skills
+
+Skills for Claude Code are stored in `.claude/skills/`. Each skill is a directory containing a `SKILL.md` file.
+
+Available skills:
+- **`new-step`** — Scaffolds a new provisioning/deprovisioning/update step with implementation and test file.
+- **`pr-review`** — Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
+- **`commit`** — Drafts and creates a git commit following KEB commit message conventions.
+
+**Maintenance:** Any PR that changes project structure, adds a new pattern, or modifies the build/test workflow must update `CLAUDE.md` and the relevant skills in the same PR. This keeps Claude Code's assistance accurate as the project evolves.
