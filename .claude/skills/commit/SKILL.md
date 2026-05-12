@@ -32,6 +32,8 @@ Create a git commit for staged or unstaged changes in the KEB repository.
 
 5. **Commit** once confirmed.
 
+6. **Ask about pushing** — after a successful commit, ask: "Would you like to push the changes?"  If yes, run `git push`.
+
 ---
 
 ## Commit message conventions
