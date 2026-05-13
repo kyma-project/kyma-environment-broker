@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="960" font-family="monospace, monospace" font-size="13">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- Browser -->
+  <rect x="160" y="20" width="300" height="50" rx="6" fill="#e8f4fd" stroke="#4a90d9" stroke-width="1.5"/>
+  <text x="310" y="42" text-anchor="middle" fill="#1a1a1a">Browser</text>
+  <text x="310" y="60" text-anchor="middle" fill="#555" font-size="11">HTTPS request (no _oauth2_proxy cookie)</text>
+
+  <!-- Arrow 1 -->
+  <line x1="310" y1="70" x2="310" y2="98" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Istio -->
+  <rect x="60" y="100" width="500" height="50" rx="6" fill="#fdf6e3" stroke="#e6a817" stroke-width="1.5"/>
+  <text x="310" y="122" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Istio Gateway → Service keb-analytics:4180</text>
+  <text x="310" y="140" text-anchor="middle" fill="#555" font-size="11">Forwarded to Pod port 4180</text>
+
+  <!-- Arrow 2 -->
+  <line x1="310" y1="150" x2="310" y2="178" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- oauth2-proxy no session -->
+  <rect x="60" y="180" width="500" height="80" rx="6" fill="#f0f8f0" stroke="#5aaa5a" stroke-width="1.5"/>
+  <text x="310" y="202" text-anchor="middle" fill="#1a1a1a" font-weight="bold">oauth2-proxy sidecar (port 4180)</text>
+  <text x="310" y="222" text-anchor="middle" fill="#555" font-size="11">No valid session cookie → initiates OIDC authorization code flow</text>
+  <text x="310" y="240" text-anchor="middle" fill="#555" font-size="11">--skip-provider-button=true  |  --code-challenge-method=S256 (PKCE)</text>
+
+  <!-- Arrow 3 -->
+  <line x1="310" y1="260" x2="310" y2="288" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="320" y="278" fill="#777" font-size="11">HTTP 302 redirect to SAP IDP</text>
+
+  <!-- SAP IDP -->
+  <rect x="60" y="290" width="500" height="90" rx="6" fill="#fff8e8" stroke="#e6a817" stroke-width="1.5"/>
+  <text x="310" y="312" text-anchor="middle" fill="#1a1a1a" font-weight="bold">SAP Accounts Service: kymatest.accounts400.ondemand.com</text>
+  <text x="310" y="332" text-anchor="middle" fill="#555" font-size="11">Shows login page → user enters credentials</text>
+  <text x="310" y="350" text-anchor="middle" fill="#555" font-size="11">IDP validates credentials, issues authorization code</text>
+  <text x="310" y="368" text-anchor="middle" fill="#555" font-size="11">HTTP 302 → /oauth2/callback?code=&lt;auth_code&gt;&amp;state=&lt;CSRF&gt;</text>
+
+  <!-- Arrow 4 -->
+  <line x1="310" y1="380" x2="310" y2="408" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="320" y="398" fill="#777" font-size="11">Browser follows redirect → GET /oauth2/callback?code=...</text>
+
+  <!-- oauth2-proxy callback -->
+  <rect x="60" y="410" width="500" height="160" rx="6" fill="#f0f8f0" stroke="#5aaa5a" stroke-width="1.5"/>
+  <text x="310" y="432" text-anchor="middle" fill="#1a1a1a" font-weight="bold">oauth2-proxy handles /oauth2/callback</text>
+  <text x="310" y="452" text-anchor="middle" fill="#555" font-size="11">Validates state (CSRF) and PKCE code_verifier</text>
+  <text x="310" y="470" text-anchor="middle" fill="#555" font-size="11">POST to IDP /oauth2/token → receives access_token + id_token</text>
+  <text x="310" y="496" text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="bold">Group authorization check:</text>
+  <text x="310" y="514" text-anchor="middle" fill="#555" font-size="11">--allowed-group=runtimeAdmin / runtimeOperator / runtimeViewer</text>
+  <text x="310" y="532" text-anchor="middle" fill="#555" font-size="11">User not in any group → HTTP 403</text>
+  <text x="310" y="556" text-anchor="middle" fill="#555" font-size="11">Encrypts session into _oauth2_proxy cookie (AES + HMAC-SHA256, refresh=1h)</text>
+
+  <!-- Arrow 5 -->
+  <line x1="310" y1="570" x2="310" y2="598" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="320" y="588" fill="#777" font-size="11">HTTP 302 → original URL  |  Set-Cookie: _oauth2_proxy=...</text>
+
+  <!-- Browser with cookie -->
+  <rect x="60" y="600" width="500" height="70" rx="6" fill="#e8f4fd" stroke="#4a90d9" stroke-width="1.5"/>
+  <text x="310" y="622" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Browser: GET / with _oauth2_proxy cookie</text>
+  <text x="310" y="642" text-anchor="middle" fill="#555" font-size="11">oauth2-proxy decrypts + validates cookie (HMAC + expiry)</text>
+  <text x="310" y="660" text-anchor="middle" fill="#555" font-size="11">Proxies request to http://localhost:8080</text>
+
+  <!-- Arrow 6 -->
+  <line x1="310" y1="670" x2="310" y2="698" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="320" y="688" fill="#777" font-size="11">In-pod loopback (no network hop)</text>
+
+  <!-- keb-analytics -->
+  <rect x="160" y="700" width="300" height="40" rx="6" fill="#f5f0fb" stroke="#8e6bbf" stroke-width="1.5"/>
+  <text x="310" y="722" text-anchor="middle" fill="#1a1a1a" font-weight="bold">keb-analytics (port 8080) serves the UI</text>
+</svg>
