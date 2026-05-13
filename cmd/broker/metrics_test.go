@@ -15,7 +15,7 @@ import (
 func TestMetrics(t *testing.T) {
 	cfg := fixConfig()
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / 1000 // reduce timeout to speed up the test
-	suite := NewBrokerSuitTestWithMetrics(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithMetrics())
 	defer suite.TearDown()
 
 	provisionReq := func(iid, plan string) string {

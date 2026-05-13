@@ -114,32 +114,54 @@ func (s *BrokerSuiteTest) TearDown() {
 	}
 }
 
-func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+// SuiteOption configures a BrokerSuiteTest.
+type SuiteOption func(*suiteOptions)
+
+type suiteOptions struct {
+	cfg            *Config
+	kymaVersions   []string
+	withMetrics    bool
 }
 
-func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
-	defer func() {
-		if r := recover(); r != nil {
-			err := cleanupContainer()
-			assert.NoError(t, err)
-			panic(r)
-		}
-	}()
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
-	metricsCtx, cancel := context.WithCancel(context.Background())
-	broker.cancelMetrics = cancel
-	broker.metrics = metrics.Register(metricsCtx, broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
-	broker.router.Handle("/metrics", promhttp.Handler())
+// WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
+func WithConfig(cfg *Config) SuiteOption {
+	return func(o *suiteOptions) { o.cfg = cfg }
+}
+
+// WithKymaVersion registers an additional Kyma version in the fake k8s cluster.
+func WithKymaVersion(v string) SuiteOption {
+	return func(o *suiteOptions) { o.kymaVersions = append(o.kymaVersions, v) }
+}
+
+// WithMetrics enables the Prometheus metrics endpoint on the test suite router.
+func WithMetrics() SuiteOption {
+	return func(o *suiteOptions) { o.withMetrics = true }
+}
+
+func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
+	o := &suiteOptions{cfg: fixConfig()}
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	broker := newBrokerSuiteTest(t, o)
+
+	if o.withMetrics {
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+		gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
+		metricsCtx, cancel := context.WithCancel(context.Background())
+		broker.cancelMetrics = cancel
+		broker.metrics = metrics.Register(metricsCtx, broker.eventBroker, broker.db, o.cfg.Metrics, gardenerClientWithNamespace, log)
+		broker.router.Handle("/metrics", promhttp.Handler())
+	}
+
 	return broker
 }
 
-func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
+	cfg := o.cfg
 	defer func() {
 		if r := recover(); r != nil {
 			err := cleanupContainer()
@@ -154,7 +176,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	err = imv1.AddToScheme(sch)
 	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
-	additionalKymaVersions = append(additionalKymaVersions, version...)
+	additionalKymaVersions = append(additionalKymaVersions, o.kymaVersions...)
 
 	ot := NewTestingObjectTracker(sch)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).
