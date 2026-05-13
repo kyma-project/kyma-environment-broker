@@ -13,7 +13,7 @@ import (
 
 func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -91,7 +91,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfig(t *testing.
 
 func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -151,7 +151,7 @@ func TestGetParametersAfterProvisioning_InstanceWithNoOidcConfig(t *testing.T) {
 
 func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -237,7 +237,7 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 
 func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -303,7 +303,7 @@ func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testi
 
 func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeIgnored(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -385,7 +385,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 
 func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeReturned(t *testing.T) {
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -468,7 +468,7 @@ func TestGetParametersAfterProvisioning_InstanceWithCustomOidcConfigWithGroupsPr
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -567,7 +567,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when

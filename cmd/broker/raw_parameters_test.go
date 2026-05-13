@@ -17,7 +17,7 @@ import (
 func TestRawParametersInRuntimesResponse(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -103,7 +103,7 @@ func TestRawParametersInRuntimesResponse(t *testing.T) {
 func TestProvisioningPayloadSizeLimit(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -135,7 +135,7 @@ func TestProvisioningPayloadSizeLimit(t *testing.T) {
 func TestUpdatePayloadSizeLimit(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 

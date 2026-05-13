@@ -320,18 +320,24 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 	return ParameterStats{Parameters: result}
 }
 
-// BuildDistributions computes value breakdowns for selected distribution fields.
+// BuildDistributions computes value breakdowns for all distribution-worthy fields.
+// Fields with behaviorCount (e.g. administrators, additionalWorkerNodePools) are excluded
+// because they emit numeric counts rather than categorical values.
 func BuildDistributions(params []ProvisioningParamsWithID) []DistributionStat {
-	distributionFields := []string{"machineType", "region", "autoScalerMin", "autoScalerMax"}
 	counts := buildCounts(params)
-	var result []DistributionStat
-	for _, field := range distributionFields {
-		if values, ok := counts[field]; ok {
-			result = append(result, DistributionStat{
-				Parameter: field,
-				Values:    values,
-			})
+	fields := make([]string, 0, len(counts))
+	for field := range counts {
+		if provisioningFieldConfig[field] != behaviorCount {
+			fields = append(fields, field)
 		}
+	}
+	sort.Strings(fields)
+	result := make([]DistributionStat, 0, len(fields))
+	for _, field := range fields {
+		result = append(result, DistributionStat{
+			Parameter: field,
+			Values:    counts[field],
+		})
 	}
 	return result
 }
