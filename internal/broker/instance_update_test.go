@@ -2971,7 +2971,7 @@ func TestUpdateEndpoint_AdditionalVolumeGi_NegativeValueRejected(t *testing.T) {
 	require.Error(t, err)
 	apierr, ok := err.(*apiresponses.FailureResponse)
 	require.True(t, ok, "expected FailureResponse")
-	assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil))
+	assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
 }
 
 func TestUpdateEndpoint_AdditionalVolumeGi_RejectedForExcludedPlan(t *testing.T) {
