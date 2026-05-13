@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -19,7 +18,6 @@ import (
 )
 
 const (
-	defaultKymaVer        = "2.4.0"
 	operationID           = "provisioning-op-id"
 	dbSecretKey           = "1234567890123456"
 	gardenerKymaNamespace = "kyma"
@@ -99,54 +97,8 @@ func (o *RuntimeOptions) ProvideRuntimeAdmins() []string {
 	}
 }
 
-func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string) []runtime.Object {
+func fixK8sResources() []runtime.Object {
 	var resources []runtime.Object
-	override := &coreV1.ConfigMap{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "overrides",
-			Namespace: "kcp-system",
-			Labels: map[string]string{
-				fmt.Sprintf("overrides-version-%s", defaultKymaVersion): "true",
-				"overrides-plan-azure":               "true",
-				"overrides-plan-trial":               "true",
-				"overrides-plan-aws":                 "true",
-				"overrides-plan-free":                "true",
-				"overrides-plan-gcp":                 "true",
-				"overrides-plan-sap-converged-cloud": "true",
-				"overrides-version-2.0.0-rc4":        "true",
-				"overrides-version-2.0.0":            "true",
-			},
-		},
-		Data: map[string]string{
-			"foo":                            "bar",
-			"global.booleanOverride.enabled": "false",
-		},
-	}
-	scOverride := &coreV1.ConfigMap{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "service-catalog2-overrides",
-			Namespace: "kcp-system",
-			Labels: map[string]string{
-				fmt.Sprintf("overrides-version-%s", defaultKymaVersion): "true",
-				"overrides-plan-azure":        "true",
-				"overrides-plan-trial":        "true",
-				"overrides-plan-aws":          "true",
-				"overrides-plan-free":         "true",
-				"overrides-plan-gcp":          "true",
-				"overrides-version-2.0.0-rc4": "true",
-				"overrides-version-2.0.0":     "true",
-				"component":                   "service-catalog2",
-			},
-		},
-		Data: map[string]string{
-			"setting-one": "1234",
-		},
-	}
-
-	for _, version := range additionalKymaVersions {
-		override.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"   //nolint:goconst
-		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true" //nolint:goconst
-	}
 
 	kebCfg := &coreV1.ConfigMap{
 		ObjectMeta: metaV1.ObjectMeta{
@@ -201,11 +153,7 @@ seedRegions:
 		},
 	}
 
-	for _, version := range additionalKymaVersions {
-		kebCfg.ObjectMeta.Labels[fmt.Sprintf("runtime-version-%s", version)] = "true"
-	}
-
-	resources = append(resources, override, scOverride, kebCfg, providerCfg)
+	resources = append(resources, kebCfg, providerCfg)
 
 	return resources
 }

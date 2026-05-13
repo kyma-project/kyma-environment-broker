@@ -28,7 +28,7 @@ const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplet
 func TestUpdate(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -117,7 +117,7 @@ func TestUpdateWithACL(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -233,7 +233,7 @@ func TestAddACL(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -439,7 +439,7 @@ func TestUpdatePlanToNotEnabled(t *testing.T) {
 	// given
 	config := fixConfig()
 	config.Broker.EnablePlans = []string{"aws"}
-	suite := NewBrokerSuiteTestWithConfig(t, config)
+	suite := NewBrokerSuiteTest(t, WithConfig(config))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -522,7 +522,7 @@ func TestUpdatePlanToNotAvailable(t *testing.T) {
 	// given
 	config := fixConfig()
 	config.Broker.EnablePlans = []string{"aws"}
-	suite := NewBrokerSuiteTestWithConfig(t, config)
+	suite := NewBrokerSuiteTest(t, WithConfig(config))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -606,7 +606,7 @@ func TestUpdateFailedInstance(t *testing.T) {
 	cfg := fixConfig()
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2468,7 +2468,7 @@ func TestUpdateMachineType(t *testing.T) {
 }
 func TestUpdateNetworkFilterForExternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2537,7 +2537,7 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 
 func TestUpdateNetworkFilterForInternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2611,7 +2611,7 @@ func TestUpdateNetworkFilterForInternal(t *testing.T) {
 
 func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2679,7 +2679,7 @@ func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 
 func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2747,7 +2747,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 
 func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2822,7 +2822,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 }
 
 func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2865,7 +2865,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 }
 
 func TestUpdateParamsForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2908,7 +2908,7 @@ func TestUpdateParamsForExpiredInstance(t *testing.T) {
 }
 
 func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -2957,7 +2957,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3025,7 +3025,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3094,7 +3094,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3161,7 +3161,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3281,7 +3281,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3357,7 +3357,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3451,7 +3451,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3513,7 +3513,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3575,7 +3575,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3645,7 +3645,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3727,7 +3727,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3799,7 +3799,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3874,7 +3874,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3939,7 +3939,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC object with OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4076,7 +4076,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove previously set required claims", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4139,7 +4139,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4209,7 +4209,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should reject update empty OIDC list with OIDC object that has no values", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4260,7 +4260,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4345,7 +4345,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should update OIDC object with empty OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -4403,7 +4403,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4466,7 +4466,7 @@ func TestUpdateOIDC(t *testing.T) {
 	t.Run("should not remove JWKS from OIDC config", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4532,7 +4532,7 @@ func TestUpdateGlobalAccountID(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.Broker.SubaccountMovementEnabled = true
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -4602,7 +4602,7 @@ func TestUpdate_ZonesDiscovery(t *testing.T) {
 	cfg := fixConfig()
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -4759,7 +4759,7 @@ func TestUpdate_CredentialsBinding(t *testing.T) {
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 	cfg.SubscriptionGardenerResource = "CredentialsBinding"
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -4849,7 +4849,7 @@ func TestUpdateWithMaxPods(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4918,7 +4918,7 @@ func TestUpdateWithMaxPods(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -4988,7 +4988,7 @@ func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
 	// given
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -5069,7 +5069,7 @@ func TestUpdateWithVersionAgnosticMachineTypes(t *testing.T) {
 func TestUpdateAutoScalerMinReflectedInRuntimes(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
