@@ -143,21 +143,7 @@ func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
 	for _, opt := range opts {
 		opt(o)
 	}
-
-	broker := newBrokerSuiteTest(t, o)
-
-	if o.withMetrics {
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-		gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
-		metricsCtx, cancel := context.WithCancel(context.Background())
-		broker.cancelMetrics = cancel
-		broker.metrics = metrics.Register(metricsCtx, broker.eventBroker, broker.db, o.cfg.Metrics, gardenerClientWithNamespace, log)
-		broker.router.Handle("/metrics", promhttp.Handler())
-	}
-
-	return broker
+	return newBrokerSuiteTest(t, o)
 }
 
 func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
@@ -315,6 +301,16 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	}
 
 	ts.httpServer = httptest.NewServer(ts.router)
+
+	if o.withMetrics {
+		metricsLog := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+		metricsCtx, cancel := context.WithCancel(context.Background())
+		ts.cancelMetrics = cancel
+		ts.metrics = metrics.Register(metricsCtx, ts.eventBroker, ts.db, cfg.Metrics, gardenerClientWithNamespace, metricsLog)
+		ts.router.Handle("/metrics", promhttp.Handler())
+	}
 
 	return ts
 }
