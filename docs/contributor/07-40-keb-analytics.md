@@ -8,113 +8,13 @@ The `keb-analytics` binary provides a self-contained analytics UI that shows whi
 
 `keb-analytics` is a separate Go binary deployed alongside KEB in the same Helm chart. It connects directly to the KEB PostgreSQL database, aggregates parameter usage statistics, and caches them in memory. It exposes a web UI and a JSON API protected by an oauth2-proxy sidecar.
 
-```
-Browser visits https://keb-analytics.<domain>
-      │
-      │  HTTPS request
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  Istio Gateway                                                      │
-│  VirtualService: keb-analytics → routes all traffic                │
-│  to Service keb-analytics:4180                                      │
-│                                                                     │
-│  AuthorizationPolicy: ALLOW only from namespace istio-system        │
-│  (blocks direct pod access; only Istio ingress can reach it)        │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  Forwarded to Pod port 4180
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  oauth2-proxy sidecar (port 4180)                                   │
-│                                                                     │
-│  Validates _oauth2_proxy session cookie                             │
-│  No valid session → HTTP 302 redirect to SAP Accounts Service       │
-│  Valid session → proxies request to http://localhost:8080           │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  In-pod loopback (no network hop)
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  keb-analytics (port 8080)                                          │
-│                                                                     │
-│  GET /           → serves embedded HTML+JS UI                       │
-│  GET /api/stats  → returns aggregated parameter usage JSON          │
-│  POST /api/refresh → triggers immediate cache refresh               │
-│                                                                     │
-│  Every 60 min: queries PostgreSQL directly (active instances only)  │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![keb-analytics architecture](../assets/keb-analytics-architecture.svg)
 
 ## Authentication
 
 External access is protected by an **oauth2-proxy** sidecar running in the same pod as `keb-analytics`. All requests pass through oauth2-proxy on port 4180 before reaching the analytics application on port 8080.
 
-```
-Browser visits https://keb-analytics.<domain>
-      │
-      │  HTTPS request (no _oauth2_proxy cookie)
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  Istio Gateway → Service keb-analytics:4180                         │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  Forwarded to Pod port 4180
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  oauth2-proxy sidecar (port 4180)                                   │
-│                                                                     │
-│  No valid session cookie → initiates OIDC authorization code flow   │
-│  --skip-provider-button=true → no intermediate UI shown             │
-│  --code-challenge-method=S256 → PKCE enabled                        │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  HTTP 302 redirect to SAP IDP
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  SAP Accounts Service: kymatest.accounts400.ondemand.com            │
-│                                                                     │
-│  Shows login page → user enters credentials                         │
-│  IDP validates credentials, issues authorization code               │
-│                                                                     │
-│  HTTP 302 redirect back to:                                         │
-│    https://keb-analytics.<domain>/oauth2/callback                   │
-│      ?code=<auth_code>&state=<CSRF token>                           │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  Browser follows redirect → GET /oauth2/callback?code=...
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  oauth2-proxy handles /oauth2/callback                              │
-│                                                                     │
-│  Exchanges auth code for tokens (POST to IDP /oauth2/token)         │
-│  Validates state (CSRF) and PKCE code_verifier                      │
-│                                                                     │
-│  Group authorization check:                                         │
-│    --allowed-group=runtimeAdmin                                     │
-│    --allowed-group=runtimeOperator                                  │
-│    --allowed-group=runtimeViewer                                    │
-│    user must belong to at least one group → else HTTP 403           │
-│                                                                     │
-│  Encrypts session into _oauth2_proxy cookie (AES + HMAC-SHA256)     │
-│  Secure=true, --cookie-refresh=1h                                   │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  HTTP 302 redirect to original URL
-      │  Set-Cookie: _oauth2_proxy=<encrypted>|<ts>|<hmac>
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  Browser: GET / with _oauth2_proxy cookie                           │
-│                                                                     │
-│  oauth2-proxy decrypts + validates cookie (HMAC + expiry)           │
-│  Proxies request to http://localhost:8080                           │
-└─────────────────────────────────────────────────────────────────────┘
-      │
-      │  In-pod loopback (no network hop)
-      ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  keb-analytics (port 8080) serves the UI                            │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![keb-analytics authentication flow](../assets/keb-analytics-auth.svg)
 
 - **Identity provider**: SAP Accounts Service (`https://kymatest.accounts400.ondemand.com`)
 - **Protocol**: OIDC with PKCE (S256)
