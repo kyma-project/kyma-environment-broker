@@ -171,3 +171,96 @@ The UI is a single-page application with four tabs:
 | **Value Distribution** | Bar chart of distinct values for a selected parameter (e.g. `machineType` breakdown); covers all distribution-worthy fields |
 
 Global filters (Period, Plan, Region) apply to all tabs.
+
+## Local Development
+
+Three Python scripts in `utils/` help populate a local KEB database with realistic test data. They all require KEB running locally (default: `http://localhost:8080`) and a port-forwarded PostgreSQL instance (default: `localhost:5432`).
+
+### `seed_analytics.py` — provision instances via KEB API
+
+Provisions N instances through the KEB OSB API with varied parameters across plans and regions, then applies updates to ~40% of them. This is the primary script for populating a fresh local environment.
+
+```bash
+cd utils/
+
+# Provision 1000 instances (default) and apply updates
+python seed_analytics.py
+
+# Provision 200 instances, skip updates
+python seed_analytics.py --count 200 --skip-updates
+
+# Simulate a parameter introduced 30 days ago (only ~33% of instances get it)
+python seed_analytics.py --param-cutoff ingressFiltering:30
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--count N` | `1000` | Number of instances to provision |
+| `--seed N` | `42` | Random seed for reproducibility |
+| `--skip-updates` | — | Skip the update phase |
+| `--poll-timeout N` | `600` | Seconds to wait for operations to complete |
+| `--backdate-days N` | `90` | Total time window used to compute `--param-cutoff` fractions |
+| `--param-cutoff PARAM:DAYS_AGO` | — | Simulate a parameter introduced N days ago; can be repeated |
+
+After seeding, run `backdate_operations.py` to spread `created_at` timestamps over a realistic time window so trend charts show meaningful data.
+
+### `backdate_operations.py` — spread timestamps over a past time window
+
+Updates `created_at` on provisioning operations and their instances to random offsets within the past N days. This is required for the trend charts in the analytics UI to show historical data.
+
+```bash
+cd utils/
+
+# Spread over the past 90 days (default), local k3d setup
+python backdate_operations.py
+
+# Custom DB connection
+python backdate_operations.py --days 180 --db-password mypassword
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--days N` | `90` | Spread timestamps over this many past days |
+| `--db-host HOST` | `localhost` | PostgreSQL host |
+| `--db-port PORT` | `5432` | PostgreSQL port |
+| `--db-name NAME` | `postgresdb` | PostgreSQL database name |
+| `--db-user USER` | `postgresadmin` | PostgreSQL user |
+| `--db-password PWD` | `password` | PostgreSQL password |
+
+### `seed_updates.py` — send updates to existing instances
+
+Reads active instance IDs from the database and sends PATCH update requests via the KEB API to a fraction of them. Use this to add update operations on top of an already-provisioned dataset without re-seeding from scratch.
+
+```bash
+cd utils/
+
+# Update 40% of active instances (default)
+python seed_updates.py
+
+# Update 20% with a custom DB password
+python seed_updates.py --fraction 0.2 --db-password mypassword
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--fraction F` | `0.4` | Fraction of active instances to update |
+| `--seed N` | `42` | Random seed for reproducibility |
+| `--db-host HOST` | `localhost` | PostgreSQL host |
+| `--db-port PORT` | `5432` | PostgreSQL port |
+| `--db-name NAME` | `postgresdb` | PostgreSQL database name |
+| `--db-user USER` | `postgresadmin` | PostgreSQL user |
+| `--db-password PWD` | `password` | PostgreSQL password |
+
+### Typical local setup sequence
+
+```bash
+# 1. Start local KEB (k3d cluster + port-forwards assumed to be running)
+# 2. Seed instances and updates via KEB API
+python utils/seed_analytics.py --count 500
+
+# 3. Spread timestamps so trend charts have historical data
+python utils/backdate_operations.py --days 90
+
+# 4. Trigger a cache refresh in keb-analytics
+curl -X POST http://localhost:8081/api/refresh
+```
