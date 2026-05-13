@@ -118,9 +118,9 @@ func (s *BrokerSuiteTest) TearDown() {
 type SuiteOption func(*suiteOptions)
 
 type suiteOptions struct {
-	cfg            *Config
-	kymaVersions   []string
-	withMetrics    bool
+	cfg          *Config
+	kymaVersions []string
+	withMetrics  bool
 }
 
 // WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
