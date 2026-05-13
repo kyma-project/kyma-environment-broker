@@ -95,6 +95,7 @@ All parameters are optional. Omitting `from`/`to` returns stats for all active i
 ```json
 {
   "total_instances": 1234,
+  "total_updates": 410,
   "provisioning": {
     "parameters": [
       { "parameter": "region",      "set_count": 1200, "total": 1234 },
@@ -106,12 +107,27 @@ All parameters are optional. Omitting `from`/`to` returns stats for all active i
       { "parameter": "machineType", "set_count": 320, "total": 410 }
     ]
   },
+  "combined": {
+    "parameters": [
+      { "parameter": "machineType", "set_count": 980, "total": 1234 }
+    ]
+  },
   "distributions": [
     {
       "parameter": "machineType",
       "values": { "m6i.xlarge": 410, "Standard_D4_v3": 280 }
     }
   ],
+  "trends": [
+    {
+      "parameter": "machineType",
+      "points": [
+        { "date": "2025-01-01", "count": 10, "total": 50 },
+        { "date": "2025-01-02", "count": 15, "total": 60 }
+      ]
+    }
+  ],
+  "adoption_trends": [ ],
   "plans": ["aws", "azure", "gcp", "trial"],
   "regions_by_plan": {
     "aws":   ["eu-central-1", "us-east-1"],
@@ -120,11 +136,28 @@ All parameters are optional. Omitting `from`/`to` returns stats for all active i
 }
 ```
 
-`set_count` is the number of instances that had the parameter explicitly set. Parameters are sorted by `set_count` descending.
+Field descriptions:
+
+- `total_instances` — number of active instances (succeeded provision, not deprovisioned)
+- `total_updates` — number of succeeded update operations on active instances
+- `provisioning` — parameter usage ranked by how many instances had each parameter set at provisioning time
+- `updates` — parameter usage across all update operations (one instance may contribute multiple times)
+- `combined` — per-instance deduplication: an instance is counted once per parameter if it was set in provisioning **or** any update operation
+- `distributions` — value breakdowns for all distribution-worthy parameters (all fields except those emitting numeric counts such as `administrators` and `additionalWorkerNodePools`); sorted alphabetically
+- `trends` / `adoption_trends` — daily cumulative counts of active instances with each parameter set; `count` is the running total of instances that have the parameter set on that day, `total` is the cumulative number of active instances provisioned by that day
+- `set_count` is the number of instances/operations that had the parameter explicitly set; parameters are sorted by `set_count` descending
 
 ### `POST /api/refresh`
 
 Triggers an immediate out-of-band refresh of the in-memory cache by re-querying the database. Returns `204 No Content`.
+
+## Active Instance Definition
+
+An instance is considered active if a row for it exists in the `instances` table with `deleted_at` equal to the zero timestamp. This means:
+
+- Permanently deprovisioned instances (row deleted) are excluded
+- Temporarily suspended instances (row exists, `deleted_at` zero) are included
+- Instances with a failed deprovision that set `deleted_at` are excluded
 
 ## UI Views
 
@@ -132,9 +165,9 @@ The UI is a single-page application with four tabs:
 
 | Tab | Description |
 |---|---|
-| **Provisioning** | Ranked bar chart of provisioning parameter usage (% of instances with each parameter set) |
-| **Update** | Same chart scoped to update operations |
-| **Combined** | Provisioning and update stats merged into one chart |
-| **Value Distribution** | Bar chart of distinct values for a selected parameter (e.g. `machineType` breakdown) |
+| **Provisioning** | Ranked bar chart of provisioning parameter usage; each bar shows `set_count` and percentage of active instances |
+| **Update** | Parameter usage across update operations; shows total update operation count and per-parameter `set_count` |
+| **Combined** | Per-instance deduplication across provisioning and updates; each instance counted once per parameter |
+| **Value Distribution** | Bar chart of distinct values for a selected parameter (e.g. `machineType` breakdown); covers all distribution-worthy fields |
 
 Global filters (Period, Plan, Region) apply to all tabs.
