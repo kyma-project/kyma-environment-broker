@@ -1,5 +1,5 @@
 ---
-name: pr-review
+name: review-pr
 description: Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
 ---
 
@@ -61,6 +61,10 @@ Use this format for printed items only:
 - Operations constructed via `fixture.FixProvisioningOperation` / `fixture.FixDeprovisioningOperation` / `fixture.FixInstance` — never constructed manually
 - No mocked storage in unit tests — use `storage.NewMemoryStorage()`
 - `make test` would pass (FIPS140-compliant crypto only: `GODEBUG=fips140=only`; no `crypto/md5`, `crypto/sha1`)
+
+**OSB API compatibility (if broker endpoints, catalog, or OSB request/response types are touched):**
+- Fetch the v2.16 spec: `https://raw.githubusercontent.com/openservicebrokerapi/servicebroker/v2.16/spec.md` and verify the changed code against it
+- Flag any violation of required status codes, mandatory request/response fields, async semantics, or backward compatibility rules
 
 **General:**
 - No speculative abstractions or features beyond the PR scope
