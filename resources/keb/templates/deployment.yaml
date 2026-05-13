@@ -104,6 +104,8 @@ spec:
           env:
             - name: APP_BROKER_ACL_ENABLED_PLANS
               value: "{{ .Values.broker.ACLEnabledPlans }}"
+            - name: APP_BROKER_ADDITIONAL_VOLUME_GI_MAX_SIZE
+              value: "{{ .Values.broker.additionalVolumeGiMaxSize }}"
             - name: APP_BROKER_ADDITIONAL_VOLUME_GI_PLANS
               value: "{{ .Values.broker.additionalVolumeGiPlans }}"
             - name: APP_BROKER_ALLOWED_GLOBAL_ACCOUNTS

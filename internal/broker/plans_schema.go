@@ -937,13 +937,13 @@ func GvisorProperty() *GvisorType {
 	}
 }
 
-func AdditionalVolumeGiProperty() *Type {
+func AdditionalVolumeGiProperty(maxSize int) *Type {
 	return &Type{
 		Type:        "integer",
 		Title:       "Additional Volume Size (Gi)",
 		Description: "Additional disk space in Gi added on top of the default volume size for the worker pool.",
 		Minimum:     ptr.Integer(0),
-		Maximum:     1000,
+		Maximum:     maxSize,
 		Default:     0,
 	}
 }

@@ -68,7 +68,8 @@ type Config struct {
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
-	AdditionalVolumeGIPlans StringList `envconfig:"optional"`
+	AdditionalVolumeGIPlans    StringList `envconfig:"optional"`
+	AdditionalVolumeGiMaxSize  int        `envconfig:"default=1000"`
 
 	DynamicVolumeSizeEnabled bool   `envconfig:"default=false"`
 	KCRConfigMapName         string `envconfig:"default=consumption-reporter-config"`

@@ -388,6 +388,7 @@ func createSchemaServiceWithAdditionalVolumeGi(t *testing.T) *SchemaService {
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
 		AdditionalVolumeGIPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
+		AdditionalVolumeGiMaxSize:   1000,
 	})
 }
 

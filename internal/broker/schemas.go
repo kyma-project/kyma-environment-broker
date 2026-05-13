@@ -358,6 +358,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.GvisorEnabled,
 		s.cfg.RejectUnsupportedParameters,
 		s.cfg.AdditionalVolumeGIPlans.Contains(planName),
+		s.cfg.AdditionalVolumeGiMaxSize,
 	)
 }
 
