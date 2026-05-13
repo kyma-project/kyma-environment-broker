@@ -71,6 +71,6 @@
   <text x="330" y="748" fill="#777" font-size="11">In-pod loopback (no network hop)</text>
 
   <!-- keb-analytics -->
-  <rect x="170" y="760" width="300" height="40" rx="6" fill="#f5f0fb" stroke="#8e6bbf" stroke-width="1.5"/>
+  <rect x="60" y="760" width="520" height="40" rx="6" fill="#f5f0fb" stroke="#8e6bbf" stroke-width="1.5"/>
   <text x="320" y="785" text-anchor="middle" fill="#1a1a1a" font-weight="bold">keb-analytics (port 8080) serves the UI</text>
 </svg>
