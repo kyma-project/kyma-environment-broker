@@ -155,10 +155,8 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	require.NoError(t, err)
 	err = imv1.AddToScheme(sch)
 	require.NoError(t, err)
-	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
-
 	ot := NewTestingObjectTracker(sch)
-	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).
+	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources()...).
 		WithObjectTracker(ot).Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelWarn,
