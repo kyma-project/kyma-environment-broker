@@ -1993,7 +1993,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should use UserID as default value for admins list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2029,7 +2029,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply new admins list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		expectedAdmins := []string{"admin1@test.com", "admin2@test.com"}
 		iid := uuid.New().String()
@@ -2067,7 +2067,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply empty admin value (list is not empty)", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		expectedAdmins := []string{""}
 		iid := uuid.New().String()
@@ -2106,7 +2106,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 func TestProvisioning_WithNetworkFilters(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2143,7 +2143,7 @@ func TestProvisioning_WithNetworkFilters(t *testing.T) {
 
 func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2176,7 +2176,7 @@ func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 
 func TestProvisioning_NetworkFilter_External_False(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 

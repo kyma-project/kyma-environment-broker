@@ -118,19 +118,13 @@ func (s *BrokerSuiteTest) TearDown() {
 type SuiteOption func(*suiteOptions)
 
 type suiteOptions struct {
-	cfg          *Config
-	kymaVersions []string
-	withMetrics  bool
+	cfg         *Config
+	withMetrics bool
 }
 
 // WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
 func WithConfig(cfg *Config) SuiteOption {
 	return func(o *suiteOptions) { o.cfg = cfg }
-}
-
-// WithKymaVersion registers an additional Kyma version in the fake k8s cluster.
-func WithKymaVersion(v string) SuiteOption {
-	return func(o *suiteOptions) { o.kymaVersions = append(o.kymaVersions, v) }
 }
 
 // WithMetrics enables the Prometheus metrics endpoint on the test suite router.
@@ -162,7 +156,6 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	err = imv1.AddToScheme(sch)
 	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
-	additionalKymaVersions = append(additionalKymaVersions, o.kymaVersions...)
 
 	ot := NewTestingObjectTracker(sch)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).

@@ -2468,7 +2468,7 @@ func TestUpdateMachineType(t *testing.T) {
 }
 func TestUpdateNetworkFilterForExternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2537,7 +2537,7 @@ func TestUpdateNetworkFilterForExternal(t *testing.T) {
 
 func TestUpdateNetworkFilterForInternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2611,7 +2611,7 @@ func TestUpdateNetworkFilterForInternal(t *testing.T) {
 
 func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2679,7 +2679,7 @@ func TestUpdateNetworkFilterForExternal_WithIngressForExternal(t *testing.T) {
 
 func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2747,7 +2747,7 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 
 func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
 
@@ -2822,7 +2822,7 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 }
 
 func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2865,7 +2865,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 }
 
 func TestUpdateParamsForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2908,7 +2908,7 @@ func TestUpdateParamsForExpiredInstance(t *testing.T) {
 }
 
 func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
-	suite := NewBrokerSuiteTest(t, WithKymaVersion("2.0"))
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
