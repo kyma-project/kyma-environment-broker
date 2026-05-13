@@ -353,7 +353,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 
 	if params.AdditionalVolumeGi != nil && *params.AdditionalVolumeGi < 0 {
 		err := fmt.Errorf("additionalVolumeGi must be >= 0, got %d", *params.AdditionalVolumeGi)
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 
 	if params.AdditionalVolumeGi != nil {

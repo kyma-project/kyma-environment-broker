@@ -109,6 +109,9 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 }
 
 func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if operation.ProviderValues == nil {
+		return s.operationManager.OperationFailed(operation, "ProviderValues is nil, cannot update Kyma worker", nil, log)
+	}
 	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
 	machineTypeChanged := operation.UpdatingParameters.MachineType != nil && *operation.UpdatingParameters.MachineType != oldMachineType
 
@@ -197,6 +200,9 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 
 	var volumeOverrides map[string]int
 	if s.kcrVolumeProvider != nil {
+		if operation.ProviderValues == nil {
+			return s.operationManager.OperationFailed(operation, "ProviderValues is nil, cannot compute volume overrides for additional worker pools", nil, log)
+		}
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
