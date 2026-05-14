@@ -302,7 +302,7 @@ freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
 # List of global account IDs that are allowed to use an increased maximum number of Pods.
-# For accounts listed here, the maximum number of Pods in all worker node pools is set to the value of `infrastructureManager.maxPods`.
+# For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`.
 maxPodsWhitelistedGlobalAccountIds: |-
   whitelist:
 
