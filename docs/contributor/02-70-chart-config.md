@@ -140,7 +140,7 @@
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
-| maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
+| maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`. | `whitelist:` |
 | openShellWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use Open Shell. | `whitelist:` |
 | operationBlocklist | Rules for blocking specific operations (provision, update, planUpgrade, deprovision) per plan. Leave empty to disable all blocking. See internal/blocklist/blocklist.go for format. | `` |
 | gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
@@ -164,6 +164,7 @@
 | infrastructureManager.<br>kubernetesVersion | Sets the default Kubernetes version for new clusters provisioned by the broker. | `1.16.9` |
 | infrastructureManager.<br>machineImage | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
+| infrastructureManager.<br>maxPods | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. | `200` |
 | infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `false` |
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |

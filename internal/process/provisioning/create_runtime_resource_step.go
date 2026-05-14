@@ -39,8 +39,6 @@ const (
 	dbRetryTimeout   = 1 * time.Minute
 )
 
-var MaxPods int32 = 200
-
 type CreateRuntimeResourceStep struct {
 	operationManager  *process.OperationManager
 	instanceStorage   storage.Instances
@@ -282,7 +280,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	if s.globalAccounts.MaxPodsWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID) {
 		provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 			Kubelet: &gardener.KubeletConfig{
-				MaxPods: &MaxPods,
+				MaxPods: &s.config.MaxPods,
 			},
 		}
 
@@ -290,7 +288,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 			for i := range *provider.AdditionalWorkers {
 				(*provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
 					Kubelet: &gardener.KubeletConfig{
-						MaxPods: &MaxPods,
+						MaxPods: &s.config.MaxPods,
 					},
 				}
 			}

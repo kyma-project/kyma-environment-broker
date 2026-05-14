@@ -172,6 +172,8 @@ type InfrastructureManager struct {
 	GcpVolumeSizeGb   int `envconfig:"default=80"`
 	AwsVolumeSizeGb   int `envconfig:"default=80"`
 	AzureVolumeSizeGb int `envconfig:"default=80"`
+
+	MaxPods int32 `envconfig:"default=200"`
 }
 
 type PlansConfig map[string]PlanData

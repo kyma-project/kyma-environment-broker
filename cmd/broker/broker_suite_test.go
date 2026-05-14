@@ -158,9 +158,9 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	ot := NewTestingObjectTracker(sch)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources()...).
 		WithObjectTracker(ot).Build()
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	log := slog.New(newStrippingHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelWarn,
-	}))
+	}), "instance-details"))
 
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, log),
@@ -294,9 +294,9 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	if o.withMetrics {
-		metricsLog := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		metricsLog := slog.New(newStrippingHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
-		}))
+		}), "instance-details"))
 		metricsCtx, cancel := context.WithCancel(context.Background())
 		ts.cancelMetrics = cancel
 		ts.metrics = metrics.Register(metricsCtx, ts.eventBroker, ts.db, cfg.Metrics, gardenerClientWithNamespace, metricsLog)
@@ -1162,4 +1162,63 @@ func (s *BrokerSuiteTest) CreateAdditionalCredentialsBinding(name, hyperscalerTy
 
 	_, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &cb.Unstructured, metav1.CreateOptions{})
 	require.NoError(s.t, err)
+}
+
+// strippingHandler is a slog.Handler that truncates attributes with the given keys
+// to maxInstanceDetailsLen characters. Prevents brokerapi's "instance-details"
+// attribute (which embeds the full raw request payload) from flooding test output.
+const maxInstanceDetailsLen = 1024
+
+type strippingHandler struct {
+	inner slog.Handler
+	strip map[string]struct{}
+}
+
+func newStrippingHandler(inner slog.Handler, keys ...string) *strippingHandler {
+	m := make(map[string]struct{}, len(keys))
+	for _, k := range keys {
+		m[k] = struct{}{}
+	}
+	return &strippingHandler{inner: inner, strip: m}
+}
+
+func (h *strippingHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.inner.Enabled(ctx, level)
+}
+
+func (h *strippingHandler) Handle(ctx context.Context, r slog.Record) error {
+	filtered := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
+	r.Attrs(func(a slog.Attr) bool {
+		if _, truncate := h.strip[a.Key]; truncate {
+			s := fmt.Sprintf("%v", a.Value.Any())
+			if len(s) > maxInstanceDetailsLen {
+				s = s[:maxInstanceDetailsLen] + "...[truncated]"
+			}
+			filtered.AddAttrs(slog.String(a.Key, s))
+		} else {
+			filtered.AddAttrs(a)
+		}
+		return true
+	})
+	return h.inner.Handle(ctx, filtered)
+}
+
+func (h *strippingHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	filtered := make([]slog.Attr, 0, len(attrs))
+	for _, a := range attrs {
+		if _, skip := h.strip[a.Key]; !skip {
+			filtered = append(filtered, a)
+		} else {
+			s := fmt.Sprintf("%v", a.Value.Any())
+			if len(s) > maxInstanceDetailsLen {
+				s = s[:maxInstanceDetailsLen] + "...[truncated]"
+			}
+			filtered = append(filtered, slog.String(a.Key, s))
+		}
+	}
+	return &strippingHandler{inner: h.inner.WithAttrs(filtered), strip: h.strip}
+}
+
+func (h *strippingHandler) WithGroup(name string) slog.Handler {
+	return &strippingHandler{inner: h.inner.WithGroup(name), strip: h.strip}
 }
