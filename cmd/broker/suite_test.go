@@ -177,6 +177,7 @@ func fixConfig() *Config {
 			CheckRuntimeResourceUpdate:   180 * time.Second,
 			CheckRuntimeResourceCreate:   60 * time.Second,
 			CheckRuntimeResourceDeletion: 50 * time.Millisecond,
+			ResourceStateRetryInterval:   10 * time.Millisecond,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,

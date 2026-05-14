@@ -24,10 +24,8 @@ import (
 )
 
 const (
-	resourceStateRetryInterval             = 10 * time.Second
 	resolveSubscriptionSecretRetryInterval = 10 * time.Second
-
-	resolveSubscriptionSecretTimeout = 1 * time.Minute
+	resolveSubscriptionSecretTimeout       = 1 * time.Minute
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
@@ -79,7 +77,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec, cfg.GlobalAccounts(), kcrVolumeProvider),
 		},
 		{
-			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
+			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: cfg.StepTimeouts.ResourceStateRetryInterval}, provisioningTakesLongThreshold),
 		},
 		{
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
