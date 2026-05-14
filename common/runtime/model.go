@@ -83,7 +83,7 @@ const (
 type ProvisioningParametersDTO struct {
 	AutoScalerParameters `json:",inline"`
 
-	Name                  string   `json:"name"`
+	Name                  string   `json:"name,omitempty"`
 	TargetSecret          *string  `json:"targetSecret,omitempty"`
 	MachineType           *string  `json:"machineType,omitempty"`
 	Region                *string  `json:"region,omitempty"`
