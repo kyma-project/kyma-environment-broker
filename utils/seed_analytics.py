@@ -395,6 +395,7 @@ def main():
     parser.add_argument("--poll-timeout", type=int, default=600, help="Seconds to wait for operations to complete (default: 600)")
     parser.add_argument("--provision-workers", type=int, default=50,
                         help="Number of concurrent threads for provision requests and CR patches (default: 50)")
+
     parser.add_argument("--backdate-days", type=int, default=90,
                         help="Total time window in days that backdating will spread instances across (default: 90). "
                              "Used to compute the cutoff fraction for --param-cutoff.")
@@ -403,6 +404,9 @@ def main():
                              "Only instances assigned to dates on or after the cutoff will have the parameter set. "
                              "Can be specified multiple times, e.g. --param-cutoff ingressFiltering:30")
     args = parser.parse_args()
+
+    if args.provision_workers < 1:
+        parser.error("--provision-workers must be >= 1")
 
     # Parse --param-cutoff entries into {param: fraction_of_instances_that_get_it}
     # Instances are provisioned in order 0..count-1; we treat index as a proxy for time.
@@ -458,8 +462,11 @@ def main():
         futures = {pool.submit(_provision, (i, spec)): i for i, spec in enumerate(instance_specs)}
         done = 0
         for future in as_completed(futures):
-            idx, runtime = future.result()
-            runtimes[idx] = runtime
+            try:
+                idx, runtime = future.result()
+                runtimes[idx] = runtime
+            except Exception as e:
+                print(f"  WARNING: provision request failed: {e}")
             done += 1
             if done % 100 == 0 or done == count:
                 print(f"  provisioned {done}/{count}")
@@ -474,7 +481,7 @@ def main():
         return runtime
 
     with ThreadPoolExecutor(max_workers=args.provision_workers) as pool:
-        futures = list(pool.map(_patch_ready, provisioned_runtimes))
+        list(pool.map(_patch_ready, provisioned_runtimes))
 
     provisioned = len(provisioned_runtimes)
     print(f"Patched: {provisioned}")
