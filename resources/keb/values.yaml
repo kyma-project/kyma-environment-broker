@@ -302,7 +302,7 @@ freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
 # List of global account IDs that are allowed to use an increased maximum number of Pods.
-# For accounts listed here, the maximum number of Pods in all worker node pools is set to 250.
+# For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`.
 maxPodsWhitelistedGlobalAccountIds: |-
   whitelist:
 
@@ -382,6 +382,8 @@ infrastructureManager:
   machineImage: ""
   # Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImageVersion: ""
+  # Sets the maximum number of Pods per node for global accounts in the max Pods allowlist.
+  maxPods: 200
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
   # If true, provisions trial and freemium clusters using smaller machine types.

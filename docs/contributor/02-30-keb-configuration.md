@@ -75,6 +75,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_KUBERNETES_&#x200b;VERSION** | <code>1.16.9</code> | Sets the default Kubernetes version for new clusters provisioned by the broker. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE** | None | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE_VERSION** | None | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. |
+| **APP_INFRASTRUCTURE_&#x200b;MANAGER_MAX_PODS** | <code>200</code> | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>false</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial and freemium clusters using smaller machine types. |
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |

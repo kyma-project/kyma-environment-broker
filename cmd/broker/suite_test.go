@@ -172,6 +172,7 @@ func fixConfig() *Config {
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
 			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
+			MaxPods:                      200,
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
