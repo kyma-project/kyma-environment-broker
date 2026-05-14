@@ -20,6 +20,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
@@ -68,8 +69,10 @@ const (
 // BrokerSuiteTest is a helper which allows to write simple tests of any KEB processes (provisioning, deprovisioning, update).
 // The starting point of a test could be an HTTP call to Broker API.
 type BrokerSuiteTest struct {
-	db             storage.BrokerStorage
-	storageCleanup func() error
+	db              storage.BrokerStorage
+	storageCleanup  func() error
+	analyticsReader *analytics.DBReader
+	cancelMetrics   context.CancelFunc
 
 	httpServer *httptest.Server
 	router     *httputil.Router
@@ -102,6 +105,9 @@ func (s *BrokerSuiteTest) TearDown() {
 		assert.NoError(s.t, err)
 		panic(r)
 	}
+	if s.cancelMetrics != nil {
+		s.cancelMetrics()
+	}
 	s.httpServer.Close()
 	if s.storageCleanup != nil {
 		err := s.storageCleanup()
@@ -109,34 +115,40 @@ func (s *BrokerSuiteTest) TearDown() {
 	}
 }
 
-func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+// SuiteOption configures a BrokerSuiteTest.
+type SuiteOption func(*suiteOptions)
+
+type suiteOptions struct {
+	cfg               *Config
+	withMetrics       bool
+	kcrVolumeProvider broker.VolumeSizeProvider
 }
 
-func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
-	return newBrokerSuiteTest(t, cfg, nil, version...)
+// WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
+func WithConfig(cfg *Config) SuiteOption {
+	return func(o *suiteOptions) { o.cfg = cfg }
 }
 
-func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
-	defer func() {
-		if r := recover(); r != nil {
-			err := cleanupContainer()
-			assert.NoError(t, err)
-			panic(r)
-		}
-	}()
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	gardenerClientWithNamespace := gardener.NewClient(broker.gardenerClient, gardenerKymaNamespace)
-	broker.metrics = metrics.Register(context.Background(), broker.eventBroker, broker.db, cfg.Metrics, gardenerClientWithNamespace, log)
-	broker.router.Handle("/metrics", promhttp.Handler())
-	return broker
+// WithMetrics enables the Prometheus metrics endpoint on the test suite router.
+func WithMetrics() SuiteOption {
+	return func(o *suiteOptions) { o.withMetrics = true }
 }
 
-func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.VolumeSizeProvider, version ...string) *BrokerSuiteTest {
+// WithKCRVolumeProvider sets a custom KCR volume size provider.
+func WithKCRVolumeProvider(p broker.VolumeSizeProvider) SuiteOption {
+	return func(o *suiteOptions) { o.kcrVolumeProvider = p }
+}
+
+func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
+	o := &suiteOptions{cfg: fixConfig()}
+	for _, opt := range opts {
+		opt(o)
+	}
+	return newBrokerSuiteTest(t, o)
+}
+
+func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
+	cfg := o.cfg
 	defer func() {
 		if r := recover(); r != nil {
 			err := cleanupContainer()
@@ -150,14 +162,11 @@ func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.Volu
 	require.NoError(t, err)
 	err = imv1.AddToScheme(sch)
 	require.NoError(t, err)
-	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
-	additionalKymaVersions = append(additionalKymaVersions, version...)
-
 	ot := NewTestingObjectTracker(sch)
-	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).
+	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources()...).
 		WithObjectTracker(ot).Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: slog.LevelWarn,
 	}))
 
 	configProvider := kebConfig.NewConfigProvider(
@@ -165,8 +174,13 @@ func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.Volu
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	storageCleanup, db, err := GetStorageForE2ETests()
+	storageCleanup, db, dbConn, err := GetStorageForE2ETestsWithConn()
 	assert.NoError(t, err)
+
+	var analyticsReader *analytics.DBReader
+	if dbConn != nil {
+		analyticsReader = analytics.NewDBReader(dbConn.NewSession(nil))
+	}
 
 	require.NoError(t, err)
 
@@ -187,7 +201,7 @@ func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.Volu
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
-	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, kcrVolumeProvider)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, o.kcrVolumeProvider)
 	fatalOnError(err, log)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -227,17 +241,18 @@ func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.Volu
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 
 	ts := &BrokerSuiteTest{
-		db:             db,
-		storageCleanup: storageCleanup,
-		router:         httputil.NewRouter(),
-		t:              t,
-		k8sKcp:         cli,
-		k8sSKR:         fakeK8sSKRClient,
-		eventBroker:    eventBroker,
+		db:              db,
+		storageCleanup:  storageCleanup,
+		analyticsReader: analyticsReader,
+		router:          httputil.NewRouter(),
+		t:               t,
+		k8sKcp:          cli,
+		k8sSKR:          fakeK8sSKRClient,
+		eventBroker:     eventBroker,
 
 		k8sDeletionObjectTracker: ot,
 		gardenerClient:           gardenerClient,
-		kcrVolumeProvider:        kcrVolumeProvider,
+		kcrVolumeProvider:        o.kcrVolumeProvider,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
@@ -249,7 +264,52 @@ func newBrokerSuiteTest(t *testing.T, cfg *Config, kcrVolumeProvider broker.Volu
 	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.Broker.DefaultRequestRegion, cli, log)
 	runtimeHandler.AttachRoutes(ts.router)
 
+	if ts.analyticsReader != nil {
+		reader := ts.analyticsReader
+		planIDToName := make(map[string]string, len(broker.PlanIDsMapping))
+		for name, id := range broker.PlanIDsMapping {
+			planIDToName[string(id)] = string(name)
+		}
+		ts.router.HandleFunc("/analytics/stats", func(w http.ResponseWriter, r *http.Request) {
+			provParams, err := reader.FetchActiveProvisioningParams()
+			if err != nil {
+				http.Error(w, "failed to fetch provisioning params", http.StatusInternalServerError)
+				return
+			}
+			updateParams, err := reader.FetchUpdateParams()
+			if err != nil {
+				http.Error(w, "failed to fetch update params", http.StatusInternalServerError)
+				return
+			}
+			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+			resp := analytics.StatsResponse{
+				TotalInstances: len(provParams),
+				TotalUpdates:   len(updateParams),
+				Provisioning:   analytics.AggregateProvisioning(provParams),
+				Updates:        analytics.AggregateUpdates(updateParams),
+				Combined:       analytics.AggregateCombined(provParams, updateParams),
+				Distributions:  analytics.BuildDistributions(provParams),
+				Plans:          plans,
+				RegionsByPlan:  regionsByPlan,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, "failed to encode response", http.StatusInternalServerError)
+			}
+		})
+	}
+
 	ts.httpServer = httptest.NewServer(ts.router)
+
+	if o.withMetrics {
+		metricsLog := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+		metricsCtx, cancel := context.WithCancel(context.Background())
+		ts.cancelMetrics = cancel
+		ts.metrics = metrics.Register(metricsCtx, ts.eventBroker, ts.db, cfg.Metrics, gardenerClientWithNamespace, metricsLog)
+		ts.router.Handle("/metrics", promhttp.Handler())
+	}
 
 	return ts
 }
@@ -392,6 +452,18 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	resp, err := cli.Do(req)
 	require.NoError(s.t, err)
 	return resp
+}
+
+// GetAnalyticsStats calls GET /analytics/stats and returns the decoded response.
+// Only available when the suite is backed by a real PostgreSQL database.
+func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
+	s.t.Helper()
+	resp := s.CallAPI("GET", "analytics/stats", "")
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(s.t, http.StatusOK, resp.StatusCode)
+	var stats analytics.StatsResponse
+	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(&stats))
+	return stats
 }
 
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
@@ -1059,6 +1131,8 @@ func fixSecrets() []runtime.Object {
 
 func fixDiscoveredZones() map[string][]string {
 	return map[string][]string{
+		"mi.large":  {"zone-h", "zone-i", "zone-j", "zone-k"},
+		"mi.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"m6i.large": {"zone-d", "zone-e", "zone-f", "zone-g"},
 		"m5.xlarge": {"zone-h", "zone-i", "zone-j", "zone-k"},
 		"c7i.large": {"zone-l", "zone-m"},

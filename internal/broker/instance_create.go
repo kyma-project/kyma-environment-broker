@@ -193,6 +193,10 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 
 	// EXTRACT INPUT PARAMETERS / PROVISIONING PARAMETERS
+	if len(details.RawParameters) > MaxRawParametersSize {
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(
+			fmt.Errorf("request parameters too large"), http.StatusBadRequest, "request parameters too large")
+	}
 	parameters, err := b.extractInputParameters(details)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting input parameters")
@@ -267,6 +271,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	operation.ShootDomain = fmt.Sprintf("%s.%s", shootName, shootDomainSuffix)
 	operation.ShootDNSProviders = b.shootDnsProviders
 	operation.DashboardURL = dashboardURL
+	operation.RawParameters = details.RawParameters
 	logger.Info(fmt.Sprintf("Runtime ShootDomain: %s", operation.ShootDomain))
 
 	err = b.operationsStorage.InsertOperation(operation.Operation)

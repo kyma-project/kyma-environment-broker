@@ -15,7 +15,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vrischmann/envconfig"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/analytics"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
@@ -38,8 +37,9 @@ type Config struct {
 
 type cache struct {
 	resp          analytics.StatsResponse
-	provParams    []internal.ProvisioningParameters
-	updateParams  []internal.UpdatingParametersDTO
+	provParams    []analytics.ProvisioningParamsWithID
+	updateParams  []analytics.UpdateParamsWithID
+	opEvents      []analytics.OpEvent
 	plans         []string
 	regionsByPlan map[string][]string
 }
@@ -101,13 +101,27 @@ func main() {
 			slog.Error("failed to fetch update params", "error", err)
 			return
 		}
+		opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
+		if err != nil {
+			slog.Error("failed to fetch op events", "error", err)
+			return
+		}
 
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+		provisioning := analytics.AggregateProvisioning(provParams)
+		updates := analytics.AggregateUpdates(updateParams)
+		combined := analytics.AggregateCombined(provParams, updateParams)
+		trendParams := analytics.TrendParamsFrom(combined)
+		trends := analytics.BuildTrends(opEvents, trendParams)
 		resp := analytics.StatsResponse{
 			TotalInstances: len(provParams),
-			Provisioning:   analytics.AggregateProvisioning(provParams),
-			Updates:        analytics.AggregateUpdates(updateParams),
+			TotalUpdates:   len(updateParams),
+			Provisioning:   provisioning,
+			Updates:        updates,
+			Combined:       combined,
 			Distributions:  analytics.BuildDistributions(provParams),
+			Trends:         trends,
+			AdoptionTrends: trends,
 			Plans:          plans,
 			RegionsByPlan:  regionsByPlan,
 		}
@@ -117,6 +131,7 @@ func main() {
 			resp:          resp,
 			provParams:    provParams,
 			updateParams:  updateParams,
+			opEvents:      opEvents,
 			plans:         plans,
 			regionsByPlan: regionsByPlan,
 		}
@@ -156,7 +171,7 @@ func main() {
 			if planFilter == "" && regionFilter == "" {
 				data = snapshot.resp
 			} else {
-				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
+				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
 			}
 		} else {
 			// Time-range query: fetch from DB, then filter.
@@ -172,8 +187,14 @@ func main() {
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
 				return
 			}
+			opEvents, err := reader.FetchOpEventsInRange(tr)
+			if err != nil {
+				slog.Error("failed to fetch op events for range", "error", err)
+				http.Error(w, "failed to build stats", http.StatusInternalServerError)
+				return
+			}
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-			data = buildFilteredStats(provParams, updateParams, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
+			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -205,9 +226,11 @@ func main() {
 
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
+// opEvents are unfiltered (trends are not affected by plan/region filter).
 func buildFilteredStats(
-	provParams []internal.ProvisioningParameters,
-	updateParams []internal.UpdatingParametersDTO,
+	provParams []analytics.ProvisioningParamsWithID,
+	updateParams []analytics.UpdateParamsWithID,
+	opEvents []analytics.OpEvent,
 	planFilter, regionFilter string,
 	planIDToName map[string]string,
 	plans []string,
@@ -220,11 +243,18 @@ func buildFilteredStats(
 	if regionFilter != "" {
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
+	combined := analytics.AggregateCombined(filtered, updateParams)
+	trendParams := analytics.TrendParamsFrom(combined)
+	trends := analytics.BuildTrends(opEvents, trendParams)
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),
+		TotalUpdates:   len(updateParams),
 		Provisioning:   analytics.AggregateProvisioning(filtered),
 		Updates:        analytics.AggregateUpdates(updateParams),
+		Combined:       combined,
 		Distributions:  analytics.BuildDistributions(filtered),
+		Trends:         trends,
+		AdoptionTrends: trends,
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
 	}

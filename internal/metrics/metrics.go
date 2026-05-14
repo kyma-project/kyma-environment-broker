@@ -118,5 +118,27 @@ func GetLabels(op internal.Operation) map[string]string {
 	labels["error_category"] = string(op.LastError.GetComponent())
 	labels["error_reason"] = string(op.LastError.GetReason())
 	labels["error"] = op.LastError.Error()
+	labels["provider"] = normalizeProvider(op.CloudProvider)
 	return labels
+}
+
+// normalizeProvider maps CloudProvider constant values to lowercase canonical names
+// for use as Prometheus label values. Unknown or empty values map to providerUnknown.
+const providerUnknown = "unknown"
+
+func normalizeProvider(p string) string {
+	switch p {
+	case "AWS":
+		return "aws"
+	case "Azure":
+		return "azure"
+	case "GCP":
+		return "gcp"
+	case "SapConvergedCloud":
+		return "sap-converged-cloud"
+	case "Alicloud":
+		return "alicloud"
+	default:
+		return providerUnknown
+	}
 }

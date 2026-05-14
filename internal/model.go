@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -156,6 +157,9 @@ type Operation struct {
 
 	// PreviousParameters stores the instance parameters before the update
 	PreviousParameters ProvisioningParameters `json:"previous_parameters"`
+
+	// RawParameters stores the verbatim JSON payload submitted by the caller (not modified by merging)
+	RawParameters json.RawMessage `json:"rawParameters,omitempty"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)

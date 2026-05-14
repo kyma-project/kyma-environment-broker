@@ -168,7 +168,7 @@ func TestBinding(t *testing.T) {
 func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	bindingID1 := uuid.New().String()
@@ -234,7 +234,7 @@ func TestFailedProvisioning(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / testSuiteSpeedUpFactor
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	bindingID1 := uuid.New().String()
@@ -274,7 +274,7 @@ func TestFailedProvisioning(t *testing.T) {
 func TestProvisioningInProgress(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	bindingID1 := uuid.New().String()
@@ -312,7 +312,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.Broker.Binding.BindablePlans = []string{"trial"}
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	bindingID1 := uuid.New().String()
@@ -384,7 +384,7 @@ func TestBindingCreationTimeout(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.Broker.Binding.CreateBindingTimeout = 1 * time.Nanosecond
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	bid := uuid.New().String()

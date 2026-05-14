@@ -20,7 +20,7 @@ const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_i
 func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -91,7 +91,7 @@ func TestReDeprovision(t *testing.T) {
 func TestReDeprovisionAlicloud(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -161,7 +161,7 @@ func TestReDeprovisionAlicloud(t *testing.T) {
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -210,7 +210,7 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid1 := uuid.New().String()
 

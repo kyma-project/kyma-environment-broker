@@ -40,7 +40,21 @@ var logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 var useInMemoryStorage, _ = strconv.ParseBool(os.Getenv("DB_IN_MEMORY_FOR_E2E_TESTS"))
 
-var tearDownFunc func()
+var (
+	containerOnce    sync.Once
+	containerCleanup func()
+)
+
+func TestMain(m *testing.M) {
+	exitVal := 0
+	defer func() {
+		if containerCleanup != nil {
+			containerCleanup()
+		}
+		os.Exit(exitVal)
+	}()
+	exitVal = m.Run()
+}
 
 func setupSuite(t testing.TB) func(t testing.TB) {
 	logger.Info("setup suite")
@@ -48,15 +62,11 @@ func setupSuite(t testing.TB) func(t testing.TB) {
 		logger.Info("using in-memory storage")
 	} else {
 		logger.Info("using real storage")
-		tearDownFunc = setupStorageContainer()
 	}
 
 	return func(t testing.TB) {
 		r := recover()
 		logger.Info("teardown suite")
-		if tearDownFunc != nil {
-			tearDownFunc()
-		}
 		if r != nil {
 			panic(r)
 		}
@@ -68,9 +78,6 @@ func setupTestNilStorage(t testing.TB) (func(t testing.TB), storage.BrokerStorag
 
 	return func(t testing.TB) {
 		if r := recover(); r != nil {
-			if tearDownFunc != nil {
-				tearDownFunc()
-			}
 			panic(r)
 		}
 		logger.Info("teardown test")
@@ -85,9 +92,6 @@ func setupTestWithStorage(t testing.TB) (func(t testing.TB), storage.BrokerStora
 
 	return func(t testing.TB) {
 		if r := recover(); r != nil {
-			if tearDownFunc != nil {
-				tearDownFunc()
-			}
 			panic(r)
 		}
 		if storageCleanup != nil {
@@ -1594,6 +1598,9 @@ func getStorageForTests() (func() error, storage.BrokerStorage, error) {
 	if useInMemoryStorage {
 		return nil, storage.NewMemoryStorage(), nil
 	}
+	containerOnce.Do(func() {
+		containerCleanup = setupStorageContainer()
+	})
 	return storage.GetStorageForTests(brokerStorageTestConfig())
 }
 

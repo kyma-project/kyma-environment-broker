@@ -48,7 +48,7 @@ func TestCatalog(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.DynamicVolumeSizeEnabled = true
 	cfg.Broker.AdditionalVolumeGIPlans = broker.StringList{broker.AWSPlanName, broker.GCPPlanName, broker.AzurePlanName, broker.SapConvergedCloudPlanName, broker.AlicloudPlanName, broker.PreviewPlanName, broker.BuildRuntimeAWSPlanName, broker.BuildRuntimeGCPPlanName, broker.BuildRuntimeAzurePlanName, broker.BuildRuntimeAlicloudPlanName}
-	suite := newBrokerSuiteTest(t, cfg, &fakeVolumeSizeProvider{fakeKCRVolumeSizes()})
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithKCRVolumeProvider(&fakeVolumeSizeProvider{fakeKCRVolumeSizes()}))
 	defer suite.TearDown()
 
 	// when
@@ -167,7 +167,7 @@ func fakeKCRVolumeSizes() map[pkg.CloudProvider]map[string]int {
 func TestProvisioningForTrial(t *testing.T) {
 
 	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -199,7 +199,7 @@ func TestProvisioningForTrial(t *testing.T) {
 	suite.AssertRuntimeResourceLabels(opID)
 
 	runtimeResource := suite.GetUnstructuredRuntimeResource(opID)
-	suite.AssertRuntimeResourceWorkers(runtimeResource, "m5.xlarge", 1, 1)
+	suite.AssertRuntimeResourceWorkers(runtimeResource, "m7i.xlarge", 1, 1)
 
 	op, err := suite.db.Operations().GetOperationByID(opID)
 	require.NoError(t, err)
@@ -210,7 +210,7 @@ func TestProvisioningForTrial(t *testing.T) {
 func TestProvisioningForAWS(t *testing.T) {
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -238,13 +238,18 @@ func TestProvisioningForAWS(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.CountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("administrators"))
 }
 
 func TestProvisioningWithACL(t *testing.T) {
 	cfg := fixConfig()
 	cfg.Broker.ACLEnabledPlans = []string{broker.AWSPlanName}
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -275,6 +280,11 @@ func TestProvisioningWithACL(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
 
+	stats := suite.GetAnalyticsStats()
+	assert.Equal(t, 1, stats.TotalInstances)
+	assert.Equal(t, 1, stats.Provisioning.CountFor("region"))
+	assert.Equal(t, 1, stats.Provisioning.CountFor("accessControlList"))
+
 	// test validation
 	resp1 := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s-e?accepts_incomplete=true", iid),
 		`{
@@ -302,7 +312,7 @@ func TestProvisioningForAWSWithRestrictedGA(t *testing.T) {
 	cfg.Broker.AllowedGlobalAccounts = []string{"g-account-id"}
 	cfg.Broker.RestrictToAllowedGlobalAccounts = true
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid1 := uuid.New().String()
 	iid2 := uuid.New().String()
@@ -357,7 +367,7 @@ func TestProvisioningForAlicloud(t *testing.T) {
 
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 	// when
@@ -429,7 +439,7 @@ func TestProvisioning_CredentialsBindings(t *testing.T) {
 	cfg := fixConfig()
 	cfg.SubscriptionGardenerResource = "CredentialsBinding"
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -1463,7 +1473,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
-			expectedMachineType:          "m5.xlarge",
+			expectedMachineType:          "m7i.xlarge",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
 			expectedVolumeSize:           "80Gi",
@@ -1474,7 +1484,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
-			expectedMachineType:          "m6i.large",
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws-shared",
 		},
@@ -1487,7 +1497,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMaximumNumberOfNodes: 1,
 			expectedProvider:             "aws",
 
-			expectedMachineType:      "m5.xlarge",
+			expectedMachineType:      "m7i.xlarge",
 			expectedSubscriptionName: "sb-aws",
 		},
 		"Freemium aws with smaller machines": {
@@ -1499,7 +1509,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes: 1,
 			expectedMaximumNumberOfNodes: 1,
 			expectedProvider:             "aws",
-			expectedMachineType:          "m6i.large",
+			expectedMachineType:          "m7i.large",
 			expectedSubscriptionName:     "sb-aws",
 		},
 		"Freemium azure": {
@@ -1562,7 +1572,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:           ptr.Integer(1),
 			expectedMinimalNumberOfNodes: 3,
 			expectedMaximumNumberOfNodes: 20,
-			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 
 			expectedSubscriptionName: "sb-aws",
@@ -1576,7 +1586,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:           ptr.Integer(3),
 			expectedMinimalNumberOfNodes: 3,
 			expectedMaximumNumberOfNodes: 20,
-			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedMachineType:          "m7i.large",
 			expectedProvider:             "aws",
 			expectedSubscriptionName:     "sb-aws",
 			expectedZones:                []string{"sa-east-1a", "sa-east-1b", "sa-east-1c"},
@@ -1661,7 +1671,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 				cfg.InfrastructureManager.UseSmallerMachineTypes = true
 			}
 			cfg.InfrastructureManager.MultiZoneCluster = tc.multiZone
-			suite := NewBrokerSuiteTestWithConfig(t, cfg)
+			suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 			defer suite.TearDown()
 			iid := uuid.New().String()
 
@@ -1776,7 +1786,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1836,7 +1846,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply empty OIDC list", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1983,7 +1993,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply default OIDC values when all OIDC object's fields are not present", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 
 		defer suite.TearDown()
 		iid := uuid.New().String()
@@ -2029,7 +2039,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should reject non base64 JWKS value", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2071,7 +2081,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should use UserID as default value for admins list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, "2.0")
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2107,7 +2117,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply new admins list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, "2.0")
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		expectedAdmins := []string{"admin1@test.com", "admin2@test.com"}
 		iid := uuid.New().String()
@@ -2145,7 +2155,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply empty admin value (list is not empty)", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t, "2.0")
+		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
 		expectedAdmins := []string{""}
 		iid := uuid.New().String()
@@ -2184,7 +2194,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 func TestProvisioning_WithNetworkFilters(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2221,7 +2231,7 @@ func TestProvisioning_WithNetworkFilters(t *testing.T) {
 
 func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2254,7 +2264,7 @@ func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 
 func TestProvisioning_NetworkFilter_External_False(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
+	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2708,7 +2718,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	// given
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -2795,7 +2805,7 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 	// given
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -3062,7 +3072,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 			// given
 			cfg := fixConfig()
 			cfg.Broker.EnablePlans = append(cfg.Broker.EnablePlans, "azure_lite")
-			suite := NewBrokerSuiteTestWithConfig(t, cfg)
+			suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 			defer suite.TearDown()
 			iid := uuid.New().String()
 
@@ -3116,7 +3126,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 
 	t.Run("aws", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3173,7 +3183,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 
 	t.Run("free", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3208,7 +3218,7 @@ func TestProvisioning_ZonesDiscovery(t *testing.T) {
 
 	t.Run("trial", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3412,7 +3422,7 @@ func TestProvisioning_ChannelSelection(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// The suite already has keb-runtime-config ConfigMap with "default" entry having "fast" channel
@@ -3503,7 +3513,7 @@ kyma-template: |-
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// Setup: AWS plan configured with regular as default
@@ -3593,7 +3603,7 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
 		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
 		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// Create 3 instances for same GA to verify they all use the same binding
@@ -3619,7 +3629,7 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
 		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
 		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// Create 3 instances for same GA (not in allowed global accounts) to verify they all use the same binding
@@ -3646,7 +3656,7 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
 		cfg.HapMultiHyperscalerAccount.Limits.Azure = 2
 		cfg.HapMultiHyperscalerAccount.Limits.GCP = 2
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// Create additional AWS bindings for multi-account test
@@ -3678,7 +3688,7 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"*"}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 
 		// Create additional AWS bindings
@@ -3705,7 +3715,7 @@ func TestProvisioningWithOpenShell(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3739,7 +3749,7 @@ func TestProvisioningWithOpenShell(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3775,7 +3785,7 @@ func TestProvisioningWithMaxPods(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3828,7 +3838,7 @@ func TestProvisioningWithMaxPods(t *testing.T) {
 		// given
 		cfg := fixConfig()
 
-		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -3882,7 +3892,7 @@ func TestProvisioningWithVersionAgnosticMachineTypes(t *testing.T) {
 	// given
 	cfg := fixConfig()
 
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -3927,7 +3937,7 @@ func TestProvisioningWithVersionAgnosticMachineTypes(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	require.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Equal(t, "m6i.large", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	assert.Equal(t, "m7i.large", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)

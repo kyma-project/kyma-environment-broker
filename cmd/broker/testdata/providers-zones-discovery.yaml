@@ -8,6 +8,13 @@ aws:
     "g4dn":
       "us-east-1": ["x"]
   machines:
+    "mi.large": "mi.large (2vCPU, 8GB RAM)"
+    "mi.xlarge": "mi.xlarge (4vCPU, 16GB RAM)"
+    "mi.2xlarge": "mi.2xlarge (8vCPU, 32GB RAM)"
+    "mi.4xlarge": "mi.4xlarge (16vCPU, 64GB RAM)"
+    "mi.8xlarge": "mi.8xlarge (32vCPU, 128GB RAM)"
+    "mi.12xlarge": "mi.12xlarge (48vCPU, 192GB RAM)"
+    "mi.16xlarge": "mi.16xlarge (64vCPU, 256GB RAM)"
     "m6i.large": "m6i.large (2vCPU, 8GB RAM)"
     "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)"
     "m6i.2xlarge": "m6i.2xlarge (8vCPU, 32GB RAM)"

@@ -107,13 +107,13 @@ func (om *OperationManager) OperationCanceled(operation internal.Operation, desc
 
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed
 func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
+	log.Debug("Retry Operation was called", "message", errorMessage)
 
-	log.Debug(fmt.Sprintf("Retry Operation map size is: %d", len(om.retryTimestamps)))
+	log.Debug("Retry Operation map size", "size", len(om.retryTimestamps))
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		remainingTime := om.getRemainingTime(operation.ID, maxTime)
-		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
+		log.Debug("Retrying operation", "maxTime", maxTime, "retryInterval", retryInterval, "minutesLeft", int(remainingTime.Round(time.Second).Minutes()))
 		return operation, retryInterval, nil
 	}
 
@@ -128,7 +128,7 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 }
 
 func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
+	log.Debug("Retry Operation was called", "message", errorMessage)
 
 	sinceCreation := time.Since(operation.CreatedAt)
 
@@ -138,7 +138,7 @@ func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Opera
 			remainingTime = 0
 		}
 
-		log.Info(fmt.Sprintf("Retrying for %s in %s intervals %d minutes left", maxTime.String(), retryInterval.String(), int(remainingTime.Round(time.Second).Minutes())))
+		log.Debug("Retrying operation", "maxTime", maxTime, "retryInterval", retryInterval, "minutesLeft", int(remainingTime.Round(time.Second).Minutes()))
 		return operation, retryInterval, nil
 	}
 
@@ -159,7 +159,7 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 		log.Warn(fmt.Sprintf("error while invoking the step: %s", opErr.Error()))
 	}
 
-	log.Info(fmt.Sprintf("retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
+	log.Debug("retrying operation", "maxTime", maxTime, "retryInterval", retryInterval)
 	om.storeTimestampIfMissing(operation.ID)
 	if !om.isTimeoutOccurred(operation.ID, maxTime) {
 		return operation, retryInterval, nil

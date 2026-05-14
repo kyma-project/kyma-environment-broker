@@ -45,7 +45,61 @@ func GetStorageForTests(config Config, options ...Option) (func() error, BrokerS
 		option(storageForTests)
 	}
 
-	return GetTestStorage(storageForTests.config, storageForTests.encrypter, storageForTests.connectionURL)
+	cleanup, s, err := GetTestStorage(storageForTests.config, storageForTests.encrypter, storageForTests.connectionURL)
+	return cleanup, s, err
+}
+
+// GetTestStorageWithConn is like GetStorageForTests but also returns the underlying *dbr.Connection.
+func GetTestStorageWithConn(config Config, options ...Option) (func() error, BrokerStorage, *dbr.Connection, error) {
+	storageForTests := &StorageForTests{
+		config:        config,
+		connectionURL: config.ConnectionURL(),
+		encrypter:     NewEncrypter(config.SecretKey),
+	}
+
+	for _, option := range options {
+		option(storageForTests)
+	}
+
+	return getTestStorageWithConn(storageForTests.config, storageForTests.encrypter, storageForTests.connectionURL)
+}
+
+func getTestStorageWithConn(config Config, encrypter *Encrypter, connectionURL string) (func() error, BrokerStorage, *dbr.Connection, error) {
+	s, connection, err := NewFromConfigAndConnectionURL(config, events.Config{}, encrypter, connectionURL)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("while creating storage: %w", err)
+	}
+	if connection == nil {
+		return nil, nil, nil, fmt.Errorf("connection is nil")
+	}
+	if s == nil {
+		return nil, nil, nil, fmt.Errorf("storage is nil")
+	}
+
+	failOnIncorrectDB(connection, config)
+	failOnNotEmptyDb(connection)
+
+	err = runMigrations(connection, Up)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("while applying migration files: %w", err)
+	}
+
+	cleanup := func() (error error) {
+		defer func() {
+			err = connection.Close()
+			if err != nil {
+				error = fmt.Errorf("failed to close connection: %w", err)
+			}
+		}()
+		failOnIncorrectDB(connection, config)
+		err = runMigrations(connection, Down)
+		if err != nil {
+			return fmt.Errorf("failed to clear DB tables: %w", err)
+		}
+		return
+	}
+
+	return cleanup, s, connection, nil
 }
 
 func GetTestStorage(config Config, encrypter *Encrypter, connectionURL string) (func() error, BrokerStorage, error) {

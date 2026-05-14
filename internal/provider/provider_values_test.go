@@ -145,7 +145,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, "mi.large", values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 
@@ -153,7 +153,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// given
 			planConfig := newFakeInMemoryPlanConfigProvider().
 				withMachineType(broker.AWSPlanName, changedDefaultMachineType, 0).
-				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType, 1)
+				withMachineType(broker.AWSPlanName, "mi.large", 1)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
 				broker.InfrastructureManager{},
@@ -175,7 +175,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 		t.Run("should change default volume size", func(t *testing.T) {
 			// given
 			planConfig := newFakeInMemoryPlanConfigProvider().
-				withMachineType(broker.AWSPlanName, provider.DefaultAWSMachineType).
+				withMachineType(broker.AWSPlanName, "mi.large").
 				withVolumeSize(broker.AWSPlanName, changedDefaultVolumeSizeGb)
 
 			planSpecValProvider := provider.NewPlanSpecificValuesProvider(
@@ -191,7 +191,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, "mi.large", values.DefaultMachineType)
 			assert.Equal(t, changedDefaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 	})
@@ -224,7 +224,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultOldAWSTrialMachineType, values.DefaultMachineType)
+			assert.Equal(t, provider.DefaultAWSFreeTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 
@@ -246,7 +246,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, provider.DefaultSmallerAWSFreeTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 	})
@@ -279,7 +279,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultOldAWSTrialMachineType, values.DefaultMachineType)
+			assert.Equal(t, provider.DefaultAWSFreeTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 
@@ -300,7 +300,7 @@ func TestPlanSpecificValuesProvider(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			assert.Equal(t, awsProviderName, values.ProviderType)
-			assert.Equal(t, provider.DefaultAWSMachineType, values.DefaultMachineType)
+			assert.Equal(t, provider.DefaultSmallerAWSFreeTrialMachineType, values.DefaultMachineType)
 			assert.Equal(t, defaultVolumeSizeGb, values.VolumeSizeGb)
 		})
 	})
