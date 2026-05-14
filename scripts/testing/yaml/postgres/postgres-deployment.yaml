@@ -21,4 +21,14 @@ spec:
               name: postgres-port
           envFrom:
             - configMapRef:
-                name: postgres-config 
+                name: postgres-config
+          volumeMounts:
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: initdb
+          configMap:
+            name: postgres-config
+            items:
+              - key: init-readonly-user.sql
+                path: init-readonly-user.sql

@@ -8,3 +8,6 @@ data:
   POSTGRES_DB: postgresdb
   POSTGRES_USER: postgresadmin
   POSTGRES_PASSWORD: admin12345678901#
+  init-readonly-user.sql: |
+    CREATE USER brokerread1 WITH PASSWORD 'brokerread1read#';
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO brokerread1;
