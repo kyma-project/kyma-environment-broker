@@ -184,8 +184,8 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 		properties.AdditionalVolumeGi = AdditionalVolumeGiProperty(flags.additionalVolumeGiMaxSize)
 		if properties.AdditionalWorkerNodePools != nil {
 			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeGi = AdditionalVolumeGiProperty(flags.additionalVolumeGiMaxSize)
-			properties.AdditionalWorkerNodePools.Items.ControlsOrder = append(
-				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "additionalVolumeGi",
+			properties.AdditionalWorkerNodePools.Items.ControlsOrder = insertAfter(
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "autoScalerMax", "additionalVolumeGi",
 			)
 		}
 	}
@@ -275,4 +275,17 @@ func removeString(slice []string, str string) []string {
 		}
 	}
 	return result
+}
+
+func insertAfter(slice []string, after, value string) []string {
+	for i, v := range slice {
+		if v == after {
+			result := make([]string, 0, len(slice)+1)
+			result = append(result, slice[:i+1]...)
+			result = append(result, value)
+			result = append(result, slice[i+1:]...)
+			return result
+		}
+	}
+	return append(slice, value)
 }
