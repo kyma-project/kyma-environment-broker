@@ -7,7 +7,17 @@ regions, then applies updates to ~40% of them.
 Usage:
     cd utils/
     python seed_analytics.py [--count N] [--skip-updates]
+                             [--provision-workers N]
                              [--param-cutoff PARAM:DAYS_AGO ...]
+
+All provision requests are fired concurrently (default: 50 threads), then all
+Runtime CRs are patched to Ready concurrently. This is significantly faster
+than the sequential approach when seeding hundreds of instances.
+
+For best results, also reduce the KEB retry interval so workers are not idle
+for 10 s between CR state polls:
+
+    APP_STEP_TIMEOUTS_RESOURCE_STATE_RETRY_INTERVAL=500ms
 
 --param-cutoff simulates a parameter that was introduced at a specific point in
 time. Pass one or more PARAM:DAYS_AGO pairs, e.g.:
@@ -29,6 +39,7 @@ import random
 import argparse
 import time
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, os.path.dirname(__file__))
 import keb
@@ -382,6 +393,9 @@ def main():
     parser.add_argument("--seed",  type=int, default=42,   help="Random seed for reproducibility (default: 42)")
     parser.add_argument("--skip-updates", action="store_true", help="Skip the update phase")
     parser.add_argument("--poll-timeout", type=int, default=600, help="Seconds to wait for operations to complete (default: 600)")
+    parser.add_argument("--provision-workers", type=int, default=50,
+                        help="Number of concurrent threads for provision requests and CR patches (default: 50)")
+
     parser.add_argument("--backdate-days", type=int, default=90,
                         help="Total time window in days that backdating will spread instances across (default: 90). "
                              "Used to compute the cutoff fraction for --param-cutoff.")
@@ -390,6 +404,9 @@ def main():
                              "Only instances assigned to dates on or after the cutoff will have the parameter set. "
                              "Can be specified multiple times, e.g. --param-cutoff ingressFiltering:30")
     args = parser.parse_args()
+
+    if args.provision_workers < 1:
+        parser.error("--provision-workers must be >= 1")
 
     # Parse --param-cutoff entries into {param: fraction_of_instances_that_get_it}
     # Instances are provisioned in order 0..count-1; we treat index as a proxy for time.
@@ -415,38 +432,59 @@ def main():
 
     print(f"Seeding {count} instances (random seed={args.seed})...")
 
-    runtimes = []
-
-    print("\n=== Provisioning instances ===")
+    # Build the full list of (plan, region, parameters) upfront so ordering is
+    # deterministic regardless of thread scheduling.
+    instance_specs = []
     for i in range(count):
         plan = weighted_choice(PLAN_WEIGHTS)
         region = weighted_choice(PLAN_REGIONS[plan])
         parameters = build_parameters(plan, rng)
 
-        # Apply param cutoffs: instance i is treated as being provisioned at a
-        # simulated age of (1 - i/count) * backdate_days days ago (i=0 is oldest).
         simulated_age_days = (1.0 - i / max(count - 1, 1)) * args.backdate_days
         for param, cutoff_days in param_cutoffs.items():
             if simulated_age_days <= cutoff_days:
-                # This instance is "after" the cutoff — set the parameter.
                 parameters[param] = True
             else:
-                # Before the cutoff — ensure the parameter is absent.
                 parameters.pop(param, None)
 
-        if (i + 1) % 100 == 0 or i == 0:
-            print(f"  [{i+1}/{count}] plan={plan} region={region}")
+        instance_specs.append((plan, region, parameters))
 
+    print(f"\n=== Provisioning {count} instances concurrently (workers={args.provision_workers}) ===")
+
+    runtimes = [None] * count
+
+    def _provision(idx_spec):
+        idx, (plan, region, parameters) = idx_spec
         runtime = keb.provision(plan=plan, region=region, parameters=parameters)
-        if runtime is None:
-            runtimes.append(None)
-            continue
+        return idx, runtime
 
+    with ThreadPoolExecutor(max_workers=args.provision_workers) as pool:
+        futures = {pool.submit(_provision, (i, spec)): i for i, spec in enumerate(instance_specs)}
+        done = 0
+        for future in as_completed(futures):
+            try:
+                idx, runtime = future.result()
+                runtimes[idx] = runtime
+            except Exception as e:
+                print(f"  WARNING: provision request failed: {e}")
+            done += 1
+            if done % 100 == 0 or done == count:
+                print(f"  provisioned {done}/{count}")
+
+    provisioned_runtimes = [r for r in runtimes if r is not None]
+    print(f"\nProvision requests sent: {len(provisioned_runtimes)}/{count}")
+
+    print(f"\n=== Patching Runtime CRs to Ready concurrently (workers={args.provision_workers}) ===")
+
+    def _patch_ready(runtime):
         runtime.update_runtime_status("Ready")
-        runtimes.append(runtime)
+        return runtime
 
-    provisioned = sum(1 for r in runtimes if r is not None)
-    print(f"\nProvisioned: {provisioned}/{count}")
+    with ThreadPoolExecutor(max_workers=args.provision_workers) as pool:
+        list(pool.map(_patch_ready, provisioned_runtimes))
+
+    provisioned = len(provisioned_runtimes)
+    print(f"Patched: {provisioned}")
 
     poll_until_done(runtimes, "provisioning", timeout=args.poll_timeout)
 

@@ -477,6 +477,8 @@ stepTimeouts:
   checkRuntimeResourceDeletion: 60m
   # Maximum time to wait for a runtime resource to be updated before considering the step as failed.
   checkRuntimeResourceUpdate: 180m
+  # How long to wait between polls when checking Runtime CR state. Reduce for local development.
+  resourceStateRetryInterval: 10s
 
 # Used in local k3s KEB integration tests.
 testConfig:
