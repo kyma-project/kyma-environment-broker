@@ -42,7 +42,7 @@ The Vault Secret Operator (VSO) syncs these into the `keb-analytics-db` Kubernet
 
 ### Local Development
 
-The local postgres container (used with `make install` / k3d) creates the `brokerread1` user automatically via an initdb script mounted from the `postgres-config` ConfigMap. The corresponding `keb-analytics-db` Secret is applied from `scripts/testing/yaml/postgres/keb-analytics-db-secret.yaml`.
+The local postgres container (used with `make install` / k3d) creates the `brokerread1` user automatically using an initdb script mounted from the `postgres-config` ConfigMap. The corresponding `keb-analytics-db` Secret is applied from `scripts/testing/yaml/postgres/keb-analytics-db-secret.yaml`.
 
 The local credentials are:
 
