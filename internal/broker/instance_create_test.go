@@ -3494,7 +3494,7 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	channelResolver := &fixture.FakeChannelResolver{}
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
 		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver, nil)
 	return schemaService
 }
 
@@ -3505,7 +3505,7 @@ func newSchemaServiceWithBrokerConfig(t *testing.T, cfg broker.Config) *broker.S
 	channelResolver := &fixture.FakeChannelResolver{}
 	return broker.NewSchemaService(prov, plans, nil, cfg,
 		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver, nil)
 }
 
 func newProviderSpec(t *testing.T) *configuration.ProviderSpec {
