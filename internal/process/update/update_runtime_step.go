@@ -278,14 +278,14 @@ func (s *UpdateRuntimeStep) applyMaxPodsConfig(operation internal.Operation, run
 	}
 	runtime.Spec.Shoot.Provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 		Kubelet: &gardener.KubeletConfig{
-			MaxPods: &provisioning.MaxPods,
+			MaxPods: &s.config.MaxPods,
 		},
 	}
 	if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
 		for i := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
 			(*runtime.Spec.Shoot.Provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
 				Kubelet: &gardener.KubeletConfig{
-					MaxPods: &provisioning.MaxPods,
+					MaxPods: &s.config.MaxPods,
 				},
 			}
 		}

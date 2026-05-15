@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.30.6` |
+| global.images.kyma_environment_<br>broker.version | - | `1.30.8` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.30.6` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.30.8` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.30.6` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.30.8` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.30.6` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.30.8` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.30.6` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.30.8` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.30.6` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.30.8` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.30.6` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.30.8` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.30.6` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.30.8` |
 | global.images.kyma_environment_<br>analytics.dir | - | None |
-| global.images.kyma_environment_<br>analytics.version | - | `1.30.6` |
+| global.images.kyma_environment_<br>analytics.version | - | `1.30.8` |
 | global.images.kyma_environment_<br>analytics.repository | - | `` |
 | global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -73,9 +73,10 @@
 | analytics.database.<br>hostSecretKey | - | `postgresql-serviceName` |
 | analytics.database.<br>portSecretKey | - | `postgresql-servicePort` |
 | analytics.database.<br>nameSecretKey | - | `postgresql-broker-db-name` |
-| analytics.database.<br>userSecretKey | - | `postgresql-broker-username` |
-| analytics.database.<br>passwordSecretKey | - | `postgresql-broker-password` |
 | analytics.database.<br>sslModeSecretKey | - | `postgresql-sslMode` |
+| analytics.database.<br>credentialsSecretName | - | `keb-analytics-db` |
+| analytics.database.<br>userSecretKey | - | `username` |
+| analytics.database.<br>passwordSecretKey | - | `password` |
 | analytics.<br>serviceAccountName | - | `kcp-kyma-environment-broker` |
 | analytics.host | - | `keb-analytics` |
 | analytics.oidc.<br>issuerURL | - | `https://kymatest.accounts400.ondemand.com` |
@@ -140,7 +141,7 @@
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
-| maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods in all worker node pools is set to 250. | `whitelist:` |
+| maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`. | `whitelist:` |
 | openShellWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use Open Shell. | `whitelist:` |
 | operationBlocklist | Rules for blocking specific operations (provision, update, planUpgrade, deprovision) per plan. Leave empty to disable all blocking. See internal/blocklist/blocklist.go for format. | `` |
 | gvisorWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use the gVisor container runtime. | `whitelist:` |
@@ -164,6 +165,7 @@
 | infrastructureManager.<br>kubernetesVersion | Sets the default Kubernetes version for new clusters provisioned by the broker. | `1.16.9` |
 | infrastructureManager.<br>machineImage | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
+| infrastructureManager.<br>maxPods | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. | `200` |
 | infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `false` |
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
@@ -315,3 +317,9 @@
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-id | - | `keb_analytics_client_id` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-secret | - | `keb_analytics_client_secret` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>cookie-secret | - | `keb_analytics_biscuit_secret` |
+| vsoSecrets.secrets.keb-analytics-db.<br>path | - | `gcp` |
+| vsoSecrets.secrets.keb-analytics-db.<br>secretName | - | `keb-analytics-db` |
+| vsoSecrets.secrets.keb-analytics-db.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': 'keb-analytics'}` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.enabled | - | `True` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.keys.<br>username | - | `managed_gcp_postgresql_brokerread_user` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.keys.<br>password | - | `managed_gcp_postgresql_brokerread_password` |

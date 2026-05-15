@@ -50,31 +50,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.30.6
+      version: 1.30.8
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_expirator_job:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.30.6
+      version: 1.30.8
     kyma_environment_analytics:
       dir:
-      version: "1.30.6"
+      version: "1.30.8"
       repository: ""
       tag: ""
   ingress:
@@ -139,17 +139,15 @@ analytics:
   name: keb-analytics
   port: 8080
   refreshInterval: "1h"
-  # DB credentials for keb-analytics — separate from KEB broker credentials.
-  # In Phase 1 these reference the same Secret as KEB; in Phase 2 swap to a
-  # dedicated read-only user.
   database:
     secretName: "kcp-postgresql"
     hostSecretKey: "postgresql-serviceName"
     portSecretKey: "postgresql-servicePort"
     nameSecretKey: "postgresql-broker-db-name"
-    userSecretKey: "postgresql-broker-username"
-    passwordSecretKey: "postgresql-broker-password"
     sslModeSecretKey: "postgresql-sslMode"
+    credentialsSecretName: "keb-analytics-db"
+    userSecretKey: "username"
+    passwordSecretKey: "password" # gitleaks:allow
   serviceAccountName: "kcp-kyma-environment-broker"
   host: keb-analytics
   oidc:
@@ -302,7 +300,7 @@ freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
 # List of global account IDs that are allowed to use an increased maximum number of Pods.
-# For accounts listed here, the maximum number of Pods in all worker node pools is set to 250.
+# For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`.
 maxPodsWhitelistedGlobalAccountIds: |-
   whitelist:
 
@@ -382,6 +380,8 @@ infrastructureManager:
   machineImage: ""
   # Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImageVersion: ""
+  # Sets the maximum number of Pods per node for global accounts in the max Pods allowlist.
+  maxPods: 200
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
   # If true, provisions trial and freemium clusters using smaller machine types.
@@ -839,4 +839,18 @@ vsoSecrets:
           client-id: {}
           client-secret: {}
           cookie-secret: {}
+    keb-analytics-db:
+      path: gcp
+      secretName: keb-analytics-db
+      restartTargets:
+        - kind: Deployment
+          name: keb-analytics
+      templating:
+        enabled: true
+        keys:
+          username: managed_gcp_postgresql_brokerread_user
+          password: managed_gcp_postgresql_brokerread_password
+        data:
+          username: {}
+          password: {}
 # =================================================
