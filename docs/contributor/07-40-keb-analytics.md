@@ -25,6 +25,32 @@ The authentication flow uses the following configuration:
 
 The Istio `AuthorizationPolicy` restricts Pod ingress to the `istio-system` namespace only, and a network policy limits traffic to the Istio ingress gateway.
 
+## Database Access
+
+`keb-analytics` connects to the KEB PostgreSQL database with a dedicated read-only user (`brokerread1`) that has `SELECT` access only. This user is separate from the KEB broker user and cannot modify any data.
+
+### Cloud Environments (dev/stage/prod)
+
+The read-only PostgreSQL role (`broker-readonly`) and login user (`brokerread1`) are provisioned by the SRE team outside of schema migrations. The credentials are stored in Vault under the `kcp-{env}/gcp` path:
+
+| Vault key | Description |
+|---|---|
+| `managed_gcp_postgresql_brokerread_user` | PostgreSQL username |
+| `managed_gcp_postgresql_brokerread_password` | PostgreSQL password |
+
+The Vault Secret Operator (VSO) syncs these into the `keb-analytics-db` Kubernetes Secret via the `keb-analytics-db` `VaultStaticSecret` CR defined in the KEB Helm chart. The `keb-analytics` deployment reads `APP_DATABASE_USER` and `APP_DATABASE_PASSWORD` from this secret. Connection parameters (host, port, database name, SSL mode) are still sourced from the shared `kcp-postgresql` secret.
+
+### Local Development
+
+The local postgres container (used with `make install` / k3d) creates the `brokerread1` user automatically via an initdb script mounted from the `postgres-config` ConfigMap. The corresponding `keb-analytics-db` Secret is applied from `scripts/testing/yaml/postgres/keb-analytics-db-secret.yaml`.
+
+The local credentials are:
+
+| Field | Value |
+|---|---|
+| Username | `brokerread1` |
+| Password | `brokerread1read#` |
+
 ## Configuration
 
 `keb-analytics` is configured using the following environment variables with the `APP_` prefix:
