@@ -68,7 +68,7 @@ spec:
             - name: APP_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.analytics.database.secretName }}
+                  name: {{ .Values.analytics.database.credentialsSecretName }}
                   key: {{ .Values.analytics.database.passwordSecretKey }}
             - name: APP_DATABASE_PORT
               valueFrom:
@@ -83,7 +83,7 @@ spec:
             - name: APP_DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.analytics.database.secretName }}
+                  name: {{ .Values.analytics.database.credentialsSecretName }}
                   key: {{ .Values.analytics.database.userSecretKey }}
             - name: APP_PORT
               value: "{{ .Values.analytics.port }}"

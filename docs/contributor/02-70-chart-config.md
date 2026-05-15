@@ -73,9 +73,10 @@
 | analytics.database.<br>hostSecretKey | - | `postgresql-serviceName` |
 | analytics.database.<br>portSecretKey | - | `postgresql-servicePort` |
 | analytics.database.<br>nameSecretKey | - | `postgresql-broker-db-name` |
-| analytics.database.<br>userSecretKey | - | `postgresql-broker-username` |
-| analytics.database.<br>passwordSecretKey | - | `postgresql-broker-password` |
 | analytics.database.<br>sslModeSecretKey | - | `postgresql-sslMode` |
+| analytics.database.<br>credentialsSecretName | - | `keb-analytics-db` |
+| analytics.database.<br>userSecretKey | - | `username` |
+| analytics.database.<br>passwordSecretKey | - | `password` |
 | analytics.<br>serviceAccountName | - | `kcp-kyma-environment-broker` |
 | analytics.host | - | `keb-analytics` |
 | analytics.oidc.<br>issuerURL | - | `https://kymatest.accounts400.ondemand.com` |
@@ -316,3 +317,9 @@
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-id | - | `keb_analytics_client_id` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>client-secret | - | `keb_analytics_client_secret` |
 | vsoSecrets.secrets.keb-analytics-oauth2-proxy.<br>templating.keys.<br>cookie-secret | - | `keb_analytics_biscuit_secret` |
+| vsoSecrets.secrets.keb-analytics-db.<br>path | - | `gcp` |
+| vsoSecrets.secrets.keb-analytics-db.<br>secretName | - | `keb-analytics-db` |
+| vsoSecrets.secrets.keb-analytics-db.<br>restartTargets | - | `- {'kind': 'Deployment', 'name': 'keb-analytics'}` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.enabled | - | `True` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.keys.<br>username | - | `managed_gcp_postgresql_brokerread_user` |
+| vsoSecrets.secrets.keb-analytics-db.<br>templating.keys.<br>password | - | `managed_gcp_postgresql_brokerread_password` |
