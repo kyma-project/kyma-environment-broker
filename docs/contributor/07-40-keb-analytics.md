@@ -38,7 +38,7 @@ The read-only PostgreSQL role (`broker-readonly`) and login user (`brokerread1`)
 | **managed_gcp_postgresql_brokerread_user** | PostgreSQL username |
 | **managed_gcp_postgresql_brokerread_password** | PostgreSQL password |
 
-The Vault Secret Operator (VSO) syncs these into the `keb-analytics-db` Kubernetes Secret via the `keb-analytics-db` `VaultStaticSecret` CR defined in the KEB Helm chart. The `keb-analytics` deployment reads `APP_DATABASE_USER` and `APP_DATABASE_PASSWORD` from this secret. Connection parameters (host, port, database name, SSL mode) are still sourced from the shared `kcp-postgresql` secret.
+The Vault Secret Operator (VSO) syncs these into the `keb-analytics-db` Kubernetes Secret using the `keb-analytics-db` `VaultStaticSecret` CR defined in the KEB Helm chart. The `keb-analytics` deployment reads **APP_DATABASE_USER** and **APP_DATABASE_PASSWORD** from this Secret. Connection parameters (host, port, database name, SSL mode) are still sourced from the shared `kcp-postgresql` Secret.
 
 ### Local Development
 
