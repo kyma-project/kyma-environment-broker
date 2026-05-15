@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -14,7 +15,7 @@ import (
 
 func TestMetrics(t *testing.T) {
 	cfg := fixConfig()
-	cfg.StepTimeouts.CheckRuntimeResourceCreate = cfg.StepTimeouts.CheckRuntimeResourceCreate / 1000 // reduce timeout to speed up the test
+	cfg.StepTimeouts.CheckRuntimeResourceCreate = 500 * time.Millisecond
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithMetrics())
 	defer suite.TearDown()
 
