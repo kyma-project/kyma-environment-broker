@@ -50,7 +50,6 @@ type StatsResponse struct {
 	Combined       ParameterStats      `json:"combined"`
 	Distributions  []DistributionStat  `json:"distributions"`
 	Trends         []TrendStat         `json:"trends"`
-	AdoptionTrends []TrendStat         `json:"adoption_trends"`
 	Plans          []string            `json:"plans"`
 	RegionsByPlan  map[string][]string `json:"regions_by_plan"`
 }

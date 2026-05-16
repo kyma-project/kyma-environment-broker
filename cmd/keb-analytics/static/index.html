@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KEB Analytics</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KEB Parameter Usage Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
+          integrity="sha384-b0GXujLkk9eYYSmcSfoyZbfyElGAQnDyY0skCHSG6w3JgTMFnz11ggrTAr7seu9f"
+          crossorigin="anonymous"></script>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     .chart-container { max-width: 800px; margin: 2rem 0; }
@@ -28,6 +31,9 @@
       font-weight: 700;
     }
     .tab-info { color: #555; font-size: 0.88rem; margin: 0.4rem 0 0.8rem; max-width: 800px; }
+    .sub-controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .sub-controls label { font-weight: bold; }
+    .no-data { color: #999; font-style: italic; margin: 1rem 0; }
   </style>
 </head>
 <body>
@@ -58,67 +64,59 @@
   <p id="total"></p>
   <p id="error"></p>
 
-  <div id="tab-bar" style="display:flex;gap:0;border-bottom:2px solid #ccc;margin-bottom:1rem">
+  <div id="tab-bar" style="display:flex;border-bottom:2px solid #ccc;margin-bottom:1rem">
     <button class="tab-btn active" data-tab="combined">Combined</button>
     <button class="tab-btn"        data-tab="provisioning">Provisioning</button>
     <button class="tab-btn"        data-tab="update">Update</button>
     <button class="tab-btn"        data-tab="distribution">Value Distribution</button>
     <button class="tab-btn"        data-tab="trends">Trends</button>
-    <button class="tab-btn"        data-tab="adoption">Adoption %</button>
   </div>
 
   <div id="tab-combined" class="tab-pane">
     <p class="tab-info">An active instance is counted as using a parameter if it was set in its provisioning <em>or</em> in any of its update operations. Each instance is counted at most once per parameter. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="combinedChart"></canvas></div>
+    <p id="combined-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <div id="tab-provisioning" class="tab-pane" style="display:none">
     <p class="tab-info">Each active instance is counted once per parameter if that parameter was set in its provisioning operation. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="provChart"></canvas></div>
+    <p id="provisioning-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <div id="tab-update" class="tab-pane" style="display:none">
     <p class="tab-info">Each succeeded update operation is counted once per parameter if that parameter was set in that update. Percentage is out of all update operations on active instances.</p>
     <p id="update-total"></p>
     <div class="chart-container"><canvas id="updateChart"></canvas></div>
+    <p id="update-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <div id="tab-distribution" class="tab-pane" style="display:none">
     <p class="tab-info">Value breakdown for selected parameters across active instances that provisioned with that parameter set.</p>
-    <div id="dist-controls" style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
-      <label for="distParam" style="font-weight:bold">Parameter:</label>
+    <div id="dist-controls" class="sub-controls">
+      <label for="distParam">Parameter:</label>
       <select id="distParam"></select>
-      <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:normal">
         <input type="checkbox" id="distIncludeNull">
-        <span>not provided/null included</span>
+        <span>Include not provided / null</span>
       </label>
     </div>
     <div class="chart-container"><canvas id="distChart"></canvas></div>
+    <p id="distribution-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <div id="tab-trends" class="tab-pane" style="display:none">
-    <p style="color:#555;font-size:0.88rem;margin:0.4rem 0 0.8rem;max-width:800px">
-      Daily cumulative count of active instances that have the parameter set as of each day.
-      A provisioning or update operation that sets the parameter adds +1; an update that nullifies it subtracts -1.
+    <p class="tab-info">
+      How many active instances had this parameter set on each day.
+      The count goes up when a new instance is created with the parameter, or an existing instance is updated to set it.
+      It goes down when an instance is updated to remove the parameter.
     </p>
-    <div id="trend-controls" style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
-      <label for="trendParam" style="font-weight:bold">Parameter:</label>
+    <div id="trend-controls" class="sub-controls">
+      <label for="trendParam">Parameter:</label>
       <select id="trendParam"></select>
     </div>
     <div class="chart-container"><canvas id="trendChart"></canvas></div>
-  </div>
-
-  <div id="tab-adoption" class="tab-pane" style="display:none">
-    <p class="tab-info">
-      Percentage of already-existing active instances that had the parameter set on each day.
-      Denominator = cumulative count of currently-active instances provisioned by that day.
-      Shows adoption rate among the cohort alive at each point in time.
-    </p>
-    <div id="adoption-controls" style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
-      <label for="adoptionParam" style="font-weight:bold">Parameter:</label>
-      <select id="adoptionParam"></select>
-    </div>
-    <div class="chart-container"><canvas id="adoptionChart"></canvas></div>
+    <p id="trends-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <script>
@@ -175,8 +173,29 @@
       });
     }
 
+    function setNoData(tabName, visible) {
+      const el = document.getElementById(tabName + '-nodata');
+      if (el) el.style.display = visible ? '' : 'none';
+    }
+
+    // Format a YYYY-MM-DD date label as "Jan 05" for chart X-axis ticks.
+    function formatDateLabel(dateStr) {
+      if (!dateStr) return '';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const parts = dateStr.split('-');
+      if (parts.length < 3) return dateStr;
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parts[2];
+      return months[m] + ' ' + d;
+    }
+
     function renderBar(canvasId, stats) {
-      if (!stats || !stats.parameters || stats.parameters.length === 0) return;
+      const tabName = canvasId.replace('Chart', '').replace('prov', 'provisioning');
+      if (!stats || !stats.parameters || stats.parameters.length === 0) {
+        setNoData(tabName, true);
+        return;
+      }
+      setNoData(tabName, false);
       const labels = stats.parameters.map(p => p.parameter + '  (' + p.set_count + ')');
       const pct = stats.parameters.map(p =>
         p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
@@ -188,13 +207,20 @@
           datasets: [{ label: '% instances with parameter set', data: pct,
             backgroundColor: 'rgba(54,162,235,0.6)' }]
         },
-        options: { indexAxis: 'y', scales: { x: { max: 100 }, y: { reverse: true } } }
+        options: { indexAxis: 'y', scales: {
+          x: { max: 100, title: { display: true, text: '% of active instances' } },
+          y: { reverse: true, title: { display: true, text: 'Parameter' } }
+        } }
       });
       charts.push(chart);
     }
 
     function renderUpdateBar(canvasId, stats, totalUpdates) {
-      if (!stats || !stats.parameters || stats.parameters.length === 0) return;
+      if (!stats || !stats.parameters || stats.parameters.length === 0) {
+        setNoData('update', true);
+        return;
+      }
+      setNoData('update', false);
       const labels = stats.parameters.map(p => {
         const pct = p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0;
         return p.parameter + '  (' + p.set_count + ' times / ' + pct + '%)';
@@ -209,44 +235,78 @@
           datasets: [{ label: '% of update operations with parameter set', data: pct,
             backgroundColor: 'rgba(54,162,235,0.6)' }]
         },
-        options: { indexAxis: 'y', scales: { x: { max: 100 }, y: { reverse: true } } }
+        options: { indexAxis: 'y', scales: {
+          x: { max: 100, title: { display: true, text: '% of update operations' } },
+          y: { reverse: true, title: { display: true, text: 'Parameter' } }
+        } }
       });
       charts.push(chart);
     }
 
-    function populateDistParam(distributions) {
+    function populateDistParam(data) {
+      const includeNull = document.getElementById('distIncludeNull').checked;
+      const distributions = data.distributions || [];
       const sel = document.getElementById('distParam');
       const current = sel.value;
       sel.innerHTML = '';
-      (distributions || []).forEach(d => {
+
+      // Build the parameter list: always include distribution params.
+      // When "include null" is checked, also add combined params that have no distribution entry
+      // (i.e. no instance had this parameter set — 100% not provided).
+      const distNames = new Set(distributions.map(d => d.parameter));
+      const params = distributions.map(d => d.parameter);
+      if (includeNull) {
+        (data.combined && data.combined.parameters || []).forEach(p => {
+          if (!distNames.has(p.parameter)) params.push(p.parameter);
+        });
+      }
+
+      params.forEach(name => {
         const opt = document.createElement('option');
-        opt.value = d.parameter;
-        opt.textContent = d.parameter;
-        if (d.parameter === current) opt.selected = true;
+        opt.value = name;
+        opt.textContent = name;
+        if (name === current) opt.selected = true;
         sel.appendChild(opt);
       });
       // Default to first if previous selection no longer exists
-      if (!sel.value && distributions && distributions.length) {
-        sel.value = distributions[0].parameter;
+      if (!sel.value && params.length) {
+        sel.value = params[0];
       }
     }
 
     function renderDistTab(data) {
-      populateDistParam(data.distributions);
+      populateDistParam(data);
       const sel = document.getElementById('distParam');
       const chosen = sel.value;
       const dist = (data.distributions || []).find(d => d.parameter === chosen);
-      if (!dist) return;
+      if (!dist && !document.getElementById('distIncludeNull').checked) {
+        setNoData('distribution', true);
+        return;
+      }
+      if (!chosen) {
+        setNoData('distribution', true);
+        return;
+      }
+      setNoData('distribution', false);
 
       const includeNull = document.getElementById('distIncludeNull').checked;
       const total = data.total_instances;
 
-      const entries = Object.entries(dist.values)
+      let entries = Object.entries(dist ? dist.values : {})
         .sort((a, b) => b[1] - a[1]);
       const setCount = entries.reduce((s, e) => s + e[1], 0);
 
       if (includeNull && total > setCount) {
         entries.push(['not provided/null', total - setCount]);
+      }
+
+      // Cap at top 10; collapse the rest into an "others" bucket.
+      const MAX_BUCKETS = 10;
+      if (entries.length > MAX_BUCKETS) {
+        const top = entries.slice(0, MAX_BUCKETS);
+        const othersCount = entries.slice(MAX_BUCKETS).reduce((s, [, n]) => s + n, 0);
+        top.push(['others (' + (entries.length - MAX_BUCKETS) + ' more values)', othersCount]);
+        entries = top;
       }
 
       const labels = entries.map(([v, n]) => {
@@ -255,7 +315,8 @@
       });
       const vals = entries.map(([, n]) => n);
       const colors = entries.map(([v]) =>
-        v === 'not provided/null' ? 'rgba(180,180,180,0.6)' : 'rgba(255,159,64,0.6)'
+        v.startsWith('others (') || v === 'not provided/null'
+          ? 'rgba(180,180,180,0.6)' : 'rgba(255,159,64,0.6)'
       );
 
       const chart = new Chart(document.getElementById('distChart'), {
@@ -290,10 +351,15 @@
       const sel = document.getElementById('trendParam');
       const chosen = sel.value;
       const trend = (data.trends || []).find(t => t.parameter === chosen);
-      if (!trend || !trend.points || trend.points.length === 0) return;
+      if (!trend || !trend.points || trend.points.length === 0) {
+        setNoData('trends', true);
+        return;
+      }
+      setNoData('trends', false);
 
       const labels = trend.points.map(p => p.date);
       const counts = trend.points.map(p => p.count);
+      const maxCount = counts.length > 0 ? Math.max(...counts) : 1;
       const chart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
@@ -304,85 +370,30 @@
             borderColor: 'rgba(54,162,235,0.9)',
             backgroundColor: 'rgba(54,162,235,0.1)',
             fill: true,
-            tension: 0.2,
-            pointRadius: counts.length > 90 ? 0 : 3
+            tension: 0,
+            pointRadius: counts.length > 30 ? 0 : 3
           }]
         },
         options: {
           scales: {
             x: {
+              min: labels[0],
+              max: labels[labels.length - 1],
+              title: { display: true, text: 'Date' },
               ticks: {
                 maxTicksLimit: 12,
                 maxRotation: 45,
                 callback: function(value, index) {
-                  const date = labels[index];
-                  return date ? date.slice(8, 10) : '';
+                  return formatDateLabel(labels[index]);
                 }
               }
             },
-            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
-          }
-        }
-      });
-      charts.push(chart);
-    }
-
-    function populateAdoptionParam(trends) {
-      const sel = document.getElementById('adoptionParam');
-      const current = sel.value;
-      sel.innerHTML = '';
-      (trends || []).forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.parameter;
-        opt.textContent = t.parameter;
-        if (t.parameter === current) opt.selected = true;
-        sel.appendChild(opt);
-      });
-      if (!sel.value && trends && trends.length) {
-        sel.value = trends[0].parameter;
-      }
-    }
-
-    function renderAdoptionTab(data) {
-      populateAdoptionParam(data.adoption_trends);
-      const sel = document.getElementById('adoptionParam');
-      const chosen = sel.value;
-      const trend = (data.adoption_trends || []).find(t => t.parameter === chosen);
-      if (!trend || !trend.points || trend.points.length === 0) return;
-
-      // Only emit points where total > 0 to avoid division by zero.
-      const points = trend.points.filter(p => p.total > 0);
-      if (points.length === 0) return;
-
-      const labels = points.map(p => p.date);
-      const pct = points.map(p => ((p.count / p.total) * 100).toFixed(1));
-      const chart = new Chart(document.getElementById('adoptionChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: chosen + ' adoption %',
-            data: pct,
-            borderColor: 'rgba(75,192,100,0.9)',
-            backgroundColor: 'rgba(75,192,100,0.1)',
-            fill: true,
-            tension: 0.2,
-            pointRadius: points.length > 90 ? 0 : 3
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              ticks: {
-                maxTicksLimit: 12,
-                maxRotation: 45,
-                callback: function(value, index) {
-                  const date = labels[index];
-                  return date ? date.slice(8, 10) : '';
-                }
-              }
-            },
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+            y: {
+              beginAtZero: true,
+              max: Math.max(maxCount, 1),
+              title: { display: true, text: 'Number of active instances' },
+              ticks: { stepSize: 1, precision: 0 }
+            }
           }
         }
       });
@@ -394,7 +405,10 @@
       document.getElementById('error').textContent = '';
       document.getElementById('update-total').textContent = '';
       document.getElementById('total').textContent =
-        'Total active instances: ' + data.total_instances;
+        'Total active instances: ' + data.total_instances + ' (filtered by current period / plan / region selection)';
+
+      // Hide all no-data messages before re-rendering.
+      ['combined','provisioning','update','distribution','trends'].forEach(t => setNoData(t, false));
 
       if (activeTab === 'combined') {
         renderBar('combinedChart', data.combined);
@@ -408,8 +422,6 @@
         renderDistTab(data);
       } else if (activeTab === 'trends') {
         renderTrendTab(data);
-      } else if (activeTab === 'adoption') {
-        renderAdoptionTab(data);
       }
     }
 
@@ -446,13 +458,6 @@
       if (currentData) {
         destroyCharts();
         renderTrendTab(currentData);
-      }
-    });
-
-    document.getElementById('adoptionParam').addEventListener('change', () => {
-      if (currentData) {
-        destroyCharts();
-        renderAdoptionTab(currentData);
       }
     });
 
