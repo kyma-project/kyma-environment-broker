@@ -184,7 +184,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	region, found := middleware.RegionFromContext(ctx)
 	if !found {
 		err := fmt.Errorf("%s", "No region specified in request.")
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusPermanentRedirect, "provisioning")
 	}
 	platformProvider, found := middleware.ProviderFromContext(ctx)
 	if !found {
