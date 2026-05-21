@@ -57,7 +57,7 @@ spec:
               {{- end }}
             {{- end}}
           containers:
-            - name: cleaner
+            - name: subaccount-cleanup-job
               image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
