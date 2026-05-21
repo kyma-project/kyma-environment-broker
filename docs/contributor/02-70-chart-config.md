@@ -256,11 +256,8 @@
 | serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |
 | serviceBindingCleanup.<br>schedule | - | `0 2,14 * * *` |
 | subaccountCleanup.<br>enabled | - | `true` |
-| subaccountCleanup.<br>nameV1 | - | `kcp-subaccount-cleaner-v1.0` |
-| subaccountCleanup.<br>nameV2 | - | `kcp-subaccount-cleaner-v2.0` |
 | subaccountCleanup.<br>schedule | - | `0 1 * * *` |
-| subaccountCleanup.<br>clientV1VersionName | Client version. | `v1.0` |
-| subaccountCleanup.<br>clientV2VersionName | Client version. | `v2.0` |
+| subaccountCleanup.<br>clientVersion | Specifies the Events Service client version. | `v1` |
 | subaccountSync.<br>accountSyncInterval | Interval between full account synchronization runs. | `24h` |
 | subaccountSync.<br>alwaysSubaccountFromDatabase | If true, fetches subaccountID from the database only when the subaccount is empty. | `False` |
 | subaccountSync.cisRateLimits.<br>accounts.<br>maxRequestsPerInterval | Maximum number of requests per interval to the CIS Accounts API. | `5` |
