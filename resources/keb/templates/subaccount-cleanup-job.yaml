@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: "{{- .Values.subaccountCleanup.nameV2 -}}"
+  name: subaccount-cleanup-job
 spec:
   schedule: "{{ .Values.subaccountCleanup.schedule }}"
   failedJobsHistoryLimit: 5
@@ -11,13 +11,13 @@ spec:
   jobTemplate:
     metadata:
       labels:
-        cronjob: subaccount-cleaner-v2.0
+        cronjob: subaccount-cleanup-job
     spec:
       backoffLimit: {{ .Values.cis.v2.jobRetries }}
       template:
         metadata:
           labels:
-            cronjob: subaccount-cleaner-v2.0
+            cronjob: subaccount-cleanup-job
         spec:
           serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
           restartPolicy: OnFailure
@@ -84,7 +84,7 @@ spec:
                 - name: APP_CIS_REQUEST_INTERVAL
                   value: {{ .Values.cis.v2.requestInterval | quote }}
                 - name: APP_CLIENT_VERSION
-                  value: "{{ .Values.subaccountCleanup.clientV2VersionName }}"
+                  value: "{{ .Values.subaccountCleanup.clientVersion }}"
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:

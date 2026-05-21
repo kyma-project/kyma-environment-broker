@@ -677,13 +677,8 @@ serviceBindingCleanup:
 # =================================================
 subaccountCleanup:
   enabled: "true"
-  nameV1: "kcp-subaccount-cleaner-v1.0"
-  nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
-  # Client version.
-  clientV1VersionName: "v1.0"
-  # Client version.
-  clientV2VersionName: "v2.0"
+  clientVersion: "v1"
 # =================================================
 
 
