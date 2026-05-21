@@ -69,7 +69,7 @@ jobs:
          name: kyma-environment-subaccount-cleanup-job
          dockerfile: Dockerfile.job
          context: .
-         build-args: BIN=subaccountcleanup
+         build-args: BIN=accountcleanup
 
    subaccount-sync-image:
       needs: restricted-gate
