@@ -53,7 +53,7 @@ Use the following environment variables to configure the application:
 | **APP_CIS_MAX_REQUEST_&#x200b;RETRIES** | <code>3</code> | The maximum number of request retries to the CIS v2 API in case of errors. |
 | **APP_CIS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | The minimum interval between requests to the CIS v2 API in case of errors. |
 | **APP_CIS_REQUEST_&#x200b;INTERVAL** | <code>200ms</code> | The interval between requests to the CIS v2 API. |
-| **APP_CLIENT_VERSION** | <code>v1</code> | Specifies the Events Service client version. |
+| **APP_EVENTS_SERVICE_&#x200b;VERSION** | <code>v1</code> | Specifies the Events Service version. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |
