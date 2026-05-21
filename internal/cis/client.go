@@ -120,6 +120,8 @@ func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisRespon
 	switch {
 	case response.StatusCode == http.StatusTooManyRequests:
 		return CisResponse{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
+	case response.StatusCode >= 500:
+		return CisResponse{}, kebError.NewTemporaryError("server error: %s", c.handleWrongStatusCode(response))
 	case response.StatusCode != http.StatusOK:
 		return CisResponse{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}
