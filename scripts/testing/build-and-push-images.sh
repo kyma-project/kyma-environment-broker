@@ -21,7 +21,7 @@ declare -a IMAGES=(
     "kyma-environment-deprovision-retrigger-job:Dockerfile.job:BIN=deprovisionretrigger"
     "kyma-environment-expirator-job:Dockerfile.job:BIN=expirator"
     "kyma-environment-runtime-reconciler:Dockerfile.runtimereconciler:BIN=runtime-reconciler"
-    "kyma-environment-subaccount-cleanup-job:Dockerfile.job:BIN=accountcleanup"
+    "kyma-environment-subaccount-cleanup-job:Dockerfile.job:BIN=subaccountcleanup"
     "kyma-environment-subaccount-sync:Dockerfile.subaccountsync:BIN=subaccount-sync"
     "kyma-environment-broker-schema-migrator:Dockerfile.schemamigrator:"
     "kyma-environment-service-binding-cleanup-job:Dockerfile.job:BIN=servicebindingcleanup"
