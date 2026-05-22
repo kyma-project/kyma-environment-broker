@@ -1,6 +1,6 @@
 module github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/google/uuid v1.6.0
