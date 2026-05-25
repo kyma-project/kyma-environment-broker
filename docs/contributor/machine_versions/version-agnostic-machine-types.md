@@ -175,7 +175,7 @@ GCP version-agnostic types omit the generation number from the family prefix. Th
 | `cd-highcpu-{size}`      | Compute-optimized             | `c2d-highcpu-{size}`               |
 | `g-standard-{size}`      | GPU                           | `g2-standard-{size}`               |
 | `m-ultramem-{size}`      | Memory-optimized              | `m3-ultramem-{size}`               |
-| `z-highmem-{size}`       | Storage-optimized (local SSD) | `z3-highmem-{size}-standardlssd`   |
+| `z-highmem-{size}-standardlssd`       | Storage-optimized (local SSD) | `z3-highmem-{size}-standardlssd`   |
 
 Configuration:
 
@@ -188,7 +188,7 @@ providersConfiguration:
       cd-highcpu-2: cd-highcpu-2 (2vCPU, 4GB RAM)
       g-standard-4: g-standard-4 (1GPU, 4vCPU, 16GB RAM)*
       m-ultramem-32: m-ultramem-32 (32vCPU, 976GB RAM)
-      z-highmem-14: z-highmem-14 (14vCPU, 112GB RAM)
+      z-highmem-14-standardlssd: z-highmem-14-standardlssd (14vCPU, 112GB RAM)
 
       # Deprecated machines with explicit version
       n2-standard-2: n2-standard-2 (deprecated, use n-standard-2)
@@ -200,7 +200,7 @@ providersConfiguration:
       cd-highcpu-{size}: c2d-highcpu-{size}
       g-standard-{size}: g2-standard-{size}
       m-ultramem-{size}: m3-ultramem-{size}
-      z-highmem-{size}: z3-highmem-{size}-standardlssd
+      z-highmem-{size}-standardlssd: z3-highmem-{size}-standardlssd
 ```
 
 Machine version resolution:
@@ -211,7 +211,7 @@ Machine version resolution:
 | `cd-highcpu-2`  | `cd-highcpu-{size}` |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
 | `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
 | `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
-| `z-highmem-14`  | `z-highmem-{size}`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
+| `z-highmem-14-standardlssd`  | `z-highmem-{size}-standardlssd`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
 | `n2-standard-2` |         `-`         |               `-`                |       `n2-standard-2`        |
 | `c2d-highcpu-2` |         `-`         |               `-`                |       `c2d-highcpu-2`        |
 | `g2-standard-4` |         `-`         |               `-`                |       `g2-standard-4`        |
