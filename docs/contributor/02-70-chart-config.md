@@ -257,7 +257,7 @@
 | serviceBindingCleanup.<br>schedule | - | `0 2,14 * * *` |
 | subaccountCleanup.<br>enabled | - | `true` |
 | subaccountCleanup.<br>schedule | - | `0 1 * * *` |
-| subaccountCleanup.<br>eventsServiceVersion | Specifies the Events Service version. | `v1` |
+| subaccountCleanup.<br>eventsServiceVersion | Specifies the Events Service version. | `v2` |
 | subaccountSync.<br>accountSyncInterval | Interval between full account synchronization runs. | `24h` |
 | subaccountSync.<br>alwaysSubaccountFromDatabase | If true, fetches subaccountID from the database only when the subaccount is empty. | `False` |
 | subaccountSync.cisRateLimits.<br>accounts.<br>maxRequestsPerInterval | Maximum number of requests per interval to the CIS Accounts API. | `5` |
