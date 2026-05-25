@@ -16,7 +16,7 @@ import (
 )
 
 type Config struct {
-	EventsServiceVersion string `envconfig:"default=v1"`
+	EventsServiceVersion string `envconfig:"default=v2"`
 	CIS                  cis.Config
 	Database             storage.Config
 	Broker               broker.ClientConfig

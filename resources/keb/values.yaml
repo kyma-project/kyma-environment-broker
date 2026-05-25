@@ -679,7 +679,7 @@ subaccountCleanup:
   enabled: "true"
   schedule: "0 1 * * *"
   # Specifies the Events Service version.
-  eventsServiceVersion: "v1"
+  eventsServiceVersion: "v2"
 # =================================================
 
 
