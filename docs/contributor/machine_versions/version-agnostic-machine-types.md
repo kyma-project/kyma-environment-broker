@@ -49,7 +49,7 @@ Each supported provider uses a pattern-based naming scheme. The **machinesVersio
 
 ### Amazon Web Services
 
-AWS version-agnostic types use short two-letter family prefixes without an explicit generation number. The `{size}` placeholder matches any standard size suffix such as `large`, `xlarge`, or `16xlarge`.
+AWS version-agnostic types use short alphabetic family prefixes without an explicit generation number. The `{size}` placeholder matches any standard size suffix such as `large`, `xlarge`, or `16xlarge`.
 
 | Version-Agnostic Prefix | Purpose           | Resolves To |
 |:-----------------------:|:-----------------:|:-----------:|
