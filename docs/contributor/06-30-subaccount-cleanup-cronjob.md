@@ -22,7 +22,7 @@ The Subaccount Cleanup workflow is divided into several steps:
 
    - **CIS v2** (default):
      1. The CIS client calls `/events/v2/events/central` requesting `Subaccount_Deletion` events for the `Subaccount` entity type, covering the last 30 days.
-     2. It fetches subsequent pages by following the `nextCursor` value in each response, until no cursor is returned.
+     2. It fetches subsequent pages by following the **nextCursor** value in each response, until no cursor is returned.
      3. A subaccount ID is extracted from each event and collected into an array.
      4. Once complete, the client logs the number of subaccounts fetched and the time range of events.
 
