@@ -3,14 +3,14 @@
 # Subaccount Cleanup CronJob
 
 Each SAP BTP, Kyma runtime instance in the Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
-Subaccount Cleanup is an application that periodically calls the CIS service and reports **SUBACCOUNT_DELETE** events.
+Subaccount Cleanup is an application that periodically calls the CIS service and reports **Subaccount_Deletion** events.
 Based on these events, Subaccount Cleanup triggers the deprovisioning action on Kyma runtime instances belonging to the given subaccount.
 
 ## Details
 
 The Subaccount Cleanup workflow is divided into several steps:
 
-1. Fetch **SUBACCOUNT_DELETE** events from the CIS service.
+1. Fetch **Subaccount_Deletion** events from the CIS service.
 
    The behavior depends on the configured Events Service version (**APP_EVENTS_SERVICE_VERSION**):
 
@@ -21,7 +21,7 @@ The Subaccount Cleanup workflow is divided into several steps:
      4. Once complete, the client logs the number of subaccounts fetched and the time range of events.
 
    - **CIS v2** (default):
-     1. The CIS client calls `/events/v2/events/central` requesting `Subaccount_Deletion` events for the `Subaccount` entity type, covering the last 30 days.
+     1. The CIS client calls `/events/v2/events/central` requesting **Subaccount_Deletion** events for the `Subaccount` entity type, covering the last 30 days.
      2. It fetches subsequent pages by following the **nextCursor** value in each response, until no cursor is returned.
      3. A subaccount ID is extracted from each event and collected into an array.
      4. Once complete, the client logs the number of subaccounts fetched and the time range of events.
@@ -41,8 +41,8 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 ## Prerequisites
 
-* CIS service to receive all **SUBACCOUNT_DELETE** events
-* The KEB database to get the instance ID for each subaccount ID from the **SUBACCOUNT_DELETE** event
+* CIS service to receive all **Subaccount_Deletion** events
+* The KEB database to get the instance ID for each subaccount ID from the **Subaccount_Deletion** event
 * KEB to trigger Kyma runtime instance deprovisioning
 
 ## Configuration
