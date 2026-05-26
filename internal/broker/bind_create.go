@@ -96,8 +96,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
 	b.log.Info(fmt.Sprintf("Bind instanceID: %s", instanceID))
-	b.log.Info(fmt.Sprintf("Bind parameters: %s", string(details.RawParameters)))
-	b.log.Info(fmt.Sprintf("Bind context: %s", string(details.RawContext)))
+	b.log.Info(fmt.Sprintf("Bind context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext))))
 	b.log.Info(fmt.Sprintf("Bind asyncAllowed: %v", asyncAllowed))
 
 	if !b.config.Enabled {
