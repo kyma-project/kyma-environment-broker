@@ -12,7 +12,7 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 1. Fetch **SUBACCOUNT_DELETE** events from the CIS service.
 
-   The behavior depends on the configured Events Service version (`APP_EVENTS_SERVICE_VERSION`):
+   The behavior depends on the configured Events Service version (**APP_EVENTS_SERVICE_VERSION**):
 
    - **CIS v1** (legacy):
      1. The CIS client calls the CIS service and receives a paginated list of events.
