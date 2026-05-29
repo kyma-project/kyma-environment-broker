@@ -125,7 +125,7 @@ For more information, see the following documents:
  * [Regions Supporting Machine Types](03-50-regions-supporting-machine.md)
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-83-plan-updates.md)
- * [Dual-Stack Configuration](03-85-dual-stack-configuration.md)
+ * [Dual-Stack Configuration](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-85-dual-stack-configuration.md)
 
 ## Bindings
 
