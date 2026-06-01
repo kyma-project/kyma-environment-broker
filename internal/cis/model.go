@@ -13,17 +13,7 @@ type CisResponse struct {
 	Events     []Event `json:"events"`
 }
 
-type EventDataVer1 struct {
-	SubAccount string `json:"subaccountGuid"`
-}
-
-type EventVer1 struct {
-	Type string        `json:"type"`
-	Data EventDataVer1 `json:"eventData"`
-}
-
-type CisResponseVer1 struct {
-	Total      int         `json:"totalResults"`
-	TotalPages int         `json:"totalPages"`
-	Events     []EventVer1 `json:"events"`
+type CisResponseV2 struct {
+	NextCursor string  `json:"nextCursor"`
+	Events     []Event `json:"events"`
 }

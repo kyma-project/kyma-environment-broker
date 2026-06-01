@@ -121,7 +121,6 @@ func main() {
 			Combined:       combined,
 			Distributions:  analytics.BuildDistributions(provParams),
 			Trends:         trends,
-			AdoptionTrends: trends,
 			Plans:          plans,
 			RegionsByPlan:  regionsByPlan,
 		}
@@ -254,7 +253,6 @@ func buildFilteredStats(
 		Combined:       combined,
 		Distributions:  analytics.BuildDistributions(filtered),
 		Trends:         trends,
-		AdoptionTrends: trends,
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
 	}

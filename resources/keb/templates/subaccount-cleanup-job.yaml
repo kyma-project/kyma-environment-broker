@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: "{{- .Values.subaccountCleanup.nameV2 -}}"
+  name: subaccount-cleanup-job
 spec:
   schedule: "{{ .Values.subaccountCleanup.schedule }}"
   failedJobsHistoryLimit: 5
@@ -11,13 +11,13 @@ spec:
   jobTemplate:
     metadata:
       labels:
-        cronjob: subaccount-cleaner-v2.0
+        cronjob: subaccount-cleanup-job
     spec:
       backoffLimit: {{ .Values.cis.v2.jobRetries }}
       template:
         metadata:
           labels:
-            cronjob: subaccount-cleaner-v2.0
+            cronjob: subaccount-cleanup-job
         spec:
           serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
           restartPolicy: OnFailure
@@ -57,7 +57,7 @@ spec:
               {{- end }}
             {{- end}}
           containers:
-            - name: cleaner
+            - name: subaccount-cleanup-job
               image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
@@ -83,8 +83,8 @@ spec:
                   value: {{ .Values.cis.v2.rateLimitingInterval | quote }}
                 - name: APP_CIS_REQUEST_INTERVAL
                   value: {{ .Values.cis.v2.requestInterval | quote }}
-                - name: APP_CLIENT_VERSION
-                  value: "{{ .Values.subaccountCleanup.clientV2VersionName }}"
+                - name: APP_EVENTS_SERVICE_VERSION
+                  value: "{{ .Values.subaccountCleanup.eventsServiceVersion }}"
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
