@@ -144,7 +144,6 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	logger := b.log.With("instanceID", instanceID)
 	logger.Info(fmt.Sprintf("Updating instanceID: %s", instanceID))
 	logger.Info(fmt.Sprintf("Updating asyncAllowed: %v", asyncAllowed))
-	logger.Info(fmt.Sprintf("Parameters: '%s'", string(details.RawParameters)))
 	logger.Info(fmt.Sprintf("Plan ID: '%s'", details.PlanID))
 
 	response, err := b.update(ctx, instanceID, details, asyncAllowed)

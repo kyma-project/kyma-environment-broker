@@ -773,9 +773,17 @@ A Kyma cluster was provisioned with machine type `m6i.large`, which was later re
   
   ![update-instance-view-1.png](assets/update-instance-view-1.png)
 
-- Switching JSON ↔ Form View
+- Switching to JSON view
 
-  The field is automatically set to the first available value from the schema.
+  The `machineType` field retains the original value (`m6i.large`), but the update cannot be submitted due to a validation error.
+
+  ![update-instance-json-view.png](assets/update-instance-json-view.png)
+
+  ![update-instance-json-error-view.png](assets/update-instance-json-error-view.png)
+
+- Switching back to Form view
+
+  The field is automatically reset to the first available value from the schema.
   
   ![update-instance-view-2.png](assets/update-instance-view-2.png)
 

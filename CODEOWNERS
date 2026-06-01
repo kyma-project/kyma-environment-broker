@@ -4,5 +4,6 @@
 # Owners of all .md files in the repository
 *.md @kyma-project/technical-writers
 
-# CLAUDE.md is also reviewed by gophers
+# CLAUDE.md and Claude Code skills are also reviewed by gophers
 CLAUDE.md @kyma-project/technical-writers @kyma-project/gopher
+/.claude/skills/ @kyma-project/technical-writers @kyma-project/gopher

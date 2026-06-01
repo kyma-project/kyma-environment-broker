@@ -40,7 +40,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -158,9 +157,9 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	ot := NewTestingObjectTracker(sch)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources()...).
 		WithObjectTracker(ot).Build()
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	log := slog.New(broker.NewStrippingHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelWarn,
-	}))
+	}), "instance-details"))
 
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, log),
@@ -294,9 +293,9 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	ts.httpServer = httptest.NewServer(ts.router)
 
 	if o.withMetrics {
-		metricsLog := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		metricsLog := slog.New(broker.NewStrippingHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
-		}))
+		}), "instance-details"))
 		metricsCtx, cancel := context.WithCancel(context.Background())
 		ts.cancelMetrics = cancel
 		ts.metrics = metrics.Register(metricsCtx, ts.eventBroker, ts.db, cfg.Metrics, gardenerClientWithNamespace, metricsLog)
@@ -520,7 +519,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
+		log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
 		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)
