@@ -225,8 +225,18 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	HAZones       *Type          `json:"haZones,omitempty"`
 	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
 	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
+	Labels        *KeyValueType  `json:"labels,omitempty"`
+	Annotations   *KeyValueType  `json:"annotations,omitempty"`
 	Taints        *TaintsType    `json:"taints,omitempty"`
 	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
+}
+
+type KeyValueType struct {
+	Type              string                 `json:"type"`
+	Description       string                 `json:"description,omitempty"`
+	ControlType       string                 `json:"_controlType,omitempty"`
+	PatternProperties map[string]interface{} `json:"patternProperties,omitempty"`
+	PropertyNames     map[string]interface{} `json:"propertyNames,omitempty"`
 }
 
 type TaintsType struct {
@@ -826,7 +836,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			UniqueItems: true,
 			Description: "Specifies the list of additional worker node pools."},
 		Items: AdditionalWorkerNodePoolsItems{
-			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "taints"},
+			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax", "labels", "annotations", "taints"},
 			Required:      []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",
@@ -866,7 +876,9 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					Default:     autoscalerMaxDefaultValue,
 					Description: "Specifies the maximum number of virtual machines to create.",
 				},
-				Taints: NewTaintsSchema(rejectUnsupportedParameters),
+				Taints:      NewTaintsSchema(rejectUnsupportedParameters),
+				Labels:      NewLabelsSchema(),
+				Annotations: NewAnnotationsSchema(),
 			},
 		},
 	}
@@ -915,6 +927,30 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 		t.Items.Type.AdditionalProperties = false
 	}
 	return t
+}
+
+func NewLabelsSchema() *KeyValueType {
+	return &KeyValueType{
+		Type:        "object",
+		Description: "Define labels",
+		ControlType: "keyvalue",
+		PatternProperties: map[string]interface{}{
+			".*": map[string]interface{}{"type": "string"},
+		},
+		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+	}
+}
+
+func NewAnnotationsSchema() *KeyValueType {
+	return &KeyValueType{
+		Type:        "object",
+		Description: "Define annotations",
+		ControlType: "keyvalue",
+		PatternProperties: map[string]interface{}{
+			".*": map[string]interface{}{"type": "string"},
+		},
+		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+	}
 }
 
 func GvisorProperty() *GvisorType {
