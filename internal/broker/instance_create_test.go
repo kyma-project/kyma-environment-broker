@@ -3097,7 +3097,7 @@ func TestDiscoveryZones(t *testing.T) {
 				WithValuesProvider(fixValueProvider(t)).
 				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
 				WithRulesService(rulesService).
-				WithGardenerClient(fixture.CreateGardenerClient()).
+				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
 				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError)).
 				Build()
 
