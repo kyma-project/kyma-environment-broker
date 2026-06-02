@@ -571,7 +571,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	awsClient, err := newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
