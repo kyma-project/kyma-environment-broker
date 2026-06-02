@@ -250,8 +250,6 @@ spec:
               value: "{{ .Values.hap.multiHyperscalerAccount.minBindingsForGuard }}"
             - name: APP_HAP_RULE_FILE_PATH
               value: {{ .Values.configPaths.hapRule }}
-            - name: APP_HOLD_HAP_STEPS
-              value: "{{ .Values.holdHAPSteps }}"
             - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
@@ -342,8 +340,6 @@ spec:
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
-            - name: APP_SUBSCRIPTION_GARDENER_RESOURCE
-              value: "{{ .Values.subscriptionGardenerResource }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: {{ .Values.configPaths.trialRegionMapping }}
             - name: APP_UPDATE_MAX_STEP_PROCESSING_TIME
