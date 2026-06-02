@@ -362,7 +362,7 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if params.AdditionalVolumeGi != nil {
-		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))
 		if !b.config.AdditionalVolumeGIPlans.Contains(planName) {
 			err := fmt.Errorf("additionalVolumeGi is not available for plan %s", planName)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
@@ -854,7 +854,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 
 	if params.AdditionalVolumeGi != nil {
 		instance.Parameters.Parameters.AdditionalVolumeGi = params.AdditionalVolumeGi
-		updateStorage = append(updateStorage, "Additional Volume GiB")
+		updateStorage = append(updateStorage, "Additional Volume Gi")
 	}
 
 	if params.Gvisor != nil {

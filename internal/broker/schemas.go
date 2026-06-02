@@ -392,11 +392,11 @@ func (s *SchemaService) machineDisplayNames(cp pkg.CloudProvider, machines []str
 		if volGb, ok := providerSizes[resolved]; ok {
 			switch {
 			case strings.HasSuffix(displayName, ")*"):
-				enriched[machineType] = fmt.Sprintf("%s, %dGB volume)*", strings.TrimSuffix(displayName, ")*"), volGb)
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)*", strings.TrimSuffix(displayName, ")*"), volGb)
 			case strings.HasSuffix(displayName, ")"):
-				enriched[machineType] = fmt.Sprintf("%s, %dGB volume)", strings.TrimSuffix(displayName, ")"), volGb)
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)", strings.TrimSuffix(displayName, ")"), volGb)
 			default:
-				enriched[machineType] = fmt.Sprintf("%s, %dGB volume", displayName, volGb)
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume", displayName, volGb)
 			}
 		} else {
 			enriched[machineType] = displayName
