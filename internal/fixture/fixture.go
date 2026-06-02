@@ -310,25 +310,6 @@ func createSecret(name, namespace string) *unstructured.Unstructured {
 	return u
 }
 
-func createSecretBinding(name, namespace, secretName string, labels map[string]string) *unstructured.Unstructured {
-	u := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": namespace,
-			},
-			"secretRef": map[string]interface{}{
-				"name":      secretName,
-				"namespace": namespace,
-			},
-		},
-	}
-	u.SetLabels(labels)
-	u.SetGroupVersionKind(gardener.SecretBindingGVK)
-
-	return u
-}
-
 func createCredentialsBinding(name, namespace, secretName string, labels map[string]string) *unstructured.Unstructured {
 	u := &unstructured.Unstructured{
 		Object: map[string]interface{}{

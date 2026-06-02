@@ -2,9 +2,10 @@ package deprovisioning
 
 import (
 	"context"
+	"testing"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 

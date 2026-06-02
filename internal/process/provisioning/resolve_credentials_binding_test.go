@@ -2,13 +2,14 @@ package provisioning
 
 import (
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/multiaccount"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"

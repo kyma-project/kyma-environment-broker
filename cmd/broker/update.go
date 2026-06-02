@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -14,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
-	"log/slog"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
