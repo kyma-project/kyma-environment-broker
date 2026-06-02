@@ -34,7 +34,7 @@ var _ process.Step = &FreeCredentialsBindingStep{}
 
 func NewFreeCredentialsBindingStep(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string) *FreeCredentialsBindingStep {
 	return &FreeCredentialsBindingStep{
-		operationManager: process.NewOperationManager(os, freeSubscriptionStepName, kebErr.KEBDependency),
+		operationManager: process.NewOperationManager(os, freeCredentialsBindingStepName, kebErr.KEBDependency),
 		instanceStorage:  is,
 		operationStorage: os,
 		gardenerClient:   gardenerClient,
