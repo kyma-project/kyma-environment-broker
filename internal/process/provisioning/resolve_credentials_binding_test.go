@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"log/slog"
 	"os"
 	"strings"
@@ -1181,4 +1183,24 @@ func TestMultiAccountSupport(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, updatedInstance.SubscriptionSecretName)
 	})
+}
+
+func createRulesService(t *testing.T) *rules.RulesService {
+	// TODO could be simpler if we create service form slice not file
+	content := `rule:
+                      - aws(PR=cf-eu11) -> EU
+                      - aws(PR=cf-ap11)
+                      - azure(PR=cf-ch20) -> EU
+                      - azure(PR=cf-ap21)
+                      - gcp(PR=cf-eu30) -> EU,S
+                      - gcp(PR=cf-us30)
+                      - trial -> S`
+	tmpfile, err := rules.CreateTempFile(content)
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(tmpfile) }()
+
+	rs, err := rules.NewRulesServiceFromFile(tmpfile, sets.New(broker.AvailablePlans.GetAllPlanNamesAsStrings()...), sets.New("aws", "azure", "gcp", "trial"))
+	require.NoError(t, err)
+
+	return rs
 }
