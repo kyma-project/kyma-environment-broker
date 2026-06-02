@@ -572,7 +572,7 @@ func TestSchemaService_MachineTypeDisplayNamesEnrichedWithDiskSize(t *testing.T)
 
 		name, ok := enumDisplayName["m6i.large"].(string)
 		require.True(t, ok, "expected 'm6i.large' in enumDisplayName")
-		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM, 100GB volume)", name)
+		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM, 100Gi volume)", name)
 	})
 
 	t.Run("gpu machine type with trailing asterisk has disk size inside parentheses", func(t *testing.T) {
@@ -595,7 +595,7 @@ func TestSchemaService_MachineTypeDisplayNamesEnrichedWithDiskSize(t *testing.T)
 
 		name, ok := enumDisplayName["g4dn.xlarge"].(string)
 		require.True(t, ok, "expected 'g4dn.xlarge' in enumDisplayName")
-		assert.Equal(t, "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM, 125GB volume)*", name)
+		assert.Equal(t, "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM, 125Gi volume)*", name)
 	})
 
 	t.Run("gcp regular machine type display name includes disk size", func(t *testing.T) {
@@ -612,7 +612,7 @@ func TestSchemaService_MachineTypeDisplayNamesEnrichedWithDiskSize(t *testing.T)
 
 		name, ok := enumDisplayName["n2-standard-2"].(string)
 		require.True(t, ok, "expected 'n2-standard-2' in enumDisplayName")
-		assert.Equal(t, "n2-standard-2 (2vCPU, 8GB RAM, 200GB volume)", name)
+		assert.Equal(t, "n2-standard-2 (2vCPU, 8GB RAM, 200Gi volume)", name)
 	})
 
 	t.Run("display names unchanged when kcrVolumeSizes is nil", func(t *testing.T) {
