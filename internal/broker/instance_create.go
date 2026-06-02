@@ -103,7 +103,6 @@ type ProvisionEndpoint struct {
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
 	awsClientFactory       aws.ClientFactory
-	useCredentialsBindings bool
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -317,12 +316,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 			Labels: ResponseLabels(instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
-}
-
-// UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
-// when all KCP instances are migrated to use credentials bindings
-func (b *ProvisionEndpoint) UseCredentialsBindings() {
-	b.useCredentialsBindings = true
 }
 
 func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
@@ -547,14 +540,7 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		// todo: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-		var awsClient aws.Client
-		var err error
-		if b.useCredentialsBindings {
-			awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
-		} else {
-			awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
-		}
+		awsClient, err := newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)

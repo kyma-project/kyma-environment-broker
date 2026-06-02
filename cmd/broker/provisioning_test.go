@@ -349,7 +349,6 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 func TestProvisioning_CredentialsBindings(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.SubscriptionGardenerResource = "CredentialsBinding"
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
@@ -3509,7 +3508,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("disabled feature uses single-account behavior", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
@@ -3535,7 +3533,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("GA not in allowed global accounts uses single-account behavior", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"whitelisted-ga-001"}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
@@ -3561,7 +3558,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("enabled for specific GA selects most populated account below limit", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"multi-account-ga-001"}
 		// Set low limit to force rotation to multiple bindings
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
@@ -3596,7 +3592,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("wildcard allowed global accounts enables feature for all GAs", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"*"}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
