@@ -198,22 +198,6 @@ func newShootWithCredentialsBindingRef(name, credentialsBindingName string) *uns
 	return shoot
 }
 
-func newShootWithSecretBindingRef(name, bindingName string) *unstructured.Unstructured {
-	shoot := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": testNamespace,
-			},
-			"spec": map[string]interface{}{
-				"secretBindingName": bindingName,
-			},
-		},
-	}
-	shoot.SetGroupVersionKind(gardener.ShootGVK)
-	return shoot
-}
-
 func fixGCPInstance(instanceID string) internal.Instance {
 	instance := fixture.FixInstance(instanceID)
 	instance.Provider = pkg.GCP
