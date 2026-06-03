@@ -2888,9 +2888,9 @@ func TestUpdateBlocklist(t *testing.T) {
 	})
 }
 
-func TestUpdateEndpoint_AdditionalVolumeGiPersistedToInstance(t *testing.T) {
-	// A first update sets additionalVolumeGi. A second update changes only the machine type.
-	// The second update must carry the persisted additionalVolumeGi from instance.Parameters,
+func TestUpdateEndpoint_AdditionalVolumeSizeGiPersistedToInstance(t *testing.T) {
+	// A first update sets additionalVolumeSizeGi. A second update changes only the machine type.
+	// The second update must carry the persisted additionalVolumeSizeGi from instance.Parameters,
 	// otherwise the step cannot add it to the recomputed base volume.
 	instance := internal.Instance{
 		InstanceID:    instanceID,
@@ -2911,29 +2911,29 @@ func TestUpdateEndpoint_AdditionalVolumeGiPersistedToInstance(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGIPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
 		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
 	)
 
-	additionalVolumeGi := 20
+	additionalVolumeSizeGi := 20
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:     "",
 		PlanID:        broker.AWSPlanID,
-		RawParameters: json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeGi":20}`),
+		RawParameters: json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeSizeGi":20}`),
 		RawContext:    json.RawMessage(`{"active":true}`),
 	}, true)
 	require.NoError(t, err)
 
 	updated, err := st.Instances().GetByID(instanceID)
 	require.NoError(t, err)
-	require.NotNil(t, updated.Parameters.Parameters.AdditionalVolumeGi, "additionalVolumeGi must be persisted to instance after first update")
-	assert.Equal(t, additionalVolumeGi, *updated.Parameters.Parameters.AdditionalVolumeGi)
+	require.NotNil(t, updated.Parameters.Parameters.AdditionalVolumeSizeGi, "additionalVolumeSizeGi must be persisted to instance after first update")
+	assert.Equal(t, additionalVolumeSizeGi, *updated.Parameters.Parameters.AdditionalVolumeSizeGi)
 }
 
-func TestUpdateEndpoint_AdditionalVolumeGi_NegativeValueRejected(t *testing.T) {
+func TestUpdateEndpoint_AdditionalVolumeSizeGi_NegativeValueRejected(t *testing.T) {
 	instance := internal.Instance{
 		InstanceID:    instanceID,
 		ServicePlanID: broker.AWSPlanID,
@@ -2955,7 +2955,7 @@ func TestUpdateEndpoint_AdditionalVolumeGi_NegativeValueRejected(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGIPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
@@ -2964,7 +2964,7 @@ func TestUpdateEndpoint_AdditionalVolumeGi_NegativeValueRejected(t *testing.T) {
 
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		PlanID:        broker.AWSPlanID,
-		RawParameters: json.RawMessage(`{"additionalVolumeGi": -5}`),
+		RawParameters: json.RawMessage(`{"additionalVolumeSizeGi": -5}`),
 		RawContext:    json.RawMessage(`{"active":true}`),
 	}, true)
 
@@ -2974,7 +2974,7 @@ func TestUpdateEndpoint_AdditionalVolumeGi_NegativeValueRejected(t *testing.T) {
 	assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
 }
 
-func TestUpdateEndpoint_AdditionalVolumeGi_RejectedForExcludedPlan(t *testing.T) {
+func TestUpdateEndpoint_AdditionalVolumeSizeGi_RejectedForExcludedPlan(t *testing.T) {
 	instance := internal.Instance{
 		InstanceID:    instanceID,
 		ServicePlanID: broker.AzureLitePlanID,
@@ -2995,9 +2995,9 @@ func TestUpdateEndpoint_AdditionalVolumeGi_RejectedForExcludedPlan(t *testing.T)
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	// AdditionalVolumeGIPlans contains only aws — azure_lite is excluded
+	// AdditionalVolumeSizeGIPlans contains only aws — azure_lite is excluded
 	svc := broker.NewUpdate(
-		broker.Config{AdditionalVolumeGIPlans: broker.StringList{broker.AWSPlanName}},
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
 		st, handler, true, false, true, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
 		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
@@ -3006,7 +3006,7 @@ func TestUpdateEndpoint_AdditionalVolumeGi_RejectedForExcludedPlan(t *testing.T)
 
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		PlanID:        broker.AzureLitePlanID,
-		RawParameters: json.RawMessage(`{"additionalVolumeGi": 10}`),
+		RawParameters: json.RawMessage(`{"additionalVolumeSizeGi": 10}`),
 		RawContext:    json.RawMessage(`{"active":true}`),
 	}, true)
 

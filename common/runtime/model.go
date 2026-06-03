@@ -105,12 +105,12 @@ type ProvisioningParametersDTO struct {
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
-	AdditionalVolumeGi        *int                       `json:"additionalVolumeGi,omitempty"`
+	AdditionalVolumeSizeGi        *int                       `json:"additionalVolumeSizeGi,omitempty"`
 }
 
-func (p ProvisioningParametersDTO) ValidateAdditionalVolumeGi() error {
-	if p.AdditionalVolumeGi != nil && *p.AdditionalVolumeGi < 0 {
-		return fmt.Errorf("additionalVolumeGi must be >= 0, got %d", *p.AdditionalVolumeGi)
+func (p ProvisioningParametersDTO) ValidateAdditionalVolumeSizeGi() error {
+	if p.AdditionalVolumeSizeGi != nil && *p.AdditionalVolumeSizeGi < 0 {
+		return fmt.Errorf("additionalVolumeSizeGi must be >= 0, got %d", *p.AdditionalVolumeSizeGi)
 	}
 	return nil
 }
@@ -612,7 +612,7 @@ type AdditionalWorkerNodePool struct {
 	AutoScalerMax      int        `json:"autoScalerMax"`
 	Taints             []TaintDTO `json:"taints,omitempty"`
 	Gvisor             *GvisorDTO `json:"gvisor,omitempty"`
-	AdditionalVolumeGi int        `json:"additionalVolumeGi,omitempty"`
+	AdditionalVolumeSizeGi int        `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
@@ -625,8 +625,8 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	if a.AutoScalerMin < 0 {
 		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
 	}
-	if a.AdditionalVolumeGi < 0 {
-		return fmt.Errorf("AdditionalVolumeGi value cannot be lower than 0 for %s additional worker node pool", a.Name)
+	if a.AdditionalVolumeSizeGi < 0 {
+		return fmt.Errorf("AdditionalVolumeSizeGi value cannot be lower than 0 for %s additional worker node pool", a.Name)
 	}
 	return nil
 }

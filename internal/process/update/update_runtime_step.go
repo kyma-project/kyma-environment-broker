@@ -115,9 +115,9 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
 	machineTypeChanged := operation.UpdatingParameters.MachineType != nil && *operation.UpdatingParameters.MachineType != oldMachineType
 
-	newAdditionalVolumeGi := operation.UpdatingParameters.AdditionalVolumeGi
-	prevAdditionalVolumeGi := operation.PreviousParameters.Parameters.AdditionalVolumeGi
-	additionalVolumeChanged := newAdditionalVolumeGi != nil && (prevAdditionalVolumeGi == nil || *newAdditionalVolumeGi != *prevAdditionalVolumeGi)
+	newAdditionalVolumeSizeGi := operation.UpdatingParameters.AdditionalVolumeSizeGi
+	prevAdditionalVolumeSizeGi := operation.PreviousParameters.Parameters.AdditionalVolumeSizeGi
+	additionalVolumeSizeChanged := newAdditionalVolumeSizeGi != nil && (prevAdditionalVolumeSizeGi == nil || *newAdditionalVolumeSizeGi != *prevAdditionalVolumeSizeGi)
 
 	if operation.UpdatingParameters.MachineType != nil {
 		if machineTypeChanged {
@@ -132,11 +132,11 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 		}
 	}
 
-	if newAdditionalVolumeGi != nil {
-		operation.ProvisioningParameters.Parameters.AdditionalVolumeGi = newAdditionalVolumeGi
+	if newAdditionalVolumeSizeGi != nil {
+		operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi = newAdditionalVolumeSizeGi
 	}
 
-	if machineTypeChanged || additionalVolumeChanged {
+	if machineTypeChanged || additionalVolumeSizeChanged {
 		resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
 		volGb, err := s.computeMainWorkerBaseVolumeGb(operation, runtime)
 		if err != nil {
@@ -145,7 +145,7 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 			}
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
 		}
-		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeGi; v != nil {
+		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi; v != nil {
 			volGb += *v
 		}
 		if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
@@ -206,10 +206,10 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			// only look up KCR when the pool is new, its machine type changed, or additionalVolumeGi changed
+			// only look up KCR when the pool is new, its machine type changed, or additionalVolumeSizeGi changed
 			unchanged := false
 			for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
-				if prev.Name == pool.Name && prev.MachineType == pool.MachineType && prev.AdditionalVolumeGi == pool.AdditionalVolumeGi {
+				if prev.Name == pool.Name && prev.MachineType == pool.MachineType && prev.AdditionalVolumeSizeGi == pool.AdditionalVolumeSizeGi {
 					unchanged = true
 					break
 				}

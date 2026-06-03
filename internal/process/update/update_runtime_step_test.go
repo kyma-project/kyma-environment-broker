@@ -1053,8 +1053,8 @@ func TestUpdateRuntimeStep_SkipMachineTypeUpdateWhenMachineTypeParameterIsNil(t 
 	assert.Equal(t, "original-type", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
 }
 
-func TestUpdateRuntimeStep_AdditionalVolumeGi_PersistedFromPreviousUpdate(t *testing.T) {
-	// Scenario: machine type changes in this update, but AdditionalVolumeGi is NOT in
+func TestUpdateRuntimeStep_AdditionalVolumeSizeGi_PersistedFromPreviousUpdate(t *testing.T) {
+	// Scenario: machine type changes in this update, but AdditionalVolumeSizeGi is NOT in
 	// UpdatingParameters — it was persisted to ProvisioningParameters.Parameters in a prior
 	// update. The step must still add the persisted value to the recomputed base volume.
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -1066,9 +1066,9 @@ func TestUpdateRuntimeStep_AdditionalVolumeGi_PersistedFromPreviousUpdate(t *tes
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
-	// Simulate a prior update that persisted additionalVolumeGi = 20 to instance parameters.
-	operation.ProvisioningParameters.Parameters.AdditionalVolumeGi = ptr.Integer(20)
-	// Current update only changes the machine type — no new AdditionalVolumeGi.
+	// Simulate a prior update that persisted additionalVolumeSizeGi = 20 to instance parameters.
+	operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi = ptr.Integer(20)
+	// Current update only changes the machine type — no new AdditionalVolumeSizeGi.
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		MachineType: ptr.String("m5.xlarge"),
 	}
@@ -1088,7 +1088,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeGi_PersistedFromPreviousUpdate(t *tes
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
-	// base volume = 80Gi (from fixValuesProvider) + persisted AdditionalVolumeGi = 20 → 100Gi
+	// base volume = 80Gi (from fixValuesProvider) + persisted AdditionalVolumeSizeGi = 20 → 100Gi
 	assert.Equal(t, "100Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
 
@@ -1976,7 +1976,7 @@ meters:
 	assert.Nil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
 }
 
-func TestUpdateRuntimeStep_AdditionalVolumeGiOnMainWorker(t *testing.T) {
+func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnMainWorker(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
@@ -1987,9 +1987,9 @@ func TestUpdateRuntimeStep_AdditionalVolumeGiOnMainWorker(t *testing.T) {
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
-	additionalVolumeGi := 50
+	additionalVolumeSizeGi := 50
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		AdditionalVolumeGi: &additionalVolumeGi,
+		AdditionalVolumeSizeGi: &additionalVolumeSizeGi,
 	}
 
 	// when
@@ -2003,14 +2003,14 @@ func TestUpdateRuntimeStep_AdditionalVolumeGiOnMainWorker(t *testing.T) {
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: kcpSystemNamespace}, &gotRuntime)
 	require.NoError(t, err)
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
-	// Azure base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGi = 50 → expected 130Gi
+	// Azure base volume is 80Gi (from fixValuesProvider); AdditionalVolumeSizeGi = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
 
-func TestUpdateRuntimeStep_AdditionalVolumeGiOnAdditionalWorkers(t *testing.T) {
-	// AdditionalVolumeGi change on an additional worker pool triggers a volume recompute.
-	// The isAdditionalWorkerPoolUnchanged check considers AdditionalVolumeGi, so a pool
-	// with a changed AdditionalVolumeGi is treated as changed and its volume is recalculated.
+func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnAdditionalWorkers(t *testing.T) {
+	// AdditionalVolumeSizeGi change on an additional worker pool triggers a volume recompute.
+	// The isAdditionalWorkerPoolUnchanged check considers AdditionalVolumeSizeGi, so a pool
+	// with a changed AdditionalVolumeSizeGi is treated as changed and its volume is recalculated.
 	err := imv1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
@@ -2029,14 +2029,14 @@ func TestUpdateRuntimeStep_AdditionalVolumeGiOnAdditionalWorkers(t *testing.T) {
 	operation.PreviousParameters = internal.ProvisioningParameters{
 		Parameters: pkg.ProvisioningParametersDTO{
 			AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-				{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGi: 0},
+				{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeSizeGi: 0},
 			},
 		},
 	}
-	additionalVolumeGi := 50
+	additionalVolumeSizeGi := 50
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
 		AdditionalWorkerNodePools: []pkg.AdditionalWorkerNodePool{
-			{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeGi: additionalVolumeGi},
+			{Name: "worker-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 3, AdditionalVolumeSizeGi: additionalVolumeSizeGi},
 		},
 	}
 
@@ -2053,6 +2053,6 @@ func TestUpdateRuntimeStep_AdditionalVolumeGiOnAdditionalWorkers(t *testing.T) {
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)
 	require.Len(t, *gotRuntime.Spec.Shoot.Provider.AdditionalWorkers, 1)
 	require.NotNil(t, (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume)
-	// AWS base volume is 80Gi (from fixValuesProvider); AdditionalVolumeGi = 50 → expected 130Gi
+	// AWS base volume is 80Gi (from fixValuesProvider); AdditionalVolumeSizeGi = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", (*gotRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Volume.VolumeSize)
 }

@@ -62,8 +62,8 @@ type ControlFlagsObject struct {
 	ingressFilteringEnabled     bool
 	gvisorEnabled               bool
 	rejectUnsupportedParameters bool
-	additionalVolumeGiEnabled   bool
-	additionalVolumeGiMaxSize   int
+	additionalVolumeSizeGiEnabled   bool
+	additionalVolumeSizeGiMaxSize   int
 }
 
 type AvailablePlansType struct {
@@ -129,13 +129,13 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeGiEnabled bool, additionalVolumeGiMaxSize int) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int) ControlFlagsObject {
 	return ControlFlagsObject{
 		ingressFilteringEnabled:     ingressFilteringEnabled,
 		gvisorEnabled:               gvisorEnabled,
 		rejectUnsupportedParameters: rejectUnsupportedParameters,
-		additionalVolumeGiEnabled:   additionalVolumeGiEnabled,
-		additionalVolumeGiMaxSize:   additionalVolumeGiMaxSize,
+		additionalVolumeSizeGiEnabled:   additionalVolumeSizeGiEnabled,
+		additionalVolumeSizeGiMaxSize:   additionalVolumeSizeGiMaxSize,
 	}
 }
 
@@ -180,12 +180,12 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
 	}
-	if flags.additionalVolumeGiEnabled {
-		properties.AdditionalVolumeGi = AdditionalVolumeGiProperty(flags.additionalVolumeGiMaxSize)
+	if flags.additionalVolumeSizeGiEnabled {
+		properties.AdditionalVolumeSizeGi = AdditionalVolumeSizeGiProperty(flags.additionalVolumeSizeGiMaxSize)
 		if properties.AdditionalWorkerNodePools != nil {
-			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeGi = AdditionalVolumeGiProperty(flags.additionalVolumeGiMaxSize)
+			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeSizeGi = AdditionalVolumeSizeGiProperty(flags.additionalVolumeSizeGiMaxSize)
 			properties.AdditionalWorkerNodePools.Items.ControlsOrder = insertAfter(
-				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "autoScalerMax", "additionalVolumeGi",
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "autoScalerMax", "additionalVolumeSizeGi",
 			)
 		}
 	}

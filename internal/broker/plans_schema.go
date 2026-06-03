@@ -56,7 +56,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
-	AdditionalVolumeGi        *Type                          `json:"additionalVolumeGi,omitempty"`
+	AdditionalVolumeSizeGi        *Type                          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -229,7 +229,7 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMax      AutoscalerType `json:"autoScalerMax,omitempty"`
 	Taints             *TaintsType    `json:"taints,omitempty"`
 	Gvisor             *GvisorType    `json:"gvisor,omitempty"`
-	AdditionalVolumeGi *Type          `json:"additionalVolumeGi,omitempty"`
+	AdditionalVolumeSizeGi *Type          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 type TaintsType struct {
@@ -777,7 +777,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "additionalVolumeGi", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "additionalVolumeSizeGi", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -937,7 +937,7 @@ func GvisorProperty() *GvisorType {
 	}
 }
 
-func AdditionalVolumeGiProperty(maxSize int) *Type {
+func AdditionalVolumeSizeGiProperty(maxSize int) *Type {
 	return &Type{
 		Type:        "integer",
 		Title:       "Additional Volume Size (Gi)",

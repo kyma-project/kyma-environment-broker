@@ -610,15 +610,15 @@ aws:
 		assert.Equal(t, "120Gi", workers[0].Volume.VolumeSize)
 	})
 
-	t.Run("should add AdditionalVolumeGi on top of base volume", func(t *testing.T) {
+	t.Run("should add AdditionalVolumeSizeGi on top of base volume", func(t *testing.T) {
 		// given
 		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
-				Name:               "worker",
-				MachineType:        "standard",
-				HAZones:            true,
-				AdditionalVolumeGi: 50,
+				Name:                   "worker",
+				MachineType:            "standard",
+				HAZones:                true,
+				AdditionalVolumeSizeGi: 50,
 			},
 		}
 
@@ -961,24 +961,24 @@ func TestIsAdditionalWorkerPoolUnchanged(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "returns false when name and machine type match but AdditionalVolumeGi differs",
+			name: "returns false when name and machine type match but AdditionalVolumeSizeGi differs",
 			operation: &internal.Operation{
 				PreviousParameters: internal.ProvisioningParameters{
 					Parameters: runtime.ProvisioningParametersDTO{
 						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
 							{
-								Name:               "pool-a",
-								MachineType:        "m5.large",
-								AdditionalVolumeGi: 0,
+								Name:                   "pool-a",
+								MachineType:            "m5.large",
+								AdditionalVolumeSizeGi: 0,
 							},
 						},
 					},
 				},
 			},
 			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
-				Name:               "pool-a",
-				MachineType:        "m5.large",
-				AdditionalVolumeGi: 50,
+				Name:                   "pool-a",
+				MachineType:            "m5.large",
+				AdditionalVolumeSizeGi: 50,
 			},
 			want: false,
 		},

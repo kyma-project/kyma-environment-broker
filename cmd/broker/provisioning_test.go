@@ -47,7 +47,7 @@ func TestCatalog(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.Broker.DynamicVolumeSizeEnabled = true
-	cfg.Broker.AdditionalVolumeGIPlans = broker.StringList{broker.AWSPlanName, broker.GCPPlanName, broker.AzurePlanName, broker.SapConvergedCloudPlanName, broker.AlicloudPlanName, broker.PreviewPlanName, broker.BuildRuntimeAWSPlanName, broker.BuildRuntimeGCPPlanName, broker.BuildRuntimeAzurePlanName, broker.BuildRuntimeAlicloudPlanName}
+	cfg.Broker.AdditionalVolumeSizeGIPlans = broker.StringList{broker.AWSPlanName, broker.GCPPlanName, broker.AzurePlanName, broker.SapConvergedCloudPlanName, broker.AlicloudPlanName, broker.PreviewPlanName, broker.BuildRuntimeAWSPlanName, broker.BuildRuntimeGCPPlanName, broker.BuildRuntimeAzurePlanName, broker.BuildRuntimeAlicloudPlanName}
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithKCRVolumeProvider(&fakeVolumeSizeProvider{fakeKCRVolumeSizes()}))
 	defer suite.TearDown()
 
