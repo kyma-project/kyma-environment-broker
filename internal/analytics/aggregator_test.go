@@ -311,6 +311,43 @@ func TestAggregateCombined_SortedBySetCountDescThenName(t *testing.T) {
 	assert.Equal(t, "machineType", stats.Parameters[0].Parameter)
 }
 
+// TestAggregateCombined_DecreaseableParamNullifiedByUpdate verifies that AggregateCombined
+// does NOT track nullification. An instance provisioned WITH gvisor and then updated WITHOUT
+// gvisor (which would nullify it in BuildTrend) is still counted in Combined — the union
+// only grows, never shrinks.
+func TestAggregateCombined_DecreaseableParamNullifiedByUpdate(t *testing.T) {
+	provParams := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{
+			Gvisor: &pkg.GvisorDTO{Enabled: true},
+		}}},
+	}
+	// Update without gvisor — gvisor is in updatingFieldConfig so BuildTrend would nullify it,
+	// but AggregateCombined simply does a union of "ever set in any op".
+	updateParams := []UpdateParamsWithID{
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{}},
+	}
+	stats := AggregateCombined(provParams, updateParams)
+	// The provisioning op put i1 in the gvisor set; the update op does not remove it.
+	assert.Equal(t, 1, stats.CountFor("gvisor"), "provisioning set gvisor; subsequent nullifying update must not remove instance from Combined")
+}
+
+// TestAggregateCombined_DecreaseableParamSetByUpdateThenNullified verifies that an instance
+// added to the Combined set via an update op is never removed, even if a later update op
+// nullifies the same parameter.
+func TestAggregateCombined_DecreaseableParamSetByUpdateThenNullified(t *testing.T) {
+	// Provision without gvisor, set it via update, then nullify via a second update.
+	provParams := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
+	}
+	updateParams := []UpdateParamsWithID{
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: true}}}, // sets gvisor
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{}},                                       // nullifies gvisor
+	}
+	stats := AggregateCombined(provParams, updateParams)
+	// The second update op did not set gvisor, but the first did — i1 remains in the set.
+	assert.Equal(t, 1, stats.CountFor("gvisor"), "once added by an update op, instance must remain in Combined even after a nullifying update")
+}
+
 // ---------------------------------------------------------------------------
 // BuildTrend helpers
 // ---------------------------------------------------------------------------
@@ -352,6 +389,30 @@ func updateEvent(instanceID, day, machineType string) OpEvent {
 // updateEventNoParam creates an OpEvent for an update op that does NOT set machineType.
 func updateEventNoParam(instanceID, day string) OpEvent {
 	op := internal.Operation{}
+	raw, err := json.Marshal(op)
+	if err != nil {
+		panic(err)
+	}
+	return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "update", RawParams: string(raw)}
+}
+
+// provEventGvisor creates an OpEvent for a provision op that sets gvisor.
+func provEventGvisor(instanceID, day string) OpEvent {
+	p := internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: true}},
+	}
+	raw, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "provision", RawParams: string(raw)}
+}
+
+// updateEventGvisor creates an OpEvent for an update op that sets gvisor.
+func updateEventGvisor(instanceID, day string) OpEvent {
+	op := internal.Operation{
+		UpdatingParameters: internal.UpdatingParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: true}},
+	}
 	raw, err := json.Marshal(op)
 	if err != nil {
 		panic(err)
