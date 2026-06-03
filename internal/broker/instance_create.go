@@ -1098,7 +1098,7 @@ func newAWSClient(
 	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
 	labelSelector := labelSelectorBuilder.BuildAnySubscription()
 
-	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	log.Info(fmt.Sprintf("getting credentials binding with selector %q", labelSelector))
 	credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
