@@ -14,7 +14,7 @@ The feature is controlled by the following environment variables:
 |---|---|---|
 | **APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED** | `false` | Enables dynamic volume size lookup. When `false`, the static plan default is used. |
 | **APP_BROKER_KCR_CONFIG_MAP_NAME** | `consumption-reporter-config` | Name of the ConfigMap in the `kcp-system` namespace that provides the volume sizes. |
-| **APP_BROKER_ADDITIONAL_VOLUME_GI_PLANS** | _(empty)_ | Comma-separated list of plan names for which the `additionalVolumeSizeGi` parameter is exposed in provisioning and update schemas. Leave empty to disable the feature. Requires `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` to be `true`. |
+| **APP_BROKER_ADDITIONAL_VOLUME_SIZE_GI_PLANS** | _(empty)_ | Comma-separated list of plan names for which the `additionalVolumeSizeGi` parameter is exposed in provisioning and update schemas. Leave empty to disable the feature. Requires `APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED` to be `true`. |
 
 ## Behavior
 
