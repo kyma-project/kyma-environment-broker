@@ -466,7 +466,10 @@ func TestBuildTrend_ParamRemovedByUpdate(t *testing.T) {
 		p := internal.ProvisioningParameters{
 			Parameters: pkg.ProvisioningParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: g}},
 		}
-		raw, _ := json.Marshal(p)
+		raw, err := json.Marshal(p)
+		if err != nil {
+			panic(err)
+		}
 		return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "provision", RawParams: string(raw)}
 	}
 	events := []OpEvent{
