@@ -59,11 +59,11 @@ type PlanNameType string
 var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
 
 type ControlFlagsObject struct {
-	ingressFilteringEnabled     bool
-	gvisorEnabled               bool
-	rejectUnsupportedParameters bool
-	additionalVolumeSizeGiEnabled   bool
-	additionalVolumeSizeGiMaxSize   int
+	ingressFilteringEnabled       bool
+	gvisorEnabled                 bool
+	rejectUnsupportedParameters   bool
+	additionalVolumeSizeGiEnabled bool
+	additionalVolumeSizeGiMaxSize int
 }
 
 type AvailablePlansType struct {
@@ -131,11 +131,11 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 
 func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int) ControlFlagsObject {
 	return ControlFlagsObject{
-		ingressFilteringEnabled:     ingressFilteringEnabled,
-		gvisorEnabled:               gvisorEnabled,
-		rejectUnsupportedParameters: rejectUnsupportedParameters,
-		additionalVolumeSizeGiEnabled:   additionalVolumeSizeGiEnabled,
-		additionalVolumeSizeGiMaxSize:   additionalVolumeSizeGiMaxSize,
+		ingressFilteringEnabled:       ingressFilteringEnabled,
+		gvisorEnabled:                 gvisorEnabled,
+		rejectUnsupportedParameters:   rejectUnsupportedParameters,
+		additionalVolumeSizeGiEnabled: additionalVolumeSizeGiEnabled,
+		additionalVolumeSizeGiMaxSize: additionalVolumeSizeGiMaxSize,
 	}
 }
 

@@ -384,11 +384,11 @@ func gvisorProperty() map[string]interface{} {
 
 func createSchemaServiceWithAdditionalVolumeSizeGi(t *testing.T) *SchemaService {
 	return createSchemaServiceWithConfig(t, Config{
-		RejectUnsupportedParameters: true,
-		EnablePlanUpgrades:          true,
-		DualStackDocsURL:            "https://placeholder.com",
-		AdditionalVolumeSizeGIPlans:     StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
-		AdditionalVolumeSizeGiMaxSize:   1000,
+		RejectUnsupportedParameters:   true,
+		EnablePlanUpgrades:            true,
+		DualStackDocsURL:              "https://placeholder.com",
+		AdditionalVolumeSizeGIPlans:   StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
+		AdditionalVolumeSizeGiMaxSize: 1000,
 	})
 }
 

@@ -56,7 +56,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
-	AdditionalVolumeSizeGi        *Type                          `json:"additionalVolumeSizeGi,omitempty"`
+	AdditionalVolumeSizeGi    *Type                          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -222,13 +222,13 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name               Type           `json:"name,omitempty"`
-	MachineType        Type           `json:"machineType,omitempty"`
-	HAZones            *Type          `json:"haZones,omitempty"`
-	AutoScalerMin      AutoscalerType `json:"autoScalerMin,omitempty"`
-	AutoScalerMax      AutoscalerType `json:"autoScalerMax,omitempty"`
-	Taints             *TaintsType    `json:"taints,omitempty"`
-	Gvisor             *GvisorType    `json:"gvisor,omitempty"`
+	Name                   Type           `json:"name,omitempty"`
+	MachineType            Type           `json:"machineType,omitempty"`
+	HAZones                *Type          `json:"haZones,omitempty"`
+	AutoScalerMin          AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax          AutoscalerType `json:"autoScalerMax,omitempty"`
+	Taints                 *TaintsType    `json:"taints,omitempty"`
+	Gvisor                 *GvisorType    `json:"gvisor,omitempty"`
 	AdditionalVolumeSizeGi *Type          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
