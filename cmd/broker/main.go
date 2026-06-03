@@ -136,9 +136,6 @@ type Config struct {
 	Quota                               quota.Config
 	QuotaWhitelistedSubaccountsFilePath string
 
-	// todo: remove after all SecretBinding are migrated to CredentialBinding resources
-	HoldHapSteps bool
-
 	MachinesAvailabilityEndpoint bool
 
 	MaxPodsWhitelistedGlobalAccountIds   whitelist.Set `envconfig:"-"`
@@ -473,7 +470,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
-	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
 
 	// log metrics config
 	logs.Info(fmt.Sprintf("Metrics.Enabled: %t", cfg.Metrics.Enabled))
