@@ -11,15 +11,23 @@ permissions:
    id-token: write
    contents: read
 jobs:
+   restricted-gate:
+      runs-on: ubuntu-latest
+      environment: restricted
+      steps:
+         - run: echo "Build approved"
+
    kyma-environment-broker-image:
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    with: 
-      name:  kyma-environment-broker
-      dockerfile: Dockerfile.keb
-      context: .
-      build-args: VERSION=PR-${{ github.event.pull_request.number }}
+      needs: restricted-gate
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      with:
+        name:  kyma-environment-broker
+        dockerfile: Dockerfile.keb
+        context: .
+        build-args: VERSION=PR-${{ github.event.pull_request.number }}
 
    environments-cleanup-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environments-cleanup-job
@@ -28,6 +36,7 @@ jobs:
          build-args: BIN=environmentscleanup
 
    deprovision-retrigger-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-deprovision-retrigger-job
@@ -36,6 +45,7 @@ jobs:
          build-args: BIN=deprovisionretrigger
 
    expirator-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-expirator-job
@@ -44,6 +54,7 @@ jobs:
          build-args: BIN=expirator
 
    runtime-reconciler-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-runtime-reconciler
@@ -52,6 +63,7 @@ jobs:
          build-args: BIN=runtime-reconciler
 
    subaccount-cleanup-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-subaccount-cleanup-job
@@ -60,6 +72,7 @@ jobs:
          build-args: BIN=accountcleanup
 
    subaccount-sync-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with: 
          name: kyma-environment-subaccount-sync
@@ -68,6 +81,7 @@ jobs:
          build-args: BIN=subaccount-sync
 
    schema-migrator-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with:
          name: kyma-environment-broker-schema-migrator
@@ -75,6 +89,7 @@ jobs:
          context: .
 
    service-binding-cleanup-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with:
          name: kyma-environment-service-binding-cleanup-job
@@ -83,6 +98,7 @@ jobs:
          build-args: BIN=servicebindingcleanup
 
    keb-analytics-image:
+      needs: restricted-gate
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
       with:
          name: keb-analytics

@@ -45,7 +45,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -260,9 +259,9 @@ func main() {
 	// set default formatted
 	logLevel := new(slog.LevelVar)
 	logLevel.Set(slog.LevelInfo)
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	log := slog.New(broker.NewStrippingHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: logLevel,
-	}))
+	}), "instance-details"))
 	slog.SetDefault(log)
 
 	// create and fill config
@@ -276,9 +275,6 @@ func main() {
 	if cfg.LogLevel != "" {
 		logLevel.Set(cfg.getLogLevel())
 	}
-
-	// create logger
-	logger := lager.NewLogger("kyma-env-broker")
 
 	if broker.AvailablePlans == nil {
 		fatalOnError(fmt.Errorf("AvailablePlans is not initialized properly"), log)
@@ -425,7 +421,7 @@ func main() {
 	// Apply panic recovery middleware to all HTTP endpoints
 	router.Use(httputil.PanicRecoveryMiddleware(log))
 
-	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
+	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, log,
 		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker,
 		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, awsClientFactory)
 
@@ -512,7 +508,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher,
 	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
 	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
@@ -536,13 +532,6 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
 	fatalOnError(err, logs)
-
-	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(debugSink)
-	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(errorSink)
 
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)

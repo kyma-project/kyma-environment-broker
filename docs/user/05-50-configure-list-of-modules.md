@@ -1,4 +1,4 @@
-<!--{"metadata":{"publish":true}}-->
+<!--{"metadata":{"publish":false}}-->
 
 # Configure List of Modules
 

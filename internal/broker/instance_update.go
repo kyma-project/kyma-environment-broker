@@ -144,7 +144,6 @@ func (b *UpdateEndpoint) Update(ctx context.Context, instanceID string, details 
 	logger := b.log.With("instanceID", instanceID)
 	logger.Info(fmt.Sprintf("Updating instanceID: %s", instanceID))
 	logger.Info(fmt.Sprintf("Updating asyncAllowed: %v", asyncAllowed))
-	logger.Info(fmt.Sprintf("Parameters: '%s'", string(details.RawParameters)))
 	logger.Info(fmt.Sprintf("Plan ID: '%s'", details.PlanID))
 
 	response, err := b.update(ctx, instanceID, details, asyncAllowed)
@@ -173,7 +172,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 
 	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-	if err := b.operationBlocklist.CheckUpdate(planName); err != nil {
+	if err := b.operationBlocklist.CheckUpdate(blocklist.OperationContext{PlanName: planName, GlobalAccountID: instance.GlobalAccountID}); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -798,7 +797,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 
-		if err := b.operationBlocklist.CheckPlanUpgrade(targetPlanName); err != nil {
+		if err := b.operationBlocklist.CheckPlanUpgrade(blocklist.OperationContext{PlanName: targetPlanName, GlobalAccountID: instance.GlobalAccountID}); err != nil {
 			return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
