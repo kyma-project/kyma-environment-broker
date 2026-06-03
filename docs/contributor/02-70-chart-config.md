@@ -112,7 +112,7 @@
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>dualStackDocsURL | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. | `https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support` |
 | broker.<br>additionalVolumeSizeGiPlans | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. | `` |
-| broker.<br>additionalVolumeSizeGiMaxSize | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. | `1000` |
+| broker.<br>additionalVolumeSizeGiMaxSize | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. | `100` |
 | broker.<br>dynamicVolumeSizeEnabled | If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default. | `false` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
