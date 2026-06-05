@@ -608,6 +608,14 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
+		if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
+		if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
 		if err := checkAvailableZones(
 			b.providerSpec,
 			pkg.CloudProviderFromString(values.ProviderType),
@@ -766,6 +774,44 @@ func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 	var errors []string
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
 		if err := additionalWorkerNodePool.ValidateTaints(additionalWorkerNodePool.Taints, additionalWorkerNodePool.Name); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+
+	if len(errors) == 0 {
+		return nil
+	}
+
+	message := "The following additionalWorkerPools have validation issues: "
+	message = message + strings.Join(errors, "; ")
+	message = message + "."
+
+	return fmt.Errorf("%s", message)
+}
+
+func checkLabelsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.ValidateLabels(additionalWorkerNodePool.Labels, additionalWorkerNodePool.Name); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+
+	if len(errors) == 0 {
+		return nil
+	}
+
+	message := "The following additionalWorkerPools have validation issues: "
+	message = message + strings.Join(errors, "; ")
+	message = message + "."
+
+	return fmt.Errorf("%s", message)
+}
+
+func checkAnnotationsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.ValidateAnnotations(additionalWorkerNodePool.Annotations, additionalWorkerNodePool.Name); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}

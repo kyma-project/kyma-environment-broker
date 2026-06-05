@@ -1073,6 +1073,28 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider im
 	assert.ElementsMatch(t, expectedTaints, worker.Taints)
 }
 
+func (s *BrokerSuiteTest) assertAdditionalWorkerLabels(t *testing.T, provider imv1.Provider, name string, expectedLabels map[string]string) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.Equal(t, expectedLabels, worker.Labels)
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerAnnotations(t *testing.T, provider imv1.Provider, name string, expectedAnnotations map[string]string) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.Equal(t, expectedAnnotations, worker.Annotations)
+}
+
 func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
 	var worker *v1beta1.Worker
 	for _, additionalWorker := range *provider.AdditionalWorkers {

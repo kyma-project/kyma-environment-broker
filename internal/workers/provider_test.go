@@ -323,6 +323,88 @@ aws:
 		assert.Equal(t, corev1.Taint{Key: "dedicated", Value: "ml", Effect: corev1.TaintEffectPreferNoSchedule}, workers[0].Taints[1])
 	})
 
+	t.Run("should map labels and annotations to gardener worker", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-labeled",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+				Labels:      map[string]string{"env": "prod", "team": "platform"},
+				Annotations: map[string]string{"note": "test"},
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			slog.Default(),
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Equal(t, map[string]string{"env": "prod", "team": "platform"}, workers[0].Labels)
+		assert.Equal(t, map[string]string{"note": "test"}, workers[0].Annotations)
+	})
+
+	t.Run("should not set labels and annotations when none provided", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-plain",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			slog.Default(),
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Nil(t, workers[0].Labels)
+		assert.Nil(t, workers[0].Annotations)
+	})
+
 	t.Run("should set CRI with gvisor when gvisor is enabled", func(t *testing.T) {
 		// given
 		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
@@ -666,6 +748,36 @@ func TestToGardenerTaints(t *testing.T) {
 		assert.Equal(t, []corev1.Taint{
 			{Key: "special", Value: "", Effect: corev1.TaintEffectNoExecute},
 		}, result)
+	})
+}
+
+func TestToGardenerLabels(t *testing.T) {
+	t.Run("nil input returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerLabels(nil))
+	})
+
+	t.Run("empty map returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerLabels(map[string]string{}))
+	})
+
+	t.Run("non-empty map is returned as-is", func(t *testing.T) {
+		labels := map[string]string{"env": "prod", "team": "platform"}
+		assert.Equal(t, labels, toGardenerLabels(labels))
+	})
+}
+
+func TestToGardenerAnnotations(t *testing.T) {
+	t.Run("nil input returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerAnnotations(nil))
+	})
+
+	t.Run("empty map returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerAnnotations(map[string]string{}))
+	})
+
+	t.Run("non-empty map is returned as-is", func(t *testing.T) {
+		annotations := map[string]string{"note": "test", "owner": "team-a"}
+		assert.Equal(t, annotations, toGardenerAnnotations(annotations))
 	})
 }
 

@@ -511,6 +511,14 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if err := checkLabelsConfiguration(params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if err := checkAnnotationsConfiguration(params.AdditionalWorkerNodePools); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}

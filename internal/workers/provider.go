@@ -83,6 +83,8 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
 			Zones:          workerZones,
 			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
+			Labels:         toGardenerLabels(additionalWorkerNodePool.Labels),
+			Annotations:    toGardenerAnnotations(additionalWorkerNodePool.Annotations),
 		}
 
 		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) {
@@ -170,4 +172,18 @@ func toGardenerTaints(taints []pkg.TaintDTO) []corev1.Taint {
 		})
 	}
 	return result
+}
+
+func toGardenerLabels(labels map[string]string) map[string]string {
+	if len(labels) == 0 {
+		return nil
+	}
+	return labels
+}
+
+func toGardenerAnnotations(annotations map[string]string) map[string]string {
+	if len(annotations) == 0 {
+		return nil
+	}
+	return annotations
 }
