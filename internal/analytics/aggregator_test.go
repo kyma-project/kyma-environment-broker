@@ -10,7 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testRegion = "eu-central-1"
+const (
+	testRegion      = "eu-central-1"
+	testRegion2     = "us-east-1"
+	testMachineType = "m6i.xlarge"
+)
 
 func TestWalkFields_SkipsConfiguredFields(t *testing.T) {
 	dto := pkg.ProvisioningParametersDTO{
@@ -32,13 +36,13 @@ func TestWalkFields_CountsArrayLength(t *testing.T) {
 }
 
 func TestWalkFields_EmitsStringValue(t *testing.T) {
-	machineType := "m6i.xlarge"
+	machineType := testMachineType
 	dto := pkg.ProvisioningParametersDTO{
 		MachineType: &machineType,
 	}
 	counts := make(map[string]map[string]int)
 	walkFields(dto, provisioningFieldConfig, counts)
-	assert.Equal(t, 1, counts["machineType"]["m6i.xlarge"])
+	assert.Equal(t, 1, counts["machineType"][testMachineType])
 }
 
 func TestWalkFields_SkipsNilPointers(t *testing.T) {
@@ -343,7 +347,7 @@ func TestAggregateCombined_DecreaseableParamSetByUpdateThenNullified(t *testing.
 	}
 	updateParams := []UpdateParamsWithID{
 		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: true}}}, // sets gvisor
-		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{}},                                       // nullifies gvisor
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{}},                                      // nullifies gvisor
 	}
 	stats := AggregateCombined(provParams, updateParams)
 	// The second update op did not set gvisor, but the first did — i1 remains in the set.
@@ -410,18 +414,6 @@ func provEventGvisor(instanceID, day string) OpEvent {
 	return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "provision", RawParams: string(raw)}
 }
 
-// updateEventGvisor creates an OpEvent for an update op that sets gvisor.
-func updateEventGvisor(instanceID, day string) OpEvent {
-	op := internal.Operation{
-		UpdatingParameters: internal.UpdatingParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: true}},
-	}
-	raw, err := json.Marshal(op)
-	if err != nil {
-		panic(err)
-	}
-	return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "update", RawParams: string(raw)}
-}
-
 // ---------------------------------------------------------------------------
 // BuildTrend tests
 // ---------------------------------------------------------------------------
@@ -463,20 +455,9 @@ func TestBuildTrend_ParamAddedByUpdate(t *testing.T) {
 func TestBuildTrend_ParamRemovedByUpdate(t *testing.T) {
 	// provision with param, then update clears it (machineType is NOT in updatingFieldConfig,
 	// so its absence in an update op means "state unchanged" — use gvisor which IS updatable)
-	provWithGvisor := func(instanceID, day string) OpEvent {
-		g := true
-		p := internal.ProvisioningParameters{
-			Parameters: pkg.ProvisioningParametersDTO{Gvisor: &pkg.GvisorDTO{Enabled: g}},
-		}
-		raw, err := json.Marshal(p)
-		if err != nil {
-			panic(err)
-		}
-		return OpEvent{InstanceID: instanceID, CreatedAt: day, Type: "provision", RawParams: string(raw)}
-	}
 	events := []OpEvent{
-		provWithGvisor("i1", "2024-01-01"),       // gvisor set → Count=1
-		updateEventNoParam("i1", "2024-01-02"),    // update without gvisor → nullified (in updatingFieldConfig) → Count=0
+		provEventGvisor("i1", "2024-01-01"),    // gvisor set → Count=1
+		updateEventNoParam("i1", "2024-01-02"), // update without gvisor → nullified (in updatingFieldConfig) → Count=0
 	}
 	trend := BuildTrend(events, "gvisor")
 	require.Len(t, trend.Points, 2)
@@ -513,7 +494,7 @@ func TestBuildTrend_TotalAccumulatesProvisions(t *testing.T) {
 func TestBuildTrend_MultipleInstancesMultipleDays(t *testing.T) {
 	events := []OpEvent{
 		provEvent("i1", "2024-01-01", "m6i.xlarge"), // Count: 1
-		provEventNoParam("i2", "2024-01-01"),         // Count: still 1
+		provEventNoParam("i2", "2024-01-01"),        // Count: still 1
 		provEvent("i3", "2024-01-02", "m6i.xlarge"), // Count: 2
 	}
 	trend := BuildTrend(events, "machineType")
@@ -562,13 +543,13 @@ func TestFilterByPlan_FallsBackToRawPlanID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestFilterByRegion_MatchByRegion(t *testing.T) {
-	region1 := "eu-central-1"
-	region2 := "us-east-1"
+	region1 := testRegion
+	region2 := testRegion2
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{Region: &region1}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{Region: &region2}}},
 	}
-	result := FilterByRegion(params, "eu-central-1")
+	result := FilterByRegion(params, testRegion)
 	require.Len(t, result, 1)
 	assert.Equal(t, "i1", result[0].InstanceID)
 }
@@ -577,16 +558,16 @@ func TestFilterByRegion_NilRegionSkipped(t *testing.T) {
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 	}
-	result := FilterByRegion(params, "eu-central-1")
+	result := FilterByRegion(params, testRegion)
 	assert.Empty(t, result)
 }
 
 func TestFilterByRegion_NoMatch(t *testing.T) {
-	region := "us-east-1"
+	region := testRegion2
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
 	}
-	result := FilterByRegion(params, "eu-central-1")
+	result := FilterByRegion(params, testRegion)
 	assert.Empty(t, result)
 }
 
@@ -595,7 +576,7 @@ func TestFilterByRegion_NoMatch(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestBuildPlanRegionIndex_SortedPlans(t *testing.T) {
-	region := "eu-central-1"
+	region := testRegion
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{PlanID: "uuid-b", Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{PlanID: "uuid-a", Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
@@ -606,20 +587,20 @@ func TestBuildPlanRegionIndex_SortedPlans(t *testing.T) {
 }
 
 func TestBuildPlanRegionIndex_SortedRegionsPerPlan(t *testing.T) {
-	regionB := "us-east-1"
-	regionA := "eu-central-1"
+	regionB := testRegion2
+	regionA := testRegion
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{PlanID: "uuid-aws", Parameters: pkg.ProvisioningParametersDTO{Region: &regionB}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{PlanID: "uuid-aws", Parameters: pkg.ProvisioningParametersDTO{Region: &regionA}}},
 	}
 	nameMap := map[string]string{"uuid-aws": "aws"}
 	_, byPlan := BuildPlanRegionIndex(params, nameMap)
-	assert.Equal(t, []string{"eu-central-1", "us-east-1"}, byPlan["aws"])
+	assert.Equal(t, []string{testRegion, testRegion2}, byPlan["aws"])
 }
 
 func TestBuildPlanRegionIndex_AllRegionsKey(t *testing.T) {
-	regionA := "eu-central-1"
-	regionB := "us-east-1"
+	regionA := testRegion
+	regionB := testRegion2
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{PlanID: "uuid-aws", Parameters: pkg.ProvisioningParametersDTO{Region: &regionA}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{PlanID: "uuid-gcp", Parameters: pkg.ProvisioningParametersDTO{Region: &regionB}}},
@@ -627,11 +608,11 @@ func TestBuildPlanRegionIndex_AllRegionsKey(t *testing.T) {
 	nameMap := map[string]string{"uuid-aws": "aws", "uuid-gcp": "gcp"}
 	_, byPlan := BuildPlanRegionIndex(params, nameMap)
 	// "" key must contain all regions across all plans, sorted
-	assert.Equal(t, []string{"eu-central-1", "us-east-1"}, byPlan[""])
+	assert.Equal(t, []string{testRegion, testRegion2}, byPlan[""])
 }
 
 func TestBuildPlanRegionIndex_NilRegionExcludedFromLists(t *testing.T) {
-	region := "eu-central-1"
+	region := testRegion
 	params := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{PlanID: "uuid-aws", Parameters: pkg.ProvisioningParametersDTO{Region: &region}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{PlanID: "uuid-aws", Parameters: pkg.ProvisioningParametersDTO{}}}, // nil region
@@ -641,7 +622,7 @@ func TestBuildPlanRegionIndex_NilRegionExcludedFromLists(t *testing.T) {
 	// plan still appears (it has instances)
 	assert.Equal(t, []string{"aws"}, plans)
 	// nil region is excluded from the region list
-	assert.Equal(t, []string{"eu-central-1"}, byPlan["aws"])
+	assert.Equal(t, []string{testRegion}, byPlan["aws"])
 }
 
 // combinedCountFor returns the SetCount for param from AggregateCombined.
