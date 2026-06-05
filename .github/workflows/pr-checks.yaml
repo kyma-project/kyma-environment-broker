@@ -33,5 +33,5 @@ jobs:
           delay: '1'
           retries: '15'
           polling_interval: '1'
-          checks_exclude: 'markdown-link-check,enable-auto-merge,run-govulncheck,scan'
+          checks_exclude: 'markdown-link-check,enable-auto-merge,run-govulncheck,scan,restricted-gate,kyma-environment-broker-image,environments-cleanup-image,deprovision-retrigger-image,expirator-image,runtime-reconciler-image,subaccount-cleanup-image,subaccount-sync-image,schema-migrator-image,service-binding-cleanup-image,keb-analytics-image'
           verbose: true
