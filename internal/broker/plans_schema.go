@@ -932,7 +932,7 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 func NewLabelsSchema() *KeyValueType {
 	return &KeyValueType{
 		Type:        "object",
-		Description: "Define labels",
+		Description: "Use labels to identify, filter, and organize objects.",
 		ControlType: "keyvalue",
 		PatternProperties: map[string]interface{}{
 			".*": map[string]interface{}{"type": "string"},
@@ -944,7 +944,7 @@ func NewLabelsSchema() *KeyValueType {
 func NewAnnotationsSchema() *KeyValueType {
 	return &KeyValueType{
 		Type:        "object",
-		Description: "Define annotations",
+		Description: "Use annotations to attach arbitrary non-identifying metadata to objects.",
 		ControlType: "keyvalue",
 		PatternProperties: map[string]interface{}{
 			".*": map[string]interface{}{"type": "string"},
