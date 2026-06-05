@@ -346,7 +346,7 @@ func valueOfBoolPtr(ptr *bool) bool {
 
 func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger) error {
 	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID))
-	if err := b.operationBlocklist.CheckProvision(planName); err != nil {
+	if err := b.operationBlocklist.CheckProvision(blocklist.OperationContext{PlanName: planName, GlobalAccountID: provisioningParameters.ErsContext.GlobalAccountID}); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
