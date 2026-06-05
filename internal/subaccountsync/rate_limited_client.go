@@ -6,24 +6,27 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
 )
 
 type RateLimitedCisClient struct {
-	ctx         context.Context
-	httpClient  *http.Client
-	config      CisEndpointConfig
-	log         *slog.Logger
-	RateLimiter *rate.Limiter
+	ctx                  context.Context
+	httpClient           *http.Client
+	config               CisEndpointConfig
+	log                  *slog.Logger
+	RateLimiter          *rate.Limiter
+	eventsServiceVersion string
+	eventsWindowSize     time.Duration
 }
 
 type RateLimiter interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger) *RateLimitedCisClient {
+func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration) *RateLimitedCisClient {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -34,11 +37,13 @@ func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log 
 	rl := rate.NewLimiter(rate.Every(config.RateLimitingInterval), config.MaxRequestsPerInterval)
 
 	return &RateLimitedCisClient{
-		ctx:         ctx,
-		httpClient:  httpClientOAuth,
-		config:      config,
-		log:         log,
-		RateLimiter: rl,
+		ctx:                  ctx,
+		httpClient:           httpClientOAuth,
+		config:               config,
+		log:                  log,
+		RateLimiter:          rl,
+		eventsServiceVersion: eventsServiceVersion,
+		eventsWindowSize:     eventsWindowSize,
 	}
 }
 

@@ -48,6 +48,12 @@ type eventsEndpointResponse struct {
 	Events     mutableEvents `json:"events"`
 }
 
+type v2eventsEndpointResponse struct {
+	Total      int           `json:"total"`
+	NextCursor string        `json:"nextCursor"`
+	Events     mutableEvents `json:"events"`
+}
+
 func NewFakeServer() (*fakeServer, error) {
 	se, err := newSubaccountsEndpoint()
 	if err != nil {
@@ -61,6 +67,7 @@ func NewFakeServer() (*fakeServer, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /accounts/v1/technical/subaccounts/{subaccountID}", se.getSubaccount)
 	mux.HandleFunc("GET /events/v1/events/central", ee.getEvents)
+	mux.HandleFunc("GET /events/v2/events/central", ee.getEventsV2)
 
 	srv := httptest.NewServer(mux)
 
@@ -230,6 +237,85 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 		slog.Error(fmt.Sprintf("error while writing events data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+}
+
+func (e *eventsEndpoint) getEventsV2(w http.ResponseWriter, r *http.Request) {
+	events := make(mutableEvents, 0, len(e.events))
+	events = append(events, e.events...)
+	pageSize := 150
+
+	query := r.URL.Query()
+	cursor := query.Get("cursor")
+	pageNumber := 0
+
+	if cursor != "" {
+		if n, err := strconv.Atoi(cursor); err == nil {
+			pageNumber = n
+		}
+	} else {
+		eventTypeFilter := query.Get("eventType")
+		sortField := query.Get("sortField")
+		sortOrder := strings.ToUpper(query.Get("sortOrder"))
+		pageSizeParam := query.Get("pageSize")
+
+		if eventTypeFilter != "" {
+			if err := events.filterEventsByEventType(eventTypeFilter); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+		if sortOrder == "" || (sortOrder != asc && sortOrder != desc) {
+			sortOrder = asc
+		}
+		if sortField != "" {
+			if err := events.sortEvents(sortField, sortOrder); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+		if pageSizeParam != "" {
+			if size, err := strconv.Atoi(pageSizeParam); err == nil && size > 1 {
+				pageSize = size
+			}
+		}
+	}
+
+	eventsNumber := len(events)
+	startIndex := pageNumber * pageSize
+	if startIndex >= eventsNumber {
+		resp := v2eventsEndpointResponse{Total: eventsNumber, NextCursor: "", Events: mutableEvents{}}
+		data, _ := json.Marshal(resp)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(data)
+		return
+	}
+	endIndex := startIndex + pageSize
+	if endIndex > eventsNumber {
+		endIndex = eventsNumber
+	}
+	eventsForResponse := events[startIndex:endIndex]
+
+	nextCursor := ""
+	if endIndex < eventsNumber {
+		nextCursor = strconv.Itoa(pageNumber + 1)
+	}
+
+	resp := v2eventsEndpointResponse{
+		Total:      eventsNumber,
+		NextCursor: nextCursor,
+		Events:     eventsForResponse,
+	}
+	data, err := json.Marshal(resp)
+	if err != nil {
+		slog.Error(fmt.Sprintf("error while marshalling v2 events data: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if _, err = w.Write(data); err != nil {
+		slog.Error(fmt.Sprintf("error while writing v2 events data: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 

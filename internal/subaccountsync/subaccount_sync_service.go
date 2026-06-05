@@ -25,6 +25,7 @@ const (
 	subaccountIDLabel     = "kyma-project.io/subaccount-id"
 	runtimeIDLabel        = "kyma-project.io/runtime-id"
 	eventServicePath      = "%s/events/v1/events/central"
+	eventServicePathV2    = "%s/events/v2/events/central"
 	subaccountServicePath = "%s/accounts/v1/technical/subaccounts/%s"
 	eventType             = "Subaccount_Creation,Subaccount_Update"
 )
@@ -87,7 +88,7 @@ func (s *SyncService) Run() {
 	logger.Info(fmt.Sprintf("%s service started", s.appName))
 
 	// create CIS clients
-	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger)
+	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger, s.cfg.EventsServiceVersion, s.cfg.EventsWindowSize)
 	accountsClient := CreateAccountsClient(s.ctx, s.cfg.CisAccounts, logger)
 
 	metrics := NewMetrics(s.metricsRegistry, s.appName)
@@ -177,13 +178,11 @@ func (s *SyncService) Run() {
 }
 
 func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger) *RateLimitedCisClient {
-	accountsClient := NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"))
-	return accountsClient
+	return NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"), "", 0)
 }
 
-func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger) *RateLimitedCisClient {
-	eventsClient := NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"))
-	return eventsClient
+func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration) *RateLimitedCisClient {
+	return NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"), eventsServiceVersion, eventsWindowSize)
 }
 
 func getDataFromLabels(u *unstructured.Unstructured) (subaccountID string, runtimeID string, betaEnabled string) {

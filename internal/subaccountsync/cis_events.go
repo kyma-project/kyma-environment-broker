@@ -4,11 +4,34 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64) (*http.Request, error) {
+func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64, cursor string) (*http.Request, error) {
+	if c.eventsServiceVersion == "v2" {
+		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePathV2, c.config.ServiceURL), nil)
+		if err != nil {
+			return nil, fmt.Errorf("while creating request: %v", err)
+		}
+		q := request.URL.Query()
+		if cursor != "" {
+			q.Add("cursor", cursor)
+		} else {
+			q.Add("since", durationToSince(c.eventsWindowSize))
+			q.Add("entityType", "Subaccount")
+			q.Add("eventType", eventType)
+			q.Add("pageSize", c.config.PageSize)
+			q.Add("sortField", "actionTime")
+			q.Add("sortOrder", "ASC")
+		}
+		request.URL.RawQuery = q.Encode()
+		return request, nil
+	}
+
+	// v1
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePath, c.config.ServiceURL), nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating request: %v", err)
@@ -20,13 +43,18 @@ func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64)
 	q.Add("fromActionTime", strconv.FormatInt(fromActionTime, 10))
 	q.Add("sortField", "actionTime")
 	q.Add("sortOrder", "ASC")
-
 	request.URL.RawQuery = q.Encode()
-
 	return request, nil
 }
 
 func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event, error) {
+	if c.eventsServiceVersion == "v2" {
+		return c.fetchEventsWindowV2()
+	}
+	return c.fetchEventsWindowV1(fromActionTime)
+}
+
+func (c *RateLimitedCisClient) fetchEventsWindowV1(fromActionTime int64) ([]Event, error) {
 	var events []Event
 	var currentPage int
 	var totalPages int
@@ -50,8 +78,53 @@ func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event,
 	return events, nil
 }
 
+func (c *RateLimitedCisClient) fetchEventsWindowV2() ([]Event, error) {
+	var events []Event
+	var cursor string
+	var page int
+	for {
+		cisResponse, err := c.fetchEventsPageV2(cursor)
+		if err != nil {
+			c.log.Error(fmt.Sprintf("while getting subaccount events (v2) page %d: %v", page, err))
+			return events, err
+		}
+		events = append(events, cisResponse.Events...)
+		page++
+		if cisResponse.NextCursor == "" {
+			break
+		}
+		cursor = cisResponse.NextCursor
+	}
+	c.log.Debug(fmt.Sprintf("Event window fetched (v2) - pages: %d, events: %d", page, len(events)))
+	return events, nil
+}
+
+func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsResponse, error) {
+	request, err := c.buildEventRequest(0, 0, cursor)
+	if err != nil {
+		return CisEventsResponse{}, fmt.Errorf("while building v2 request for event service: %v", err)
+	}
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return CisEventsResponse{}, fmt.Errorf("while executing v2 request to event service: %v", err)
+	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			c.log.Warn(fmt.Sprintf("failed to close response body: %s", err.Error()))
+		}
+	}()
+	if response.StatusCode != http.StatusOK {
+		return CisEventsResponse{}, fmt.Errorf("while processing v2 response: %s", c.handleErrorStatusCode(response))
+	}
+	var cisResponse CisEventsResponse
+	if err := json.NewDecoder(response.Body).Decode(&cisResponse); err != nil {
+		return CisEventsResponse{}, fmt.Errorf("while decoding CIS v2 events response: %v", err)
+	}
+	return cisResponse, nil
+}
+
 func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (CisEventsResponse, error) {
-	request, err := c.buildEventRequest(page, fromActionTime)
+	request, err := c.buildEventRequest(page, fromActionTime, "")
 	if err != nil {
 		return CisEventsResponse{}, fmt.Errorf("while building request for event service: %v", err)
 	}
@@ -102,4 +175,13 @@ func filterEvents(rawEvents []Event, subaccounts subaccountsSetType) []Event {
 		}
 	}
 	return filteredEvents
+}
+
+// durationToSince rounds d up to the nearest hour and returns a string like "2H".
+func durationToSince(d time.Duration) string {
+	hours := int(math.Ceil(d.Hours()))
+	if hours < 1 {
+		hours = 1
+	}
+	return fmt.Sprintf("%dH", hours)
 }

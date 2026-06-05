@@ -18,6 +18,7 @@ type (
 		TotalPages int     `json:"totalPages"`
 		PageNum    int     `json:"pageNum"`
 		Events     []Event `json:"events"`
+		NextCursor string  `json:"nextCursor"`
 	}
 
 	CisStateType struct {
