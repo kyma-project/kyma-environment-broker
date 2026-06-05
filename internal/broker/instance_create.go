@@ -114,6 +114,7 @@ const (
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
 	maskedKubeconfig                                   = "*****"
 	GvisorNotAvailableForAccountMsg                    = "The gvisor parameter is not available for your account. Please contact us for further assistance."
+	additionalWorkerPoolsValidationIssuesMsg           = "The following additionalWorkerPools have validation issues: "
 )
 
 func NewProvision(brokerConfig Config,
@@ -763,7 +764,7 @@ func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWork
 		return nil
 	}
 
-	message := "The following additionalWorkerPools have validation issues: "
+	message := additionalWorkerPoolsValidationIssuesMsg
 	message = message + strings.Join(errors, "; ")
 	message = message + "."
 
@@ -782,7 +783,7 @@ func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 		return nil
 	}
 
-	message := "The following additionalWorkerPools have validation issues: "
+	message := additionalWorkerPoolsValidationIssuesMsg
 	message = message + strings.Join(errors, "; ")
 	message = message + "."
 
@@ -801,7 +802,7 @@ func checkLabelsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 		return nil
 	}
 
-	message := "The following additionalWorkerPools have validation issues: "
+	message := additionalWorkerPoolsValidationIssuesMsg
 	message = message + strings.Join(errors, "; ")
 	message = message + "."
 
@@ -820,7 +821,7 @@ func checkAnnotationsConfiguration(additionalWorkerNodePools []pkg.AdditionalWor
 		return nil
 	}
 
-	message := "The following additionalWorkerPools have validation issues: "
+	message := additionalWorkerPoolsValidationIssuesMsg
 	message = message + strings.Join(errors, "; ")
 	message = message + "."
 

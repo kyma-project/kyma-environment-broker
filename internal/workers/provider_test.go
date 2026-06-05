@@ -333,8 +333,8 @@ aws:
 				HAZones:       true,
 				AutoScalerMin: 3,
 				AutoScalerMax: 10,
-				Labels:      map[string]string{"env": "prod", "team": "platform"},
-				Annotations: map[string]string{"note": "test"},
+				Labels:        map[string]string{"env": "prod", "team": "platform"},
+				Annotations:   map[string]string{"note": "test"},
 			},
 		}
 
