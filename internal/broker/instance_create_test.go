@@ -2000,17 +2000,17 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		{
 			name:                      "Single unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
 		},
 		{
 			name:                      "Multiple unsupported machine types",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m7g.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1; m7g.xlarge (used in: name-2), it is supported in the us-west-2",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), supported in the ap-northeast-1, ap-southeast-1, ca-central-1; m7g.xlarge (used in: name-2), supported in the us-west-2",
 		},
 		{
 			name:                      "Duplicate unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1, name-2), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1, name-2), supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
 		},
 	}
 
@@ -3518,7 +3518,7 @@ func TestProvision_UnsupportedMachineType(t *testing.T) {
 				true,
 			)
 
-			require.EqualError(t, err, "In the region eu-west-2, the following machine types are not available: ri.xlarge (used in: name-1), it is not supported in any region")
+			require.EqualError(t, err, "In the region eu-west-2, the following machine types are not available: ri.xlarge (used in: name-1), not supported in any region")
 		})
 	}
 }

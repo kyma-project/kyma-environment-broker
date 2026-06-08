@@ -738,9 +738,9 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 		}
 		availableRegions := providerSpec.SupportedRegions(provider, machineType)
 		if len(availableRegions) == 0 {
-			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is not supported in any region", machineType, strings.Join(unsupportedMachines[machineType], ", ")))
+			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), not supported in any region", machineType, strings.Join(unsupportedMachines[machineType], ", ")))
 		} else {
-			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), strings.Join(availableRegions, ", ")))
+			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), strings.Join(availableRegions, ", ")))
 		}
 	}
 
