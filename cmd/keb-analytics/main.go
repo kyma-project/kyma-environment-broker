@@ -186,7 +186,9 @@ func main() {
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
 				return
 			}
-			opEvents, err := reader.FetchOpEventsInRange(tr)
+			// Trends always use the full op-event history so the chart shows a
+			// complete timeline regardless of the selected time-range filter.
+			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 			if err != nil {
 				slog.Error("failed to fetch op events for range", "error", err)
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
