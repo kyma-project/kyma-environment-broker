@@ -59,7 +59,7 @@ regionsSupportingMachine:
 
 ### Region supported in all its zones (no zone restriction)
 
-Use an **empty list `[]`** instead of a bare key (null value):
+Use an empty list `[]` instead of a bare key (null value):
 
 ```yaml
 regionsSupportingMachine:
