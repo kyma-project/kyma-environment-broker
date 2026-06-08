@@ -29,14 +29,57 @@ providersConfiguration:
     aws:
         regionsSupportingMachine:
             g6:
-                us-west-2:
+                us-west-2: []
                 eu-central-1: [a, b]
                 ap-south-1: [b]
                 us-east-1: [a, b, c, d]
             g4dn:
-                eu-central-1:
-                eu-west-2:
-                us-east-1:
-                ap-south-1:
+                eu-central-1: []
+                eu-west-2: []
+                us-east-1: []
+                ap-south-1: []
                 us-west-2: [a, b, c]
 ```
+
+## Landscaper Compatibility
+
+Landscaper uses **strategic merge patch** semantics when applying ConfigMaps. Under these semantics, a key with a null value is interpreted as "delete this key" rather than "set this key to null". This means that region entries written without a value:
+
+```yaml
+regionsSupportingMachine:
+    g4dn:
+        eu-central-1:
+        eu-west-2:
+    g6:
+```
+
+are silently dropped by Landscaper, resulting in:
+
+```yaml
+regionsSupportingMachine:
+    g4dn: {}
+```
+
+### Region supported in all its zones (no zone restriction)
+
+Use an **empty list `[]`** instead of a bare key (null value):
+
+```yaml
+regionsSupportingMachine:
+    g4dn:
+        eu-central-1: []
+        eu-west-2: []
+```
+
+`eu-central-1: []` means the region is supported but zone selection falls back to the Kyma worker node pool zones. This is functionally equivalent to a bare key when processed by KEB, but survives the Landscaper patch without being dropped.
+
+### Machine type not available in any region
+
+Use an **empty map `{}`** as the value for the machine family:
+
+```yaml
+regionsSupportingMachine:
+    g6: {}
+```
+
+This makes the machine type unavailable in every region.
