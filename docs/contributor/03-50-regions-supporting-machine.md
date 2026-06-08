@@ -82,4 +82,8 @@ regionsSupportingMachine:
     g6: {}
 ```
 
-This makes the machine type unavailable in every region.
+This makes the machine type unavailable in every region. Users attempting to provision in any region will receive an error similar to:
+
+```
+In the region eu-central-1, the following machine types are not available: g6.xlarge (used in: worker-1), it is not supported in any region
+```
