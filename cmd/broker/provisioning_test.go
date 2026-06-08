@@ -2755,6 +2755,13 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 								"haZones": false,
 								"autoScalerMin": 1,
 								"autoScalerMax": 1
+							},
+							{
+								"name": "name-4",
+								"machineType": "ri.xlarge",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
 							}
 						]
 					}
@@ -2767,10 +2774,11 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 4)
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "us-east-1w", "us-east-1x", "us-east-1y", "us-east-1z")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-4", 3, "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f")
 }
 
 func TestProvisioning_BuildRuntimePlans(t *testing.T) {

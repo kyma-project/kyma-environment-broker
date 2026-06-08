@@ -2,7 +2,7 @@ aws:
   zonesDiscovery: true
   regionsSupportingMachine:
     "c7i":
-      "us-east-1": ["w", "x", "y", "z"]
+      "us-east-1": []
     "g6":
       "us-east-1": ["x", "y"]
     "g4dn":
