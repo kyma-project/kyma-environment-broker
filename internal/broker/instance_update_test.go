@@ -1474,17 +1474,17 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 		{
 			name:                      "Single unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the brazilsouth, uksouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), supported in the brazilsouth, uksouth",
 		},
 		{
 			name:                      "Multiple unsupported machine types",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D16s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the brazilsouth, uksouth; Standard_D16s_v5 (used in: name-2), it is supported in the brazilsouth, uksouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), supported in the brazilsouth, uksouth; Standard_D16s_v5 (used in: name-2), supported in the brazilsouth, uksouth",
 		},
 		{
 			name:                      "Duplicate unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), it is supported in the brazilsouth, uksouth",
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), supported in the brazilsouth, uksouth",
 		},
 	}
 
@@ -2886,6 +2886,134 @@ func TestUpdateBlocklist(t *testing.T) {
 		// then
 		require.NoError(t, err)
 	})
+}
+
+func TestUpdateEndpoint_AdditionalVolumeSizeGiPersistedToInstance(t *testing.T) {
+	// A first update sets additionalVolumeSizeGi. A second update changes only the machine type.
+	// The second update must carry the persisted additionalVolumeSizeGi from instance.Parameters,
+	// otherwise the step cannot add it to the recomputed base volume.
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AWSPlanID,
+			ErsContext: internal.ERSContext{
+				Active: ptr.Bool(true),
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instance))
+	require.NoError(t, st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01")))
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewUpdate(
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
+		st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
+		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
+	)
+
+	additionalVolumeSizeGi := 20
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:     "",
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(`{"machineType":"m5.xlarge","additionalVolumeSizeGi":20}`),
+		RawContext:    json.RawMessage(`{"active":true}`),
+	}, true)
+	require.NoError(t, err)
+
+	updated, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	require.NotNil(t, updated.Parameters.Parameters.AdditionalVolumeSizeGi, "additionalVolumeSizeGi must be persisted to instance after first update")
+	assert.Equal(t, additionalVolumeSizeGi, *updated.Parameters.Parameters.AdditionalVolumeSizeGi)
+}
+
+func TestUpdateEndpoint_AdditionalVolumeSizeGi_NegativeValueRejected(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AWSPlanID,
+			ErsContext: internal.ERSContext{
+				Active: ptr.Bool(true),
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instance))
+	provisioning := fixProvisioningOperation("01")
+	provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+	require.NoError(t, st.Operations().InsertProvisioningOperation(provisioning))
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewUpdate(
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
+		st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
+		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
+	)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(`{"additionalVolumeSizeGi": -5}`),
+		RawContext:    json.RawMessage(`{"active":true}`),
+	}, true)
+
+	require.Error(t, err)
+	apierr, ok := err.(*apiresponses.FailureResponse)
+	require.True(t, ok, "expected FailureResponse")
+	assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
+}
+
+func TestUpdateEndpoint_AdditionalVolumeSizeGi_RejectedForExcludedPlan(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AzureLitePlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AzureLitePlanID,
+			ErsContext: internal.ERSContext{
+				Active: ptr.Bool(true),
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instance))
+	provisioning := fixProvisioningOperation("01")
+	provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "azure"}
+	require.NoError(t, st.Operations().InsertProvisioningOperation(provisioning))
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	// AdditionalVolumeSizeGIPlans contains only aws — azure_lite is excluded
+	svc := broker.NewUpdate(
+		broker.Config{AdditionalVolumeSizeGIPlans: broker.StringList{broker.AWSPlanName}},
+		st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
+		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
+	)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		PlanID:        broker.AzureLitePlanID,
+		RawParameters: json.RawMessage(`{"additionalVolumeSizeGi": 10}`),
+		RawContext:    json.RawMessage(`{"active":true}`),
+	}, true)
+
+	require.Error(t, err)
+	apierr, ok := err.(*apiresponses.FailureResponse)
+	require.True(t, ok, "expected FailureResponse")
+	assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil))
 }
 
 func fixValueProvider(t *testing.T) broker.ValuesProvider {

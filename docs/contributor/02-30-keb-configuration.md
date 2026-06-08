@@ -7,6 +7,8 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_ACL_&#x200b;ENABLED_PLANS** | <code>no-plan</code> | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. |
+| **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_MAX_SIZE** | <code>100</code> | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. |
+| **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_PLANS** | None | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
@@ -75,7 +77,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE** | None | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE_VERSION** | None | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MAX_PODS** | <code>200</code> | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. |
-| **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>false</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
+| **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>true</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial and freemium clusters using smaller machine types. |
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |

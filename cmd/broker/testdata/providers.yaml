@@ -7,6 +7,9 @@ aws:
       "us-east-1": ["x", "y"]
     "g4dn":
       "us-east-1": ["x"]
+    "ri":
+      "eu-central-1": []
+      "us-east-1": []
   machines:
     "mi.large": "mi.large (2vCPU, 8GB RAM)"
     "mi.xlarge": "mi.xlarge (4vCPU, 16GB RAM)"

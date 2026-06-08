@@ -384,6 +384,18 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 
+	if err := parameters.ValidateAdditionalVolumeSizeGi(); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if parameters.AdditionalVolumeSizeGi != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID))
+		if !b.config.AdditionalVolumeSizeGIPlans.Contains(planName) {
+			err := fmt.Errorf("additionalVolumeSizeGi is not available for plan %s", planName)
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
 	if parameters.OIDC.IsProvided() {
 		if err := parameters.OIDC.Validate(nil); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
@@ -722,8 +734,12 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 		if i > 0 {
 			errorMsg.WriteString("; ")
 		}
-		availableRegions := strings.Join(providerSpec.SupportedRegions(provider, machineType), ", ")
-		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
+		availableRegions := providerSpec.SupportedRegions(provider, machineType)
+		if len(availableRegions) == 0 {
+			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), not supported in any region", machineType, strings.Join(unsupportedMachines[machineType], ", ")))
+		} else {
+			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), strings.Join(availableRegions, ", ")))
+		}
 	}
 
 	return fmt.Errorf("%s", errorMsg.String())

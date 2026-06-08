@@ -346,6 +346,13 @@
       }
     }
 
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function fmtDate(isoDate) {
+      // isoDate is YYYY-MM-DD; returns "Jan 03" style without year
+      const d = new Date(isoDate + 'T00:00:00Z');
+      return MON[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0');
+    }
+
     function renderTrendTab(data) {
       populateTrendParam(data.trends);
       const sel = document.getElementById('trendParam');
@@ -357,36 +364,37 @@
       }
       setNoData('trends', false);
 
-      const labels = trend.points.map(p => p.date);
-      const counts = trend.points.map(p => p.count);
-      const maxCount = counts.length > 0 ? Math.max(...counts) : 1;
+      // Use numeric timestamps on X so Chart.js spaces points by actual calendar distance.
+      const points = trend.points.map(p => ({
+        x: new Date(p.date + 'T00:00:00Z').getTime(),
+        y: p.count
+      }));
+      const maxCount = points.length > 0 ? Math.max(...points.map(p => p.y)) : 1;
       const chart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
-          labels,
           datasets: [{
             label: 'instances with ' + chosen + ' set',
-            data: counts,
+            data: points,
             borderColor: 'rgba(54,162,235,0.9)',
             backgroundColor: 'rgba(54,162,235,0.1)',
             fill: true,
             tension: 0,
-            pointRadius: counts.length > 30 ? 0 : 3
+            pointRadius: trend.points.length > 30 ? 0 : 3
           }]
         },
         options: {
           scales: {
             x: {
-              min: labels[0],
-              max: labels[labels.length - 1],
-              title: { display: true, text: 'Date' },
+              type: 'linear',
               ticks: {
                 maxTicksLimit: 12,
                 maxRotation: 45,
-                callback: function(value, index) {
-                  return formatDateLabel(labels[index]);
+                callback: function(value) {
+                  return fmtDate(new Date(value).toISOString().slice(0, 10));
                 }
-              }
+              },
+              title: { display: true, text: 'Date' }
             },
             y: {
               beginAtZero: true,

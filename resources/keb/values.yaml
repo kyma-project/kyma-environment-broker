@@ -50,31 +50,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.30.14
+      version: 1.31.0
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_expirator_job:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.30.14
+      version: 1.31.0
     kyma_environment_analytics:
       dir:
-      version: "1.30.14"
+      version: "1.31.0"
       repository: ""
       tag: ""
   ingress:
@@ -223,6 +223,11 @@ broker:
   trialDocsURL: "https://help.sap.com/docs/"
   # URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema.
   dualStackDocsURL: "https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support"
+  # Plans for which the additionalVolumeSizeGi parameter is exposed in the schema.
+  # Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature.
+  additionalVolumeSizeGiPlans: ""
+  # Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter.
+  additionalVolumeSizeGiMaxSize: 100
   # If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default.
   dynamicVolumeSizeEnabled: "false"
   # If true, updates runtimeCR labels when moving subaccounts.
@@ -383,7 +388,7 @@ infrastructureManager:
   # Sets the maximum number of Pods per node for global accounts in the max Pods allowlist.
   maxPods: 200
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
-  multiZoneCluster: "false"
+  multiZoneCluster: "true"
   # If true, provisions trial and freemium clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 

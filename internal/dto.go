@@ -65,6 +65,7 @@ type UpdatingParametersDTO struct {
 	IngressFiltering          *bool                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *pkg.AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *pkg.GvisorDTO                 `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi    *int                           `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 func (u UpdatingParametersDTO) UpdateAutoScaler(p *pkg.ProvisioningParametersDTO) bool {

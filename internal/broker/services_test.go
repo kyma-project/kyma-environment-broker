@@ -164,7 +164,7 @@ func createSchemaService(t *testing.T, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg
 	plans, err := configuration.NewPlanSpecificationsFromFile("testdata/plans.yaml")
 	channelResolver := &fixture.FakeChannelResolver{}
 
-	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans, channelResolver)
+	service := broker.NewSchemaService(provider, plans, defaultOIDCConfig, cfg, ingressFilteringPlans, channelResolver, nil)
 	require.NoError(t, err)
 	return service
 }

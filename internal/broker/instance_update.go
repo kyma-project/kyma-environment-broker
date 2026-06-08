@@ -355,6 +355,19 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if params.AdditionalVolumeSizeGi != nil && *params.AdditionalVolumeSizeGi < 0 {
+		err := fmt.Errorf("additionalVolumeSizeGi must be >= 0, got %d", *params.AdditionalVolumeSizeGi)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if params.AdditionalVolumeSizeGi != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))
+		if !b.config.AdditionalVolumeSizeGIPlans.Contains(planName) {
+			err := fmt.Errorf("additionalVolumeSizeGi is not available for plan %s", planName)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
 	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
@@ -823,6 +836,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 		updateStorage = append(updateStorage, "Machine type")
+	}
+
+	if params.AdditionalVolumeSizeGi != nil {
+		instance.Parameters.Parameters.AdditionalVolumeSizeGi = params.AdditionalVolumeSizeGi
+		updateStorage = append(updateStorage, "Additional Volume Gi")
 	}
 
 	if params.Gvisor != nil {

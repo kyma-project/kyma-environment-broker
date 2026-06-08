@@ -1,11 +1,20 @@
 package broker
 
 import (
+	"context"
+	"fmt"
+	"strings"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
+
+// VolumeSizeProvider fetches per-machine volume sizes from the KCR ConfigMap on each call.
+type VolumeSizeProvider interface {
+	CloudProviderVolumeSizes(ctx context.Context) (map[pkg.CloudProvider]map[string]int, error)
+}
 
 type SchemaService struct {
 	planSpec          *configuration.PlanSpecifications
@@ -16,9 +25,11 @@ type SchemaService struct {
 
 	cfg             Config
 	channelResolver config.ChannelResolver
+
+	kcrVolumeProvider VolumeSizeProvider
 }
 
-func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans StringList, channelResolver config.ChannelResolver) *SchemaService {
+func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *configuration.PlanSpecifications, defaultOIDCConfig *pkg.OIDCConfigDTO, cfg Config, ingressFilteringPlans StringList, channelResolver config.ChannelResolver, kcrVolumeProvider VolumeSizeProvider) *SchemaService {
 	return &SchemaService{
 		planSpec:              planSpec,
 		providerSpec:          providerSpec,
@@ -26,6 +37,7 @@ func NewSchemaService(providerSpec *configuration.ProviderSpec, planSpec *config
 		cfg:                   cfg,
 		ingressFilteringPlans: ingressFilteringPlans,
 		channelResolver:       channelResolver,
+		kcrVolumeProvider:     kcrVolumeProvider,
 	}
 }
 
@@ -140,8 +152,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 	flags := s.createFlags(planName)
 
 	createProperties := NewProvisioningProperties(
-		s.providerSpec.MachineDisplayNames(cp, machines),
-		s.providerSpec.MachineDisplayNames(cp, regularAndAdditionalMachines),
+		s.machineDisplayNames(cp, machines),
+		s.machineDisplayNames(cp, regularAndAdditionalMachines),
 		s.providerSpec.RegionDisplayNames(cp, regions),
 		machines,
 		regularAndAdditionalMachines,
@@ -155,8 +167,8 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		s.channelResolver,
 	)
 	updateProperties := NewProvisioningProperties(
-		s.providerSpec.MachineDisplayNames(cp, machines),
-		s.providerSpec.MachineDisplayNames(cp, regularAndAdditionalMachines),
+		s.machineDisplayNames(cp, machines),
+		s.machineDisplayNames(cp, regularAndAdditionalMachines),
 		s.providerSpec.RegionDisplayNames(cp, regions),
 		machines,
 		regularAndAdditionalMachines,
@@ -220,7 +232,7 @@ func (s *SchemaService) BuildRuntimeAlicloudSchemas(platformRegion string) (crea
 func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string, update bool) *map[string]interface{} {
 	flags := s.createFlags(AzureLitePlanName)
 	machines := s.planSpec.RegularMachines(AzureLitePlanName)
-	displayNames := s.providerSpec.MachineDisplayNames(pkg.Azure, machines)
+	displayNames := s.machineDisplayNames(pkg.Azure, machines)
 
 	properties := NewProvisioningProperties(
 		displayNames,
@@ -345,6 +357,8 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.GvisorEnabled,
 		s.cfg.RejectUnsupportedParameters,
+		s.cfg.AdditionalVolumeSizeGIPlans.Contains(planName),
+		s.cfg.AdditionalVolumeSizeGiMaxSize,
 	)
 }
 
@@ -354,4 +368,39 @@ func (s *SchemaService) RandomZones(cp pkg.CloudProvider, region string, zonesCo
 
 func (s *SchemaService) PlanRegions(planName, platformRegion string) []string {
 	return s.planSpec.Regions(planName, platformRegion)
+}
+
+// machineDisplayNames returns per-machine display names, enriched with the default disk size
+// (from the KCR ConfigMap) when DynamicVolumeSizeEnabled is true. The ConfigMap is read on
+// each call so that schema always reflects the current data without a KEB restart.
+func (s *SchemaService) machineDisplayNames(cp pkg.CloudProvider, machines []string) map[string]string {
+	names := s.providerSpec.MachineDisplayNames(cp, machines)
+	if s.kcrVolumeProvider == nil {
+		return names
+	}
+	kcrVolumeSizes, err := s.kcrVolumeProvider.CloudProviderVolumeSizes(context.Background())
+	if err != nil {
+		return names
+	}
+	providerSizes, ok := kcrVolumeSizes[cp]
+	if !ok {
+		return names
+	}
+	enriched := make(map[string]string, len(names))
+	for machineType, displayName := range names {
+		resolved := strings.ToLower(s.providerSpec.ResolveMachineType(cp, machineType))
+		if volGb, ok := providerSizes[resolved]; ok {
+			switch {
+			case strings.HasSuffix(displayName, ")*"):
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)*", strings.TrimSuffix(displayName, ")*"), volGb)
+			case strings.HasSuffix(displayName, ")"):
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)", strings.TrimSuffix(displayName, ")"), volGb)
+			default:
+				enriched[machineType] = fmt.Sprintf("%s, %dGi volume", displayName, volGb)
+			}
+		} else {
+			enriched[machineType] = displayName
+		}
+	}
+	return enriched
 }

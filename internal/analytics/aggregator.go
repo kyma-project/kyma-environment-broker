@@ -94,6 +94,13 @@ func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
 //
 //	counts[jsonName][value] = occurrenceCount
+//
+// The value emitted depends on the field's configured behavior: scalars are
+// stringified as-is (behaviorValue), slices/arrays emit their length, and typed
+// struct behaviors (behaviorModules, behaviorGvisor, behaviorACL, behaviorNetworking,
+// behaviorOIDC) apply domain-specific transformations before recording. Fields
+// listed as behaviorSkip are silently ignored. Nil pointers and zero-value
+// non-pointer fields produce no entry.
 func walkFields(v interface{}, config map[string]fieldBehavior, counts map[string]map[string]int) {
 	rv := reflect.ValueOf(v)
 	rt := rv.Type()
@@ -441,7 +448,8 @@ func isParamSet(v interface{}, config map[string]fieldBehavior, param string) bo
 // Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
 // For each instance the function tracks whether the parameter is currently set,
 // emits +1 / -1 / 0 deltas, buckets them by day, and returns the running total.
-// TrendPoint.Total holds the cumulative count of active instances provisioned by that day.
+// TrendPoint.Total holds the cumulative count of instances provisioned up to that day
+// (never decremented when an instance is deprovisioned).
 func BuildTrend(events []OpEvent, param string) TrendStat {
 	// per-instance: is the param currently set?
 	instanceState := make(map[string]bool)

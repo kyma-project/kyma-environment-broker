@@ -59,9 +59,11 @@ type PlanNameType string
 var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
 
 type ControlFlagsObject struct {
-	ingressFilteringEnabled     bool
-	gvisorEnabled               bool
-	rejectUnsupportedParameters bool
+	ingressFilteringEnabled       bool
+	gvisorEnabled                 bool
+	rejectUnsupportedParameters   bool
+	additionalVolumeSizeGiEnabled bool
+	additionalVolumeSizeGiMaxSize int
 }
 
 type AvailablePlansType struct {
@@ -127,11 +129,13 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters bool) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int) ControlFlagsObject {
 	return ControlFlagsObject{
-		ingressFilteringEnabled:     ingressFilteringEnabled,
-		gvisorEnabled:               gvisorEnabled,
-		rejectUnsupportedParameters: rejectUnsupportedParameters,
+		ingressFilteringEnabled:       ingressFilteringEnabled,
+		gvisorEnabled:                 gvisorEnabled,
+		rejectUnsupportedParameters:   rejectUnsupportedParameters,
+		additionalVolumeSizeGiEnabled: additionalVolumeSizeGiEnabled,
+		additionalVolumeSizeGiMaxSize: additionalVolumeSizeGiMaxSize,
 	}
 }
 
@@ -175,6 +179,15 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 	}
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()
+	}
+	if flags.additionalVolumeSizeGiEnabled {
+		properties.AdditionalVolumeSizeGi = AdditionalVolumeSizeGiProperty(flags.additionalVolumeSizeGiMaxSize)
+		if properties.AdditionalWorkerNodePools != nil {
+			properties.AdditionalWorkerNodePools.Items.Properties.AdditionalVolumeSizeGi = AdditionalVolumeSizeGiProperty(flags.additionalVolumeSizeGiMaxSize)
+			properties.AdditionalWorkerNodePools.Items.ControlsOrder = insertAfter(
+				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "autoScalerMax", "additionalVolumeSizeGi",
+			)
+		}
 	}
 
 	if update {
@@ -262,4 +275,17 @@ func removeString(slice []string, str string) []string {
 		}
 	}
 	return result
+}
+
+func insertAfter(slice []string, after, value string) []string {
+	for i, v := range slice {
+		if v == after {
+			result := make([]string, 0, len(slice)+1)
+			result = append(result, slice[:i+1]...)
+			result = append(result, value)
+			result = append(result, slice[i+1:]...)
+			return result
+		}
+	}
+	return append(slice, value)
 }
