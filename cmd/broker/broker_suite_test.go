@@ -1062,47 +1062,34 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 	assert.Len(t, worker.Zones, zonesNumer)
 }
 
-func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider imv1.Provider, name string, expectedTaints []corev1.Taint) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
+func (s *BrokerSuiteTest) findAdditionalWorker(t *testing.T, provider imv1.Provider, name string) *v1beta1.Worker {
+	for _, w := range *provider.AdditionalWorkers {
+		if w.Name == name {
+			wCopy := w
+			return &wCopy
 		}
 	}
-	require.NotNil(t, worker)
+	require.Failf(t, "worker not found", "worker %q not found in additional workers", name)
+	return nil
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider imv1.Provider, name string, expectedTaints []corev1.Taint) {
+	worker := s.findAdditionalWorker(t, provider, name)
 	assert.ElementsMatch(t, expectedTaints, worker.Taints)
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerLabels(t *testing.T, provider imv1.Provider, name string, expectedLabels map[string]string) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
-		}
-	}
-	require.NotNil(t, worker)
+	worker := s.findAdditionalWorker(t, provider, name)
 	assert.Equal(t, expectedLabels, worker.Labels)
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerAnnotations(t *testing.T, provider imv1.Provider, name string, expectedAnnotations map[string]string) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
-		}
-	}
-	require.NotNil(t, worker)
+	worker := s.findAdditionalWorker(t, provider, name)
 	assert.Equal(t, expectedAnnotations, worker.Annotations)
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
-		}
-	}
-	require.NotNil(t, worker)
+	worker := s.findAdditionalWorker(t, provider, name)
 	assert.Len(t, worker.Zones, zonesNumber)
 	for _, v := range worker.Zones {
 		assert.Contains(t, zones, v)

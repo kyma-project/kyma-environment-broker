@@ -644,22 +644,21 @@ func (a AdditionalWorkerNodePool) ValidateTaints(taints []TaintDTO, poolName str
 	return nil
 }
 
-func (a AdditionalWorkerNodePool) ValidateLabels(labels map[string]string, poolName string) error {
-	for k := range labels {
+func validateKeyValueMap(m map[string]string, kind, poolName string) error {
+	for k := range m {
 		if k == "" {
-			return fmt.Errorf("label key must not be empty for %s additional worker node pool", poolName)
+			return fmt.Errorf("%s key must not be empty for %s additional worker node pool", kind, poolName)
 		}
 	}
 	return nil
 }
 
+func (a AdditionalWorkerNodePool) ValidateLabels(labels map[string]string, poolName string) error {
+	return validateKeyValueMap(labels, "label", poolName)
+}
+
 func (a AdditionalWorkerNodePool) ValidateAnnotations(annotations map[string]string, poolName string) error {
-	for k := range annotations {
-		if k == "" {
-			return fmt.Errorf("annotation key must not be empty for %s additional worker node pool", poolName)
-		}
-	}
-	return nil
+	return validateKeyValueMap(annotations, "annotation", poolName)
 }
 
 func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) bool {
