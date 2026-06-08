@@ -189,6 +189,7 @@
 | stepTimeouts.<br>checkRuntimeResourceCreate | Maximum time to wait for a runtime resource to be created before considering the step as failed. | `60m` |
 | stepTimeouts.<br>checkRuntimeResourceDeletion | Maximum time to wait for a runtime resource to be deleted before considering the step as failed. | `60m` |
 | stepTimeouts.<br>checkRuntimeResourceUpdate | Maximum time to wait for a runtime resource to be updated before considering the step as failed. | `180m` |
+| stepTimeouts.<br>resourceStateRetryInterval | How long to wait between polls when checking Runtime CR state. Reduce for local development. | `10s` |
 | testConfig.kebDeployment.<br>useAnnotations | - | `False` |
 | testConfig.kebDeployment.<br>weight | - | `2` |
 | trialRegionsMapping | Determines a Kyma region for a trial environment based on the requested platform region. | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |

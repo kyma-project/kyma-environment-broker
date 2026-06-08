@@ -176,6 +176,7 @@ type StepTimeoutsConfig struct {
 	CheckRuntimeResourceCreate   time.Duration `envconfig:"default=60m"`
 	CheckRuntimeResourceUpdate   time.Duration `envconfig:"default=180m"`
 	CheckRuntimeResourceDeletion time.Duration `envconfig:"default=1h"`
+	ResourceStateRetryInterval   time.Duration `envconfig:"default=10s"`
 }
 
 type K8sClientProvider interface {

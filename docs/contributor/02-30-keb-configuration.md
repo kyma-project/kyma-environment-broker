@@ -109,6 +109,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_DELETION** | <code>60m</code> | Maximum time to wait for a runtime resource to be deleted before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_UPDATE** | <code>180m</code> | Maximum time to wait for a runtime resource to be updated before considering the step as failed. |
+| **APP_STEP_TIMEOUTS_&#x200b;RESOURCE_STATE_&#x200b;RETRY_INTERVAL** | <code>10s</code> | How long to wait between polls when checking Runtime CR state. Reduce for local development. |
 | **APP_SUBSCRIPTION_&#x200b;GARDENER_RESOURCE** | <code>SecretBinding</code> | Name of the Gardener resource, which the broker uses to look up for hyperscaler assignment. Allowed values: SecretBinding or CredentialsBinding. |
 | **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | <code>/config/trialRegionMapping.yaml</code> | Path to the region mapping for trial environments. |
 | **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue. |
