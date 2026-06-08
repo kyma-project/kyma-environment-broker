@@ -43,7 +43,7 @@ providersConfiguration:
 
 ## Landscaper Compatibility
 
-Landscaper uses **strategic merge patch** semantics when applying ConfigMaps. Under these semantics, a key with a null value is interpreted as "delete this key" rather than "set this key to null". This means that region entries written without a value:
+Landscaper uses strategic merge patch semantics when applying ConfigMaps. Under these semantics, a key with a null value is interpreted as "delete this key" rather than "set this key to null". This means that region entries written without a value are silently dropped by Landscaper. Therefore, the following setting:
 
 ```yaml
 regionsSupportingMachine:
@@ -51,9 +51,6 @@ regionsSupportingMachine:
         eu-central-1:
         eu-west-2:
     g6:
-```
-
-are silently dropped by Landscaper, resulting in:
 
 ```yaml
 regionsSupportingMachine:
