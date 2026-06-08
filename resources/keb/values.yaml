@@ -383,7 +383,7 @@ infrastructureManager:
   # Sets the maximum number of Pods per node for global accounts in the max Pods allowlist.
   maxPods: 200
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
-  multiZoneCluster: "false"
+  multiZoneCluster: "true"
   # If true, provisions trial and freemium clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 

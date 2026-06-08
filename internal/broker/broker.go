@@ -164,7 +164,7 @@ type InfrastructureManager struct {
 	MachineImage                 string            `envconfig:"optional"`
 	MachineImageVersion          string            `envconfig:"optional"`
 	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
-	MultiZoneCluster             bool              `envconfig:"default=false"`
+	MultiZoneCluster             bool              `envconfig:"default=true"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
 	IngressFilteringPlans        StringList        `envconfig:"default=no-plan"`
