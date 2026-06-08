@@ -72,7 +72,7 @@ regionsSupportingMachine:
 
 ### Machine type not available in any region
 
-Use an **empty map `{}`** as the value for the machine family:
+Use an empty map `{}` as the value for the machine family:
 
 ```yaml
 regionsSupportingMachine:
