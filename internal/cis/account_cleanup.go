@@ -41,7 +41,7 @@ func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, st
 }
 
 func (ac *SubAccountCleanupService) Run() error {
-	ac.log.Info("Starting SubAccount cleanup process")
+	ac.log.Info("Starting Subaccount cleanup job")
 
 	subaccounts, err := ac.client.FetchSubaccountsToDelete()
 	if err != nil {

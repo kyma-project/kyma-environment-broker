@@ -32,7 +32,7 @@ type DistributionStat struct {
 type TrendPoint struct {
 	Date  string `json:"date"`  // YYYY-MM-DD
 	Count int    `json:"count"` // cumulative count of active instances with param set
-	Total int    `json:"total"` // cumulative count of active instances provisioned by this day
+	Total int    `json:"total"` // cumulative count of instances provisioned up to and including this day (never decremented)
 }
 
 // TrendStat holds the daily trend for a single parameter.
@@ -50,7 +50,6 @@ type StatsResponse struct {
 	Combined       ParameterStats      `json:"combined"`
 	Distributions  []DistributionStat  `json:"distributions"`
 	Trends         []TrendStat         `json:"trends"`
-	AdoptionTrends []TrendStat         `json:"adoption_trends"`
 	Plans          []string            `json:"plans"`
 	RegionsByPlan  map[string][]string `json:"regions_by_plan"`
 }

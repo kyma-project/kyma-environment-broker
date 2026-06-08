@@ -76,7 +76,7 @@ func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
 
-	c.log.Info(fmt.Sprintf("CIS returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
+	c.log.Info(fmt.Sprintf("CIS v1 returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
 		"The events include a range of time from %s to %s", subaccounts.total, len(subaccounts.ids), subaccounts.from, subaccounts.to))
 
 	return subaccounts.ids, nil
@@ -120,6 +120,8 @@ func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisRespon
 	switch {
 	case response.StatusCode == http.StatusTooManyRequests:
 		return CisResponse{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
+	case response.StatusCode >= 500:
+		return CisResponse{}, kebError.NewTemporaryError("server error: %s", c.handleWrongStatusCode(response))
 	case response.StatusCode != http.StatusOK:
 		return CisResponse{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}

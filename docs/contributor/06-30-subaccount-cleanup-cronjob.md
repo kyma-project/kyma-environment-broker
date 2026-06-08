@@ -3,22 +3,28 @@
 # Subaccount Cleanup CronJob
 
 Each SAP BTP, Kyma runtime instance in the Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
-Subaccount Cleanup is an application that periodically calls the CIS service and reports **SUBACCOUNT_DELETE** events.
+Subaccount Cleanup is an application that periodically calls the CIS service and reports **Subaccount_Deletion** events.
 Based on these events, Subaccount Cleanup triggers the deprovisioning action on Kyma runtime instances belonging to the given subaccount.
 
 ## Details
 
 The Subaccount Cleanup workflow is divided into several steps:
 
-1. Fetch **SUBACCOUNT_DELETE** events from the CIS service.
+1. Fetch **Subaccount_Deletion** events from the CIS service.
 
-    a. CIS client makes a call to the CIS service and in response, it gets a list of events divided into pages.
+   The behavior depends on the configured Events Service version (**APP_EVENTS_SERVICE_VERSION**):
 
-    b. CIS client fetches the rest of the events by making a call to each page one by one.
+   - **CIS v1** (legacy):
+     1. The CIS client calls the CIS service and receives a paginated list of events.
+     2. It fetches remaining pages one by one, identified by page number.
+     3. A subaccount ID is extracted from each event and collected into an array.
+     4. Once complete, the client logs the number of subaccounts fetched and the time range of events.
 
-    c. A subaccount ID is taken from each event and kept in an array.
-
-    d. When the CIS client completes its workflow, it displays logs with information on how many subaccounts were fetched.
+   - **CIS v2** (default):
+     1. The CIS client calls `/events/v2/events/central` requesting **Subaccount_Deletion** events for the `Subaccount` entity type, covering the last 30 days.
+     2. It fetches subsequent pages by following the **nextCursor** value in each response, until no cursor is returned.
+     3. A subaccount ID is extracted from each event and collected into an array.
+     4. Once complete, the client logs the number of subaccounts fetched and the time range of events.
 
 2. Find all instances in the KEB database based on the fetched subaccount IDs.
    The subaccounts pool is divided into batches. For each batch, a query is made to the database to fetch instances.
@@ -35,8 +41,8 @@ The Subaccount Cleanup workflow is divided into several steps:
 
 ## Prerequisites
 
-* CIS service to receive all **SUBACCOUNT_DELETE** events
-* The KEB database to get the instance ID for each subaccount ID from the **SUBACCOUNT_DELETE** event
+* CIS service to receive all **Subaccount_Deletion** events
+* The KEB database to get the instance ID for each subaccount ID from the **Subaccount_Deletion** event
 * KEB to trigger Kyma runtime instance deprovisioning
 
 ## Configuration
@@ -53,7 +59,7 @@ Use the following environment variables to configure the application:
 | **APP_CIS_MAX_REQUEST_&#x200b;RETRIES** | <code>3</code> | The maximum number of request retries to the CIS v2 API in case of errors. |
 | **APP_CIS_RATE_&#x200b;LIMITING_INTERVAL** | <code>2s</code> | The minimum interval between requests to the CIS v2 API in case of errors. |
 | **APP_CIS_REQUEST_&#x200b;INTERVAL** | <code>200ms</code> | The interval between requests to the CIS v2 API. |
-| **APP_CLIENT_VERSION** | <code>v2.0</code> | Client version. |
+| **APP_EVENTS_SERVICE_&#x200b;VERSION** | <code>v2</code> | Specifies the Events Service version. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
 | **APP_DATABASE_&#x200b;PASSWORD** | None | Specifies the user password for the database. |

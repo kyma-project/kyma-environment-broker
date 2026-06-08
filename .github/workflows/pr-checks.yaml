@@ -27,11 +27,11 @@ jobs:
         run: | 
           echo "PRs from kyma-gopher-bot are automatically green"
           exit 0
-      - uses: wechuli/allcheckspassed@1d00cf0c34c4b0805db8866d8913f22e7125301e
+      - uses: wechuli/allcheckspassed@204ff63e89eabdc8086f0c50b91f675bcf37c8f6
         if: ${{ github.event.pull_request.user.login != 'kyma-gopher-bot' }}
         with:
           delay: '1'
           retries: '15'
           polling_interval: '1'
-          checks_exclude: 'markdown-link-check,enable-auto-merge,run-govulncheck,scan'
+          checks_exclude: 'markdown-link-check,enable-auto-merge,run-govulncheck,scan,restricted-gate,kyma-environment-broker-image,environments-cleanup-image,deprovision-retrigger-image,expirator-image,runtime-reconciler-image,subaccount-cleanup-image,subaccount-sync-image,schema-migrator-image,service-binding-cleanup-image,keb-analytics-image'
           verbose: true

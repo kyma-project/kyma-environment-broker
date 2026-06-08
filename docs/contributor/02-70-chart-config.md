@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.30.8` |
+| global.images.kyma_environment_<br>broker.version | - | `1.30.14` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.30.8` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.30.14` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.30.8` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.30.14` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.30.8` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.30.14` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.30.8` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.30.14` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.30.8` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.30.14` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.30.8` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.30.14` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.30.8` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.30.14` |
 | global.images.kyma_environment_<br>analytics.dir | - | None |
-| global.images.kyma_environment_<br>analytics.version | - | `1.30.8` |
+| global.images.kyma_environment_<br>analytics.version | - | `1.30.14` |
 | global.images.kyma_environment_<br>analytics.repository | - | `` |
 | global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -256,11 +256,8 @@
 | serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |
 | serviceBindingCleanup.<br>schedule | - | `0 2,14 * * *` |
 | subaccountCleanup.<br>enabled | - | `true` |
-| subaccountCleanup.<br>nameV1 | - | `kcp-subaccount-cleaner-v1.0` |
-| subaccountCleanup.<br>nameV2 | - | `kcp-subaccount-cleaner-v2.0` |
 | subaccountCleanup.<br>schedule | - | `0 1 * * *` |
-| subaccountCleanup.<br>clientV1VersionName | Client version. | `v1.0` |
-| subaccountCleanup.<br>clientV2VersionName | Client version. | `v2.0` |
+| subaccountCleanup.<br>eventsServiceVersion | Specifies the Events Service version. | `v2` |
 | subaccountSync.<br>accountSyncInterval | Interval between full account synchronization runs. | `24h` |
 | subaccountSync.<br>alwaysSubaccountFromDatabase | If true, fetches subaccountID from the database only when the subaccount is empty. | `False` |
 | subaccountSync.cisRateLimits.<br>accounts.<br>maxRequestsPerInterval | Maximum number of requests per interval to the CIS Accounts API. | `5` |

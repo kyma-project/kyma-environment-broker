@@ -18,7 +18,16 @@ permissions:
   contents: read 
 
 jobs:
+  restricted-gate:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    environment: restricted
+    steps:
+      - run: echo "Build approved"
+
   e2e-provisioning-test-image:
+    needs: restricted-gate
+    if: always() && (needs.restricted-gate.result == 'success' || needs.restricted-gate.result == 'skipped')
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: e2e-provisioning-test

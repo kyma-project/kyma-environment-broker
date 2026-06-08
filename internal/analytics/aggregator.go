@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -93,6 +94,13 @@ func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, 
 // walkFields reflects over a struct, applies fieldConfig, and populates counts:
 //
 //	counts[jsonName][value] = occurrenceCount
+//
+// The value emitted depends on the field's configured behavior: scalars are
+// stringified as-is (behaviorValue), slices/arrays emit their length, and typed
+// struct behaviors (behaviorModules, behaviorGvisor, behaviorACL, behaviorNetworking,
+// behaviorOIDC) apply domain-specific transformations before recording. Fields
+// listed as behaviorSkip are silently ignored. Nil pointers and zero-value
+// non-pointer fields produce no entry.
 func walkFields(v interface{}, config map[string]fieldBehavior, counts map[string]map[string]int) {
 	rv := reflect.ValueOf(v)
 	rt := rv.Type()
@@ -320,16 +328,13 @@ func toParameterStats(counts map[string]map[string]int, total int) ParameterStat
 	return ParameterStats{Parameters: result}
 }
 
-// BuildDistributions computes value breakdowns for all distribution-worthy fields.
-// Fields with behaviorCount (e.g. administrators, additionalWorkerNodePools) are excluded
-// because they emit numeric counts rather than categorical values.
+// BuildDistributions computes value breakdowns for all tracked fields from provisioning params.
+// All non-skip behaviors are included; behaviorCount fields emit their numeric length as the bucket value.
 func BuildDistributions(params []ProvisioningParamsWithID) []DistributionStat {
 	counts := buildCounts(params)
 	fields := make([]string, 0, len(counts))
 	for field := range counts {
-		if provisioningFieldConfig[field] != behaviorCount {
-			fields = append(fields, field)
-		}
+		fields = append(fields, field)
 	}
 	sort.Strings(fields)
 	result := make([]DistributionStat, 0, len(fields))
@@ -443,7 +448,8 @@ func isParamSet(v interface{}, config map[string]fieldBehavior, param string) bo
 // Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
 // For each instance the function tracks whether the parameter is currently set,
 // emits +1 / -1 / 0 deltas, buckets them by day, and returns the running total.
-// TrendPoint.Total holds the cumulative count of active instances provisioned by that day.
+// TrendPoint.Total holds the cumulative count of instances provisioned up to that day
+// (never decremented when an instance is deprovisioned).
 func BuildTrend(events []OpEvent, param string) TrendStat {
 	// per-instance: is the param currently set?
 	instanceState := make(map[string]bool)
@@ -496,24 +502,32 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 		}
 	}
 
-	// Collect all days with either a param delta or a provisioning event.
-	allDays := make(map[string]struct{})
+	// Collect the first and last day across all events to build a continuous daily range.
+	allEventDays := make(map[string]struct{})
 	for d := range dayDelta {
-		allDays[d] = struct{}{}
+		allEventDays[d] = struct{}{}
 	}
 	for d := range dayProvisioned {
-		allDays[d] = struct{}{}
+		allEventDays[d] = struct{}{}
 	}
-	sortedDays := make([]string, 0, len(allDays))
-	for d := range allDays {
-		sortedDays = append(sortedDays, d)
+	if len(allEventDays) == 0 {
+		return TrendStat{Parameter: param, Points: nil}
 	}
-	sort.Strings(sortedDays)
+	eventDaysSorted := make([]string, 0, len(allEventDays))
+	for d := range allEventDays {
+		eventDaysSorted = append(eventDaysSorted, d)
+	}
+	sort.Strings(eventDaysSorted)
 
-	points := make([]TrendPoint, 0, len(sortedDays))
+	// Build a continuous day-by-day sequence from first to last event day so the
+	// chart X-axis is a linear time scale (gaps appear as flat segments, not compressed).
+	firstDay, lastDay := eventDaysSorted[0], eventDaysSorted[len(eventDaysSorted)-1]
+	allDays := expandDayRange(firstDay, lastDay)
+
+	points := make([]TrendPoint, 0, len(allDays))
 	running := 0
 	runningTotal := 0
-	for _, day := range sortedDays {
+	for _, day := range allDays {
 		running += dayDelta[day]
 		runningTotal += dayProvisioned[day]
 		points = append(points, TrendPoint{Date: day, Count: running, Total: runningTotal})
@@ -539,4 +553,24 @@ func TrendParamsFrom(combined ParameterStats) []string {
 		params = append(params, p.Parameter)
 	}
 	return params
+}
+
+// expandDayRange returns every calendar day from first to last inclusive,
+// in YYYY-MM-DD format. Both inputs must be valid YYYY-MM-DD strings.
+func expandDayRange(first, last string) []string {
+	const layout = "2006-01-02"
+	t, err := time.Parse(layout, first)
+	if err != nil {
+		return []string{first}
+	}
+	end, err := time.Parse(layout, last)
+	if err != nil {
+		return []string{first}
+	}
+	var days []string
+	for !t.After(end) {
+		days = append(days, t.Format(layout))
+		t = t.AddDate(0, 0, 1)
+	}
+	return days
 }

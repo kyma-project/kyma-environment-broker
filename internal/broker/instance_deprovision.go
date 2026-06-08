@@ -88,7 +88,7 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 
 	// create and save new operation
 	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-	if err := b.operationBlocklist.CheckDeprovision(planName); err != nil {
+	if err := b.operationBlocklist.CheckDeprovision(blocklist.OperationContext{PlanName: planName, GlobalAccountID: instance.GlobalAccountID}); err != nil {
 		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 

@@ -16,27 +16,43 @@ type PlanValidator interface {
 	IsPlanName(name string) bool
 }
 
+// OperationContext carries the attributes of an incoming operation used when
+// matching blocking rules. Add fields here to extend filtering capabilities
+// (e.g. SubAccountID for SA!= support in the future).
+type OperationContext struct {
+	PlanName        string
+	GlobalAccountID string
+}
+
 // Rule holds a parsed blocking rule.
 //
 // Compact string format: '"message"' or '"message","plan=val1,val2"'
+// or '"message","plan=val1,val2","GA!=<id1>,<id2>"'
 //
 // The message is a double-quoted string as the first token. The optional
-// second token is a double-quoted "plan=<value>" string where <value> may be
-// a comma-separated list of plan names.
+// tokens are double-quoted key=value or key!=value strings.
 //
 // The message may contain the {plan} placeholder.
 type Rule struct {
-	Message string
-	Plan    string // empty = match all plans
+	Message               string
+	Plan                  string   // comma-separated list; empty = match all plans
+	IncludeGlobalAccounts []string // GA= values; nil = no filter
+	ExcludeGlobalAccounts []string // GA!= values; nil = no exclusion
 }
 
 // parseRule parses a compact rule string. Tokens are comma-separated quoted
-// strings. The first token is the message; the optional second token is
-// "plan=<value>". Any key other than "plan" is an error.
+// strings. The first token is the message; optional further tokens are filters.
 //
 //	'"message"'
 //	'"message","plan=aws"'
 //	'"message","plan=aws,gcp"'
+//	'"message","plan=trial","GA!=12345"'
+//	'"message","plan=trial","GA=12345"'
+//
+// Supported filter tokens:
+//   - plan=<name1>,<name2>  — match specific plans (comma-separated)
+//   - GA=<globalAccountID>  — match only the specified GlobalAccount
+//   - GA!=<globalAccountID> — exclude a GlobalAccount from being blocked
 func parseRule(s string) (Rule, error) {
 	if strings.TrimSpace(s) == "" {
 		return Rule{}, nil // empty string is a no-op, caller must skip
@@ -54,27 +70,67 @@ func parseRule(s string) (Rule, error) {
 
 	r := Rule{Message: tokens[0]}
 	if len(tokens) == 1 {
-		return Rule{}, nil // no plan filter — no-op, caller must skip
+		return Rule{}, nil // no filters — no-op, caller must skip
 	}
 	for _, tok := range tokens[1:] {
+		// Check for negation operator (!=) before equality (=) to avoid
+		// misparse: "GA!=X" with IndexByte('=') would yield key="GA!".
+		if bangIdx := strings.Index(tok, "!="); bangIdx != -1 {
+			key := strings.TrimSpace(tok[:bangIdx])
+			val := strings.TrimSpace(tok[bangIdx+2:])
+			switch key {
+			case "GA":
+				if val == "" {
+					return Rule{}, fmt.Errorf("empty GA value in rule %q", s)
+				}
+				parts := strings.Split(val, ",")
+				for i, p := range parts {
+					parts[i] = strings.TrimSpace(p)
+					if parts[i] == "" {
+						return Rule{}, fmt.Errorf("empty GA segment in rule %q", s)
+					}
+				}
+				r.ExcludeGlobalAccounts = parts
+			default:
+				return Rule{}, fmt.Errorf("unknown negation key %q in rule %q", key, s)
+			}
+			continue
+		}
 		idx := strings.IndexByte(tok, '=')
 		if idx == -1 {
 			return Rule{}, fmt.Errorf("invalid key=value token %q in rule %q", tok, s)
 		}
 		key := strings.TrimSpace(tok[:idx])
 		val := strings.TrimSpace(tok[idx+1:])
-		if key != "plan" {
-			return Rule{}, fmt.Errorf("unknown key %q in rule %q (only \"plan\" is allowed)", key, s)
-		}
-		if val == "" {
-			return Rule{}, fmt.Errorf("empty plan filter in rule %q", s)
-		}
-		for _, p := range strings.Split(val, ",") {
-			if strings.TrimSpace(p) == "" {
-				return Rule{}, fmt.Errorf("empty plan segment in rule %q", s)
+		switch key {
+		case "plan":
+			if val == "" {
+				return Rule{}, fmt.Errorf("empty plan filter in rule %q", s)
 			}
+			for _, p := range strings.Split(val, ",") {
+				if strings.TrimSpace(p) == "" {
+					return Rule{}, fmt.Errorf("empty plan segment in rule %q", s)
+				}
+			}
+			r.Plan = val
+		case "GA":
+			if val == "" {
+				return Rule{}, fmt.Errorf("empty GA value in rule %q", s)
+			}
+			parts := strings.Split(val, ",")
+			for i, p := range parts {
+				parts[i] = strings.TrimSpace(p)
+				if parts[i] == "" {
+					return Rule{}, fmt.Errorf("empty GA segment in rule %q", s)
+				}
+			}
+			r.IncludeGlobalAccounts = parts
+		default:
+			return Rule{}, fmt.Errorf("unknown key %q in rule %q (allowed: \"plan=\", \"GA=\", \"GA!=\")", key, s)
 		}
-		r.Plan = val
+	}
+	if (len(r.IncludeGlobalAccounts) > 0 || len(r.ExcludeGlobalAccounts) > 0) && r.Plan == "" {
+		return Rule{}, fmt.Errorf("GA filter requires plan= in rule %q", s)
 	}
 	return r, nil
 }
@@ -218,42 +274,62 @@ func ReadFromFile(path string) (OperationBlocklist, error) {
 	return bl, nil
 }
 
-// CheckProvision returns a non-nil error when a provision rule matches planName.
-func (b *OperationBlocklist) CheckProvision(planName string) error {
-	return checkRules(b.Provision, b.planValidator, planName)
+// CheckProvision returns a non-nil error when a provision rule matches ctx.
+func (b *OperationBlocklist) CheckProvision(ctx OperationContext) error {
+	return checkRules(b.Provision, b.planValidator, ctx)
 }
 
-// CheckUpdate returns a non-nil error when an update rule matches planName.
-func (b *OperationBlocklist) CheckUpdate(planName string) error {
-	return checkRules(b.Update, b.planValidator, planName)
+// CheckUpdate returns a non-nil error when an update rule matches ctx.
+func (b *OperationBlocklist) CheckUpdate(ctx OperationContext) error {
+	return checkRules(b.Update, b.planValidator, ctx)
 }
 
-// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches planName.
-func (b *OperationBlocklist) CheckPlanUpgrade(planName string) error {
-	return checkRules(b.PlanUpgrade, b.planValidator, planName)
+// CheckPlanUpgrade returns a non-nil error when a planUpgrade rule matches ctx.
+func (b *OperationBlocklist) CheckPlanUpgrade(ctx OperationContext) error {
+	return checkRules(b.PlanUpgrade, b.planValidator, ctx)
 }
 
-// CheckDeprovision returns a non-nil error when a deprovision rule matches planName.
-func (b *OperationBlocklist) CheckDeprovision(planName string) error {
-	return checkRules(b.Deprovision, b.planValidator, planName)
+// CheckDeprovision returns a non-nil error when a deprovision rule matches ctx.
+func (b *OperationBlocklist) CheckDeprovision(ctx OperationContext) error {
+	return checkRules(b.Deprovision, b.planValidator, ctx)
 }
 
 // checkRules iterates rules and returns an error for the first matching one.
-func checkRules(rules []Rule, pv PlanValidator, planName string) error {
+func checkRules(rules []Rule, pv PlanValidator, ctx OperationContext) error {
 	for _, r := range rules {
-		if matchesRule(r, pv, planName) {
-			return fmt.Errorf("%s", formatMessage(r.Message, planName))
+		if matchesRule(r, pv, ctx) {
+			return fmt.Errorf("%s", formatMessage(r.Message, ctx))
 		}
 	}
 	return nil
 }
 
-// matchesRule returns true when the rule's plan filter (if any) matches planName.
-func matchesRule(r Rule, pv PlanValidator, planName string) bool {
-	if r.Plan == "" {
-		return true
+// matchesRule returns true when all of the rule's filters match the context.
+// Each guard returns false when its condition excludes this operation from the rule.
+func matchesRule(r Rule, pv PlanValidator, ctx OperationContext) bool {
+	if r.Plan != "" && !matchesPlan(pv, r.Plan, ctx.PlanName) {
+		return false
 	}
-	return matchesPlan(pv, r.Plan, planName)
+	if len(r.IncludeGlobalAccounts) > 0 {
+		matched := false
+		for _, ga := range r.IncludeGlobalAccounts {
+			if strings.EqualFold(ga, ctx.GlobalAccountID) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+	if len(r.ExcludeGlobalAccounts) > 0 {
+		for _, ga := range r.ExcludeGlobalAccounts {
+			if strings.EqualFold(ga, ctx.GlobalAccountID) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // matchesPlan checks whether rulePlan (comma-separated list) contains operationPlan.
@@ -274,7 +350,9 @@ func matchesPlan(pv PlanValidator, rulePlan, operationPlan string) bool {
 	return false
 }
 
-// formatMessage replaces {plan} placeholder with the actual plan name.
-func formatMessage(msg, planName string) string {
-	return strings.ReplaceAll(msg, "{plan}", planName)
+// formatMessage replaces {plan} and {globalAccount} placeholders.
+func formatMessage(msg string, ctx OperationContext) string {
+	msg = strings.ReplaceAll(msg, "{plan}", ctx.PlanName)
+	msg = strings.ReplaceAll(msg, "{globalAccount}", ctx.GlobalAccountID)
+	return msg
 }
