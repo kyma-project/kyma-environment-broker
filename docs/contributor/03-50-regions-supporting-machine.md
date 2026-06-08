@@ -51,6 +51,9 @@ regionsSupportingMachine:
         eu-central-1:
         eu-west-2:
     g6:
+```
+
+results in:
 
 ```yaml
 regionsSupportingMachine:
