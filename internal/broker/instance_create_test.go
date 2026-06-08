@@ -3435,6 +3435,94 @@ func TestProvisionBlocklist(t *testing.T) {
 	})
 }
 
+func TestProvision_UnsupportedMachineType(t *testing.T) {
+	testCases := []struct {
+		name           string
+		zonesDiscovery bool
+	}{
+		{
+			name:           "zones discovery enabled",
+			zonesDiscovery: true,
+		},
+		{
+			name:           "zones discovery disabled",
+			zonesDiscovery: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "ri.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+			rulesService, err := rules.NewRulesServiceFromSlice([]string{"aws"}, sets.New("aws"), sets.New("aws"))
+			require.NoError(t, err)
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(broker.Config{
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
+				}).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithSchemaService(newSchemaService(t)).
+				WithConfigurationProvider(fixture.NewProviderSpecWithZonesDiscovery(t, tc.zonesDiscovery)).
+				WithValuesProvider(fixValueProvider(t)).
+				WithRulesService(rulesService).
+				WithGardenerClient(fixture.CreateGardenerClient()).
+				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(map[string][]string{
+					"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
+					"ri.xlarge": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
+				}, nil)).
+				Build()
+
+			_, err = provisionEndpoint.Provision(
+				fixRequestContext(t, "req-region"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID: serviceID,
+					PlanID:    broker.AWSPlanID,
+					RawParameters: json.RawMessage(fmt.Sprintf(
+						`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s}`,
+						clusterName,
+						"eu-west-2",
+						additionalWorkerNodePools,
+					)),
+					RawContext: json.RawMessage(fmt.Sprintf(
+						`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`,
+						globalAccountID,
+						subAccountID,
+						"Test@Test.pl",
+					)),
+				},
+				true,
+			)
+
+			require.EqualError(t, err, "In the region eu-west-2, the following machine types are not available: ri.xlarge (used in: name-1), it is not supported in any region")
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion

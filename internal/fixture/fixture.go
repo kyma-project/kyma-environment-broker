@@ -439,6 +439,8 @@ aws:
   zonesDiscovery: %t
   machinesVersions:
     mi.{size}: m7i.{size}
+  regionsSupportingMachine:
+    ri: {}
 `, zonesDiscovery)
 	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
 	require.NoError(t, err)
