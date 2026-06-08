@@ -23,7 +23,7 @@ type (
 		LogLevel                          string        `envconfig:"default=info"`
 		RuntimeConfigurationConfigMapName string
 		AlwaysSubaccountFromDatabase      bool   `envconfig:"default=false"`
-		EventsServiceVersion              string `envconfig:"default=v2"`
+		EventsServiceVersion              string `envconfig:"default=v1"`
 	}
 
 	CisEndpointConfig struct {
