@@ -402,6 +402,7 @@ func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.
 	return workers.NewProvider(
 		imConfig,
 		spec,
+		true,
 	)
 }
 

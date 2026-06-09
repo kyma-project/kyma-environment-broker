@@ -464,10 +464,11 @@ func TestNewAvailablePlans_NonBijectiveMappingReturnsEmptyAvailablePlans(t *test
 
 func createSchemaService(t *testing.T) *SchemaService {
 	return createSchemaServiceWithConfig(t, Config{
-		RejectUnsupportedParameters: true,
-		EnablePlanUpgrades:          true,
-		DualStackDocsURL:            "https://placeholder.com",
-		ACLEnabledPlans:             []string{"gcp"},
+		RejectUnsupportedParameters:       true,
+		EnablePlanUpgrades:                true,
+		DualStackDocsURL:                  "https://placeholder.com",
+		ACLEnabledPlans:                   []string{"gcp"},
+		WorkerPoolLabelsAnnotationsEnabled: true,
 	})
 }
 

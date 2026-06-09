@@ -1397,9 +1397,10 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
 				WithConfig(broker.Config{
-					EnablePlans:          []string{"aws"},
-					URL:                  brokerURL,
-					OnlySingleTrialPerGA: true}).
+					EnablePlans:                        []string{"aws"},
+					URL:                                brokerURL,
+					OnlySingleTrialPerGA:               true,
+					WorkerPoolLabelsAnnotationsEnabled: true}).
 				WithGardenerConfig(gardener.Config{
 					Project:      "test",
 					ShootDomain:  "example.com",

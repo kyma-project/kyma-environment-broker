@@ -609,12 +609,13 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
-		if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-
-		if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		if b.config.WorkerPoolLabelsAnnotationsEnabled {
+			if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
 		}
 
 		if err := checkAvailableZones(
