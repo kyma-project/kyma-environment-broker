@@ -50,10 +50,12 @@ type CreateRuntimeResourceStep struct {
 
 	globalAccounts    config.GlobalAccountsConfig
 	kcrVolumeProvider *provider.KCRVolumeProvider
+	auditLogAccess    bool
 }
 
 func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
-	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig, kcrVolumeProvider *provider.KCRVolumeProvider) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig, kcrVolumeProvider *provider.KCRVolumeProvider,
+	auditLogAccess bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   db.Instances(),
 		k8sClient:         k8sClient,
@@ -63,6 +65,7 @@ func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Cli
 		providerSpec:      providerSpec,
 		globalAccounts:    gaCfg,
 		kcrVolumeProvider: kcrVolumeProvider,
+		auditLogAccess:    auditLogAccess,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -159,6 +162,12 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(log *slog.Logger
 	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
 
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
+
+	if s.auditLogAccess {
+		if operation.ProvisioningParameters.Parameters.AuditLogAccess != nil && *operation.ProvisioningParameters.Parameters.AuditLogAccess {
+			runtime.Spec.AuditLogAccessEnabled = operation.ProvisioningParameters.Parameters.AuditLogAccess
+		}
+	}
 
 	runtime.Spec.Shoot.EnableNvidiaOpenshell = ptr.Bool(s.globalAccounts.OpenShellWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID))
 

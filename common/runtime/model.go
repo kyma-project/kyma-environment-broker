@@ -106,6 +106,7 @@ type ProvisioningParametersDTO struct {
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
 	AdditionalVolumeSizeGi    *int                       `json:"additionalVolumeSizeGi,omitempty"`
+	AuditLogAccess            *bool                      `json:"auditLogAccess,omitempty"`
 }
 
 func (p ProvisioningParametersDTO) ValidateAdditionalVolumeSizeGi() error {

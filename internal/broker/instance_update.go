@@ -372,6 +372,12 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if b.config.AuditLogAccess {
+		if err := validateAuditLogAccess(previousInstance, params.AuditLogAccess); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
 	operation.PreviousParameters = previousInstance.Parameters
 
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
@@ -462,6 +468,13 @@ func (b *UpdateEndpoint) validateGvisorAccess(params internal.UpdatingParameters
 	}
 	if enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
 		return apiresponses.NewFailureResponse(errors.New(GvisorNotAvailableForAccountMsg), http.StatusBadRequest, GvisorNotAvailableForAccountMsg)
+	}
+	return nil
+}
+
+func validateAuditLogAccess(previousInstance *internal.Instance, auditLogAccess *bool) error {
+	if auditLogAccess != nil && !*auditLogAccess && previousInstance.Parameters.Parameters.AuditLogAccess != nil && *previousInstance.Parameters.Parameters.AuditLogAccess {
+		return errors.New("Audit Log Access cannot be disabled once enabled.")
 	}
 	return nil
 }
@@ -846,6 +859,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	if params.Gvisor != nil {
 		instance.Parameters.Parameters.Gvisor = params.Gvisor
 		updateStorage = append(updateStorage, "Gvisor")
+	}
+
+	if params.AuditLogAccess != nil {
+		instance.Parameters.Parameters.AuditLogAccess = params.AuditLogAccess
+		updateStorage = append(updateStorage, "Audit Log Access")
 	}
 
 	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
