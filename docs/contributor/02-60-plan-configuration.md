@@ -121,7 +121,7 @@ For more information, see the following documents:
 
  * [Regions Configuration](03-60-regions-configuration.md)
  * [Machine Types Configuration](03-70-machines-configuration.md)
- * [Machines Versions]([03-72-machines-versions.md](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-72-machines-versions.md))
+ * [Machines Versions](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-72-machines-versions.md)
  * [Regions Supporting Machine Types](03-50-regions-supporting-machine.md)
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-83-plan-updates.md)
