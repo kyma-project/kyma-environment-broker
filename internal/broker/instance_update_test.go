@@ -3016,6 +3016,64 @@ func TestUpdateEndpoint_AdditionalVolumeSizeGi_RejectedForExcludedPlan(t *testin
 	assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil))
 }
 
+func TestUpdateAuditLogAccessForPlan(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID         string
+		rawParameters  string
+		expectedErrMsg string
+	}{
+		"audit log access enabled for trial plan": {
+			planID:         broker.TrialPlanID,
+			rawParameters:  `{"auditLogAccess": true}`,
+			expectedErrMsg: "Audit Log Access is not available for trial plan.",
+		},
+		"audit log access enabled for free plan": {
+			planID:         broker.FreemiumPlanID,
+			rawParameters:  `{"auditLogAccess": true}`,
+			expectedErrMsg: "Audit Log Access is not available for free plan.",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{AuditLogAccess: true}
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = tc.planID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			svc := broker.NewUpdate(brokerCfg, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient,
+				newProviderSpec(t), newPlanSpec(t), imConfigFixture,
+				newSchemaServiceWithBrokerConfig(t, brokerCfg),
+				nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:     "",
+				PlanID:        tc.planID,
+				RawParameters: json.RawMessage(tc.rawParameters),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "active": true}`, globalAccountID)),
+			}, true)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestUpdateAuditLogAccess(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		initialAuditLogAccess *bool

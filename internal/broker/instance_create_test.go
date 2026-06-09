@@ -3523,6 +3523,76 @@ func TestProvision_UnsupportedMachineType(t *testing.T) {
 	}
 }
 
+func TestProvisionAuditLogAccessForPlan(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID         string
+		rawParameters  string
+		expectedErrMsg string
+	}{
+		"audit log access enabled for trial plan": {
+			planID:         broker.TrialPlanID,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "Audit Log Access is not available for trial plan.",
+		},
+		"audit log access enabled for free plan": {
+			planID:         broker.FreemiumPlanID,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "region": "westeurope", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "Audit Log Access is not available for free plan.",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{
+				EnablePlans:          []string{"aws", broker.TrialPlanName, broker.FreemiumPlanName},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: false,
+				AuditLogAccess:       true,
+			}
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			memoryStorage := storage.NewMemoryStorage()
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(brokerCfg).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{globalAccountID: {}}).
+				WithSchemaService(newSchemaServiceWithBrokerConfig(t, brokerCfg)).
+				WithConfigurationProvider(newProviderSpec(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				Build()
+
+			// when
+			_, err := provisionEndpoint.Provision(
+				fixRequestContext(t, "cf-eu10"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        tc.planID,
+					RawParameters: json.RawMessage(tc.rawParameters),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				},
+				true,
+			)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion

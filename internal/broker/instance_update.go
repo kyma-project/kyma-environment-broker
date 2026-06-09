@@ -373,6 +373,9 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	}
 
 	if b.config.AuditLogAccess {
+		if err := validateAuditLogAccessForPlan(previousInstance.ServicePlanID, params.AuditLogAccess); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 		if err := validateAuditLogAccess(previousInstance, params.AuditLogAccess); err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
@@ -468,6 +471,14 @@ func (b *UpdateEndpoint) validateGvisorAccess(params internal.UpdatingParameters
 	}
 	if enabled && whitelist.IsNotWhitelisted(globalAccountID, b.gvisorWhitelist) {
 		return apiresponses.NewFailureResponse(errors.New(GvisorNotAvailableForAccountMsg), http.StatusBadRequest, GvisorNotAvailableForAccountMsg)
+	}
+	return nil
+}
+
+func validateAuditLogAccessForPlan(planID string, auditLogAccess *bool) error {
+	if auditLogAccess != nil && (IsTrialPlan(planID) || IsFreemiumPlan(planID)) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))
+		return fmt.Errorf("Audit Log Access is not available for %s plan.", planName)
 	}
 	return nil
 }
