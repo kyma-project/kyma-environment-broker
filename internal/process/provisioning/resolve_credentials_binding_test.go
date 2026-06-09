@@ -1187,7 +1187,7 @@ func TestMultiAccountSupport(t *testing.T) {
 }
 
 func createRulesService(t *testing.T) *rules.RulesService {
-	// TODO could be simpler if we create service form slice not file
+	// TODO could be simpler if we create service from slice not file
 	content := `rule:
                       - aws(PR=cf-eu11) -> EU
                       - aws(PR=cf-ap11)
