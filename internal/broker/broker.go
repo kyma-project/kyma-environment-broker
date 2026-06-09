@@ -77,6 +77,8 @@ type Config struct {
 
 	// enables Access-Control-List.
 	ACLEnabledPlans StringList `envconfig:"default=false"`
+
+	AuditLogAccess bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

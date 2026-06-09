@@ -721,6 +721,7 @@ func createSchemaService(t *testing.T) *SchemaService {
 		EnablePlanUpgrades:          true,
 		DualStackDocsURL:            "https://placeholder.com",
 		ACLEnabledPlans:             []string{"gcp"},
+		AuditLogAccess:              true,
 	})
 }
 

@@ -359,6 +359,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.RejectUnsupportedParameters,
 		s.cfg.AdditionalVolumeSizeGIPlans.Contains(planName),
 		s.cfg.AdditionalVolumeSizeGiMaxSize,
+		s.cfg.AuditLogAccess,
 	)
 }
 

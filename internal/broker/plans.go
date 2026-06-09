@@ -64,6 +64,7 @@ type ControlFlagsObject struct {
 	rejectUnsupportedParameters   bool
 	additionalVolumeSizeGiEnabled bool
 	additionalVolumeSizeGiMaxSize int
+	auditLogAccess                bool
 }
 
 type AvailablePlansType struct {
@@ -129,13 +130,14 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int, auditLogAccess bool) ControlFlagsObject {
 	return ControlFlagsObject{
 		ingressFilteringEnabled:       ingressFilteringEnabled,
 		gvisorEnabled:                 gvisorEnabled,
 		rejectUnsupportedParameters:   rejectUnsupportedParameters,
 		additionalVolumeSizeGiEnabled: additionalVolumeSizeGiEnabled,
 		additionalVolumeSizeGiMaxSize: additionalVolumeSizeGiMaxSize,
+		auditLogAccess:                auditLogAccess,
 	}
 }
 
@@ -188,6 +190,9 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "autoScalerMax", "additionalVolumeSizeGi",
 			)
 		}
+	}
+	if flags.auditLogAccess {
+		properties.AuditLogAccess = AuditLogAccessProperty()
 	}
 
 	if update {
