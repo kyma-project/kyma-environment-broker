@@ -59,9 +59,9 @@ type Config struct {
 	AdditionalPropertiesPath        string `envconfig:"default=/additional-properties"`
 	GardenerSeedsCacheConfigMapName string `envconfig:"default=gardener-seeds-cache"`
 
-	RejectUnsupportedParameters bool `envconfig:"default=false"`
-	EnablePlanUpgrades          bool `envconfig:"default=false"`
-	CheckQuotaLimit             bool `envconfig:"default=false"`
+	RejectUnsupportedParameters        bool `envconfig:"default=false"`
+	EnablePlanUpgrades                 bool `envconfig:"default=false"`
+	CheckQuotaLimit                    bool `envconfig:"default=false"`
 	GvisorEnabled                      bool `envconfig:"default=false"`
 	WorkerPoolLabelsAnnotationsEnabled bool `envconfig:"default=false"`
 

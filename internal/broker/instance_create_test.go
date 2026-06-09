@@ -1378,6 +1378,14 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "labels": {"env": "prod"}, "annotations": {"note": "test"}}]`,
 			expectedError:             false,
 		},
+		"Duplicate label key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "labels": {"env": "prod", "env": "dev"}}]`,
+			expectedError:             true,
+		},
+		"Duplicate annotation key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "annotations": {"cc": "123", "cc": "456"}}]`,
+			expectedError:             true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given

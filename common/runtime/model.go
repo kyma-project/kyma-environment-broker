@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -705,6 +706,73 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 			}
 
 		}
+	}
+	return nil
+}
+
+func (a *AdditionalWorkerNodePool) UnmarshalJSON(data []byte) error {
+	type Alias AdditionalWorkerNodePool
+	var tmp Alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	for _, field := range []string{"labels", "annotations"} {
+		if err := checkDuplicateJSONKeys(data, field); err != nil {
+			return fmt.Errorf("additional worker node pool %q: %w", tmp.Name, err)
+		}
+	}
+	*a = AdditionalWorkerNodePool(tmp)
+	return nil
+}
+
+// checkDuplicateJSONKeys scans the JSON object at fieldName within data and
+// returns an error if any key appears more than once.
+func checkDuplicateJSONKeys(data []byte, fieldName string) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	tok, err := dec.Token()
+	if err != nil || tok != json.Delim('{') {
+		return nil
+	}
+	for dec.More() {
+		key, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		k, ok := key.(string)
+		if !ok {
+			return nil
+		}
+		if k != fieldName {
+			var skip json.RawMessage
+			if err := dec.Decode(&skip); err != nil {
+				return err
+			}
+			continue
+		}
+		tok, err := dec.Token()
+		if err != nil || tok != json.Delim('{') {
+			return nil
+		}
+		seen := make(map[string]struct{})
+		for dec.More() {
+			subKey, err := dec.Token()
+			if err != nil {
+				return err
+			}
+			sk, ok := subKey.(string)
+			if !ok {
+				continue
+			}
+			if _, exists := seen[sk]; exists {
+				return fmt.Errorf("duplicate key %q in %s", sk, fieldName)
+			}
+			seen[sk] = struct{}{}
+			var val json.RawMessage
+			if err := dec.Decode(&val); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	return nil
 }
