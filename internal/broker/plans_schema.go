@@ -954,6 +954,6 @@ func AuditLogAccessProperty() *Type {
 		Type:        "boolean",
 		Title:       "Enable Audit Log Access",
 		Default:     false,
-		Description: "Specifies whether Audit Log Access is enabled. Once enabled, it cannot be disabled.",
+		Description: "Specifies whether Audit Log Access is enabled. Once enabled, you cannot disable it.",
 	}
 }
