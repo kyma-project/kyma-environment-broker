@@ -694,7 +694,7 @@ aws:
 
 	t.Run("should add AdditionalVolumeSizeGi on top of base volume", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:                   "worker",

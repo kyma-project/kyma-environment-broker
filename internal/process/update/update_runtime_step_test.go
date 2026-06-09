@@ -2015,7 +2015,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnAdditionalWorkers(t *testing.
 	require.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{},
-		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
+		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true), true),
 		fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
