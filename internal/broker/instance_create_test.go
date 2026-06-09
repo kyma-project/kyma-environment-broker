@@ -3489,7 +3489,7 @@ func TestProvision_UnsupportedMachineType(t *testing.T) {
 				WithConfigurationProvider(fixture.NewProviderSpecWithZonesDiscovery(t, tc.zonesDiscovery)).
 				WithValuesProvider(fixValueProvider(t)).
 				WithRulesService(rulesService).
-				WithGardenerClient(fixture.CreateGardenerClient()).
+				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
 				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(map[string][]string{
 					"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
 					"ri.xlarge": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
