@@ -76,7 +76,6 @@ type UpdateEndpoint struct {
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
 
-	useCredentialsBindings         bool
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
 }
@@ -576,7 +575,6 @@ func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, prev
 }
 
 func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
-	var err error
 	discoveredZones := make(map[string]int)
 	if params.MachineType != nil {
 		discoveredZones[*params.MachineType] = 0
@@ -586,13 +584,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-	var awsClient aws.Client
-	if b.useCredentialsBindings {
-		awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-	} else {
-		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-	}
+	awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
@@ -650,12 +642,6 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	}
 
 	return true, lastOperation
-}
-
-// UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
-// when all KCP instances are migrated to use credentials bindings
-func (b *UpdateEndpoint) UseCredentialsBindings() {
-	b.useCredentialsBindings = true
 }
 
 func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger *slog.Logger) (*internal.Instance, bool, error) {

@@ -4757,7 +4757,6 @@ func TestUpdate_CredentialsBinding(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
-	cfg.SubscriptionGardenerResource = "CredentialsBinding"
 
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
