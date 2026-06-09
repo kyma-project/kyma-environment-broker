@@ -375,18 +375,20 @@ func main() {
 	fatalOnError(providerSpec.ValidateMachinesVersions(), log)
 
 	var kcrVolumeProvider *provider.KCRVolumeProvider
+	var volumeSizeProvider broker.VolumeSizeProvider
 	if cfg.Broker.DynamicVolumeSizeEnabled {
 		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
 		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud, pkg.SapConvergedCloud})
 		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
 		log.Info("KCR volume sizes validated successfully")
+		volumeSizeProvider = kcrVolumeProvider
 	}
 
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
 
-	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &oidcDefaultValues, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, volumeSizeProvider)
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")

@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
 const (
@@ -55,6 +56,7 @@ type UpdateProperties struct {
 	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi    *Type                          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -124,7 +126,7 @@ type Type struct {
 	Type        string `json:"type"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
-	Minimum     int    `json:"minimum,omitempty"`
+	Minimum     *int   `json:"minimum,omitempty"`
 	Maximum     int    `json:"maximum,omitempty"`
 	MinLength   int    `json:"minLength,omitempty"`
 	MaxLength   int    `json:"maxLength,omitempty"`
@@ -220,15 +222,16 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name          Type           `json:"name,omitempty"`
-	MachineType   Type           `json:"machineType,omitempty"`
-	HAZones       *Type          `json:"haZones,omitempty"`
-	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
-	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
-	Labels        *KeyValueType  `json:"labels,omitempty"`
-	Annotations   *KeyValueType  `json:"annotations,omitempty"`
-	Taints        *TaintsType    `json:"taints,omitempty"`
-	Gvisor        *GvisorType    `json:"gvisor,omitempty"`
+	Name                   Type           `json:"name,omitempty"`
+	MachineType            Type           `json:"machineType,omitempty"`
+	HAZones                *Type          `json:"haZones,omitempty"`
+	AutoScalerMin          AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax          AutoscalerType `json:"autoScalerMax,omitempty"`
+	Labels                 *KeyValueType  `json:"labels,omitempty"`
+	Annotations            *KeyValueType  `json:"annotations,omitempty"`
+	Taints                 *TaintsType    `json:"taints,omitempty"`
+	Gvisor                 *GvisorType    `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi *Type          `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 type KeyValueType struct {
@@ -784,7 +787,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "additionalVolumeSizeGi", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -967,5 +970,16 @@ func GvisorProperty() *GvisorType {
 				Default: false,
 			},
 		},
+	}
+}
+
+func AdditionalVolumeSizeGiProperty(maxSize int) *Type {
+	return &Type{
+		Type:        "integer",
+		Title:       "Additional Volume Size (Gi)",
+		Description: "Additional disk space in Gi added on top of the default volume size for the worker pool.",
+		Minimum:     ptr.Integer(0),
+		Maximum:     maxSize,
+		Default:     0,
 	}
 }

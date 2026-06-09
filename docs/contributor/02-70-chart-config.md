@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.30.14` |
+| global.images.kyma_environment_<br>broker.version | - | `1.31.0` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.30.14` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.31.0` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.30.14` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.31.0` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.30.14` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.31.0` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.30.14` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.31.0` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.30.14` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.31.0` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.30.14` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.31.0` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.30.14` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.31.0` |
 | global.images.kyma_environment_<br>analytics.dir | - | None |
-| global.images.kyma_environment_<br>analytics.version | - | `1.30.14` |
+| global.images.kyma_environment_<br>analytics.version | - | `1.31.0` |
 | global.images.kyma_environment_<br>analytics.repository | - | `` |
 | global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -111,6 +111,8 @@
 | broker.<br>subaccountMovementEnabled | If true, enables subaccount movement (allows changing global account for an instance). | `false` |
 | broker.trialDocsURL | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. | `https://help.sap.com/docs/` |
 | broker.<br>dualStackDocsURL | URL to the documentation for dual-stack networking. Used in dual-stack configuration description in schema. | `https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-runtime-with-dual-stack-support` |
+| broker.<br>additionalVolumeSizeGiPlans | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. | `` |
+| broker.<br>additionalVolumeSizeGiMaxSize | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. | `100` |
 | broker.<br>dynamicVolumeSizeEnabled | If true, reads node volume sizes per machine type from the KCR ConfigMap instead of using the static plan default. | `false` |
 | broker.<br>updateCustomResourcesLabelsOnAccountMove | If true, updates runtimeCR labels when moving subaccounts. | `false` |
 | broker.<br>restrictToAllowedGlobalAccountIDs | If true, restricts provisioning to the global account IDs listed in AllowedGlobalAccountIDs. | `false` |
@@ -166,7 +168,7 @@
 | infrastructureManager.<br>machineImage | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>maxPods | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. | `200` |
-| infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `false` |
+| infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `true` |
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |

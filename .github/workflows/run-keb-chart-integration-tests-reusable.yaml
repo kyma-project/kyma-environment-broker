@@ -151,6 +151,16 @@ jobs:
 
       - name: Wait for provisioning to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
+
+      - name: Assert volume size from KCR after provisioning
+        run: |
+          VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
+          echo "Volume size: $VOLUME_SIZE"
+          if [ "$VOLUME_SIZE" != "80Gi" ]; then
+            echo "Error: Expected volume size 80Gi (from KCR ConfigMap for m6i.large) but got $VOLUME_SIZE"
+            exit 1
+          fi
+          echo "Volume size assertion passed"
         
       - name: Set Kyma state to Ready
         run: make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
@@ -164,12 +174,38 @@ jobs:
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME"
 
       - name: Update the instance
-        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m5.xlarge"}' http://localhost:8080
+        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m5.xlarge","additionalVolumeSizeGi":20}' http://localhost:8080
 
       - name: Wait for updating to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
       - name: Assert update totalCount is 1
         run: scripts/testing/assert_runtime_count.sh aws-cluster 1 http://localhost:8080 update
+
+      - name: Assert volume size after update with additionalVolumeSizeGi
+        run: |
+          VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
+          echo "Volume size after update: $VOLUME_SIZE"
+          if [ "$VOLUME_SIZE" != "100Gi" ]; then
+            echo "Error: Expected 100Gi (80Gi from KCR for m5.xlarge + 20Gi additionalVolumeSizeGi) but got $VOLUME_SIZE"
+            exit 1
+          fi
+          echo "additionalVolumeSizeGi sum assertion passed"
+
+      - name: Update machine type while additionalVolumeSizeGi is persisted
+        run: scripts/testing/update_instance.sh aws-cluster 361c511f-f939-4621-b228-d0fb79a1fe15 '{"machineType":"m6i.4xlarge"}' http://localhost:8080
+
+      - name: Wait for machine type change update to finish
+        run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
+
+      - name: Assert volume size recalculated for new machine with persisted additionalVolumeSizeGi
+        run: |
+          VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
+          echo "Volume size after machine type change: $VOLUME_SIZE"
+          if [ "$VOLUME_SIZE" != "170Gi" ]; then
+            echo "Error: Expected 170Gi (150Gi from KCR for m6i.4xlarge + 20Gi persisted additionalVolumeSizeGi) but got $VOLUME_SIZE"
+            exit 1
+          fi
+          echo "Machine type change with persisted additionalVolumeSizeGi assertion passed"
 
       - name: Check for errors and warnings in KEB logs after update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
@@ -401,8 +437,8 @@ jobs:
 
       - name: Wait for global account ID update to finish
         run: ./scripts/testing/wait_for_instance_state.sh aws-cluster
-      - name: Assert update totalCount is 2
-        run: scripts/testing/assert_runtime_count.sh aws-cluster 2 http://localhost:8080 update
+      - name: Assert update totalCount is 3
+        run: scripts/testing/assert_runtime_count.sh aws-cluster 3 http://localhost:8080 update
 
       - name: Check for errors and warnings in KEB logs after global account ID update
         run: ./scripts/testing/check-keb-logs.sh "$KEB_POD_NAME" "true"
