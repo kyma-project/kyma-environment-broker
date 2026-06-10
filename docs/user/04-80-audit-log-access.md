@@ -9,7 +9,7 @@ To enable it, set the **auditLogAccess** parameter to `true` in the provisioning
 > ### Note:
 > The Audit Log Access feature is not available for `trial` and `free` plans.
 
-> ### Note:
+> ### Caution:
 > Once enabled, Audit Log Access cannot be disabled.
 
 ## Provisioning with Audit Log Access
