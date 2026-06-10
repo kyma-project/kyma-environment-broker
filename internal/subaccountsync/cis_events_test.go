@@ -43,7 +43,7 @@ func TestBuildEventRequest_V2_FirstCall(t *testing.T) {
 	q := req.URL.Query()
 	assert.Equal(t, "1H", q.Get("since"))
 	assert.Equal(t, "Subaccount", q.Get("entityType"))
-	assert.Equal(t, eventType, q.Get("eventType"))
+	assert.ElementsMatch(t, eventTypes, q["eventType"])
 	assert.Equal(t, "10", q.Get("pageSize"))
 	assert.Equal(t, "", q.Get("cursor"))
 	assert.Equal(t, "", q.Get("pageNum"))

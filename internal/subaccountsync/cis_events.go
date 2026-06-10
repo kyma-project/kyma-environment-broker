@@ -22,7 +22,9 @@ func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64,
 		} else {
 			q.Add("since", durationToSince(c.eventsWindowSize))
 			q.Add("entityType", "Subaccount")
-			q.Add("eventType", eventType)
+			for _, et := range eventTypes {
+				q.Add("eventType", et)
+			}
 			q.Add("pageSize", c.config.PageSize)
 			q.Add("sortField", "actionTime")
 			q.Add("sortOrder", "ASC")
