@@ -22,7 +22,7 @@ type Config struct {
 
 type JobConfig struct {
 	DryRun         bool          `envconfig:"default=true"`
-	RequestTimeout time.Duration `envconfig:"default=2s"`
+	RequestTimeout time.Duration `envconfig:"default=10s"`
 	RequestRetries int           `envconfig:"default=2"`
 }
 
