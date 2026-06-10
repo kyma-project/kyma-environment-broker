@@ -3090,6 +3090,16 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 			rawParameters:         `{"auditLogAccess": false}`,
 			expectError:           false,
 		},
+		"enable when disabled": {
+			initialAuditLogAccess: ptr.Bool(false),
+			rawParameters:         `{"auditLogAccess": true}`,
+			expectError:           false,
+		},
+		"disable when already disabled": {
+			initialAuditLogAccess: ptr.Bool(false),
+			rawParameters:         `{"auditLogAccess": false}`,
+			expectError:           false,
+		},
 		"enable when already enabled": {
 			initialAuditLogAccess: ptr.Bool(true),
 			rawParameters:         `{"auditLogAccess": true}`,
