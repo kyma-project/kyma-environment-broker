@@ -372,13 +372,11 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if b.config.AuditLogAccess {
-		if err := validateAuditLogAccessForPlan(previousInstance.ServicePlanID, params.AuditLogAccess); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
-		if err := validateAuditLogAccess(previousInstance, params.AuditLogAccess); err != nil {
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	if err := validateAuditLogAccessForPlan(planID, params.AuditLogAccess); err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+	if err := validateAuditLogAccess(previousInstance, params.AuditLogAccess); err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
 	operation.PreviousParameters = previousInstance.Parameters

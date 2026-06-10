@@ -414,10 +414,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return err
 	}
 
-	if b.config.AuditLogAccess {
-		if err := validateAuditLogAccessForPlan(provisioningParameters.PlanID, parameters.AuditLogAccess); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
+	if err := validateAuditLogAccessForPlan(provisioningParameters.PlanID, parameters.AuditLogAccess); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
