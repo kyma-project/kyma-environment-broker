@@ -7,7 +7,7 @@ By default, Audit Log Access is disabled.
 To enable it, set the **auditLogAccess** parameter to `true` in the provisioning or update request.
 
 > ### Note:
-> The Audit Log Access feature is not available for `trial` and `free` plans.
+> The Audit Log Access feature is not available for `trial` Kyma instances or the `free` plan.
 
 > ### Caution:
 > Once you enable Audit Log Access, you cannot disable it.
