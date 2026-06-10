@@ -245,6 +245,9 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		}
 		volGb = looked
 	}
+	if add := operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi; add != nil {
+		volGb += *add
+	}
 	vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
 	if values.DiskType != "" {
 		vol.Type = ptr.String(values.DiskType)

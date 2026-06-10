@@ -110,6 +110,24 @@ func cloudProviderToKey(cp pkg.CloudProvider) string {
 	}
 }
 
+// CloudProviderVolumeSizes reads the KCR ConfigMap once and returns per-provider volume sizes
+// keyed by CloudProvider and lowercased machine type.
+func (p *KCRVolumeProvider) CloudProviderVolumeSizes(ctx context.Context) (map[pkg.CloudProvider]map[string]int, error) {
+	raw, err := p.readAndParse(ctx)
+	if err != nil {
+		return nil, err
+	}
+	knownProviders := []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.SapConvergedCloud, pkg.Alicloud}
+	result := make(map[pkg.CloudProvider]map[string]int, len(knownProviders))
+	for _, cp := range knownProviders {
+		key := cloudProviderToKey(cp)
+		if sizes, ok := raw[key]; ok {
+			result[cp] = sizes
+		}
+	}
+	return result, nil
+}
+
 type nodemeterDTO struct {
 	Meters struct {
 		Node struct {

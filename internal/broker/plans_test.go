@@ -2,6 +2,7 @@ package broker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path"
@@ -381,6 +382,258 @@ func gvisorProperty() map[string]interface{} {
 	}
 }
 
+func createSchemaServiceWithAdditionalVolumeSizeGi(t *testing.T) *SchemaService {
+	return createSchemaServiceWithConfig(t, Config{
+		RejectUnsupportedParameters:   true,
+		EnablePlanUpgrades:            true,
+		DualStackDocsURL:              "https://placeholder.com",
+		AdditionalVolumeSizeGIPlans:   StringList{AWSPlanName, GCPPlanName, AzurePlanName, SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName, BuildRuntimeAWSPlanName, BuildRuntimeGCPPlanName, BuildRuntimeAzurePlanName, BuildRuntimeAlicloudPlanName},
+		AdditionalVolumeSizeGiMaxSize: 1000,
+	})
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiPropertyPresentOnEnabledPlans(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeSizeGi(t)
+	expected := additionalVolumeSizeGiProperty()
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+
+			got, ok := props["additionalVolumeSizeGi"]
+			require.True(t, ok, "expected 'additionalVolumeSizeGi' property to be present in schema")
+			assert.Equal(t, expected, got)
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiPropertyAbsentOnExcludedPlans(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeSizeGi(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AzureLitePlanName, freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+			assert.NotContains(t, props, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiAbsentWhenNoPlansConfigured(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			props, ok := (*schema)["properties"].(map[string]interface{})
+			require.True(t, ok, "schema has no 'properties' key")
+			assert.NotContains(t, props, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiPresentInAdditionalWorkerNodePoolsItemProperties(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeSizeGi(t)
+	expected := additionalVolumeSizeGiProperty()
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+			got, ok := itemProps["additionalVolumeSizeGi"]
+			require.True(t, ok, "expected 'additionalVolumeSizeGi' to be present in additionalWorkerNodePools item properties")
+			assert.Equal(t, expected, got)
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiAbsentInAdditionalWorkerNodePoolsItemPropertiesWhenNoPlansConfigured(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+			assert.NotContains(t, itemProps, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiAbsentInAdditionalWorkerNodePoolsItemPropertiesForAzureLite(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeSizeGi(t)
+
+	for _, tc := range planSchemaCases(schemaService, AzureLitePlanName) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			itemProps := additionalWorkerNodePoolsItemProperties(t, schema)
+			assert.NotContains(t, itemProps, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiPresentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+	schemaService := createSchemaServiceWithAdditionalVolumeSizeGi(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
+			assert.Contains(t, order, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func TestSchemaService_AdditionalVolumeSizeGiAbsentInAdditionalWorkerNodePoolsItemControlsOrder(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	for _, tc := range planSchemaCases(schemaService,
+		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+	) {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := tc.get()
+			require.NotNil(t, schema)
+
+			order := additionalWorkerNodePoolsItemControlsOrder(t, schema)
+			assert.NotContains(t, order, "additionalVolumeSizeGi")
+		})
+	}
+}
+
+func additionalVolumeSizeGiProperty() map[string]interface{} {
+	return map[string]interface{}{
+		"type":        "integer",
+		"title":       "Additional Volume Size (Gi)",
+		"description": "Additional disk space in Gi added on top of the default volume size for the worker pool.",
+		"minimum":     float64(0),
+		"maximum":     float64(1000),
+		"default":     float64(0),
+	}
+}
+
+func TestSchemaService_MachineTypeDisplayNamesEnrichedWithDiskSize(t *testing.T) {
+	kcrVolumeSizes := map[pkg.CloudProvider]map[string]int{
+		pkg.AWS: {"m6i.large": 100, "g4dn.xlarge": 125},
+		pkg.GCP: {"n2-standard-2": 200},
+	}
+	svc := createSchemaServiceWithConfig(t, Config{
+		RejectUnsupportedParameters: true,
+		EnablePlanUpgrades:          true,
+		DualStackDocsURL:            "https://placeholder.com",
+	})
+	svc.kcrVolumeProvider = &fixedVolumeSizeProvider{sizes: kcrVolumeSizes}
+
+	t.Run("aws regular machine type display name includes disk size", func(t *testing.T) {
+		create, _, available := svc.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["m6i.large"].(string)
+		require.True(t, ok, "expected 'm6i.large' in enumDisplayName")
+		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM, 100Gi volume)", name)
+	})
+
+	t.Run("gpu machine type with trailing asterisk has disk size inside parentheses", func(t *testing.T) {
+		create, _, available := svc.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		additionalWorkerPools, ok := props["additionalWorkerNodePools"].(map[string]interface{})
+		require.True(t, ok)
+		items, ok := additionalWorkerPools["items"].(map[string]interface{})
+		require.True(t, ok)
+		itemProps, ok := items["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := itemProps["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["g4dn.xlarge"].(string)
+		require.True(t, ok, "expected 'g4dn.xlarge' in enumDisplayName")
+		assert.Equal(t, "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM, 125Gi volume)*", name)
+	})
+
+	t.Run("gcp regular machine type display name includes disk size", func(t *testing.T) {
+		create, _, available := svc.GCPSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["n2-standard-2"].(string)
+		require.True(t, ok, "expected 'n2-standard-2' in enumDisplayName")
+		assert.Equal(t, "n2-standard-2 (2vCPU, 8GB RAM, 200Gi volume)", name)
+	})
+
+	t.Run("display names unchanged when kcrVolumeSizes is nil", func(t *testing.T) {
+		svcNil := createSchemaService(t)
+		create, _, available := svcNil.AWSSchemas(platformRegionUS11)
+		require.True(t, available)
+		require.NotNil(t, create)
+
+		props, ok := (*create)["properties"].(map[string]interface{})
+		require.True(t, ok)
+		machineType, ok := props["machineType"].(map[string]interface{})
+		require.True(t, ok)
+		enumDisplayName, ok := machineType["_enumDisplayName"].(map[string]interface{})
+		require.True(t, ok)
+
+		name, ok := enumDisplayName["m6i.large"].(string)
+		require.True(t, ok)
+		assert.Equal(t, "m6i.large (2vCPU, 8GB RAM)", name)
+	})
+}
+
 func validateSchema(t *testing.T, actual []byte, file string) {
 	var prettyExpected bytes.Buffer
 	expected := readJsonFile(t, file)
@@ -491,5 +744,13 @@ func createSchemaServiceWithConfig(t *testing.T, cfg Config) *SchemaService {
 
 	return NewSchemaService(provider, plans, nil, cfg,
 		StringList{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName, AlicloudPlanName},
-		channelResolver)
+		channelResolver, nil)
+}
+
+type fixedVolumeSizeProvider struct {
+	sizes map[pkg.CloudProvider]map[string]int
+}
+
+func (f *fixedVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (map[pkg.CloudProvider]map[string]int, error) {
+	return f.sizes, nil
 }

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -87,6 +86,7 @@ type BrokerSuiteTest struct {
 	metrics                  *metrics.RegisterContainer
 	k8sDeletionObjectTracker Deleter
 	gardenerClient           *dynamicFake.FakeDynamicClient
+	kcrVolumeProvider        broker.VolumeSizeProvider
 }
 
 func (s *BrokerSuiteTest) AddNotCompletedStep(suspensionOpID string) {
@@ -117,8 +117,9 @@ func (s *BrokerSuiteTest) TearDown() {
 type SuiteOption func(*suiteOptions)
 
 type suiteOptions struct {
-	cfg         *Config
-	withMetrics bool
+	cfg               *Config
+	withMetrics       bool
+	kcrVolumeProvider broker.VolumeSizeProvider
 }
 
 // WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
@@ -129,6 +130,11 @@ func WithConfig(cfg *Config) SuiteOption {
 // WithMetrics enables the Prometheus metrics endpoint on the test suite router.
 func WithMetrics() SuiteOption {
 	return func(o *suiteOptions) { o.withMetrics = true }
+}
+
+// WithKCRVolumeProvider sets a custom KCR volume size provider.
+func WithKCRVolumeProvider(p broker.VolumeSizeProvider) SuiteOption {
+	return func(o *suiteOptions) { o.kcrVolumeProvider = p }
 }
 
 func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
@@ -180,7 +186,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 
 	eventBroker := event.NewPubSub(log)
 
-	createSubscriptions(t, gardenerClient, cfg.SubscriptionGardenerResource)
+	createSubscriptions(t, gardenerClient)
 	require.NoError(t, err)
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
@@ -193,7 +199,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
-	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
+	schemaService := broker.NewSchemaService(providerSpec, plansSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, o.kcrVolumeProvider)
 	fatalOnError(err, log)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -244,6 +250,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 
 		k8sDeletionObjectTracker: ot,
 		gardenerClient:           gardenerClient,
+		kcrVolumeProvider:        o.kcrVolumeProvider,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
@@ -309,12 +316,7 @@ func (s *BrokerSuiteTest) GetKcpClient() client.Client {
 	return s.k8sKcp
 }
 
-func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient, bindingResource string) {
-	resource := gardener.SecretBindingResource
-	if strings.ToLower(bindingResource) == credentialsBinding {
-		resource = gardener.CredentialsBindingResource
-	}
-
+func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicClient) {
 	for sbName, labels := range map[string]map[string]string{
 		"sb-azure": {
 			"hyperscalerType": "azure",
@@ -361,28 +363,16 @@ func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicCl
 	} {
 
 		var unstructuredObj *unstructured.Unstructured
-		if resource == gardener.SecretBindingResource {
-			sb := &gardener.SecretBinding{}
-			sb.SetName(sbName)
-			sb.SetNamespace(gardenerKymaNamespace)
-			sb.SetLabels(labels)
-			sb.SetSecretRefName(sbName)
-			sb.SetSecretRefNamespace(gardenerKymaNamespace)
-			unstructuredObj = &sb.Unstructured
-			_, err := gardenerClient.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
-			require.NoError(t, err)
-		} else {
-			cb := &gardener.CredentialsBinding{}
-			cb.SetName(sbName)
-			cb.SetNamespace(gardenerKymaNamespace)
-			cb.SetLabels(labels)
-			cb.SetSecretRefName(sbName)
-			cb.SetSecretRefNamespace(gardenerKymaNamespace)
-			unstructuredObj = &cb.Unstructured
-			_, err := gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
-			require.NoError(t, err)
-		}
 
+		cb := &gardener.CredentialsBinding{}
+		cb.SetName(sbName)
+		cb.SetNamespace(gardenerKymaNamespace)
+		cb.SetLabels(labels)
+		cb.SetSecretRefName(sbName)
+		cb.SetSecretRefNamespace(gardenerKymaNamespace)
+		unstructuredObj = &cb.Unstructured
+		_, err := gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
+		require.NoError(t, err)
 	}
 }
 
@@ -516,13 +506,21 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	runtimeConfigProvider := kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields)
 	channelResolver, err := kebConfig.NewChannelResolver(runtimeConfigProvider, broker.AvailablePlans.GetAllPlanNamesAsStrings(), log)
 	fatalOnError(err, log)
-	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver)
+	schemaService := broker.NewSchemaService(providerSpec, planSpec, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.IngressFilteringPlans, channelResolver, s.kcrVolumeProvider)
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
 		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
 
 	s.httpServer = httptest.NewServer(s.router)
+}
+
+type fakeVolumeSizeProvider struct {
+	sizes map[pkg.CloudProvider]map[string]int
+}
+
+func (f *fakeVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (map[pkg.CloudProvider]map[string]int, error) {
+	return f.sizes, nil
 }
 
 func (s *BrokerSuiteTest) CreateProvisionedRuntime(options RuntimeOptions) string {

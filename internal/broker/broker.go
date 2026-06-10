@@ -69,6 +69,9 @@ type Config struct {
 
 	SyncEmptyUpdateResponseEnabled bool `envconfig:"default=false"`
 
+	AdditionalVolumeSizeGIPlans   StringList `envconfig:"optional"`
+	AdditionalVolumeSizeGiMaxSize int        `envconfig:"default=1000"`
+
 	DynamicVolumeSizeEnabled bool   `envconfig:"default=false"`
 	KCRConfigMapName         string `envconfig:"default=consumption-reporter-config"`
 
@@ -104,6 +107,12 @@ func (cfg *Config) Validate() error {
 		return err
 	}
 	if err := validatePlanList(cfg.Binding.BindablePlans, "BindablePlans"); err != nil {
+		return err
+	}
+	if len(cfg.AdditionalVolumeSizeGIPlans) > 0 && !cfg.DynamicVolumeSizeEnabled {
+		return fmt.Errorf("APP_BROKER_ADDITIONAL_VOLUME_SIZE_GI_PLANS requires APP_BROKER_DYNAMIC_VOLUME_SIZE_ENABLED to be true")
+	}
+	if err := validatePlanList(cfg.AdditionalVolumeSizeGIPlans, "AdditionalVolumeSizeGIPlans"); err != nil {
 		return err
 	}
 	return nil
@@ -164,7 +173,7 @@ type InfrastructureManager struct {
 	MachineImage                 string            `envconfig:"optional"`
 	MachineImageVersion          string            `envconfig:"optional"`
 	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
-	MultiZoneCluster             bool              `envconfig:"default=false"`
+	MultiZoneCluster             bool              `envconfig:"default=true"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
 	IngressFilteringPlans        StringList        `envconfig:"default=no-plan"`

@@ -8,7 +8,7 @@
 
 The diagram illustrates the architecture based on an example provisioning request.
 1. The user sends a provisioning request.
-2. Kyma Environment Broker (KEB) requests an appropriate SecretBinding (CredentialsBinding).
+2. Kyma Environment Broker (KEB) requests an appropriate CredentialsBinding.
 3. KEB creates a Runtime resource.
 4. KEB creates a Kyma resource.
 
