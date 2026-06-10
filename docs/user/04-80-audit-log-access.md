@@ -61,4 +61,4 @@ To enable Audit Log Access on an existing Kyma runtime, send an update request w
 ```
 
 > ### Note:
-> Once Audit Log Access is enabled, setting **auditLogAccess** to `false` in an update request results in an error.
+> If Audit Log Access is enabled, setting **auditLogAccess** to `false` in an update request results in an error.
