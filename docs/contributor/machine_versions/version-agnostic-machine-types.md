@@ -12,6 +12,9 @@ When a hyperscaler deprecates a machine generation or introduces a newer one, on
 > ### Tip:
 > Versioned machine types such as `m6i.large` are still supported. If an input machine type does not match any configured mapping pattern, it is preserved as-is. However, we recommend marking versioned names as deprecated in the schema and switching to the corresponding version-agnostic names.
 
+> ### Note
+> The concrete version a version-agnostic name resolves to may not always be the latest available generation. Operational constraints such as limited regional availability or storage class incompatibilities can require the mapping to target an older generation until those limitations are resolved. Additionally, some machine types may be introduced as specific concrete instances rather than version-agnostic types, depending on provider constraints or cost considerations. Before adopting version-agnostic machine types for a provider, consult the respective hyperscaler's documentation directly. When a mapping is updated, review the change for potential breaking implications, such as storage class or regional availability changes, before applying it.
+
 ## Machine Type Resolution
 
 Machine type resolution is applied in the following cases:
@@ -30,9 +33,9 @@ Machine type resolution is applied in the following cases:
 
 ### How Resolution Works
 
-Resolution is based on the following pattern matching:
+Resolution is based on pattern matching:
 
-1. The configured machine type is compared against the templates in **machinesVersions**.
+1. The configured machine type is compared against the templates in `machinesVersions`.
 2. If a template matches, its placeholders are substituted into the mapped output template.
 3. If no template matches, the original value is returned unchanged.
 
@@ -51,14 +54,14 @@ Each supported provider uses a pattern-based naming scheme. The **machinesVersio
 
 AWS version-agnostic types use short alphabetic family prefixes without an explicit generation number. The `{size}` placeholder matches any standard size suffix such as `large`, `xlarge`, or `16xlarge`.
 
-| Version-Agnostic Prefix | Purpose           | Resolves To |
+| Version-Agnostic Prefix |      Purpose      | Resolves To |
 |:-----------------------:|:-----------------:|:-----------:|
-| `mi`                    | General-purpose   | `m6i`       |
-| `ci`                    | Compute-optimized | `c7i`       |
-| `ri`                    | Memory-optimized  | `r8i`       |
-| `ii`                    | Storage-optimized | `i7i`       |
-| `g`                     | GPU (G6 family)   | `g6`        |
-| `gdn`                   | GPU (G4dn family) | `g4dn`      |
+|          `mi`           |  General-purpose  |    `m6i`    |
+|          `ci`           | Compute-optimized |    `c7i`    |
+|          `ri`           | Memory-optimized  |    `r8i`    |
+|          `ii`           | Storage-optimized |    `i7i`    |
+|           `g`           |  GPU (G6 family)  |    `g6`     |
+|          `gdn`          | GPU (G4dn family) |   `g4dn`    |
 
 Configuration:
 
@@ -112,14 +115,14 @@ Machine version resolution:
 
 Azure version-agnostic types omit the `_v{N}` generation suffix. The `{size}` placeholder matches the numeric size component of the instance name.
 
-| Version-Agnostic Pattern  | Purpose                          | Resolves To                  |
-|:-------------------------:|:--------------------------------:|:----------------------------:|
-| `Standard_D{size}s`       | General-purpose (premium storage)| `Standard_D{size}s_v5`       |
-| `Standard_D{size}`        | General-purpose                  | `Standard_D{size}_v3`        |
-| `Standard_F{size}s`       | Compute-optimized                | `Standard_F{size}s_v2`       |
-| `Standard_NC{size}as_T4`  | GPU                              | `Standard_NC{size}as_T4_v3`  |
-| `Standard_E{size}s`       | Memory-optimized                 | `Standard_E{size}s_v6`       |
-| `Standard_L{size}s`       | Storage-optimized                | `Standard_L{size}s_v3`       |
+| Version-Agnostic Pattern |              Purpose              |         Resolves To         |
+|:------------------------:|:---------------------------------:|:---------------------------:|
+|   `Standard_D{size}s`    | General-purpose (premium storage) |   `Standard_D{size}s_v5`    |
+|    `Standard_D{size}`    |          General-purpose          |    `Standard_D{size}_v3`    |
+|   `Standard_F{size}s`    |         Compute-optimized         |   `Standard_F{size}s_v2`    |
+| `Standard_NC{size}as_T4` |                GPU                | `Standard_NC{size}as_T4_v3` |
+|   `Standard_E{size}s`    |         Memory-optimized          |   `Standard_E{size}s_v6`    |
+|   `Standard_L{size}s`    |         Storage-optimized         |   `Standard_L{size}s_v3`    |
 
 Configuration:
 
@@ -169,13 +172,13 @@ Machine version resolution:
 
 GCP version-agnostic types omit the generation number from the family prefix. The `{size}` placeholder matches the vCPU count in the instance name:
 
-| Version-Agnostic Pattern | Purpose                       | Resolves To                        |
-|:------------------------:|:-----------------------------:|:----------------------------------:|
-| `n-standard-{size}`      | General-purpose               | `n2-standard-{size}`               |
-| `cd-highcpu-{size}`      | Compute-optimized             | `c2d-highcpu-{size}`               |
-| `g-standard-{size}`      | GPU                           | `g2-standard-{size}`               |
-| `m-ultramem-{size}`      | Memory-optimized              | `m3-ultramem-{size}`               |
-| `z-highmem-{size}-standardlssd`       | Storage-optimized (local SSD) | `z3-highmem-{size}-standardlssd`   |
+|    Version-Agnostic Pattern     |            Purpose            |           Resolves To            |
+|:-------------------------------:|:-----------------------------:|:--------------------------------:|
+|       `n-standard-{size}`       |        General-purpose        |       `n2-standard-{size}`       |
+|       `cd-highcpu-{size}`       |       Compute-optimized       |       `c2d-highcpu-{size}`       |
+|       `g-standard-{size}`       |              GPU              |       `g2-standard-{size}`       |
+|       `m-ultramem-{size}`       |       Memory-optimized        |       `m3-ultramem-{size}`       |
+| `z-highmem-{size}-standardlssd` | Storage-optimized (local SSD) | `z3-highmem-{size}-standardlssd` |
 
 Configuration:
 
@@ -190,8 +193,10 @@ providersConfiguration:
       m-ultramem-32: m-ultramem-32 (32vCPU, 976GB RAM)
       z-highmem-14-standardlssd: z-highmem-14-standardlssd (14vCPU, 112GB RAM)
 
+      # Concrete machines (not resolved through a version-agnostic name)
+      n2-standard-2: n2-standard-2 (2vCPU, 8GB RAM)
+
       # Deprecated machines with explicit version
-      n2-standard-2: n2-standard-2 (deprecated, use n-standard-2)
       c2d-highcpu-2: c2d-highcpu-2 (deprecated, use cd-highcpu-2)
       g2-standard-4: g2-standard-4 (deprecated, use g-standard-4)*
 
@@ -205,22 +210,22 @@ providersConfiguration:
 
 Machine version resolution:
 
-|      Input      |   Input Template    |         Output Template          |            Output            |
-|:---------------:|:-------------------:|:--------------------------------:|:----------------------------:|
-| `n-standard-2`  | `n-standard-{size}` |       `n2-standard-{size}`       |       `n2-standard-2`        |
-| `cd-highcpu-2`  | `cd-highcpu-{size}` |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
-| `g-standard-4`  | `g-standard-{size}` |       `g2-standard-{size}`       |       `g2-standard-4`        |
-| `m-ultramem-32` | `m-ultramem-{size}` |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
-| `z-highmem-14-standardlssd`  | `z-highmem-{size}-standardlssd`  | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
-| `n2-standard-2` |         `-`         |               `-`                |       `n2-standard-2`        |
-| `c2d-highcpu-2` |         `-`         |               `-`                |       `c2d-highcpu-2`        |
-| `g2-standard-4` |         `-`         |               `-`                |       `g2-standard-4`        |
+|            Input            |         Input Template          |         Output Template          |            Output            |
+|:---------------------------:|:-------------------------------:|:--------------------------------:|:----------------------------:|
+|       `n-standard-2`        |       `n-standard-{size}`       |       `n2-standard-{size}`       |       `n2-standard-2`        |
+|       `cd-highcpu-2`        |       `cd-highcpu-{size}`       |       `c2d-highcpu-{size}`       |       `c2d-highcpu-2`        |
+|       `g-standard-4`        |       `g-standard-{size}`       |       `g2-standard-{size}`       |       `g2-standard-4`        |
+|       `m-ultramem-32`       |       `m-ultramem-{size}`       |       `m3-ultramem-{size}`       |       `m3-ultramem-32`       |
+| `z-highmem-14-standardlssd` | `z-highmem-{size}-standardlssd` | `z3-highmem-{size}-standardlssd` | `z3-highmem-14-standardlssd` |
+|       `n2-standard-2`       |               `-`               |               `-`                |       `n2-standard-2`        |
+|       `c2d-highcpu-2`       |               `-`               |               `-`                |       `c2d-highcpu-2`        |
+|       `g2-standard-4`       |               `-`               |               `-`                |       `g2-standard-4`        |
 
 ### SAP Cloud Infrastructure
 
 SAP Cloud Infrastructure machine types follow the `g_c{c_size}_m{m_size}` scheme, where `c_size` is the vCPU count and `m_size` is the memory in GB. These first-generation types do not carry an explicit version identifier. When **machinesVersions** is configured, KEB resolves them to the corresponding second-generation `_v2` variant.
 
-| Version-Agnostic Pattern | Purpose         | Resolves To                |
+| Version-Agnostic Pattern |     Purpose     |        Resolves To         |
 |:------------------------:|:---------------:|:--------------------------:|
 | `g_c{c_size}_m{m_size}`  | General-purpose | `g_c{c_size}_m{m_size}_v2` |
 
@@ -250,9 +255,9 @@ Machine version resolution:
 
 Alibaba Cloud version-agnostic types use the `ecs.gi.{size}` scheme, omitting the generation number from the family prefix.
 
-| Version-Agnostic Pattern | Purpose         | Resolves To      |
+| Version-Agnostic Pattern |     Purpose     |   Resolves To    |
 |:------------------------:|:---------------:|:----------------:|
-| `ecs.gi.{size}`          | General-purpose | `ecs.g9i.{size}` |
+|     `ecs.gi.{size}`      | General-purpose | `ecs.g9i.{size}` |
 
 Configuration:
 
