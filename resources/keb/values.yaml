@@ -665,7 +665,7 @@ serviceBindingCleanup:
   # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
   # Timeout for each DELETE request to the broker.
-  requestTimeout: 2s
+  requestTimeout: 10s
   schedule: "0 2,14 * * *"
 # =================================================
 

@@ -253,7 +253,7 @@
 | serviceBindingCleanup.<br>dryRun | If true, the Job only logs what would be deleted without actually removing any bindings. | `False` |
 | serviceBindingCleanup.<br>enabled | If true, enables the Service Binding Cleanup CronJob. | `True` |
 | serviceBindingCleanup.<br>requestRetries | Number of times to retry a failed DELETE request for a binding. | `2` |
-| serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `2s` |
+| serviceBindingCleanup.<br>requestTimeout | Timeout for each DELETE request to the broker. | `10s` |
 | serviceBindingCleanup.<br>schedule | - | `0 2,14 * * *` |
 | subaccountCleanup.<br>enabled | - | `true` |
 | subaccountCleanup.<br>schedule | - | `0 1 * * *` |
