@@ -27,8 +27,10 @@ const (
 	eventServicePath      = "%s/events/v1/events/central"
 	eventServicePathV2    = "%s/events/v2/events/central"
 	subaccountServicePath = "%s/accounts/v1/technical/subaccounts/%s"
-	eventType             = "Subaccount_Creation,Subaccount_Update"
+	eventType             = "Subaccount_Creation,Subaccount_Update" // used for v1 (comma-separated string)
 )
+
+var eventTypes = []string{"Subaccount_Creation", "Subaccount_Update"} // used for v2 (repeated params)
 
 type (
 	subaccountIDType string

@@ -254,7 +254,7 @@ func (e *eventsEndpoint) getEventsV2(w http.ResponseWriter, r *http.Request) {
 			pageNumber = n
 		}
 	} else {
-		eventTypeFilter := query.Get("eventType")
+		eventTypeFilter := strings.Join(query["eventType"], ",")
 		sortField := query.Get("sortField")
 		sortOrder := strings.ToUpper(query.Get("sortOrder"))
 		pageSizeParam := query.Get("pageSize")
