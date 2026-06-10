@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64, cursor string) (*http.Request, error) {
+func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64, cursor string, eventType string) (*http.Request, error) {
 	if c.eventsServiceVersion == "v2" {
 		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePathV2, c.config.ServiceURL), nil)
 		if err != nil {
@@ -79,13 +79,25 @@ func (c *RateLimitedCisClient) fetchEventsWindowV1(fromActionTime int64) ([]Even
 }
 
 func (c *RateLimitedCisClient) fetchEventsWindowV2() ([]Event, error) {
+	var all []Event
+	for _, et := range eventTypes {
+		events, err := c.fetchEventsWindowV2ForType(et)
+		if err != nil {
+			return all, err
+		}
+		all = append(all, events...)
+	}
+	return all, nil
+}
+
+func (c *RateLimitedCisClient) fetchEventsWindowV2ForType(et string) ([]Event, error) {
 	var events []Event
 	var cursor string
 	var page int
 	for {
-		cisResponse, err := c.fetchEventsPageV2(cursor)
+		cisResponse, err := c.fetchEventsPageV2(cursor, et)
 		if err != nil {
-			c.log.Error(fmt.Sprintf("while getting subaccount events (v2) page %d: %v", page, err))
+			c.log.Error(fmt.Sprintf("while getting subaccount events (v2) page %d for type %s: %v", page, et, err))
 			return events, err
 		}
 		events = append(events, cisResponse.Events...)
@@ -95,12 +107,12 @@ func (c *RateLimitedCisClient) fetchEventsWindowV2() ([]Event, error) {
 		}
 		cursor = cisResponse.NextCursor
 	}
-	c.log.Debug(fmt.Sprintf("Event window fetched (v2) - pages: %d, events: %d", page, len(events)))
+	c.log.Debug(fmt.Sprintf("Event window fetched (v2) for type %s - pages: %d, events: %d", et, page, len(events)))
 	return events, nil
 }
 
-func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsResponse, error) {
-	request, err := c.buildEventRequest(0, 0, cursor)
+func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string, et string) (CisEventsResponse, error) {
+	request, err := c.buildEventRequest(0, 0, cursor, et)
 	if err != nil {
 		return CisEventsResponse{}, fmt.Errorf("while building v2 request for event service: %v", err)
 	}
@@ -124,7 +136,7 @@ func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsRespon
 }
 
 func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (CisEventsResponse, error) {
-	request, err := c.buildEventRequest(page, fromActionTime, "")
+	request, err := c.buildEventRequest(page, fromActionTime, "", eventType)
 	if err != nil {
 		return CisEventsResponse{}, fmt.Errorf("while building request for event service: %v", err)
 	}
