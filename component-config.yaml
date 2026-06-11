@@ -1,5 +1,5 @@
 name: kyma-project.io/kyma-runtime/kcp-components/keb-sap
-team: kyma/gophers
+team: kyma/gopher
 images:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.31.4
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.31.4
