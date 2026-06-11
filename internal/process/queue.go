@@ -122,6 +122,7 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					queue.Done(key)
+					q.queueDepthGauge.Set(float64(queue.Len()))
 					workerLogger.Info("queue done processing")
 				}()
 
