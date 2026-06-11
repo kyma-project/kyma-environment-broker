@@ -50,31 +50,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.31.4
+      version: 1.32.0
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_expirator_job:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.31.4
+      version: 1.32.0
     kyma_environment_analytics:
       dir:
-      version: "1.31.4"
+      version: "1.32.0"
       repository: ""
       tag: ""
   ingress:
@@ -169,6 +169,8 @@ analytics:
 # Kyma Environment Broker (KEB) Deployment Settings
 # =================================================
 broker:
+  # Enables the auditLogAccess parameter in the provisioning and update schemas.
+  auditLogAccess: false
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp".
     bindablePlans: "aws"
@@ -667,7 +669,7 @@ serviceBindingCleanup:
   # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
   # Timeout for each DELETE request to the broker.
-  requestTimeout: 2s
+  requestTimeout: 10s
   schedule: "0 2,14 * * *"
 # =================================================
 

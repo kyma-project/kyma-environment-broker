@@ -183,5 +183,6 @@ Available skills:
 - **`review-pr`** — Reviews a PR against KEB conventions (step interface, storage access, docs metadata, FIPS compliance, etc.).
 - **`commit`** — Drafts and creates a git commit following KEB commit message conventions.
 - **`create-pr`** — Creates a pull request from a fork branch to `kyma-project/kyma-environment-broker:main`.
+- **`pr-deploy`** — Creates a pr-deploy PR in `kyma/management-plane-charts` to deploy a KEB PR to kcp-dev via ArgoCD.
 
 **Maintenance:** Any PR that changes project structure, adds a new pattern, or modifies the build/test workflow must update `CLAUDE.md` and the relevant skills in the same PR. This keeps Claude Code's assistance accurate as the project evolves.

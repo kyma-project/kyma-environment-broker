@@ -10,6 +10,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_MAX_SIZE** | <code>100</code> | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. |
 | **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_PLANS** | None | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
+| **APP_BROKER_AUDIT_&#x200b;LOG_ACCESS** | <code>false</code> | Enables the auditLogAccess parameter in the provisioning and update schemas. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |

@@ -57,6 +57,7 @@ type UpdateProperties struct {
 	AccessControlList         *ACLType                       `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorType                    `json:"gvisor,omitempty"`
 	AdditionalVolumeSizeGi    *Type                          `json:"additionalVolumeSizeGi,omitempty"`
+	AuditLogAccess            *Type                          `json:"auditLogAccess,omitempty"`
 }
 
 type GvisorProperties struct {
@@ -787,7 +788,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "additionalVolumeSizeGi", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "colocateControlPlane", "machineType", "autoScalerMin", "autoScalerMax", "additionalVolumeSizeGi", "zonesCount", "gvisor", "additionalWorkerNodePools", "modules", "networking", "accessControlList", "oidc", "administrators", "ingressFiltering", "auditLogAccess"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -981,5 +982,14 @@ func AdditionalVolumeSizeGiProperty(maxSize int) *Type {
 		Minimum:     ptr.Integer(0),
 		Maximum:     maxSize,
 		Default:     0,
+	}
+}
+
+func AuditLogAccessProperty() *Type {
+	return &Type{
+		Type:        "boolean",
+		Title:       "Enable Audit Log Access",
+		Default:     false,
+		Description: "Specifies whether Audit Log Access is enabled. Once enabled, you cannot disable it.",
 	}
 }

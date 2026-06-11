@@ -3947,6 +3947,44 @@ func TestProvisioningWithVersionAgnosticMachineTypes(t *testing.T) {
 	assert.Equal(t, "r8i.16xlarge", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[1].Machine.Type)
 }
 
+func TestProvisioning_AuditLogAccess(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.AuditLogAccess = true
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+	defer suite.TearDown()
+
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"region": "eu-central-1",
+				"auditLogAccess": true
+			}
+	}`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	require.NotNil(t, runtime.Spec.AuditLogAccessEnabled)
+	assert.True(t, *runtime.Spec.AuditLogAccessEnabled)
+}
+
 func (s *BrokerSuiteTest) provisionMultipleInstances(t *testing.T, instanceIDs []string, globalAccountID string) {
 	const (
 		serviceID         = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"

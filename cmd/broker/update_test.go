@@ -5511,3 +5511,58 @@ func TestUpdateAutoScalerMinReflectedInRuntimes(t *testing.T) {
 	require.NotNil(t, rt.Status.Update.Data[1].Parameters.AutoScalerMin)
 	assert.Equal(t, 5, *rt.Status.Update.Data[1].Parameters.AutoScalerMin)
 }
+
+func TestUpdateAuditLogAccess(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.AuditLogAccess = true
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"region": "eu-central-1"
+			}
+	}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	require.Nil(t, runtime.Spec.AuditLogAccessEnabled)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"auditLogAccess": true
+			}
+	}`)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then
+	runtime = suite.GetRuntimeResourceByInstanceID(iid)
+	require.NotNil(t, runtime.Spec.AuditLogAccessEnabled)
+	assert.True(t, *runtime.Spec.AuditLogAccessEnabled)
+}

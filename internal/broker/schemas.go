@@ -296,6 +296,7 @@ func (s *SchemaService) FreeSchema(provider pkg.CloudProvider, platformRegion st
 		regionsDisplayNames = s.providerSpec.RegionDisplayNames(pkg.AWS, regions)
 	}
 	flags := s.createFlags(FreemiumPlanName)
+	flags.auditLogAccess = false
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -331,6 +332,7 @@ func (s *SchemaService) FreeSchemas(provider pkg.CloudProvider, platformRegion s
 
 func (s *SchemaService) TrialSchema(update bool) *map[string]interface{} {
 	flags := s.createFlags(TrialPlanName)
+	flags.auditLogAccess = false
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -360,6 +362,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.cfg.WorkerPoolLabelsAnnotationsEnabled,
 		s.cfg.AdditionalVolumeSizeGIPlans.Contains(planName),
 		s.cfg.AdditionalVolumeSizeGiMaxSize,
+		s.cfg.AuditLogAccess,
 	)
 }
 

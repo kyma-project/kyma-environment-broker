@@ -38,10 +38,12 @@ type UpdateRuntimeStep struct {
 	maxPodsWhitelistedGlobalAccountIds whitelist.Set
 	providerSpec                       *configuration.ProviderSpec
 	kcrVolumeProvider                  *provider.KCRVolumeProvider
+	auditLogAccess                     bool
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager,
-	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec, kcrVolumeProvider *provider.KCRVolumeProvider) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider, maxPodsWhitelistedGlobalAccountIds whitelist.Set, providerSpec *configuration.ProviderSpec, kcrVolumeProvider *provider.KCRVolumeProvider,
+	auditLogAccess bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                          k8sClient,
 		delay:                              delay,
@@ -51,6 +53,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		maxPodsWhitelistedGlobalAccountIds: maxPodsWhitelistedGlobalAccountIds,
 		providerSpec:                       providerSpec,
 		kcrVolumeProvider:                  kcrVolumeProvider,
+		auditLogAccess:                     auditLogAccess,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -88,6 +91,12 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) && operation.UpdatingParameters.IngressFiltering != nil {
 		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: *operation.UpdatingParameters.IngressFiltering}
+	}
+
+	if s.auditLogAccess {
+		if operation.UpdatingParameters.AuditLogAccess != nil && *operation.UpdatingParameters.AuditLogAccess {
+			runtime.Spec.AuditLogAccessEnabled = operation.UpdatingParameters.AuditLogAccess
+		}
 	}
 
 	if operation.UpdatedPlanID != "" {
