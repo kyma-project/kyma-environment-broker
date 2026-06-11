@@ -121,7 +121,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resource, first runtime, no label
@@ -174,7 +174,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resources, all true
@@ -213,7 +213,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resources, all true
@@ -263,7 +263,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resources
@@ -313,7 +313,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resources, all true
@@ -358,7 +358,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		teardownTest, brokerStorage := setupTestNilStorage(t)
 		defer teardownTest(t)
 
-		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig)
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v1")
 
 		// given
 		// initial event from a kyma resources, all true
@@ -424,6 +424,50 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		//then we got update from the plane (updater updated second resource with true label)
 		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "UNSET"})
 		assert.True(t, reconciler.syncQueue.IsEmpty())
+	})
+}
+
+func TestStateReconcilerWithFakeCisServerV2(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
+
+	srv, err := cis.NewFakeServer()
+	require.NoError(t, err)
+	defer srv.Close()
+
+	cisClient := srv.Client()
+	cisConfig := CisEndpointConfig{
+		ServiceURL:             srv.URL,
+		RateLimitingInterval:   time.Minute * 10,
+		MaxRequestsPerInterval: 1000,
+	}
+
+	t.Run("should schedule update of one resource after getting account data from faked CIS v2 events", func(t *testing.T) {
+		teardownTest, brokerStorage := setupTestNilStorage(t)
+		defer teardownTest(t)
+
+		reconciler := createNewReconcilerWithFakeCisServer(brokerStorage, cisClient, cisConfig, "v2")
+
+		// initial resource state — no CIS data yet
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "", usedForProduction: ""})
+		assert.Equal(t, 1, len(reconciler.inMemoryState))
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		assert.Equal(t, 1, len(reconciler.inMemoryState))
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+
+		// accounts sync populates CIS state
+		reconciler.periodicAccountsSync()
+		assert.False(t, reconciler.syncQueue.IsEmpty())
+		element, ok := reconciler.syncQueue.Extract()
+		assert.True(t, ok)
+		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+
+		// events sync via v2 — testdata has updates for FakeSubaccountID1 with betaEnabled=true
+		reconciler.periodicEventsSync(0)
+		assert.Equal(t, true, reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.BetaEnabled)
 	})
 }
 
@@ -1493,21 +1537,22 @@ func createNewReconciler(storage storage.BrokerStorage) stateReconcilerType {
 	}
 }
 
-func createFakeRateLimitedCisClient(ctx context.Context, httpClient *http.Client, config CisEndpointConfig, log *slog.Logger) *RateLimitedCisClient {
-
+func createFakeRateLimitedCisClient(ctx context.Context, httpClient *http.Client, config CisEndpointConfig, log *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration) *RateLimitedCisClient {
 	rl := rate.NewLimiter(rate.Every(config.RateLimitingInterval), config.MaxRequestsPerInterval)
 
 	return &RateLimitedCisClient{
-		ctx:         ctx,
-		httpClient:  httpClient,
-		config:      config,
-		RateLimiter: rl,
-		log:         log,
+		ctx:                  ctx,
+		httpClient:           httpClient,
+		config:               config,
+		RateLimiter:          rl,
+		log:                  log,
+		eventsServiceVersion: eventsServiceVersion,
+		eventsWindowSize:     eventsWindowSize,
 	}
 }
 
-func createNewReconcilerWithFakeCisServer(brokerStorage storage.BrokerStorage, client *http.Client, cisEndpointConfig CisEndpointConfig) stateReconcilerType {
-	rtlClient := createFakeRateLimitedCisClient(context.Background(), client, cisEndpointConfig, logger)
+func createNewReconcilerWithFakeCisServer(brokerStorage storage.BrokerStorage, client *http.Client, cisEndpointConfig CisEndpointConfig, eventsServiceVersion string) stateReconcilerType {
+	rtlClient := createFakeRateLimitedCisClient(context.Background(), client, cisEndpointConfig, logger, eventsServiceVersion, 20*time.Minute)
 	var epochInStubs = int64(1710748500000)
 	return stateReconcilerType{
 		inMemoryState:  make(inMemoryStateType),

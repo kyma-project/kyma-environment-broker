@@ -22,7 +22,8 @@ type (
 		MetricsPort                       string        `envconfig:"default=8081"`
 		LogLevel                          string        `envconfig:"default=info"`
 		RuntimeConfigurationConfigMapName string
-		AlwaysSubaccountFromDatabase      bool `envconfig:"default=false"`
+		AlwaysSubaccountFromDatabase      bool   `envconfig:"default=false"`
+		EventsServiceVersion              string `envconfig:"default=v1"`
 	}
 
 	CisEndpointConfig struct {
