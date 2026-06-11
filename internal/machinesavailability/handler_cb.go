@@ -17,6 +17,30 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 )
 
+const (
+	machinesAvailabilityPath  = "/oauth/v2/machines_availability"
+	highAvailabilityThreshold = 3
+)
+
+type ProvidersData struct {
+	Providers []Provider `json:"providers"`
+}
+
+type Provider struct {
+	Name         runtime.CloudProvider `json:"name"`
+	MachineTypes []MachineType         `json:"machine_types"`
+}
+
+type MachineType struct {
+	Name    string   `json:"name"`
+	Regions []Region `json:"regions"`
+}
+
+type Region struct {
+	Name             string `json:"name"`
+	HighAvailability bool   `json:"high_availability"`
+}
+
 type HandlerCB struct {
 	providerSpec   *configuration.ProviderSpec
 	rulesService   *rules.RulesService

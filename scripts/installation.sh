@@ -16,6 +16,9 @@ kubectl create namespace kyma-system || true
 kubectl create namespace istio-system || true
 kubectl create namespace garden-kyma-dev || true
 
+# Create KCR ConfigMap for dynamic volume sizes before KEB starts
+kubectl apply -f scripts/testing/yaml/kcr-configmap.yaml
+
 # Install Istio CRDs (needed for AuthorizationPolicy/VirtualService in the helm chart)
 helm repo add istio https://istio-release.storage.googleapis.com/charts
 helm repo update

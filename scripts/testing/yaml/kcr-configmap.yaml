@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consumption-reporter-config
+  namespace: kcp-system
+data:
+  nodemeterconfig.yaml: |
+    meters:
+      node:
+        machine_types:
+          aws:
+            m6i.large:
+              default_volume_size: "80Gi"
+            m6i.xlarge:
+              default_volume_size: "80Gi"
+            m6i.2xlarge:
+              default_volume_size: "80Gi"
+            m6i.4xlarge:
+              default_volume_size: "150Gi"
+            m6i.8xlarge:
+              default_volume_size: "80Gi"
+            m6i.12xlarge:
+              default_volume_size: "80Gi"
+            m6i.16xlarge:
+              default_volume_size: "80Gi"
+            m5.large:
+              default_volume_size: "80Gi"
+            m5.xlarge:
+              default_volume_size: "80Gi"
+            m5.2xlarge:
+              default_volume_size: "80Gi"
+            m5.4xlarge:
+              default_volume_size: "80Gi"
+            m5.8xlarge:
+              default_volume_size: "80Gi"
+            m5.12xlarge:
+              default_volume_size: "80Gi"
+            m5.16xlarge:
+              default_volume_size: "80Gi"
+            c7i.large:
+              default_volume_size: "80Gi"
+            c7i.xlarge:
+              default_volume_size: "80Gi"
+            c7i.2xlarge:
+              default_volume_size: "80Gi"
+            c7i.4xlarge:
+              default_volume_size: "80Gi"
+            c7i.8xlarge:
+              default_volume_size: "80Gi"
+            c7i.12xlarge:
+              default_volume_size: "80Gi"
+            c7i.16xlarge:
+              default_volume_size: "80Gi"
+            g6.xlarge:
+              default_volume_size: "80Gi"
+            g6.2xlarge:
+              default_volume_size: "80Gi"
+            g6.4xlarge:
+              default_volume_size: "80Gi"
+            g6.8xlarge:
+              default_volume_size: "80Gi"
+            g6.12xlarge:
+              default_volume_size: "80Gi"
+            g6.16xlarge:
+              default_volume_size: "80Gi"
+            g4dn.xlarge:
+              default_volume_size: "80Gi"
+            g4dn.2xlarge:
+              default_volume_size: "80Gi"
+            g4dn.4xlarge:
+              default_volume_size: "80Gi"
+            g4dn.8xlarge:
+              default_volume_size: "80Gi"
+            g4dn.12xlarge:
+              default_volume_size: "80Gi"
+            g4dn.16xlarge:
+              default_volume_size: "80Gi"
+          azure:
+            Standard_D2s_v5:
+              default_volume_size: "82Gi"
+            Standard_D4s_v5:
+              default_volume_size: "82Gi"
+            Standard_D8s_v5:
+              default_volume_size: "82Gi"
+            Standard_D16s_v5:
+              default_volume_size: "82Gi"
+            Standard_D32s_v5:
+              default_volume_size: "82Gi"
+            Standard_D48s_v5:
+              default_volume_size: "82Gi"
+            Standard_D64s_v5:
+              default_volume_size: "82Gi"
+            Standard_D4_v3:
+              default_volume_size: "82Gi"
+            Standard_D8_v3:
+              default_volume_size: "82Gi"
+            Standard_D16_v3:
+              default_volume_size: "82Gi"
+            Standard_D32_v3:
+              default_volume_size: "82Gi"
+            Standard_D48_v3:
+              default_volume_size: "82Gi"
+            Standard_D64_v3:
+              default_volume_size: "82Gi"
+            Standard_F2s_v2:
+              default_volume_size: "82Gi"
+            Standard_F4s_v2:
+              default_volume_size: "82Gi"
+            Standard_F8s_v2:
+              default_volume_size: "82Gi"
+            Standard_F16s_v2:
+              default_volume_size: "82Gi"
+            Standard_F32s_v2:
+              default_volume_size: "82Gi"
+            Standard_F48s_v2:
+              default_volume_size: "82Gi"
+            Standard_F64s_v2:
+              default_volume_size: "82Gi"
+            Standard_NC4as_T4_v3:
+              default_volume_size: "82Gi"
+            Standard_NC8as_T4_v3:
+              default_volume_size: "82Gi"
+            Standard_NC16as_T4_v3:
+              default_volume_size: "82Gi"
+            Standard_NC64as_T4_v3:
+              default_volume_size: "82Gi"
+          gcp:
+            n2-standard-2:
+              default_volume_size: "100Gi"
+            n2-standard-4:
+              default_volume_size: "100Gi"
+            n2-standard-8:
+              default_volume_size: "100Gi"
+            n2-standard-16:
+              default_volume_size: "100Gi"
+            n2-standard-32:
+              default_volume_size: "100Gi"
+            n2-standard-48:
+              default_volume_size: "100Gi"
+            n2-standard-64:
+              default_volume_size: "100Gi"
+            c2d-highcpu-2:
+              default_volume_size: "100Gi"
+            c2d-highcpu-4:
+              default_volume_size: "100Gi"
+            c2d-highcpu-8:
+              default_volume_size: "100Gi"
+            c2d-highcpu-16:
+              default_volume_size: "100Gi"
+            c2d-highcpu-32:
+              default_volume_size: "100Gi"
+            c2d-highcpu-56:
+              default_volume_size: "100Gi"
+            g2-standard-4:
+              default_volume_size: "100Gi"
+            g2-standard-8:
+              default_volume_size: "100Gi"
+            g2-standard-12:
+              default_volume_size: "100Gi"
+            g2-standard-16:
+              default_volume_size: "100Gi"
+            g2-standard-24:
+              default_volume_size: "100Gi"
+            g2-standard-32:
+              default_volume_size: "100Gi"
+            g2-standard-48:
+              default_volume_size: "100Gi"
+          openstack:
+            g_c2_m8:
+              default_volume_size: "50Gi"
+            g_c4_m16:
+              default_volume_size: "50Gi"
+            g_c6_m24:
+              default_volume_size: "50Gi"
+            g_c8_m32:
+              default_volume_size: "50Gi"
+            g_c12_m48:
+              default_volume_size: "50Gi"
+            g_c16_m64:
+              default_volume_size: "50Gi"
+            g_c32_m128:
+              default_volume_size: "50Gi"
+            g_c64_m256:
+              default_volume_size: "50Gi"
+          alicloud:
+            ecs.g9i.large:
+              default_volume_size: "80Gi"

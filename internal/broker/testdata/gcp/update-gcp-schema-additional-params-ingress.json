@@ -9,7 +9,8 @@
     "accessControlList",
     "oidc",
     "administrators",
-    "ingressFiltering"
+    "ingressFiltering",
+    "auditLogAccess"
   ],
   "_load_current_config": true,
   "_show_form_view": true,
@@ -173,6 +174,12 @@
       },
       "title": "Administrators",
       "type": "array"
+    },
+    "auditLogAccess": {
+      "default": false,
+      "description": "Specifies whether Audit Log Access is enabled. Once enabled, you cannot disable it.",
+      "title": "Enable Audit Log Access",
+      "type": "boolean"
     },
     "autoScalerMax": {
       "description": "Specifies the maximum number of virtual machines to create",

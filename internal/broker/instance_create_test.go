@@ -2000,17 +2000,17 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		{
 			name:                      "Single unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
 		},
 		{
 			name:                      "Multiple unsupported machine types",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m7g.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1; m7g.xlarge (used in: name-2), it is supported in the us-west-2",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), supported in the ap-northeast-1, ap-southeast-1, ca-central-1; m7g.xlarge (used in: name-2), supported in the us-west-2",
 		},
 		{
 			name:                      "Duplicate unsupported machine type",
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1, name-2), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1, name-2), supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
 		},
 	}
 
@@ -3097,7 +3097,7 @@ func TestDiscoveryZones(t *testing.T) {
 				WithValuesProvider(fixValueProvider(t)).
 				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
 				WithRulesService(rulesService).
-				WithGardenerClient(fixture.CreateGardenerClient()).
+				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
 				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError)).
 				Build()
 
@@ -3435,6 +3435,164 @@ func TestProvisionBlocklist(t *testing.T) {
 	})
 }
 
+func TestProvision_UnsupportedMachineType(t *testing.T) {
+	testCases := []struct {
+		name           string
+		zonesDiscovery bool
+	}{
+		{
+			name:           "zones discovery enabled",
+			zonesDiscovery: true,
+		},
+		{
+			name:           "zones discovery disabled",
+			zonesDiscovery: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "ri.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+			rulesService, err := rules.NewRulesServiceFromSlice([]string{"aws"}, sets.New("aws"), sets.New("aws"))
+			require.NoError(t, err)
+
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(broker.Config{
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
+				}).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithSchemaService(newSchemaService(t)).
+				WithConfigurationProvider(fixture.NewProviderSpecWithZonesDiscovery(t, tc.zonesDiscovery)).
+				WithValuesProvider(fixValueProvider(t)).
+				WithRulesService(rulesService).
+				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
+				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(map[string][]string{
+					"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
+					"ri.xlarge": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
+				}, nil)).
+				Build()
+
+			_, err = provisionEndpoint.Provision(
+				fixRequestContext(t, "req-region"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID: serviceID,
+					PlanID:    broker.AWSPlanID,
+					RawParameters: json.RawMessage(fmt.Sprintf(
+						`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s}`,
+						clusterName,
+						"eu-west-2",
+						additionalWorkerNodePools,
+					)),
+					RawContext: json.RawMessage(fmt.Sprintf(
+						`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`,
+						globalAccountID,
+						subAccountID,
+						"Test@Test.pl",
+					)),
+				},
+				true,
+			)
+
+			require.EqualError(t, err, "In the region eu-west-2, the following machine types are not available: ri.xlarge (used in: name-1), not supported in any region")
+		})
+	}
+}
+
+func TestProvisionAuditLogAccessForPlan(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID         string
+		rawParameters  string
+		expectedErrMsg string
+	}{
+		"audit log access enabled for trial plan": {
+			planID:         broker.TrialPlanID,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "Audit Log Access is not available for trial plan.",
+		},
+		"audit log access enabled for free plan": {
+			planID:         broker.FreemiumPlanID,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "region": "westeurope", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "Audit Log Access is not available for free plan.",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{
+				EnablePlans:          []string{"aws", broker.TrialPlanName, broker.FreemiumPlanName},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: false,
+				AuditLogAccess:       true,
+			}
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			memoryStorage := storage.NewMemoryStorage()
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(brokerCfg).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{globalAccountID: {}}).
+				WithSchemaService(newSchemaServiceWithBrokerConfig(t, brokerCfg)).
+				WithConfigurationProvider(newProviderSpec(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				Build()
+
+			// when
+			_, err := provisionEndpoint.Provision(
+				fixRequestContext(t, "cf-eu10"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        tc.planID,
+					RawParameters: json.RawMessage(tc.rawParameters),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				},
+				true,
+			)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
@@ -3494,7 +3652,7 @@ func newSchemaService(t *testing.T) *broker.SchemaService {
 	channelResolver := &fixture.FakeChannelResolver{}
 	schemaService := broker.NewSchemaService(provider, plans, nil, broker.Config{},
 		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver, nil)
 	return schemaService
 }
 
@@ -3505,7 +3663,7 @@ func newSchemaServiceWithBrokerConfig(t *testing.T, cfg broker.Config) *broker.S
 	channelResolver := &fixture.FakeChannelResolver{}
 	return broker.NewSchemaService(prov, plans, nil, cfg,
 		broker.StringList{broker.TrialPlanName, broker.AzurePlanName, broker.AzureLitePlanName, broker.AWSPlanName,
-			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver)
+			broker.GCPPlanName, broker.SapConvergedCloudPlanName, broker.FreemiumPlanName}, channelResolver, nil)
 }
 
 func newProviderSpec(t *testing.T) *configuration.ProviderSpec {

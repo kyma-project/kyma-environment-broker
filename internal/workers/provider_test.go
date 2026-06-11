@@ -609,6 +609,45 @@ aws:
 		require.NotNil(t, workers[0].Volume)
 		assert.Equal(t, "120Gi", workers[0].Volume.VolumeSize)
 	})
+
+	t.Run("should add AdditionalVolumeSizeGi on top of base volume", func(t *testing.T) {
+		// given
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:                   "worker",
+				MachineType:            "standard",
+				HAZones:                true,
+				AdditionalVolumeSizeGi: 50,
+			},
+		}
+
+		// when
+		workers, err := p.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 80,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			log,
+		)
+
+		// then
+		assert.NoError(t, err)
+		require.Len(t, workers, 1)
+		require.NotNil(t, workers[0].Volume)
+		assert.Equal(t, "130Gi", workers[0].Volume.VolumeSize)
+	})
 }
 
 func TestToGardenerTaints(t *testing.T) {
@@ -920,6 +959,28 @@ func TestIsAdditionalWorkerPoolUnchanged(t *testing.T) {
 				MachineType: "m5.xlarge",
 			},
 			want: true,
+		},
+		{
+			name: "returns false when name and machine type match but AdditionalVolumeSizeGi differs",
+			operation: &internal.Operation{
+				PreviousParameters: internal.ProvisioningParameters{
+					Parameters: runtime.ProvisioningParametersDTO{
+						AdditionalWorkerNodePools: []runtime.AdditionalWorkerNodePool{
+							{
+								Name:                   "pool-a",
+								MachineType:            "m5.large",
+								AdditionalVolumeSizeGi: 0,
+							},
+						},
+					},
+				},
+			},
+			additionalWorkerPool: runtime.AdditionalWorkerNodePool{
+				Name:                   "pool-a",
+				MachineType:            "m5.large",
+				AdditionalVolumeSizeGi: 50,
+			},
+			want: false,
 		},
 	}
 

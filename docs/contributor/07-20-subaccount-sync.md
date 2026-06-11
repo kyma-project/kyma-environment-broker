@@ -78,6 +78,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
 | **SUBACCOUNT_SYNC_&#x200b;DATABASE_USER** | None | Specifies the username for the database. |
+| **SUBACCOUNT_SYNC_&#x200b;EVENTS_SERVICE_&#x200b;VERSION** | <code>v1</code> | Specifies the CIS Events API version to use (v1 or v2). |
 | **SUBACCOUNT_SYNC_&#x200b;EVENTS_WINDOW_&#x200b;INTERVAL** | <code>15m</code> | Time window for collecting events from CIS. |
 | **SUBACCOUNT_SYNC_&#x200b;EVENTS_WINDOW_SIZE** | <code>20m</code> | Size of the time window for collecting events from CIS. |
 | **SUBACCOUNT_SYNC_LOG_&#x200b;LEVEL** | <code>info</code> | Log level for the subaccount sync job. |

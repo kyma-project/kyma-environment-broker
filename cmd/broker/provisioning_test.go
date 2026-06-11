@@ -37,10 +37,6 @@ const (
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
 	t.Skip()
-	catalogTestFile := "catalog-test.json"
-	catalogTestFilePerm := os.FileMode.Perm(0666)
-	outputToFile := true
-	prettyJson := true
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
@@ -49,7 +45,10 @@ func TestCatalog(t *testing.T) {
 	}
 
 	// given
-	suite := NewBrokerSuiteTest(t)
+	cfg := fixConfig()
+	cfg.Broker.DynamicVolumeSizeEnabled = true
+	cfg.Broker.AdditionalVolumeSizeGIPlans = broker.StringList{broker.AWSPlanName, broker.GCPPlanName, broker.AzurePlanName, broker.SapConvergedCloudPlanName, broker.AlicloudPlanName, broker.PreviewPlanName, broker.BuildRuntimeAWSPlanName, broker.BuildRuntimeGCPPlanName, broker.BuildRuntimeAzurePlanName, broker.BuildRuntimeAlicloudPlanName}
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithKCRVolumeProvider(&fakeVolumeSizeProvider{fakeKCRVolumeSizes()}))
 	defer suite.TearDown()
 
 	// when
@@ -59,20 +58,109 @@ func TestCatalog(t *testing.T) {
 	assert.NoError(t, err)
 	defer func() { _ = resp.Body.Close() }()
 
-	if outputToFile {
-		if prettyJson {
-			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
-			assert.NoError(t, err)
-		} else {
-			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
-			assert.NoError(t, err)
-		}
-	} else {
-		if prettyJson {
-			fmt.Println(prettify(content).String())
-		} else {
-			fmt.Println(string(content))
-		}
+	err = os.WriteFile("catalog-test.json", prettify(content).Bytes(), os.FileMode(0666))
+	assert.NoError(t, err)
+}
+
+func fakeKCRVolumeSizes() map[pkg.CloudProvider]map[string]int {
+	return map[pkg.CloudProvider]map[string]int{
+		pkg.AWS: {
+			"m6i.large":     50,
+			"m6i.xlarge":    80,
+			"m6i.2xlarge":   100,
+			"m6i.4xlarge":   150,
+			"m6i.8xlarge":   200,
+			"m6i.12xlarge":  250,
+			"m6i.16xlarge":  300,
+			"m5.large":      50,
+			"m5.xlarge":     80,
+			"m5.2xlarge":    100,
+			"m5.4xlarge":    150,
+			"m5.8xlarge":    200,
+			"m5.12xlarge":   250,
+			"m5.16xlarge":   300,
+			"c7i.large":     50,
+			"c7i.xlarge":    80,
+			"c7i.2xlarge":   100,
+			"c7i.4xlarge":   150,
+			"c7i.8xlarge":   200,
+			"c7i.12xlarge":  250,
+			"c7i.16xlarge":  300,
+			"g6.xlarge":     125,
+			"g6.2xlarge":    125,
+			"g6.4xlarge":    125,
+			"g6.8xlarge":    250,
+			"g6.12xlarge":   250,
+			"g6.16xlarge":   250,
+			"g4dn.xlarge":   125,
+			"g4dn.2xlarge":  125,
+			"g4dn.4xlarge":  125,
+			"g4dn.8xlarge":  250,
+			"g4dn.12xlarge": 250,
+			"g4dn.16xlarge": 250,
+		},
+		pkg.Azure: {
+			"standard_d2s_v5":  50,
+			"standard_d4s_v5":  80,
+			"standard_d8s_v5":  100,
+			"standard_d16s_v5": 150,
+			"standard_d32s_v5": 200,
+			"standard_d48s_v5": 250,
+			"standard_d64s_v5": 300,
+			"standard_d4_v3":   80,
+			"standard_d8_v3":   100,
+			"standard_d16_v3":  150,
+			"standard_d32_v3":  200,
+			"standard_d48_v3":  250,
+			"standard_d64_v3":  300,
+			"standard_f2s_v2":  50,
+			"standard_f4s_v2":  80,
+			"standard_f8s_v2":  100,
+			"standard_f16s_v2": 150,
+			"standard_f32s_v2": 200,
+			"standard_f48s_v2": 250,
+		},
+		pkg.GCP: {
+			"n2-standard-2":  50,
+			"n2-standard-4":  80,
+			"n2-standard-8":  100,
+			"n2-standard-16": 150,
+			"n2-standard-32": 200,
+			"n2-standard-48": 250,
+			"n2-standard-64": 300,
+			"c2d-highcpu-2":  50,
+			"c2d-highcpu-4":  80,
+			"c2d-highcpu-8":  100,
+			"c2d-highcpu-16": 150,
+			"c2d-highcpu-32": 200,
+			"c2d-highcpu-56": 250,
+			"g2-standard-4":  100,
+			"g2-standard-8":  100,
+			"g2-standard-12": 100,
+			"g2-standard-16": 100,
+			"g2-standard-24": 200,
+			"g2-standard-32": 200,
+			"g2-standard-48": 200,
+		},
+		pkg.SapConvergedCloud: {
+			"g_c2_m8":    50,
+			"g_c4_m16":   80,
+			"g_c6_m24":   100,
+			"g_c8_m32":   120,
+			"g_c12_m48":  150,
+			"g_c16_m64":  200,
+			"g_c32_m128": 300,
+			"g_c64_m256": 500,
+		},
+		pkg.Alicloud: {
+			"ecs.g9i.large":    50,
+			"ecs.g9i.xlarge":   80,
+			"ecs.g9i.2xlarge":  100,
+			"ecs.g9i.4xlarge":  150,
+			"ecs.g9i.8xlarge":  200,
+			"ecs.g9i.12xlarge": 250,
+			"ecs.g9i.16xlarge": 300,
+		},
 	}
 }
 
@@ -349,7 +437,6 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 func TestProvisioning_CredentialsBindings(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.SubscriptionGardenerResource = "CredentialsBinding"
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
 	defer suite.TearDown()
@@ -2755,6 +2842,13 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 								"haZones": false,
 								"autoScalerMin": 1,
 								"autoScalerMax": 1
+							},
+							{
+								"name": "name-4",
+								"machineType": "ri.xlarge",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
 							}
 						]
 					}
@@ -2767,10 +2861,11 @@ func TestZoneMappingInAdditionalWorkerNodePools(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 4)
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "us-east-1w", "us-east-1x", "us-east-1y", "us-east-1z")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
 	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
+	suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-4", 3, "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f")
 }
 
 func TestProvisioning_BuildRuntimePlans(t *testing.T) {
@@ -3509,7 +3604,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("disabled feature uses single-account behavior", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
@@ -3535,7 +3629,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("GA not in allowed global accounts uses single-account behavior", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"whitelisted-ga-001"}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
@@ -3561,7 +3654,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("enabled for specific GA selects most populated account below limit", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"multi-account-ga-001"}
 		// Set low limit to force rotation to multiple bindings
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
@@ -3596,7 +3688,6 @@ func TestProvisioning_MultiHyperscalerAccounts(t *testing.T) {
 	t.Run("wildcard allowed global accounts enables feature for all GAs", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.SubscriptionGardenerResource = credentialsBinding
 		cfg.HapMultiHyperscalerAccount.AllowedGlobalAccounts = []string{"*"}
 		cfg.HapMultiHyperscalerAccount.Limits.Default = 100
 		cfg.HapMultiHyperscalerAccount.Limits.AWS = 2
@@ -3854,6 +3945,44 @@ func TestProvisioningWithVersionAgnosticMachineTypes(t *testing.T) {
 	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	assert.Equal(t, "r8i.large", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Machine.Type)
 	assert.Equal(t, "r8i.16xlarge", (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[1].Machine.Type)
+}
+
+func TestProvisioning_AuditLogAccess(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.AuditLogAccess = true
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+	defer suite.TearDown()
+
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"region": "eu-central-1",
+				"auditLogAccess": true
+			}
+	}`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	require.NotNil(t, runtime.Spec.AuditLogAccessEnabled)
+	assert.True(t, *runtime.Spec.AuditLogAccessEnabled)
 }
 
 func (s *BrokerSuiteTest) provisionMultipleInstances(t *testing.T, instanceIDs []string, globalAccountID string) {

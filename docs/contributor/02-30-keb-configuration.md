@@ -7,7 +7,10 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | Environment Variable | Current Value | Description |
 |---------------------|------------------------------|---------------------------------------------------------------|
 | **APP_BROKER_ACL_&#x200b;ENABLED_PLANS** | <code>no-plan</code> | A comma-separated list of plans with enabled Access Control List. Value "all" enables ACL for all plans. |
+| **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_MAX_SIZE** | <code>100</code> | Maximum value (in Gi) allowed for the additionalVolumeSizeGi parameter. |
+| **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_PLANS** | None | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
+| **APP_BROKER_AUDIT_&#x200b;LOG_ACCESS** | <code>false</code> | Enables the auditLogAccess parameter in the provisioning and update schemas. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |
@@ -67,7 +70,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_OPENSTACK** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;MIN_BINDINGS_FOR_&#x200b;GUARD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When the number of claimed bindings without any active instances in the DB is equal to or greater than this value, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |
-| **APP_HOLD_HAP_STEPS** | <code>false</code> | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_CONTROL_&#x200b;PLANE_FAILURE_&#x200b;TOLERANCE** | None | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;GARDENER_SHOOT_&#x200b;PURPOSE** | <code>development</code> | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_DEFAULT_&#x200b;TRIAL_PROVIDER** | <code>Azure</code> | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS. |
@@ -76,7 +78,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE** | None | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MACHINE_&#x200b;IMAGE_VERSION** | None | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MAX_PODS** | <code>200</code> | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. |
-| **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>false</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
+| **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>true</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial and freemium clusters using smaller machine types. |
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. |
 | **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://dashboard.dev.kyma.cloud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. |
@@ -109,7 +111,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_CREATE** | <code>60m</code> | Maximum time to wait for a runtime resource to be created before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_DELETION** | <code>60m</code> | Maximum time to wait for a runtime resource to be deleted before considering the step as failed. |
 | **APP_STEP_TIMEOUTS_&#x200b;CHECK_RUNTIME_&#x200b;RESOURCE_UPDATE** | <code>180m</code> | Maximum time to wait for a runtime resource to be updated before considering the step as failed. |
-| **APP_SUBSCRIPTION_&#x200b;GARDENER_RESOURCE** | <code>SecretBinding</code> | Name of the Gardener resource, which the broker uses to look up for hyperscaler assignment. Allowed values: SecretBinding or CredentialsBinding. |
 | **APP_TRIAL_REGION_&#x200b;MAPPING_FILE_PATH** | <code>/config/trialRegionMapping.yaml</code> | Path to the region mapping for trial environments. |
 | **APP_UPDATE_MAX_STEP_&#x200b;PROCESSING_TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the update queue. |
 | **APP_UPDATE_&#x200b;PROCESSING_ENABLED** | <code>true</code> | If true, the broker processes update requests for service instances. |
