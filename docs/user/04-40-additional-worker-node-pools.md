@@ -165,8 +165,8 @@ Each label entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **key** | Yes | Any non-empty string |
-| **value** | No | Any string |
+| **{key}** | Yes | Any non-empty string |
+| **{value}** | No | Any string |
 
 ### Provisioning with Labels
 
@@ -250,8 +250,8 @@ Each annotation entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **key** | Yes | Any non-empty string |
-| **value** | No | Any string |
+| **{key}** | Yes | Any non-empty string |
+| **{value}** | No | Any string |
 
 ### Provisioning with Annotations
 
