@@ -59,14 +59,16 @@ func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 
 func (q *Queue) Add(processId string) {
 	q.queue.Add(processId)
-	q.queueDepthGauge.Set(float64(q.queue.Len()))
-	q.log.Info(fmt.Sprintf("added item %s to the queue %s, queue length is %d", processId, q.name, q.queue.Len()))
+	queueLen := q.queue.Len()
+	q.queueDepthGauge.Set(float64(queueLen))
+	q.log.Info(fmt.Sprintf("added item %s to the queue %s, queue length is %d", processId, q.name, queueLen))
 }
 
 func (q *Queue) AddAfter(processId string, duration time.Duration) {
 	q.queue.AddAfter(processId, duration)
-	q.queueDepthGauge.Set(float64(q.queue.Len()))
-	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %s, queue length is %d", processId, q.name, duration, q.queue.Len()))
+	queueLen := q.queue.Len()
+	q.queueDepthGauge.Set(float64(queueLen))
+	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %s, queue length is %d", processId, q.name, duration, queueLen))
 }
 
 func (q *Queue) ShutDown() {

@@ -48,7 +48,6 @@ func TestQueueDepthMetric(t *testing.T) {
 	assert.Equal(t, 1.0, gaugeValue(t, name), "depth should be 1 after Add")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	q.Run(ctx.Done(), 1)
 
 	// wait until the worker picks up the item
@@ -56,6 +55,9 @@ func TestQueueDepthMetric(t *testing.T) {
 	assert.Equal(t, 0.0, gaugeValue(t, name), "depth should be 0 after Get")
 
 	close(release)
+	cancel()
+	q.ShutDown()
+	q.waitGroup.Wait()
 }
 
 func TestWorkerLogging(t *testing.T) {
