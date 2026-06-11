@@ -101,4 +101,3 @@ type captureWriter struct {
 func (c *captureWriter) Write(p []byte) (n int, err error) {
 	return c.buf.Write(p)
 }
-
