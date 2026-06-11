@@ -15,7 +15,7 @@ echo "Updating component-config.yaml for release ${TAG}:"
 
 cat <<EOF | tee component-config.yaml
 name: kyma-project.io/kyma-runtime/kcp-components/keb-sap
-team: kyma/gophers
+team: kyma/gopher
 images:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:${TAG}
