@@ -711,7 +711,6 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 	return nil
 }
 
-
 // CheckDuplicateWorkerNodePoolKeys checks each pool in the raw JSON array for
 // duplicate keys in "labels" and "annotations". Must be called explicitly when
 // the feature flag is enabled — it is not enforced during standard unmarshaling.
