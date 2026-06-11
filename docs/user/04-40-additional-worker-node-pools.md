@@ -159,7 +159,7 @@ The update operation overwrites the additional worker node pools with the list p
 
 ## Labels
 
-Each additional worker node pool supports an optional **labels** map. Labels are key-value pairs attached to the worker nodes, which you can use to identify, filter, and organize them.
+Each additional worker node pool supports an optional **labels** map. Labels are key-value pairs attached to worker nodes that you can use to identify, filter, and organize them.
 
 Each label entry has the following properties:
 
