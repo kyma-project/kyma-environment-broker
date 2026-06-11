@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.31.0` |
+| global.images.kyma_environment_<br>broker.version | - | `1.31.4` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.31.0` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.31.4` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.31.0` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.31.4` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.31.0` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.31.4` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.31.0` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.31.4` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.31.0` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.31.4` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.31.0` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.31.4` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.31.0` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.31.4` |
 | global.images.kyma_environment_<br>analytics.dir | - | None |
-| global.images.kyma_environment_<br>analytics.version | - | `1.31.0` |
+| global.images.kyma_environment_<br>analytics.version | - | `1.31.4` |
 | global.images.kyma_environment_<br>analytics.repository | - | `` |
 | global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -196,8 +196,6 @@
 | testConfig.kebDeployment.<br>weight | - | `2` |
 | trialRegionsMapping | Determines a Kyma region for a trial environment based on the requested platform region. | `cf-eu10: europe    cf-us10: us    cf-ap21: asia` |
 | osbUpdateProcessingEnabled | If true, the broker processes update requests for service instances. | `true` |
-| holdHAPSteps | If true, the broker holds any operation with HAP assignments. It is designed for migration (SecretBinding to CredentialBinding). | `false` |
-| subscriptionGardenerResource | Name of the Gardener resource, which the broker uses to look up for hyperscaler assignment. Allowed values: SecretBinding or CredentialsBinding. | `SecretBinding` |
 | machinesAvailabilityEndpoint | If true, the broker exposes the API endpoint that returns the availability of machine types. | `False` |
 | cis.accounts.authURL | The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API. | None |
 | cis.accounts.id | The OAuth2 client ID used for authenticating requests to the CIS Accounts API. | None |
@@ -270,6 +268,7 @@
 | subaccountSync.<br>enabled | If true, enables the subaccount synchronization job. | `True` |
 | subaccountSync.<br>eventsWindowInterval | Time window for collecting events from CIS. | `15m` |
 | subaccountSync.<br>eventsWindowSize | Size of the time window for collecting events from CIS. | `20m` |
+| subaccountSync.<br>eventsServiceVersion | Specifies the CIS Events API version to use (v1 or v2). | `v1` |
 | subaccountSync.<br>logLevel | Log level for the subaccount sync job. | `info` |
 | subaccountSync.<br>metricsPort | Port on which the subaccount sync service exposes Prometheus metrics. | `8081` |
 | subaccountSync.name | Name of the subaccount sync deployment. | `subaccount-sync` |

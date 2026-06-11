@@ -52,7 +52,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/vrischmann/envconfig"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -134,14 +133,8 @@ type Config struct {
 
 	PlansConfigurationFilePath string
 
-	// allows to configure which k8s resource in the Gardener must be used for HAP and discovery zones feature
-	SubscriptionGardenerResource string `envconfig:"default=SecretBinding"`
-
 	Quota                               quota.Config
 	QuotaWhitelistedSubaccountsFilePath string
-
-	// todo: remove after all SecretBinding are migrated to CredentialBinding resources
-	HoldHapSteps bool
 
 	MachinesAvailabilityEndpoint bool
 
@@ -223,26 +216,10 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 }
 
 func (c *Config) Validate() error {
-	_, err := c.GardenerSubscriptionResource()
-	if err != nil {
-		return err
-	}
 	if err := c.Broker.Validate(); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (c *Config) GardenerSubscriptionResource() (schema.GroupVersionResource, error) {
-	resourceName := strings.ToLower(c.SubscriptionGardenerResource)
-	switch resourceName {
-	case "secretbinding":
-		return gardener.SecretBindingResource, nil
-	case "credentialsbinding":
-		return gardener.CredentialsBindingResource, nil
-	default:
-		return schema.GroupVersionResource{}, fmt.Errorf("invalid SubscriptionGardenerResource: %s. Supported values are SecretBinding and CredentialsBinding", c.SubscriptionGardenerResource)
-	}
 }
 
 func main() {
@@ -495,7 +472,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
-	logs.Info(fmt.Sprintf("HoldHapSteps: %v", cfg.HoldHapSteps))
 
 	// log metrics config
 	logs.Info(fmt.Sprintf("Metrics.Enabled: %t", cfg.Metrics.Enabled))
@@ -505,8 +481,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Metrics.OperationResultFinishedOperationRetentionPeriod: %s", cfg.Metrics.OperationResultFinishedOperationRetentionPeriod))
 	logs.Info(fmt.Sprintf("Metrics.BindingsStatsPollingInterval: %s", cfg.Metrics.BindingsStatsPollingInterval))
 
-	r, _ := cfg.GardenerSubscriptionResource()
-	logs.Info(fmt.Sprintf("Gardener resource used for subscriptions: %s", r.String()))
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
@@ -516,13 +490,8 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
 
 	if cfg.MachinesAvailabilityEndpoint {
-		if r, _ := cfg.GardenerSubscriptionResource(); r == gardener.SecretBindingResource {
-			machinesAvailability := machinesavailability.NewHandler(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
-			machinesAvailability.AttachRoutes(router)
-		} else {
-			machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
-			machinesAvailability.AttachRoutes(router)
-		}
+		machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
+		machinesAvailability.AttachRoutes(router)
 	}
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
@@ -577,11 +546,6 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
-	}
-
-	if r, _ := cfg.GardenerSubscriptionResource(); r == gardener.CredentialsBindingResource {
-		kymaEnvBroker.ProvisionEndpoint.UseCredentialsBindings()
-		kymaEnvBroker.UpdateEndpoint.UseCredentialsBindings()
 	}
 
 	// Wrap broker with panic recovery for all OSB endpoints

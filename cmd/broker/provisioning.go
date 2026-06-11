@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -35,8 +34,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
 	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, awsClientFactory aws.ClientFactory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
 
-	useCredentialsBinding := strings.ToLower(cfg.SubscriptionGardenerResource) == credentialsBinding
-
 	provisioningSteps := []struct {
 		disabled  bool
 		step      process.Step
@@ -52,22 +49,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewOverrideKymaModules(db.Operations()),
 		},
 		{
-			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				provisioning.NewResolveSubscriptionSecretStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval})),
-			disabled: useCredentialsBinding,
+			step: provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount),
 		},
 		{
-			step: steps.NewHolderStep(cfg.HoldHapSteps,
-				provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount)),
-			disabled: !useCredentialsBinding,
-		},
-		{
-			step:     steps.NewDiscoverAvailableZonesStep(db, providerSpec, gardenerClient, awsClientFactory),
-			disabled: useCredentialsBinding,
-		},
-		{
-			step:     steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, awsClientFactory),
-			disabled: !useCredentialsBinding,
+			step: steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, awsClientFactory),
 		},
 		{
 			step: provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),

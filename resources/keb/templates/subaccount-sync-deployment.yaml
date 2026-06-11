@@ -143,6 +143,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.database.managedGCP.secretName }}
                   key: {{ .Values.global.database.managedGCP.userNameSecretKey }}
+            - name: SUBACCOUNT_SYNC_EVENTS_SERVICE_VERSION
+              value: {{ .Values.subaccountSync.eventsServiceVersion | quote }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL
               value: {{ .Values.subaccountSync.eventsWindowInterval | quote }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE

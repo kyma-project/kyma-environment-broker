@@ -44,7 +44,7 @@ func newResultsCollector(db storage.Operations, cfg Config, logger *slog.Logger)
 			Subsystem: prometheusSubsystemV2,
 			Name:      "operation_result",
 			Help:      "Metrics of operations results",
-		}, []string{"operation_id", "instance_id", "global_account_id", "runtime_id", "shoot_name", "plan_id", "type", "state", "error_category", "error_reason", "error", "provider"}),
+		}, []string{"operation_id", "instance_id", "global_account_id", "runtime_id", "shoot", "plan_id", "type", "state", "error_category", "error_reason", "error", "provider"}),
 		pollingInterval:                  cfg.OperationResultPollingInterval,
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
