@@ -113,10 +113,11 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 				}
 
 				q.workersInUseGauge.Inc()
-				q.queueDepthGauge.Set(float64(q.queue.Len()))
+				queueLen := queue.Len()
+				q.queueDepthGauge.Set(float64(queueLen))
 				id := key
 				workerLogger := log.With("operationID", id)
-				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
+				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, queueLen))
 
 				defer func() {
 					q.workersInUseGauge.Dec()
@@ -130,7 +131,7 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 
 				when, err := process(id)
 				if err == nil && when != 0 {
-					workerLogger.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, q.queue.Len()))
+					workerLogger.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, queue.Len()))
 					afterDuration := time.Duration(int64(when) / q.speedFactor)
 					queue.AddAfter(key, afterDuration)
 					return false
