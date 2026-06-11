@@ -710,15 +710,6 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 	return nil
 }
 
-func (a *AdditionalWorkerNodePool) UnmarshalJSON(data []byte) error {
-	type Alias AdditionalWorkerNodePool
-	var tmp Alias
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-	*a = AdditionalWorkerNodePool(tmp)
-	return nil
-}
 
 // CheckDuplicateWorkerNodePoolKeys checks each pool in the raw JSON array for
 // duplicate keys in "labels" and "annotations". Must be called explicitly when
