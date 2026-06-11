@@ -5184,6 +5184,8 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	require.Nil(t, runtime.Spec.AuditLogAccessEnabled)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -5205,7 +5207,7 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then
-	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	runtime = suite.GetRuntimeResourceByInstanceID(iid)
 	require.NotNil(t, runtime.Spec.AuditLogAccessEnabled)
 	assert.True(t, *runtime.Spec.AuditLogAccessEnabled)
 }
