@@ -118,6 +118,20 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 		require.NotNil(t, binding.ExpiresAt)
 		require.Empty(t, binding.Kubeconfig)
 	})
+
+	t.Run("should return 500 when k8s API call fails", func(t *testing.T) {
+		// when
+		_, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-k8s-error", domain.BindDetails{
+			ServiceID: "123",
+			PlanID:    fixture.PlanId,
+		}, false)
+
+		// then
+		require.Error(t, err)
+		apierr, ok := err.(*apiresponses.FailureResponse)
+		require.True(t, ok)
+		assert.Equal(t, http.StatusInternalServerError, apierr.ValidatedStatusCode(nil))
+	})
 }
 
 func TestCreateBindingExceedsAllowedNumberOfNonExpiredBindings(t *testing.T) {
