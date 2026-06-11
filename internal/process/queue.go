@@ -111,6 +111,7 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 				}
 
 				q.workersInUseGauge.Inc()
+				q.queueDepthGauge.Set(float64(q.queue.Len()))
 				id := key
 				workerLogger := log.With("operationID", id)
 				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
@@ -121,7 +122,6 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					queue.Done(key)
-					q.queueDepthGauge.Set(float64(q.queue.Len()))
 					workerLogger.Info("queue done processing")
 				}()
 
