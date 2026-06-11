@@ -26,6 +26,7 @@ type Queue struct {
 
 	speedFactor       int64
 	workersInUseGauge prometheus.Gauge
+	queueDepthGauge   prometheus.Gauge
 }
 
 var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -33,6 +34,13 @@ var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Subsystem: "keb_v2",
 	Name:      "queue_workers_in_use",
 	Help:      "Number of queue workers currently processing items",
+}, []string{"queue_name"})
+
+var queueDepthMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "kcp",
+	Subsystem: "keb_v2",
+	Name:      "queue_depth",
+	Help:      "Number of items currently waiting in the queue",
 }, []string{"queue_name"})
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
@@ -45,16 +53,19 @@ func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 		speedFactor:       1,
 		name:              name,
 		workersInUseGauge: queueWorkersInUseMetric.WithLabelValues(name),
+		queueDepthGauge:   queueDepthMetric.WithLabelValues(name),
 	}
 }
 
 func (q *Queue) Add(processId string) {
 	q.queue.Add(processId)
+	q.queueDepthGauge.Set(float64(q.queue.Len()))
 	q.log.Info(fmt.Sprintf("added item %s to the queue %s, queue length is %d", processId, q.name, q.queue.Len()))
 }
 
 func (q *Queue) AddAfter(processId string, duration time.Duration) {
 	q.queue.AddAfter(processId, duration)
+	q.queueDepthGauge.Set(float64(q.queue.Len()))
 	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %d, queue length is %d", processId, q.name, duration, q.queue.Len()))
 }
 
@@ -110,6 +121,7 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					queue.Done(key)
+					q.queueDepthGauge.Set(float64(q.queue.Len()))
 					workerLogger.Info("queue done processing")
 				}()
 
