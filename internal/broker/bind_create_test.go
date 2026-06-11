@@ -132,6 +132,30 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, http.StatusInternalServerError, apierr.ValidatedStatusCode(nil))
 	})
+
+	t.Run("should return 422 when binding already exists in DB with empty kubeconfig", func(t *testing.T) {
+		// given - pre-insert a binding with the same ID, matching ExpirationSeconds, future ExpiresAt, no kubeconfig
+		// searchDbForBinding finds it, sees empty kubeconfig → "binding creation already in progress" → 422
+		err := db.Bindings().Insert(&internal.Binding{
+			ID:                "binding-id-duplicate",
+			InstanceID:        instanceID1,
+			ExpiresAt:         time.Now().Add(time.Hour),
+			ExpirationSeconds: int64(bindingCfg.ExpirationSeconds),
+		})
+		require.NoError(t, err)
+
+		// when
+		_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-duplicate", domain.BindDetails{
+			ServiceID: "123",
+			PlanID:    fixture.PlanId,
+		}, false)
+
+		// then
+		require.Error(t, err)
+		apierr, ok := err.(*apiresponses.FailureResponse)
+		require.True(t, ok)
+		assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
+	})
 }
 
 func TestCreateBindingExceedsAllowedNumberOfNonExpiredBindings(t *testing.T) {
