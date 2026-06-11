@@ -193,10 +193,8 @@ providersConfiguration:
       m-ultramem-32: m-ultramem-32 (32vCPU, 976GB RAM)
       z-highmem-14-standardlssd: z-highmem-14-standardlssd (14vCPU, 112GB RAM)
 
-      # Concrete machines (not resolved through a version-agnostic name)
-      n2-standard-2: n2-standard-2 (2vCPU, 8GB RAM)
-
       # Deprecated machines with explicit version
+      n2-standard-2: n2-standard-2 (deprecated, use n-standard-2)
       c2d-highcpu-2: c2d-highcpu-2 (deprecated, use cd-highcpu-2)
       g2-standard-4: g2-standard-4 (deprecated, use g-standard-4)*
 
