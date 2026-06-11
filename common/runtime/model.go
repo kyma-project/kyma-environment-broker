@@ -716,12 +716,34 @@ func (a *AdditionalWorkerNodePool) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
-	for _, field := range []string{"labels", "annotations"} {
-		if err := checkDuplicateJSONKeys(data, field); err != nil {
-			return fmt.Errorf("additional worker node pool %q: %w", tmp.Name, err)
+	*a = AdditionalWorkerNodePool(tmp)
+	return nil
+}
+
+// CheckDuplicateWorkerNodePoolKeys checks each pool in the raw JSON array for
+// duplicate keys in "labels" and "annotations". Must be called explicitly when
+// the feature flag is enabled — it is not enforced during standard unmarshaling.
+func CheckDuplicateWorkerNodePoolKeys(rawPools json.RawMessage) error {
+	dec := json.NewDecoder(bytes.NewReader(rawPools))
+	tok, err := dec.Token()
+	if err != nil || tok != json.Delim('[') {
+		return nil
+	}
+	for dec.More() {
+		var rawPool json.RawMessage
+		if err := dec.Decode(&rawPool); err != nil {
+			return err
+		}
+		var name struct {
+			Name string `json:"name"`
+		}
+		_ = json.Unmarshal(rawPool, &name)
+		for _, field := range []string{"labels", "annotations"} {
+			if err := checkDuplicateJSONKeys(rawPool, field); err != nil {
+				return fmt.Errorf("additional worker node pool %q: %w", name.Name, err)
+			}
 		}
 	}
-	*a = AdditionalWorkerNodePool(tmp)
 	return nil
 }
 

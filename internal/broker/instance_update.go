@@ -531,6 +531,14 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 		if err := checkAnnotationsConfiguration(params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
+		var raw struct {
+			Pools json.RawMessage `json:"additionalWorkerNodePools"`
+		}
+		if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
+			if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+		}
 	}
 
 	if err := checkHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools, params.AdditionalWorkerNodePools); err != nil {
