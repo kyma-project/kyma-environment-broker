@@ -1064,8 +1064,7 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 func (s *BrokerSuiteTest) assertForAdditionalWorkerNodePool(t *testing.T, provider imv1.Provider, name string, f func(*v1beta1.Worker)) {
 	for _, w := range *provider.AdditionalWorkers {
 		if w.Name == name {
-			wCopy := w
-			f(&wCopy)
+			f(&w)
 			return
 		}
 	}

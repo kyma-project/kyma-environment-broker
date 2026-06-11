@@ -767,6 +767,13 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
+func workerPoolValidationError(errors []string) error {
+	if len(errors) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s%s.", additionalWorkerPoolsValidationIssuesMsg, strings.Join(errors, "; "))
+}
+
 func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	var errors []string
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
@@ -774,16 +781,7 @@ func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWork
 			errors = append(errors, err.Error())
 		}
 	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	message := additionalWorkerPoolsValidationIssuesMsg
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+	return workerPoolValidationError(errors)
 }
 
 func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -793,16 +791,7 @@ func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 			errors = append(errors, err.Error())
 		}
 	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	message := additionalWorkerPoolsValidationIssuesMsg
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+	return workerPoolValidationError(errors)
 }
 
 func checkLabelsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -812,16 +801,7 @@ func checkLabelsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 			errors = append(errors, err.Error())
 		}
 	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	message := additionalWorkerPoolsValidationIssuesMsg
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+	return workerPoolValidationError(errors)
 }
 
 func checkAnnotationsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -831,16 +811,7 @@ func checkAnnotationsConfiguration(additionalWorkerNodePools []pkg.AdditionalWor
 			errors = append(errors, err.Error())
 		}
 	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	message := additionalWorkerPoolsValidationIssuesMsg
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+	return workerPoolValidationError(errors)
 }
 
 func checkAvailableZones(
