@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -17,6 +20,7 @@ import (
 )
 
 const subscriptionSecretName = "sb-01"
+const testNamespace = "test-ns"
 
 func TestFreeCredentialsBinding_SubscriptionSecretNameFromInstance(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
@@ -160,39 +164,6 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 	assert.NotContains(t, gotSB.GetLabels(), "dirty")
 }
 
-func TestFreeCredentialsBinding_ReleasingBlocked_ifShootWithSecretBindingExists(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
-
-	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	instance := fixGCPInstance(operation.InstanceID)
-	instance.SubscriptionSecretName = "sb-01"
-	instance.GlobalAccountID = operation.GlobalAccountID
-
-	err := memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-	gClient := gardener.NewDynamicFakeClient(
-		newSecretBinding("sb-01", "secret-01", map[string]interface{}{
-			"tenantName": instance.GlobalAccountID,
-		}),
-		newCredentialsBinding("sb-01", "secret-01", map[string]interface{}{
-			"tenantName": instance.GlobalAccountID}),
-		newShootWithSecretBindingRef("shoot-01", "sb-01"),
-		newShootWithSecretBindingRef("shoot-02", "sb-01"),
-	)
-	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
-
-	// when
-	_, repeat, err := step.Run(operation, fixLogger())
-
-	// then
-	require.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), "sb-01", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.NotContains(t, gotSB.GetLabels(), "dirty")
-}
-
 func newCredentialsBinding(name, secretName string, labels map[string]interface{}) *unstructured.Unstructured {
 	secretBinding := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -227,18 +198,16 @@ func newShootWithCredentialsBindingRef(name, credentialsBindingName string) *uns
 	return shoot
 }
 
-func newShootWithSecretBindingRef(name, bindingName string) *unstructured.Unstructured {
-	shoot := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": testNamespace,
-			},
-			"spec": map[string]interface{}{
-				"secretBindingName": bindingName,
-			},
-		},
-	}
-	shoot.SetGroupVersionKind(gardener.ShootGVK)
-	return shoot
+func fixGCPInstance(instanceID string) internal.Instance {
+	instance := fixture.FixInstance(instanceID)
+	instance.Provider = pkg.GCP
+	return instance
+}
+
+func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {
+	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
+	deprovisioningOperation.ProvisioningParameters.PlanID = planID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = testGlobalAccountID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = testSubAccountID
+	return deprovisioningOperation
 }

@@ -109,37 +109,51 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 }
 
 func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if operation.ProviderValues == nil {
+		return s.operationManager.OperationFailed(operation, "ProviderValues is nil, cannot update Kyma worker", nil, log)
+	}
+	oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
+	machineTypeChanged := operation.UpdatingParameters.MachineType != nil && *operation.UpdatingParameters.MachineType != oldMachineType
+
+	newAdditionalVolumeSizeGi := operation.UpdatingParameters.AdditionalVolumeSizeGi
+	prevAdditionalVolumeSizeGi := operation.PreviousParameters.Parameters.AdditionalVolumeSizeGi
+	additionalVolumeSizeChanged := newAdditionalVolumeSizeGi != nil && (prevAdditionalVolumeSizeGi == nil || *newAdditionalVolumeSizeGi != *prevAdditionalVolumeSizeGi)
+
 	if operation.UpdatingParameters.MachineType != nil {
-		oldMachineType := provisioning.DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.PreviousParameters.Parameters.MachineType)
-		if *operation.UpdatingParameters.MachineType != oldMachineType {
+		if machineTypeChanged {
 			log.Info(fmt.Sprintf("Machine type updated for Kyma worker: %s -> %s", oldMachineType, *operation.UpdatingParameters.MachineType))
 			runtime.Spec.Shoot.Provider.Workers[0].Machine.Type = s.providerSpec.ResolveMachineType(
 				pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
 				*operation.UpdatingParameters.MachineType,
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
-
-			if s.kcrVolumeProvider != nil {
-				resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
-				volGb, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
-					pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
-					resolvedMachineType)
-				if err != nil {
-					if kebError.IsTemporaryError(err) {
-						return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
-					}
-					return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
-				}
-				if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
-					runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
-				} else {
-					runtime.Spec.Shoot.Provider.Workers[0].Volume = &gardener.Volume{
-						VolumeSize: fmt.Sprintf("%dGi", volGb),
-					}
-				}
-			}
 		} else {
 			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+		}
+	}
+
+	if newAdditionalVolumeSizeGi != nil {
+		operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi = newAdditionalVolumeSizeGi
+	}
+
+	if machineTypeChanged || additionalVolumeSizeChanged {
+		resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+		volGb, err := s.computeMainWorkerBaseVolumeGb(operation, runtime)
+		if err != nil {
+			if kebError.IsTemporaryError(err) {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("reading KCR ConfigMap for machine %s", resolvedMachineType), err, 10*time.Second, 1*time.Minute, log)
+			}
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("volume size lookup failed for machine %s", resolvedMachineType), err, log)
+		}
+		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi; v != nil {
+			volGb += *v
+		}
+		if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
+			runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
+		} else {
+			runtime.Spec.Shoot.Provider.Workers[0].Volume = &gardener.Volume{
+				VolumeSize: fmt.Sprintf("%dGi", volGb),
+			}
 		}
 	}
 
@@ -158,6 +172,20 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 	return operation, 0, nil
 }
 
+func (s *UpdateRuntimeStep) computeMainWorkerBaseVolumeGb(operation internal.Operation, runtime *imv1.Runtime) (int, error) {
+	if s.kcrVolumeProvider != nil {
+		resolvedMachineType := runtime.Spec.Shoot.Provider.Workers[0].Machine.Type
+		return s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
+			pkg.CloudProviderFromString(operation.ProviderValues.ProviderType),
+			resolvedMachineType)
+	}
+	values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
+	if err != nil {
+		return 0, err
+	}
+	return values.VolumeSizeGb, nil
+}
+
 func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Operation, runtime *imv1.Runtime, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.UpdatingParameters.AdditionalWorkerNodePools == nil {
 		return operation, 0, nil
@@ -172,13 +200,16 @@ func (s *UpdateRuntimeStep) updateAdditionalWorkerPools(operation internal.Opera
 
 	var volumeOverrides map[string]int
 	if s.kcrVolumeProvider != nil {
+		if operation.ProviderValues == nil {
+			return s.operationManager.OperationFailed(operation, "ProviderValues is nil, cannot compute volume overrides for additional worker pools", nil, log)
+		}
 		volumeOverrides = make(map[string]int)
 		cp := pkg.CloudProviderFromString(operation.ProviderValues.ProviderType)
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			// only look up KCR when the pool is new or its machine type changed
+			// only look up KCR when the pool is new, its machine type changed, or additionalVolumeSizeGi changed
 			unchanged := false
 			for _, prev := range operation.PreviousParameters.Parameters.AdditionalWorkerNodePools {
-				if prev.Name == pool.Name && prev.MachineType == pool.MachineType {
+				if prev.Name == pool.Name && prev.MachineType == pool.MachineType && prev.AdditionalVolumeSizeGi == pool.AdditionalVolumeSizeGi {
 					unchanged = true
 					break
 				}

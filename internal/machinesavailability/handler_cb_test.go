@@ -38,7 +38,7 @@ func TestMachinesAvailabilityCBHandler(t *testing.T) {
 
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	handler := NewHandler(providerSpec, rulesService, fixture.CreateGardenerClient(), fakeAWSClientFactory, log)
+	handler := NewHandlerCB(providerSpec, rulesService, fixture.CreateGardenerClientWithCredentialsBindings(), fakeAWSClientFactory, log)
 
 	router := httputil.NewRouter()
 	handler.AttachRoutes(router)

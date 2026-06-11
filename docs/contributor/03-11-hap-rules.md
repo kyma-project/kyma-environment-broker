@@ -3,7 +3,7 @@
 # HAP Rule Configuration
 
 With the Hyperscaler Account Pool (HAP) rule configuration functionality, you can control pool selection from a configurable helm property. 
-A pool is a set of Gardener's SecretBinding (CredentialsBinding) custom resources that share the same labels. 
+A pool is a set of Gardener's CredentialsBinding custom resources that share the same labels. 
 Pool selection is a process that decides which SecretBinding (CredentialsBinding) pool is the most suitable for each SAP BTP, Kyma runtime creation request.
 The process generates a list of requirements for a [label selector](#label-selector) based on Kyma runtime's attributes.
 

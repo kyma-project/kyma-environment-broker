@@ -105,6 +105,14 @@ type ProvisioningParametersDTO struct {
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 	AccessControlList         *AclDTO                    `json:"accessControlList,omitempty"`
 	Gvisor                    *GvisorDTO                 `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi    *int                       `json:"additionalVolumeSizeGi,omitempty"`
+}
+
+func (p ProvisioningParametersDTO) ValidateAdditionalVolumeSizeGi() error {
+	if p.AdditionalVolumeSizeGi != nil && *p.AdditionalVolumeSizeGi < 0 {
+		return fmt.Errorf("additionalVolumeSizeGi must be >= 0, got %d", *p.AdditionalVolumeSizeGi)
+	}
+	return nil
 }
 
 type GvisorDTO struct {
@@ -597,13 +605,14 @@ type TaintDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	Name          string     `json:"name"`
-	MachineType   string     `json:"machineType"`
-	HAZones       bool       `json:"haZones"`
-	AutoScalerMin int        `json:"autoScalerMin"`
-	AutoScalerMax int        `json:"autoScalerMax"`
-	Taints        []TaintDTO `json:"taints,omitempty"`
-	Gvisor        *GvisorDTO `json:"gvisor,omitempty"`
+	Name                   string     `json:"name"`
+	MachineType            string     `json:"machineType"`
+	HAZones                bool       `json:"haZones"`
+	AutoScalerMin          int        `json:"autoScalerMin"`
+	AutoScalerMax          int        `json:"autoScalerMax"`
+	Taints                 []TaintDTO `json:"taints,omitempty"`
+	Gvisor                 *GvisorDTO `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi int        `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
@@ -615,6 +624,9 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	}
 	if a.AutoScalerMin < 0 {
 		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
+	}
+	if a.AdditionalVolumeSizeGi < 0 {
+		return fmt.Errorf("AdditionalVolumeSizeGi value cannot be lower than 0 for %s additional worker node pool", a.Name)
 	}
 	return nil
 }

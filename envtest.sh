@@ -8,7 +8,7 @@ cd "$(dirname "$0")" || exit
 LOCAL_BIN=$(pwd)/bin/$$
 mkdir -p "$LOCAL_BIN"
 
-K8S_VERSION=1.29.1
+K8S_VERSION=1.31.0
 
 GOBIN="$LOCAL_BIN" go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 

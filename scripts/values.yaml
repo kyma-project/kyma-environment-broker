@@ -1,4 +1,7 @@
 broker:
+  additionalVolumeSizeGiPlans: "aws,gcp,azure,sap-converged-cloud,alicloud,preview,build-runtime-aws,build-runtime-gcp,build-runtime-azure,build-runtime-alicloud"
+  additionalVolumeSizeGiMaxSize: 1000
+  dynamicVolumeSizeEnabled: "true"
   subaccountMovementEnabled: "true"
   updateCustomResourcesLabelsOnAccountMove: "true"
   

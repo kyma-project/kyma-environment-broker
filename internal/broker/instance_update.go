@@ -76,7 +76,6 @@ type UpdateEndpoint struct {
 	gardenerClient   *gardener.Client
 	awsClientFactory aws.ClientFactory
 
-	useCredentialsBindings         bool
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
 }
@@ -172,7 +171,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))))
 
 	planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
-	if err := b.operationBlocklist.CheckUpdate(planName); err != nil {
+	if err := b.operationBlocklist.CheckUpdate(blocklist.OperationContext{PlanName: planName, GlobalAccountID: instance.GlobalAccountID}); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -354,6 +353,19 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
+	if params.AdditionalVolumeSizeGi != nil && *params.AdditionalVolumeSizeGi < 0 {
+		err := fmt.Errorf("additionalVolumeSizeGi must be >= 0, got %d", *params.AdditionalVolumeSizeGi)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	}
+
+	if params.AdditionalVolumeSizeGi != nil {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(planID))
+		if !b.config.AdditionalVolumeSizeGIPlans.Contains(planName) {
+			err := fmt.Errorf("additionalVolumeSizeGi is not available for plan %s", planName)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 	}
 
 	if err := validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger); err != nil {
@@ -563,7 +575,6 @@ func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, prev
 }
 
 func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
-	var err error
 	discoveredZones := make(map[string]int)
 	if params.MachineType != nil {
 		discoveredZones[*params.MachineType] = 0
@@ -573,13 +584,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	// TODO: simplify it, remove "if" when all KCP instances are migrated to use credentials bindings
-	var awsClient aws.Client
-	if b.useCredentialsBindings {
-		awsClient, err = newAWSClientUsingCredentialsBinding(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-	} else {
-		awsClient, err = newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
-	}
+	awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
@@ -637,12 +642,6 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	}
 
 	return true, lastOperation
-}
-
-// UseCredentialsBindings indicates whether to use credentials bindings when creating AWS clients, it is a deprecated func and will be removed in future releases
-// when all KCP instances are migrated to use credentials bindings
-func (b *UpdateEndpoint) UseCredentialsBindings() {
-	b.useCredentialsBindings = true
 }
 
 func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger *slog.Logger) (*internal.Instance, bool, error) {
@@ -797,7 +796,7 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 		sourcePlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(instance.ServicePlanID))
 		targetPlanName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
 
-		if err := b.operationBlocklist.CheckPlanUpgrade(targetPlanName); err != nil {
+		if err := b.operationBlocklist.CheckPlanUpgrade(blocklist.OperationContext{PlanName: targetPlanName, GlobalAccountID: instance.GlobalAccountID}); err != nil {
 			return nil, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
@@ -837,6 +836,11 @@ func (b *UpdateEndpoint) updateInstanceAndOperationParameters(instance *internal
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 		updateStorage = append(updateStorage, "Machine type")
+	}
+
+	if params.AdditionalVolumeSizeGi != nil {
+		instance.Parameters.Parameters.AdditionalVolumeSizeGi = params.AdditionalVolumeSizeGi
+		updateStorage = append(updateStorage, "Additional Volume Gi")
 	}
 
 	if params.Gvisor != nil {
