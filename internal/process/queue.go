@@ -66,7 +66,7 @@ func (q *Queue) Add(processId string) {
 func (q *Queue) AddAfter(processId string, duration time.Duration) {
 	q.queue.AddAfter(processId, duration)
 	q.queueDepthGauge.Set(float64(q.queue.Len()))
-	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %d, queue length is %d", processId, q.name, duration, q.queue.Len()))
+	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %s, queue length is %d", processId, q.name, duration, q.queue.Len()))
 }
 
 func (q *Queue) ShutDown() {
