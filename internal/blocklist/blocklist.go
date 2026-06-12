@@ -80,15 +80,9 @@ func parseRule(s string) (Rule, error) {
 			val := strings.TrimSpace(tok[bangIdx+2:])
 			switch key {
 			case "GA":
-				if val == "" {
-					return Rule{}, fmt.Errorf("empty GA value in rule %q", s)
-				}
-				parts := strings.Split(val, ",")
-				for i, p := range parts {
-					parts[i] = strings.TrimSpace(p)
-					if parts[i] == "" {
-						return Rule{}, fmt.Errorf("empty GA segment in rule %q", s)
-					}
+				parts, err := parseGAList(val, s)
+				if err != nil {
+					return Rule{}, err
 				}
 				r.ExcludeGlobalAccounts = parts
 			default:
@@ -114,15 +108,9 @@ func parseRule(s string) (Rule, error) {
 			}
 			r.Plan = val
 		case "GA":
-			if val == "" {
-				return Rule{}, fmt.Errorf("empty GA value in rule %q", s)
-			}
-			parts := strings.Split(val, ",")
-			for i, p := range parts {
-				parts[i] = strings.TrimSpace(p)
-				if parts[i] == "" {
-					return Rule{}, fmt.Errorf("empty GA segment in rule %q", s)
-				}
+			parts, err := parseGAList(val, s)
+			if err != nil {
+				return Rule{}, err
 			}
 			r.IncludeGlobalAccounts = parts
 		default:
@@ -133,6 +121,22 @@ func parseRule(s string) (Rule, error) {
 		return Rule{}, fmt.Errorf("GA filter requires plan= in rule %q", s)
 	}
 	return r, nil
+}
+
+// parseGAList splits a comma-separated GA value, trims spaces, and validates
+// that no segment is empty. Used for both GA= and GA!= filter tokens.
+func parseGAList(val, rule string) ([]string, error) {
+	if val == "" {
+		return nil, fmt.Errorf("empty GA value in rule %q", rule)
+	}
+	parts := strings.Split(val, ",")
+	for i, p := range parts {
+		parts[i] = strings.TrimSpace(p)
+		if parts[i] == "" {
+			return nil, fmt.Errorf("empty GA segment in rule %q", rule)
+		}
+	}
+	return parts, nil
 }
 
 // splitQuotedTokens splits a string into tokens separated by commas that are
