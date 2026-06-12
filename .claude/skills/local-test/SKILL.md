@@ -185,10 +185,7 @@ Work through each test case from the Test Plan in order. For each case:
    RUNTIME_ID=$(curl -s http://localhost:8080/runtimes \
      --header 'X-Broker-API-Version: 2.16' \
      | jq -r --arg iid "<instance_id>" '.data[] | select(.instanceID==$iid) | .runtimeID')
-   make create-kubeconfig-secret RUNTIME_ID="${RUNTIME_ID}"
-   make set-runtime-state RUNTIME_ID="${RUNTIME_ID}" STATE=Ready
-   KYMA_ID=$(kubectl get kyma -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-   [ -n "$KYMA_ID" ] && make set-kyma-state KYMA_ID="${KYMA_ID}" STATE=Ready
+   make run-provisioning-flow RUNTIME_ID="${RUNTIME_ID}"
    ```
 
    **Update** — same poll loop using `.status.update.state`.
