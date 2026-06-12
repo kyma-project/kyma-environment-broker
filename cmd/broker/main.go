@@ -417,27 +417,14 @@ func main() {
 	kcHandler.AttachRoutes(router)
 
 	if !cfg.DisableProcessOperationsInProgress {
-		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log)
-		fatalOnError(err, log)
-		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log)
-		fatalOnError(err, log)
-		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log)
-		fatalOnError(err, log)
-
-		// Second scan after a delay to recover operations orphaned during rolling deployments.
-		// An operation created on the old pod after the new pod's startup scan completes would
-		// otherwise remain stuck until the next deployment.
+		// Delayed scan to recover in-progress operations after a rolling deployment.
+		// Using a delay ensures the old pod has fully stopped, so operations created
+		// on the old pod after this pod started are not missed.
 		time.AfterFunc(cfg.OperationRecoveryDelay, func() {
-			log.Info(fmt.Sprintf("Running delayed operation recovery scan after %s", cfg.OperationRecoveryDelay))
-			if err := processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log); err != nil {
-				log.Error(fmt.Sprintf("error during delayed provisioning operation recovery: %s", err))
-			}
-			if err := processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log); err != nil {
-				log.Error(fmt.Sprintf("error during delayed deprovisioning operation recovery: %s", err))
-			}
-			if err := processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log); err != nil {
-				log.Error(fmt.Sprintf("error during delayed update operation recovery: %s", err))
-			}
+			log.Info(fmt.Sprintf("Running operation recovery scan after %s", cfg.OperationRecoveryDelay))
+			fatalOnError(processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log), log)
+			fatalOnError(processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log), log)
+			fatalOnError(processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log), log)
 		})
 	} else {
 		log.Info("Skipping processing operation in progress on start")
