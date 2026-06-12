@@ -55,7 +55,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_DEPROVISIONING_&#x200b;MAX_STEP_PROCESSING_&#x200b;TIME** | <code>2m</code> | Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue. |
 | **APP_DEPROVISIONING_&#x200b;WORKERS_AMOUNT** | <code>20</code> | Number of workers in deprovisioning queue. |
 | **APP_DISABLE_PROCESS_&#x200b;OPERATIONS_IN_&#x200b;PROGRESS** | <code>false</code> | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. |
-| **APP_OPERATION_&#x200b;RECOVERY_DELAY** | <code>2m</code> | Delay after startup before running a second scan for in-progress operations, to recover operations orphaned during rolling deployments. |
 | **APP_DOMAIN_NAME** | <code>localhost</code> | - |
 | **APP_EVENTS_ENABLED** | <code>true</code> | Enables or disables the events API and event storage for operation events (true/false). |
 | **APP_FREEMIUM_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/freemiumWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. |
@@ -95,6 +94,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_METRICS_&#x200b;OPERATION_STATS_&#x200b;POLLING_INTERVAL** | <code>1m</code> | Frequency of polling for operation statistics. |
 | **APP_OPEN_SHELL_&#x200b;WHITELISTED_GLOBAL_&#x200b;ACCOUNTS_FILE_PATH** | <code>/config/openShellWhitelistedGlobalAccountIds.yaml</code> | Path to the list of global account IDs that are allowed to use Open Shell. |
 | **APP_OPERATION_&#x200b;BLOCKLIST_FILE_PATH** | <code>/config/operationBlocklist.yaml</code> | Path to the operation blocklist configuration file. |
+| **APP_OPERATION_&#x200b;RECOVERY_DELAY** | <code>2m</code> | Delay after startup before running a second scan for in-progress operations, to recover operations orphaned during rolling deployments. |
 | **APP_PLANS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/plansConfig.yaml</code> | Path to the plans configuration file, which defines available service plans. |
 | **APP_PROFILER_MEMORY** | <code>false</code> | Enables memory profiler (true/false). |
 | **APP_PROVIDERS_&#x200b;CONFIGURATION_FILE_&#x200b;PATH** | <code>/config/providersConfig.yaml</code> | Path to the providers configuration file, which defines hyperscaler/provider settings. |
