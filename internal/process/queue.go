@@ -26,6 +26,7 @@ type Queue struct {
 
 	speedFactor       int64
 	workersInUseGauge prometheus.Gauge
+	queueDepthGauge   prometheus.Gauge
 }
 
 var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -33,6 +34,13 @@ var queueWorkersInUseMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Subsystem: "keb_v2",
 	Name:      "queue_workers_in_use",
 	Help:      "Number of queue workers currently processing items",
+}, []string{"queue_name"})
+
+var queueDepthMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "kcp",
+	Subsystem: "keb_v2",
+	Name:      "queue_depth",
+	Help:      "Number of items currently waiting in the queue",
 }, []string{"queue_name"})
 
 func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
@@ -45,17 +53,22 @@ func NewQueue(executor Executor, log *slog.Logger, name string) *Queue {
 		speedFactor:       1,
 		name:              name,
 		workersInUseGauge: queueWorkersInUseMetric.WithLabelValues(name),
+		queueDepthGauge:   queueDepthMetric.WithLabelValues(name),
 	}
 }
 
 func (q *Queue) Add(processId string) {
 	q.queue.Add(processId)
-	q.log.Info(fmt.Sprintf("added item %s to the queue %s, queue length is %d", processId, q.name, q.queue.Len()))
+	queueLen := q.queue.Len()
+	q.queueDepthGauge.Set(float64(queueLen))
+	q.log.Info(fmt.Sprintf("added item %s to the queue %s, queue length is %d", processId, q.name, queueLen))
 }
 
 func (q *Queue) AddAfter(processId string, duration time.Duration) {
 	q.queue.AddAfter(processId, duration)
-	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %d, queue length is %d", processId, q.name, duration, q.queue.Len()))
+	queueLen := q.queue.Len()
+	q.queueDepthGauge.Set(float64(queueLen))
+	q.log.Info(fmt.Sprintf("item %s will be added to the queue %s after duration of %s, queue length is %d", processId, q.name, duration, queueLen))
 }
 
 func (q *Queue) ShutDown() {
@@ -100,9 +113,11 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 				}
 
 				q.workersInUseGauge.Inc()
+				queueLen := queue.Len()
+				q.queueDepthGauge.Set(float64(queueLen))
 				id := key
 				workerLogger := log.With("operationID", id)
-				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
+				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, queueLen))
 
 				defer func() {
 					q.workersInUseGauge.Dec()
@@ -110,12 +125,13 @@ func (q *Queue) worker(queue workqueue.TypedRateLimitingInterface[string], proce
 						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					queue.Done(key)
+					q.queueDepthGauge.Set(float64(queue.Len()))
 					workerLogger.Info("queue done processing")
 				}()
 
 				when, err := process(id)
 				if err == nil && when != 0 {
-					workerLogger.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, q.queue.Len()))
+					workerLogger.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, queue.Len()))
 					afterDuration := time.Duration(int64(when) / q.speedFactor)
 					queue.AddAfter(key, afterDuration)
 					return false

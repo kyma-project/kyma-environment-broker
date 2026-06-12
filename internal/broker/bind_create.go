@@ -273,7 +273,7 @@ func (b *BindEndpoint) createNewBinding(ctx context.Context, instanceID string, 
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
 		b.log.Error(fmt.Sprintf("for instance %s %s", instanceID, message))
-		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
 	binding.ExpiresAt = expiresAt
