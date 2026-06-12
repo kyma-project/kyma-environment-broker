@@ -16,7 +16,7 @@ This document describes how to introduce version-agnostic machine type names in 
 6. Update the ERS registry to stop displaying the removed machine types to customers.
 
     > ### Warning
-    > If an update request includes a machine type that has already been removed from the schema, the BTP Cockpit form view shows the machine type field as empty. To submit the update, the user must switch to JSON view, then switch back to the form view. The `machineType` field is automatically reset to the first available value in the schema, and the update can be submitted.
+    > If an update request includes a machine type that has already been removed from the schema, the BTP Cockpit form view shows the machine type field as empty. To submit the update, the user must switch to JSON view, then switch back to the form view. The **machineType** field is automatically reset to the first available value in the schema, and the update can be submitted.
 
 ## Post-Update Steps
 

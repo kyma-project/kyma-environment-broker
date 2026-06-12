@@ -7,7 +7,7 @@ Using provider-specific versioned machine types, such as `m6i.large`, `Standard_
 
 To reduce this coupling, machine names are partially abstracted. Instead of requiring full provider-specific instance names, the configuration uses version-agnostic names such as `mi.large` (AWS) that Kyma Environment Broker (KEB) resolves to the current provider-specific instance at provisioning and update time.
 
-When a hyperscaler deprecates a machine generation or introduces a newer one, only the `machinesVersions` mapping in the KEB ConfigMap needs updating. The machine names exposed to users remain stable, while KEB applies the updated mapping to new worker pools automatically.
+When a hyperscaler deprecates a machine generation or introduces a newer one, only the **machinesVersions** mapping in the KEB ConfigMap needs updating. The machine names exposed to users remain stable, while KEB applies the updated mapping to new worker pools automatically.
 
 > ### Tip:
 > Versioned machine types such as `m6i.large` are still supported. If an input machine type does not match any configured mapping pattern, it is preserved as-is. However, we recommend marking versioned names as planned for deprecation in the schema and switching to the corresponding version-agnostic names.
