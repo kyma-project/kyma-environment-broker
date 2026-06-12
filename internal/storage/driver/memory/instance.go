@@ -358,41 +358,23 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 func (s *instances) matchState(state dbmodel.InstanceState, op *internal.Operation) bool {
 	switch state {
 	case dbmodel.InstanceSucceeded:
-		if op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision {
-			return true
-		}
+		return op.State == domain.Succeeded && op.Type != internal.OperationTypeDeprovision
 	case dbmodel.InstanceFailed:
-		if op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision) {
-			return true
-		}
+		return op.State == domain.Failed && (op.Type == internal.OperationTypeProvision || op.Type == internal.OperationTypeDeprovision)
 	case dbmodel.InstanceError:
-		if op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision {
-			return true
-		}
+		return op.State == domain.Failed && op.Type != internal.OperationTypeProvision && op.Type != internal.OperationTypeDeprovision
 	case dbmodel.InstanceProvisioning:
-		if op.Type == internal.OperationTypeProvision && op.State == domain.InProgress {
-			return true
-		}
+		return op.Type == internal.OperationTypeProvision && op.State == domain.InProgress
 	case dbmodel.InstanceDeprovisioning:
-		if op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress {
-			return true
-		}
+		return op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress
 	case dbmodel.InstanceUpgrading:
-		if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
-			return true
-		}
+		return op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress
 	case dbmodel.InstanceUpdating:
-		if op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress {
-			return true
-		}
+		return op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress
 	case dbmodel.InstanceDeprovisioned:
-		if op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision {
-			return true
-		}
+		return op.State == domain.Succeeded && op.Type == internal.OperationTypeDeprovision
 	case dbmodel.InstanceNotDeprovisioned:
-		if op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision {
-			return true
-		}
+		return op.State != domain.Succeeded || op.Type != internal.OperationTypeDeprovision
 	}
 	return false
 }
