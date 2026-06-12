@@ -115,7 +115,27 @@ Show the user which keys were changed (if any) and their new values. `make insta
 
 ---
 
-## Step 5 — Install KEB
+## Step 5 — Verify the PR image exists
+
+Before installing, confirm the Docker image for this PR was actually built. Run:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" \
+  "https://europe-docker.pkg.dev/v2/kyma-project/dev/kyma-environment-broker/manifests/PR-<PR>"
+```
+
+A `200` means the image exists. Anything else (typically `404` or `401`) means it does not.
+
+If the status code is not `200`, **stop immediately** and tell the user:
+
+> The image `europe-docker.pkg.dev/kyma-project/dev/kyma-environment-broker:PR-<PR>` does not exist yet.
+> The PR build job must be triggered first. Once the build succeeds, re-run this skill.
+
+Do not attempt to install KEB with a missing image.
+
+---
+
+## Step 6 — Install KEB
 
 Run:
 
@@ -142,7 +162,7 @@ sleep 3
 
 ---
 
-## Step 6 — Pre-test context check
+## Step 7 — Pre-test context check
 
 **Hard stop before running any test.** Run:
 
@@ -159,7 +179,7 @@ Print both outputs to the user. If either check fails, stop immediately and do n
 
 ---
 
-## Step 7 — Execute test cases
+## Step 8 — Execute test cases
 
 Work through each test case from the Test Plan in order. For each case:
 
@@ -199,7 +219,7 @@ Accumulate results; continue to the next case even on failure.
 
 ---
 
-## Step 8 — Pre-cleanup context check
+## Step 9 — Pre-cleanup context check
 
 **Hard stop before deleting the cluster.** Run:
 
@@ -216,7 +236,7 @@ If the context no longer matches, **do not delete anything**. Tell the user exac
 
 ---
 
-## Step 9 — Remove the cluster
+## Step 10 — Remove the cluster
 
 Kill the port-forward (best effort) and delete the cluster:
 
@@ -233,7 +253,7 @@ k3d cluster list
 
 ---
 
-## Step 10 — Print summary
+## Step 11 — Print summary
 
 Print a structured summary:
 
