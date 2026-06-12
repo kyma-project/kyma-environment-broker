@@ -101,6 +101,7 @@
 | broker.<br>freeExpirationPeriod | Determines when to show expiration info to users. | `720h` |
 | broker.<br>gardenerSeedsCache | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. | `gardener-seeds-cache` |
 | broker.gvisorEnabled | If true, includes the gVisor container runtime property in every plan schema. | `false` |
+| broker.<br>workerPoolLabelsAnnotationsEnabled | If true, includes labels and annotations in additional worker node pool schema and enables their validation. | `false` |
 | broker.<br>kcrConfigMapName | Name of the ConfigMap in kcp-system that provides per-machine-type volume sizes (used when dynamicVolumeSizeEnabled is true). | `consumption-reporter-config` |
 | broker.<br>monitorAdditionalProperties | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. | `False` |
 | broker.<br>onlyOneFreePerGA | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. | `false` |

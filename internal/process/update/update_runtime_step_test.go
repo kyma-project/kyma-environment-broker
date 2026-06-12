@@ -666,7 +666,7 @@ func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
-	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true), true), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
@@ -790,7 +790,7 @@ func TestUpdateRuntimeStep_GvisorOnMainAndAdditionalWorkers(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{},
-		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
+		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true), true),
 		fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
@@ -885,7 +885,7 @@ aws:
     ri.{size}: r9i.{size}
 `))
 	require.NoError(t, err)
-	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec, true), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
@@ -982,7 +982,7 @@ aws:
     ri.{size}: r9i.{size}
 `))
 	require.NoError(t, err)
-	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec, true), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
@@ -1533,7 +1533,7 @@ meters:
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(baseRuntime).WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
 	db := storage.NewMemoryStorage()
-	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}, true), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = runtimeResourceName
@@ -1616,7 +1616,7 @@ meters:
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(baseRuntime).WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
 	db := storage.NewMemoryStorage()
-	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}, true), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
 	autoScalerMax := 10
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
@@ -1795,7 +1795,7 @@ aws:
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
 	db := storage.NewMemoryStorage()
-	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec, true), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = runtimeResourceName
@@ -1871,7 +1871,7 @@ aws:
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(baseRuntime).WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcpClient, "consumption-reporter-config")
 	db := storage.NewMemoryStorage()
-	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec, true), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = runtimeResourceName
@@ -2015,7 +2015,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnAdditionalWorkers(t *testing.
 	require.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{},
-		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
+		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true), true),
 		fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation

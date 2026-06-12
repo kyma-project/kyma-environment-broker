@@ -200,6 +200,8 @@ broker:
   gardenerSeedsCache: "gardener-seeds-cache"
   # If true, includes the gVisor container runtime property in every plan schema.
   gvisorEnabled: "false"
+  # If true, includes labels and annotations in additional worker node pool schema and enables their validation.
+  workerPoolLabelsAnnotationsEnabled: "false"
   # Name of the ConfigMap in kcp-system that provides per-machine-type volume sizes (used when dynamicVolumeSizeEnabled is true).
   kcrConfigMapName: "consumption-reporter-config"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.

@@ -113,6 +113,7 @@ const (
 	FailedToValidateZonesMsg                           = "Failed to validate the number of available zones. Please try again later."
 	maskedKubeconfig                                   = "*****"
 	GvisorNotAvailableForAccountMsg                    = "The gvisor parameter is not available for your account. Please contact us for further assistance."
+	additionalWorkerPoolsValidationIssuesMsg           = "The following additionalWorkerPools have validation issues: "
 )
 
 func NewProvision(brokerConfig Config,
@@ -610,6 +611,23 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
+		if b.config.WorkerPoolLabelsAnnotationsEnabled {
+			if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			var raw struct {
+				Pools json.RawMessage `json:"additionalWorkerNodePools"`
+			}
+			if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
+				if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
+					return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+				}
+			}
+		}
+
 		if err := checkAvailableZones(
 			b.providerSpec,
 			pkg.CloudProviderFromString(values.ProviderType),
@@ -749,6 +767,13 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
+func workerPoolValidationError(errors []string) error {
+	if len(errors) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s%s.", additionalWorkerPoolsValidationIssuesMsg, strings.Join(errors, "; "))
+}
+
 func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	var errors []string
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
@@ -756,16 +781,7 @@ func checkAutoScalerConfiguration(additionalWorkerNodePools []pkg.AdditionalWork
 			errors = append(errors, err.Error())
 		}
 	}
-
-	if len(errors) == 0 {
-		return nil
-	}
-
-	message := "The following additionalWorkerPools have validation issues: "
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+	return workerPoolValidationError(errors)
 }
 
 func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -775,16 +791,27 @@ func checkTaintsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNo
 			errors = append(errors, err.Error())
 		}
 	}
+	return workerPoolValidationError(errors)
+}
 
-	if len(errors) == 0 {
-		return nil
+func checkLabelsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.ValidateLabels(additionalWorkerNodePool.Labels, additionalWorkerNodePool.Name); err != nil {
+			errors = append(errors, err.Error())
+		}
 	}
+	return workerPoolValidationError(errors)
+}
 
-	message := "The following additionalWorkerPools have validation issues: "
-	message = message + strings.Join(errors, "; ")
-	message = message + "."
-
-	return fmt.Errorf("%s", message)
+func checkAnnotationsConfiguration(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	var errors []string
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		if err := additionalWorkerNodePool.ValidateAnnotations(additionalWorkerNodePool.Annotations, additionalWorkerNodePool.Name); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+	return workerPoolValidationError(errors)
 }
 
 func checkAvailableZones(

@@ -374,7 +374,7 @@ func main() {
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")
-	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
+	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec, cfg.Broker.WorkerPoolLabelsAnnotationsEnabled)
 
 	awsClientFactory := aws.NewFactory(providerSpec)
 

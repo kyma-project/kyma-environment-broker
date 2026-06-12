@@ -1366,6 +1366,26 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "taints": []}]`,
 			expectedError:             false,
 		},
+		"Label with empty key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "labels": {"": "value"}}]`,
+			expectedError:             true,
+		},
+		"Annotation with empty key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "annotations": {"": "value"}}]`,
+			expectedError:             true,
+		},
+		"Valid labels and annotations": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "labels": {"env": "prod"}, "annotations": {"note": "test"}}]`,
+			expectedError:             false,
+		},
+		"Duplicate label key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "labels": {"env": "prod", "env": "dev"}}]`,
+			expectedError:             true,
+		},
+		"Duplicate annotation key": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20, "annotations": {"cc": "123", "cc": "456"}}]`,
+			expectedError:             true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -1385,9 +1405,10 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
 				WithConfig(broker.Config{
-					EnablePlans:          []string{"aws"},
-					URL:                  brokerURL,
-					OnlySingleTrialPerGA: true}).
+					EnablePlans:                        []string{"aws"},
+					URL:                                brokerURL,
+					OnlySingleTrialPerGA:               true,
+					WorkerPoolLabelsAnnotationsEnabled: true}).
 				WithGardenerConfig(gardener.Config{
 					Project:      "test",
 					ShootDomain:  "example.com",

@@ -59,12 +59,13 @@ type PlanNameType string
 var AvailablePlans = NewAvailablePlans(PlanIDsMapping)
 
 type ControlFlagsObject struct {
-	ingressFilteringEnabled       bool
-	gvisorEnabled                 bool
-	rejectUnsupportedParameters   bool
-	additionalVolumeSizeGiEnabled bool
-	additionalVolumeSizeGiMaxSize int
-	auditLogAccess                bool
+	ingressFilteringEnabled            bool
+	gvisorEnabled                      bool
+	rejectUnsupportedParameters        bool
+	workerPoolLabelsAnnotationsEnabled bool
+	additionalVolumeSizeGiEnabled      bool
+	additionalVolumeSizeGiMaxSize      int
+	auditLogAccess                     bool
 }
 
 type AvailablePlansType struct {
@@ -130,14 +131,15 @@ func (ap AvailablePlansType) GetAllPlanNamesAsStrings() []string {
 	return names
 }
 
-func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int, auditLogAccess bool) ControlFlagsObject {
+func NewControlFlagsObject(ingressFilteringEnabled, gvisorEnabled, rejectUnsupportedParameters, workerPoolLabelsAnnotationsEnabled, additionalVolumeSizeGiEnabled bool, additionalVolumeSizeGiMaxSize int, auditLogAccess bool) ControlFlagsObject {
 	return ControlFlagsObject{
-		ingressFilteringEnabled:       ingressFilteringEnabled,
-		gvisorEnabled:                 gvisorEnabled,
-		rejectUnsupportedParameters:   rejectUnsupportedParameters,
-		additionalVolumeSizeGiEnabled: additionalVolumeSizeGiEnabled,
-		additionalVolumeSizeGiMaxSize: additionalVolumeSizeGiMaxSize,
-		auditLogAccess:                auditLogAccess,
+		ingressFilteringEnabled:            ingressFilteringEnabled,
+		gvisorEnabled:                      gvisorEnabled,
+		rejectUnsupportedParameters:        rejectUnsupportedParameters,
+		workerPoolLabelsAnnotationsEnabled: workerPoolLabelsAnnotationsEnabled,
+		additionalVolumeSizeGiEnabled:      additionalVolumeSizeGiEnabled,
+		additionalVolumeSizeGiMaxSize:      additionalVolumeSizeGiMaxSize,
+		auditLogAccess:                     auditLogAccess,
 	}
 }
 
@@ -178,6 +180,17 @@ func createSchemaWithProperties(properties ProvisioningProperties,
 				properties.AdditionalWorkerNodePools.Items.ControlsOrder, "gvisor",
 			)
 		}
+	}
+	if !flags.workerPoolLabelsAnnotationsEnabled && properties.AdditionalWorkerNodePools != nil {
+		properties.AdditionalWorkerNodePools.Items.Properties.Labels = nil
+		properties.AdditionalWorkerNodePools.Items.Properties.Annotations = nil
+		filtered := make([]string, 0, len(properties.AdditionalWorkerNodePools.Items.ControlsOrder))
+		for _, c := range properties.AdditionalWorkerNodePools.Items.ControlsOrder {
+			if c != "labels" && c != "annotations" {
+				filtered = append(filtered, c)
+			}
+		}
+		properties.AdditionalWorkerNodePools.Items.ControlsOrder = filtered
 	}
 	if flags.ingressFilteringEnabled {
 		properties.IngressFiltering = IngressFilteringProperty()

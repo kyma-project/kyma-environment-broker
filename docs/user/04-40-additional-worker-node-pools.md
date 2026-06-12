@@ -3,7 +3,7 @@
 # Additional Worker Node Pools
 
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the **additionalWorkerNodePools** provisioning parameter.
-To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**. Optionally, you can also configure [**taints**](#taints) and [**gvisor**](04-70-gvisor-container-runtime.md) for each pool.
+To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**. Optionally, you can also configure [**labels**](#labels), [**annotations**](#annotations), [**taints**](#taints) and [**gvisor**](04-70-gvisor-container-runtime.md) for each pool.
 
 See the example:
 
@@ -156,6 +156,176 @@ The update operation overwrites the additional worker node pools with the list p
       ]
     }
     ```
+
+## Labels
+
+Each additional worker node pool supports an optional **labels** map. Labels are key-value pairs attached to worker nodes that you can use to identify, filter, and organize them.
+
+Each label entry has the following properties:
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| **{key}** | Yes | Any non-empty string |
+| **{value}** | No | Any string |
+
+### Provisioning with Labels
+
+To provision a cluster with labels in an additional worker node pool, run the following command:
+
+```bash
+curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"name\": \"$NAME\",
+      \"region\": \"$REGION\",
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"labels\": {
+            \"env\": \"prod\",
+            \"team\": \"platform\"
+          }
+        }
+      ]
+    }
+  }"
+```
+
+### Updating Labels
+
+Label updates follow these rules:
+
+- If you omit the **labels** field for a worker node pool in the update request, the existing labels for that pool are removed.
+- If you set **labels** to an empty object (`{}`), the existing labels for that pool are also removed.
+- To update labels, provide the full desired set of labels — the update overwrites the existing labels for that pool.
+
+> ### Note:
+> You can't preserve existing labels without providing them explicitly in the update request.
+
+To remove all labels from a worker node pool, set **labels** to an empty object.
+
+```bash
+curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"labels\": {}
+        }
+      ]
+    }
+  }"
+```
+
+## Annotations
+
+Each additional worker node pool supports an optional **annotations** map. Annotations are key-value pairs used to attach arbitrary non-identifying metadata to worker nodes, such as tooling configuration or operational notes.
+
+Each annotation entry has the following properties:
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| **{key}** | Yes | Any non-empty string |
+| **{value}** | No | Any string |
+
+### Provisioning with Annotations
+
+To provision a cluster with annotations in an additional worker node pool, run the following command:
+
+```bash
+curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"name\": \"$NAME\",
+      \"region\": \"$REGION\",
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"annotations\": {
+            \"owner\": \"team-platform\",
+            \"cost-center\": \"12345\"
+          }
+        }
+      ]
+    }
+  }"
+```
+
+### Updating Annotations
+
+Annotation updates follow these rules:
+
+- If you omit the **annotations** field for a worker node pool in the update request, the existing annotations for that pool are removed.
+- If you set **annotations** to an empty object (`{}`), the existing annotations for that pool are also removed.
+- To update annotations, provide the full desired set of annotations — the update overwrites the existing annotations for that pool.
+
+> ### Note:
+> You can't preserve existing annotations without providing them explicitly in the update request.
+
+To remove all annotations from a worker node pool, set **annotations** to an empty object.
+
+```bash
+curl --request PATCH "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+  --header 'X-Broker-API-Version: 2.14' \
+  --header 'Content-Type: application/json' \
+  --header "$AUTHORIZATION_HEADER" \
+  --data-raw "{
+    \"service_id\": \"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",
+    \"plan_id\": \"4deee563-e5ec-4731-b9b1-53b42d855f0c\",
+    \"context\": {
+      \"globalaccount_id\": \"$GLOBAL_ACCOUNT_ID\"
+    },
+    \"parameters\": {
+      \"additionalWorkerNodePools\": [
+        {
+          \"name\": \"worker-1\",
+          \"machineType\": \"Standard_D2s_v5\",
+          \"haZones\": true,
+          \"autoScalerMin\": 3,
+          \"autoScalerMax\": 20,
+          \"annotations\": {}
+        }
+      ]
+    }
+  }"
+```
 
 ## Taints
 

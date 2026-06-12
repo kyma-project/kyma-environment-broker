@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -606,14 +607,16 @@ type TaintDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	Name                   string     `json:"name"`
-	MachineType            string     `json:"machineType"`
-	HAZones                bool       `json:"haZones"`
-	AutoScalerMin          int        `json:"autoScalerMin"`
-	AutoScalerMax          int        `json:"autoScalerMax"`
-	Taints                 []TaintDTO `json:"taints,omitempty"`
-	Gvisor                 *GvisorDTO `json:"gvisor,omitempty"`
-	AdditionalVolumeSizeGi int        `json:"additionalVolumeSizeGi,omitempty"`
+	Name                   string            `json:"name"`
+	MachineType            string            `json:"machineType"`
+	HAZones                bool              `json:"haZones"`
+	AutoScalerMin          int               `json:"autoScalerMin"`
+	AutoScalerMax          int               `json:"autoScalerMax"`
+	Labels                 map[string]string `json:"labels,omitempty"`
+	Annotations            map[string]string `json:"annotations,omitempty"`
+	Taints                 []TaintDTO        `json:"taints,omitempty"`
+	Gvisor                 *GvisorDTO        `json:"gvisor,omitempty"`
+	AdditionalVolumeSizeGi int               `json:"additionalVolumeSizeGi,omitempty"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
@@ -655,6 +658,23 @@ func (a AdditionalWorkerNodePool) ValidateTaints(taints []TaintDTO, poolName str
 	return nil
 }
 
+func validateKeyValueMap(m map[string]string, kind, poolName string) error {
+	for k := range m {
+		if k == "" {
+			return fmt.Errorf("%s key must not be empty for %s additional worker node pool", kind, poolName)
+		}
+	}
+	return nil
+}
+
+func (a AdditionalWorkerNodePool) ValidateLabels(labels map[string]string, poolName string) error {
+	return validateKeyValueMap(labels, "label", poolName)
+}
+
+func (a AdditionalWorkerNodePool) ValidateAnnotations(annotations map[string]string, poolName string) error {
+	return validateKeyValueMap(annotations, "annotation", poolName)
+}
+
 func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) bool {
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {
@@ -687,6 +707,85 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 			}
 
 		}
+	}
+	return nil
+}
+
+// CheckDuplicateWorkerNodePoolKeys checks each pool in the raw JSON array for
+// duplicate keys in "labels" and "annotations". Must be called explicitly when
+// the feature flag is enabled — it is not enforced during standard unmarshaling.
+func CheckDuplicateWorkerNodePoolKeys(rawPools json.RawMessage) error {
+	dec := json.NewDecoder(bytes.NewReader(rawPools))
+	tok, err := dec.Token()
+	if err != nil || tok != json.Delim('[') {
+		return nil
+	}
+	for dec.More() {
+		var rawPool json.RawMessage
+		if err := dec.Decode(&rawPool); err != nil {
+			return err
+		}
+		var name struct {
+			Name string `json:"name"`
+		}
+		_ = json.Unmarshal(rawPool, &name)
+		for _, field := range []string{"labels", "annotations"} {
+			if err := checkDuplicateJSONKeys(rawPool, field); err != nil {
+				return fmt.Errorf("additional worker node pool %q: %w", name.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+// checkDuplicateJSONKeys scans the JSON object at fieldName within data and
+// returns an error if any key appears more than once.
+func checkDuplicateJSONKeys(data []byte, fieldName string) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	tok, err := dec.Token()
+	if err != nil || tok != json.Delim('{') {
+		return nil
+	}
+	for dec.More() {
+		key, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		k, ok := key.(string)
+		if !ok {
+			return nil
+		}
+		if k != fieldName {
+			var skip json.RawMessage
+			if err := dec.Decode(&skip); err != nil {
+				return err
+			}
+			continue
+		}
+		tok, err := dec.Token()
+		if err != nil || tok != json.Delim('{') {
+			return nil
+		}
+		seen := make(map[string]struct{})
+		for dec.More() {
+			subKey, err := dec.Token()
+			if err != nil {
+				return err
+			}
+			sk, ok := subKey.(string)
+			if !ok {
+				continue
+			}
+			if _, exists := seen[sk]; exists {
+				return fmt.Errorf("duplicate key %q in %s", sk, fieldName)
+			}
+			seen[sk] = struct{}{}
+			var val json.RawMessage
+			if err := dec.Decode(&val); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	return nil
 }

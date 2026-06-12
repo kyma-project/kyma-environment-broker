@@ -3933,6 +3933,361 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			{Key: "dedicated", Value: "", Effect: corev1.TaintEffectNoSchedule},
 		})
 	})
+
+	t.Run("should add additional worker node pool with labels and annotations via update", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1"
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers == nil || len(*runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers) == 0)
+
+		// when
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "labeled-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "prod", "team": "platform"},
+							"annotations": {"note": "test"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "labeled-pool", map[string]string{"env": "prod", "team": "platform"})
+		suite.assertAdditionalWorkerAnnotations(t, runtime.Spec.Shoot.Provider, "labeled-pool", map[string]string{"note": "test"})
+	})
+
+	t.Run("should update labels on existing additional worker node pool", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1",
+					"additionalWorkerNodePools": [
+						{
+							"name": "labeled-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "staging"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		suite.assertAdditionalWorkerLabels(t, runtimeAfterProvisioning.Spec.Shoot.Provider, "labeled-pool", map[string]string{"env": "staging"})
+
+		// when - update labels
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "labeled-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "prod"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "labeled-pool", map[string]string{"env": "prod"})
+	})
+
+	t.Run("should replace existing worker pools when updating with a non-existing pool name", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1",
+					"additionalWorkerNodePools": [
+						{
+							"name": "original-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "staging"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerLabels(t, runtimeAfterProvisioning.Spec.Shoot.Provider, "original-pool", map[string]string{"env": "staging"})
+
+		// when - update with a different pool name (full replacement)
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "new-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "prod"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then - original-pool is gone, new-pool is present
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "new-pool", map[string]string{"env": "prod"})
+	})
+
+	t.Run("should handle mixed update with existing and new worker node pools with labels", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1",
+					"additionalWorkerNodePools": [
+						{
+							"name": "pool-a",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "staging"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtimeAfterProvisioning.Spec.Shoot.Provider.AdditionalWorkers, 1)
+
+		// when - update pool-a labels and add pool-b
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "pool-a",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "prod"}
+						},
+						{
+							"name": "pool-b",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"team": "platform"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then - both pools present with their respective labels
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "pool-a", map[string]string{"env": "prod"})
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "pool-b", map[string]string{"team": "platform"})
+	})
+
+	t.Run("should remove labels from additional worker node pool", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg))
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "eu-central-1",
+					"additionalWorkerNodePools": [
+						{
+							"name": "labeled-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {"env": "prod"}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtimeAfterProvisioning := suite.GetRuntimeResourceByInstanceID(iid)
+		suite.assertAdditionalWorkerLabels(t, runtimeAfterProvisioning.Spec.Shoot.Provider, "labeled-pool", map[string]string{"env": "prod"})
+
+		// when - remove labels
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "labeled-pool",
+							"machineType": "m6i.large",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 20,
+							"labels": {}
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		suite.assertAdditionalWorkerLabels(t, runtime.Spec.Shoot.Provider, "labeled-pool", nil)
+	})
 }
 
 func TestUpdateOIDC(t *testing.T) {

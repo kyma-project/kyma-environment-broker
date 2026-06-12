@@ -392,6 +392,7 @@ func workersProvider(imConfig broker.InfrastructureManager, spec *configuration.
 	return workers.NewProvider(
 		imConfig,
 		spec,
+		true,
 	)
 }
 
@@ -1060,29 +1061,41 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 	assert.Len(t, worker.Zones, zonesNumer)
 }
 
-func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider imv1.Provider, name string, expectedTaints []corev1.Taint) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
+func (s *BrokerSuiteTest) assertForAdditionalWorkerNodePool(t *testing.T, provider imv1.Provider, name string, f func(*v1beta1.Worker)) {
+	for _, w := range *provider.AdditionalWorkers {
+		if w.Name == name {
+			f(&w)
+			return
 		}
 	}
-	require.NotNil(t, worker)
-	assert.ElementsMatch(t, expectedTaints, worker.Taints)
+	require.Failf(t, "worker not found", "worker %q not found in additional workers", name)
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerTaints(t *testing.T, provider imv1.Provider, name string, expectedTaints []corev1.Taint) {
+	s.assertForAdditionalWorkerNodePool(t, provider, name, func(w *v1beta1.Worker) {
+		assert.ElementsMatch(t, expectedTaints, w.Taints)
+	})
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerLabels(t *testing.T, provider imv1.Provider, name string, expectedLabels map[string]string) {
+	s.assertForAdditionalWorkerNodePool(t, provider, name, func(w *v1beta1.Worker) {
+		assert.Equal(t, expectedLabels, w.Labels)
+	})
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerAnnotations(t *testing.T, provider imv1.Provider, name string, expectedAnnotations map[string]string) {
+	s.assertForAdditionalWorkerNodePool(t, provider, name, func(w *v1beta1.Worker) {
+		assert.Equal(t, expectedAnnotations, w.Annotations)
+	})
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
-	var worker *v1beta1.Worker
-	for _, additionalWorker := range *provider.AdditionalWorkers {
-		if additionalWorker.Name == name {
-			worker = &additionalWorker
+	s.assertForAdditionalWorkerNodePool(t, provider, name, func(w *v1beta1.Worker) {
+		assert.Len(t, w.Zones, zonesNumber)
+		for _, v := range w.Zones {
+			assert.Contains(t, zones, v)
 		}
-	}
-	require.NotNil(t, worker)
-	assert.Len(t, worker.Zones, zonesNumber)
-	for _, v := range worker.Zones {
-		assert.Contains(t, zones, v)
-	}
+	})
 }
 
 func fixSecrets() []runtime.Object {

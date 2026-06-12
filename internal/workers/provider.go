@@ -16,14 +16,16 @@ import (
 )
 
 type Provider struct {
-	imConfig     broker.InfrastructureManager
-	providerSpec *configuration.ProviderSpec
+	imConfig                 broker.InfrastructureManager
+	providerSpec             *configuration.ProviderSpec
+	labelsAnnotationsEnabled bool
 }
 
-func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
+func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec, labelsAnnotationsEnabled bool) *Provider {
 	return &Provider{
-		imConfig:     imConfig,
-		providerSpec: providerSpec,
+		imConfig:                 imConfig,
+		providerSpec:             providerSpec,
+		labelsAnnotationsEnabled: labelsAnnotationsEnabled,
 	}
 }
 
@@ -83,6 +85,10 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
 			Zones:          workerZones,
 			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
+		}
+		if p.labelsAnnotationsEnabled {
+			worker.Labels = toGardenerLabels(additionalWorkerNodePool.Labels)
+			worker.Annotations = toGardenerAnnotations(additionalWorkerNodePool.Annotations)
 		}
 
 		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) {
@@ -173,4 +179,18 @@ func toGardenerTaints(taints []pkg.TaintDTO) []corev1.Taint {
 		})
 	}
 	return result
+}
+
+func toGardenerLabels(labels map[string]string) map[string]string {
+	if len(labels) == 0 {
+		return nil
+	}
+	return labels
+}
+
+func toGardenerAnnotations(annotations map[string]string) map[string]string {
+	if len(annotations) == 0 {
+		return nil
+	}
+	return annotations
 }

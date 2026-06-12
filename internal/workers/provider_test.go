@@ -27,7 +27,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with zones from existing worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker-existing": {
 				Name:  "worker-existing",
@@ -68,7 +68,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with Kyma workload zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -107,7 +107,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with one zone if ha is disabled", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -149,7 +149,7 @@ aws:
       eu-west-1: [a, b, c]
 `))
 		assert.NoError(t, err)
-		provider := NewProvider(broker.InfrastructureManager{}, providerSpec)
+		provider := NewProvider(broker.InfrastructureManager{}, providerSpec, true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -188,7 +188,7 @@ aws:
 
 	t.Run("should set volume for openstack provider without type", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -228,7 +228,7 @@ aws:
 
 	t.Run("should use discovered zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true))
+		provider := NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker-1",
@@ -279,7 +279,7 @@ aws:
 
 	t.Run("should map taints to gardener worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:          "worker-tainted",
@@ -323,9 +323,91 @@ aws:
 		assert.Equal(t, corev1.Taint{Key: "dedicated", Value: "ml", Effect: corev1.TaintEffectPreferNoSchedule}, workers[0].Taints[1])
 	})
 
+	t.Run("should map labels and annotations to gardener worker", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-labeled",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+				Labels:        map[string]string{"env": "prod", "team": "platform"},
+				Annotations:   map[string]string{"note": "test"},
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			slog.Default(),
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Equal(t, map[string]string{"env": "prod", "team": "platform"}, workers[0].Labels)
+		assert.Equal(t, map[string]string{"note": "test"}, workers[0].Annotations)
+	})
+
+	t.Run("should not set labels and annotations when none provided", func(t *testing.T) {
+		// given
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
+		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
+			{
+				Name:          "worker-plain",
+				MachineType:   "standard",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 10,
+			},
+		}
+
+		// when
+		workers, err := provider.CreateAdditionalWorkers(
+			internal.ProviderValues{
+				ProviderType: provider2.AWSProviderType,
+				VolumeSizeGb: 115,
+			},
+			nil,
+			additionalWorkerNodePools,
+			[]string{"zone-a", "zone-b", "zone-c"},
+			broker.AWSPlanID,
+			map[string][]string{},
+			nil,
+			&internal.Operation{
+				InstanceDetails: internal.InstanceDetails{
+					ProviderValues: &internal.ProviderValues{},
+				},
+			},
+			slog.Default(),
+		)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, workers, 1)
+		assert.Nil(t, workers[0].Labels)
+		assert.Nil(t, workers[0].Annotations)
+	})
+
 	t.Run("should set CRI with gvisor when gvisor is enabled", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "gvisor-pool",
@@ -362,7 +444,7 @@ aws:
 
 	t.Run("should not set CRI when gvisor is nil", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "no-gvisor-pool",
@@ -397,7 +479,7 @@ aws:
 
 	t.Run("should not set CRI when gvisor is disabled", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "gvisor-disabled-pool",
@@ -432,7 +514,7 @@ aws:
 
 	t.Run("should not set taints when none provided", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		provider := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:          "worker-no-taints",
@@ -471,7 +553,7 @@ aws:
 
 	t.Run("should preserve existing volume when pool is unchanged (autoscaler-only update)", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker": {
 				Name:  "worker",
@@ -519,7 +601,7 @@ aws:
 
 	t.Run("should preserve nil volume when legacy pool is unchanged (autoscaler-only update)", func(t *testing.T) {
 		// given — simulates a legacy SCC cluster where the worker had no volume
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker": {
 				Name:   "worker",
@@ -564,7 +646,7 @@ aws:
 
 	t.Run("should update volume when machine type changes", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker": {
 				Name:  "worker",
@@ -612,7 +694,7 @@ aws:
 
 	t.Run("should add AdditionalVolumeSizeGi on top of base volume", func(t *testing.T) {
 		// given
-		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec())
+		p := NewProvider(broker.InfrastructureManager{}, newEmptyProviderSpec(), true)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:                   "worker",
@@ -708,6 +790,36 @@ func TestToGardenerTaints(t *testing.T) {
 	})
 }
 
+func TestToGardenerLabels(t *testing.T) {
+	t.Run("nil input returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerLabels(nil))
+	})
+
+	t.Run("empty map returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerLabels(map[string]string{}))
+	})
+
+	t.Run("non-empty map is returned as-is", func(t *testing.T) {
+		labels := map[string]string{"env": "prod", "team": "platform"}
+		assert.Equal(t, labels, toGardenerLabels(labels))
+	})
+}
+
+func TestToGardenerAnnotations(t *testing.T) {
+	t.Run("nil input returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerAnnotations(nil))
+	})
+
+	t.Run("empty map returns nil", func(t *testing.T) {
+		assert.Nil(t, toGardenerAnnotations(map[string]string{}))
+	})
+
+	t.Run("non-empty map is returned as-is", func(t *testing.T) {
+		annotations := map[string]string{"note": "test", "owner": "team-a"}
+		assert.Equal(t, annotations, toGardenerAnnotations(annotations))
+	})
+}
+
 func TestResolveMachineType(t *testing.T) {
 	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(`
 aws:
@@ -716,7 +828,7 @@ aws:
 `))
 	require.NoError(t, err)
 
-	provider := NewProvider(broker.InfrastructureManager{}, providerSpec)
+	provider := NewProvider(broker.InfrastructureManager{}, providerSpec, true)
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))

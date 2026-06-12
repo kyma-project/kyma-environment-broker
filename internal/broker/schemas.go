@@ -359,6 +359,7 @@ func (s *SchemaService) createFlags(planName string) ControlFlagsObject {
 		s.ingressFilteringPlans.Contains(planName),
 		s.cfg.GvisorEnabled,
 		s.cfg.RejectUnsupportedParameters,
+		s.cfg.WorkerPoolLabelsAnnotationsEnabled,
 		s.cfg.AdditionalVolumeSizeGIPlans.Contains(planName),
 		s.cfg.AdditionalVolumeSizeGiMaxSize,
 		s.cfg.AuditLogAccess,
