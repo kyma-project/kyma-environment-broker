@@ -143,7 +143,7 @@
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
 | configPaths.<br>cloudsqlSSLRootCert | Path to the Cloud SQL SSL root certificate file. | `/secrets/cloudsql-sslrootcert/server-ca.pem` |
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
-| operationRecoveryDelay | Delay after startup before running a second scan for in-progress operations, to recover operations orphaned during rolling deployments. | `2m` |
+| operationRecoveryDelay | Delay after startup before running a scan for in-progress operations, to recover operations orphaned during rolling deployments. | `2m` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
 | freemiumWhitelistedGlobalAccountIds | List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes. Only accounts listed here can provision more than the default limit of free environments. | `whitelist:` |
 | maxPodsWhitelistedGlobalAccountIds | List of global account IDs that are allowed to use an increased maximum number of Pods. For accounts listed here, the maximum number of Pods per node in all worker node pools is set to the value of `infrastructureManager.maxPods`. | `whitelist:` |

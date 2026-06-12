@@ -74,7 +74,7 @@ type Config struct {
 	// running in a separate testing deployment but with the production DB.
 	DisableProcessOperationsInProgress bool `envconfig:"default=false"`
 
-	// OperationRecoveryDelay is the delay after which a second scan for in-progress
+	// OperationRecoveryDelay is the delay after which a scan for in-progress
 	// operations is performed. This covers the rolling deployment race where an operation
 	// is created on the old pod after the new pod's startup scan has already completed.
 	OperationRecoveryDelay time.Duration `envconfig:"default=2m"`
