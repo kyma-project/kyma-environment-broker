@@ -296,6 +296,8 @@ configPaths:
 
 # If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"
+# Delay after startup before running a second scan for in-progress operations, to recover operations orphaned during rolling deployments.
+operationRecoveryDelay: "2m"
 
 events:
   # Enables or disables the events API and event storage for operation events (true/false).
