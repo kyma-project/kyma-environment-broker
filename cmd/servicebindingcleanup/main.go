@@ -8,7 +8,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/servicebindingcleanup"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/vrischmann/envconfig"
@@ -46,26 +45,17 @@ func main() {
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
+	defer func() { _ = conn.Close() }()
 
 	svc := servicebindingcleanup.NewService(cfg.Job.DryRun, brokerClient, db.Bindings())
 	fatalOnError(svc.PerformCleanup())
 
 	slog.Info("Service Binding cleanup job finished successfully!")
-
-	fatalOnError(conn.Close())
-	logOnError(cleaner.HaltIstioSidecar())
-	fatalOnError(cleaner.Halt())
 }
 
 func fatalOnError(err error) {
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(0)
-	}
-}
-
-func logOnError(err error) {
-	if err != nil {
-		slog.Error(err.Error())
 	}
 }

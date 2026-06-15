@@ -17,7 +17,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	_ "github.com/lib/pq"
 )
 
@@ -82,14 +81,6 @@ func main() {
 	migrateErr := invokeMigration()
 	if migrateErr != nil {
 		slog.Error(fmt.Sprintf("while invoking migration: %s", migrateErr))
-	}
-
-	// continue with cleanup
-	err := cleaner.Halt()
-
-	if err != nil || migrateErr != nil {
-		slog.Error(fmt.Sprintf("error during migration: %s", migrateErr))
-		slog.Error(fmt.Sprintf("error during cleanup: %s", err))
 		os.Exit(-1)
 	}
 }

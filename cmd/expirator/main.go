@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
@@ -84,6 +83,7 @@ func main() {
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
+	defer func() { _ = conn.Close() }()
 	svc := newCleanupService(cfg, brokerClient, db.Instances())
 
 	result, err := svc.PerformCleanup()
@@ -100,17 +100,6 @@ func main() {
 	))
 
 	slog.Info("Expirator job finished successfully!")
-
-	err = conn.Close()
-	if err != nil {
-		fatalOnError(err)
-	}
-
-	err = cleaner.HaltIstioSidecar()
-	logOnError(err)
-	// do not use defer, close must be done before halting
-	err = cleaner.Halt()
-	fatalOnError(err)
 }
 
 func (s *CleanupService) PerformCleanup() (Result, error) {
@@ -218,11 +207,5 @@ func fatalOnError(err error) {
 		//log.Fatal(err)
 		slog.Error(err.Error())
 		os.Exit(0)
-	}
-}
-
-func logOnError(err error) {
-	if err != nil {
-		slog.Error(err.Error())
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/cis"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/vrischmann/envconfig"
 )
@@ -61,6 +60,7 @@ func main() {
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
+	defer func() { _ = conn.Close() }()
 
 	// create broker client
 	brokerClient := broker.NewClient(ctx, cfg.Broker)
@@ -69,30 +69,11 @@ func main() {
 	// create SubAccountCleanerService and execute process
 	sacs := cis.NewSubAccountCleanupService(client, brokerClient, db.Instances(), logger)
 	fatalOnError(sacs.Run())
-
-	// do not use defer, close must be done before halting
-	err = conn.Close()
-	if err != nil {
-		fatalOnError(err)
-	}
-
-	err = cleaner.HaltIstioSidecar()
-	logOnError(err)
-	err = cleaner.Halt()
-	fatalOnError(err)
-
-	time.Sleep(5 * time.Second)
 }
 
 func fatalOnError(err error) {
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
-	}
-}
-
-func logOnError(err error) {
-	if err != nil {
-		slog.Error(err.Error())
 	}
 }

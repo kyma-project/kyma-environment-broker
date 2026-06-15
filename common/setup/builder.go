@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vrischmann/envconfig"
@@ -147,15 +146,6 @@ func createK8sClient(cfg *rest.Config) (client.Client, error) {
 
 func (b *AppBuilder) Cleanup() {
 	err := b.conn.Close()
-	if err != nil {
-		FatalOnError(err)
-	}
-
-	err = cleaner.HaltIstioSidecar()
-	LogOnError(err)
-
-	// do not use defer, close must be done before halting
-	err = cleaner.Halt()
 	if err != nil {
 		FatalOnError(err)
 	}

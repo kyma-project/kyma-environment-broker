@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/vrischmann/envconfig"
@@ -64,6 +63,7 @@ func main() {
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
+	defer func() { _ = conn.Close() }()
 	svc := newDeprovisionRetriggerService(cfg, brokerClient, db.Instances())
 
 	result, err := svc.PerformCleanup()
@@ -78,16 +78,6 @@ func main() {
 	))
 
 	slog.Info("Deprovision retrigger job finished successfully!")
-	err = conn.Close()
-	if err != nil {
-		fatalOnError(err)
-	}
-
-	err = cleaner.HaltIstioSidecar()
-	logOnError(err)
-	// do not use defer, close must be done before halting
-	err = cleaner.Halt()
-	fatalOnError(err)
 }
 
 func newDeprovisionRetriggerService(cfg Config, brokerClient BrokerClient, instances storage.Instances) *DeprovisionRetriggerService {
@@ -188,11 +178,5 @@ func fatalOnError(err error) {
 		// exit with 0 to avoid any side effects - we ignore all errors only logging those
 		slog.Error(err.Error())
 		os.Exit(0)
-	}
-}
-
-func logOnError(err error) {
-	if err != nil {
-		slog.Error(err.Error())
 	}
 }
