@@ -35,7 +35,7 @@ func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateT
 	}()
 
 	if response.StatusCode == http.StatusNotFound {
-		c.incRequest("success")
+		c.incRequest("notfound")
 		return CisStateType{}, nil
 	}
 
