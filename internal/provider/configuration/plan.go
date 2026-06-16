@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -163,4 +164,35 @@ func (p *PlanSpecifications) DefaultMachineType(planName string) string {
 		return ""
 	}
 	return regularMachines[0]
+}
+
+// ValidateInternalOnlyMachines returns warning messages for misconfigured internalOnlyMachines entries:
+// - redundant entries already covered by a prefix in the same list
+// - entries that don't match any machine in regularMachines or additionalMachines
+func (p *PlanSpecifications) ValidateInternalOnlyMachines() []string {
+	var warnings []string
+	for planName, plan := range p.plans {
+		allMachines := append(plan.RegularMachines, plan.AdditionalMachines...)
+		for i, entry := range plan.InternalOnlyMachines {
+			for j, other := range plan.InternalOnlyMachines {
+				if i != j && strings.HasPrefix(entry, other) && entry != other {
+					warnings = append(warnings, fmt.Sprintf("internalOnlyMachines entry %q is redundant in plan %q — already covered by prefix %q", entry, planName, other))
+					break
+				}
+			}
+		}
+		for _, entry := range plan.InternalOnlyMachines {
+			matched := false
+			for _, machine := range allMachines {
+				if machine == entry || strings.HasPrefix(machine, entry) {
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				warnings = append(warnings, fmt.Sprintf("internalOnlyMachines entry %q in plan %q does not match any machine type in regularMachines or additionalMachines", entry, planName))
+			}
+		}
+	}
+	return warnings
 }

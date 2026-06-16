@@ -351,6 +351,9 @@ func main() {
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
+	for _, warning := range plansSpec.ValidateInternalOnlyMachines() {
+		log.Warn(warning)
+	}
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
