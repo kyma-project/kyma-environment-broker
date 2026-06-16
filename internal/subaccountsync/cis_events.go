@@ -106,7 +106,7 @@ func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsRespon
 	if err != nil {
 		return CisEventsResponse{}, fmt.Errorf("while building v2 request for event service: %v", err)
 	}
-	response, err := c.httpClient.Do(request)
+	response, err := c.Do(request)
 	if err != nil {
 		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while executing v2 request to event service: %v", err)
@@ -135,7 +135,7 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 		return CisEventsResponse{}, fmt.Errorf("while building request for event service: %v", err)
 	}
 
-	response, err := c.httpClient.Do(request)
+	response, err := c.Do(request)
 	if err != nil {
 		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while executing request to event service: %v", err)
@@ -166,7 +166,6 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 func (c *RateLimitedCisClient) getEventsForSubaccounts(fromActionTime int64, logs slog.Logger, subaccountsMap subaccountsSetType) ([]Event, error) {
 	rawEvents, err := c.FetchEventsWindow(fromActionTime)
 	if err != nil {
-		logs.Error(fmt.Sprintf("while getting events: %s", err))
 		return filterEvents(rawEvents, subaccountsMap), err
 	}
 

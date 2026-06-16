@@ -22,7 +22,7 @@ func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateT
 		return CisStateType{}, fmt.Errorf("while building request for accounts technical service: %w", err)
 	}
 
-	response, err := c.httpClient.Do(request)
+	response, err := c.Do(request)
 	if err != nil {
 		c.incRequest("failure")
 		return CisStateType{}, fmt.Errorf("while executing request to accounts technical service: %w", err)

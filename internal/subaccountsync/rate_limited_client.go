@@ -54,7 +54,7 @@ func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log 
 
 func (c *RateLimitedCisClient) incRequest(status string) {
 	if c.cisRequests != nil {
-		c.cisRequests.With(prometheus.Labels{"endpoint": c.endpoint, "status": status}).Inc()
+		c.cisRequests.WithLabelValues(c.endpoint, status).Inc()
 	}
 }
 
