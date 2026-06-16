@@ -24,6 +24,7 @@ func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateT
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
+		c.incRequest("failure")
 		return CisStateType{}, fmt.Errorf("while executing request to accounts technical service: %w", err)
 	}
 	defer func() {
@@ -34,18 +35,22 @@ func (c *RateLimitedCisClient) GetSubaccountData(subaccountID string) (CisStateT
 	}()
 
 	if response.StatusCode == http.StatusNotFound {
+		c.incRequest("success")
 		return CisStateType{}, nil
 	}
 
 	if response.StatusCode != http.StatusOK {
+		c.incRequest("failure")
 		return CisStateType{}, fmt.Errorf("while processing response: %s", c.handleErrorStatusCode(response))
 	}
 
 	var cisResponse CisStateType
 	err = json.NewDecoder(response.Body).Decode(&cisResponse)
 	if err != nil {
+		c.incRequest("failure")
 		return CisStateType{}, fmt.Errorf("while decoding CIS account response: %w", err)
 	}
 
+	c.incRequest("success")
 	return cisResponse, nil
 }

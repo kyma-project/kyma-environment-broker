@@ -108,6 +108,7 @@ func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsRespon
 	}
 	response, err := c.httpClient.Do(request)
 	if err != nil {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while executing v2 request to event service: %v", err)
 	}
 	defer func() {
@@ -116,12 +117,15 @@ func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsRespon
 		}
 	}()
 	if response.StatusCode != http.StatusOK {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while processing v2 response: %s", c.handleErrorStatusCode(response))
 	}
 	var cisResponse CisEventsResponse
 	if err := json.NewDecoder(response.Body).Decode(&cisResponse); err != nil {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while decoding CIS v2 events response: %v", err)
 	}
+	c.incRequest("success")
 	return cisResponse, nil
 }
 
@@ -133,6 +137,7 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while executing request to event service: %v", err)
 	}
 	defer func() {
@@ -143,30 +148,33 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 	}()
 
 	if response.StatusCode != http.StatusOK {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while processing response: %s", c.handleErrorStatusCode(response))
 	}
 
 	var cisResponse CisEventsResponse
 	err = json.NewDecoder(response.Body).Decode(&cisResponse)
 	if err != nil {
+		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while decoding CIS events response: %v", err)
 	}
 
+	c.incRequest("success")
 	return cisResponse, nil
 }
 
 func (c *RateLimitedCisClient) getEventsForSubaccounts(fromActionTime int64, logs slog.Logger, subaccountsMap subaccountsSetType) ([]Event, error) {
 	rawEvents, err := c.FetchEventsWindow(fromActionTime)
-	if err != nil && len(rawEvents) == 0 {
+	if err != nil {
 		logs.Error(fmt.Sprintf("while getting events: %s", err))
-		return nil, err
+		return filterEvents(rawEvents, subaccountsMap), err
 	}
 
 	// filter events to get only the ones in subaccounts map
 	filteredEventsFromCis := filterEvents(rawEvents, subaccountsMap)
 	logs.Info(fmt.Sprintf("Raw events: %d, filtered: %d", len(rawEvents), len(filteredEventsFromCis)))
 
-	return filteredEventsFromCis, err
+	return filteredEventsFromCis, nil
 }
 
 func filterEvents(rawEvents []Event, subaccounts subaccountsSetType) []Event {
