@@ -539,7 +539,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder,
 			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
-			schemaService, providerSpec, valuesProvider,
+			schemaService, providerSpec, planSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
 			rulesService, gardenerClient, awsClientFactory, operationBlocklist),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs, operationBlocklist),

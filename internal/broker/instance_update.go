@@ -528,6 +528,10 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 	}
 
 	if IsExternalLicenseType(ersContext) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, params.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}

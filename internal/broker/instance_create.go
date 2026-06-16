@@ -29,6 +29,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -98,6 +99,7 @@ type ProvisionEndpoint struct {
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           ConfigurationProvider
+	planSpec               *configuration.PlanSpecifications
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
@@ -129,6 +131,7 @@ func NewProvision(brokerConfig Config,
 	gvisorWhitelist whitelist.Set,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
+	planSpec *configuration.PlanSpecifications,
 	valuesProvider ValuesProvider,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
@@ -161,6 +164,7 @@ func NewProvision(brokerConfig Config,
 		gvisorWhitelist:         gvisorWhitelist,
 		kcBuilder:               kcBuilder,
 		providerSpec:            providerSpec,
+		planSpec:                planSpec,
 		valuesProvider:          valuesProvider,
 		schemaService:           schemaService,
 		providerConfigProvider:  providerConfigProvider,
@@ -594,6 +598,10 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 		}
 
 		if IsExternalLicenseType(provisioningParameters.ErsContext) {
+			planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+			if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, parameters.AdditionalWorkerNodePools); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			}
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
@@ -689,6 +697,41 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 
 func IsExternalLicenseType(ersContext internal.ERSContext) bool {
 	return *ersContext.ExternalLicenseType()
+}
+
+func checkInternalOnlyMachinesUsage(planSpec *configuration.PlanSpecifications, planName string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	if planSpec == nil {
+		return nil
+	}
+	usedMachines := make(map[string][]string)
+	var orderedMachineTypes []string
+
+	for _, pool := range additionalWorkerNodePools {
+		if planSpec.IsInternalOnlyMachine(planName, pool.MachineType) {
+			if _, exists := usedMachines[pool.MachineType]; !exists {
+				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
+			}
+			usedMachines[pool.MachineType] = append(usedMachines[pool.MachineType], pool.Name)
+		}
+	}
+
+	if len(usedMachines) == 0 {
+		return nil
+	}
+
+	var errorMsg strings.Builder
+	errorMsg.WriteString("The following machine types: ")
+
+	for i, machineType := range orderedMachineTypes {
+		if i > 0 {
+			errorMsg.WriteString(", ")
+		}
+		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedMachines[machineType], ", ")))
+	}
+
+	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
+
+	return fmt.Errorf("%s", errorMsg.String())
 }
 
 func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {

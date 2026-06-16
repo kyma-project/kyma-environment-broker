@@ -52,3 +52,28 @@ sap-converged-cloud:
 	assert.False(t, spec.IsUpgradableBetween("plan1", "plan3-bis"))
 	assert.False(t, spec.IsUpgradableBetween("plan1-not-existing", "plan2"))
 }
+
+func TestIsInternalOnlyMachine(t *testing.T) {
+	spec, err := NewPlanSpecifications(strings.NewReader(`
+aws:
+    internalOnlyMachines:
+        - g4dn.xlarge
+        - g6
+azure:
+`))
+	require.NoError(t, err)
+
+	// exact match
+	assert.True(t, spec.IsInternalOnlyMachine("aws", "g4dn.xlarge"))
+	// prefix match
+	assert.True(t, spec.IsInternalOnlyMachine("aws", "g6.xlarge"))
+	// exact entry that is also a prefix — exact match takes precedence but result is same
+	assert.True(t, spec.IsInternalOnlyMachine("aws", "g6"))
+	// no match
+	assert.False(t, spec.IsInternalOnlyMachine("aws", "m5.xlarge"))
+	assert.False(t, spec.IsInternalOnlyMachine("aws", "g4dn.2xlarge"))
+	// unknown plan
+	assert.False(t, spec.IsInternalOnlyMachine("unknown", "g6.xlarge"))
+	// plan with no internalOnlyMachines
+	assert.False(t, spec.IsInternalOnlyMachine("azure", "Standard_NC4as_T4_v3"))
+}

@@ -49,10 +49,11 @@ type planSpecificationDTO struct {
 	// platform region -> list of hyperscaler regions
 	Regions map[string][]string `yaml:"regions"`
 
-	RegularMachines    []string `yaml:"regularMachines"`
-	AdditionalMachines []string `yaml:"additionalMachines"`
-	VolumeSizeGb       int      `yaml:"volumeSizeGb"`
-	UpgradableToPlans  []string `yaml:"upgradableToPlans,omitempty"`
+	RegularMachines      []string `yaml:"regularMachines"`
+	AdditionalMachines   []string `yaml:"additionalMachines"`
+	InternalOnlyMachines []string `yaml:"internalOnlyMachines,omitempty"`
+	VolumeSizeGb         int      `yaml:"volumeSizeGb"`
+	UpgradableToPlans    []string `yaml:"upgradableToPlans,omitempty"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -98,6 +99,24 @@ func (p *PlanSpecifications) AdditionalMachines(planName string) []string {
 		return []string{}
 	}
 	return plan.AdditionalMachines
+}
+
+func (p *PlanSpecifications) IsInternalOnlyMachine(planName, machineType string) bool {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return false
+	}
+	for _, entry := range plan.InternalOnlyMachines {
+		if machineType == entry {
+			return true
+		}
+	}
+	for _, entry := range plan.InternalOnlyMachines {
+		if strings.HasPrefix(machineType, entry) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *PlanSpecifications) DefaultVolumeSizeGb(planName string) (int, bool) {
