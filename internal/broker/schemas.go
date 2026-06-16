@@ -55,6 +55,8 @@ func (s *SchemaService) Validate() error {
 			provider = pkg.SapConvergedCloud
 		case AlicloudPlanName, BuildRuntimeAlicloudPlanName:
 			provider = pkg.Alicloud
+		case GDCHPlanName:
+			provider = pkg.GDCH
 		default:
 			continue
 		}
@@ -86,6 +88,9 @@ func (s *SchemaService) Plans(plans PlansConfig, platformRegion string, cp pkg.C
 	}
 	if createSchema, updateSchema, available := s.AlicloudSchemas(platformRegion); available {
 		outputPlans[AlicloudPlanID] = s.defaultServicePlan(AlicloudPlanID, AlicloudPlanName, plans, createSchema, updateSchema)
+	}
+	if createSchema, updateSchema, available := s.GDCHSchemas(platformRegion); available {
+		outputPlans[GDCHPlanID] = s.defaultServicePlan(GDCHPlanID, GDCHPlanName, plans, createSchema, updateSchema)
 	}
 	if createSchema, updateSchema, available := s.PreviewSchemas(platformRegion); available {
 		outputPlans[PreviewPlanID] = s.defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, createSchema, updateSchema)
@@ -150,6 +155,9 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 	}
 	regularAndAdditionalMachines := append(machines, s.planSpec.AdditionalMachines(planName)...)
 	flags := s.createFlags(planName)
+	if s.planSpec.IsGvisorDisabled(planName) {
+		flags.gvisorEnabled = false
+	}
 
 	createProperties := NewProvisioningProperties(
 		s.machineDisplayNames(cp, machines),
@@ -181,6 +189,14 @@ func (s *SchemaService) planSchemas(cp pkg.CloudProvider, planName, platformRegi
 		planName,
 		s.channelResolver,
 	)
+	if s.planSpec.IsNetworkingDisabled(planName) {
+		createProperties.Networking = nil
+		updateProperties.Networking = nil
+	}
+	if s.planSpec.IsColocateControlPlaneDisabled(planName) {
+		createProperties.ColocateControlPlane = nil
+		updateProperties.ColocateControlPlane = nil
+	}
 	if s.cfg.IsACLEnabledForPlanName(planName) {
 		createProperties.AccessControlList = ACLProperty()
 		updateProperties.AccessControlList = ACLProperty()
@@ -227,6 +243,10 @@ func (s *SchemaService) AlicloudSchemas(platformRegion string) (create, update *
 
 func (s *SchemaService) BuildRuntimeAlicloudSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
 	return s.planSchemas(pkg.Alicloud, BuildRuntimeAlicloudPlanName, platformRegion)
+}
+
+func (s *SchemaService) GDCHSchemas(platformRegion string) (create, update *map[string]interface{}, available bool) {
+	return s.planSchemas(pkg.GDCH, GDCHPlanName, platformRegion)
 }
 
 func (s *SchemaService) AzureLiteSchema(platformRegion string, regions []string, update bool) *map[string]interface{} {

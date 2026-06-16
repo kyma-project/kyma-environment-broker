@@ -35,6 +35,8 @@ const (
 	AlicloudPlanName             = "alicloud"
 	BuildRuntimeAlicloudPlanID   = "72efa867-7b54-4d59-8df7-68f4759ff271"
 	BuildRuntimeAlicloudPlanName = "build-runtime-alicloud"
+	GDCHPlanID                   = "024e11fb-40df-4753-a992-24d136e2d15c"
+	GDCHPlanName                 = "gdch"
 )
 
 var PlanIDsMapping = map[PlanNameType]PlanIDType{
@@ -51,6 +53,7 @@ var PlanIDsMapping = map[PlanNameType]PlanIDType{
 	BuildRuntimeAzurePlanName:    BuildRuntimeAzurePlanID,
 	AlicloudPlanName:             AlicloudPlanID,
 	BuildRuntimeAlicloudPlanName: BuildRuntimeAlicloudPlanID,
+	GDCHPlanName:                 GDCHPlanID,
 }
 
 type PlanIDType string

@@ -76,6 +76,7 @@ const (
 	Azure             CloudProvider = "Azure"
 	AWS               CloudProvider = "AWS"
 	GCP               CloudProvider = "GCP"
+	GDCH              CloudProvider = "GDCH"
 	UnknownProvider   CloudProvider = "unknown"
 	SapConvergedCloud CloudProvider = "SapConvergedCloud"
 	Alicloud          CloudProvider = "Alicloud"
@@ -143,6 +144,8 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return Azure
 	case "gcp":
 		return GCP
+	case "gdch":
+		return GDCH
 	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
 	case "alicloud":

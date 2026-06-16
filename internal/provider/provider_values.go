@@ -132,6 +132,14 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
+	case broker.GDCHPlanID:
+		p = &GDCHInputProvider{
+			Purpose:                s.defaultPurpose,
+			MultiZone:              s.multiZoneCluster,
+			ProvisioningParameters: provisioningParameters,
+			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
+		}
 	case broker.TrialPlanID:
 		var trialProvider pkg.CloudProvider
 		if provisioningParameters.Parameters.Provider == nil {
@@ -195,6 +203,8 @@ func ProviderToCloudProvider(providerType string) pkg.CloudProvider {
 		return pkg.AWS
 	case "gcp":
 		return pkg.GCP
+	case "gdch":
+		return pkg.GDCH
 	case "openstack":
 		return pkg.SapConvergedCloud
 	case "alicloud":

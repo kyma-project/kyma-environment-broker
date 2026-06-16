@@ -68,6 +68,8 @@ func FullZoneName(providerType string, region string, zone string) string {
 	switch providerType {
 	case GCPProviderType:
 		return fmt.Sprintf("%s-%s", region, zone)
+	case GDCHProviderType:
+		return fmt.Sprintf("%s-%s", region, zone)
 	case AzureProviderType:
 		return zone
 	case OpenstackProviderType:
