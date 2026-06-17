@@ -15,7 +15,7 @@ The restriction applies to:
 
 If an external customer specifies a restricted machine type, the request is rejected with an error message that lists the restricted machine types and the worker pool names where they appear.
 
-At startup, KEB logs a warning for any `internalOnlyMachines` entry that is redundant (already covered by a shorter prefix) or unmatched (does not correspond to any machine in `regularMachines` or `additionalMachines`). These warnings are informational and do not prevent KEB from starting.
+At startup, KEB logs a warning for any **internalOnlyMachines** entry that is redundant (already covered by a shorter prefix) or unmatched (does not correspond to any machine in **regularMachines** or **additionalMachines**). These warnings are informational and do not prevent KEB from starting.
 
 ## Procedure
 
