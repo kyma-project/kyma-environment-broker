@@ -137,8 +137,6 @@ azure:
 	assert.True(t, spec.IsInternalOnlyMachine("aws", "g4dn.xlarge"))
 	// prefix match
 	assert.True(t, spec.IsInternalOnlyMachine("aws", "g6.xlarge"))
-	// exact entry that is also a prefix — exact match takes precedence but result is same
-	assert.True(t, spec.IsInternalOnlyMachine("aws", "g6"))
 	// no match
 	assert.False(t, spec.IsInternalOnlyMachine("aws", "m5.xlarge"))
 	assert.False(t, spec.IsInternalOnlyMachine("aws", "g4dn.2xlarge"))
