@@ -36,7 +36,7 @@ plansConfiguration:
       - "g4dn.xlarge"  # fully-qualified — restricts only this specific size
 ```
 
-See [Internal-Only Machine Types](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-73-internal-only-machines.md) for full configuration details.
+For more configuration details, see [Internal-Only Machine Types](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-73-internal-only-machines.md).
 
 ## Post-Update Steps
 
