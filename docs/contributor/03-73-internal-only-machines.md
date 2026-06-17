@@ -35,7 +35,7 @@ If an external customer includes a restricted machine type — either as the mai
 
 ## Startup Validation
 
-At startup, KEB validates the `internalOnlyMachines` configuration and logs a warning for each of the following issues:
+At startup, KEB validates the **internalOnlyMachines** configuration and logs a warning for each of the following issues:
 
 - **Redundant entry**: A fully-qualified name is already covered by a shorter prefix in the same list. For example, `g6.xlarge` is redundant when `g6` is also listed.
 - **Unmatched entry**: An entry does not match any machine type in `regularMachines` or `additionalMachines`.
