@@ -19,7 +19,7 @@ At startup, KEB logs a warning for any **internalOnlyMachines** entry that is re
 
 ## Procedure
 
-Add `internalOnlyMachines` to the relevant plans in the plan configuration. Each entry is either a family prefix (matches all machine types starting with that string) or a fully-qualified machine type name (matches only that exact type).
+Add **internalOnlyMachines** to the relevant plans in the plan configuration. Each entry is either a family prefix (matches all machine types starting with that string) or a fully-qualified machine type name (matches only that exact type).
 
 ```yaml
 plansConfiguration:
