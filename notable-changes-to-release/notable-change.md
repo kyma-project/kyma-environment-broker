@@ -49,7 +49,7 @@ After updating the configuration:
      internalOnlyMachines entry "g6.xlarge" is redundant in plan "aws" — already covered by prefix "g6"
      ```
 
-   - Unmatched entry (does not correspond to any machine in `regularMachines` or `additionalMachines`):
+   - Unmatched entry (does not correspond to any machine in **regularMachines** or **additionalMachines**):
      ```
      internalOnlyMachines entry "g6.unknown" in plan "aws" does not match any machine type in regularMachines or additionalMachines
      ```
