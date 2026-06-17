@@ -6,7 +6,7 @@ Some machine types — such as GPU-equipped instances — are not available to a
 
 ## Configuration
 
-Define `internalOnlyMachines` as a list of machine type entries in the plan configuration:
+Define **internalOnlyMachines** as a list of machine type entries in the plan configuration:
 
 ```yaml
 plansConfiguration:
