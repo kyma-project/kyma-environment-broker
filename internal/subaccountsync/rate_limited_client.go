@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
 )
@@ -20,13 +21,15 @@ type RateLimitedCisClient struct {
 	RateLimiter          *rate.Limiter
 	eventsServiceVersion string
 	eventsWindowSize     time.Duration
+	cisRequests          *prometheus.CounterVec
+	endpoint             string
 }
 
 type RateLimiter interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration) *RateLimitedCisClient {
+func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec, endpoint string) *RateLimitedCisClient {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -44,6 +47,14 @@ func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log 
 		RateLimiter:          rl,
 		eventsServiceVersion: eventsServiceVersion,
 		eventsWindowSize:     eventsWindowSize,
+		cisRequests:          cisRequests,
+		endpoint:             endpoint,
+	}
+}
+
+func (c *RateLimitedCisClient) incRequest(status string) {
+	if c.cisRequests != nil {
+		c.cisRequests.WithLabelValues(c.endpoint, status).Inc()
 	}
 }
 

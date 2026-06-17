@@ -120,13 +120,14 @@ func (reconciler *stateReconcilerType) setMetrics() {
 	reconciler.metrics.states.With(prometheus.Labels{"type": usedForProductionLabel, "value": "others"}).Set(float64(others))
 }
 
-func (reconciler *stateReconcilerType) periodicAccountsSync() (found int, notfound int, failures int) {
+func (reconciler *stateReconcilerType) periodicAccountsSync() {
 	logs := reconciler.logger
 
 	// get distinct subaccounts from inMemoryState
 	subaccountsSet := reconciler.getAllSubaccountIDsFromState()
 	logs.Info(fmt.Sprintf("Running CIS accounts synchronization for %d subaccounts", len(subaccountsSet)))
 
+	var found, notfound, failures int
 	for subaccountID := range subaccountsSet {
 		subaccountDataFromCis, err := reconciler.accountsClient.GetSubaccountData(string(subaccountID))
 		if subaccountDataFromCis == (CisStateType{}) && err == nil {
@@ -143,21 +144,18 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() (found int, notfou
 		}
 	}
 	logs.Debug(fmt.Sprintf("Accounts synchronization finished: found: %d, notfound %d, failures: %d", found, notfound, failures))
-	return found, notfound, failures
 }
 
-func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) (success bool) {
+func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) {
 
 	logs := reconciler.logger
 	eventsClient := reconciler.eventsClient
 	subaccountsSet := reconciler.getAllSubaccountIDsFromState()
-	success = true
 
 	logs.Info(fmt.Sprintf("Running CIS events synchronization from epoch: %d for %d subaccounts", fromActionTime, len(subaccountsSet)))
 
 	eventsOfInterest, err := eventsClient.getEventsForSubaccounts(fromActionTime, *logs, subaccountsSet)
 	if err != nil {
-		success = false
 		logs.Error(fmt.Sprintf("while getting subaccount events: %s", err))
 		// we will retry in the next run
 	}
@@ -166,8 +164,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
-	logs.Debug(fmt.Sprintf("Events synchronization finished with succcess==%t, the most recent reconciled event time: %d", success, reconciler.eventWindow.lastToTime))
-	return success
+	logs.Debug(fmt.Sprintf("Events synchronization finished, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
 }
 
 func (reconciler *stateReconcilerType) getAllSubaccountIDsFromState() subaccountsSetType {
@@ -187,12 +184,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 		// establish actual time window
 		eventsFrom := reconciler.eventWindow.GetNextFromTime()
 
-		ok := reconciler.periodicEventsSync(eventsFrom)
-		if ok {
-			reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events", "status": "success"}).Inc()
-		} else {
-			reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events", "status": "failure"}).Inc()
-		}
+		reconciler.periodicEventsSync(eventsFrom)
 
 		reconciler.eventWindow.UpdateFromTime(eventsFrom)
 		logs.Debug(fmt.Sprintf("Running events synchronization from epoch: %d, lastFromTime: %d, lastToTime: %d", eventsFrom, reconciler.eventWindow.lastFromTime, reconciler.eventWindow.lastToTime))
@@ -202,12 +194,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	}
 
 	_, err = s.Every(cfg.AccountsSyncInterval).Do(func() {
-		found, notfound, failures := reconciler.periodicAccountsSync()
-
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "failure"}).Add(float64(failures))
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "success"}).Add(float64(found + notfound))
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "notfound"}).Add(float64(notfound))
-
+		reconciler.periodicAccountsSync()
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling accounts sync job: %s", err))
