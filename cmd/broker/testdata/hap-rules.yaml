@@ -20,3 +20,4 @@
                                     # pool: hyperscalerType: azure
   - alicloud                        # pool: hyperscalerType: alicloud
   - build-runtime-alicloud          # pool: hyperscalerType: alicloud
+  - gdch                            # pool: hyperscalerType: gdch
