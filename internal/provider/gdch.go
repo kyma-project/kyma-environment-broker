@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DefaultGDCHRegion        = "us-west16"
+	DefaultGDCHRegion         = "us-west16"
 	DefaultGDCHMultiZoneCount = 3
 )
 
