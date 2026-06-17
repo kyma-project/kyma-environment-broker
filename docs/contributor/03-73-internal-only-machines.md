@@ -25,7 +25,7 @@ plansConfiguration:
 
 Each entry is either a family prefix or a fully-qualified machine type name. A machine type is considered internal-only if it matches an entry exactly or starts with one of the listed prefixes. In the example above, `g6` matches `g6.xlarge`, `g6.2xlarge`, and any other machine type starting with `g6`. A fully-qualified entry, such as `g4dn.xlarge,` restricts only that specific size.
 
-`internalOnlyMachines` entries can match machines from either `regularMachines` or `additionalMachines`.
+**internalOnlyMachines** entries can match machines from either **regularMachines** or **additionalMachines**.
 
 ## Access Control
 
