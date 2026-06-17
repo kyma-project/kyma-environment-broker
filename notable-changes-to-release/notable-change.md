@@ -40,7 +40,7 @@ For more configuration details, see [Internal-Only Machine Types](https://github
 
 ## Post-Update Steps
 
-After updating the configuration:
+After updating the configuration, perform the following steps:
 
 1. Check KEB startup logs for configuration warnings. KEB logs a warning for each misconfigured **internalOnlyMachines** entry. Look for lines similar to the following:
 
