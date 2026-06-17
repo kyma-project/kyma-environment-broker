@@ -1517,6 +1517,78 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
+func TestUpdateInternalOnlyMainMachineTypeForInternalUser(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.Parameters.Region = ptr.String("eu-central-1")
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("eu-central-1")
+	err = st.Operations().InsertProvisioningOperation(op)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AWSPlanID,
+		RawParameters:   json.RawMessage(`{"machineType":"m5.16xlarge"}`),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage(`{"globalaccount_id":"globalaccount_id_1", "active":true}`),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestUpdateInternalOnlyMainMachineTypeForExternalCustomer(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues.ProviderType = "aws"
+	err = st.Operations().InsertProvisioningOperation(provisioning)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AWSPlanID,
+		RawParameters:   json.RawMessage(fmt.Sprintf(`{"machineType":"%s"}`, "m5.16xlarge")),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage(`{"globalaccount_id":"globalaccount_id_1", "active":true, "license_type": "CUSTOMER"}`),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type m5.16xlarge is not available for your account. For details, please contact your sales representative.")
+}
+
 func TestUpdateInternalOnlyMachineForInternalUser(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)

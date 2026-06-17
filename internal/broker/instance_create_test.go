@@ -3518,7 +3518,87 @@ func fixGardenerConfig() gardener.Config {
 		DNSProviders: fixDNSProviders()}
 }
 
-func TestInternalOnlyMachineForInternalUser(t *testing.T) {
+func TestProvisionInternalOnlyMainMachineTypeForInternalUser(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(fixGardenerConfig()).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "m5.16xlarge"}`, clusterName, "eu-central-1")),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "SAPDEV"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestProvisionInternalOnlyMainMachineTypeForExternalCustomer(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws", "azure", "gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(fixGardenerConfig()).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s"}`, clusterName, "eu-central-1", "m5.16xlarge")),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "CUSTOMER"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type m5.16xlarge is not available for your account. For details, please contact your sales representative.")
+}
+
+func TestProvisionInternalOnlyMachineForInternalUser(t *testing.T) {
 	// given
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	memoryStorage := storage.NewMemoryStorage()
@@ -3562,7 +3642,7 @@ func TestInternalOnlyMachineForInternalUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInternalOnlyMachinesForExternalCustomer(t *testing.T) {
+func TestProvisionInternalOnlyMachinesForExternalCustomer(t *testing.T) {
 	// given
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	memoryStorage := storage.NewMemoryStorage()

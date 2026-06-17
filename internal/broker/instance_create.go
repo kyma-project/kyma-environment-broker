@@ -454,6 +454,13 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 }
 
 func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) error {
+	if IsExternalLicenseType(provisioningParameters.ErsContext) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if parameters.MachineType != nil && *parameters.MachineType != "" && b.planSpec.IsInternalOnlyMachine(planName, *parameters.MachineType) {
+			return fmt.Errorf("Machine type %s is not available for your account. For details, please contact your sales representative.", *parameters.MachineType)
+		}
+	}
+
 	if !b.providerSpec.IsRegionSupported(pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
 		return fmt.Errorf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
