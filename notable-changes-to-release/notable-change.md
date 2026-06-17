@@ -56,4 +56,4 @@ After updating the configuration:
 
    These warnings are informational, and they don't prevent KEB from starting. They only indicate entries that either have no effect or overlap with a prefix and should be corrected.
 
-2. **Verify request enforcement.** Confirm that external provisioning and update requests using the restricted machine types are rejected, and that internal requests continue to succeed.
+2. Verify request enforcement: Confirm that external provisioning and update requests using the restricted machine types are rejected, and that internal requests continue to succeed.
