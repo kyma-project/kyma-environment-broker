@@ -182,7 +182,7 @@ func (p *PlanSpecifications) ValidateInternalOnlyMachines() []string {
 		for _, entry := range plan.InternalOnlyMachines {
 			matched := false
 			for _, machine := range allMachines {
-				if machine == entry || strings.HasPrefix(machine, entry) {
+				if strings.HasPrefix(machine, entry) {
 					matched = true
 					break
 				}
