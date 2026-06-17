@@ -8,10 +8,11 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -40,7 +41,7 @@ type fakeProvisionEndpointBuilder struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	awsClientFactory       map[pkg.CloudProvider]hyperscalers.ClientFactory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -143,7 +144,7 @@ func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Clien
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFactory) *fakeProvisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory map[pkg.CloudProvider]hyperscalers.ClientFactory) *fakeProvisionEndpointBuilder {
 	b.awsClientFactory = factory
 	return b
 }

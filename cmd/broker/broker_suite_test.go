@@ -27,7 +27,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -212,7 +212,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	awsClientFactory := fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil)
+	awsClientFactory := fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil))
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
@@ -451,7 +451,7 @@ func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
 	deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger,
 	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications,
-	rulesService *rules.RulesService, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
+	rulesService *rules.RulesService, gardenerClient *gardener.Client, clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -511,7 +511,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
-		providerSpec, configProvider, planSpec, rulesService, gardenerClient, awsClientFactory)
+		providerSpec, configProvider, planSpec, rulesService, gardenerClient, clientFactories)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

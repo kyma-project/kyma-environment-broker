@@ -5,10 +5,11 @@ import (
 	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
@@ -22,7 +23,7 @@ import (
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
 	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
-	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
+	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -43,7 +44,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, awsClientFactory),
+			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, clientFactories),
 		},
 		{
 			stage: "runtime_resource",

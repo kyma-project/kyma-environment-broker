@@ -25,7 +25,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
@@ -102,7 +102,7 @@ type ProvisionEndpoint struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	awsClientFactory       map[pkg.CloudProvider]hyperscalers.ClientFactory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -135,7 +135,7 @@ func NewProvision(brokerConfig Config,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -557,9 +557,9 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		awsClient, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
 		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			logger.Error(fmt.Sprintf("unable to create hyperscaler client: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
@@ -1118,15 +1118,21 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 	return nil
 }
 
-func newAWSClient(
+func newHyperscalerClient(
 	ctx context.Context,
 	log *slog.Logger,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
-) (aws.Client, error) {
+) (hyperscalers.Client, error) {
+	provider := pkg.CloudProviderFromString(values.ProviderType)
+	factory, ok := clientFactories[provider]
+	if !ok {
+		return nil, fmt.Errorf("no client factory for provider %s", provider)
+	}
+
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
 		Plan:              AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
@@ -1161,13 +1167,9 @@ func newAWSClient(
 		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	}
 
-	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	client, err := factory.NewFromSecret(ctx, secret, values.Region)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract AWS credentials")
-	}
-	client, err := awsClientFactory.New(ctx, accessKeyID, secretAccessKey, values.Region)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create AWS client")
+		return nil, fmt.Errorf("unable to create hyperscaler client")
 	}
 
 	return client, nil

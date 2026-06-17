@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -118,11 +120,22 @@ func NewFakeAWSClientFactory(zones map[string][]string, error error) *FakeAWSCli
 	return &FakeAWSClientFactory{client: fakeClient}
 }
 
+// FakeClientFactories wraps FakeAWSClientFactory in a map for use with the common hyperscalers interface.
+func FakeClientFactories(f *FakeAWSClientFactory) map[pkg.CloudProvider]hyperscalers.ClientFactory {
+	return map[pkg.CloudProvider]hyperscalers.ClientFactory{
+		pkg.AWS: f,
+	}
+}
+
 type FakeAWSClientFactory struct {
 	client aws.Client
 }
 
 func (f *FakeAWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
+	return f.client, nil
+}
+
+func (f *FakeAWSClientFactory) NewFromSecret(_ context.Context, _ *unstructured.Unstructured, _ string) (hyperscalers.Client, error) {
 	return f.client, nil
 }
 

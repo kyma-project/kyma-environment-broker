@@ -7,6 +7,7 @@ import (
 	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -23,6 +24,7 @@ const (
 )
 
 type ClientFactory interface {
+	hyperscalers.ClientFactory
 	New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error)
 }
 
@@ -46,6 +48,14 @@ type AWSClientFactory struct {
 }
 
 func (a AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
+	return NewClient(ctx, a.providerSpec, accessKeyID, secretAccessKey, region)
+}
+
+func (a AWSClientFactory) NewFromSecret(ctx context.Context, secret *unstructured.Unstructured, region string) (hyperscalers.Client, error) {
+	accessKeyID, secretAccessKey, err := ExtractCredentials(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract AWS credentials: %w", err)
+	}
 	return NewClient(ctx, a.providerSpec, accessKeyID, secretAccessKey, region)
 }
 

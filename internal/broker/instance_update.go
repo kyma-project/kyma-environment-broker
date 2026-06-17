@@ -19,7 +19,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -74,7 +74,7 @@ type UpdateEndpoint struct {
 	gvisorWhitelist  whitelist.Set
 	rulesService     *rules.RulesService
 	gardenerClient   *gardener.Client
-	awsClientFactory aws.ClientFactory
+	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -623,10 +623,10 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	awsClient, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
 
 	if err != nil {
-		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+		logger.Error(fmt.Sprintf("unable to create hyperscaler client: %s", err))
 		return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 	}
 
