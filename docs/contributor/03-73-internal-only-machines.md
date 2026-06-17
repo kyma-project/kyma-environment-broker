@@ -2,7 +2,7 @@
 
 # Internal-Only Machine Types
 
-Some machine types — such as GPU-equipped instances — are not available to all customers. The `internalOnlyMachines` configuration restricts these machine types to internal SAP users and prevents external customers from using them.
+Some machine types — such as GPU-equipped instances — are not available to all customers. The **internalOnlyMachines** configuration restricts these machine types to internal SAP users and prevents external customers from using them.
 
 ## Configuration
 
