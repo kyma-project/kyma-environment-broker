@@ -86,9 +86,10 @@ aws:
 `))
 		require.NoError(t, err)
 		warnings := spec.ValidateInternalOnlyMachines()
-		require.Len(t, warnings, 2)
-		assert.Equal(t, `internalOnlyMachines entry "g6.xlarge" is redundant in plan "aws" — already covered by prefix "g6"`, warnings[0])
-		assert.Equal(t, `internalOnlyMachines entry "g9" in plan "aws" does not match any machine type in regularMachines or additionalMachines`, warnings[1])
+		assert.ElementsMatch(t, []string{
+			`internalOnlyMachines entry "g6.xlarge" is redundant in plan "aws" — already covered by prefix "g6"`,
+			`internalOnlyMachines entry "g9" in plan "aws" does not match any machine type in regularMachines or additionalMachines`,
+		}, warnings)
 	})
 
 	t.Run("entry matches additionalMachines", func(t *testing.T) {

@@ -108,11 +108,6 @@ func (p *PlanSpecifications) IsInternalOnlyMachine(planName, machineType string)
 		return false
 	}
 	for _, entry := range plan.InternalOnlyMachines {
-		if machineType == entry {
-			return true
-		}
-	}
-	for _, entry := range plan.InternalOnlyMachines {
 		if strings.HasPrefix(machineType, entry) {
 			return true
 		}
