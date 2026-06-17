@@ -54,6 +54,6 @@ After updating the configuration:
      internalOnlyMachines entry "g6.unknown" in plan "aws" does not match any machine type in regularMachines or additionalMachines
      ```
 
-   These warnings are informational — KEB continues to start — but they indicate entries that either have no effect or overlap with a prefix, and should be corrected.
+   These warnings are informational, and they don't prevent KEB from starting. They only indicate entries that either have no effect or overlap with a prefix and should be corrected.
 
 2. **Verify request enforcement.** Confirm that external provisioning and update requests using the restricted machine types are rejected, and that internal requests continue to succeed.
