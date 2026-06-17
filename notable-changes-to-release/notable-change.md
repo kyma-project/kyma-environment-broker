@@ -42,7 +42,7 @@ See [Internal-Only Machine Types](https://github.com/kyma-project/kyma-environme
 
 After updating the configuration:
 
-1. **Check KEB startup logs for configuration warnings.** KEB logs a warning for each misconfigured `internalOnlyMachines` entry. Look for lines like:
+1. Check KEB startup logs for configuration warnings. KEB logs a warning for each misconfigured **internalOnlyMachines** entry. Look for lines similar to the following:
 
    - Redundant entry (already covered by a shorter prefix in the same list):
      ```
