@@ -7,7 +7,7 @@
 
 ## What's Changed
 
-KEB now supports an `internalOnlyMachines` field in the plan configuration. Machine types listed there are blocked for external customers (requests carrying an external license type) but remain available to internal SAP users.
+KEB now supports the **internalOnlyMachines** field in the plan configuration. The machine types listed there are blocked for requests from external customers (carrying an external license type) but remain available to internal SAP users.
 
 The restriction applies to:
 - The main machine type in a provisioning or update request.
