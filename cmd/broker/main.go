@@ -363,7 +363,7 @@ func main() {
 	var volumeSizeProvider broker.VolumeSizeProvider
 	if cfg.Broker.DynamicVolumeSizeEnabled {
 		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
-		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud, pkg.SapConvergedCloud})
+		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, cfg.Broker.EnablePlans)
 		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
 		log.Info("KCR volume sizes validated successfully")
 		volumeSizeProvider = kcrVolumeProvider
@@ -650,9 +650,16 @@ func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
 	}
 }
 
-func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, providers []pkg.CloudProvider) map[pkg.CloudProvider][]string {
+func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, enabledPlans broker.StringList) map[pkg.CloudProvider][]string {
+	providerSet := map[pkg.CloudProvider]struct{}{}
+	for _, planName := range enabledPlans {
+		if cp := provider.CloudProviderForPlan(planName); cp != pkg.UnknownProvider {
+			providerSet[cp] = struct{}{}
+		}
+	}
+
 	result := map[pkg.CloudProvider][]string{}
-	for _, cp := range providers {
+	for cp := range providerSet {
 		seen := make(map[string]struct{})
 		for _, mt := range providerSpec.MachineTypes(cp) {
 			resolved := providerSpec.ResolveMachineType(cp, mt)
