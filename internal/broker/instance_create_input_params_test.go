@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -35,6 +36,7 @@ type fakeProvisionEndpointBuilder struct {
 	gvisorWhitelist        whitelist.Set
 	schemaService          *SchemaService
 	providerSpec           ConfigurationProvider
+	planSpec               *configuration.PlanSpecifications
 	valuesProvider         ValuesProvider
 	providerConfigProvider config.ConfigMapConfigProvider
 	quotaClient            QuotaClient
@@ -96,6 +98,11 @@ func (b *fakeProvisionEndpointBuilder) WithKubeconfigBuilder(kubeconfigBuilder k
 
 func (b *fakeProvisionEndpointBuilder) WithConfigurationProvider(provider ConfigurationProvider) *fakeProvisionEndpointBuilder {
 	b.providerSpec = provider
+	return b
+}
+
+func (b *fakeProvisionEndpointBuilder) WithPlanSpec(spec *configuration.PlanSpecifications) *fakeProvisionEndpointBuilder {
+	b.planSpec = spec
 	return b
 }
 
@@ -169,6 +176,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.gvisorWhitelist,
 		b.schemaService,
 		b.providerSpec,
+		b.planSpec,
 		b.valuesProvider,
 		b.providerConfigProvider,
 		b.quotaClient,

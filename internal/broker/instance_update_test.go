@@ -1517,7 +1517,79 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
-func TestUpdateGPUMachineForInternalUser(t *testing.T) {
+func TestUpdateInternalOnlyMainMachineTypeForInternalUser(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	instance.Parameters.Parameters.Region = ptr.String("eu-central-1")
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	op := fixProvisioningOperation("provisioning01")
+	op.ProvisioningParameters.Parameters.Region = ptr.String("eu-central-1")
+	err = st.Operations().InsertProvisioningOperation(op)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AWSPlanID,
+		RawParameters:   json.RawMessage(`{"machineType":"m5.16xlarge"}`),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage(`{"globalaccount_id":"globalaccount_id_1", "active":true}`),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestUpdateInternalOnlyMainMachineTypeForExternalCustomer(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.AWSPlanID
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	provisioning := fixProvisioningOperation("provisioning01")
+	provisioning.ProviderValues.ProviderType = "aws"
+	err = st.Operations().InsertProvisioningOperation(provisioning)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AWSPlanID,
+		RawParameters:   json.RawMessage(fmt.Sprintf(`{"machineType":"%s"}`, "m5.16xlarge")),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage(`{"globalaccount_id":"globalaccount_id_1", "active":true, "license_type": "CUSTOMER"}`),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type m5.16xlarge is not available for your account. For details, please contact your sales representative.")
+}
+
+func TestUpdateInternalOnlyMachineForInternalUser(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
 	instance.Parameters.Parameters.Region = ptr.String("uksouth")
@@ -1527,16 +1599,15 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 
 	op := fixProvisioningOperation("provisioning01")
 	op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
-
 	err = st.Operations().InsertProvisioningOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
 		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
 
@@ -1555,76 +1626,41 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
+func TestUpdateInternalOnlyMachinesForExternalCustomer(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                    string
 		additionalWorkerNodePools string
 		expectedError             string
 	}{
-		"Single AWS G6 GPU machine type": {
+		"single AWS internal-only machine (prefix g6)": {
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: additionalWorkerNodePools,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
-		"Multiple AWS G6 GPU machine types": {
+		"multiple AWS internal-only machines (prefix g6)": {
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
-		"Duplicate AWS G6 GPU machine type": {
+		"duplicate AWS internal-only machine (prefix g6)": {
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
-		"Single AWS G4dn GPU machine type": {
+		"single AWS internal-only machine (prefix g4dn)": {
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
-		"Multiple AWS G4dn GPU machine types": {
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1), g4dn.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Duplicate AWS G4dn GPU machine type": {
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Single GCP GPU machine type": {
+		"single GCP internal-only machine (prefix g2-standard)": {
 			planID:                    broker.GCPPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
-		"Multiple GCP GPU machine types": {
-			planID:                    broker.GCPPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-8", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1), g2-standard-8 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Duplicate GCP GPU machine type": {
-			planID:                    broker.GCPPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Single Azure GPU machine type": {
+		"single Azure internal-only machine (prefix Standard_NC)": {
 			planID:                    broker.AzurePlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Multiple Azure GPU machine types": {
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1), Standard_NC8as_T4_v3 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Duplicate Azure GPU machine type": {
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		"Version agnostic GPU machine type": {
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+			expectedError:             "The following machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
