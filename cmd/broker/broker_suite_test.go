@@ -212,21 +212,21 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	awsClientFactory := fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil))
+	clientFactories := fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil))
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, awsClientFactory, nil)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, clientFactories, nil)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
-		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, awsClientFactory, nil)
+		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, clientFactories, nil)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 
@@ -254,7 +254,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec, rulesService, gardenerClientWithNamespace, awsClientFactory)
+	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec, rulesService, gardenerClientWithNamespace, clientFactories)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)

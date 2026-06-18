@@ -80,7 +80,8 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 
 	factory, ok := s.clientFactories[provider]
 	if !ok {
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("no client factory for provider %s", provider), nil, log)
+		err := fmt.Errorf("no client factory for provider %s", provider)
+		return s.operationManager.OperationFailed(operation, err.Error(), err, log)
 	}
 	client, err := factory.NewFromSecret(context.Background(), secret, operation.ProviderValues.Region)
 	if err != nil {

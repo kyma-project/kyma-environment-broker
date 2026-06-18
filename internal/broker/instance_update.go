@@ -74,7 +74,7 @@ type UpdateEndpoint struct {
 	gvisorWhitelist  whitelist.Set
 	rulesService     *rules.RulesService
 	gardenerClient   *gardener.Client
-	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories  map[pkg.CloudProvider]hyperscalers.ClientFactory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories  map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -130,7 +130,7 @@ func NewUpdate(cfg Config,
 		gvisorWhitelist:                          gvisorWhitelist,
 		rulesService:                             rulesService,
 		gardenerClient:                           gardenerClient,
-		awsClientFactory:                         awsClientFactory,
+		clientFactories:                          clientFactories,
 		syncEmptyUpdateResponseEnabled:           cfg.SyncEmptyUpdateResponseEnabled,
 		operationBlocklist:                       operationBlocklist,
 	}
@@ -635,7 +635,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	awsClient, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.clientFactories, instance.Parameters, providerValues)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create hyperscaler client: %s", err))
@@ -643,7 +643,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 	}
 
 	for machineType := range discoveredZones {
-		zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+		zonesCount, err := client.AvailableZonesCount(ctx, machineType)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)

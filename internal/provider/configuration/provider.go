@@ -186,6 +186,19 @@ func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
 	return providerData.ZonesDiscovery
 }
 
+func (p *ProviderSpec) MachineFamily(cp runtime.CloudProvider, machineType string) (string, bool) {
+	switch cp {
+	case runtime.AWS:
+		parts := strings.SplitN(machineType, ".", 2)
+		if len(parts) < 2 {
+			return "", false
+		}
+		return parts[0], true
+	default:
+		return "", false
+	}
+}
+
 func (p *ProviderSpec) MachineTypes(cp runtime.CloudProvider) []string {
 	providerData := p.findProviderDTO(cp)
 	if providerData == nil {

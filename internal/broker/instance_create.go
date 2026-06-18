@@ -104,7 +104,7 @@ type ProvisionEndpoint struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories        map[pkg.CloudProvider]hyperscalers.ClientFactory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -172,7 +172,7 @@ func NewProvision(brokerConfig Config,
 		quotaWhitelist:          quotaWhitelist,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
-		awsClientFactory:        awsClientFactory,
+		clientFactories:        awsClientFactory,
 		operationBlocklist:      operationBlocklist,
 	}
 }
@@ -568,14 +568,14 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.clientFactories, provisioningParameters, values)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create hyperscaler client: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			zonesCount, err := client.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
@@ -1207,19 +1207,19 @@ func newHyperscalerClient(
 		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
 	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
+		return nil, fmt.Errorf("no credentials bindings found for selector %q", labelSelector)
 	}
 	credentialsBinding := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
 
 	log.Info(fmt.Sprintf("getting subscription credentials with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 	secret, err := gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 
 	client, err := factory.NewFromSecret(ctx, secret, values.Region)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create hyperscaler client")
+		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}
 
 	return client, nil

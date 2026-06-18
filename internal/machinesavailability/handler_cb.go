@@ -95,13 +95,9 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 		machineTypes := h.providerSpec.MachineTypes(provider)
 		machineFamilies := make(map[string]string)
 		for _, machineType := range machineTypes {
-			var family string
-			if provider == runtime.AWS {
-				// For AWS, machine types follow the pattern "<family>.<size>".
-				parts := strings.SplitN(machineType, ".", 2)
-				family = parts[0]
-			} else {
-				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("%s provider not supported", provider))
+			family, ok := h.providerSpec.MachineFamily(provider, machineType)
+			if !ok {
+				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("machine family extraction not supported for provider %s", provider))
 				return
 			}
 			machineFamilies[family] = machineType
@@ -165,7 +161,7 @@ func (h *HandlerCB) getSecret(provider string) (*unstructured.Unstructured, erro
 	h.logger.Info(fmt.Sprintf("getting subscription secret with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 	secret, err := h.gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 	return secret, nil
 }

@@ -43,7 +43,7 @@ type fakeProvisionEndpointBuilder struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories       map[pkg.CloudProvider]hyperscalers.ClientFactory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -151,8 +151,8 @@ func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Clien
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory map[pkg.CloudProvider]hyperscalers.ClientFactory) *fakeProvisionEndpointBuilder {
-	b.awsClientFactory = factory
+func (b *fakeProvisionEndpointBuilder) WithClientFactories(factory map[pkg.CloudProvider]hyperscalers.ClientFactory) *fakeProvisionEndpointBuilder {
+	b.clientFactories = factory
 	return b
 }
 
@@ -183,7 +183,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.quotaWhitelist,
 		b.rulesService,
 		b.gardenerClient,
-		b.awsClientFactory,
+		b.clientFactories,
 		b.operationBlocklist,
 	)
 }
