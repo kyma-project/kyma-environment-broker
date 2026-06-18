@@ -23,11 +23,6 @@ const (
 	retries  = 5
 )
 
-type Client interface {
-	AvailableZones(ctx context.Context, machineType string) ([]string, error)
-	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
-}
-
 type EC2API interface {
 	DescribeInstanceTypeOfferings(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error)
 }
