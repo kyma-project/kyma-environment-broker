@@ -47,6 +47,8 @@ gcp,build-runtime-gcp:
     - "g2-standard-24"
     - "g2-standard-32"
     - "g2-standard-48"
+  internalOnlyMachines:
+    - "g2-standard"
   regions:
     cf-sa30:
       - "me-central2"
@@ -104,6 +106,10 @@ preview,aws,build-runtime-aws:
     - "g4dn.8xlarge"
     - "g4dn.12xlarge"
     - "g4dn.16xlarge"
+  internalOnlyMachines:
+    - "g6"
+    - "g4dn"
+    - "m5.16xlarge"
   regions:
     cf-eu11: [ "eu-central-1" ]
     default: [ "eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-2", "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2" ]
@@ -142,6 +148,8 @@ azure:
     - "Standard_NC8as_T4"
     - "Standard_NC16as_T4"
     - "Standard_NC64as_T4"
+  internalOnlyMachines:
+    - "Standard_NC"
   regions: &azure_regions
     cf-ch20: [ "switzerlandnorth" ]
     default: [ "eastus","centralus","westus2","uksouth","northeurope","westeurope","japaneast","southeastasia","australiaeast","brazilsouth","canadacentral" ]
