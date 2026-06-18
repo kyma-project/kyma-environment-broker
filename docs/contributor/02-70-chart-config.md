@@ -163,6 +163,7 @@
 | hap.multiHyperscalerAccount.<br>limits.azure | - | `999999` |
 | hap.multiHyperscalerAccount.<br>limits.openstack | - | `999999` |
 | hap.multiHyperscalerAccount.<br>limits.alicloud | - | `999999` |
+| hap.multiHyperscalerAccount.<br>limits.gdch | - | `999999` |
 | infrastructureManager.<br>controlPlaneFailureTolerance | Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters. Possible values: empty (default), "node", or "zone". | `` |
 | infrastructureManager.<br>defaultShootPurpose | Sets the default purpose for Gardener shoots (clusters) created by the broker. Possible values: development, evaluation, production, testing. | `development` |
 | infrastructureManager.<br>defaultTrialProvider | Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS. | `Azure` |
