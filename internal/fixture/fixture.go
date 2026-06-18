@@ -131,10 +131,6 @@ type FakeAWSClientFactory struct {
 	client aws.Client
 }
 
-func (f *FakeAWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
-	return f.client, nil
-}
-
 func (f *FakeAWSClientFactory) NewFromSecret(_ context.Context, _ *unstructured.Unstructured, _ string) (hyperscalers.Client, error) {
 	return f.client, nil
 }

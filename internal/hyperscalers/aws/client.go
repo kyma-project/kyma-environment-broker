@@ -23,11 +23,6 @@ const (
 	retries  = 5
 )
 
-type ClientFactory interface {
-	hyperscalers.ClientFactory
-	New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error)
-}
-
 type Client interface {
 	AvailableZones(ctx context.Context, machineType string) ([]string, error)
 	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
@@ -37,7 +32,7 @@ type EC2API interface {
 	DescribeInstanceTypeOfferings(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error)
 }
 
-func NewFactory(providerSpec *configuration.ProviderSpec) ClientFactory {
+func NewFactory(providerSpec *configuration.ProviderSpec) hyperscalers.ClientFactory {
 	return AWSClientFactory{
 		providerSpec: providerSpec,
 	}
@@ -45,10 +40,6 @@ func NewFactory(providerSpec *configuration.ProviderSpec) ClientFactory {
 
 type AWSClientFactory struct {
 	providerSpec *configuration.ProviderSpec
-}
-
-func (a AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
-	return NewClient(ctx, a.providerSpec, accessKeyID, secretAccessKey, region)
 }
 
 func (a AWSClientFactory) NewFromSecret(ctx context.Context, secret *unstructured.Unstructured, region string) (hyperscalers.Client, error) {
