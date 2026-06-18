@@ -7,6 +7,7 @@ import (
 
 const (
 	DefaultGDCHRegion         = "us-west16"
+	DefaultGDCHMachineType    = "n3-standard-2-gdc"
 	DefaultGDCHMultiZoneCount = 3
 )
 

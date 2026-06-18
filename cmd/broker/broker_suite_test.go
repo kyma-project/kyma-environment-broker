@@ -360,6 +360,9 @@ func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicCl
 		"sb-alicloud": {
 			"hyperscalerType": "alicloud",
 		},
+		"sb-gdch": {
+			"hyperscalerType": "gdch",
+		},
 	} {
 
 		var unstructuredObj *unstructured.Unstructured

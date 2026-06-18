@@ -150,6 +150,9 @@ seedRegions:
 			"alicloud": `
 seedRegions:
 - eu-central-1`,
+			"gdch": `
+seedRegions:
+- us-west16`,
 		},
 	}
 
