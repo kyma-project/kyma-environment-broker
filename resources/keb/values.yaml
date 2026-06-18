@@ -373,6 +373,7 @@ hap:
       azure: 999999
       openstack: 999999
       alicloud: 999999
+      gdch: 999999
 
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.

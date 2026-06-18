@@ -26,3 +26,6 @@ data:
   openstack: |-
     seedRegions:
     - eu-de-1
+  gdch: |-
+    seedRegions:
+    - us-west16

@@ -1,0 +1,12 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: gdch
+  name: gdch
+  namespace: garden-kyma-dev
+provider:
+  type: gdch
+credentialsRef:
+  name: gdch-secret
+  namespace: garden-kyma-dev
