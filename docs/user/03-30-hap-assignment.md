@@ -4,7 +4,7 @@
 
 Assignment rules for SAP BTP, Kyma runtime to IaaS provider accounts determine how Kyma instances are mapped to specific cloud provider account pools based on provider type, plan, and, in some cases, region.
 
-Each IaaS provider (Amazon Web Services, Google Cloud, Microsoft Azure, SAP Cloud Infrastructure) provides pools of accounts to which your Kyma instances are assigned.
+Each IaaS provider (Amazon Web Services, Google Cloud, Microsoft Azure, SAP Cloud Infrastructure, Google Distributed Cloud Hosted) provides pools of accounts to which your Kyma instances are assigned.
 The assignment is primarily based on the IaaS provider type. This means that Kyma instances in one global account are assigned to a single account of a particular IaaS provider.
 The IaaS provider corresponds to a Kyma instance's plan and, in some cases, other requirements, such as EU Access.
 For example, a Kyma instance with the standard `aws` plan is assigned to an Amazon Web Services account, and a Kyma instance with the `build-runtime-azure` plan is assigned to a Microsoft Azure account.
@@ -27,6 +27,8 @@ The specific assignment options are the following:
   - An account pool for Kyma instances created with the service plans `gcp` and `build-runtime-gcp` in the subaccount region cf-sa30, KSA (Dammam) GCP public sector, requiring Assured Workloads Kingdom of Saudi Arabia (KSA) control package.
 
 - SAP Cloud Infrastructure offers one pool of shared accounts for each of the cluster regions available for the service plan `sap-converged-cloud`
+
+- Google Distributed Cloud Hosted offers one account pool for Kyma instances created with the service plan `gdch`
 
 
 For example, once you create the first Kyma instance with the standard `aws` plan in a non-EU region in your global account, it is automatically assigned to an account provided by Amazon Web Services.
