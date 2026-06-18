@@ -3,7 +3,7 @@
 As an operator, you add and manage machine types available in a given plan. When adding a new machine type, follow the procedure described in this document to avoid provisioning failures.
 
 > ### Note:
-> When a customer requests a new machine type in the production (live) environment, handle the request directly. If the request concerns a canary environment (ns2-canary, china-canary), forward it to the Kyma team and stay involved in the process.
+> When a customer requests a new machine type in the production environment, handle the request directly. If the request concerns a canary environment (ns2-canary, china-canary), forward it to the Kyma team and stay involved in the process.
 
 ## Check Zone Availability
 
