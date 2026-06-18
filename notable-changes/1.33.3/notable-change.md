@@ -1,9 +1,9 @@
-<!--{"metadata":{"requirement":"RECOMMENDED","type":"INTERNAL","category":"CONFIGURATION"}}-->
+<!--{"metadata":{"requirement":"MANDATORY","type":"EXTERNAL","category":"CONFIGURATION"}}-->
 
 # KEB: Internal-Only Machine Types
 
 > ### Note: 
-> This change is recommended. Without configuring **internalOnlyMachines**, machine types intended for internal SAP use — such as GPU-equipped instances — remain accessible to external customers.
+> This change is mandatory. Without configuring **internalOnlyMachines**, machine types intended for internal SAP use — such as GPU-equipped instances — remain accessible to external customers.
 
 ## What's Changed
 
