@@ -117,7 +117,7 @@ func (p *KCRVolumeProvider) CloudProviderVolumeSizes(ctx context.Context) (map[p
 	if err != nil {
 		return nil, err
 	}
-	knownProviders := []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.SapConvergedCloud, pkg.Alicloud}
+	knownProviders := []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.SapConvergedCloud, pkg.Alicloud, pkg.GDCH}
 	result := make(map[pkg.CloudProvider]map[string]int, len(knownProviders))
 	for _, cp := range knownProviders {
 		key := cloudProviderToKey(cp)
