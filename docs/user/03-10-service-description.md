@@ -187,17 +187,17 @@ Google Distributed Cloud Hosted
 
 > **Note:** The following parameters are not available for the `gdch` plan and are disabled by design: custom **networking** configuration, **colocate control plane**, and **GVisor** container runtime.
 
-| Parameter name                | Type   | Description                                                                                | Required | Default value          |
-|-------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|------------------------|
-| **machineType**               | string | Specifies the provider-specific virtual machine type.                                      |    No    | `n3-standard-2-gdc`    |
-| **volumeSizeGb**              | int    | Specifies the size of the root volume.                                                     |    No    | `80`                   |
-| **region**                    | string | Defines the cluster region.                                                                |   Yes    | None                   |
-| **zones**                     | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["us-west16-a"]`      |
-| **autoScalerMin<sup>1</sup>** | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`                    |
-| **autoScalerMax<sup>1</sup>** | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `10`                   |
-| **maxSurge<sup>1</sup>**      | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`                    |
-| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`                    |
-| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools.                                     |    No    | None                   |
+| Parameter name                            | Type   | Description                                                                                | Required | Default value       |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `n3-standard-2-gdc` |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `80`                |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None                |
+| **zones**                                 | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["us-west16-a"]`   |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`                 |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `10`                |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`                 |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`                 |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools.                                     |    No    | None                |
 
 
 </details>

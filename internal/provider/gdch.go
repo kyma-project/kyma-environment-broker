@@ -32,7 +32,7 @@ func (p *GDCHInputProvider) Provide() internal.ProviderValues {
 		Region:               region,
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
-		DiskType:             "standard",
+		DiskType:             "Standard",
 		FailureTolerance:     &p.FailureTolerance,
 	}
 }

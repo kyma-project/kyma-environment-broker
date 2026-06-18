@@ -33,7 +33,7 @@ func TestGDCHDefaults(t *testing.T) {
 		Region:               "us-west16",
 		Purpose:              "production",
 		VolumeSizeGb:         80,
-		DiskType:             "standard",
+		DiskType:             "Standard",
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -63,7 +63,7 @@ func TestGDCHMultiZone(t *testing.T) {
 		Region:               "us-west16",
 		Purpose:              "production",
 		VolumeSizeGb:         80,
-		DiskType:             "standard",
+		DiskType:             "Standard",
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
@@ -93,7 +93,7 @@ func TestGDCHCustomRegion(t *testing.T) {
 		Region:               "us-east1",
 		Purpose:              "production",
 		VolumeSizeGb:         80,
-		DiskType:             "standard",
+		DiskType:             "Standard",
 		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
