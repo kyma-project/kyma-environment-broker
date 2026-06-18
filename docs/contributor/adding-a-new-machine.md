@@ -36,7 +36,7 @@ For more information, see [Regions Supporting Machine Types](03-50-regions-suppo
 
 Once the zone availability check is complete, proceed with the configuration:
 
-1. Add the machine type to **plansConfiguration.\<plan\>.regularMachines** (for use as the main worker node pool machine type) or **additionalMachines** (for use in additional worker node pools only). The first entry in **regularMachines** becomes the default machine type for the plan.
+1. Add the machine type to **plansConfiguration.\<plan\>.regularMachines** (for use as the main worker node pool machine type and in additional worker node pools) or **additionalMachines** (for use in additional worker node pools only). The first entry in **regularMachines** becomes the default machine type for the plan.
 
 2. Add the display name to **providersConfiguration.\<provider\>.machines**.
 
