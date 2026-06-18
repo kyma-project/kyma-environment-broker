@@ -43,7 +43,7 @@ type fakeProvisionEndpointBuilder struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	clientFactories       map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories        map[pkg.CloudProvider]hyperscalers.ClientFactory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 

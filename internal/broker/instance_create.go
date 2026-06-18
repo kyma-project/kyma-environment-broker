@@ -138,7 +138,7 @@ func NewProvision(brokerConfig Config,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -172,7 +172,7 @@ func NewProvision(brokerConfig Config,
 		quotaWhitelist:          quotaWhitelist,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
-		clientFactories:        awsClientFactory,
+		clientFactories:         clientFactories,
 		operationBlocklist:      operationBlocklist,
 	}
 }

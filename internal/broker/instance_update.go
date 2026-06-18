@@ -66,15 +66,15 @@ type UpdateEndpoint struct {
 	valuesProvider              ValuesProvider
 	infrastructureManagerConfig InfrastructureManager
 
-	schemaService    *SchemaService
-	providerSpec     *configuration.ProviderSpec
-	planSpec         *configuration.PlanSpecifications
-	quotaClient      QuotaClient
-	quotaWhitelist   whitelist.Set
-	gvisorWhitelist  whitelist.Set
-	rulesService     *rules.RulesService
-	gardenerClient   *gardener.Client
-	clientFactories  map[pkg.CloudProvider]hyperscalers.ClientFactory
+	schemaService   *SchemaService
+	providerSpec    *configuration.ProviderSpec
+	planSpec        *configuration.PlanSpecifications
+	quotaClient     QuotaClient
+	quotaWhitelist  whitelist.Set
+	gvisorWhitelist whitelist.Set
+	rulesService    *rules.RulesService
+	gardenerClient  *gardener.Client
+	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories  map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{

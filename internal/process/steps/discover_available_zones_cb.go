@@ -19,19 +19,19 @@ import (
 )
 
 type DiscoverAvailableZonesCBStep struct {
-	operationManager  *process.OperationManager
-	instanceStorage   storage.Instances
-	providerSpec      *configuration.ProviderSpec
-	gardenerClient    *gardener.Client
-	clientFactories   map[runtime.CloudProvider]hyperscalers.ClientFactory
+	operationManager *process.OperationManager
+	instanceStorage  storage.Instances
+	providerSpec     *configuration.ProviderSpec
+	gardenerClient   *gardener.Client
+	clientFactories  map[runtime.CloudProvider]hyperscalers.ClientFactory
 }
 
 func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, clientFactories map[runtime.CloudProvider]hyperscalers.ClientFactory) *DiscoverAvailableZonesCBStep {
 	step := &DiscoverAvailableZonesCBStep{
-		instanceStorage:  db.Instances(),
-		providerSpec:     providerSpec,
-		gardenerClient:   gardenerClient,
-		clientFactories:  clientFactories,
+		instanceStorage: db.Instances(),
+		providerSpec:    providerSpec,
+		gardenerClient:  gardenerClient,
+		clientFactories: clientFactories,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
