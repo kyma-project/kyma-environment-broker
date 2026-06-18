@@ -10,7 +10,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
@@ -128,7 +127,7 @@ func FakeClientFactories(f *FakeAWSClientFactory) map[pkg.CloudProvider]hypersca
 }
 
 type FakeAWSClientFactory struct {
-	client aws.Client
+	client hyperscalers.Client
 }
 
 func (f *FakeAWSClientFactory) NewFromSecret(_ context.Context, _ *unstructured.Unstructured, _ string) (hyperscalers.Client, error) {
