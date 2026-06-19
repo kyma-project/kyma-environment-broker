@@ -212,7 +212,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	clientFactories := fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(fixDiscoveredZones(), nil))
+	clientFactories := fixture.NewFakeFactory(fixDiscoveredZones(), nil)
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
@@ -451,7 +451,7 @@ func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
 	deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger,
 	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications,
-	rulesService *rules.RulesService, gardenerClient *gardener.Client, clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory) {
+	rulesService *rules.RulesService, gardenerClient *gardener.Client, clientFactories hyperscalers.Factory) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",

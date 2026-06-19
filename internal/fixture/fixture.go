@@ -111,42 +111,31 @@ func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceName
 	}})
 }
 
-func NewFakeAWSClientFactory(zones map[string][]string, error error) *FakeAWSClientFactory {
-	fakeClient := &fakeAWSClient{
-		zones: zones,
-		err:   error,
-	}
-	return &FakeAWSClientFactory{client: fakeClient}
+func NewFakeFactory(zones map[string][]string, err error) *FakeFactory {
+	return &FakeFactory{zones: zones, err: err}
 }
 
-// FakeClientFactories wraps FakeAWSClientFactory in a map for use with the common hyperscalers interface.
-func FakeClientFactories(f *FakeAWSClientFactory) map[pkg.CloudProvider]hyperscalers.ClientFactory {
-	return map[pkg.CloudProvider]hyperscalers.ClientFactory{
-		pkg.AWS: f,
-	}
-}
-
-type FakeAWSClientFactory struct {
-	client hyperscalers.Client
-}
-
-func (f *FakeAWSClientFactory) NewFromSecret(_ context.Context, _ *unstructured.Unstructured, _ string) (hyperscalers.Client, error) {
-	return f.client, nil
-}
-
-type fakeAWSClient struct {
+type FakeFactory struct {
 	zones map[string][]string
 	err   error
 }
 
-func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
+	return &fakeProviderClient{zones: f.zones}, nil
+}
+
+type fakeProviderClient struct {
+	zones map[string][]string
+}
+
+func (f *fakeProviderClient) AvailableZones(_ context.Context, machineType string) ([]string, error) {
 	return f.zones[machineType], nil
 }
 
-func (f *fakeAWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+func (f *fakeProviderClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
 	zones, err := f.AvailableZones(ctx, machineType)
 	if err != nil {
 		return 0, err

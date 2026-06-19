@@ -74,7 +74,7 @@ type UpdateEndpoint struct {
 	gvisorWhitelist whitelist.Set
 	rulesService    *rules.RulesService
 	gardenerClient  *gardener.Client
-	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories hyperscalers.Factory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{

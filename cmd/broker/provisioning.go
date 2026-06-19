@@ -32,7 +32,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
-	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
+	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, clientFactories hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
 
 	provisioningSteps := []struct {
 		disabled  bool

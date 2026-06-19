@@ -30,7 +30,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -380,9 +379,7 @@ func main() {
 	log.Info("Plans and providers configuration is valid")
 	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec, cfg.Broker.WorkerPoolLabelsAnnotationsEnabled)
 
-	clientFactories := map[pkg.CloudProvider]hyperscalers.ClientFactory{
-		pkg.AWS: aws.NewFactory(providerSpec),
-	}
+	clientFactories := hyperscalers.NewFactory(providerSpec)
 
 	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
@@ -501,7 +498,7 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher,
 	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
-	gardenerClient *gardener.Client, clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory) {
+	gardenerClient *gardener.Client, clientFactories hyperscalers.Factory) {
 
 	if cfg.MachinesAvailabilityEndpoint {
 		machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, clientFactories, logs)

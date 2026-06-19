@@ -46,7 +46,7 @@ type HandlerCB struct {
 	providerSpec    *configuration.ProviderSpec
 	rulesService    *rules.RulesService
 	gardenerClient  *gardener.Client
-	clientFactories map[runtime.CloudProvider]hyperscalers.ClientFactory
+	clientFactories hyperscalers.Factory
 	logger          *slog.Logger
 }
 
@@ -54,7 +54,7 @@ func NewHandlerCB(
 	providerSpec *configuration.ProviderSpec,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories map[runtime.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories hyperscalers.Factory,
 	logger *slog.Logger,
 ) *HandlerCB {
 	return &HandlerCB{
@@ -78,12 +78,6 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 		providerEntry := Provider{
 			Name:         provider,
 			MachineTypes: []MachineType{},
-		}
-
-		factory, ok := h.clientFactories[provider]
-		if !ok {
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("no client factory for provider %s", provider))
-			return
 		}
 
 		secret, err := h.getSecret(strings.ToLower(string(provider)))
@@ -115,7 +109,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			}
 
 			for _, region := range regions {
-				client, err := factory.NewFromSecret(context.Background(), secret, region)
+				client, err := h.clientFactories.NewFromSecret(context.Background(), provider, secret, region)
 				if err != nil {
 					httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 					return

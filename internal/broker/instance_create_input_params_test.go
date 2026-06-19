@@ -8,7 +8,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
@@ -43,7 +42,7 @@ type fakeProvisionEndpointBuilder struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	clientFactories        map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories        hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -151,7 +150,7 @@ func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Clien
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithClientFactories(factory map[pkg.CloudProvider]hyperscalers.ClientFactory) *fakeProvisionEndpointBuilder {
+func (b *fakeProvisionEndpointBuilder) WithClientFactories(factory hyperscalers.Factory) *fakeProvisionEndpointBuilder {
 	b.clientFactories = factory
 	return b
 }

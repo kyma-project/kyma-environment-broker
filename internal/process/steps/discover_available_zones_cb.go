@@ -23,15 +23,15 @@ type DiscoverAvailableZonesCBStep struct {
 	instanceStorage  storage.Instances
 	providerSpec     *configuration.ProviderSpec
 	gardenerClient   *gardener.Client
-	clientFactories  map[runtime.CloudProvider]hyperscalers.ClientFactory
+	factory          hyperscalers.Factory
 }
 
-func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, clientFactories map[runtime.CloudProvider]hyperscalers.ClientFactory) *DiscoverAvailableZonesCBStep {
+func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory) *DiscoverAvailableZonesCBStep {
 	step := &DiscoverAvailableZonesCBStep{
 		instanceStorage: db.Instances(),
 		providerSpec:    providerSpec,
 		gardenerClient:  gardenerClient,
-		clientFactories: clientFactories,
+		factory:         factory,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
@@ -78,12 +78,7 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()), err, 10*time.Second, time.Minute, log)
 	}
 
-	factory, ok := s.clientFactories[provider]
-	if !ok {
-		err := fmt.Errorf("no client factory for provider %s", provider)
-		return s.operationManager.OperationFailed(operation, err.Error(), err, log)
-	}
-	client, err := factory.NewFromSecret(context.Background(), secret, operation.ProviderValues.Region)
+	client, err := s.factory.NewFromSecret(context.Background(), provider, secret, operation.ProviderValues.Region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to create %s client", provider), err, 10*time.Second, time.Minute, log)
 	}

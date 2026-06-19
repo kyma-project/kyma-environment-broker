@@ -104,7 +104,7 @@ type ProvisionEndpoint struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	clientFactories        map[pkg.CloudProvider]hyperscalers.ClientFactory
+	clientFactories        hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -138,7 +138,7 @@ func NewProvision(brokerConfig Config,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -1173,15 +1173,11 @@ func newHyperscalerClient(
 	log *slog.Logger,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories map[pkg.CloudProvider]hyperscalers.ClientFactory,
+	clientFactories hyperscalers.Factory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
-) (hyperscalers.Client, error) {
+) (hyperscalers.ProviderClient, error) {
 	provider := pkg.CloudProviderFromString(values.ProviderType)
-	factory, ok := clientFactories[provider]
-	if !ok {
-		return nil, fmt.Errorf("no client factory for provider %s", provider)
-	}
 
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
@@ -1217,7 +1213,7 @@ func newHyperscalerClient(
 		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 
-	client, err := factory.NewFromSecret(ctx, secret, values.Region)
+	client, err := clientFactories.NewFromSecret(ctx, provider, secret, values.Region)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}

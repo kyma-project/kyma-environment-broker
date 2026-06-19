@@ -2931,7 +2931,7 @@ func TestDiscoveryZones(t *testing.T) {
 				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
 				WithRulesService(rulesService).
 				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
-				WithClientFactories(fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError))).
+				WithClientFactories(fixture.NewFakeFactory(tc.zones, tc.awsError)).
 				Build()
 
 			// when
@@ -3323,10 +3323,10 @@ func TestProvision_UnsupportedMachineType(t *testing.T) {
 				WithValuesProvider(fixValueProvider(t)).
 				WithRulesService(rulesService).
 				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
-				WithClientFactories(fixture.FakeClientFactories(fixture.NewFakeAWSClientFactory(map[string][]string{
+				WithClientFactories(fixture.NewFakeFactory(map[string][]string{
 					"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
 					"ri.xlarge": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
-				}, nil))).
+				}, nil)).
 				Build()
 
 			_, err = provisionEndpoint.Provision(
