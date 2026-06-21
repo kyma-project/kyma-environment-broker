@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 
@@ -43,6 +44,27 @@ func TestDecryptUsingGCMMode(t *testing.T) {
 	decrypted, err := e.DecryptUsingMode(encrypted)
 	require.NoError(t, err)
 	assert.Equal(t, data, decrypted)
+}
+
+func TestEncryptNonceIsRandom(t *testing.T) {
+	secretKey := rand.String(32)
+	e := NewEncrypter(secretKey)
+
+	enc1, err := e.Encrypt([]byte("same plaintext"))
+	require.NoError(t, err)
+	enc2, err := e.Encrypt([]byte("same plaintext"))
+	require.NoError(t, err)
+
+	raw1, err := base64.StdEncoding.DecodeString(string(enc1))
+	require.NoError(t, err)
+	raw2, err := base64.StdEncoding.DecodeString(string(enc2))
+	require.NoError(t, err)
+
+	// First 12 bytes are the nonce — must differ between encryptions of the same plaintext
+	require.GreaterOrEqual(t, len(raw1), 12, "ciphertext too short to contain nonce")
+	require.GreaterOrEqual(t, len(raw2), 12, "ciphertext too short to contain nonce")
+	assert.NotEqual(t, raw1[:12], raw2[:12], "nonces must be unique across encryptions")
+	assert.NotEqual(t, enc1, enc2, "ciphertexts must differ when nonces differ")
 }
 
 func TestDecryptSMCredentialsUsingGCMMode(t *testing.T) {
