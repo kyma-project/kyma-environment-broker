@@ -43,26 +43,26 @@ type Region struct {
 }
 
 type HandlerCB struct {
-	providerSpec    *configuration.ProviderSpec
-	rulesService    *rules.RulesService
-	gardenerClient  *gardener.Client
-	clientFactories hyperscalers.Factory
-	logger          *slog.Logger
+	providerSpec   *configuration.ProviderSpec
+	rulesService   *rules.RulesService
+	gardenerClient *gardener.Client
+	factory        hyperscalers.Factory
+	logger         *slog.Logger
 }
 
 func NewHandlerCB(
 	providerSpec *configuration.ProviderSpec,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories hyperscalers.Factory,
+	factory hyperscalers.Factory,
 	logger *slog.Logger,
 ) *HandlerCB {
 	return &HandlerCB{
-		providerSpec:    providerSpec,
-		rulesService:    rulesService,
-		gardenerClient:  gardenerClient,
-		clientFactories: clientFactories,
-		logger:          logger.With("service", "MachinesAvailabilityHandler"),
+		providerSpec:   providerSpec,
+		rulesService:   rulesService,
+		gardenerClient: gardenerClient,
+		factory:        factory,
+		logger:         logger.With("service", "MachinesAvailabilityHandler"),
 	}
 }
 
@@ -109,7 +109,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			}
 
 			for _, region := range regions {
-				client, err := h.clientFactories.NewFromSecret(context.Background(), provider, secret, region)
+				client, err := h.factory.NewFromSecret(context.Background(), provider, secret, region)
 				if err != nil {
 					httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 					return

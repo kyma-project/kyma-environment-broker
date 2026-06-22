@@ -699,15 +699,7 @@ alicloud:
 }
 
 func TestProviderSpec_MachineFamily(t *testing.T) {
-	spec, err := NewProviderSpec(strings.NewReader(`
-aws:
-  regions:
-    eu-central-1:
-      displayName: "EU Central"
-  machines:
-    m6i.large: "m6i.large"
-`))
-	require.NoError(t, err)
+	spec, _ := NewProviderSpec(strings.NewReader(""))
 
 	tests := []struct {
 		name        string

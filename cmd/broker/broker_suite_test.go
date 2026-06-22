@@ -212,21 +212,21 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	clientFactories := fixture.NewFakeFactory(fixDiscoveredZones(), nil)
+	factory := fixture.NewFakeFactory(fixDiscoveredZones(), nil)
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, clientFactories, nil)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, factory, nil)
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
-		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, clientFactories, nil)
+		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, factory, nil)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
 
@@ -254,7 +254,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec, rulesService, gardenerClientWithNamespace, clientFactories)
+	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker, configProvider, plansSpec, rulesService, gardenerClientWithNamespace, factory)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
@@ -451,7 +451,7 @@ func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue,
 	deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger,
 	skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications,
-	rulesService *rules.RulesService, gardenerClient *gardener.Client, clientFactories hyperscalers.Factory) {
+	rulesService *rules.RulesService, gardenerClient *gardener.Client, factory hyperscalers.Factory) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -511,7 +511,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 
 	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker,
-		providerSpec, configProvider, planSpec, rulesService, gardenerClient, clientFactories)
+		providerSpec, configProvider, planSpec, rulesService, gardenerClient, factory)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

@@ -22,7 +22,7 @@ import (
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
 	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
-	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, clientFactories hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
+	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -43,7 +43,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, clientFactories),
+			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory),
 		},
 		{
 			stage: "runtime_resource",

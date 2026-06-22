@@ -74,7 +74,7 @@ type UpdateEndpoint struct {
 	gvisorWhitelist whitelist.Set
 	rulesService    *rules.RulesService
 	gardenerClient  *gardener.Client
-	clientFactories hyperscalers.Factory
+	factory         hyperscalers.Factory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories hyperscalers.Factory,
+	factory hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -130,7 +130,7 @@ func NewUpdate(cfg Config,
 		gvisorWhitelist:                          gvisorWhitelist,
 		rulesService:                             rulesService,
 		gardenerClient:                           gardenerClient,
-		clientFactories:                          clientFactories,
+		factory:                                  factory,
 		syncEmptyUpdateResponseEnabled:           cfg.SyncEmptyUpdateResponseEnabled,
 		operationBlocklist:                       operationBlocklist,
 	}
@@ -635,7 +635,7 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.clientFactories, instance.Parameters, providerValues)
+	client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, instance.Parameters, providerValues)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", providerValues.ProviderType, err))

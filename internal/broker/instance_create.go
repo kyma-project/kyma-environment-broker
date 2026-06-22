@@ -104,7 +104,7 @@ type ProvisionEndpoint struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	clientFactories        hyperscalers.Factory
+	factory                hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -138,7 +138,7 @@ func NewProvision(brokerConfig Config,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories hyperscalers.Factory,
+	factory hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -172,7 +172,7 @@ func NewProvision(brokerConfig Config,
 		quotaWhitelist:          quotaWhitelist,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
-		clientFactories:         clientFactories,
+		factory:                 factory,
 		operationBlocklist:      operationBlocklist,
 	}
 }
@@ -568,7 +568,7 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.clientFactories, provisioningParameters, values)
+		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, provisioningParameters, values)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", values.ProviderType, err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
@@ -1173,7 +1173,7 @@ func newHyperscalerClient(
 	log *slog.Logger,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactories hyperscalers.Factory,
+	factory hyperscalers.Factory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
 ) (hyperscalers.ProviderClient, error) {
@@ -1213,7 +1213,7 @@ func newHyperscalerClient(
 		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 
-	client, err := clientFactories.NewFromSecret(ctx, provider, secret, values.Region)
+	client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}
