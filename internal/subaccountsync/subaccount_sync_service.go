@@ -89,10 +89,6 @@ func (s *SyncService) Run() {
 	logger := slog.Default()
 	logger.Info(fmt.Sprintf("%s service started", s.appName))
 
-	// create CIS clients
-	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger, s.cfg.EventsServiceVersion, s.cfg.EventsWindowSize)
-	accountsClient := CreateAccountsClient(s.ctx, s.cfg.CisAccounts, logger)
-
 	metrics := NewMetrics(s.metricsRegistry, s.appName)
 	promHandler := promhttp.HandlerFor(s.metricsRegistry, promhttp.HandlerOpts{Registry: s.metricsRegistry})
 	http.Handle("/metrics", promHandler)
@@ -104,6 +100,10 @@ func (s *SyncService) Run() {
 			logger.Error(fmt.Sprintf("while serving metrics: %s", err))
 		}
 	}()
+
+	// create CIS clients
+	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger, s.cfg.EventsServiceVersion, s.cfg.EventsWindowSize, metrics.cisRequests)
+	accountsClient := CreateAccountsClient(s.ctx, s.cfg.CisAccounts, logger, metrics.cisRequests)
 
 	// create priority queue
 	priorityQueue := queues.NewPriorityQueueWithCallbacks(logger, &queues.EventHandler{
@@ -179,12 +179,12 @@ func (s *SyncService) Run() {
 	informer.Run(s.ctx.Done())
 }
 
-func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger) *RateLimitedCisClient {
-	return NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"), "", 0)
+func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
+	return NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"), "", 0, cisRequests, "accounts")
 }
 
-func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration) *RateLimitedCisClient {
-	return NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"), eventsServiceVersion, eventsWindowSize)
+func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
+	return NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"), eventsServiceVersion, eventsWindowSize, cisRequests, "events")
 }
 
 func getDataFromLabels(u *unstructured.Unstructured) (subaccountID string, runtimeID string, betaEnabled string) {

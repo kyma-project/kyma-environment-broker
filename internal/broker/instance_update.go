@@ -419,6 +419,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 }
 
 func (b *UpdateEndpoint) validateMachineType(ctx context.Context, providerValues internal.ProviderValues, instance *internal.Instance, params internal.UpdatingParametersDTO, logger *slog.Logger, details domain.UpdateDetails, ersContext internal.ERSContext) error {
+	if IsExternalLicenseType(ersContext) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if params.MachineType != nil && *params.MachineType != "" && b.planSpec.IsInternalOnlyMachine(planName, *params.MachineType) {
+			message := fmt.Sprintf("Machine type %s is not available for your account. For details, please contact your sales representative.", *params.MachineType)
+			return apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
+		}
+	}
+
 	if !b.providerSpec.IsRegionSupported(pkg.CloudProviderFromString(providerValues.ProviderType), valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
@@ -528,6 +536,10 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 	}
 
 	if IsExternalLicenseType(ersContext) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, params.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
 		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
