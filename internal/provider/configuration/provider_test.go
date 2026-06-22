@@ -698,6 +698,40 @@ alicloud:
 	})
 }
 
+func TestProviderSpec_MachineFamily(t *testing.T) {
+	spec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  regions:
+    eu-central-1:
+      displayName: "EU Central"
+  machines:
+    m6i.large: "m6i.large"
+`))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		provider    runtime.CloudProvider
+		machineType string
+		wantFamily  string
+		wantOK      bool
+	}{
+		{"aws standard", runtime.AWS, "m6i.2xlarge", "m6i", true},
+		{"aws large", runtime.AWS, "c7i.large", "c7i", true},
+		{"aws no dot", runtime.AWS, "invalid", "", false},
+		{"aws empty", runtime.AWS, "", "", false},
+		{"unsupported provider", runtime.Azure, "Standard_D4s_v5", "", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			family, ok := spec.MachineFamily(tc.provider, tc.machineType)
+			assert.Equal(t, tc.wantOK, ok)
+			assert.Equal(t, tc.wantFamily, family)
+		})
+	}
+}
+
 type captureWriter struct {
 	buf *bytes.Buffer
 }

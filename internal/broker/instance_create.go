@@ -570,7 +570,7 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 
 		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.clientFactories, provisioningParameters, values)
 		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create hyperscaler client: %s", err))
+			logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", values.ProviderType, err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
