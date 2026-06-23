@@ -183,8 +183,12 @@ jobs:
 
       - name: Assert volume size after update with additionalVolumeSizeGi
         run: |
-          VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
-          echo "Volume size after update: $VOLUME_SIZE"
+          for i in $(seq 1 12); do
+            VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
+            echo "Volume size after update: $VOLUME_SIZE"
+            [ "$VOLUME_SIZE" = "100Gi" ] && break
+            sleep 5
+          done
           if [ "$VOLUME_SIZE" != "100Gi" ]; then
             echo "Error: Expected 100Gi (80Gi from KCR for m5.xlarge + 20Gi additionalVolumeSizeGi) but got $VOLUME_SIZE"
             exit 1
@@ -199,8 +203,12 @@ jobs:
 
       - name: Assert volume size recalculated for new machine with persisted additionalVolumeSizeGi
         run: |
-          VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
-          echo "Volume size after machine type change: $VOLUME_SIZE"
+          for i in $(seq 1 12); do
+            VOLUME_SIZE=$(kubectl get runtime $RUNTIME_ID -n kcp-system -o jsonpath='{.spec.shoot.provider.workers[0].volume.size}')
+            echo "Volume size after machine type change: $VOLUME_SIZE"
+            [ "$VOLUME_SIZE" = "170Gi" ] && break
+            sleep 5
+          done
           if [ "$VOLUME_SIZE" != "170Gi" ]; then
             echo "Error: Expected 170Gi (150Gi from KCR for m6i.4xlarge + 20Gi persisted additionalVolumeSizeGi) but got $VOLUME_SIZE"
             exit 1
