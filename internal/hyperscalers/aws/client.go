@@ -22,31 +22,16 @@ const (
 	retries  = 5
 )
 
-type ClientFactory interface {
-	New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error)
-}
-
-type Client interface {
-	AvailableZones(ctx context.Context, machineType string) ([]string, error)
-	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
-}
-
 type EC2API interface {
 	DescribeInstanceTypeOfferings(ctx context.Context, params *ec2.DescribeInstanceTypeOfferingsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypeOfferingsOutput, error)
 }
 
-func NewFactory(providerSpec *configuration.ProviderSpec) ClientFactory {
-	return AWSClientFactory{
-		providerSpec: providerSpec,
+func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string) (*AWSClient, error) {
+	accessKeyID, secretAccessKey, err := ExtractCredentials(secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract AWS credentials: %w", err)
 	}
-}
-
-type AWSClientFactory struct {
-	providerSpec *configuration.ProviderSpec
-}
-
-func (a AWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (Client, error) {
-	return NewClient(ctx, a.providerSpec, accessKeyID, secretAccessKey, region)
+	return NewClient(ctx, providerSpec, accessKeyID, secretAccessKey, region)
 }
 
 type AWSClient struct {

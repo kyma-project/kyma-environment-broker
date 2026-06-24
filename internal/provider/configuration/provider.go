@@ -186,6 +186,25 @@ func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
 	return providerData.ZonesDiscovery
 }
 
+func (p *ProviderSpec) MachineFamily(cp runtime.CloudProvider, machineType string) (string, bool) {
+	switch cp {
+	case runtime.AWS:
+		return awsMachineFamily(machineType)
+	default:
+		return "", false
+	}
+}
+
+// awsMachineFamily extracts the family prefix from an AWS machine type.
+// AWS machine types follow the pattern "<family>.<size>", e.g. "m6i.2xlarge" → "m6i".
+func awsMachineFamily(machineType string) (string, bool) {
+	parts := strings.SplitN(machineType, ".", 2)
+	if len(parts) < 2 {
+		return "", false
+	}
+	return parts[0], true
+}
+
 func (p *ProviderSpec) MachineTypes(cp runtime.CloudProvider) []string {
 	providerData := p.findProviderDTO(cp)
 	if providerData == nil {

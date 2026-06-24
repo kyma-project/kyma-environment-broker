@@ -12,9 +12,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -45,7 +46,7 @@ type HandlerCB struct {
 	providerSpec   *configuration.ProviderSpec
 	rulesService   *rules.RulesService
 	gardenerClient *gardener.Client
-	clientFactory  aws.ClientFactory
+	factory        hyperscalers.Factory
 	logger         *slog.Logger
 }
 
@@ -53,14 +54,14 @@ func NewHandlerCB(
 	providerSpec *configuration.ProviderSpec,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	clientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	logger *slog.Logger,
 ) *HandlerCB {
 	return &HandlerCB{
 		providerSpec:   providerSpec,
 		rulesService:   rulesService,
 		gardenerClient: gardenerClient,
-		clientFactory:  clientFactory,
+		factory:        factory,
 		logger:         logger.With("service", "MachinesAvailabilityHandler"),
 	}
 }
@@ -79,7 +80,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			MachineTypes: []MachineType{},
 		}
 
-		accessKeyID, secretAccessKey, err := h.clientCredentials(strings.ToLower(string(provider)))
+		secret, err := h.getSecret(strings.ToLower(string(provider)))
 		if err != nil {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
@@ -88,13 +89,9 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 		machineTypes := h.providerSpec.MachineTypes(provider)
 		machineFamilies := make(map[string]string)
 		for _, machineType := range machineTypes {
-			var family string
-			if provider == runtime.AWS {
-				// For AWS, machine types follow the pattern "<family>.<size>".
-				parts := strings.SplitN(machineType, ".", 2)
-				family = parts[0]
-			} else {
-				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("%s provider not supported", provider))
+			family, ok := h.providerSpec.MachineFamily(provider, machineType)
+			if !ok {
+				httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("machine family extraction not supported for provider %s", provider))
 				return
 			}
 			machineFamilies[family] = machineType
@@ -112,7 +109,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			}
 
 			for _, region := range regions {
-				client, err := h.clientFactory.New(context.Background(), accessKeyID, secretAccessKey, region)
+				client, err := h.factory.NewFromSecret(context.Background(), provider, secret, region)
 				if err != nil {
 					httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 					return
@@ -144,28 +141,23 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 	httputil.WriteResponse(w, http.StatusOK, providersData)
 }
 
-func (h *HandlerCB) clientCredentials(provider string) (string, string, error) {
+func (h *HandlerCB) getSecret(provider string) (*unstructured.Unstructured, error) {
 	matchedRule, err := h.matchRule(provider)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	credentialsBinding, err := h.getCredentialsBindingForRule(matchedRule)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	h.logger.Info(fmt.Sprintf("getting subscription secret with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 	secret, err := h.gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	if err != nil {
-		return "", "", fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
-
-	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to extract AWS credentials")
-	}
-	return accessKeyID, secretAccessKey, nil
+	return secret, nil
 }
 
 func (h *HandlerCB) matchRule(provider string) (rules.Result, error) {

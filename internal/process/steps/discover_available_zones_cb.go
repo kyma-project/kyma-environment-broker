@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -23,15 +23,15 @@ type DiscoverAvailableZonesCBStep struct {
 	instanceStorage  storage.Instances
 	providerSpec     *configuration.ProviderSpec
 	gardenerClient   *gardener.Client
-	awsClientFactory aws.ClientFactory
+	factory          hyperscalers.Factory
 }
 
-func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) *DiscoverAvailableZonesCBStep {
+func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory) *DiscoverAvailableZonesCBStep {
 	step := &DiscoverAvailableZonesCBStep{
-		instanceStorage:  db.Instances(),
-		providerSpec:     providerSpec,
-		gardenerClient:   gardenerClient,
-		awsClientFactory: awsClientFactory,
+		instanceStorage: db.Instances(),
+		providerSpec:    providerSpec,
+		gardenerClient:  gardenerClient,
+		factory:         factory,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
@@ -42,8 +42,9 @@ func (s *DiscoverAvailableZonesCBStep) Name() string {
 }
 
 func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if !s.providerSpec.ZonesDiscovery(runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)) {
-		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)))
+	provider := runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)
+	if !s.providerSpec.ZonesDiscovery(provider) {
+		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", provider))
 		return operation, 0, nil
 	}
 	if len(operation.DiscoveredZones) > 0 {
@@ -76,14 +77,10 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()), err, 10*time.Second, time.Minute, log)
 	}
-	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
-	if err != nil {
-		return s.operationManager.OperationFailed(operation, "failed to extract AWS credentials", err, log)
-	}
 
-	client, err := s.awsClientFactory.New(context.Background(), accessKeyID, secretAccessKey, operation.ProviderValues.Region)
+	client, err := s.factory.NewFromSecret(context.Background(), provider, secret, operation.ProviderValues.Region)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, "unable to create AWS client", err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to create %s client", provider), err, 10*time.Second, time.Minute, log)
 	}
 
 	discoveredZones := make(map[string][]string)

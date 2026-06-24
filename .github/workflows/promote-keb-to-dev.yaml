@@ -118,6 +118,42 @@ jobs:
 
           if  echo $prs | tr " " '\n' | grep -F -q -x ${BRANCH_NAME}; then
               echo "PR already exists, no need to create new one"
-              exit 0
+              pr_url=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" --state open --json headRefName,url | jq -r --arg branch "${BRANCH_NAME}" '.[] | select(.headRefName==$branch) | .url')
+          else
+              pr_url=$(printf '%s\nRisk is Low\n' "${{env.KEB_RELEASES_URL }}/${TAG}" | gh pr create -B chart/keb-sap -H ${BRANCH_NAME} -R https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/ --title "Bump keb to ${TAG}" --fill --body-file -)
+              echo "${pr_url}" | tee $GITHUB_STEP_SUMMARY
           fi
-          printf '%s\nRisk is Low\n' "${{env.KEB_RELEASES_URL }}/${TAG}" | gh pr create -B chart/keb-sap -H ${BRANCH_NAME} -R https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/ --title "Bump keb to ${TAG}" --fill --body-file - | tee $GITHUB_STEP_SUMMARY
+          echo "PROMOTE_PR_URL=${pr_url}" >> $GITHUB_ENV
+
+      - name: Comment on release management issue for patch releases
+        working-directory: management-plane-charts
+        env:
+          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          RELEASE_MANAGEMENT_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/release-management"
+          # needed by gh cli for GitHub enterprise
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          patch=$(echo "${TAG}" | cut -d. -f3)
+          if [ "${patch}" = "0" ]; then
+            echo "Feature release, skipping release management comment"
+            exit 0
+          fi
+
+          major_minor=$(echo "${TAG}" | cut -d. -f1-2)
+          feature_tag="${major_minor}.0"
+
+          chart_version=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" --state all --search "Bump keb to ${feature_tag} in:title" --json number,mergedAt --jq 'sort_by(.mergedAt) | last | .number' | xargs -I{} gh api "/repos/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/pulls/{}/files" --hostname ${{ vars.GH_TOOLS_HOST }} | jq -r '.[] | select(.filename | endswith("Chart.yaml")) | .patch' | grep '^\+version:' | head -1 | sed 's/^+version: *//')
+
+          if [ -z "${chart_version}" ]; then
+            echo "Could not determine chart version from feature PR, skipping comment"
+            exit 1
+          fi
+
+          rm_issue_number=$(gh issue list -R "${RELEASE_MANAGEMENT_REPO_URL}" --state all --search "kyma-project.io/kyma-runtime/kcp-components/keb-sap ${chart_version} in:title" --json number --jq '.[0].number')
+
+          if [ -z "${rm_issue_number}" ]; then
+            echo "No release management issue found for chart version ${chart_version}, skipping comment"
+            exit 1
+          fi
+
+          gh issue comment "${rm_issue_number}" -R "${RELEASE_MANAGEMENT_REPO_URL}" --body "Patch ${TAG} is approved here: ${PROMOTE_PR_URL}"

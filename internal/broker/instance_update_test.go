@@ -2414,7 +2414,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
 				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, fixture.NewProviderSpecWithZonesDiscovery(t, true), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil,
-				rulesService, fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError), blocklist.OperationBlocklist{})
+				rulesService, fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeFactory(tc.zones, tc.awsError), blocklist.OperationBlocklist{})
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{

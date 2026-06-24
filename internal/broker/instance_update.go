@@ -19,7 +19,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -66,15 +66,15 @@ type UpdateEndpoint struct {
 	valuesProvider              ValuesProvider
 	infrastructureManagerConfig InfrastructureManager
 
-	schemaService    *SchemaService
-	providerSpec     *configuration.ProviderSpec
-	planSpec         *configuration.PlanSpecifications
-	quotaClient      QuotaClient
-	quotaWhitelist   whitelist.Set
-	gvisorWhitelist  whitelist.Set
-	rulesService     *rules.RulesService
-	gardenerClient   *gardener.Client
-	awsClientFactory aws.ClientFactory
+	schemaService   *SchemaService
+	providerSpec    *configuration.ProviderSpec
+	planSpec        *configuration.PlanSpecifications
+	quotaClient     QuotaClient
+	quotaWhitelist  whitelist.Set
+	gvisorWhitelist whitelist.Set
+	rulesService    *rules.RulesService
+	gardenerClient  *gardener.Client
+	factory         hyperscalers.Factory
 
 	syncEmptyUpdateResponseEnabled bool
 	operationBlocklist             blocklist.OperationBlocklist
@@ -102,7 +102,7 @@ func NewUpdate(cfg Config,
 	gvisorWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -130,7 +130,7 @@ func NewUpdate(cfg Config,
 		gvisorWhitelist:                          gvisorWhitelist,
 		rulesService:                             rulesService,
 		gardenerClient:                           gardenerClient,
-		awsClientFactory:                         awsClientFactory,
+		factory:                                  factory,
 		syncEmptyUpdateResponseEnabled:           cfg.SyncEmptyUpdateResponseEnabled,
 		operationBlocklist:                       operationBlocklist,
 	}
@@ -635,15 +635,15 @@ func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues inter
 		discoveredZones[additionalWorkerNodePool.MachineType] = 0
 	}
 
-	awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, instance.Parameters, providerValues)
+	client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, instance.Parameters, providerValues)
 
 	if err != nil {
-		logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+		logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", providerValues.ProviderType, err))
 		return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
 	}
 
 	for machineType := range discoveredZones {
-		zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+		zonesCount, err := client.AvailableZonesCount(ctx, machineType)
 		if err != nil {
 			logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)

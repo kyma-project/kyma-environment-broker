@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -42,7 +42,7 @@ type fakeProvisionEndpointBuilder struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	factory                hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -150,8 +150,8 @@ func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Clien
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFactory) *fakeProvisionEndpointBuilder {
-	b.awsClientFactory = factory
+func (b *fakeProvisionEndpointBuilder) WithClientFactories(factory hyperscalers.Factory) *fakeProvisionEndpointBuilder {
+	b.factory = factory
 	return b
 }
 
@@ -182,7 +182,7 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.quotaWhitelist,
 		b.rulesService,
 		b.gardenerClient,
-		b.awsClientFactory,
+		b.factory,
 		b.operationBlocklist,
 	)
 }

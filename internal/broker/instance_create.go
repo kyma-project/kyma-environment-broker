@@ -25,7 +25,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
@@ -104,7 +104,7 @@ type ProvisionEndpoint struct {
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	factory                hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -138,7 +138,7 @@ func NewProvision(brokerConfig Config,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -172,7 +172,7 @@ func NewProvision(brokerConfig Config,
 		quotaWhitelist:          quotaWhitelist,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
-		awsClientFactory:        awsClientFactory,
+		factory:                 factory,
 		operationBlocklist:      operationBlocklist,
 	}
 }
@@ -568,14 +568,14 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, provisioningParameters, values)
 		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", values.ProviderType, err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			zonesCount, err := client.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
@@ -1168,15 +1168,17 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 	return nil
 }
 
-func newAWSClient(
+func newHyperscalerClient(
 	ctx context.Context,
 	log *slog.Logger,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
-) (aws.Client, error) {
+) (hyperscalers.ProviderClient, error) {
+	provider := pkg.CloudProviderFromString(values.ProviderType)
+
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
 		Plan:              AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
@@ -1201,23 +1203,19 @@ func newAWSClient(
 		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
 	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
+		return nil, fmt.Errorf("no credentials bindings found for selector %q", labelSelector)
 	}
 	credentialsBinding := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
 
 	log.Info(fmt.Sprintf("getting subscription credentials with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 	secret, err := gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 
-	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract AWS credentials")
-	}
-	client, err := awsClientFactory.New(ctx, accessKeyID, secretAccessKey, values.Region)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create AWS client")
+		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}
 
 	return client, nil

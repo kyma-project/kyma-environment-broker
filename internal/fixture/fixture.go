@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
@@ -110,35 +111,31 @@ func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceName
 	}})
 }
 
-func NewFakeAWSClientFactory(zones map[string][]string, error error) *FakeAWSClientFactory {
-	fakeClient := &fakeAWSClient{
-		zones: zones,
-		err:   error,
-	}
-	return &FakeAWSClientFactory{client: fakeClient}
+func NewFakeFactory(zones map[string][]string, err error) *FakeFactory {
+	return &FakeFactory{zones: zones, err: err}
 }
 
-type FakeAWSClientFactory struct {
-	client aws.Client
-}
-
-func (f *FakeAWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
-	return f.client, nil
-}
-
-type fakeAWSClient struct {
+type FakeFactory struct {
 	zones map[string][]string
 	err   error
 }
 
-func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
+	return &fakeProviderClient{zones: f.zones}, nil
+}
+
+type fakeProviderClient struct {
+	zones map[string][]string
+}
+
+func (f *fakeProviderClient) AvailableZones(_ context.Context, machineType string) ([]string, error) {
 	return f.zones[machineType], nil
 }
 
-func (f *fakeAWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+func (f *fakeProviderClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
 	zones, err := f.AvailableZones(ctx, machineType)
 	if err != nil {
 		return 0, err
