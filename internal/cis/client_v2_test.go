@@ -260,13 +260,13 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
+	w.WriteHeader(http.StatusOK)
 	_, err := w.Write(response)
 	if err != nil {
 		s.t.Errorf("fakeCisServer cannot write response: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *server) writeRateLimitingResponse(w http.ResponseWriter) {

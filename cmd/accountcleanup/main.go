@@ -38,10 +38,7 @@ func main() {
 	fatalOnError(err)
 
 	// create CIS client
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	})).With("client", "CIS-v2")
-	client := cis.NewClient(ctx, cfg.CIS, log)
+	client := cis.NewClient(ctx, cfg.CIS, logger.With("client", "CIS-v2"))
 
 	// create storage connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
