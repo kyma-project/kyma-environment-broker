@@ -15,20 +15,31 @@ import (
 )
 
 const (
-	eventServicePathV2 = "%s/events/v2/events/central"
-	eventTypeV2        = "Subaccount_Deletion"
-	entityTypeV2       = "Subaccount"
-	defaultPageSizeV2  = "150"
-	defaultSinceV2     = "30D"
+	eventServicePath = "%s/events/v2/events/central"
+	eventType        = "Subaccount_Deletion"
+	entityType       = "Subaccount"
+	defaultPageSize  = "150"
+	defaultSince     = "30D"
 )
 
-type ClientV2 struct {
+type Config struct {
+	ClientID             string
+	ClientSecret         string
+	AuthURL              string
+	EventServiceURL      string
+	PageSize             string        `envconfig:"optional"`
+	RequestInterval      time.Duration `envconfig:"default=200ms,optional"`
+	RateLimitingInterval time.Duration `envconfig:"default=2s,optional"`
+	MaxRequestRetries    int           `envconfig:"default=3,optional"`
+}
+
+type Client struct {
 	httpClient *http.Client
 	config     Config
 	log        *slog.Logger
 }
 
-func NewClientV2(ctx context.Context, config Config, log *slog.Logger) *ClientV2 {
+func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -37,10 +48,10 @@ func NewClientV2(ctx context.Context, config Config, log *slog.Logger) *ClientV2
 	httpClientOAuth := cfg.Client(ctx)
 
 	if config.PageSize == "" {
-		config.PageSize = defaultPageSizeV2
+		config.PageSize = defaultPageSize
 	}
 
-	return &ClientV2{
+	return &Client{
 		httpClient: httpClientOAuth,
 		config:     config,
 		log:        log,
@@ -48,31 +59,31 @@ func NewClientV2(ctx context.Context, config Config, log *slog.Logger) *ClientV2
 }
 
 // SetHttpClient auxiliary method of testing to get rid of oAuth client wrapper
-func (c *ClientV2) SetHttpClient(httpClient *http.Client) {
+func (c *Client) SetHttpClient(httpClient *http.Client) {
 	c.httpClient = httpClient
 }
 
-type subaccountsV2 struct {
+type subaccounts struct {
 	ids  []string
 	from time.Time
 	to   time.Time
 }
 
-func (c *ClientV2) FetchSubaccountsToDelete() ([]string, error) {
-	subaccounts := subaccountsV2{}
+func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
+	subaccounts := subaccounts{}
 
 	err := c.fetchSubaccountsFromDeleteEvents(&subaccounts)
 	if err != nil {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
 
-	c.log.Info(fmt.Sprintf("CIS v2 returned %d subaccounts to delete. "+
+	c.log.Info(fmt.Sprintf("CIS Events v2 returned %d subaccounts to delete. "+
 		"The events include a range of time from %s to %s", len(subaccounts.ids), subaccounts.from, subaccounts.to))
 
 	return subaccounts.ids, nil
 }
 
-func (c *ClientV2) fetchSubaccountsFromDeleteEvents(subaccs *subaccountsV2) error {
+func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 	var cursor string
 	var retries int
 	for {
@@ -98,38 +109,38 @@ func (c *ClientV2) fetchSubaccountsFromDeleteEvents(subaccs *subaccountsV2) erro
 	return nil
 }
 
-func (c *ClientV2) fetchSubaccountDeleteEventsForCursor(cursor string) (CisResponseV2, error) {
+func (c *Client) fetchSubaccountDeleteEventsForCursor(cursor string) (Response, error) {
 	request, err := c.buildRequest(cursor)
 	if err != nil {
-		return CisResponseV2{}, fmt.Errorf("while building request for event service: %w", err)
+		return Response{}, fmt.Errorf("while building request for event service: %w", err)
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return CisResponseV2{}, fmt.Errorf("while executing request to event service: %w", err)
+		return Response{}, fmt.Errorf("while executing request to event service: %w", err)
 	}
 	defer func() { _ = response.Body.Close() }()
 
 	switch {
 	case response.StatusCode == http.StatusTooManyRequests:
-		return CisResponseV2{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
+		return Response{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
 	case response.StatusCode >= 500:
-		return CisResponseV2{}, kebError.NewTemporaryError("server error: %s", c.handleWrongStatusCode(response))
+		return Response{}, kebError.NewTemporaryError("server error: %s", c.handleWrongStatusCode(response))
 	case response.StatusCode != http.StatusOK:
-		return CisResponseV2{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
+		return Response{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}
 
-	var cisResponse CisResponseV2
+	var cisResponse Response
 	err = json.NewDecoder(response.Body).Decode(&cisResponse)
 	if err != nil {
-		return CisResponseV2{}, fmt.Errorf("while decoding CIS response: %w", err)
+		return Response{}, fmt.Errorf("while decoding CIS response: %w", err)
 	}
 
 	return cisResponse, nil
 }
 
-func (c *ClientV2) buildRequest(cursor string) (*http.Request, error) {
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePathV2, c.config.EventServiceURL), nil)
+func (c *Client) buildRequest(cursor string) (*http.Request, error) {
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePath, c.config.EventServiceURL), nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating request: %w", err)
 	}
@@ -138,9 +149,9 @@ func (c *ClientV2) buildRequest(cursor string) (*http.Request, error) {
 	if cursor != "" {
 		q.Add("cursor", cursor)
 	} else {
-		q.Add("eventType", eventTypeV2)
-		q.Add("entityType", entityTypeV2)
-		q.Add("since", defaultSinceV2)
+		q.Add("eventType", eventType)
+		q.Add("entityType", entityType)
+		q.Add("since", defaultSince)
 		q.Add("pageSize", c.config.PageSize)
 		q.Add("sortField", "creationTime")
 		q.Add("sortOrder", "ASC")
@@ -151,7 +162,7 @@ func (c *ClientV2) buildRequest(cursor string) (*http.Request, error) {
 	return request, nil
 }
 
-func (c *ClientV2) handleWrongStatusCode(response *http.Response) string {
+func (c *Client) handleWrongStatusCode(response *http.Response) string {
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Sprintf("server returned %d status code, response body is unreadable", response.StatusCode)
@@ -160,10 +171,10 @@ func (c *ClientV2) handleWrongStatusCode(response *http.Response) string {
 	return fmt.Sprintf("server returned %d status code, body: %s", response.StatusCode, string(body))
 }
 
-func (c *ClientV2) appendSubaccountsFromDeleteEvents(cisResp *CisResponseV2, subaccs *subaccountsV2) {
+func (c *Client) appendSubaccountsFromDeleteEvents(cisResp *Response, subaccs *subaccounts) {
 	for _, event := range cisResp.Events {
-		if event.Type != eventTypeV2 {
-			c.log.Warn(fmt.Sprintf("event type %s is not equal to %s, skip event", event.Type, eventTypeV2))
+		if event.Type != eventType {
+			c.log.Warn(fmt.Sprintf("event type %s is not equal to %s, skip event", event.Type, eventType))
 			continue
 		}
 		subaccs.ids = append(subaccs.ids, event.SubAccount)

@@ -83,8 +83,6 @@ spec:
                   value: {{ .Values.cis.v2.rateLimitingInterval | quote }}
                 - name: APP_CIS_REQUEST_INTERVAL
                   value: {{ .Values.cis.v2.requestInterval | quote }}
-                - name: APP_EVENTS_SERVICE_VERSION
-                  value: "{{ .Values.subaccountCleanup.eventsServiceVersion }}"
                 - name: APP_DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
