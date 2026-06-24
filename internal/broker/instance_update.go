@@ -540,9 +540,6 @@ func (b *UpdateEndpoint) validateAdditionalWorkerPoolsParams(details domain.Upda
 		if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, params.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
-		if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
-			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-		}
 	}
 
 	if err := checkUnsupportedMachines(b.providerSpec, pkg.CloudProviderFromString(providerValues.ProviderType), valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {

@@ -609,9 +609,6 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
 		}
 
 		if err := checkUnsupportedMachines(b.providerSpec, pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
@@ -734,47 +731,6 @@ func checkInternalOnlyMachinesUsage(planSpec *configuration.PlanSpecifications, 
 			errorMsg.WriteString(", ")
 		}
 		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedMachines[machineType], ", ")))
-	}
-
-	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
-
-	return fmt.Errorf("%s", errorMsg.String())
-}
-
-func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
-	var GPUMachines = []string{
-		"g2-standard",
-		"g6",
-		"g4dn",
-		"Standard_NC",
-	}
-
-	usedGPUMachines := make(map[string][]string)
-	var orderedMachineTypes []string
-
-	for _, pool := range additionalWorkerNodePools {
-		for _, GPUMachine := range GPUMachines {
-			if strings.HasPrefix(pool.MachineType, GPUMachine) {
-				if _, exists := usedGPUMachines[pool.MachineType]; !exists {
-					orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
-				}
-				usedGPUMachines[pool.MachineType] = append(usedGPUMachines[pool.MachineType], pool.Name)
-			}
-		}
-	}
-
-	if len(usedGPUMachines) == 0 {
-		return nil
-	}
-
-	var errorMsg strings.Builder
-	errorMsg.WriteString("The following GPU machine types: ")
-
-	for i, machineType := range orderedMachineTypes {
-		if i > 0 {
-			errorMsg.WriteString(", ")
-		}
-		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedGPUMachines[machineType], ", ")))
 	}
 
 	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
