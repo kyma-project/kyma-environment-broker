@@ -185,7 +185,8 @@ You can configure the following provisioning parameters for Google Distributed C
 Google Distributed Cloud Hosted
 </summary>
 
-> **Note:** The following parameters are not available for the `gdch` plan and are disabled by design: custom **networking** configuration, **colocate control plane**, and **GVisor** container runtime.
+> ### Note:
+> The custom **networking** configuration parameter is not available for the `gdch` plan and is disabled by design.
 
 | Parameter name                            | Type   | Description                                                                                | Required | Default value       |
 |-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------------|
