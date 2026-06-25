@@ -68,6 +68,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AZURE** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_DEFAULT** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_GCP** | <code>999999</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_GDCH** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_OPENSTACK** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;MIN_BINDINGS_FOR_&#x200b;GUARD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When the number of claimed bindings without any active instances in the DB is equal to or greater than this value, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |

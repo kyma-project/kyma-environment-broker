@@ -55,6 +55,10 @@ type planSpecificationDTO struct {
 	InternalOnlyMachines []string `yaml:"internalOnlyMachines,omitempty"`
 	VolumeSizeGb         int      `yaml:"volumeSizeGb"`
 	UpgradableToPlans    []string `yaml:"upgradableToPlans,omitempty"`
+
+	DisableNetworking           bool `yaml:"disableNetworking,omitempty"`
+	DisableColocateControlPlane bool `yaml:"disableColocateControlPlane,omitempty"`
+	DisableGvisor               bool `yaml:"disableGvisor,omitempty"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -162,6 +166,18 @@ func (p *PlanSpecifications) DefaultMachineType(planName string) string {
 		return ""
 	}
 	return regularMachines[0]
+}
+
+func (p *PlanSpecifications) IsNetworkingDisabled(planName string) bool {
+	return p.plans[planName].DisableNetworking
+}
+
+func (p *PlanSpecifications) IsColocateControlPlaneDisabled(planName string) bool {
+	return p.plans[planName].DisableColocateControlPlane
+}
+
+func (p *PlanSpecifications) IsGvisorDisabled(planName string) bool {
+	return p.plans[planName].DisableGvisor
 }
 
 // ValidateInternalOnlyMachines returns warning messages for misconfigured internalOnlyMachines entries:

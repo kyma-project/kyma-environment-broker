@@ -185,3 +185,19 @@ alicloud,build-runtime-alicloud:
     - "ecs.g9i.16xlarge"
   regions:
     default: ["ap-southeast-1","eu-central-1","eu-west-1"]
+
+gdch:
+  disableNetworking: true
+  disableColocateControlPlane: true
+  disableGvisor: true
+  volumeSizeGb: 80
+  regularMachines:
+    - "n3-standard-2-gdc"
+    - "n3-standard-4-gdc"
+    - "n3-standard-8-gdc"
+    - "n3-standard-16-gdc"
+    - "n3-standard-32-gdc"
+    - "n3-standard-64-gdc"
+  regions:
+    default:
+      - "us-west16"

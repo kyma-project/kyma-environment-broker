@@ -15,22 +15,22 @@ import (
 )
 
 const (
-	subAccountV2Test1 = "fda14cab-bacc-4d0b-a10f-18557a6d9060"
-	subAccountV2Test2 = "7514cf27-41b0-4266-a273-637cb3a2c051"
-	subAccountV2Test3 = "47af15c8-adfe-4404-8675-525a878c4601"
+	subAccountTest1 = "fda14cab-bacc-4d0b-a10f-18557a6d9060"
+	subAccountTest2 = "7514cf27-41b0-4266-a273-637cb3a2c051"
+	subAccountTest3 = "47af15c8-adfe-4404-8675-525a878c4601"
 )
 
-func TestClientV2_FetchSubaccountsToDelete(t *testing.T) {
+func TestClient_FetchSubaccountsToDelete(t *testing.T) {
 	t.Run("client fetched all subaccount IDs to delete", func(t *testing.T) {
 		// Given
-		testServer := fixHTTPServerV2(newServerV2(t))
+		testServer := fixHTTPServer(newServer(t))
 		defer testServer.Close()
 
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		client := NewClientV2(context.TODO(), Config{
+		client := NewClient(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
 		}, logger)
@@ -42,21 +42,21 @@ func TestClientV2_FetchSubaccountsToDelete(t *testing.T) {
 		// Then
 		require.NoError(t, err)
 		require.Len(t, saList, 3)
-		require.ElementsMatch(t, saList, []string{subAccountV2Test1, subAccountV2Test2, subAccountV2Test3})
+		require.ElementsMatch(t, saList, []string{subAccountTest1, subAccountTest2, subAccountTest3})
 	})
 
 	t.Run("error occur during fetch subaccount IDs", func(t *testing.T) {
 		// Given
-		srv := newServerV2(t)
+		srv := newServer(t)
 		srv.serverErr = true
-		testServer := fixHTTPServerV2(srv)
+		testServer := fixHTTPServer(srv)
 		defer testServer.Close()
 
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		client := NewClientV2(context.TODO(), Config{
+		client := NewClient(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
 		}, logger)
@@ -72,17 +72,17 @@ func TestClientV2_FetchSubaccountsToDelete(t *testing.T) {
 
 	t.Run("should fetch subaccounts ids after request retries", func(t *testing.T) {
 		// Given
-		srv := newServerV2(t)
+		srv := newServer(t)
 		srv.rateLimiting = true
 		srv.requiredRequestRetries = 1
-		testServer := fixHTTPServerV2(srv)
+		testServer := fixHTTPServer(srv)
 		defer testServer.Close()
 
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		client := NewClientV2(context.TODO(), Config{
+		client := NewClient(context.TODO(), Config{
 			EventServiceURL:   testServer.URL,
 			PageSize:          "3",
 			MaxRequestRetries: 3,
@@ -95,22 +95,22 @@ func TestClientV2_FetchSubaccountsToDelete(t *testing.T) {
 		// Then
 		require.NoError(t, err)
 		require.Len(t, saList, 3)
-		require.ElementsMatch(t, saList, []string{subAccountV2Test1, subAccountV2Test2, subAccountV2Test3})
+		require.ElementsMatch(t, saList, []string{subAccountTest1, subAccountTest2, subAccountTest3})
 	})
 
 	t.Run("should return rate limiting error", func(t *testing.T) {
 		// Given
-		srv := newServerV2(t)
+		srv := newServer(t)
 		srv.rateLimiting = true
 		srv.requiredRequestRetries = 5
-		testServer := fixHTTPServerV2(srv)
+		testServer := fixHTTPServer(srv)
 		defer testServer.Close()
 
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		client := NewClientV2(context.TODO(), Config{
+		client := NewClient(context.TODO(), Config{
 			EventServiceURL:   testServer.URL,
 			PageSize:          "3",
 			MaxRequestRetries: 3,
@@ -126,7 +126,7 @@ func TestClientV2_FetchSubaccountsToDelete(t *testing.T) {
 	})
 }
 
-type serverV2 struct {
+type server struct {
 	t                      *testing.T
 	serverErr              bool
 	rateLimiting           bool
@@ -134,21 +134,21 @@ type serverV2 struct {
 	requiredRequestRetries int
 }
 
-func newServerV2(t *testing.T) *serverV2 {
-	return &serverV2{
+func newServer(t *testing.T) *server {
+	return &server{
 		t: t,
 	}
 }
 
-func fixHTTPServerV2(srv *serverV2) *httptest.Server {
+func fixHTTPServer(srv *server) *httptest.Server {
 	r := httputil.NewRouter()
 
-	r.HandleFunc("GET /events/v2/events/central", srv.returnCISEventsV2)
+	r.HandleFunc("GET /events/v2/events/central", srv.returnCISEvents)
 
 	return httptest.NewServer(r)
 }
 
-func (s *serverV2) returnCISEventsV2(w http.ResponseWriter, r *http.Request) {
+func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 	eventType := r.URL.Query().Get("eventType")
 	cursor := r.URL.Query().Get("cursor")
 
@@ -158,13 +158,13 @@ func (s *serverV2) returnCISEventsV2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if s.serverErr {
-		s.writeResponseV2(w, []byte(`{bad}`))
+		s.writeResponse(w, []byte(`{bad}`))
 		return
 	}
 
 	if s.rateLimiting {
 		if s.requestRetriesCount < s.requiredRequestRetries {
-			s.writeRateLimitingResponseV2(w)
+			s.writeRateLimitingResponse(w)
 			s.requestRetriesCount++
 			return
 		}
@@ -250,26 +250,26 @@ func (s *serverV2) returnCISEventsV2(w http.ResponseWriter, r *http.Request) {
 					"eventType": "Subaccount_Deletion"
 				}
 			]
-		}`, subAccountV2Test1, subAccountV2Test1, subAccountV2Test1,
-			subAccountV2Test2, subAccountV2Test2, subAccountV2Test2,
-			subAccountV2Test3, subAccountV2Test3, subAccountV2Test3)
+		}`, subAccountTest1, subAccountTest1, subAccountTest1,
+			subAccountTest2, subAccountTest2, subAccountTest2,
+			subAccountTest3, subAccountTest3, subAccountTest3)
 	}
 
-	s.writeResponseV2(w, []byte(response))
+	s.writeResponse(w, []byte(response))
 	s.requestRetriesCount = 0
 }
 
-func (s *serverV2) writeResponseV2(w http.ResponseWriter, response []byte) {
+func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
+	w.WriteHeader(http.StatusOK)
 	_, err := w.Write(response)
 	if err != nil {
-		s.t.Errorf("fakeCisServerV2 cannot write response: %s", err)
+		s.t.Errorf("fakeCisServer cannot write response: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
-func (s *serverV2) writeRateLimitingResponseV2(w http.ResponseWriter) {
+func (s *server) writeRateLimitingResponse(w http.ResponseWriter) {
 	response := `{
 		"error": {
 			"message": "Request rate limit exceeded"
@@ -278,7 +278,7 @@ func (s *serverV2) writeRateLimitingResponseV2(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusTooManyRequests)
 	_, err := w.Write([]byte(response))
 	if err != nil {
-		s.t.Errorf("fakeCisServerV2 cannot write response: %s", err)
+		s.t.Errorf("fakeCisServer cannot write response: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

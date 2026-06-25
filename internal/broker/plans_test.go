@@ -73,6 +73,20 @@ func TestSchemaService_SapConvergedCloud(t *testing.T) {
 	validateSchema(t, Marshal(update), "sap-converged-cloud/update-sap-converged-cloud-schema-additional-params-ingress.json")
 }
 
+func TestSchemaService_GDCH(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	create, update, available := schemaService.GDCHSchemas("cf-us11")
+	require.True(t, available)
+	validateSchema(t, Marshal(create), "gdch/gdch-schema.json")
+	validateSchema(t, Marshal(update), "gdch/update-gdch-schema.json")
+
+	props := (*create)["properties"].(map[string]interface{})
+	assert.NotContains(t, props, "networking", "networking must be absent from GDCH schema")
+	assert.NotContains(t, props, "colocateControlPlane", "colocateControlPlane must be absent from GDCH schema")
+	assert.NotContains(t, props, "gvisor", "gvisor must be absent from GDCH schema")
+}
+
 func TestSchemaService_FreeAWS(t *testing.T) {
 	schemaService := createSchemaService(t)
 
@@ -156,7 +170,7 @@ func TestSchemaService_GvisorAbsentWhenFeatureFlagDisabled(t *testing.T) {
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
-		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, GDCHPlanName, PreviewPlanName,
 		freeAWSPlanName, freeAzurePlanName, TrialPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -179,7 +193,7 @@ func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemProperties(t *
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
-		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, GDCHPlanName, PreviewPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
@@ -196,7 +210,7 @@ func TestSchemaService_GvisorAbsentInAdditionalWorkerNodePoolsItemControlsOrder(
 
 	for _, tc := range planSchemaCases(schemaService,
 		AWSPlanName, AzurePlanName, AzureLitePlanName, GCPPlanName,
-		SapConvergedCloudPlanName, AlicloudPlanName, PreviewPlanName,
+		SapConvergedCloudPlanName, AlicloudPlanName, GDCHPlanName, PreviewPlanName,
 	) {
 		t.Run(tc.name, func(t *testing.T) {
 			schema := tc.get()
@@ -279,6 +293,10 @@ func planSchemaCases(svc *SchemaService, planNames ...string) []struct {
 		AlicloudPlanName: {
 			create: func() *map[string]interface{} { s, _, _ := svc.AlicloudSchemas(platformRegionEU40); return s },
 			update: func() *map[string]interface{} { _, s, _ := svc.AlicloudSchemas(platformRegionEU40); return s },
+		},
+		GDCHPlanName: {
+			create: func() *map[string]interface{} { s, _, _ := svc.GDCHSchemas(platformRegionUS11); return s },
+			update: func() *map[string]interface{} { _, s, _ := svc.GDCHSchemas(platformRegionUS11); return s },
 		},
 		PreviewPlanName: {
 			create: func() *map[string]interface{} { s, _, _ := svc.PreviewSchemas(platformRegionUS11); return s },

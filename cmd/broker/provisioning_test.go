@@ -1662,6 +1662,33 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProvider:             "openstack",
 			expectedSubscriptionName:     "sb-openstack_eu-de-2",
 		},
+		"Production GDCH": {
+			planID:                       broker.GDCHPlanID,
+			region:                       "us-west16",
+			multiZone:                    false,
+			controlPlaneFailureTolerance: "zone",
+
+			expectedZonesCount:           ptr.Integer(1),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 10,
+			expectedMachineType:          provider.DefaultGDCHMachineType,
+			expectedProvider:             "gdch",
+			expectedSubscriptionName:     "sb-gdch",
+			expectedVolumeSize:           "80Gi",
+		},
+		"Production Multi-AZ GDCH": {
+			planID:                       broker.GDCHPlanID,
+			region:                       "us-west16",
+			multiZone:                    true,
+			controlPlaneFailureTolerance: "zone",
+
+			expectedZonesCount:           ptr.Integer(3),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 10,
+			expectedMachineType:          provider.DefaultGDCHMachineType,
+			expectedProvider:             "gdch",
+			expectedSubscriptionName:     "sb-gdch",
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -3073,6 +3100,13 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 
 			expectedProvider:         "alicloud",
 			expectedSubscriptionName: "sb-alicloud",
+		},
+		"gdch us-west16": {
+			planID: broker.GDCHPlanID,
+			region: "us-west16",
+
+			expectedProvider:         "gdch",
+			expectedSubscriptionName: "sb-gdch",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

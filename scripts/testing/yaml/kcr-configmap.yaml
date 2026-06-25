@@ -185,3 +185,16 @@ data:
           alicloud:
             ecs.g9i.large:
               default_volume_size: "80Gi"
+          gdch:
+            n3-standard-2-gdc:
+              default_volume_size: "80Gi"
+            n3-standard-4-gdc:
+              default_volume_size: "80Gi"
+            n3-standard-8-gdc:
+              default_volume_size: "80Gi"
+            n3-standard-16-gdc:
+              default_volume_size: "80Gi"
+            n3-standard-32-gdc:
+              default_volume_size: "80Gi"
+            n3-standard-64-gdc:
+              default_volume_size: "80Gi"

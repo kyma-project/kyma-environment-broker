@@ -248,6 +248,8 @@ spec:
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.default }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_GCP
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.gcp }}"
+            - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_GDCH
+              value: "{{ .Values.hap.multiHyperscalerAccount.limits.gdch }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_LIMITS_OPENSTACK
               value: "{{ .Values.hap.multiHyperscalerAccount.limits.openstack }}"
             - name: APP_HAP_MULTI_HYPERSCALER_ACCOUNT_MIN_BINDINGS_FOR_GUARD
