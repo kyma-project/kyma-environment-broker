@@ -2835,7 +2835,7 @@ func TestRestrictGA(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDiscoveryZones(t *testing.T) {
+func TestDiscoveryZones_AWS(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -2944,6 +2944,86 @@ func TestDiscoveryZones(t *testing.T) {
 
 			// then
 			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
+}
+
+func TestDiscoveryZones_Azure(t *testing.T) {
+	// Tests HTTP-time zone validation for Azure — mirrors TestDiscoveryZones but with Azure provider.
+	// Logs should contain: "validating zones using secret test/azure-secret-1 region=westeurope"
+	memoryStorage := storage.NewMemoryStorage()
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	rulesService, err := rules.NewRulesServiceFromSlice([]string{"azure"}, sets.New("azure"), sets.New("azure"))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name          string
+		zones         map[string][]string
+		azureError    error
+		expectedError string
+	}{
+		{
+			name:          "Should fail if Azure returns error",
+			azureError:    fmt.Errorf("Azure API error"),
+			expectedError: "Failed to validate the number of available zones. Please try again later.",
+		},
+		{
+			name: "Should fail if not enough zones for Kyma worker node pool",
+			zones: map[string][]string{
+				"Standard_D4s_v5": {"1", "2"},
+			},
+			expectedError: "In the westeurope, the Standard_D4s_v5 machine type is not available in 3 zones.",
+		},
+		{
+			name: "Should succeed when machine type has 3 zones",
+			zones: map[string][]string{
+				"Standard_D4s_v5": {"1", "2", "3"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(broker.Config{EnablePlans: []string{"azure"}}).
+				WithGardenerConfig(gardener.Config{
+					Project:      "test",
+					ShootDomain:  "test.example.com",
+					DNSProviders: fixDNSProviders()}).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{}).
+				WithSchemaService(newSchemaService(t)).
+				WithConfigurationProvider(fixture.NewAzureProviderSpecWithZonesDiscovery(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+				WithRulesService(rulesService).
+				WithGardenerClient(fixture.CreateGardenerClientWithAzureCredentialsBindings()).
+				WithClientFactories(fixture.NewFakeFactory(tc.zones, tc.azureError)).
+				Build()
+
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AzurePlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "westeurope", "machineType": "Standard_D4s_v5"}`, clusterName)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "Test@Test.pl"}`, globalAccountID, subAccountID)),
+			}, true)
+
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

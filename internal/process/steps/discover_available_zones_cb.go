@@ -78,7 +78,11 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()), err, 10*time.Second, time.Minute, log)
 	}
 
-	client, err := s.factory.NewFromSecret(context.Background(), provider, secret, operation.ProviderValues.Region)
+	log.Info(fmt.Sprintf("discovering zones using credentials binding %s region=%s", subscriptionSecretName, operation.ProviderValues.Region))
+
+	// Always use a per-call client with the exact Kyma-specific secret to ensure
+	// zone discovery reflects the actual subscription restrictions for this instance.
+	client, err := s.factory.NewPerCallFromSecret(context.Background(), provider, secret, operation.ProviderValues.Region)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to create %s client", provider), err, 10*time.Second, time.Minute, log)
 	}
@@ -102,7 +106,7 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 		}
 		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
-		log.Info(fmt.Sprintf("Available zones for machine type %s: %v", machineType, zones))
+		log.Info(fmt.Sprintf("Available zones for machine type %s in region %s: %v", machineType, operation.ProviderValues.Region, zones))
 		discoveredZones[machineType] = zones
 	}
 

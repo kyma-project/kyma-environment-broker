@@ -2,6 +2,7 @@ package fixture
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
@@ -121,6 +122,13 @@ type FakeFactory struct {
 }
 
 func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &fakeProviderClient{zones: f.zones}, nil
+}
+
+func (f *FakeFactory) NewPerCallFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -287,6 +295,48 @@ func CreateGardenerClientWithThreeAWSBindingsAndOneUnclaimed() *gardener.Client 
 	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, s4, sb1, sb2, sb3, sb4)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func CreateGardenerClientWithAzureCredentialsBindings() *gardener.Client {
+	const (
+		namespace  = "test"
+		secretName = "azure-secret-1"
+	)
+	secret := createAzureSecret(secretName, namespace)
+	binding := createCredentialsBinding(AzureUnclaimedSecretName, namespace, secretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+	})
+	return gardener.NewClient(gardener.NewDynamicFakeClient(secret, binding), namespace)
+}
+
+func createAzureSecret(name, namespace string) *unstructured.Unstructured {
+	enc := func(s string) string { return base64.StdEncoding.EncodeToString([]byte(s)) }
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{"name": name, "namespace": namespace},
+			"data": map[string]interface{}{
+				"clientID":       enc("test-client-id"),
+				"clientSecret":   enc("test-client-secret"),
+				"tenantID":       enc("test-tenant-id"),
+				"subscriptionID": enc("test-subscription-id-12345"),
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.SecretGVK)
+	return u
+}
+
+func NewAzureProviderSpecWithZonesDiscovery(t *testing.T) *configuration.ProviderSpec {
+	spec := `
+azure:
+  zonesDiscovery: true
+  regions:
+    westeurope:
+      displayName: "West Europe"
+`
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
+	require.NoError(t, err)
+	return providerSpec
 }
 
 func createSecret(name, namespace string) *unstructured.Unstructured {

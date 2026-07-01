@@ -71,7 +71,7 @@ func (h *HandlerCB) AttachRoutes(router *httputil.Router) {
 }
 
 func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Request) {
-	supportedProviders := []runtime.CloudProvider{runtime.AWS}
+	supportedProviders := h.providerSpec.ZonesDiscoveryProviders()
 	var providersData ProvidersData
 
 	for _, provider := range supportedProviders {

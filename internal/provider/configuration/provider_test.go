@@ -712,7 +712,11 @@ func TestProviderSpec_MachineFamily(t *testing.T) {
 		{"aws large", runtime.AWS, "c7i.large", "c7i", true},
 		{"aws no dot", runtime.AWS, "invalid", "", false},
 		{"aws empty", runtime.AWS, "", "", false},
-		{"unsupported provider", runtime.Azure, "Standard_D4s_v5", "", false},
+		{"azure D-series", runtime.Azure, "Standard_D4s_v5", "D", true},
+		{"azure NC-series", runtime.Azure, "Standard_NC4as_T4_v3", "NC", true},
+		{"azure F-series", runtime.Azure, "Standard_F4s_v2", "F", true},
+		{"azure no Standard prefix", runtime.Azure, "D4s_v5", "", false},
+		{"unsupported provider", runtime.GCP, "n2-standard-4", "", false},
 	}
 
 	for _, tc := range tests {
@@ -730,4 +734,31 @@ type captureWriter struct {
 
 func (c *captureWriter) Write(p []byte) (n int, err error) {
 	return c.buf.Write(p)
+}
+
+func TestProviderSpec_ZonesDiscoveryProviders_StableOrder(t *testing.T) {
+	spec, err := NewProviderSpec(strings.NewReader(`
+aws:
+  zonesDiscovery: true
+  regions:
+    eu-central-1:
+      displayName: "EU Central"
+azure:
+  zonesDiscovery: true
+  regions:
+    westeurope:
+      displayName: "West Europe"
+`))
+	require.NoError(t, err)
+
+	providers := spec.ZonesDiscoveryProviders()
+
+	require.Len(t, providers, 2)
+	// Result must be sorted: AWS < Azure alphabetically.
+	assert.Equal(t, runtime.AWS, providers[0])
+	assert.Equal(t, runtime.Azure, providers[1])
+
+	// Call again — order must be stable across repeated calls.
+	providers2 := spec.ZonesDiscoveryProviders()
+	assert.Equal(t, providers, providers2)
 }

@@ -14,4 +14,8 @@ type ProviderClient interface {
 
 type Factory interface {
 	NewFromSecret(ctx context.Context, provider pkg.CloudProvider, secret *unstructured.Unstructured, region string) (ProviderClient, error)
+	// NewPerCallFromSecret always creates a fresh per-call client, bypassing any global cache.
+	// Used by the async DiscoverAvailableZonesCBStep to ensure zone discovery uses
+	// the exact Kyma-specific subscription secret, not the global cache startup secret.
+	NewPerCallFromSecret(ctx context.Context, provider pkg.CloudProvider, secret *unstructured.Unstructured, region string) (ProviderClient, error)
 }

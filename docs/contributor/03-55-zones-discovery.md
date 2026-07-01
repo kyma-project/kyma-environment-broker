@@ -7,14 +7,15 @@
 The Zones Discovery feature extends Kyma Environment Broker (KEB) to dynamically determine availability zones for both the Kyma worker node pool and additional worker node pools during provisioning and updates.
 Operators can configure worker node pools to use either static zone assignments (predefined in the configuration) or dynamic zone assignments (queried live from the hyperscaler).
 
-> ### Note:
-> This feature is currently supported only on AWS.
+This feature is supported on **AWS** and **Azure**.
 
 Configuration:
 
 ```yaml
 providersConfiguration:
   aws:
+    zonesDiscovery: true
+  azure:
     zonesDiscovery: true
 ```
 
@@ -24,8 +25,12 @@ Example log entries:
 
 ```json lines
 {"level":"WARN", "msg":"Provider aws has zones discovery enabled, but region us-west-2 is configured with 4 static zone(s), which will be ignored."} 
-{"level":"WARN", "msg":"Provider aws has zones discovery enabled, but machine type g6 in region ap-south-1 is configured with 1 static zone(s), which will be ignored."}
+{"level":"WARN", "msg":"Provider azure has zones discovery enabled, but region westeurope is configured with 3 static zone(s), which will be ignored."}
 ```
+
+## Credentials
+
+KEB resolves hyperscaler credentials from Gardener secrets referenced by a `CredentialsBinding`. The secret fields follow the Gardener convention for each provider type.
 
 ## Validation
 
@@ -35,6 +40,10 @@ During provisioning and updates, KEB validates the worker node pool configuratio
 
 To optimize performance, if the same machine type is used in multiple worker node pools, KEB queries the hyperscaler only once per unique machine type and reuses the result across all occurrences. This solution eliminates unnecessary duplicate calls.
 The subscription secret is used only for validation. Its name is logged to support traceability in case of validation failures.
+
+### Azure — zone restrictions
+
+Azure `ResourceSKUs` API returns zone-level restrictions (`restrictions[type=Zone]`) which indicate that a given machine type is not available in a specific zone for the subscription. KEB automatically excludes restricted zones from the available zone list.
 
 ## Zones Discovery
 
