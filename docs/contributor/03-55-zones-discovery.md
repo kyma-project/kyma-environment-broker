@@ -7,7 +7,8 @@
 The Zones Discovery feature extends Kyma Environment Broker (KEB) to dynamically determine availability zones for both the Kyma worker node pool and additional worker node pools during provisioning and updates.
 Operators can configure worker node pools to use either static zone assignments (predefined in the configuration) or dynamic zone assignments (queried live from the hyperscaler).
 
-This feature is supported on **AWS** and **Azure**.
+> ### Note:
+> This feature is only supported on Amazon Web Services and Microsoft Azure.
 
 Configuration:
 
@@ -41,7 +42,7 @@ During provisioning and updates, KEB validates the worker node pool configuratio
 To optimize performance, if the same machine type is used in multiple worker node pools, KEB queries the hyperscaler only once per unique machine type and reuses the result across all occurrences. This solution eliminates unnecessary duplicate calls.
 The subscription secret is used only for validation. Its name is logged to support traceability in case of validation failures.
 
-### Azure — zone restrictions
+### Microsoft Azure — Zone Restrictions
 
 Azure `ResourceSKUs` API returns zone-level restrictions (`restrictions[type=Zone]`) which indicate that a given machine type is not available in a specific zone for the subscription. KEB automatically excludes restricted zones from the available zone list.
 
