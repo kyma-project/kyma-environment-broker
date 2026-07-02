@@ -31,7 +31,7 @@ Example log entries:
 
 ## Credentials
 
-KEB resolves hyperscaler credentials from Gardener secrets referenced by a `CredentialsBinding`. The secret fields follow the Gardener convention for each provider type.
+KEB resolves hyperscaler credentials from Gardener Secrets referenced by a `CredentialsBinding`. The fields within a Secret follow the Gardener convention for each provider type.
 
 ## Validation
 
