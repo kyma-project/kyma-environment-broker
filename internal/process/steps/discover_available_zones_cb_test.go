@@ -246,7 +246,7 @@ func TestDiscoverAvailableZonesCBStep_MachineTypeFromProviderValues(t *testing.T
 	assert.ElementsMatch(t, operation.DiscoveredZones["m5.large"], []string{"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"})
 }
 
-func TestDiscoverAvailableZonesCBStep_RepeatWhenAWSError(t *testing.T) {
+func TestDiscoverAvailableZonesCBStep_AWSRepeatWhenError(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -279,7 +279,7 @@ func TestDiscoverAvailableZonesCBStep_RepeatWhenAWSError(t *testing.T) {
 	assert.Equal(t, 10*time.Second, repeat)
 }
 
-func TestDiscoverAvailableZonesCBStep_ProvisioningHappyPath(t *testing.T) {
+func TestDiscoverAvailableZonesCBStep_AWSProvisioningHappyPath(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -334,7 +334,7 @@ func TestDiscoverAvailableZonesCBStep_ProvisioningHappyPath(t *testing.T) {
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
 }
 
-func TestDiscoverAvailableZonesCBStep_UpdateHappyPath(t *testing.T) {
+func TestDiscoverAvailableZonesCBStep_AWSUpdateHappyPath(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -383,6 +383,133 @@ func TestDiscoverAvailableZonesCBStep_UpdateHappyPath(t *testing.T) {
 	assert.Len(t, operation.DiscoveredZones, 2)
 	assert.ElementsMatch(t, operation.DiscoveredZones["g6.xlarge"], []string{"ap-southeast-2a", "ap-southeast-2c"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["g4dn.xlarge"], []string{"ap-southeast-2b"})
+}
+
+func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixture.FixInstance(instanceID)
+	instance.SubscriptionSecretName = fixture.AzureUnclaimedSecretName
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
+	operation.RuntimeID = instance.RuntimeID
+	machineType := "Standard_D4s_v5"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "worker-1",
+			MachineType:   "Standard_F8s_v2",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 10,
+		},
+		{
+			Name:          "worker-2",
+			MachineType:   "Standard_D4s_v5", // duplicate — queried only once
+			HAZones:       false,
+			AutoScalerMin: 1,
+			AutoScalerMax: 3,
+		},
+	}
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesCBStep(
+		memoryStorage,
+		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
+		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
+		fixture.NewFakeFactory(map[string][]string{
+			"Standard_D4s_v5": {"1", "2", "3"},
+			"Standard_F8s_v2": {"1", "2", "3"},
+		}, nil))
+
+	// when
+	// Logs should contain: "discovering zones using credentials binding azure-unclaimed region=westeurope"
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 2) // Standard_D4s_v5 and Standard_F8s_v2 (deduped)
+	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_D4s_v5"], []string{"1", "2", "3"})
+	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_F8s_v2"], []string{"1", "2", "3"})
+}
+
+func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixture.FixInstance(instanceID)
+	instance.SubscriptionSecretName = fixture.AzureUnclaimedSecretName
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixUpdatingOperation(operationID, instanceID).Operation
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
+	operation.RuntimeID = instance.RuntimeID
+	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "worker-1",
+			MachineType:   "Standard_D4s_v5",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 10,
+		},
+	}
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesCBStep(
+		memoryStorage,
+		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
+		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
+		fixture.NewFakeFactory(map[string][]string{
+			"Standard_D4s_v5": {"1", "2", "3"},
+		}, nil))
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Len(t, operation.DiscoveredZones, 1)
+	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_D4s_v5"], []string{"1", "2", "3"})
+}
+
+func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixture.FixInstance(instanceID)
+	instance.SubscriptionSecretName = fixture.AzureUnclaimedSecretName
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
+	operation.RuntimeID = instance.RuntimeID
+	machineType := "Standard_D4s_v5"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesCBStep(
+		memoryStorage,
+		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
+		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
+		fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("Azure API error")))
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, 10*time.Second, repeat)
 }
 
 func fixLogger() *slog.Logger {

@@ -1174,5 +1174,7 @@ func newHyperscalerClient(
 		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}
 
+	log.Info(fmt.Sprintf("validating zones for region=%s secret=%s/%s", values.Region, credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
+
 	return client, nil
 }
