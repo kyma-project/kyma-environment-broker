@@ -898,7 +898,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 
-			svc := broker.NewUpdate(broker.Config{WorkerPoolLabelsAnnotationsEnabled: tc.labelsAnnotationsEnabled}, st, handler, true, true, false, q, broker.PlansConfig{},
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
 				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t), nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
 
 			// when

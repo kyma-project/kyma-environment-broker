@@ -623,20 +623,19 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
-		if b.config.WorkerPoolLabelsAnnotationsEnabled {
-			if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+		if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
+		if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+		var raw struct {
+			Pools json.RawMessage `json:"additionalWorkerNodePools"`
+		}
+		if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
+			if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			var raw struct {
-				Pools json.RawMessage `json:"additionalWorkerNodePools"`
-			}
-			if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
-				if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
-					return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
 			}
 		}
 

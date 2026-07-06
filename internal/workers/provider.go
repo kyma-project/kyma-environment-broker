@@ -16,9 +16,8 @@ import (
 )
 
 type Provider struct {
-	imConfig                 broker.InfrastructureManager
-	providerSpec             *configuration.ProviderSpec
-	labelsAnnotationsEnabled bool
+	imConfig     broker.InfrastructureManager
+	providerSpec *configuration.ProviderSpec
 }
 
 func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
