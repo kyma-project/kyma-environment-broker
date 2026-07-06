@@ -180,13 +180,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	logs := reconciler.logger
 
 	_, err := s.Every(cfg.EventsWindowInterval).Do(func() {
-		// establish actual time window
-		eventsFrom := reconciler.eventWindow.GetNextFromTime()
-
 		reconciler.periodicEventsSync()
-
-		reconciler.eventWindow.UpdateFromTime(eventsFrom)
-		logs.Debug(fmt.Sprintf("Running events synchronization from epoch: %d, lastFromTime: %d, lastToTime: %d", eventsFrom, reconciler.eventWindow.lastFromTime, reconciler.eventWindow.lastToTime))
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling events sync job: %s", err))
