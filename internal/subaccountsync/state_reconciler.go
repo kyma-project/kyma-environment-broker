@@ -146,15 +146,14 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() {
 	logs.Debug(fmt.Sprintf("Accounts synchronization finished: found: %d, notfound %d, failures: %d", found, notfound, failures))
 }
 
-func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) {
-
+func (reconciler *stateReconcilerType) periodicEventsSync() {
 	logs := reconciler.logger
 	eventsClient := reconciler.eventsClient
 	subaccountsSet := reconciler.getAllSubaccountIDsFromState()
 
-	logs.Info(fmt.Sprintf("Running CIS events synchronization from epoch: %d for %d subaccounts", fromActionTime, len(subaccountsSet)))
+	logs.Info(fmt.Sprintf("Running CIS events synchronization for %d subaccounts", len(subaccountsSet)))
 
-	eventsOfInterest, err := eventsClient.getEventsForSubaccounts(fromActionTime, *logs, subaccountsSet)
+	eventsOfInterest, err := eventsClient.getEventsForSubaccounts(*logs, subaccountsSet)
 	if err != nil {
 		logs.Error(fmt.Sprintf("while getting subaccount events: %s", err))
 		// we will retry in the next run
@@ -184,7 +183,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 		// establish actual time window
 		eventsFrom := reconciler.eventWindow.GetNextFromTime()
 
-		reconciler.periodicEventsSync(eventsFrom)
+		reconciler.periodicEventsSync()
 
 		reconciler.eventWindow.UpdateFromTime(eventsFrom)
 		logs.Debug(fmt.Sprintf("Running events synchronization from epoch: %d, lastFromTime: %d, lastToTime: %d", eventsFrom, reconciler.eventWindow.lastFromTime, reconciler.eventWindow.lastToTime))
