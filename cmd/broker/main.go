@@ -379,7 +379,7 @@ func main() {
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")
-	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec, cfg.Broker.WorkerPoolLabelsAnnotationsEnabled)
+	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
 
 	// azureSecretFetcher re-fetches the Azure secret on every cache refresh
 	// to handle credential rotation without restarting KEB.
