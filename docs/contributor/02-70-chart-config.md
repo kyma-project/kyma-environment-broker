@@ -270,7 +270,6 @@
 | subaccountSync.<br>enabled | If true, enables the subaccount synchronization job. | `True` |
 | subaccountSync.<br>eventsWindowInterval | Time window for collecting events from CIS. | `15m` |
 | subaccountSync.<br>eventsWindowSize | Size of the time window for collecting events from CIS. | `20m` |
-| subaccountSync.<br>eventsServiceVersion | Specifies the CIS Events API version to use (v1 or v2). | `v1` |
 | subaccountSync.<br>logLevel | Log level for the subaccount sync job. | `info` |
 | subaccountSync.<br>metricsPort | Port on which the subaccount sync service exposes Prometheus metrics. | `8081` |
 | subaccountSync.name | Name of the subaccount sync deployment. | `subaccount-sync` |
