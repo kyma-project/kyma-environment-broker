@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/fips140"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -504,6 +505,55 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Metrics.OperationResultFinishedOperationRetentionPeriod: %s", cfg.Metrics.OperationResultFinishedOperationRetentionPeriod))
 	logs.Info(fmt.Sprintf("Metrics.BindingsStatsPollingInterval: %s", cfg.Metrics.BindingsStatsPollingInterval))
 
+	logCACertBundleDigest(logs)
+}
+
+// systemCertFiles mirrors the search order of crypto/x509/root_linux.go.
+var systemCertFiles = []string{
+	"/etc/ssl/certs/ca-certificates.crt",
+	"/etc/pki/tls/certs/ca-bundle.crt",
+	"/etc/ssl/ca-bundle.pem",
+	"/etc/pki/tls/cacert.pem",
+	"/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+	"/etc/ssl/cert.pem",
+}
+
+func logCACertBundleDigest(logs *slog.Logger) {
+	logCACertBundleDigestFromPaths(logs, systemCertFiles)
+}
+
+func logCACertBundleDigestFromPaths(logs *slog.Logger, paths []string) {
+	type pathStatus struct {
+		path   string
+		status string
+	}
+	var statuses []pathStatus
+
+	for _, p := range paths {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				statuses = append(statuses, pathStatus{p, "missing"})
+			} else {
+				statuses = append(statuses, pathStatus{p, fmt.Sprintf("error:%s", err.Error())})
+			}
+			continue
+		}
+		if len(data) == 0 {
+			statuses = append(statuses, pathStatus{p, "empty"})
+			continue
+		}
+		sum := sha256.Sum256(data)
+		logs.Info("CA bundle digest", slog.String("path", p), slog.String("sha256", fmt.Sprintf("%x", sum)))
+		return
+	}
+
+	// No usable bundle found — enumerate all paths with their status.
+	args := []any{slog.String("msg_detail", "no usable system cert bundle found")}
+	for _, s := range statuses {
+		args = append(args, slog.String(s.path, s.status))
+	}
+	logs.Warn("CA bundle digest", args...)
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
