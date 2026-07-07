@@ -9,7 +9,7 @@ High availability is determined by checking how many availability zones in a giv
 If the number of zones meets or exceeds the configured threshold, the machine type is considered to be highly available for that region.
 
 > ### Note:
-> Currently, this endpoint supports only AWS.
+> Currently, this endpoint supports only AWS and Azure.
 
 ## Overview
 
@@ -50,19 +50,29 @@ The response contains a list of providers. For each provider, it lists the follo
               "high_availability": false
             },
             {
-              "name": "ap-southeast-2",
-              "high_availability": true
-            },
-            {
               "name": "eu-central-1",
-              "high_availability": false
+              "high_availability": true
             },
             {
               "name": "us-east-1",
               "high_availability": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Azure",
+      "machine_types": [
+        {
+          "name": "D",
+          "regions": [
+            {
+              "name": "eastus",
+              "high_availability": true
             },
             {
-              "name": "us-west-2",
+              "name": "northeurope",
               "high_availability": true
             }
           ]
