@@ -11,7 +11,7 @@ Labels and annotations on additional worker node pools are now enabled.
 
 ## Procedure
 
-Refresh the ERS schema to include the `labels` and `annotations` fields in the additional worker node pool configuration.
+Refresh the ERS schema to include the **labels** and **annotations** fields in the additional worker node pool configuration.
 
 ## Post-Update Steps
 
