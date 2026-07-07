@@ -14,22 +14,21 @@ import (
 )
 
 type RateLimitedCisClient struct {
-	ctx                  context.Context
-	httpClient           *http.Client
-	config               CisEndpointConfig
-	log                  *slog.Logger
-	RateLimiter          *rate.Limiter
-	eventsServiceVersion string
-	eventsWindowSize     time.Duration
-	cisRequests          *prometheus.CounterVec
-	endpoint             string
+	ctx              context.Context
+	httpClient       *http.Client
+	config           CisEndpointConfig
+	log              *slog.Logger
+	RateLimiter      *rate.Limiter
+	eventsWindowSize time.Duration
+	cisRequests      *prometheus.CounterVec
+	endpoint         string
 }
 
 type RateLimiter interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec, endpoint string) *RateLimitedCisClient {
+func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log *slog.Logger, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec, endpoint string) *RateLimitedCisClient {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -40,15 +39,14 @@ func NewRateLimitedCisClient(ctx context.Context, config CisEndpointConfig, log 
 	rl := rate.NewLimiter(rate.Every(config.RateLimitingInterval), config.MaxRequestsPerInterval)
 
 	return &RateLimitedCisClient{
-		ctx:                  ctx,
-		httpClient:           httpClientOAuth,
-		config:               config,
-		log:                  log,
-		RateLimiter:          rl,
-		eventsServiceVersion: eventsServiceVersion,
-		eventsWindowSize:     eventsWindowSize,
-		cisRequests:          cisRequests,
-		endpoint:             endpoint,
+		ctx:              ctx,
+		httpClient:       httpClientOAuth,
+		config:           config,
+		log:              log,
+		RateLimiter:      rl,
+		eventsWindowSize: eventsWindowSize,
+		cisRequests:      cisRequests,
+		endpoint:         endpoint,
 	}
 }
 
