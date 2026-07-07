@@ -14,9 +14,6 @@ type (
 	}
 
 	CisEventsResponse struct {
-		Total      int     `json:"total"`
-		TotalPages int     `json:"totalPages"`
-		PageNum    int     `json:"pageNum"`
 		Events     []Event `json:"events"`
 		NextCursor string  `json:"nextCursor"`
 	}
