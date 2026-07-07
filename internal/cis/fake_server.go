@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -42,14 +40,6 @@ type mutableEvents []map[string]interface{}
 
 type eventsEndpointResponse struct {
 	Total      int           `json:"total"`
-	TotalPages int           `json:"totalPages"`
-	PageNum    int           `json:"pageNum"`
-	MorePages  bool          `json:"morePages"`
-	Events     mutableEvents `json:"events"`
-}
-
-type v2eventsEndpointResponse struct {
-	Total      int           `json:"total"`
 	NextCursor string        `json:"nextCursor"`
 	Events     mutableEvents `json:"events"`
 }
@@ -66,8 +56,7 @@ func NewFakeServer() (*fakeServer, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /accounts/v1/technical/subaccounts/{subaccountID}", se.getSubaccount)
-	mux.HandleFunc("GET /events/v1/events/central", ee.getEvents)
-	mux.HandleFunc("GET /events/v2/events/central", ee.getEventsV2)
+	mux.HandleFunc("GET /events/v2/events/central", ee.getEvents)
 
 	srv := httptest.NewServer(mux)
 
@@ -157,92 +146,6 @@ func newEventsEndpoint() (*eventsEndpoint, error) {
 func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	events := make(mutableEvents, 0, len(e.events))
 	events = append(events, e.events...)
-	pageSize, _ := strconv.Atoi(defaultPageSize)
-	pageNumber := 0
-
-	query := r.URL.Query()
-	eventTypeFilter := query.Get("eventType")
-	actionTimeFilter := query.Get("fromActionTime")
-	sortField := query.Get("sortField")
-	sortOrder := strings.ToUpper(query.Get("sortOrder"))
-	pageSizeLimit := query.Get("pageSize")
-	pageNumberRequest := query.Get("pageNum")
-
-	if eventTypeFilter != "" {
-		if err := events.filterEventsByEventType(eventTypeFilter); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-	if actionTimeFilter != "" {
-		if err := events.filterEventsByActionTime(actionTimeFilter); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-	if sortOrder == "" || (sortOrder != asc && sortOrder != desc) {
-		sortOrder = asc
-	}
-	if sortField != "" {
-		if err := events.sortEvents(sortField, sortOrder); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-	if pageSizeLimit != "" {
-		sizeLimit, err := strconv.Atoi(pageSizeLimit)
-		if err == nil && sizeLimit > 1 {
-			pageSize = sizeLimit
-		}
-	}
-	if pageNumberRequest != "" {
-		requestedPageNumber, err := strconv.Atoi(pageNumberRequest)
-		if err == nil && requestedPageNumber >= 0 {
-			pageNumber = requestedPageNumber
-		}
-	}
-
-	eventsNumber := len(events)
-	pagesNumber := int(math.Ceil(float64(eventsNumber) / float64(pageSize)))
-
-	eventsForResponse := make([]map[string]interface{}, 0)
-	if len(events) < pageSize {
-		eventsForResponse = append(eventsForResponse, events...)
-	} else {
-		startIndex := pageNumber * pageSize
-		endIndex := startIndex + pageSize
-		if endIndex > eventsNumber {
-			endIndex = eventsNumber
-		}
-		eventsForResponse = append(eventsForResponse, events[startIndex:endIndex]...)
-	}
-
-	resp := eventsEndpointResponse{
-		Total:      eventsNumber,
-		TotalPages: pagesNumber,
-		PageNum:    pageNumber,
-		MorePages:  pageNumber < pagesNumber-1,
-		Events:     eventsForResponse,
-	}
-
-	data, err := json.Marshal(resp)
-	if err != nil {
-		slog.Error(fmt.Sprintf("error while marshalling events data: %v", err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	if _, err = w.Write(data); err != nil {
-		slog.Error(fmt.Sprintf("error while writing events data: %v", err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (e *eventsEndpoint) getEventsV2(w http.ResponseWriter, r *http.Request) {
-	events := make(mutableEvents, 0, len(e.events))
-	events = append(events, e.events...)
 	pageSize := 150
 
 	query := r.URL.Query()
@@ -284,7 +187,7 @@ func (e *eventsEndpoint) getEventsV2(w http.ResponseWriter, r *http.Request) {
 	eventsNumber := len(events)
 	startIndex := pageNumber * pageSize
 	if startIndex >= eventsNumber {
-		resp := v2eventsEndpointResponse{Total: eventsNumber, NextCursor: "", Events: mutableEvents{}}
+		resp := eventsEndpointResponse{Total: eventsNumber, NextCursor: "", Events: mutableEvents{}}
 		data, _ := json.Marshal(resp)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(data)
@@ -301,20 +204,20 @@ func (e *eventsEndpoint) getEventsV2(w http.ResponseWriter, r *http.Request) {
 		nextCursor = strconv.Itoa(pageNumber + 1)
 	}
 
-	resp := v2eventsEndpointResponse{
+	resp := eventsEndpointResponse{
 		Total:      eventsNumber,
 		NextCursor: nextCursor,
 		Events:     eventsForResponse,
 	}
 	data, err := json.Marshal(resp)
 	if err != nil {
-		slog.Error(fmt.Sprintf("error while marshalling v2 events data: %v", err))
+		slog.Error(fmt.Sprintf("error while marshalling events data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(data); err != nil {
-		slog.Error(fmt.Sprintf("error while writing v2 events data: %v", err))
+		slog.Error(fmt.Sprintf("error while writing events data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -341,35 +244,6 @@ func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
 			keep = keep || token == actualEventType
 		}
 		if !keep {
-			*e = append((*e)[:i], (*e)[i+1:]...)
-			continue
-		}
-		i++
-	}
-
-	return nil
-}
-
-func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) error {
-	filterInUnixMilli, err := strconv.ParseInt(actionTimeFilter, 10, 64)
-	if err != nil {
-		return errors.New("cannot parse actionTime filter to int64")
-	}
-
-	timeFilter := time.UnixMilli(filterInUnixMilli)
-	for i := 0; i < len(*e); {
-		currentEvent := (*e)[i]
-		ival, ok := currentEvent[actionTimeJSONKey]
-		if !ok {
-			return errors.New("missing actionTime key in one of events")
-		}
-		eventActionTimeFloat, ok := ival.(float64)
-		if !ok {
-			return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
-		}
-		eventActionTimeInUnixMilli := int64(eventActionTimeFloat)
-		actualActionTime := time.UnixMilli(eventActionTimeInUnixMilli)
-		if actualActionTime.Before(timeFilter) {
 			*e = append((*e)[:i], (*e)[i+1:]...)
 			continue
 		}

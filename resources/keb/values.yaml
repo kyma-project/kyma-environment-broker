@@ -713,8 +713,6 @@ subaccountSync:
   eventsWindowInterval: 15m
   # Size of the time window for collecting events from CIS.
   eventsWindowSize: 20m
-  # Specifies the CIS Events API version to use (v1 or v2).
-  eventsServiceVersion: "v1"
   # Log level for the subaccount sync job.
   logLevel: info
   # Port on which the subaccount sync service exposes Prometheus metrics.

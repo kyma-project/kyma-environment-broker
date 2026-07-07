@@ -1,7 +1,6 @@
 package subaccountsync
 
 type EventWindow struct {
-	lastFromTime  int64
 	lastToTime    int64
 	windowSize    int64
 	nowMillisFunc func() int64
@@ -23,10 +22,6 @@ func (ew *EventWindow) GetNextFromTime() int64 {
 		eventsFrom = 0
 	}
 	return eventsFrom
-}
-
-func (ew *EventWindow) UpdateFromTime(fromTime int64) {
-	ew.lastFromTime = fromTime
 }
 
 func (ew *EventWindow) UpdateToTime(eventTime int64) {
