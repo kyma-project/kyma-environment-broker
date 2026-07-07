@@ -16,3 +16,7 @@ Refresh the ERS schema to include the `labels` and `annotations` fields in the a
 ## Post-Update Steps
 
 Verify that in the SAP BTP cockpit, the **Labels** and **Annotations** fields are visible in the configuration window under the **Additional Worker Node Pools** section.
+
+## Related Documentation
+
+- [Additional Worker Node Pools](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/04-40-additional-worker-node-pools.md)
