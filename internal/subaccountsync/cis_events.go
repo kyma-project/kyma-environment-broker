@@ -6,88 +6,39 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
-	"strconv"
 	"time"
 )
 
-func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64, cursor string) (*http.Request, error) {
-	if c.eventsServiceVersion == "v2" {
-		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePathV2, c.config.ServiceURL), nil)
-		if err != nil {
-			return nil, fmt.Errorf("while creating request: %v", err)
-		}
-		q := request.URL.Query()
-		if cursor != "" {
-			q.Add("cursor", cursor)
-		} else {
-			q.Add("since", durationToSince(c.eventsWindowSize))
-			q.Add("entityType", "Subaccount")
-			for _, et := range eventTypes {
-				q.Add("eventType", et)
-			}
-			q.Add("pageSize", c.config.PageSize)
-			q.Add("sortField", "actionTime")
-			q.Add("sortOrder", "ASC")
-		}
-		request.URL.RawQuery = q.Encode()
-		return request, nil
-	}
-
-	// v1
+func (c *RateLimitedCisClient) buildEventRequest(cursor string) (*http.Request, error) {
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(eventServicePath, c.config.ServiceURL), nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating request: %v", err)
 	}
 	q := request.URL.Query()
-	q.Add("eventType", eventType)
-	q.Add("pageSize", c.config.PageSize)
-	q.Add("pageNum", strconv.Itoa(page))
-	q.Add("fromActionTime", strconv.FormatInt(fromActionTime, 10))
-	q.Add("sortField", "actionTime")
-	q.Add("sortOrder", "ASC")
+	if cursor != "" {
+		q.Add("cursor", cursor)
+	} else {
+		q.Add("since", durationToSince(c.eventsWindowSize))
+		q.Add("entityType", "Subaccount")
+		for _, et := range eventTypes {
+			q.Add("eventType", et)
+		}
+		q.Add("pageSize", c.config.PageSize)
+		q.Add("sortField", "actionTime")
+		q.Add("sortOrder", "ASC")
+	}
 	request.URL.RawQuery = q.Encode()
 	return request, nil
 }
 
-func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event, error) {
-	if c.eventsServiceVersion == "v2" {
-		return c.fetchEventsWindowV2()
-	}
-	return c.fetchEventsWindowV1(fromActionTime)
-}
-
-func (c *RateLimitedCisClient) fetchEventsWindowV1(fromActionTime int64) ([]Event, error) {
-	var events []Event
-	var currentPage int
-	var totalPages int
-	for {
-		cisResponse, err := c.fetchEventsPage(currentPage, fromActionTime)
-		if cisResponse.TotalPages > 0 {
-			totalPages = cisResponse.TotalPages
-		}
-		if err != nil {
-			c.log.Error(fmt.Sprintf("while getting subaccount events for %d page: %v", currentPage, err))
-			c.log.Debug(fmt.Sprintf("event window fetched partially - pages: %d out of %d, fetched events: %d, from epoch: %d", currentPage, totalPages, len(events), fromActionTime))
-			return events, err
-		}
-		events = append(events, cisResponse.Events...)
-		currentPage++
-		if cisResponse.TotalPages == currentPage {
-			break
-		}
-	}
-	c.log.Debug(fmt.Sprintf("Event window fetched - pages: %d, events: %d, from epoch: %d", currentPage, len(events), fromActionTime))
-	return events, nil
-}
-
-func (c *RateLimitedCisClient) fetchEventsWindowV2() ([]Event, error) {
+func (c *RateLimitedCisClient) fetchEventsWindow() ([]Event, error) {
 	var events []Event
 	var cursor string
 	var page int
 	for {
-		cisResponse, err := c.fetchEventsPageV2(cursor)
+		cisResponse, err := c.fetchEventsPage(cursor)
 		if err != nil {
-			c.log.Error(fmt.Sprintf("while getting subaccount events (v2) page %d: %v", page, err))
+			c.log.Error(fmt.Sprintf("while getting subaccount events page %d: %v", page, err))
 			return events, err
 		}
 		events = append(events, cisResponse.Events...)
@@ -97,19 +48,19 @@ func (c *RateLimitedCisClient) fetchEventsWindowV2() ([]Event, error) {
 		}
 		cursor = cisResponse.NextCursor
 	}
-	c.log.Debug(fmt.Sprintf("Event window fetched (v2) - pages: %d, events: %d", page, len(events)))
+	c.log.Debug(fmt.Sprintf("Event window fetched - pages: %d, events: %d", page, len(events)))
 	return events, nil
 }
 
-func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsResponse, error) {
-	request, err := c.buildEventRequest(0, 0, cursor)
+func (c *RateLimitedCisClient) fetchEventsPage(cursor string) (CisEventsResponse, error) {
+	request, err := c.buildEventRequest(cursor)
 	if err != nil {
-		return CisEventsResponse{}, fmt.Errorf("while building v2 request for event service: %v", err)
+		return CisEventsResponse{}, fmt.Errorf("while building request for event service: %v", err)
 	}
 	response, err := c.Do(request)
 	if err != nil {
 		c.incRequest("failure")
-		return CisEventsResponse{}, fmt.Errorf("while executing v2 request to event service: %v", err)
+		return CisEventsResponse{}, fmt.Errorf("while executing request to event service: %v", err)
 	}
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -118,53 +69,19 @@ func (c *RateLimitedCisClient) fetchEventsPageV2(cursor string) (CisEventsRespon
 	}()
 	if response.StatusCode != http.StatusOK {
 		c.incRequest("failure")
-		return CisEventsResponse{}, fmt.Errorf("while processing v2 response: %s", c.handleErrorStatusCode(response))
+		return CisEventsResponse{}, fmt.Errorf("while processing response: %s", c.handleErrorStatusCode(response))
 	}
 	var cisResponse CisEventsResponse
 	if err := json.NewDecoder(response.Body).Decode(&cisResponse); err != nil {
 		c.incRequest("failure")
-		return CisEventsResponse{}, fmt.Errorf("while decoding CIS v2 events response: %v", err)
-	}
-	c.incRequest("success")
-	return cisResponse, nil
-}
-
-func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (CisEventsResponse, error) {
-	request, err := c.buildEventRequest(page, fromActionTime, "")
-	if err != nil {
-		return CisEventsResponse{}, fmt.Errorf("while building request for event service: %v", err)
-	}
-
-	response, err := c.Do(request)
-	if err != nil {
-		c.incRequest("failure")
-		return CisEventsResponse{}, fmt.Errorf("while executing request to event service: %v", err)
-	}
-	defer func() {
-		err := response.Body.Close()
-		if err != nil {
-			c.log.Warn(fmt.Sprintf("failed to close response body: %s", err.Error()))
-		}
-	}()
-
-	if response.StatusCode != http.StatusOK {
-		c.incRequest("failure")
-		return CisEventsResponse{}, fmt.Errorf("while processing response: %s", c.handleErrorStatusCode(response))
-	}
-
-	var cisResponse CisEventsResponse
-	err = json.NewDecoder(response.Body).Decode(&cisResponse)
-	if err != nil {
-		c.incRequest("failure")
 		return CisEventsResponse{}, fmt.Errorf("while decoding CIS events response: %v", err)
 	}
-
 	c.incRequest("success")
 	return cisResponse, nil
 }
 
-func (c *RateLimitedCisClient) getEventsForSubaccounts(fromActionTime int64, logs slog.Logger, subaccountsMap subaccountsSetType) ([]Event, error) {
-	rawEvents, err := c.FetchEventsWindow(fromActionTime)
+func (c *RateLimitedCisClient) getEventsForSubaccounts(logs slog.Logger, subaccountsMap subaccountsSetType) ([]Event, error) {
+	rawEvents, err := c.fetchEventsWindow()
 	if err != nil {
 		return filterEvents(rawEvents, subaccountsMap), err
 	}

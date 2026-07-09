@@ -24,13 +24,11 @@ import (
 const (
 	subaccountIDLabel     = "kyma-project.io/subaccount-id"
 	runtimeIDLabel        = "kyma-project.io/runtime-id"
-	eventServicePath      = "%s/events/v1/events/central"
-	eventServicePathV2    = "%s/events/v2/events/central"
+	eventServicePath      = "%s/events/v2/events/central"
 	subaccountServicePath = "%s/accounts/v1/technical/subaccounts/%s"
-	eventType             = "Subaccount_Creation,Subaccount_Update" // used for v1 (comma-separated string)
 )
 
-var eventTypes = []string{"Subaccount_Creation", "Subaccount_Update"} // used for v2 (repeated params)
+var eventTypes = []string{"Subaccount_Creation", "Subaccount_Update"}
 
 type (
 	subaccountIDType string
@@ -102,7 +100,7 @@ func (s *SyncService) Run() {
 	}()
 
 	// create CIS clients
-	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger, s.cfg.EventsServiceVersion, s.cfg.EventsWindowSize, metrics.cisRequests)
+	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger, s.cfg.EventsWindowSize, metrics.cisRequests)
 	accountsClient := CreateAccountsClient(s.ctx, s.cfg.CisAccounts, logger, metrics.cisRequests)
 
 	// create priority queue
@@ -180,11 +178,11 @@ func (s *SyncService) Run() {
 }
 
 func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
-	return NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"), "", 0, cisRequests, "accounts")
+	return NewRateLimitedCisClient(ctx, accountsConfig, logger.With("component", "CIS-Accounts-client"), 0, cisRequests, "accounts")
 }
 
-func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger, eventsServiceVersion string, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
-	return NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"), eventsServiceVersion, eventsWindowSize, cisRequests, "events")
+func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, logger *slog.Logger, eventsWindowSize time.Duration, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
+	return NewRateLimitedCisClient(ctx, eventsConfig, logger.With("component", "CIS-Events-client"), eventsWindowSize, cisRequests, "events")
 }
 
 func getDataFromLabels(u *unstructured.Unstructured) (subaccountID string, runtimeID string, betaEnabled string) {
