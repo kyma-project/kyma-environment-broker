@@ -5,8 +5,9 @@
 > ### Note:
 > No action is required to keep the existing behavior. Zone discovery for Microsoft Azure is opt-in and disabled by default. Enable it only if you want KEB to determine available zones dynamically from the Azure ResourceSKUs API instead of using static zone assignments.
 
-> ### Warning:
-> Enabling `zonesDiscovery` for Azure requires the Service Principal in the Gardener Secret to have the `Microsoft.Compute/skus/read` permission on the target subscription. The Contributor role alone may not be sufficient, depending on how it is configured. If the Azure zone cache fails to fill on startup, it returns errors such as `AuthorizationFailed` on `Microsoft.Compute/skus` in KEB logs, and KEB falls back to live API calls per request, which also fails with the same error. To recover, disable `zonesDiscovery` for Azure and investigate the subscription permissions.
+> ### Caution:
+> Enabling `zonesDiscovery` for Azure requires the Service Principal in the Gardener Secret to have the `Microsoft.Compute/skus/read` permission on the target subscription. The Contributor role alone may not be sufficient, depending on how it is configured. If the Azure zone cache fails to fill on startup, it returns errors such as `AuthorizationFailed` on `Microsoft.Compute/skus` in KEB logs, and KEB falls back to live API calls per request, which also fail with the same error.
+> To recover, disable `zonesDiscovery` for Azure and investigate the subscription permissions.
 
 ## What's Changed
 
