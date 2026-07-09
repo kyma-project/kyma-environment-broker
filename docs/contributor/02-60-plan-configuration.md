@@ -76,6 +76,15 @@ plansConfiguration:
         - "g6"           # family prefix — restricts all g6.* sizes
         - "g4dn.xlarge"  # fully-qualified — restricts only this specific size
       
+      # removes the networking property from the provisioning and update schemas
+      disableNetworking: false
+      
+      # removes the colocate control plane property from the provisioning and update schemas
+      disableColocateControlPlane: false
+      
+      # removes the gVisor property from the provisioning and update schemas
+      disableGvisor: false
+      
       # defines a list of regions where the plan can be used grouped by BTP region
       regions:
         cf-eu11:
@@ -91,15 +100,6 @@ Each provider has its own configuration, which defines provider details, for exa
 ```yaml
 providersConfiguration:
   aws:
-    # removes the networking property from the provisioning and update schemas
-    disableNetworking: false
-    
-    # removes the colocate control plane property from the provisioning and update schemas
-    disableColocateControlPlane: false
-    
-    # removes the gVisor property from the provisioning and update schemas
-    disableGvisor: false
-    
     # enables dual-stack networking support (IPv4 and IPv6)
     dualStack: true
     
