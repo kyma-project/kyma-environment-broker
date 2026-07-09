@@ -170,7 +170,7 @@ func main() {
 			if planFilter == "" && regionFilter == "" {
 				data = snapshot.resp
 			} else {
-				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
+				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, analytics.TrendParamsFrom(snapshot.resp.Combined))
 			}
 		} else {
 			// Time-range query: fetch from DB, then filter.
@@ -195,7 +195,12 @@ func main() {
 				return
 			}
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
+			// trendParams come from the full (unfiltered) cache so that trends are visible
+			// even when no instances were provisioned within the selected time window.
+			mu.RLock()
+			trendParams := analytics.TrendParamsFrom(c.resp.Combined)
+			mu.RUnlock()
+			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan, trendParams)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -228,6 +233,9 @@ func main() {
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
 // opEvents are unfiltered (trends are not affected by plan/region filter).
+// trendParams is the list of parameter names to build trends for; it must come from the
+// full (unfiltered) combined stats so that trends remain populated even when the selected
+// time-range window contains no provisioning operations.
 func buildFilteredStats(
 	provParams []analytics.ProvisioningParamsWithID,
 	updateParams []analytics.UpdateParamsWithID,
@@ -236,6 +244,7 @@ func buildFilteredStats(
 	planIDToName map[string]string,
 	plans []string,
 	regionsByPlan map[string][]string,
+	trendParams []string,
 ) analytics.StatsResponse {
 	filtered := provParams
 	if planFilter != "" {
@@ -245,7 +254,6 @@ func buildFilteredStats(
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
 	combined := analytics.AggregateCombined(filtered, updateParams)
-	trendParams := analytics.TrendParamsFrom(combined)
 	trends := analytics.BuildTrends(opEvents, trendParams)
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),
