@@ -91,6 +91,15 @@ Each provider has its own configuration, which defines provider details, for exa
 ```yaml
 providersConfiguration:
   aws:
+    # removes the networking property from the provisioning and update schemas
+    disableNetworking: false
+    
+    # removes the colocate control plane property from the provisioning and update schemas
+    disableColocateControlPlane: false
+    
+    # removes the gVisor property from the provisioning and update schemas
+    disableGvisor: false
+    
     # enables dual-stack networking support (IPv4 and IPv6)
     dualStack: true
     
