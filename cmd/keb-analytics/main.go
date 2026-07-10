@@ -91,21 +91,15 @@ func main() {
 	)
 
 	refresh := func() {
-		provParams, err := reader.FetchActiveProvisioningParamsInRange(analytics.TimeRange{})
-		if err != nil {
-			slog.Error("failed to fetch provisioning params", "error", err)
-			return
-		}
-		updateParams, err := reader.FetchUpdateParamsInRange(analytics.TimeRange{})
-		if err != nil {
-			slog.Error("failed to fetch update params", "error", err)
-			return
-		}
+		// Single query: fetch all op events (provision + update) for active instances.
+		// provParams and updateParams are derived in-memory, eliminating two extra round-trips.
 		opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 		if err != nil {
 			slog.Error("failed to fetch op events", "error", err)
 			return
 		}
+		provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
+		updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, analytics.TimeRange{})
 
 		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 		provisioning := analytics.AggregateProvisioning(provParams)
@@ -170,32 +164,27 @@ func main() {
 			if planFilter == "" && regionFilter == "" {
 				data = snapshot.resp
 			} else {
-				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan)
+				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, analytics.TrendParamsFrom(snapshot.resp.Combined))
 			}
 		} else {
-			// Time-range query: fetch from DB, then filter.
-			provParams, err := reader.FetchActiveProvisioningParamsInRange(tr)
-			if err != nil {
-				slog.Error("failed to fetch provisioning params for range", "error", err)
-				http.Error(w, "failed to build stats", http.StatusInternalServerError)
-				return
-			}
-			updateParams, err := reader.FetchUpdateParamsInRange(tr)
-			if err != nil {
-				slog.Error("failed to fetch update params for range", "error", err)
-				http.Error(w, "failed to build stats", http.StatusInternalServerError)
-				return
-			}
-			// Trends always use the full op-event history so the chart shows a
-			// complete timeline regardless of the selected time-range filter.
+			// Time-range query: single DB fetch, derive prov/update params in-memory.
+			// Op events for the full history are used for trends; the time-range filter
+			// applies only to which instances count in the bar charts.
 			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 			if err != nil {
 				slog.Error("failed to fetch op events for range", "error", err)
 				http.Error(w, "failed to build stats", http.StatusInternalServerError)
 				return
 			}
+			provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
+			updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan)
+			// trendParams come from the full (unfiltered) cache so that trends are visible
+			// even when no instances were provisioned within the selected time window.
+			mu.RLock()
+			trendParams := analytics.TrendParamsFrom(c.resp.Combined)
+			mu.RUnlock()
+			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan, trendParams)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -228,6 +217,9 @@ func main() {
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
 // opEvents are unfiltered (trends are not affected by plan/region filter).
+// trendParams is the list of parameter names to build trends for; it must come from the
+// full (unfiltered) combined stats so that trends remain populated even when the selected
+// time-range window contains no provisioning operations.
 func buildFilteredStats(
 	provParams []analytics.ProvisioningParamsWithID,
 	updateParams []analytics.UpdateParamsWithID,
@@ -236,6 +228,7 @@ func buildFilteredStats(
 	planIDToName map[string]string,
 	plans []string,
 	regionsByPlan map[string][]string,
+	trendParams []string,
 ) analytics.StatsResponse {
 	filtered := provParams
 	if planFilter != "" {
@@ -245,7 +238,6 @@ func buildFilteredStats(
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
 	}
 	combined := analytics.AggregateCombined(filtered, updateParams)
-	trendParams := analytics.TrendParamsFrom(combined)
 	trends := analytics.BuildTrends(opEvents, trendParams)
 	return analytics.StatsResponse{
 		TotalInstances: len(filtered),

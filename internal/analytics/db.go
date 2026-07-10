@@ -44,112 +44,12 @@ type UpdateParamsWithID struct {
 	Params     internal.UpdatingParametersDTO
 }
 
-func (r *DBReader) fetchProvisioningParams(tr TimeRange) ([]ProvisioningParamsWithID, error) {
-	q := `
-SELECT o.instance_id, o.provisioning_parameters
-FROM operations o
-JOIN instances i ON i.instance_id = o.instance_id
-WHERE o.type = 'provision'
-  AND o.state = 'succeeded'
-  AND i.deleted_at = '0001-01-01 00:00:00+00'`
-	args := []interface{}{}
-	if !tr.From.IsZero() {
-		q += sqlCreatedAtGte
-		args = append(args, tr.From)
-	}
-	if !tr.To.IsZero() {
-		q += sqlCreatedAtLt
-		args = append(args, tr.To)
-	}
-
-	var rows []struct {
-		InstanceID             string `db:"instance_id"`
-		ProvisioningParameters string `db:"provisioning_parameters"`
-	}
-	_, err := r.session.SelectBySql(q, args...).Load(&rows)
-	if err != nil {
-		return nil, fmt.Errorf("fetching active provisioning params: %w", err)
-	}
-
-	result := make([]ProvisioningParamsWithID, 0, len(rows))
-	for _, row := range rows {
-		p, err := parseProvisioningParameters(row.ProvisioningParameters)
-		if err != nil {
-			slog.Warn("analytics: skipping malformed provisioning_parameters row", "error", err)
-			continue
-		}
-		result = append(result, ProvisioningParamsWithID{InstanceID: row.InstanceID, Params: p})
-	}
-	return result, nil
-}
-
-// FetchActiveProvisioningParams returns ProvisioningParameters for all active instances.
-// Active = row exists in instances table with deleted_at = zero (not permanently deprovisioned,
-// not failed-deprovision). Temporary deprovisioned instances are considered active.
-func (r *DBReader) FetchActiveProvisioningParams() ([]ProvisioningParamsWithID, error) {
-	return r.fetchProvisioningParams(TimeRange{})
-}
-
-// FetchActiveProvisioningParamsInRange is like FetchActiveProvisioningParams but scoped to tr.
-func (r *DBReader) FetchActiveProvisioningParamsInRange(tr TimeRange) ([]ProvisioningParamsWithID, error) {
-	return r.fetchProvisioningParams(tr)
-}
-
-func (r *DBReader) fetchUpdateParams(tr TimeRange) ([]UpdateParamsWithID, error) {
-	q := `
-SELECT o.instance_id, o.data
-FROM operations o
-JOIN instances i ON i.instance_id = o.instance_id
-WHERE o.type = 'update'
-  AND o.state = 'succeeded'
-  AND i.deleted_at = '0001-01-01 00:00:00+00'`
-	args := []interface{}{}
-	if !tr.From.IsZero() {
-		q += sqlCreatedAtGte
-		args = append(args, tr.From)
-	}
-	if !tr.To.IsZero() {
-		q += sqlCreatedAtLt
-		args = append(args, tr.To)
-	}
-
-	var rows []struct {
-		InstanceID string `db:"instance_id"`
-		Data       string `db:"data"`
-	}
-	_, err := r.session.SelectBySql(q, args...).Load(&rows)
-	if err != nil {
-		return nil, fmt.Errorf("fetching update params: %w", err)
-	}
-
-	result := make([]UpdateParamsWithID, 0, len(rows))
-	for _, row := range rows {
-		var op internal.Operation
-		if err := json.Unmarshal([]byte(row.Data), &op); err != nil {
-			slog.Warn("analytics: skipping malformed operation data row", "error", err)
-			continue
-		}
-		result = append(result, UpdateParamsWithID{InstanceID: row.InstanceID, Params: op.UpdatingParameters})
-	}
-	return result, nil
-}
-
-// FetchUpdateParams returns UpdatingParametersDTO for all update operations on active instances.
-func (r *DBReader) FetchUpdateParams() ([]UpdateParamsWithID, error) {
-	return r.fetchUpdateParams(TimeRange{})
-}
-
-// FetchUpdateParamsInRange is like FetchUpdateParams but scoped to tr.
-func (r *DBReader) FetchUpdateParamsInRange(tr TimeRange) ([]UpdateParamsWithID, error) {
-	return r.fetchUpdateParams(tr)
-}
-
 // OpEvent is a single provisioning or update operation used for trend computation.
 type OpEvent struct {
 	InstanceID string
 	CreatedAt  string // YYYY-MM-DD
 	Type       string // "provision" or "update"
-	RawParams  string // provisioning_parameters for provision ops; operation data JSON for update ops
+	RawParams  string // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
 }
 
 // FetchOpEventsInRange returns all succeeded provisioning and update operations on active
@@ -157,7 +57,7 @@ type OpEvent struct {
 func (r *DBReader) FetchOpEventsInRange(tr TimeRange) ([]OpEvent, error) {
 	q := `
 SELECT o.instance_id, DATE(o.created_at) AS created_date, o.type,
-       CASE WHEN o.type = 'provision' THEN o.provisioning_parameters ELSE o.data END AS raw_params
+       CASE WHEN o.type = 'provision' THEN o.provisioning_parameters ELSE o.data->'updating_parameters' END AS raw_params
 FROM operations o
 JOIN instances i ON i.instance_id = o.instance_id
 WHERE o.type IN ('provision', 'update')
@@ -217,11 +117,63 @@ func PlainProvisioningParams(params []ProvisioningParamsWithID) []internal.Provi
 	return result
 }
 
-// PlainUpdateParams extracts just the UpdatingParametersDTO slice from UpdateParamsWithID.
-func PlainUpdateParams(params []UpdateParamsWithID) []internal.UpdatingParametersDTO {
-	result := make([]internal.UpdatingParametersDTO, len(params))
-	for i, p := range params {
-		result[i] = p.Params
+// OpEventsToProvParamsInRange derives ProvisioningParamsWithID from provision events in events,
+// filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningParamsWithID {
+	result := make([]ProvisioningParamsWithID, 0, len(events))
+	for _, ev := range events {
+		if ev.Type != "provision" {
+			continue
+		}
+		if !inRange(ev.CreatedAt, tr) {
+			continue
+		}
+		p, err := parseProvisioningParameters(ev.RawParams)
+		if err != nil {
+			slog.Warn("analytics: skipping malformed provisioning_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+			continue
+		}
+		result = append(result, ProvisioningParamsWithID{InstanceID: ev.InstanceID, Params: p})
 	}
 	return result
+}
+
+// OpEventsToUpdateParamsInRange derives UpdateParamsWithID from update events in events,
+// filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParamsWithID {
+	result := make([]UpdateParamsWithID, 0, len(events))
+	for _, ev := range events {
+		if ev.Type != "update" {
+			continue
+		}
+		if !inRange(ev.CreatedAt, tr) {
+			continue
+		}
+		var params internal.UpdatingParametersDTO
+		if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
+			slog.Warn("analytics: skipping malformed updating_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+			continue
+		}
+		result = append(result, UpdateParamsWithID{InstanceID: ev.InstanceID, Params: params})
+	}
+	return result
+}
+
+// inRange returns true if the YYYY-MM-DD date string d falls within [tr.From, tr.To).
+// An empty tr (both zero) always returns true.
+func inRange(d string, tr TimeRange) bool {
+	if tr.From.IsZero() && tr.To.IsZero() {
+		return true
+	}
+	t, err := time.Parse("2006-01-02", d)
+	if err != nil {
+		return false
+	}
+	if !tr.From.IsZero() && t.Before(tr.From) {
+		return false
+	}
+	if !tr.To.IsZero() && !t.Before(tr.To) {
+		return false
+	}
+	return true
 }
