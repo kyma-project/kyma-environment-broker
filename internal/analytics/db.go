@@ -44,7 +44,6 @@ type UpdateParamsWithID struct {
 	Params     internal.UpdatingParametersDTO
 }
 
-
 // OpEvent is a single provisioning or update operation used for trend computation.
 type OpEvent struct {
 	InstanceID string
