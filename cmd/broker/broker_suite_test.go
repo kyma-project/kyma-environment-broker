@@ -269,16 +269,13 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 			planIDToName[string(id)] = string(name)
 		}
 		ts.router.HandleFunc("/analytics/stats", func(w http.ResponseWriter, r *http.Request) {
-			provParams, err := reader.FetchActiveProvisioningParams()
+			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 			if err != nil {
-				http.Error(w, "failed to fetch provisioning params", http.StatusInternalServerError)
+				http.Error(w, "failed to fetch op events", http.StatusInternalServerError)
 				return
 			}
-			updateParams, err := reader.FetchUpdateParams()
-			if err != nil {
-				http.Error(w, "failed to fetch update params", http.StatusInternalServerError)
-				return
-			}
+			provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
+			updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, analytics.TimeRange{})
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 			resp := analytics.StatsResponse{
 				TotalInstances: len(provParams),

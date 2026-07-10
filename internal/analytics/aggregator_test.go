@@ -3,6 +3,7 @@ package analytics
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -381,11 +382,11 @@ func provEventNoParam(instanceID, day string) OpEvent {
 }
 
 // updateEvent creates an OpEvent carrying an update operation setting machineType.
+// RawParams holds the UpdatingParametersDTO JSON directly (as returned by the narrowed
+// o.data->'updating_parameters' SQL expression).
 func updateEvent(instanceID, day, machineType string) OpEvent {
-	op := internal.Operation{
-		UpdatingParameters: internal.UpdatingParametersDTO{MachineType: &machineType},
-	}
-	raw, err := json.Marshal(op)
+	params := internal.UpdatingParametersDTO{MachineType: &machineType}
+	raw, err := json.Marshal(params)
 	if err != nil {
 		panic(err)
 	}
@@ -393,9 +394,9 @@ func updateEvent(instanceID, day, machineType string) OpEvent {
 }
 
 // updateEventNoParam creates an OpEvent for an update op that does NOT set machineType.
+// RawParams holds the UpdatingParametersDTO JSON directly (empty object).
 func updateEventNoParam(instanceID, day string) OpEvent {
-	op := internal.Operation{}
-	raw, err := json.Marshal(op)
+	raw, err := json.Marshal(internal.UpdatingParametersDTO{})
 	if err != nil {
 		panic(err)
 	}
@@ -838,4 +839,124 @@ func TestBuildDistributions_UpdateOnlyParamAbsentFromDistributions(t *testing.T)
 	assert.True(t, gvisorInCombined, "gvisor must appear in combined (set via update on i2)")
 	_, inDist := distParams["gvisor"]
 	assert.False(t, inDist, "gvisor must not appear in distributions (no instance provisioned with it)")
+}
+
+// ---------------------------------------------------------------------------
+// OpEventsToProvParamsInRange / OpEventsToUpdateParamsInRange
+// ---------------------------------------------------------------------------
+
+func TestOpEventsToProvParamsInRange_FiltersToRange(t *testing.T) {
+	events := []OpEvent{
+		provEvent("i1", "2024-01-01", "m6i.xlarge"),
+		provEvent("i2", "2024-01-10", "m6i.xlarge"),
+		provEvent("i3", "2024-01-20", "m6i.xlarge"),
+	}
+	tr := TimeRange{
+		From: mustParseDate("2024-01-05"),
+		To:   mustParseDate("2024-01-15"),
+	}
+	params := OpEventsToProvParamsInRange(events, tr)
+	require.Len(t, params, 1)
+	assert.Equal(t, "i2", params[0].InstanceID)
+}
+
+func TestOpEventsToUpdateParamsInRange_FiltersToRange(t *testing.T) {
+	events := []OpEvent{
+		updateEvent("i1", "2024-01-01", "m5.xlarge"),
+		updateEvent("i1", "2024-01-10", "m6i.xlarge"),
+		updateEvent("i2", "2024-01-20", "m5.xlarge"),
+	}
+	tr := TimeRange{
+		From: mustParseDate("2024-01-05"),
+		To:   mustParseDate("2024-01-15"),
+	}
+	params := OpEventsToUpdateParamsInRange(events, tr)
+	require.Len(t, params, 1)
+	assert.Equal(t, "i1", params[0].InstanceID)
+	assert.Equal(t, "m6i.xlarge", *params[0].Params.MachineType)
+}
+
+func TestOpEventsToProvParamsInRange_EmptyRangeReturnsAll(t *testing.T) {
+	events := []OpEvent{
+		provEvent("i1", "2024-01-01", "m6i.xlarge"),
+		provEvent("i2", "2024-01-10", "m6i.xlarge"),
+	}
+	params := OpEventsToProvParamsInRange(events, TimeRange{})
+	require.Len(t, params, 2)
+}
+
+func mustParseDate(s string) time.Time {
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+func TestOpEventsToProvParams_ExtractsProvisioningEvents(t *testing.T) {
+	events := []OpEvent{
+		provEvent("i1", "2024-01-01", "m6i.xlarge"),
+		updateEvent("i1", "2024-01-02", "m5.xlarge"),
+		provEvent("i2", "2024-01-03", "m6i.xlarge"),
+	}
+	params := OpEventsToProvParamsInRange(events, TimeRange{})
+	require.Len(t, params, 2)
+	assert.Equal(t, "i1", params[0].InstanceID)
+	assert.Equal(t, "i2", params[1].InstanceID)
+	assert.Equal(t, "m6i.xlarge", *params[0].Params.Parameters.MachineType)
+}
+
+func TestOpEventsToProvParams_SkipsMalformed(t *testing.T) {
+	events := []OpEvent{
+		{InstanceID: "i1", CreatedAt: "2024-01-01", Type: "provision", RawParams: "not-json"},
+		provEvent("i2", "2024-01-01", "m6i.xlarge"),
+	}
+	params := OpEventsToProvParamsInRange(events, TimeRange{})
+	require.Len(t, params, 1)
+	assert.Equal(t, "i2", params[0].InstanceID)
+}
+
+// ---------------------------------------------------------------------------
+// OpEventsToUpdateParams
+// ---------------------------------------------------------------------------
+
+func TestOpEventsToUpdateParams_ExtractsUpdateEvents(t *testing.T) {
+	events := []OpEvent{
+		provEvent("i1", "2024-01-01", "m6i.xlarge"),
+		updateEvent("i1", "2024-01-02", "m5.xlarge"),
+		updateEvent("i2", "2024-01-03", "m6i.xlarge"),
+	}
+	params := OpEventsToUpdateParamsInRange(events, TimeRange{})
+	require.Len(t, params, 2)
+	assert.Equal(t, "i1", params[0].InstanceID)
+	assert.Equal(t, "m5.xlarge", *params[0].Params.MachineType)
+	assert.Equal(t, "i2", params[1].InstanceID)
+}
+
+func TestOpEventsToUpdateParams_SkipsMalformed(t *testing.T) {
+	events := []OpEvent{
+		{InstanceID: "i1", CreatedAt: "2024-01-01", Type: "update", RawParams: "not-json"},
+		updateEvent("i2", "2024-01-01", "m6i.xlarge"),
+	}
+	params := OpEventsToUpdateParamsInRange(events, TimeRange{})
+	require.Len(t, params, 1)
+	assert.Equal(t, "i2", params[0].InstanceID)
+}
+
+// ---------------------------------------------------------------------------
+// BuildTrend with narrowed RawParams for update events
+// ---------------------------------------------------------------------------
+
+// TestBuildTrend_UpdateRawParamsIsUpdatingParametersDTO verifies that BuildTrend correctly
+// parses update op RawParams as UpdatingParametersDTO (not internal.Operation), consistent
+// with the narrowed SQL expression o.data->'updating_parameters'.
+func TestBuildTrend_UpdateRawParamsIsUpdatingParametersDTO(t *testing.T) {
+	events := []OpEvent{
+		provEventNoParam("i1", "2024-01-01"),
+		updateEvent("i1", "2024-01-02", "m6i.xlarge"), // RawParams = UpdatingParametersDTO JSON
+	}
+	trend := BuildTrend(events, "machineType")
+	require.Len(t, trend.Points, 2)
+	assert.Equal(t, 0, trend.Points[0].Count)
+	assert.Equal(t, 1, trend.Points[1].Count)
 }

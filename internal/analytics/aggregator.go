@@ -472,11 +472,11 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 			nowSet = isParamSet(p.Parameters, provisioningFieldConfig, param)
 			dayProvisioned[ev.CreatedAt]++
 		case "update":
-			var op internal.Operation
-			if err := json.Unmarshal([]byte(ev.RawParams), &op); err != nil {
+			var params internal.UpdatingParametersDTO
+			if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
 				continue
 			}
-			if isParamSet(op.UpdatingParameters, updatingFieldConfig, param) {
+			if isParamSet(params, updatingFieldConfig, param) {
 				nowSet = true
 			} else if _, inConfig := updatingFieldConfig[param]; inConfig {
 				// param is updatable and absent from this op → nullified
