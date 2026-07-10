@@ -56,7 +56,7 @@ type OpEvent struct {
 // instances within tr, ordered by created_at ASC. Used for trend (AC6) computation.
 func (r *DBReader) FetchOpEventsInRange(tr TimeRange) ([]OpEvent, error) {
 	q := `
-SELECT o.instance_id, DATE(o.created_at) AS created_date, o.type,
+SELECT o.instance_id, TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_date, o.type,
        CASE WHEN o.type = 'provision' THEN o.provisioning_parameters ELSE o.data->'updating_parameters' END AS raw_params
 FROM operations o
 JOIN instances i ON i.instance_id = o.instance_id
