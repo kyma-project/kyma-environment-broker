@@ -60,7 +60,7 @@ regionsSupportingMachine:
     g4dn: {}
 ```
 
-### Region supported in all its zones (no zone restriction)
+### Region Supported in All Its Zones (No Zone Restriction)
 
 Use an empty list `[]` instead of a bare key (null value):
 
@@ -73,7 +73,7 @@ regionsSupportingMachine:
 
 `eu-central-1: []` means the region is supported but zone selection falls back to the Kyma worker node pool zones. This is functionally equivalent to a bare key when processed by KEB, but survives the Landscaper patch without being dropped.
 
-### Machine type not available in any region
+### Machine Type Not Available In Any Region
 
 Use an empty map `{}` as the value for the machine family:
 

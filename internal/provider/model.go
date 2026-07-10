@@ -6,4 +6,5 @@ const (
 	OpenstackProviderType = "openstack"
 	AWSProviderType       = "aws"
 	AlicloudProviderType  = "alicloud"
+	GDCHProviderType      = "gdch"
 )

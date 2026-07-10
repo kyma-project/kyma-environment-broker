@@ -70,6 +70,20 @@ plansConfiguration:
       additionalMachines:
         - "c7i.large"
         - "c7i.xlarge"
+          
+      # defines machine types restricted to internal SAP users; each entry is a family prefix or a fully-qualified name
+      internalOnlyMachines:
+        - "g6"           # family prefix — restricts all g6.* sizes
+        - "g4dn.xlarge"  # fully-qualified — restricts only this specific size
+      
+      # removes the networking property from the provisioning and update schemas
+      disableNetworking: false
+      
+      # removes the colocate control plane property from the provisioning and update schemas
+      disableColocateControlPlane: false
+      
+      # removes the gVisor property from the provisioning and update schemas
+      disableGvisor: false
       
       # defines a list of regions where the plan can be used grouped by BTP region
       regions:
@@ -126,6 +140,7 @@ For more information, see the following documents:
  * [Zones Discovery](03-55-zones-discovery.md)
  * [Plan Updates](03-83-plan-updates.md)
  * [Dual-Stack Configuration](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/contributor/03-85-dual-stack-configuration.md)
+ * [Internal-Only Machine Types](03-73-internal-only-machines.md)
 
 ## Bindings
 

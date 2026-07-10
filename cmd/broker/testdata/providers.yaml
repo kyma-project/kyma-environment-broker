@@ -274,3 +274,15 @@ alicloud:
     eu-west-1:
       displayName: "eu-west-1 (UK, London)"
       zones: ["a", "b"]
+gdch:
+  machines:
+    "n3-standard-2-gdc": "n3-standard-2-gdc (2vCPU, 8GB RAM)"
+    "n3-standard-4-gdc": "n3-standard-4-gdc (4vCPU, 16GB RAM)"
+    "n3-standard-8-gdc": "n3-standard-8-gdc (8vCPU, 32GB RAM)"
+    "n3-standard-16-gdc": "n3-standard-16-gdc (16vCPU, 64GB RAM)"
+    "n3-standard-32-gdc": "n3-standard-32-gdc (32vCPU, 128GB RAM)"
+    "n3-standard-64-gdc": "n3-standard-64-gdc (64vCPU, 256GB RAM)"
+  regions:
+    us-west16:
+      displayName: "us-west16"
+      zones: ["a", "b", "c"]

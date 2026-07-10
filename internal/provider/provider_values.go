@@ -132,6 +132,14 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			FailureTolerance:       s.commercialFailureTolerance,
 			ZonesProvider:          s.zonesProvider,
 		}
+	case broker.GDCHPlanID:
+		p = &GDCHInputProvider{
+			Purpose:                s.defaultPurpose,
+			MultiZone:              s.multiZoneCluster,
+			ProvisioningParameters: provisioningParameters,
+			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
+		}
 	case broker.TrialPlanID:
 		var trialProvider pkg.CloudProvider
 		if provisioningParameters.Parameters.Provider == nil {
@@ -187,6 +195,27 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 	return values, nil
 }
 
+// CloudProviderForPlan returns the CloudProvider used by a given plan name.
+// Returns UnknownProvider for plans that don't map to a single hyperscaler (e.g. trial, free).
+func CloudProviderForPlan(planName string) pkg.CloudProvider {
+	switch planName {
+	case broker.AWSPlanName, broker.BuildRuntimeAWSPlanName, broker.PreviewPlanName:
+		return pkg.AWS
+	case broker.AzurePlanName, broker.AzureLitePlanName, broker.BuildRuntimeAzurePlanName:
+		return pkg.Azure
+	case broker.GCPPlanName, broker.BuildRuntimeGCPPlanName:
+		return pkg.GCP
+	case broker.SapConvergedCloudPlanName:
+		return pkg.SapConvergedCloud
+	case broker.AlicloudPlanName, broker.BuildRuntimeAlicloudPlanName:
+		return pkg.Alicloud
+	case broker.GDCHPlanName:
+		return pkg.GDCH
+	default:
+		return pkg.UnknownProvider
+	}
+}
+
 func ProviderToCloudProvider(providerType string) pkg.CloudProvider {
 	switch providerType {
 	case "azure":
@@ -195,6 +224,8 @@ func ProviderToCloudProvider(providerType string) pkg.CloudProvider {
 		return pkg.AWS
 	case "gcp":
 		return pkg.GCP
+	case "gdch":
+		return pkg.GDCH
 	case "openstack":
 		return pkg.SapConvergedCloud
 	case "alicloud":

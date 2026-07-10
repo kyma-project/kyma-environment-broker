@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -49,10 +50,15 @@ type planSpecificationDTO struct {
 	// platform region -> list of hyperscaler regions
 	Regions map[string][]string `yaml:"regions"`
 
-	RegularMachines    []string `yaml:"regularMachines"`
-	AdditionalMachines []string `yaml:"additionalMachines"`
-	VolumeSizeGb       int      `yaml:"volumeSizeGb"`
-	UpgradableToPlans  []string `yaml:"upgradableToPlans,omitempty"`
+	RegularMachines      []string `yaml:"regularMachines"`
+	AdditionalMachines   []string `yaml:"additionalMachines"`
+	InternalOnlyMachines []string `yaml:"internalOnlyMachines,omitempty"`
+	VolumeSizeGb         int      `yaml:"volumeSizeGb"`
+	UpgradableToPlans    []string `yaml:"upgradableToPlans,omitempty"`
+
+	DisableNetworking           bool `yaml:"disableNetworking,omitempty"`
+	DisableColocateControlPlane bool `yaml:"disableColocateControlPlane,omitempty"`
+	DisableGvisor               bool `yaml:"disableGvisor,omitempty"`
 }
 
 func (p *PlanSpecifications) Regions(planName string, platformRegion string) []string {
@@ -100,6 +106,22 @@ func (p *PlanSpecifications) AdditionalMachines(planName string) []string {
 	return plan.AdditionalMachines
 }
 
+func (p *PlanSpecifications) IsInternalOnlyMachine(planName, machineType string) bool {
+	plan, ok := p.plans[planName]
+	if !ok {
+		return false
+	}
+	for _, entry := range plan.InternalOnlyMachines {
+		if entry == "" {
+			continue
+		}
+		if strings.HasPrefix(machineType, entry) {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *PlanSpecifications) DefaultVolumeSizeGb(planName string) (int, bool) {
 	plan, ok := p.plans[planName]
 	if !ok {
@@ -144,4 +166,47 @@ func (p *PlanSpecifications) DefaultMachineType(planName string) string {
 		return ""
 	}
 	return regularMachines[0]
+}
+
+func (p *PlanSpecifications) IsNetworkingDisabled(planName string) bool {
+	return p.plans[planName].DisableNetworking
+}
+
+func (p *PlanSpecifications) IsColocateControlPlaneDisabled(planName string) bool {
+	return p.plans[planName].DisableColocateControlPlane
+}
+
+func (p *PlanSpecifications) IsGvisorDisabled(planName string) bool {
+	return p.plans[planName].DisableGvisor
+}
+
+// ValidateInternalOnlyMachines returns warning messages for misconfigured internalOnlyMachines entries:
+// - redundant entries already covered by a prefix in the same list
+// - entries that don't match any machine in regularMachines or additionalMachines
+func (p *PlanSpecifications) ValidateInternalOnlyMachines() []string {
+	var warnings []string
+	for planName, plan := range p.plans {
+		allMachines := append(plan.RegularMachines, plan.AdditionalMachines...)
+		for i, entry := range plan.InternalOnlyMachines {
+			for j, other := range plan.InternalOnlyMachines {
+				if i != j && strings.HasPrefix(entry, other) && entry != other {
+					warnings = append(warnings, fmt.Sprintf("internalOnlyMachines entry %q is redundant in plan %q — already covered by prefix %q", entry, planName, other))
+					break
+				}
+			}
+		}
+		for _, entry := range plan.InternalOnlyMachines {
+			matched := false
+			for _, machine := range allMachines {
+				if strings.HasPrefix(machine, entry) {
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				warnings = append(warnings, fmt.Sprintf("internalOnlyMachines entry %q in plan %q does not match any machine type in regularMachines or additionalMachines", entry, planName))
+			}
+		}
+	}
+	return warnings
 }

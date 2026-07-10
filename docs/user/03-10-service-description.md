@@ -22,6 +22,7 @@ The supported plans that you can configure (see [Plan Configuration](../contribu
 | `build-runtime-gcp`      | `a310cd6b-6452-45a0-935d-d24ab53f9eba` | Installs Kyma runtime in the Google Cloud cluster.             |
 | `alicloud`               | `9f2c3b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` | Installs Kyma runtime in the Alibaba Cloud cluster.            |
 | `build-runtime-alicloud` | `72efa867-7b54-4d59-8df7-68f4759ff271` | Installs Kyma runtime in the Alibaba Cloud cluster.            |
+| `gdch`                   | `024e11fb-40df-4753-a992-24d136e2d15c` | Installs Kyma runtime in the GDCH cluster. |
 
 There is also an experimental `preview` plan:
 
@@ -173,6 +174,31 @@ SAP Cloud Infrastructure
 | **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
 | **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 | **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools.                                     |    No    | None          |
+
+
+</details>
+
+You can configure the following provisioning parameters for Google Distributed Cloud Hosted (GDCH):
+
+<details>
+<summary label="gdch-plan">
+Google Distributed Cloud Hosted
+</summary>
+
+> ### Note:
+> The custom **networking** configuration parameter is not available for the `gdch` plan and is disabled by design.
+
+| Parameter name                            | Type   | Description                                                                                | Required | Default value       |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `n3-standard-2-gdc` |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `80`                |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None                |
+| **zones**                                 | string | Defines the list of zones in which KIM creates a cluster.                                  |    No    | `["us-west16-a"]`   |
+| **autoScalerMin<sup>1</sup>**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`                 |
+| **autoScalerMax<sup>1</sup>**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `10`                |
+| **maxSurge<sup>1</sup>**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`                 |
+| **maxUnavailable<sup>1</sup>**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`                 |
+| **additionalWorkerNodePools<sup>1</sup>** | array  | Defines a custom list of additional worker node pools.                                     |    No    | None                |
 
 
 </details>

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/fips140"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -29,7 +30,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
+	azurehyperscaler "github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -39,6 +41,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
 	"github.com/kyma-project/kyma-environment-broker/internal/version"
@@ -351,6 +354,9 @@ func main() {
 
 	plansSpec, err := configuration.NewPlanSpecificationsFromFile(cfg.PlansConfigurationFilePath)
 	fatalOnError(err, log)
+	for _, warning := range plansSpec.ValidateInternalOnlyMachines() {
+		log.Warn(warning)
+	}
 	providerSpec, err := configuration.NewProviderSpecFromFile(cfg.ProvidersConfigurationFilePath)
 	fatalOnError(err, log)
 	fatalOnError(providerSpec.ValidateZonesDiscovery(), log)
@@ -360,7 +366,7 @@ func main() {
 	var volumeSizeProvider broker.VolumeSizeProvider
 	if cfg.Broker.DynamicVolumeSizeEnabled {
 		kcrVolumeProvider = provider.NewKCRVolumeProvider(kcpK8sClient, cfg.Broker.KCRConfigMapName)
-		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, []pkg.CloudProvider{pkg.AWS, pkg.Azure, pkg.GCP, pkg.Alicloud, pkg.SapConvergedCloud})
+		machinesToValidate := resolvedMachineTypesForKCR(providerSpec, cfg.Broker.EnablePlans)
 		fatalOnError(kcrVolumeProvider.ValidateAllMachineTypes(ctx, machinesToValidate), log)
 		log.Info("KCR volume sizes validated successfully")
 		volumeSizeProvider = kcrVolumeProvider
@@ -374,24 +380,34 @@ func main() {
 	fatalOnError(err, log)
 	fatalOnError(schemaService.Validate(), log)
 	log.Info("Plans and providers configuration is valid")
-	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec, cfg.Broker.WorkerPoolLabelsAnnotationsEnabled)
+	workersProvider := workers.NewProvider(cfg.InfrastructureManager, providerSpec)
 
-	awsClientFactory := aws.NewFactory(providerSpec)
+	// azureSecretFetcher re-fetches the Azure secret on every cache refresh
+	// to handle credential rotation without restarting KEB.
+	// Only built when Azure zones discovery is enabled.
+	var azureSecretFetcher azurehyperscaler.SecretFetcher
+	if providerSpec.ZonesDiscovery(pkg.Azure) {
+		var fetchErr error
+		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService)
+		if fetchErr != nil {
+			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
+		}
+	}
+	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher)
 
-	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, awsClientFactory, kcrVolumeProvider)
+		skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider, providerSpec, factory, kcrVolumeProvider)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db,
 		skrK8sClientProvider, kcpK8sClient, configProvider, dynamicGardener, gardenerNamespace, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, awsClientFactory, kcrVolumeProvider)
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider, schemaService, plansSpec, configProvider, providerSpec, gardenerClient, factory, kcrVolumeProvider)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -407,7 +423,7 @@ func main() {
 
 	createAPI(router, schemaService, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, log,
 		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker,
-		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, awsClientFactory)
+		providerSpec, configProvider, plansSpec, rulesService, gardenerClient, factory)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -489,16 +505,65 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Metrics.OperationResultFinishedOperationRetentionPeriod: %s", cfg.Metrics.OperationResultFinishedOperationRetentionPeriod))
 	logs.Info(fmt.Sprintf("Metrics.BindingsStatsPollingInterval: %s", cfg.Metrics.BindingsStatsPollingInterval))
 
+	logCACertBundleDigest(logs)
+}
+
+// systemCertFiles mirrors the search order of crypto/x509/root_linux.go.
+var systemCertFiles = []string{
+	"/etc/ssl/certs/ca-certificates.crt",
+	"/etc/pki/tls/certs/ca-bundle.crt",
+	"/etc/ssl/ca-bundle.pem",
+	"/etc/pki/tls/cacert.pem",
+	"/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+	"/etc/ssl/cert.pem",
+}
+
+func logCACertBundleDigest(logs *slog.Logger) {
+	logCACertBundleDigestFromPaths(logs, systemCertFiles)
+}
+
+func logCACertBundleDigestFromPaths(logs *slog.Logger, paths []string) {
+	type pathStatus struct {
+		path   string
+		status string
+	}
+	var statuses []pathStatus
+
+	for _, p := range paths {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				statuses = append(statuses, pathStatus{p, "missing"})
+			} else {
+				statuses = append(statuses, pathStatus{p, fmt.Sprintf("error:%s", err.Error())})
+			}
+			continue
+		}
+		if len(data) == 0 {
+			statuses = append(statuses, pathStatus{p, "empty"})
+			continue
+		}
+		sum := sha256.Sum256(data)
+		logs.Info("CA bundle digest", slog.String("path", p), slog.String("sha256", fmt.Sprintf("%x", sum)))
+		return
+	}
+
+	// No usable bundle found — enumerate all paths with their status.
+	args := []any{slog.String("msg_detail", "no usable system cert bundle found")}
+	for _, s := range statuses {
+		args = append(args, slog.String(s.path, s.status))
+	}
+	logs.Warn("CA bundle digest", args...)
 }
 
 func createAPI(router *httputil.Router, schemaService *broker.SchemaService, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
 	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher,
 	providerSpec *configuration.ProviderSpec, configProvider kebConfig.Provider, planSpec *configuration.PlanSpecifications, rulesService *rules.RulesService,
-	gardenerClient *gardener.Client, awsClientFactory aws.ClientFactory) {
+	gardenerClient *gardener.Client, factory hyperscalers.Factory) {
 
 	if cfg.MachinesAvailabilityEndpoint {
-		machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, awsClientFactory, logs)
+		machinesAvailability := machinesavailability.NewHandlerCB(providerSpec, rulesService, gardenerClient, factory, logs)
 		machinesAvailability.AttachRoutes(router)
 	}
 
@@ -539,15 +604,15 @@ func createAPI(router *httputil.Router, schemaService *broker.SchemaService, ser
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder,
 			freemiumGlobalAccountIds, gvisorWhitelistedGlobalAccountIds,
-			schemaService, providerSpec, valuesProvider,
+			schemaService, providerSpec, planSpec, valuesProvider,
 			kebConfig.NewConfigMapConfigProvider(configProvider, cfg.Broker.GardenerSeedsCacheConfigMapName, kebConfig.ProviderConfigurationRequiredFields), quotaClient, quotaWhitelistedSubaccountIds,
-			rulesService, gardenerClient, awsClientFactory, operationBlocklist),
+			rulesService, gardenerClient, factory, operationBlocklist),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs, operationBlocklist),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
 			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, kcpK8sClient, providerSpec, planSpec, cfg.InfrastructureManager, schemaService, quotaClient,
 			quotaWhitelistedSubaccountIds, gvisorWhitelistedGlobalAccountIds,
-			rulesService, gardenerClient, awsClientFactory, operationBlocklist),
+			rulesService, gardenerClient, factory, operationBlocklist),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),
@@ -647,9 +712,16 @@ func (c *Config) GlobalAccounts() kebConfig.GlobalAccountsConfig {
 	}
 }
 
-func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, providers []pkg.CloudProvider) map[pkg.CloudProvider][]string {
+func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, enabledPlans broker.StringList) map[pkg.CloudProvider][]string {
+	providerSet := map[pkg.CloudProvider]struct{}{}
+	for _, planName := range enabledPlans {
+		if cp := provider.CloudProviderForPlan(planName); cp != pkg.UnknownProvider {
+			providerSet[cp] = struct{}{}
+		}
+	}
+
 	result := map[pkg.CloudProvider][]string{}
-	for _, cp := range providers {
+	for cp := range providerSet {
 		seen := make(map[string]struct{})
 		for _, mt := range providerSpec.MachineTypes(cp) {
 			resolved := providerSpec.ResolveMachineType(cp, mt)
@@ -660,4 +732,39 @@ func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, provid
 		}
 	}
 	return result
+}
+
+// buildAzureSecretFetcher returns a SecretFetcher that fetches the first available Azure
+// credentials secret from Gardener on each call. This ensures credential rotation is
+// picked up on every cache refresh without restarting KEB.
+func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService) (azurehyperscaler.SecretFetcher, error) {
+	attr := &rules.ProvisioningAttributes{
+		Plan:        "azure",
+		Hyperscaler: "azure",
+	}
+	matchedRule, found := rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
+	if !found {
+		return nil, fmt.Errorf("no matching rule for azure hyperscaler")
+	}
+	labelSelector := subscriptions.NewLabelSelectorFromRuleset(matchedRule).BuildAnySubscription()
+
+	return func() (azurehyperscaler.AzureCredentials, error) {
+		credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
+		if err != nil {
+			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("while getting Azure credentials bindings: %w", err)
+		}
+		if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
+			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
+		}
+		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
+		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
+		if err != nil {
+			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)
+		}
+		creds, err := azurehyperscaler.ExtractCredentials(secret)
+		if err != nil {
+			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("failed to extract Azure credentials: %w", err)
+		}
+		return creds, nil
+	}, nil
 }

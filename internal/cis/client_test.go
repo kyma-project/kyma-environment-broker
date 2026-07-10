@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -142,14 +143,16 @@ func newServer(t *testing.T) *server {
 func fixHTTPServer(srv *server) *httptest.Server {
 	r := httputil.NewRouter()
 
-	r.HandleFunc("GET /events/v1/events/central", srv.returnCISEvents)
+	r.HandleFunc("GET /events/v2/events/central", srv.returnCISEvents)
 
 	return httptest.NewServer(r)
 }
 
 func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 	eventType := r.URL.Query().Get("eventType")
-	if eventType != "Subaccount_Deletion" {
+	cursor := r.URL.Query().Get("cursor")
+
+	if eventType != "Subaccount_Deletion" && cursor == "" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -167,32 +170,30 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pageNum := r.URL.Query().Get("pageNum")
 	var response string
-	if pageNum != "0" {
-		response = `{}`
+	if cursor != "" {
+		response = `{"events": []}`
 	} else {
 		response = fmt.Sprintf(`{
-			"total": 3,
-			"totalPages": 1,
-			"pageNum": 0,
-			"morePages": "false",
+			"nextCursor": "",
 			"events": [
 				{
-					"id": 631087,
+					"id": 1001,
 					"actionTime": 1597135762286,
 					"creationTime": 1597135763081,
 					"details": {
 						"description": "Subaccount deleted.",
 						"guid": "%s",
+						"technicalName": "%s",
 						"parentGuid": "a6c5f1b0-9713-45fc-a831-ed0057a7925c",
 						"displayName": "trial",
 						"subaccountDescription": null,
-						"region": "eu10-canary",
+						"region": "eu10",
 						"jobLocation": null,
-						"subdomain": "e8b84ae5trial",
+						"subdomain": "trial-subdomain",
 						"betaEnabled": false,
-						"expiryDate": null
+						"labels": {},
+						"usedForProduction": "UNSET"
 					},
 					"globalAccountGUID": "a6c5f1b0-9713-45fc-a831-ed0057a7925c",
 					"entityId": "%s",
@@ -201,20 +202,22 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 					"eventType": "Subaccount_Deletion"
 				},
 				{
-					"id": 629225,
+					"id": 1002,
 					"actionTime": 1597090087820,
 					"creationTime": 1597090088405,
 					"details": {
-					"description": "Subaccount deleted.",
+						"description": "Subaccount deleted.",
 						"guid": "%s",
+						"technicalName": "%s",
 						"parentGuid": "ec0a066a-60a1-4d31-b329-80cf97292789",
-						"displayName": "Vered-Neo1",
+						"displayName": "test-subaccount",
 						"subaccountDescription": null,
-						"region": "eu1-canary",
+						"region": "eu10",
 						"jobLocation": null,
-						"subdomain": "74eb3e9f-d8f5-4dc9-b2fe-5a5c061487c2",
+						"subdomain": "test-subdomain",
 						"betaEnabled": false,
-						"expiryDate": null
+						"labels": {},
+						"usedForProduction": "UNSET"
 					},
 					"globalAccountGUID": "ec0a066a-60a1-4d31-b329-80cf97292789",
 					"entityId": "%s",
@@ -223,28 +226,33 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 					"eventType": "Subaccount_Deletion"
 				},
 				{
-					"id": 629224,
+					"id": 1003,
 					"actionTime": 1597090066116,
 					"creationTime": 1597090067309,
 					"details": {
-					"description": "Subaccount deleted.",
+						"description": "Subaccount deleted.",
 						"guid": "%s",
+						"technicalName": "%s",
 						"parentGuid": "ec0a066a-60a1-4d31-b329-80cf97292789",
-						"displayName": "anatneo",
+						"displayName": "dev-subaccount",
 						"subaccountDescription": null,
-						"region": "eu1-canary",
+						"region": "eu10",
 						"jobLocation": null,
-						"subdomain": "095db937-725d-4ce6-b802-ce33403e90d1",
+						"subdomain": "dev-subdomain",
 						"betaEnabled": false,
-						"expiryDate": null
+						"labels": {},
+						"usedForProduction": "UNSET"
 					},
 					"globalAccountGUID": "ec0a066a-60a1-4d31-b329-80cf97292789",
 					"entityId": "%s",
 					"entityType": "Subaccount",
 					"eventOrigin": "accounts-service",
 					"eventType": "Subaccount_Deletion"
-				}]
-		}`, subAccountTest1, subAccountTest1, subAccountTest2, subAccountTest2, subAccountTest3, subAccountTest3)
+				}
+			]
+		}`, subAccountTest1, subAccountTest1, subAccountTest1,
+			subAccountTest2, subAccountTest2, subAccountTest2,
+			subAccountTest3, subAccountTest3, subAccountTest3)
 	}
 
 	s.writeResponse(w, []byte(response))
@@ -252,13 +260,13 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
+	w.WriteHeader(http.StatusOK)
 	_, err := w.Write(response)
 	if err != nil {
 		s.t.Errorf("fakeCisServer cannot write response: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *server) writeRateLimitingResponse(w http.ResponseWriter) {

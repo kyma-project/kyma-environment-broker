@@ -76,6 +76,7 @@ const (
 	Azure             CloudProvider = "Azure"
 	AWS               CloudProvider = "AWS"
 	GCP               CloudProvider = "GCP"
+	GDCH              CloudProvider = "GDCH"
 	UnknownProvider   CloudProvider = "unknown"
 	SapConvergedCloud CloudProvider = "SapConvergedCloud"
 	Alicloud          CloudProvider = "Alicloud"
@@ -143,6 +144,8 @@ func CloudProviderFromString(provider string) CloudProvider {
 		return Azure
 	case "gcp":
 		return GCP
+	case "gdch":
+		return GDCH
 	case "sapconvergedcloud", "openstack", "sap-converged-cloud":
 		return SapConvergedCloud
 	case "alicloud":
@@ -712,8 +715,7 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypeChange(currentAdditionalWor
 }
 
 // CheckDuplicateWorkerNodePoolKeys checks each pool in the raw JSON array for
-// duplicate keys in "labels" and "annotations". Must be called explicitly when
-// the feature flag is enabled — it is not enforced during standard unmarshaling.
+// duplicate keys in "labels" and "annotations".
 func CheckDuplicateWorkerNodePoolKeys(rawPools json.RawMessage) error {
 	dec := json.NewDecoder(bytes.NewReader(rawPools))
 	tok, err := dec.Token()

@@ -76,12 +76,12 @@ Provide the SHA of the existing `Chart.yaml` file.
 
 ### 7. Append image overrides to values.yaml
 
+The file already has a `global.images` key (for `cloudsql_proxy`). The override block must be appended as **additional keys under the existing `global.images`** — do NOT add a second `images:` key, as that would create a duplicate YAML key and shadow `cloudsql_proxy`.
+
 Append the following block to the **end** of `keb-sap/values.yaml` (after the existing content, preceded by a blank line):
 
 ```yaml
-
-  # KEB PR-<PR> dev deploy overrides
-  images:
+    # KEB PR-<PR> dev deploy overrides
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/dev
     kyma_environment_broker:
@@ -113,7 +113,7 @@ Append the following block to the **end** of `keb-sap/values.yaml` (after the ex
       version: PR-<PR>
 ```
 
-Note: the block must be indented under `global:` — it sits at the same indentation level as the existing `global.images` keys. The safest approach: read the full current content, append the block, then write the whole file back using `mcp__github-tools__create_or_update_file`.
+Note: the block is indented with 4 spaces — it sits under `global.images`, at the same level as `cloudsql_proxy`. The safest approach: read the full current content, append the block, then write the whole file back using `mcp__github-tools__create_or_update_file`.
 
 Use the SHA from step 4.
 

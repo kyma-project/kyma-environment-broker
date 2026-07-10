@@ -42,7 +42,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://help.sap.com/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels. |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts. |
 | **APP_BROKER_URL** | <code>kyma-env-broker.localhost</code> | - |
-| **APP_BROKER_WORKER_&#x200b;POOL_LABELS_&#x200b;ANNOTATIONS_ENABLED** | <code>false</code> | If true, includes labels and annotations in additional worker node pool schema and enables their validation. |
 | **APP_CATALOG_FILE_&#x200b;PATH** | <code>/config/catalog.yaml</code> | Path to the service catalog configuration file. |
 | **APP_DATABASE_HOST** | None | Specifies the host of the database. |
 | **APP_DATABASE_NAME** | None | Specifies the name of the database. |
@@ -68,6 +67,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_AZURE** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_DEFAULT** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_GCP** | <code>999999</code> | - |
+| **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_GDCH** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;LIMITS_OPENSTACK** | <code>999999</code> | - |
 | **APP_HAP_MULTI_&#x200b;HYPERSCALER_ACCOUNT_&#x200b;MIN_BINDINGS_FOR_&#x200b;GUARD** | <code>0</code> | Minimum number of claimed CredentialsBindings for a global account that activates the data-inconsistency guard. When the number of claimed bindings without any active instances in the DB is equal to or greater than this value, provisioning returns an error. Set to 0 to disable the guard. |
 | **APP_HAP_RULE_FILE_&#x200b;PATH** | <code>/config/hapRule.yaml</code> | Path to the rules for mapping plans and regions to hyperscaler account pools. |

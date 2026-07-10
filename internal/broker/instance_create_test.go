@@ -1405,10 +1405,9 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
 				WithConfig(broker.Config{
-					EnablePlans:                        []string{"aws"},
-					URL:                                brokerURL,
-					OnlySingleTrialPerGA:               true,
-					WorkerPoolLabelsAnnotationsEnabled: true}).
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true}).
 				WithGardenerConfig(gardener.Config{
 					Project:      "test",
 					ShootDomain:  "example.com",
@@ -2043,194 +2042,6 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 				PlanID:        broker.AWSPlanID,
 				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
 				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
-			}, true)
-			t.Logf("%+v\n", *provisionEndpoint)
-
-			// then
-			assert.EqualError(t, err, tc.expectedError)
-		})
-	}
-}
-
-func TestGPUMachineForInternalUser(t *testing.T) {
-	// given
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
-	memoryStorage := storage.NewMemoryStorage()
-
-	queue := &automock.Queue{}
-	queue.On("Add", mock.AnythingOfType("string"))
-
-	factoryBuilder := &automock.PlanValidator{}
-	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
-
-	kcBuilder := &kcMock.KcBuilder{}
-	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
-	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
-		WithConfig(broker.Config{
-			EnablePlans:          []string{"aws"},
-			URL:                  brokerURL,
-			OnlySingleTrialPerGA: true}).
-		WithGardenerConfig(gardener.Config{
-			Project:      "test",
-			ShootDomain:  "example.com",
-			DNSProviders: fixDNSProviders()}).
-		WithInfrastructureManager(imConfigFixture).
-		WithStorage(memoryStorage).
-		WithQueue(queue).
-		WithLogger(log).
-		WithDashboardConfig(dashboardConfig).
-		WithKubeconfigBuilder(kcBuilder).
-		WithFreemiumWhitelist(whitelist.Set{}).
-		WithSchemaService(newSchemaService(t)).
-		WithConfigurationProvider(newProviderSpec(t)).
-		WithValuesProvider(fixValueProvider(t)).
-		Build()
-
-	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
-	// when
-	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
-		ServiceID:     serviceID,
-		PlanID:        broker.AWSPlanID,
-		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
-		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "SAPDEV"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
-	}, true)
-	t.Logf("%+v\n", *provisionEndpoint)
-
-	// then
-	assert.NoError(t, err)
-}
-
-func TestGPUMachinesForExternalCustomer(t *testing.T) {
-	// given
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
-	memoryStorage := storage.NewMemoryStorage()
-
-	queue := &automock.Queue{}
-	queue.On("Add", mock.AnythingOfType("string"))
-
-	kcBuilder := &kcMock.KcBuilder{}
-	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
-	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
-		WithConfig(broker.Config{
-			EnablePlans:          []string{"aws", "azure", "gcp"},
-			URL:                  brokerURL,
-			OnlySingleTrialPerGA: true}).
-		WithGardenerConfig(gardener.Config{
-			Project:      "test",
-			ShootDomain:  "example.com",
-			DNSProviders: fixDNSProviders()}).
-		WithInfrastructureManager(imConfigFixture).
-		WithStorage(memoryStorage).
-		WithQueue(queue).
-		WithLogger(log).
-		WithDashboardConfig(dashboardConfig).
-		WithKubeconfigBuilder(kcBuilder).
-		WithFreemiumWhitelist(whitelist.Set{}).
-		WithSchemaService(newSchemaService(t)).
-		WithConfigurationProvider(newProviderSpec(t)).
-		WithValuesProvider(fixValueProvider(t)).
-		Build()
-
-	testCases := []struct {
-		name                      string
-		planID                    string
-		additionalWorkerNodePools string
-		expectedError             string
-	}{
-		{
-			name:                      "Single AWS G6 GPU machine type",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Multiple AWS G6 GPU machine types",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Duplicate AWS G6 GPU machine type",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Single AWS G4dn GPU machine type",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Multiple AWS G4dn GPU machine types",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1), g4dn.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Duplicate AWS G4dn GPU machine type",
-			planID:                    broker.AWSPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Single GCP GPU machine type",
-			planID:                    broker.GCPPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Multiple GCP GPU machine types",
-			planID:                    broker.GCPPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-8", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1), g2-standard-8 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Duplicate GCP GPU machine type",
-			planID:                    broker.GCPPlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Single Azure GPU machine type",
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Multiple Azure GPU machine types",
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1), Standard_NC8as_T4_v3 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Duplicate Azure GPU machine type",
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
-		},
-		{
-			name:                      "Version Agnostic GPU machine type",
-			planID:                    broker.AzurePlanID,
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
-			expectedError:             "The following GPU machine types: Standard_NC4as_T4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// when
-			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
-				ServiceID:     serviceID,
-				PlanID:        tc.planID,
-				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
-				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "CUSTOMER"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
 			}, true)
 			t.Logf("%+v\n", *provisionEndpoint)
 
@@ -3023,7 +2834,7 @@ func TestRestrictGA(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDiscoveryZones(t *testing.T) {
+func TestDiscoveryZones_AWS(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -3119,7 +2930,7 @@ func TestDiscoveryZones(t *testing.T) {
 				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
 				WithRulesService(rulesService).
 				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
-				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(tc.zones, tc.awsError)).
+				WithClientFactories(fixture.NewFakeFactory(tc.zones, tc.awsError)).
 				Build()
 
 			// when
@@ -3132,6 +2943,86 @@ func TestDiscoveryZones(t *testing.T) {
 
 			// then
 			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
+}
+
+func TestDiscoveryZones_Azure(t *testing.T) {
+	// Tests HTTP-time zone validation for Azure — mirrors TestDiscoveryZones but with Azure provider.
+	// Logs should contain: "validating zones using secret test/azure-secret-1 region=westeurope"
+	memoryStorage := storage.NewMemoryStorage()
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	rulesService, err := rules.NewRulesServiceFromSlice([]string{"azure"}, sets.New("azure"), sets.New("azure"))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name          string
+		zones         map[string][]string
+		azureError    error
+		expectedError string
+	}{
+		{
+			name:          "Should fail if Azure returns error",
+			azureError:    fmt.Errorf("Azure API error"),
+			expectedError: "Failed to validate the number of available zones. Please try again later.",
+		},
+		{
+			name: "Should fail if not enough zones for Kyma worker node pool",
+			zones: map[string][]string{
+				"Standard_D4s_v5": {"1", "2"},
+			},
+			expectedError: "In the westeurope, the Standard_D4s_v5 machine type is not available in 3 zones.",
+		},
+		{
+			name: "Should succeed when machine type has 3 zones",
+			zones: map[string][]string{
+				"Standard_D4s_v5": {"1", "2", "3"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(broker.Config{EnablePlans: []string{"azure"}}).
+				WithGardenerConfig(gardener.Config{
+					Project:      "test",
+					ShootDomain:  "test.example.com",
+					DNSProviders: fixDNSProviders()}).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithFreemiumWhitelist(whitelist.Set{}).
+				WithSchemaService(newSchemaService(t)).
+				WithConfigurationProvider(fixture.NewAzureProviderSpecWithZonesDiscovery(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				WithConfigMapConfigProvider(config.FakeProviderConfigProvider{}).
+				WithRulesService(rulesService).
+				WithGardenerClient(fixture.CreateGardenerClientWithAzureCredentialsBindings()).
+				WithClientFactories(fixture.NewFakeFactory(tc.zones, tc.azureError)).
+				Build()
+
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AzurePlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "westeurope", "machineType": "Standard_D4s_v5"}`, clusterName)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "Test@Test.pl"}`, globalAccountID, subAccountID)),
+			}, true)
+
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
@@ -3511,7 +3402,7 @@ func TestProvision_UnsupportedMachineType(t *testing.T) {
 				WithValuesProvider(fixValueProvider(t)).
 				WithRulesService(rulesService).
 				WithGardenerClient(fixture.CreateGardenerClientWithCredentialsBindings()).
-				WithAwsClientFactory(fixture.NewFakeAWSClientFactory(map[string][]string{
+				WithClientFactories(fixture.NewFakeFactory(map[string][]string{
 					"m6i.large": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
 					"ri.xlarge": {"eu-west-2a", "eu-west-2b", "eu-west-2c"},
 				}, nil)).
@@ -3704,4 +3595,219 @@ func fixGardenerConfig() gardener.Config {
 		Project:      "test",
 		ShootDomain:  "example.com",
 		DNSProviders: fixDNSProviders()}
+}
+
+func TestProvisionInternalOnlyMainMachineTypeForInternalUser(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(fixGardenerConfig()).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "m5.16xlarge"}`, clusterName, "eu-central-1")),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "SAPDEV"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestProvisionInternalOnlyMainMachineTypeForExternalCustomer(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws", "azure", "gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(fixGardenerConfig()).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s"}`, clusterName, "eu-central-1", "m5.16xlarge")),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "CUSTOMER"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type m5.16xlarge is not available for your account. For details, please contact your sales representative.")
+}
+
+func TestProvisionInternalOnlyMachineForInternalUser(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(gardener.Config{
+			Project:      "test",
+			ShootDomain:  "example.com",
+			DNSProviders: fixDNSProviders()}).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "SAPDEV"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestProvisionInternalOnlyMachinesForExternalCustomer(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	memoryStorage := storage.NewMemoryStorage()
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+	provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+		WithConfig(broker.Config{
+			EnablePlans:          []string{"aws", "azure", "gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true}).
+		WithGardenerConfig(gardener.Config{
+			Project:      "test",
+			ShootDomain:  "example.com",
+			DNSProviders: fixDNSProviders()}).
+		WithInfrastructureManager(imConfigFixture).
+		WithStorage(memoryStorage).
+		WithQueue(queue).
+		WithLogger(log).
+		WithDashboardConfig(dashboardConfig).
+		WithKubeconfigBuilder(kcBuilder).
+		WithFreemiumWhitelist(whitelist.Set{}).
+		WithSchemaService(newSchemaService(t)).
+		WithConfigurationProvider(newProviderSpec(t)).
+		WithPlanSpec(newPlanSpec(t)).
+		WithValuesProvider(fixValueProvider(t)).
+		Build()
+
+	testCases := []struct {
+		name                      string
+		planID                    string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "single AWS internal-only machine (prefix g6)",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "multiple AWS internal-only machines (prefix g6)",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "duplicate AWS internal-only machine (prefix g6)",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "single AWS internal-only machine (prefix g4dn)",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "single GCP internal-only machine (prefix g2-standard)",
+			planID:                    broker.GCPPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "single Azure internal-only machine (prefix Standard_NC)",
+			planID:                    broker.AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        tc.planID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s", "license_type": "CUSTOMER"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }

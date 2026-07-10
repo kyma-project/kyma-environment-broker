@@ -25,7 +25,7 @@ func TestMachinesAvailabilityCBHandler(t *testing.T) {
 	rulesService, err := rules.NewRulesServiceFromSlice([]string{"aws"}, sets.New("aws"), sets.New("aws"))
 	require.NoError(t, err)
 
-	fakeAWSClientFactory := fixture.NewFakeAWSClientFactory(map[string][]string{
+	fakeFactory := fixture.NewFakeFactory(map[string][]string{
 		"m6i.large":    {"a", "b", "c", "d"},
 		"m6i.xlarge":   {"a", "b", "c", "d"},
 		"c7i.large":    {"a", "b"},
@@ -38,7 +38,7 @@ func TestMachinesAvailabilityCBHandler(t *testing.T) {
 
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	handler := NewHandlerCB(providerSpec, rulesService, fixture.CreateGardenerClientWithCredentialsBindings(), fakeAWSClientFactory, log)
+	handler := NewHandlerCB(providerSpec, rulesService, fixture.CreateGardenerClientWithCredentialsBindings(), fakeFactory, log)
 
 	router := httputil.NewRouter()
 	handler.AttachRoutes(router)

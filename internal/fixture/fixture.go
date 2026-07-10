@@ -2,13 +2,15 @@ package fixture
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
@@ -110,35 +112,38 @@ func FixKymaResourceWithGivenRuntimeID(kcpClient client.Client, kymaResourceName
 	}})
 }
 
-func NewFakeAWSClientFactory(zones map[string][]string, error error) *FakeAWSClientFactory {
-	fakeClient := &fakeAWSClient{
-		zones: zones,
-		err:   error,
-	}
-	return &FakeAWSClientFactory{client: fakeClient}
+func NewFakeFactory(zones map[string][]string, err error) *FakeFactory {
+	return &FakeFactory{zones: zones, err: err}
 }
 
-type FakeAWSClientFactory struct {
-	client aws.Client
-}
-
-func (f *FakeAWSClientFactory) New(ctx context.Context, accessKeyID, secretAccessKey, region string) (aws.Client, error) {
-	return f.client, nil
-}
-
-type fakeAWSClient struct {
+type FakeFactory struct {
 	zones map[string][]string
 	err   error
 }
 
-func (f *fakeAWSClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
+func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
+	return &fakeProviderClient{zones: f.zones}, nil
+}
+
+func (f *FakeFactory) NewPerCallFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &fakeProviderClient{zones: f.zones}, nil
+}
+
+type fakeProviderClient struct {
+	zones map[string][]string
+}
+
+func (f *fakeProviderClient) AvailableZones(_ context.Context, machineType string) ([]string, error) {
 	return f.zones[machineType], nil
 }
 
-func (f *fakeAWSClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
+func (f *fakeProviderClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
 	zones, err := f.AvailableZones(ctx, machineType)
 	if err != nil {
 		return 0, err
@@ -290,6 +295,48 @@ func CreateGardenerClientWithThreeAWSBindingsAndOneUnclaimed() *gardener.Client 
 	fakeGardenerClient := gardener.NewDynamicFakeClient(s1, s2, s3, s4, sb1, sb2, sb3, sb4)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
+}
+
+func CreateGardenerClientWithAzureCredentialsBindings() *gardener.Client {
+	const (
+		namespace  = "test"
+		secretName = "azure-secret-1"
+	)
+	secret := createAzureSecret(secretName, namespace)
+	binding := createCredentialsBinding(AzureUnclaimedSecretName, namespace, secretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+	})
+	return gardener.NewClient(gardener.NewDynamicFakeClient(secret, binding), namespace)
+}
+
+func createAzureSecret(name, namespace string) *unstructured.Unstructured {
+	enc := func(s string) string { return base64.StdEncoding.EncodeToString([]byte(s)) }
+	u := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{"name": name, "namespace": namespace},
+			"data": map[string]interface{}{
+				"clientID":       enc("test-client-id"),
+				"clientSecret":   enc("test-client-secret"),
+				"tenantID":       enc("test-tenant-id"),
+				"subscriptionID": enc("test-subscription-id-12345"),
+			},
+		},
+	}
+	u.SetGroupVersionKind(gardener.SecretGVK)
+	return u
+}
+
+func NewAzureProviderSpecWithZonesDiscovery(t *testing.T) *configuration.ProviderSpec {
+	spec := `
+azure:
+  zonesDiscovery: true
+  regions:
+    westeurope:
+      displayName: "West Europe"
+`
+	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
+	require.NoError(t, err)
+	return providerSpec
 }
 
 func createSecret(name, namespace string) *unstructured.Unstructured {

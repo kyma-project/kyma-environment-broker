@@ -25,10 +25,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -98,11 +99,12 @@ type ProvisionEndpoint struct {
 	schemaService          *SchemaService
 	providerConfigProvider config.ConfigMapConfigProvider
 	providerSpec           ConfigurationProvider
+	planSpec               *configuration.PlanSpecifications
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	factory                hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -129,13 +131,14 @@ func NewProvision(brokerConfig Config,
 	gvisorWhitelist whitelist.Set,
 	schemaService *SchemaService,
 	providerSpec ConfigurationProvider,
+	planSpec *configuration.PlanSpecifications,
 	valuesProvider ValuesProvider,
 	providerConfigProvider config.ConfigMapConfigProvider,
 	quotaClient QuotaClient,
 	quotaWhitelist whitelist.Set,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	operationBlocklist blocklist.OperationBlocklist,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -161,6 +164,7 @@ func NewProvision(brokerConfig Config,
 		gvisorWhitelist:         gvisorWhitelist,
 		kcBuilder:               kcBuilder,
 		providerSpec:            providerSpec,
+		planSpec:                planSpec,
 		valuesProvider:          valuesProvider,
 		schemaService:           schemaService,
 		providerConfigProvider:  providerConfigProvider,
@@ -168,7 +172,7 @@ func NewProvision(brokerConfig Config,
 		quotaWhitelist:          quotaWhitelist,
 		rulesService:            rulesService,
 		gardenerClient:          gardenerClient,
-		awsClientFactory:        awsClientFactory,
+		factory:                 factory,
 		operationBlocklist:      operationBlocklist,
 	}
 }
@@ -450,6 +454,13 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 }
 
 func (b *ProvisionEndpoint) validateZonesAndSupportedMachines(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, logger *slog.Logger, values internal.ProviderValues, parameters pkg.ProvisioningParametersDTO) error {
+	if IsExternalLicenseType(provisioningParameters.ErsContext) {
+		planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+		if parameters.MachineType != nil && *parameters.MachineType != "" && b.planSpec.IsInternalOnlyMachine(planName, *parameters.MachineType) {
+			return fmt.Errorf("Machine type %s is not available for your account. For details, please contact your sales representative.", *parameters.MachineType)
+		}
+	}
+
 	if !b.providerSpec.IsRegionSupported(pkg.CloudProviderFromString(values.ProviderType), valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
 		return fmt.Errorf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
@@ -557,14 +568,14 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			discoveredZones[additionalWorkerNodePool.MachineType] = 0
 		}
 
-		awsClient, err := newAWSClient(ctx, logger, b.rulesService, b.gardenerClient, b.awsClientFactory, provisioningParameters, values)
+		client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, provisioningParameters, values)
 		if err != nil {
-			logger.Error(fmt.Sprintf("unable to create AWS client: %s", err))
+			logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", values.ProviderType, err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
 
 		for machineType := range discoveredZones {
-			zonesCount, err := awsClient.AvailableZonesCount(ctx, machineType)
+			zonesCount, err := client.AvailableZonesCount(ctx, machineType)
 			if err != nil {
 				logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
 				return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
@@ -594,7 +605,8 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 		}
 
 		if IsExternalLicenseType(provisioningParameters.ErsContext) {
-			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
+			planName := AvailablePlans.GetPlanNameOrEmpty(PlanIDType(details.PlanID))
+			if err := checkInternalOnlyMachinesUsage(b.planSpec, planName, parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
@@ -611,20 +623,19 @@ func (b *ProvisionEndpoint) validateAdditionalWorkerNodePools(parameters pkg.Pro
 			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 
-		if b.config.WorkerPoolLabelsAnnotationsEnabled {
-			if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+		if err := checkLabelsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+
+		if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+		var raw struct {
+			Pools json.RawMessage `json:"additionalWorkerNodePools"`
+		}
+		if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
+			if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			if err := checkAnnotationsConfiguration(parameters.AdditionalWorkerNodePools); err != nil {
-				return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
-			var raw struct {
-				Pools json.RawMessage `json:"additionalWorkerNodePools"`
-			}
-			if jsonErr := json.Unmarshal(details.RawParameters, &raw); jsonErr == nil && raw.Pools != nil {
-				if err := pkg.CheckDuplicateWorkerNodePoolKeys(raw.Pools); err != nil {
-					return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
 			}
 		}
 
@@ -691,40 +702,34 @@ func IsExternalLicenseType(ersContext internal.ERSContext) bool {
 	return *ersContext.ExternalLicenseType()
 }
 
-func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
-	var GPUMachines = []string{
-		"g2-standard",
-		"g6",
-		"g4dn",
-		"Standard_NC",
+func checkInternalOnlyMachinesUsage(planSpec *configuration.PlanSpecifications, planName string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	if planSpec == nil {
+		return nil
 	}
-
-	usedGPUMachines := make(map[string][]string)
+	usedMachines := make(map[string][]string)
 	var orderedMachineTypes []string
 
 	for _, pool := range additionalWorkerNodePools {
-		for _, GPUMachine := range GPUMachines {
-			if strings.HasPrefix(pool.MachineType, GPUMachine) {
-				if _, exists := usedGPUMachines[pool.MachineType]; !exists {
-					orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
-				}
-				usedGPUMachines[pool.MachineType] = append(usedGPUMachines[pool.MachineType], pool.Name)
+		if planSpec.IsInternalOnlyMachine(planName, pool.MachineType) {
+			if _, exists := usedMachines[pool.MachineType]; !exists {
+				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
 			}
+			usedMachines[pool.MachineType] = append(usedMachines[pool.MachineType], pool.Name)
 		}
 	}
 
-	if len(usedGPUMachines) == 0 {
+	if len(usedMachines) == 0 {
 		return nil
 	}
 
 	var errorMsg strings.Builder
-	errorMsg.WriteString("The following GPU machine types: ")
+	errorMsg.WriteString("The following machine types: ")
 
 	for i, machineType := range orderedMachineTypes {
 		if i > 0 {
 			errorMsg.WriteString(", ")
 		}
-		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedGPUMachines[machineType], ", ")))
+		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedMachines[machineType], ", ")))
 	}
 
 	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
@@ -1118,15 +1123,17 @@ func validateQuotaLimit(instanceStorage storage.Instances, quotaClient QuotaClie
 	return nil
 }
 
-func newAWSClient(
+func newHyperscalerClient(
 	ctx context.Context,
 	log *slog.Logger,
 	rulesService *rules.RulesService,
 	gardenerClient *gardener.Client,
-	awsClientFactory aws.ClientFactory,
+	factory hyperscalers.Factory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
-) (aws.Client, error) {
+) (hyperscalers.ProviderClient, error) {
+	provider := pkg.CloudProviderFromString(values.ProviderType)
+
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
 	attr := &rules.ProvisioningAttributes{
 		Plan:              AvailablePlans.GetPlanNameOrEmpty(PlanIDType(provisioningParameters.PlanID)),
@@ -1151,24 +1158,22 @@ func newAWSClient(
 		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
 	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
+		return nil, fmt.Errorf("no credentials bindings found for selector %q", labelSelector)
 	}
 	credentialsBinding := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
 
 	log.Info(fmt.Sprintf("getting subscription credentials with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 	secret, err := gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
+		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
 	}
 
-	accessKeyID, secretAccessKey, err := aws.ExtractCredentials(secret)
+	client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract AWS credentials")
+		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
 	}
-	client, err := awsClientFactory.New(ctx, accessKeyID, secretAccessKey, values.Region)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create AWS client")
-	}
+
+	log.Info(fmt.Sprintf("validating zones for region=%s secret=%s/%s", values.Region, credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
 
 	return client, nil
 }

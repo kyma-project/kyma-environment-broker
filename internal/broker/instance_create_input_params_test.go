@@ -11,8 +11,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/blocklist"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
+	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -34,13 +35,14 @@ type fakeProvisionEndpointBuilder struct {
 	gvisorWhitelist        whitelist.Set
 	schemaService          *SchemaService
 	providerSpec           ConfigurationProvider
+	planSpec               *configuration.PlanSpecifications
 	valuesProvider         ValuesProvider
 	providerConfigProvider config.ConfigMapConfigProvider
 	quotaClient            QuotaClient
 	quotaWhitelist         whitelist.Set
 	rulesService           *rules.RulesService
 	gardenerClient         *gardener.Client
-	awsClientFactory       aws.ClientFactory
+	factory                hyperscalers.Factory
 	operationBlocklist     blocklist.OperationBlocklist
 }
 
@@ -98,6 +100,11 @@ func (b *fakeProvisionEndpointBuilder) WithConfigurationProvider(provider Config
 	return b
 }
 
+func (b *fakeProvisionEndpointBuilder) WithPlanSpec(spec *configuration.PlanSpecifications) *fakeProvisionEndpointBuilder {
+	b.planSpec = spec
+	return b
+}
+
 func (b *fakeProvisionEndpointBuilder) WithValuesProvider(provider ValuesProvider) *fakeProvisionEndpointBuilder {
 	b.valuesProvider = provider
 	return b
@@ -143,8 +150,8 @@ func (b *fakeProvisionEndpointBuilder) WithGardenerClient(client *gardener.Clien
 	return b
 }
 
-func (b *fakeProvisionEndpointBuilder) WithAwsClientFactory(factory aws.ClientFactory) *fakeProvisionEndpointBuilder {
-	b.awsClientFactory = factory
+func (b *fakeProvisionEndpointBuilder) WithClientFactories(factory hyperscalers.Factory) *fakeProvisionEndpointBuilder {
+	b.factory = factory
 	return b
 }
 
@@ -168,13 +175,14 @@ func (b *fakeProvisionEndpointBuilder) Build() *ProvisionEndpoint {
 		b.gvisorWhitelist,
 		b.schemaService,
 		b.providerSpec,
+		b.planSpec,
 		b.valuesProvider,
 		b.providerConfigProvider,
 		b.quotaClient,
 		b.quotaWhitelist,
 		b.rulesService,
 		b.gardenerClient,
-		b.awsClientFactory,
+		b.factory,
 		b.operationBlocklist,
 	)
 }

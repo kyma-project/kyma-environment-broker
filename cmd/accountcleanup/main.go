@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -15,10 +14,9 @@ import (
 )
 
 type Config struct {
-	EventsServiceVersion string `envconfig:"default=v2"`
-	CIS                  cis.Config
-	Database             storage.Config
-	Broker               broker.ClientConfig
+	CIS      cis.Config
+	Database storage.Config
+	Broker   broker.ClientConfig
 }
 
 func main() {
@@ -40,21 +38,7 @@ func main() {
 	fatalOnError(err)
 
 	// create CIS client
-	var client cis.CisClient
-	switch cfg.EventsServiceVersion {
-	case "v1":
-		log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})).With("client", "CIS-v1")
-		client = cis.NewClient(ctx, cfg.CIS, log)
-	case "v2":
-		log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})).With("client", "CIS-v2")
-		client = cis.NewClientV2(ctx, cfg.CIS, log)
-	default:
-		fatalOnError(fmt.Errorf("Events Service version %s is not supported", cfg.EventsServiceVersion))
-	}
+	client := cis.NewClient(ctx, cfg.CIS, logger.With("client", "CIS-v2"))
 
 	// create storage connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)

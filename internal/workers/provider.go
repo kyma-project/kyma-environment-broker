@@ -16,16 +16,14 @@ import (
 )
 
 type Provider struct {
-	imConfig                 broker.InfrastructureManager
-	providerSpec             *configuration.ProviderSpec
-	labelsAnnotationsEnabled bool
+	imConfig     broker.InfrastructureManager
+	providerSpec *configuration.ProviderSpec
 }
 
-func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec, labelsAnnotationsEnabled bool) *Provider {
+func NewProvider(imConfig broker.InfrastructureManager, providerSpec *configuration.ProviderSpec) *Provider {
 	return &Provider{
-		imConfig:                 imConfig,
-		providerSpec:             providerSpec,
-		labelsAnnotationsEnabled: labelsAnnotationsEnabled,
+		imConfig:     imConfig,
+		providerSpec: providerSpec,
 	}
 }
 
@@ -84,11 +82,9 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			MaxSurge:       &workerMaxSurge,
 			MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
 			Zones:          workerZones,
+			Labels:         toGardenerLabels(additionalWorkerNodePool.Labels),
+			Annotations:    toGardenerAnnotations(additionalWorkerNodePool.Annotations),
 			Taints:         toGardenerTaints(additionalWorkerNodePool.Taints),
-		}
-		if p.labelsAnnotationsEnabled {
-			worker.Labels = toGardenerLabels(additionalWorkerNodePool.Labels)
-			worker.Annotations = toGardenerAnnotations(additionalWorkerNodePool.Annotations)
 		}
 
 		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) {
