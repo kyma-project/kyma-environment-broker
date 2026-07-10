@@ -757,6 +757,7 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
 		}
 		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
+		slog.Info(fmt.Sprintf("refreshing Azure zone cache using credential binding %q", cb.GetName()))
 		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
 		if err != nil {
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)

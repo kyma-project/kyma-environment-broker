@@ -116,7 +116,7 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 			succeeded++
 		}
 	}
-	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(regions)))
+	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(c.providerSpec.Regions(pkg.Azure))))
 }
 
 func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredentials, region string) error {
