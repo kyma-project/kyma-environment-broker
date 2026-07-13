@@ -388,7 +388,7 @@ func main() {
 	var azureSecretFetcher azurehyperscaler.SecretFetcher
 	if providerSpec.ZonesDiscovery(pkg.Azure) {
 		var fetchErr error
-		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService)
+		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService, log)
 		if fetchErr != nil {
 			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
 		}
@@ -737,7 +737,7 @@ func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, enable
 // buildAzureSecretFetcher returns a SecretFetcher that fetches the first available Azure
 // credentials secret from Gardener on each call. This ensures credential rotation is
 // picked up on every cache refresh without restarting KEB.
-func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService) (azurehyperscaler.SecretFetcher, error) {
+func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService, log *slog.Logger) (azurehyperscaler.SecretFetcher, error) {
 	attr := &rules.ProvisioningAttributes{
 		Plan:        "azure",
 		Hyperscaler: "azure",
@@ -757,6 +757,7 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
 		}
 		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
+		log.Info("refreshing Azure zone cache using credential binding", "name", cb.GetName())
 		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
 		if err != nil {
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)

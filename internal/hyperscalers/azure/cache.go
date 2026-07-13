@@ -108,11 +108,16 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 		slog.Error(fmt.Sprintf("failed to fetch Azure credentials for cache refresh: %s", err))
 		return
 	}
-	for _, region := range c.providerSpec.Regions(pkg.Azure) {
+	azureRegions := c.providerSpec.Regions(pkg.Azure)
+	succeeded := 0
+	for _, region := range azureRegions {
 		if err := c.fillRegionWithRetry(ctx, creds, region); err != nil {
 			slog.Error(fmt.Sprintf("failed to fill Azure zone cache for region %s after %d retries: %s", region, cacheRetries, err))
+		} else {
+			succeeded++
 		}
 	}
+	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(azureRegions)))
 }
 
 func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredentials, region string) error {
@@ -142,8 +147,6 @@ func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredent
 }
 
 func (c *AzureCache) fillRegion(ctx context.Context, skusClient ResourceSKUsAPI, region string) error {
-	slog.Info(fmt.Sprintf("filling Azure zone cache for region %s", region))
-
 	supportedMachineTypes := make(map[string]struct{})
 	for _, mt := range c.providerSpec.MachineTypes(pkg.Azure) {
 		supportedMachineTypes[mt] = struct{}{}
@@ -158,7 +161,6 @@ func (c *AzureCache) fillRegion(ctx context.Context, skusClient ResourceSKUsAPI,
 	c.data[region] = zones
 	c.mu.Unlock()
 
-	slog.Info(fmt.Sprintf("Azure zone cache filled for region %s (%d machine types)", region, len(zones)))
 	return nil
 }
 
