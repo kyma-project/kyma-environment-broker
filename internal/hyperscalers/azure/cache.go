@@ -108,15 +108,16 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 		slog.Error(fmt.Sprintf("failed to fetch Azure credentials for cache refresh: %s", err))
 		return
 	}
+	azureRegions := c.providerSpec.Regions(pkg.Azure)
 	succeeded := 0
-	for _, region := range c.providerSpec.Regions(pkg.Azure) {
+	for _, region := range azureRegions {
 		if err := c.fillRegionWithRetry(ctx, creds, region); err != nil {
 			slog.Error(fmt.Sprintf("failed to fill Azure zone cache for region %s after %d retries: %s", region, cacheRetries, err))
 		} else {
 			succeeded++
 		}
 	}
-	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(c.providerSpec.Regions(pkg.Azure))))
+	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(azureRegions)))
 }
 
 func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredentials, region string) error {
