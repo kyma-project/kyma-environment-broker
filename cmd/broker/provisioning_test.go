@@ -33,7 +33,6 @@ const (
 	workersAmount                 int = 2
 	provisioningRequestPathFormat     = "oauth/cf-eu10/v2/service_instances/%s"
 	providersZonesDiscovery           = "testdata/providers-zones-discovery.yaml"
-	providersZonesDiscoveryAzure      = "testdata/providers-zones-discovery-azure.yaml"
 )
 
 func TestCatalog(t *testing.T) {
@@ -4090,7 +4089,7 @@ func TestProvisioning_AzureImageVersionSuffix(t *testing.T) {
 	}
 
 	cfg := fixConfig()
-	cfg.ProvidersConfigurationFilePath = providersZonesDiscoveryAzure
+	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 	cfg.InfrastructureManager.MachineImageVersionSuffix = true
 
 	factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)

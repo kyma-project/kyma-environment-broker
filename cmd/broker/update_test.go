@@ -5569,8 +5569,6 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 }
 
 func TestUpdate_AzureImageVersionSuffix(t *testing.T) {
-	const azureProvidersConfig = "testdata/providers-zones-discovery-azure.yaml"
-
 	hyperVGens := map[string]string{
 		"Standard_D2s_v5": "-gen2",
 		"Standard_D4_v3":  "",
@@ -5582,7 +5580,7 @@ func TestUpdate_AzureImageVersionSuffix(t *testing.T) {
 
 	newSuite := func(t *testing.T) (*BrokerSuiteTest, string) {
 		cfg := fixConfig()
-		cfg.ProvidersConfigurationFilePath = azureProvidersConfig
+		cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
 		cfg.InfrastructureManager.MachineImageVersionSuffix = true
 		factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)
 		suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithFactory(factory))
