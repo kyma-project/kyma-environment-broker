@@ -170,6 +170,7 @@
 | infrastructureManager.<br>kubernetesVersion | Sets the default Kubernetes version for new clusters provisioned by the broker. | `1.16.9` |
 | infrastructureManager.<br>machineImage | Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
+| infrastructureManager.<br>machineImageVersionSuffix | If true, appends a machine-type-specific suffix (e.g. "-gen2") to the machine image version for Azure workers. | `False` |
 | infrastructureManager.<br>maxPods | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. | `200` |
 | infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `true` |
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
