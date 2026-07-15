@@ -4135,7 +4135,7 @@ func TestProvisioning_AzureImageVersionSuffix(t *testing.T) {
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
-	// kyma worker uses Standard_D4s_v5 which has -gen2 suffix
+	// kyma worker uses Standard_D2s_v5 which has -gen2 suffix
 	require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].Machine.Image)
 	assert.Equal(t, "12345.6-gen2", *runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version)
 

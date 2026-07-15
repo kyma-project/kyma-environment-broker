@@ -209,6 +209,10 @@ func (c *AzureCachedClient) AvailableZonesCount(ctx context.Context, machineType
 	return len(zones), err
 }
 
+// HyperVGeneration is intentionally not supported by the cached client.
+// The DiscoverAvailableZonesCBStep always uses NewPerCallFromSecret, which
+// returns an AzureClient with full HyperVGeneration support. The cached
+// client is only used for zone-availability lookups.
 func (c *AzureCachedClient) HyperVGeneration(_ context.Context, _ string) (string, error) {
 	return "", nil
 }
