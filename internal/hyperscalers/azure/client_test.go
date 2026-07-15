@@ -281,9 +281,10 @@ func buildClient(skus []*armcompute.ResourceSKU, apiErr error) *AzureClient {
 	}
 	spec := buildProviderSpec(machineNames)
 	return &AzureClient{
-		skusClient:   &mockSKUsAPI{skus: skus, err: apiErr},
-		region:       "westeurope",
-		providerSpec: spec,
+		skusClient:                &mockSKUsAPI{skus: skus, err: apiErr},
+		region:                    "westeurope",
+		providerSpec:              spec,
+		machineImageVersionSuffix: true,
 	}
 }
 

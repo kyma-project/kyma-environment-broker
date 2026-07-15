@@ -232,7 +232,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 					),
 					Image: &gardener.ShootMachineImage{
 						Name:    s.config.MachineImage,
-						Version: ptr.String(s.config.MachineImageVersion + s.machineImageVersionSuffix(*operation, DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType))),
+						Version: ptr.String(s.config.MachineImageVersion + operation.MachineImageVersionSuffixes[DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)]),
 					},
 				},
 				Maximum:        scalerMax,
@@ -503,13 +503,6 @@ func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration(toleranc
 		},
 	},
 	}
-}
-
-func (s *CreateRuntimeResourceStep) machineImageVersionSuffix(operation internal.Operation, machineType string) string {
-	if !s.config.AzureImageVersionSuffixEnabled {
-		return ""
-	}
-	return operation.MachineImageVersionSuffixes[machineType]
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {

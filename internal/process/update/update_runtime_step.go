@@ -137,7 +137,7 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 				*operation.UpdatingParameters.MachineType,
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
-			if s.config.AzureImageVersionSuffixEnabled && runtime.Spec.Shoot.Provider.Workers[0].Machine.Image != nil {
+			if runtime.Spec.Shoot.Provider.Workers[0].Machine.Image != nil {
 				suffix := operation.MachineImageVersionSuffixes[*operation.UpdatingParameters.MachineType]
 				runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version = ptr.String(s.config.MachineImageVersion + suffix)
 			}

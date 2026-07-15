@@ -5583,7 +5583,7 @@ func TestUpdate_AzureImageVersionSuffix(t *testing.T) {
 	newSuite := func(t *testing.T) (*BrokerSuiteTest, string) {
 		cfg := fixConfig()
 		cfg.ProvidersConfigurationFilePath = azureProvidersConfig
-		cfg.InfrastructureManager.AzureImageVersionSuffixEnabled = true
+		cfg.InfrastructureManager.MachineImageVersionSuffix = true
 		factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)
 		suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithFactory(factory))
 

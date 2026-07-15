@@ -68,7 +68,7 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
-		machineImageVersion := p.imConfig.MachineImageVersion + p.machineImageVersionSuffix(operation, additionalWorkerNodePool.MachineType)
+		machineImageVersion := p.imConfig.MachineImageVersion + operation.MachineImageVersionSuffixes[additionalWorkerNodePool.MachineType]
 		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) &&
 			currentAdditionalWorker.Machine.Image != nil && currentAdditionalWorker.Machine.Image.Version != nil {
 			machineImageVersion = *currentAdditionalWorker.Machine.Image.Version
@@ -115,13 +115,6 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 	}
 
 	return workers, nil
-}
-
-func (p *Provider) machineImageVersionSuffix(operation *internal.Operation, machineType string) string {
-	if !p.imConfig.AzureImageVersionSuffixEnabled {
-		return ""
-	}
-	return operation.MachineImageVersionSuffixes[machineType]
 }
 
 func (p *Provider) ResolveMachineType(
