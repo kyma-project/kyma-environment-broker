@@ -120,6 +120,7 @@ type suiteOptions struct {
 	cfg               *Config
 	withMetrics       bool
 	kcrVolumeProvider broker.VolumeSizeProvider
+	factory           hyperscalers.Factory
 }
 
 // WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
@@ -135,6 +136,11 @@ func WithMetrics() SuiteOption {
 // WithKCRVolumeProvider sets a custom KCR volume size provider.
 func WithKCRVolumeProvider(p broker.VolumeSizeProvider) SuiteOption {
 	return func(o *suiteOptions) { o.kcrVolumeProvider = p }
+}
+
+// WithFactory sets a custom hyperscaler factory.
+func WithFactory(f hyperscalers.Factory) SuiteOption {
+	return func(o *suiteOptions) { o.factory = f }
 }
 
 func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
@@ -212,7 +218,10 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	factory := fixture.NewFakeFactory(fixDiscoveredZones(), nil)
+	factory := hyperscalers.Factory(fixture.NewFakeFactory(fixDiscoveredZones(), nil))
+	if o.factory != nil {
+		factory = o.factory
+	}
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
@@ -1117,6 +1126,18 @@ func fixSecrets() []runtime.Object {
 			Data: map[string][]byte{
 				"accessKeyID":     []byte("test-key"),
 				"secretAccessKey": []byte("test-secret"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
 			},
 		},
 	}

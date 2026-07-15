@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
@@ -136,6 +137,10 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 				*operation.UpdatingParameters.MachineType,
 			)
 			log.Info(fmt.Sprintf("Resolved machine type with version for Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
+			if s.config.AzureImageVersionSuffixEnabled && runtime.Spec.Shoot.Provider.Workers[0].Machine.Image != nil {
+				suffix := operation.MachineImageVersionSuffixes[*operation.UpdatingParameters.MachineType]
+				runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version = ptr.String(s.config.MachineImageVersion + suffix)
+			}
 		} else {
 			log.Info(fmt.Sprintf("Reusing existing machine type with version for unchanged Kyma worker: %s", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type))
 		}

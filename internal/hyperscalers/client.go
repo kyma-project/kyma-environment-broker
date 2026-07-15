@@ -10,6 +10,7 @@ import (
 type ProviderClient interface {
 	AvailableZones(ctx context.Context, machineType string) ([]string, error)
 	AvailableZonesCount(ctx context.Context, machineType string) (int, error)
+	HyperVGeneration(ctx context.Context, machineType string) (string, error)
 }
 
 type Factory interface {

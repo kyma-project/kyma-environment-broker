@@ -208,3 +208,7 @@ func (c *AzureCachedClient) AvailableZonesCount(ctx context.Context, machineType
 	zones, err := c.AvailableZones(ctx, machineType)
 	return len(zones), err
 }
+
+func (c *AzureCachedClient) HyperVGeneration(_ context.Context, _ string) (string, error) {
+	return "", nil
+}

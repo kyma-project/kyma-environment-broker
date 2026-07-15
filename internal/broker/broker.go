@@ -170,15 +170,16 @@ type ServiceMetadata struct {
 }
 
 type InfrastructureManager struct {
-	KubernetesVersion            string            `envconfig:"default=1.16.9"`
-	DefaultGardenerShootPurpose  string            `envconfig:"default=development"`
-	MachineImage                 string            `envconfig:"optional"`
-	MachineImageVersion          string            `envconfig:"optional"`
-	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
-	MultiZoneCluster             bool              `envconfig:"default=true"`
-	ControlPlaneFailureTolerance string            `envconfig:"optional"`
-	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
-	IngressFilteringPlans        StringList        `envconfig:"default=no-plan"`
+	KubernetesVersion              string            `envconfig:"default=1.16.9"`
+	DefaultGardenerShootPurpose    string            `envconfig:"default=development"`
+	MachineImage                   string            `envconfig:"optional"`
+	MachineImageVersion            string            `envconfig:"optional"`
+	DefaultTrialProvider           pkg.CloudProvider `envconfig:"default=Azure"`
+	MultiZoneCluster               bool              `envconfig:"default=true"`
+	ControlPlaneFailureTolerance   string            `envconfig:"optional"`
+	UseSmallerMachineTypes         bool              `envconfig:"default=false"`
+	IngressFilteringPlans          StringList        `envconfig:"default=no-plan"`
+	AzureImageVersionSuffixEnabled bool              `envconfig:"default=false"`
 
 	GcpVolumeSizeGb   int `envconfig:"default=80"`
 	AwsVolumeSizeGb   int `envconfig:"default=80"`
