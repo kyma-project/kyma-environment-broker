@@ -27,7 +27,7 @@ Deprovision SAP BTP, Kyma runtime on Microsoft Azure using Kyma Environment Brok
    --header "$AUTHORIZATION_HEADER"
    ```
 
-A successful call returns the operation ID.
+   A successful call returns the operation ID.
 
    ```json
    {
