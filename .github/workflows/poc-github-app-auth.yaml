@@ -1,0 +1,46 @@
+name: POC - GitHub App Auth
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-github-com-app:
+    name: Test github.com App token
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.KEB_BOT_APP_ID }}
+          private-key: ${{ secrets.KEB_BOT_APP_PRIVATE_KEY }}
+          repositories: kyma-environment-broker
+
+      - name: Verify token works
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          echo "App installation ID: ${{ steps.token.outputs.installation-id }}"
+          echo "App slug: ${{ steps.token.outputs.app-slug }}"
+          gh pr list --repo kyma-project/kyma-environment-broker --limit 3
+
+  test-enterprise-app:
+    name: Test enterprise App token
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate enterprise token
+        id: enterprise-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.KEB_TOOLS_BOT_APP_ID }}
+          private-key: ${{ secrets.KEB_TOOLS_BOT_APP_PRIVATE_KEY }}
+          github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
+          repositories: management-plane-charts
+
+      - name: Verify token works on enterprise
+        env:
+          GH_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          echo "App installation ID: ${{ steps.enterprise-token.outputs.installation-id }}"
+          gh pr list --repo kyma/management-plane-charts --limit 3
