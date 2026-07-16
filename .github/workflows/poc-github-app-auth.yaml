@@ -35,6 +35,7 @@ jobs:
           app-id: ${{ vars.KEB_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.KEB_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
+          owner: kyma
           repositories: management-plane-charts
 
       - name: Verify token works on enterprise
