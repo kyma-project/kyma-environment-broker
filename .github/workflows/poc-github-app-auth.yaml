@@ -44,4 +44,6 @@ jobs:
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
           echo "App installation ID: ${{ steps.enterprise-token.outputs.installation-id }}"
-          gh pr list --repo kyma/management-plane-charts --limit 3
+          curl -sf -H "Authorization: Bearer ${GH_TOKEN}" \
+            "https://${GH_HOST}/api/v3/repos/kyma/management-plane-charts/pulls?state=open&per_page=3" \
+            | jq '.[].title'
