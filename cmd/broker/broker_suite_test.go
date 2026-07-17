@@ -218,9 +218,11 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	factory := hyperscalers.Factory(fixture.NewFakeFactory(fixDiscoveredZones(), nil))
+	var factory hyperscalers.Factory
 	if o.factory != nil {
 		factory = o.factory
+	} else {
+		factory = fixture.NewFakeFactory(fixDiscoveredZones(), nil)
 	}
 
 	err = cfg.Initialise()
