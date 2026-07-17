@@ -173,9 +173,8 @@ func main() {
 			mu.RUnlock()
 			provParams := analytics.OpEventsToProvParamsInRange(snapshot.opEvents, tr)
 			updateParams := analytics.OpEventsToUpdateParamsInRange(snapshot.opEvents, tr)
-			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
 			trendParams := analytics.TrendParamsFrom(snapshot.resp.Combined)
-			data = buildFilteredStats(provParams, updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan, trendParams)
+			data = buildFilteredStats(provParams, updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

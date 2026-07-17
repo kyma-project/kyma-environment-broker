@@ -167,6 +167,7 @@ func inRange(d string, tr TimeRange) bool {
 	}
 	t, err := time.Parse("2006-01-02", d)
 	if err != nil {
+		slog.Warn("analytics: skipping event with unparseable date", "date", d, "error", err)
 		return false
 	}
 	if !tr.From.IsZero() && t.Before(tr.From) {
