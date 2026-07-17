@@ -4090,7 +4090,7 @@ func TestProvisioning_AzureImageVersionSuffix(t *testing.T) {
 
 	cfg := fixConfig()
 	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
-	cfg.InfrastructureManager.MachineImageVersionSuffix = true
+	cfg.InfrastructureManager.UseMachineImageVersionSuffix = true
 
 	factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)
 	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithFactory(factory))

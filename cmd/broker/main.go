@@ -393,7 +393,7 @@ func main() {
 			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
 		}
 	}
-	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher, cfg.InfrastructureManager.MachineImageVersionSuffix)
+	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher, cfg.InfrastructureManager.UseMachineImageVersionSuffix)
 
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 

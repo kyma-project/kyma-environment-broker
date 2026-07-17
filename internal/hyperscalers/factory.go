@@ -12,9 +12,9 @@ import (
 )
 
 type hyperscalerFactory struct {
-	providerSpec              *configuration.ProviderSpec
-	azureCache                *azure.AzureCache
-	machineImageVersionSuffix bool
+	providerSpec                 *configuration.ProviderSpec
+	azureCache                   *azure.AzureCache
+	useMachineImageVersionSuffix bool
 }
 
 // NewFactory creates a new Factory without a global Azure zone cache.
@@ -27,15 +27,15 @@ func NewFactory(providerSpec *configuration.ProviderSpec) Factory {
 // The cache fills lazily in the background — KEB startup is not blocked.
 // secretFetcher is called on every cache refresh to handle credential rotation.
 // If secretFetcher is nil or Azure zones discovery is disabled, behaves like NewFactory.
-func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher azure.SecretFetcher, machineImageVersionSuffix bool) Factory {
+func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher azure.SecretFetcher, useMachineImageVersionSuffix bool) Factory {
 	var azureCache *azure.AzureCache
 	if secretFetcher != nil && providerSpec.ZonesDiscovery(pkg.Azure) {
 		azureCache = azure.NewAzureCache(ctx, providerSpec, secretFetcher)
 	}
 	return &hyperscalerFactory{
-		providerSpec:              providerSpec,
-		azureCache:                azureCache,
-		machineImageVersionSuffix: machineImageVersionSuffix,
+		providerSpec:                 providerSpec,
+		azureCache:                   azureCache,
+		useMachineImageVersionSuffix: useMachineImageVersionSuffix,
 	}
 }
 
@@ -51,7 +51,7 @@ func (f *hyperscalerFactory) NewFromSecret(ctx context.Context, provider pkg.Clo
 		if f.azureCache != nil && f.azureCache.Ready(region) {
 			return azure.NewCachedClient(f.azureCache, region, f.providerSpec), nil
 		}
-		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.machineImageVersionSuffix)
+		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.useMachineImageVersionSuffix)
 	default:
 		return nil, fmt.Errorf("zone discovery not supported for provider %s", provider)
 	}
@@ -65,7 +65,7 @@ func (f *hyperscalerFactory) NewPerCallFromSecret(ctx context.Context, provider 
 	case pkg.AWS:
 		return aws.NewClientFromSecret(ctx, f.providerSpec, secret, region)
 	case pkg.Azure:
-		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.machineImageVersionSuffix)
+		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.useMachineImageVersionSuffix)
 	default:
 		return nil, fmt.Errorf("zone discovery not supported for provider %s", provider)
 	}

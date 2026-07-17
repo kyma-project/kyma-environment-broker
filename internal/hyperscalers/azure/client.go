@@ -33,16 +33,16 @@ type ResourceSKUsAPI interface {
 }
 
 type AzureClient struct {
-	skusClient                ResourceSKUsAPI
-	region                    string
-	providerSpec              *configuration.ProviderSpec
-	zoneCache                 map[string][]string
-	hyperVGenCache            map[string]string
-	cacheLoaded               bool
-	machineImageVersionSuffix bool
+	skusClient                   ResourceSKUsAPI
+	region                       string
+	providerSpec                 *configuration.ProviderSpec
+	zoneCache                    map[string][]string
+	hyperVGenCache               map[string]string
+	cacheLoaded                  bool
+	useMachineImageVersionSuffix bool
 }
 
-func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, machineImageVersionSuffix bool) (*AzureClient, error) {
+func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, useMachineImageVersionSuffix bool) (*AzureClient, error) {
 	creds, err := ExtractCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract Azure credentials: %w", err)
@@ -59,10 +59,10 @@ func NewClientFromSecret(ctx context.Context, providerSpec *configuration.Provid
 	}
 
 	return &AzureClient{
-		skusClient:                skusClient,
-		region:                    region,
-		providerSpec:              providerSpec,
-		machineImageVersionSuffix: machineImageVersionSuffix,
+		skusClient:                   skusClient,
+		region:                       region,
+		providerSpec:                 providerSpec,
+		useMachineImageVersionSuffix: useMachineImageVersionSuffix,
 	}, nil
 }
 
@@ -85,7 +85,7 @@ func (c *AzureClient) AvailableZonesCount(ctx context.Context, machineType strin
 }
 
 func (c *AzureClient) HyperVGeneration(ctx context.Context, machineType string) (string, error) {
-	if !c.machineImageVersionSuffix {
+	if !c.useMachineImageVersionSuffix {
 		return "", nil
 	}
 	machineType = c.providerSpec.ResolveMachineType(pkg.Azure, machineType)

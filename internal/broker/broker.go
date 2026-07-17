@@ -179,7 +179,7 @@ type InfrastructureManager struct {
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
 	IngressFilteringPlans        StringList        `envconfig:"default=no-plan"`
-	MachineImageVersionSuffix    bool              `envconfig:"default=false"`
+	UseMachineImageVersionSuffix bool              `envconfig:"default=false"`
 
 	GcpVolumeSizeGb   int `envconfig:"default=80"`
 	AwsVolumeSizeGb   int `envconfig:"default=80"`
