@@ -94,6 +94,10 @@ func (c *AWSClient) AvailableZonesCount(ctx context.Context, machineType string)
 	return len(zones), nil
 }
 
+func (c *AWSClient) HyperVGeneration(_ context.Context, _ string) (string, error) {
+	return "", nil
+}
+
 func ExtractCredentials(secret *unstructured.Unstructured) (string, string, error) {
 	data, found, err := unstructured.NestedStringMap(secret.Object, "data")
 	if err != nil {
