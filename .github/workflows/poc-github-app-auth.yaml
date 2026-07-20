@@ -12,17 +12,33 @@ jobs:
         id: token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ vars.KEB_BOT_APP_ID }}
-          private-key: ${{ secrets.KEB_BOT_APP_PRIVATE_KEY }}
+          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
           repositories: kyma-environment-broker
 
-      - name: Verify token works
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Test read access
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
-          echo "App installation ID: ${{ steps.token.outputs.installation-id }}"
-          echo "App slug: ${{ steps.token.outputs.app-slug }}"
           gh pr list --repo kyma-project/kyma-environment-broker --limit 3
+
+      - name: Test write access (create and close draft PR)
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          BRANCH="poc-github-app-test-${{ github.run_id }}"
+          git config user.email "gopher-bot@kyma-project.io"
+          git config user.name "kyma-gopher"
+          git checkout -b "$BRANCH"
+          git commit --allow-empty -m "POC test commit"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --draft --title "POC test PR (${{ github.run_id }})" --body "Automated test - will be closed immediately" --base main --head "$BRANCH")
+          gh pr close "$PR_URL"
+          git push origin --delete "$BRANCH"
 
   test-enterprise-app:
     name: Test enterprise App token
@@ -32,16 +48,32 @@ jobs:
         id: enterprise-token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ vars.KEB_TOOLS_BOT_APP_ID }}
-          private-key: ${{ secrets.KEB_TOOLS_BOT_APP_PRIVATE_KEY }}
+          app-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
           owner: kyma
           repositories: management-plane-charts
 
-      - name: Verify token works on enterprise
+      - name: Test read access on enterprise
         env:
           GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
-          echo "App installation ID: ${{ steps.enterprise-token.outputs.installation-id }}"
           gh pr list --repo kyma/management-plane-charts --limit 3
+
+      - name: Test write access on enterprise (create and close draft PR)
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          BRANCH="poc-github-app-test-${{ github.run_id }}"
+          git clone https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+          cd management-plane-charts
+          git config user.email "gopher-bot@kyma-project.io"
+          git config user.name "kyma-gopher"
+          git checkout -b "$BRANCH"
+          git commit --allow-empty -m "POC test commit"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --draft --title "POC test PR (${{ github.run_id }})" --body "Automated test - will be closed immediately" --base main --head "$BRANCH" --repo kyma/management-plane-charts)
+          gh pr close "$PR_URL" --repo kyma/management-plane-charts
+          git push origin --delete "$BRANCH"
