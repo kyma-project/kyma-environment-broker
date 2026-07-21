@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -23,6 +24,8 @@ const (
 	interval = 2 * time.Second
 
 	resourceTypeVirtualMachines = "virtualMachines"
+	hyperVGenerationV2          = "V2"
+	hyperVGenerationV2Suffix    = "-gen2"
 )
 
 type ResourceSKUsAPI interface {
@@ -30,14 +33,16 @@ type ResourceSKUsAPI interface {
 }
 
 type AzureClient struct {
-	skusClient   ResourceSKUsAPI
-	region       string
-	providerSpec *configuration.ProviderSpec
-	cache        map[string][]string
-	cacheLoaded  bool
+	skusClient                   ResourceSKUsAPI
+	region                       string
+	providerSpec                 *configuration.ProviderSpec
+	zoneCache                    map[string][]string
+	hyperVGenCache               map[string]string
+	cacheLoaded                  bool
+	useMachineImageVersionSuffix bool
 }
 
-func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string) (*AzureClient, error) {
+func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, useMachineImageVersionSuffix bool) (*AzureClient, error) {
 	creds, err := ExtractCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract Azure credentials: %w", err)
@@ -54,20 +59,21 @@ func NewClientFromSecret(ctx context.Context, providerSpec *configuration.Provid
 	}
 
 	return &AzureClient{
-		skusClient:   skusClient,
-		region:       region,
-		providerSpec: providerSpec,
+		skusClient:                   skusClient,
+		region:                       region,
+		providerSpec:                 providerSpec,
+		useMachineImageVersionSuffix: useMachineImageVersionSuffix,
 	}, nil
 }
 
 func (c *AzureClient) AvailableZones(ctx context.Context, machineType string) ([]string, error) {
 	machineType = c.providerSpec.ResolveMachineType(pkg.Azure, machineType)
 
-	if err := c.ensureZonesLoaded(ctx); err != nil {
+	if err := c.ensureCacheLoaded(ctx); err != nil {
 		return nil, err
 	}
 
-	return c.cache[machineType], nil
+	return c.zoneCache[machineType], nil
 }
 
 func (c *AzureClient) AvailableZonesCount(ctx context.Context, machineType string) (int, error) {
@@ -78,7 +84,25 @@ func (c *AzureClient) AvailableZonesCount(ctx context.Context, machineType strin
 	return len(zones), nil
 }
 
-func (c *AzureClient) ensureZonesLoaded(ctx context.Context) error {
+func (c *AzureClient) HyperVGeneration(ctx context.Context, machineType string) (string, error) {
+	if !c.useMachineImageVersionSuffix {
+		return "", nil
+	}
+	machineType = c.providerSpec.ResolveMachineType(pkg.Azure, machineType)
+
+	if err := c.ensureCacheLoaded(ctx); err != nil {
+		return "", err
+	}
+
+	for _, gen := range strings.Split(c.hyperVGenCache[machineType], ",") {
+		if strings.TrimSpace(gen) == hyperVGenerationV2 {
+			return hyperVGenerationV2Suffix, nil
+		}
+	}
+	return "", nil
+}
+
+func (c *AzureClient) ensureCacheLoaded(ctx context.Context) error {
 	if c.cacheLoaded {
 		return nil
 	}
@@ -88,7 +112,8 @@ func (c *AzureClient) ensureZonesLoaded(ctx context.Context) error {
 		if err = c.tryFillCache(ctx); err == nil {
 			return nil
 		}
-		c.cache = nil
+		c.zoneCache = nil
+		c.hyperVGenCache = nil
 		time.Sleep(interval)
 	}
 	return err
@@ -100,14 +125,45 @@ func (c *AzureClient) tryFillCache(ctx context.Context) error {
 		supportedMachineTypes[mt] = struct{}{}
 	}
 	slog.Info(fmt.Sprintf("querying Azure ResourceSKUs for region %s", c.region))
-	zones, err := fetchZonesBySKU(ctx, c.skusClient, c.region, supportedMachineTypes)
+	zones, hyperVGens, err := fetchSKUData(ctx, c.skusClient, c.region, supportedMachineTypes)
 	if err != nil {
 		return err
 	}
-	c.cache = zones
+	c.zoneCache = zones
+	c.hyperVGenCache = hyperVGens
 	c.cacheLoaded = true
-	slog.Info(fmt.Sprintf("Azure ResourceSKUs loaded for region %s (%d machine types cached)", c.region, len(c.cache)))
+	slog.Info(fmt.Sprintf("Azure ResourceSKUs loaded for region %s (%d machine types cached)", c.region, len(c.zoneCache)))
 	return nil
+}
+
+func fetchSKUData(ctx context.Context, skusClient ResourceSKUsAPI, region string, supportedMachineTypes map[string]struct{}) (map[string][]string, map[string]string, error) {
+	zones := make(map[string][]string)
+	hyperVGens := make(map[string]string)
+	filter := fmt.Sprintf("location eq '%s'", region)
+	pager := skusClient.NewListPager(&armcompute.ResourceSKUsClientListOptions{Filter: &filter})
+
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to list Azure resource SKUs for region %s: %w", region, err)
+		}
+		for _, sku := range page.Value {
+			if sku.ResourceType == nil || *sku.ResourceType != resourceTypeVirtualMachines || sku.Name == nil {
+				continue
+			}
+			if _, ok := supportedMachineTypes[*sku.Name]; !ok {
+				continue
+			}
+			zones[*sku.Name] = availableZonesFromSKU(sku)
+			for _, cap := range sku.Capabilities {
+				if cap.Name != nil && *cap.Name == "HyperVGenerations" && cap.Value != nil {
+					hyperVGens[*sku.Name] = *cap.Value
+					break
+				}
+			}
+		}
+	}
+	return zones, hyperVGens, nil
 }
 
 // availableZonesFromSKU returns zones where the SKU is available,
