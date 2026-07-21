@@ -291,11 +291,11 @@
       setNoData('distribution', false);
 
       const includeNull = document.getElementById('distIncludeNull').checked;
-      const total = data.total_instances;
+      const setCount = Object.values(dist ? dist.values : {}).reduce((s, n) => s + n, 0);
+      const total = includeNull ? data.total_instances : setCount;
 
       let entries = Object.entries(dist ? dist.values : {})
         .sort((a, b) => b[1] - a[1]);
-      const setCount = entries.reduce((s, e) => s + e[1], 0);
 
       if (includeNull && total > setCount) {
         entries.push(['not provided/null', total - setCount]);
@@ -312,7 +312,8 @@
 
       const labels = entries.map(([v, n]) => {
         const pct = total > 0 ? ((n / total) * 100).toFixed(1) : 0;
-        return v + '  (' + n + ' times / ' + pct + '% all)';
+        const pctLabel = includeNull ? '% all' : '% of set';
+        return v + '  (' + n + ' / ' + pct + pctLabel + ')';
       });
       const vals = entries.map(([, n]) => n);
       const colors = entries.map(([v]) =>
