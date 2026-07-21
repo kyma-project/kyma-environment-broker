@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
@@ -5565,4 +5566,178 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 	runtime = suite.GetRuntimeResourceByInstanceID(iid)
 	require.NotNil(t, runtime.Spec.AuditLogAccessEnabled)
 	assert.True(t, *runtime.Spec.AuditLogAccessEnabled)
+}
+
+func TestUpdate_AzureImageVersionSuffix(t *testing.T) {
+	hyperVGens := map[string]string{
+		"Standard_D2s_v5": "-gen2",
+		"Standard_D4_v3":  "",
+	}
+	azureZones := map[string][]string{
+		"Standard_D2s_v5": {"1", "2", "3"},
+		"Standard_D4_v3":  {"1", "2", "3"},
+	}
+
+	newSuite := func(t *testing.T) (*BrokerSuiteTest, string) {
+		cfg := fixConfig()
+		cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
+		cfg.InfrastructureManager.UseMachineImageVersionSuffix = true
+		factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)
+		suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithFactory(factory))
+
+		iid := uuid.New().String()
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"region": "westeurope",
+					"machineType": "Standard_D2s_v5",
+					"additionalWorkerNodePools": [
+						{
+							"name": "gen2-pool",
+							"machineType": "Standard_D2s_v5",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 10
+						},
+						{
+							"name": "no-gen2-pool",
+							"machineType": "Standard_D4_v3",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 10
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		return suite, iid
+	}
+
+	t.Run("kyma worker node pool keeps image suffix unchanged", func(t *testing.T) {
+		suite, iid := newSuite(t)
+		defer suite.TearDown()
+
+		resp := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"autoScalerMin": 4,
+					"autoScalerMax": 12
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		updateOpID := suite.DecodeOperationID(resp)
+		suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].Machine.Image)
+		assert.Equal(t, "12345.6-gen2", *runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version)
+	})
+
+	t.Run("kyma worker node pool image suffix updated when machine type changes", func(t *testing.T) {
+		suite, iid := newSuite(t)
+		defer suite.TearDown()
+
+		resp := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"machineType": "Standard_D4_v3"
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		updateOpID := suite.DecodeOperationID(resp)
+		suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].Machine.Image)
+		assert.Equal(t, "12345.6", *runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version)
+	})
+
+	t.Run("additional worker node pools image suffixes reflect machine types", func(t *testing.T) {
+		suite, iid := newSuite(t)
+		defer suite.TearDown()
+
+		// add a new pool, change machine type on gen2-pool, leave no-gen2-pool unchanged
+		resp := suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"additionalWorkerNodePools": [
+						{
+							"name": "gen2-pool",
+							"machineType": "Standard_D4_v3",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 10
+						},
+						{
+							"name": "no-gen2-pool",
+							"machineType": "Standard_D4_v3",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 10
+						},
+						{
+							"name": "new-gen2-pool",
+							"machineType": "Standard_D2s_v5",
+							"haZones": true,
+							"autoScalerMin": 3,
+							"autoScalerMax": 10
+						}
+					]
+				}
+			}`)
+		defer func() { _ = resp.Body.Close() }()
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		updateOpID := suite.DecodeOperationID(resp)
+		suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+		require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+
+		for _, w := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+			require.NotNil(t, w.Machine.Image)
+			switch w.Name {
+			case "gen2-pool":
+				// machine type changed to Standard_D4_v3 — no suffix
+				assert.Equal(t, "12345.6", *w.Machine.Image.Version)
+			case "no-gen2-pool":
+				// machine type unchanged (Standard_D4_v3) — no suffix
+				assert.Equal(t, "12345.6", *w.Machine.Image.Version)
+			case "new-gen2-pool":
+				// new pool with Standard_D2s_v5 — gen2 suffix
+				assert.Equal(t, "12345.6-gen2", *w.Machine.Image.Version)
+			}
+		}
+	})
 }

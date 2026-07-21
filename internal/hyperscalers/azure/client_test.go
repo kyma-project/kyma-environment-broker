@@ -166,12 +166,100 @@ func TestAzureClient_RetryOnFillCacheError(t *testing.T) {
 		providerSpec: spec,
 	}
 
-	err := client.ensureZonesLoaded(context.Background())
+	err := client.ensureCacheLoaded(context.Background())
 	require.Error(t, err)
 	assert.Equal(t, retries, callCount)
 }
 
-// --- helpers ---
+func TestHyperVGeneration_HappyPath(t *testing.T) {
+	skus := []*armcompute.ResourceSKU{
+		buildSKUWithHyperV("Standard_D4s_v5", []string{"1", "2", "3"}, nil, "V1,V2"),
+	}
+
+	client := buildClient(skus, nil)
+
+	gen, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+	assert.Equal(t, hyperVGenerationV2Suffix, gen)
+}
+
+func TestHyperVGeneration_OnlyV1(t *testing.T) {
+	skus := []*armcompute.ResourceSKU{
+		buildSKUWithHyperV("Standard_D4s_v5", []string{"1", "2", "3"}, nil, "V1"),
+	}
+
+	client := buildClient(skus, nil)
+
+	gen, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+	assert.Equal(t, "", gen)
+}
+
+func TestHyperVGeneration_OnlyV2(t *testing.T) {
+	skus := []*armcompute.ResourceSKU{
+		buildSKUWithHyperV("Standard_D4s_v5", []string{"1", "2", "3"}, nil, "V2"),
+	}
+
+	client := buildClient(skus, nil)
+
+	gen, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+	assert.Equal(t, hyperVGenerationV2Suffix, gen)
+}
+
+func TestHyperVGeneration_MissingCapability(t *testing.T) {
+	skus := []*armcompute.ResourceSKU{
+		buildSKU("Standard_D4s_v5", []string{"1", "2", "3"}, nil),
+	}
+
+	client := buildClient(skus, nil)
+
+	gen, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+	assert.Equal(t, "", gen)
+}
+
+func TestHyperVGeneration_MachineNotInRegion(t *testing.T) {
+	skus := []*armcompute.ResourceSKU{
+		buildSKUWithHyperV("Standard_D8s_v5", []string{"1"}, nil, "V2"),
+	}
+
+	client := buildClient(skus, nil)
+
+	gen, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+	assert.Equal(t, "", gen)
+}
+
+func TestHyperVGeneration_APIError(t *testing.T) {
+	client := buildClient(nil, assert.AnError)
+
+	_, err := client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.Error(t, err)
+}
+
+func TestHyperVGeneration_CacheSharedWithZones(t *testing.T) {
+	callCount := 0
+	skus := []*armcompute.ResourceSKU{
+		buildSKUWithHyperV("Standard_D4s_v5", []string{"1", "2"}, nil, "V1,V2"),
+	}
+
+	mockAPI := &countingMockSKUsAPI{skus: skus, callCounter: &callCount}
+	spec := buildProviderSpec([]string{"Standard_D4s_v5"})
+	client := &AzureClient{
+		skusClient:   mockAPI,
+		region:       "westeurope",
+		providerSpec: spec,
+	}
+
+	_, err := client.AvailableZones(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+
+	_, err = client.HyperVGeneration(context.Background(), "Standard_D4s_v5")
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, callCount, "zones and HyperV generation should share a single API call")
+}
 
 func buildSecret(plainValues map[string]string) *unstructured.Unstructured {
 	data := make(map[string]interface{})
@@ -193,9 +281,10 @@ func buildClient(skus []*armcompute.ResourceSKU, apiErr error) *AzureClient {
 	}
 	spec := buildProviderSpec(machineNames)
 	return &AzureClient{
-		skusClient:   &mockSKUsAPI{skus: skus, err: apiErr},
-		region:       "westeurope",
-		providerSpec: spec,
+		skusClient:                   &mockSKUsAPI{skus: skus, err: apiErr},
+		region:                       "westeurope",
+		providerSpec:                 spec,
+		useMachineImageVersionSuffix: true,
 	}
 }
 
@@ -213,6 +302,10 @@ func buildProviderSpec(machineNames []string) *configuration.ProviderSpec {
 }
 
 func buildSKU(name string, zones []string, restrictedZones []string) *armcompute.ResourceSKU {
+	return buildSKUWithHyperV(name, zones, restrictedZones, "")
+}
+
+func buildSKUWithHyperV(name string, zones []string, restrictedZones []string, hyperVGen string) *armcompute.ResourceSKU {
 	resType := "virtualMachines"
 	zonesPtrs := make([]*string, len(zones))
 	for i, z := range zones {
@@ -241,6 +334,14 @@ func buildSKU(name string, zones []string, restrictedZones []string) *armcompute
 					Zones: restrictedPtrs,
 				},
 			},
+		}
+	}
+
+	if hyperVGen != "" {
+		capName := "HyperVGenerations"
+		capValue := hyperVGen
+		sku.Capabilities = []*armcompute.ResourceSKUCapabilities{
+			{Name: &capName, Value: &capValue},
 		}
 	}
 

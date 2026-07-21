@@ -95,11 +95,15 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 			discoveredZones[pool.MachineType] = []string{}
 		}
 	case internal.OperationTypeUpdate:
+		if operation.UpdatingParameters.MachineType != nil {
+			discoveredZones[*operation.UpdatingParameters.MachineType] = []string{}
+		}
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
 			discoveredZones[pool.MachineType] = []string{}
 		}
 	}
 
+	machineImageVersionSuffixes := make(map[string]string)
 	for machineType := range discoveredZones {
 		zones, err := client.AvailableZones(context.Background(), machineType)
 		if err != nil {
@@ -108,10 +112,19 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 		log.Info(fmt.Sprintf("Available zones for machine type %s in region %s: %v", machineType, operation.ProviderValues.Region, zones))
 		discoveredZones[machineType] = zones
+
+		if provider == runtime.Azure {
+			suffix, err := client.HyperVGeneration(context.Background(), machineType)
+			if err != nil {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get HyperV generation for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
+			}
+			machineImageVersionSuffixes[machineType] = suffix
+		}
 	}
 
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.DiscoveredZones = discoveredZones
+		op.MachineImageVersionSuffixes = machineImageVersionSuffixes
 	}, log)
 }
 

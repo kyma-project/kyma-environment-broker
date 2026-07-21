@@ -155,6 +155,9 @@ type Operation struct {
 	// DiscoveredZones stores availability zones per machine type, resolved at runtime
 	DiscoveredZones map[string][]string `json:"discovered_zones"`
 
+	// MachineImageVersionSuffixes stores machine image version suffixes per machine type (e.g. "-gen2" for Azure Gen2)
+	MachineImageVersionSuffixes map[string]string `json:"machine_image_version_suffixes,omitempty"`
+
 	// PreviousParameters stores the instance parameters before the update
 	PreviousParameters ProvisioningParameters `json:"previous_parameters"`
 
