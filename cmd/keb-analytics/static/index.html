@@ -531,7 +531,12 @@
       const btn = document.getElementById('refresh-btn');
       btn.disabled = true;
       btn.textContent = 'Refreshing…';
+      const deadline = Date.now() + 5 * 60 * 1000; // 5-minute timeout
       for (;;) {
+        if (Date.now() > deadline) {
+          document.getElementById('error').textContent = 'Refresh timed out. Try again.';
+          break;
+        }
         let status;
         try {
           status = await (await fetch('/api/status')).json();
