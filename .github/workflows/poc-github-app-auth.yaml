@@ -20,6 +20,11 @@ jobs:
         with:
           token: ${{ steps.token.outputs.token }}
 
+      - name: Configure git
+        run: |
+          git config user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
+          git config user.name "kyma-gopher"
+
       - name: Test read access
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
@@ -31,8 +36,6 @@ jobs:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           BRANCH="poc-github-app-test-${{ github.run_id }}"
-          git config user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
-          git config user.name "kyma-gopher"
           git checkout -b "$BRANCH"
           git commit --allow-empty -m "POC test commit"
           git push origin "$BRANCH"
