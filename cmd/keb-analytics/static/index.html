@@ -59,6 +59,7 @@
     </select>
 
     <button id="refresh-btn">Refresh</button>
+    <span id="cache-status" style="margin-left:1rem;font-size:0.85rem;color:#666"></span>
   </div>
 
   <p id="total"></p>
@@ -491,6 +492,15 @@
       }
       currentData = data;
 
+      // Update cache status line.
+      if (data.cached_at) {
+        const cachedAt = new Date(data.cached_at);
+        const nextAt = new Date(data.next_refresh_at);
+        const fmt = d => d.toLocaleString(undefined, {dateStyle:'short', timeStyle:'medium'});
+        document.getElementById('cache-status').textContent =
+          'Cached: ' + fmt(cachedAt) + ' · Next refresh: ' + fmt(nextAt);
+      }
+
       // Always repopulate plan dropdown from fresh data.
       populatePlanDropdown(data.plans);
 
@@ -514,18 +524,43 @@
     document.getElementById('period').addEventListener('change', load);
     document.getElementById('plan').addEventListener('change', onPlanChange);
     document.getElementById('region').addEventListener('change', load);
-    document.getElementById('refresh-btn').addEventListener('click', async () => {
+
+    async function pollUntilReady() {
+      const statusEl = document.getElementById('cache-status');
       const btn = document.getElementById('refresh-btn');
       btn.disabled = true;
       btn.textContent = 'Refreshing…';
+      for (;;) {
+        let status;
+        try {
+          status = await (await fetch('/api/status')).json();
+        } catch(e) {
+          document.getElementById('error').textContent = 'Status check failed: ' + e;
+          break;
+        }
+        const fmt = d => new Date(d).toLocaleString(undefined, {dateStyle:'short', timeStyle:'medium'});
+        if (!status.refreshing) {
+          statusEl.textContent = status.cached_at
+            ? 'Cached: ' + fmt(status.cached_at) + ' · Next refresh: ' + fmt(status.next_refresh_at)
+            : '';
+          await load();
+          break;
+        }
+        statusEl.textContent = 'Fetching data…';
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', async () => {
       try {
         await fetch('/api/refresh', { method: 'POST' });
       } catch(e) {
         document.getElementById('error').textContent = 'Refresh failed: ' + e;
+        return;
       }
-      await load();
-      btn.disabled = false;
-      btn.textContent = 'Refresh';
+      await pollUntilReady();
     });
     load();
   </script>
