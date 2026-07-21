@@ -167,24 +167,14 @@ func main() {
 				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, analytics.TrendParamsFrom(snapshot.resp.Combined))
 			}
 		} else {
-			// Time-range query: single DB fetch, derive prov/update params in-memory.
-			// Op events for the full history are used for trends; the time-range filter
-			// applies only to which instances count in the bar charts.
-			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
-			if err != nil {
-				slog.Error("failed to fetch op events for range", "error", err)
-				http.Error(w, "failed to build stats", http.StatusInternalServerError)
-				return
-			}
-			provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
-			updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
-			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-			// trendParams come from the full (unfiltered) cache so that trends are visible
-			// even when no instances were provisioned within the selected time window.
+			// Time-range query: slice the in-memory cache — no DB round-trip needed.
 			mu.RLock()
-			trendParams := analytics.TrendParamsFrom(c.resp.Combined)
+			snapshot := c
 			mu.RUnlock()
-			data = buildFilteredStats(provParams, updateParams, opEvents, planFilter, regionFilter, planIDToName, plans, regionsByPlan, trendParams)
+			provParams := analytics.OpEventsToProvParamsInRange(snapshot.opEvents, tr)
+			updateParams := analytics.OpEventsToUpdateParamsInRange(snapshot.opEvents, tr)
+			trendParams := analytics.TrendParamsFrom(snapshot.resp.Combined)
+			data = buildFilteredStats(provParams, updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

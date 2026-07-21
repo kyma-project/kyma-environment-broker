@@ -259,10 +259,11 @@ func AggregateUpdates(params []UpdateParamsWithID) ParameterStats {
 
 // AggregateCombined computes per-instance parameter usage: an instance is counted as
 // "using" a parameter if it was set in its provisioning operation OR in any update operation.
-// total = number of unique active instances (from provParams).
+// total = number of unique instance IDs across both provParams and updateParams.
 func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
 	// instancesWithParam[param] = set of instance IDs that have the param set
 	instancesWithParam := make(map[string]map[string]struct{})
+	allInstances := make(map[string]struct{})
 
 	record := func(instanceID, param string) {
 		if _, ok := instancesWithParam[param]; !ok {
@@ -272,6 +273,7 @@ func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []Upd
 	}
 
 	for _, p := range provParams {
+		allInstances[p.InstanceID] = struct{}{}
 		counts := make(map[string]map[string]int)
 		walkFields(p.Params.Parameters, provisioningFieldConfig, counts)
 		for param := range counts {
@@ -280,6 +282,7 @@ func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []Upd
 	}
 
 	for _, p := range updateParams {
+		allInstances[p.InstanceID] = struct{}{}
 		counts := make(map[string]map[string]int)
 		walkFields(p.Params, updatingFieldConfig, counts)
 		for param := range counts {
@@ -287,7 +290,7 @@ func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []Upd
 		}
 	}
 
-	total := len(provParams)
+	total := len(allInstances)
 	var result []ParameterStat
 	for param, instances := range instancesWithParam {
 		result = append(result, ParameterStat{
