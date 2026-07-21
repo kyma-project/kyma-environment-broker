@@ -179,18 +179,19 @@ jobs:
         env:
           GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-bot-token.outputs.token }}
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          MGMT_CHARTS_CLONE_URL: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git"
         run: |
           KEB_TAG="${{ steps.versions.outputs.KEB_TAG }}"
 
           # Fast path: branch still exists (typical at release time)
-          git clone --depth 1 --branch "keb-${KEB_TAG}" "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git" mgmt-charts 2>/dev/null || true
+          git clone --depth 1 --branch "keb-${KEB_TAG}" "${MGMT_CHARTS_CLONE_URL}" mgmt-charts 2>/dev/null || true
           CHART_VERSION=$(grep '^version:' mgmt-charts/keb-sap/Chart.yaml 2>/dev/null | awk '{print $2}' || true)
 
           if [ -z "$CHART_VERSION" ]; then
             # Branch was deleted after merge — find via merged PR title
             echo "Branch keb-${KEB_TAG} not found, searching merged PRs..."
             rm -rf mgmt-charts
-            git clone --depth 1 "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git" mgmt-charts
+            git clone --depth 1 "${MGMT_CHARTS_CLONE_URL}" mgmt-charts
 
             MERGE_SHA=$(gh pr list \
               -R "${MGMT_CHARTS_REPO_URL}" \
@@ -224,7 +225,9 @@ jobs:
 
       - name: Clone product-kyma-runtime
         if: steps.detect.outputs.has_changes == 'true'
-        run: git clone "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git" product-kyma-runtime
+        env:
+          PRODUCT_RUNTIME_CLONE_URL: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
+        run: git clone "${PRODUCT_RUNTIME_CLONE_URL}" product-kyma-runtime
 
       - name: Update toc.yaml
         if: steps.detect.outputs.has_changes == 'true'
@@ -241,6 +244,7 @@ jobs:
         env:
           GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-bot-token.outputs.token }}
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          PRODUCT_RUNTIME_CLONE_URL: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
         run: |
           BRANCH_NAME="keb-docs-sync-${GITHUB_SHA:0:8}"
           git checkout -B "${BRANCH_NAME}"
@@ -253,7 +257,7 @@ jobs:
           git commit -m "docs(keb): sync doc structure changes to toc.yaml
 
           Triggered by kyma-environment-broker@${GITHUB_SHA}"
-          git remote set-url origin "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.PK_RUNTIME_REPO_NAME }}.git"
+          git remote set-url origin "${PRODUCT_RUNTIME_CLONE_URL}"
           git push origin "${BRANCH_NAME}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
           echo "pushed=true" >> "$GITHUB_OUTPUT"

@@ -70,10 +70,12 @@ jobs:
         run: echo "BRANCH_NAME=keb-${TAG}" >> $GITHUB_ENV
 
       - name: Setup git and clone repo
+        env:
+          MANAGEMENT_PLANE_CHARTS_WITH_USER: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
         run: |
           git config --global user.email ${{ vars.GIT_USER_EMAIL }}
           git config --global user.name ${{ vars.GIT_USER_NAME }}
-          git clone "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
+          git clone "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -106,10 +108,12 @@ jobs:
 
       - name: Commit and push changes
         working-directory: management-plane-charts
+        env:
+          MANAGEMENT_PLANE_CHARTS_WITH_USER: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
         run: |
           git add .
           git commit -m "Bump keb to ${TAG}"
-          git remote set-url origin "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
+          git remote set-url origin "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
           git push origin ${BRANCH_NAME}
 
       - name: Create PR if needed
