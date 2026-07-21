@@ -325,13 +325,13 @@ func TestAggregateCombined_TotalIsDistinctInstanceCount(t *testing.T) {
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 		{InstanceID: "i3", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 	}
-	// i4 appears only in updates — must be counted in Total
+	// i4 appears only in updates — it is deprovisioned and must NOT be counted in Total.
 	updateParams := []UpdateParamsWithID{
 		{InstanceID: "i4", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m5.xlarge")}},
 	}
 	stats := AggregateCombined(provParams, updateParams)
 	for _, p := range stats.Parameters {
-		assert.Equal(t, 4, p.Total, "Total must equal distinct instance IDs across prov + update")
+		assert.Equal(t, 3, p.Total, "Total must equal active instance count (provParams only)")
 	}
 }
 
