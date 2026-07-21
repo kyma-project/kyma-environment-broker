@@ -262,6 +262,10 @@ func activeInstanceSet(provParams []ProvisioningParamsWithID) map[string]struct{
 // Only update ops from active instances (present in provParams) are counted.
 // SetCount = distinct active instances that had the parameter set in at least one update.
 // Total = number of active instances.
+// Note: a parameter is considered "set" only when walkFields records a non-nil/non-zero value
+// for it. An update op that explicitly clears a field (sets it to nil/zero) will not be counted
+// for that parameter — this conflates "was set to a non-zero value" with "was touched".
+// This is pre-existing behaviour and matches the semantics of the provisioning aggregator.
 func AggregateUpdates(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
 	active := activeInstanceSet(provParams)
 	instancesWithParam := make(map[string]map[string]struct{})

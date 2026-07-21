@@ -54,7 +54,9 @@ type cache struct {
 
 // buildRangeCache computes provParams, updateParams and the unfiltered StatsResponse
 // for the given time window from the shared opEvents slice.
-// trendParams and opEvents are always from the full history so trends are continuous.
+// Trends are intentionally built from the full opEvents history regardless of the window:
+// this means the Trends field in the 7d/30d/90d responses is identical to the "all" response,
+// providing continuous historical context on the trend chart even when a narrow period is selected.
 func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planIDToName map[string]string, trendParams []string) rangeCache {
 	provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
 	updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
