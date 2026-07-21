@@ -348,9 +348,10 @@
 
     const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function fmtDate(isoDate) {
-      // isoDate is YYYY-MM-DD; returns "Jan 03" style without year
+      // isoDate is YYYY-MM-DD; returns "Jan 03" or "Jan 03 2025" (year shown in January only)
       const d = new Date(isoDate + 'T00:00:00Z');
-      return MON[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0');
+      const label = MON[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0');
+      return d.getUTCMonth() === 0 ? label + ' ' + d.getUTCFullYear() : label;
     }
 
     function renderTrendTab(data) {
@@ -384,6 +385,15 @@
           }]
         },
         options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: function(items) {
+                  return fmtDate(new Date(items[0].parsed.x).toISOString().slice(0, 10));
+                }
+              }
+            }
+          },
           scales: {
             x: {
               type: 'linear',
