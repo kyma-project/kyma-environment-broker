@@ -279,10 +279,18 @@ jobs:
             exit 1
           fi
 
+      - name: Generate bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
+          repositories: kyma-environment-broker
+
       - name: Create PR if anything changed
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
           prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
           if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_CHART_AND_IMAGES }}; then
@@ -299,7 +307,7 @@ jobs:
       - name: Merge PR
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
           REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
         run: |
           if [ "$PR_NUMBER" -gt 0 ]; then
@@ -468,9 +476,17 @@ jobs:
           git commit -m "Update KEB chart metadata with version ${{ inputs.name }}"
           git push origin gh-pages
 
+      - name: Generate bot token
+        id: bot-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
+          repositories: kyma-environment-broker
+
       - name: Publish release
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }} # We do use bot token here to trigger workflow uploading logs
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }} # We do use bot token here to trigger workflow uploading logs
         run: |
           git checkout main
           gh release edit ${{ inputs.name }} --draft=false
