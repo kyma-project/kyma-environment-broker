@@ -26,17 +26,30 @@ jobs:
         run: |
           gh pr list --repo kyma-project/kyma-environment-broker --limit 3
 
-      - name: Test write access (create and close draft PR)
+      - name: Test write access and commit author linking
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           BRANCH="poc-github-app-test-${{ github.run_id }}"
-          git config user.email "gopher-bot@kyma-project.io"
+          git config user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
           git config user.name "kyma-gopher"
           git checkout -b "$BRANCH"
           git commit --allow-empty -m "POC test commit"
           git push origin "$BRANCH"
           PR_URL=$(gh pr create --draft --title "POC test PR (${{ github.run_id }})" --body "Automated test - will be closed immediately" --base main --head "$BRANCH")
+          echo "PR URL: $PR_URL"
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+
+          echo "=== PR author ==="
+          gh api repos/kyma-project/kyma-environment-broker/pulls/${PR_NUMBER} --jq '.user.login'
+
+          echo "=== Commit author ==="
+          gh api repos/kyma-project/kyma-environment-broker/pulls/${PR_NUMBER}/commits --jq '.[0].commit.author'
+
+          echo "=== gh pr list -A app/kyma-gopher ==="
+          gh pr list --repo kyma-project/kyma-environment-broker -A app/kyma-gopher --state open --json headRefName,url | jq .
+
           gh pr close "$PR_URL"
           git push origin --delete "$BRANCH"
 
@@ -61,19 +74,38 @@ jobs:
         run: |
           gh pr list --repo kyma/management-plane-charts --limit 3
 
-      - name: Test write access on enterprise (create and close draft PR)
+      - name: Test write access and commit author linking on enterprise
         env:
           GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          MGMT_CHARTS_CLONE_URL: "https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git"
         run: |
           BRANCH="poc-github-app-test-${{ github.run_id }}"
-          git clone https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+          git clone "${MGMT_CHARTS_CLONE_URL}"
           cd management-plane-charts
-          git config user.email "gopher-bot@kyma-project.io"
+          git config user.email "2606+kyma-gopher[bot]@users.noreply.${{ vars.GH_TOOLS_HOST }}"
           git config user.name "kyma-gopher"
           git checkout -b "$BRANCH"
           git commit --allow-empty -m "POC test commit"
           git push origin "$BRANCH"
-          PR_URL=$(gh pr create --draft --title "POC test PR (${{ github.run_id }})" --body "Automated test - will be closed immediately" --base main --head "$BRANCH" --repo kyma/management-plane-charts)
+          PR_URL=$(printf 'https://github.com/kyma-project/kyma-environment-broker\nRisk is Low\n' | gh pr create --draft \
+            --title "POC test PR (${{ github.run_id }})" \
+            --body-file - \
+            --base main \
+            --head "$BRANCH" \
+            --repo kyma/management-plane-charts)
+          echo "PR URL: $PR_URL"
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+
+          echo "=== PR author ==="
+          gh api repos/kyma/management-plane-charts/pulls/${PR_NUMBER} --hostname ${{ vars.GH_TOOLS_HOST }} --jq '.user.login'
+
+          echo "=== Commit author ==="
+          gh api repos/kyma/management-plane-charts/pulls/${PR_NUMBER}/commits --hostname ${{ vars.GH_TOOLS_HOST }} --jq '.[0].commit.author'
+
+          echo "=== gh pr list -A app/kyma-gopher ==="
+          gh pr list --repo kyma/management-plane-charts -A app/kyma-gopher --state open --json headRefName,url | jq .
+
           gh pr close "$PR_URL" --repo kyma/management-plane-charts
           git push origin --delete "$BRANCH"
