@@ -49,7 +49,7 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 
 	azureSuffixNeeded := provider == runtime.Azure && s.useMachineImageVersionSuffix
 	if !zonesDiscoveryEnabled && !azureSuffixNeeded {
-		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", provider))
+		log.Info(fmt.Sprintf("Zones discovery disabled and machine image version suffix not needed for provider %s, skipping", provider))
 		return operation, 0, nil
 	}
 	zonesAlreadyDone := !zonesDiscoveryEnabled || len(operation.DiscoveredZones) > 0
@@ -118,7 +118,7 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 			if err != nil {
 				return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
 			}
-			rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
+			shuffleZones(zones)
 			log.Info(fmt.Sprintf("Available zones for machine type %s in region %s: %v", machineType, operation.ProviderValues.Region, zones))
 			discoveredZones[machineType] = zones
 		}
@@ -143,4 +143,10 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
+}
+
+// shuffleZones randomizes zone order so that different instances spread across
+// availability zones instead of all landing in the first zone returned by the API.
+func shuffleZones(zones []string) {
+	rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 }
