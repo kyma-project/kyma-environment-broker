@@ -66,7 +66,7 @@ The [`auto-merge`](/.github/workflows/auto-merge.yaml) workflow enables the auto
 
 ## All Checks Passed Workflow
 
-The [`pr-checks`](/.github/workflows/pr-checks.yaml) workflow checks if all jobs, except those excluded in the workflow configuration, have passed. If the workflow is triggered by a PR where the author is the `kyma-gopher-bot`, the workflow ends immediately with success.
+The [`pr-checks`](/.github/workflows/pr-checks.yaml) workflow checks if all jobs, except those excluded in the workflow configuration, have passed. If the workflow is triggered by a PR where the author is `kyma-gopher[bot]`, the workflow ends immediately with success.
 
 ## Validate Database Migrations Workflow
 

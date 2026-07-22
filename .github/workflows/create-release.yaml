@@ -4,8 +4,8 @@ run-name: Create release ${{ inputs.name }}
 env:
   IMAGE_REPO: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
-  GIT_EMAIL: team-gopher+1@sap.com
-  GIT_NAME: kyma-gopher-bot
+  GIT_EMAIL: 4345220+kyma-gopher[bot]@users.noreply.github.com
+  GIT_NAME: kyma-gopher
   BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 permissions:
@@ -292,7 +292,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
-          prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
+          prs=$(gh pr list -A app/kyma-gopher --state open --json headRefName | jq -r '.[] | .headRefName')
           if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_CHART_AND_IMAGES }}; then
             echo "PR already exists, no need to create a new one"
             echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_CHART_AND_IMAGES }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
