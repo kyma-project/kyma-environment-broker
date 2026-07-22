@@ -22,8 +22,8 @@ jobs:
 
       - name: Configure git
         run: |
-          git config user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
-          git config user.name "kyma-gopher"
+          git config --global user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
+          git config --global user.name "kyma-gopher"
 
       - name: Test read access
         env:
@@ -52,6 +52,59 @@ jobs:
 
           echo "=== gh pr list -A app/kyma-gopher ==="
           gh pr list --repo kyma-project/kyma-environment-broker -A app/kyma-gopher --state open --json headRefName,url | jq .
+
+          gh pr close "$PR_URL"
+          git push origin --delete "$BRANCH"
+
+  test-pr-checks:
+    name: Test pr-checks with App token
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
+          repositories: kyma-environment-broker
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Configure git
+        run: |
+          git config --global user.email "4345220+kyma-gopher[bot]@users.noreply.github.com"
+          git config --global user.name "kyma-gopher"
+
+      - name: Create PR with notable-changes modification and verify both checks
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          BRANCH="poc-pr-checks-test-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+
+          # Touch notable-changes/ to trigger pull-check-notable-changes-version-permission
+          mkdir -p notable-changes
+          echo "poc test" > notable-changes/poc-test-${{ github.run_id }}.md
+
+          git add notable-changes/
+          git commit -m "POC pr-checks test"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "POC pr-checks test (${{ github.run_id }})" \
+            --body "Automated test of pr-checks with App token - will be closed immediately" \
+            --base poc-github-apps \
+            --head "$BRANCH")
+          echo "PR URL: $PR_URL"
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+
+          echo "Waiting 20s for checks to start..."
+          sleep 20
+
+          echo "=== pr-checks and notable-changes check status ==="
+          gh pr checks "$PR_NUMBER" --repo kyma-project/kyma-environment-broker
 
           gh pr close "$PR_URL"
           git push origin --delete "$BRANCH"
