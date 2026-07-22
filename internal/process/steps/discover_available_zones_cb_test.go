@@ -481,6 +481,41 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_D4s_v5"], []string{"1", "2", "3"})
 }
 
+func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuffixes(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	instance := fixture.FixInstance(instanceID)
+	instance.SubscriptionSecretName = fixture.AzureUnclaimedSecretName
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
+	operation.RuntimeID = instance.RuntimeID
+	machineType := "Standard_D4s_v5"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	step := NewDiscoverAvailableZonesCBStep(
+		memoryStorage,
+		fixture.NewAzureProviderSpec(t, false),
+		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
+		fixture.NewFakeFactoryWithHyperV(map[string][]string{}, map[string]string{
+			"Standard_D4s_v5": "-gen2",
+		}, nil))
+
+	// when
+	operation, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	assert.Empty(t, operation.DiscoveredZones)
+	assert.Equal(t, "-gen2", operation.MachineImageVersionSuffixes["Standard_D4s_v5"])
+}
+
 func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()

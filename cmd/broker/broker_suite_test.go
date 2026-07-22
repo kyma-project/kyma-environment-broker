@@ -1143,6 +1143,18 @@ func fixSecrets() []runtime.Object {
 				"subscriptionID": []byte("test-subscription-id"),
 			},
 		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure-eu-access",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
+			},
+		},
 	}
 }
 
