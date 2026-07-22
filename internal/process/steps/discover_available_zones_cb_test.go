@@ -20,6 +20,7 @@ const (
 	operationID               = "operation-1"
 	subscriptionSecretNameAWS = "aws-most-used-shared"
 	machineTypeM6ILarge       = "m6i.large"
+	machineTypeStandardD4sV5  = "Standard_D4s_v5"
 )
 
 func TestDiscoverAvailableZonesCBStep_ZonesDiscoveryDisabled(t *testing.T) {
@@ -397,7 +398,7 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "Standard_D4s_v5"
+	machineType := machineTypeStandardD4sV5
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
@@ -409,7 +410,7 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 		},
 		{
 			Name:          "worker-2",
-			MachineType:   "Standard_D4s_v5", // duplicate — queried only once
+			MachineType:   machineTypeStandardD4sV5, // duplicate — queried only once
 			HAZones:       false,
 			AutoScalerMin: 1,
 			AutoScalerMax: 3,
@@ -423,8 +424,8 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
-			"Standard_D4s_v5": {"1", "2", "3"},
-			"Standard_F8s_v2": {"1", "2", "3"},
+			machineTypeStandardD4sV5: {"1", "2", "3"},
+			"Standard_F8s_v2":        {"1", "2", "3"},
 		}, nil))
 
 	// when
@@ -435,7 +436,7 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Zero(t, repeat)
 	assert.Len(t, operation.DiscoveredZones, 2) // Standard_D4s_v5 and Standard_F8s_v2 (deduped)
-	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_D4s_v5"], []string{"1", "2", "3"})
+	assert.ElementsMatch(t, operation.DiscoveredZones[machineTypeStandardD4sV5], []string{"1", "2", "3"})
 	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_F8s_v2"], []string{"1", "2", "3"})
 }
 
@@ -454,7 +455,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 		{
 			Name:          "worker-1",
-			MachineType:   "Standard_D4s_v5",
+			MachineType:   machineTypeStandardD4sV5,
 			HAZones:       true,
 			AutoScalerMin: 3,
 			AutoScalerMax: 10,
@@ -468,7 +469,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
-			"Standard_D4s_v5": {"1", "2", "3"},
+			machineTypeStandardD4sV5: {"1", "2", "3"},
 		}, nil))
 
 	// when
@@ -478,7 +479,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Zero(t, repeat)
 	assert.Len(t, operation.DiscoveredZones, 1)
-	assert.ElementsMatch(t, operation.DiscoveredZones["Standard_D4s_v5"], []string{"1", "2", "3"})
+	assert.ElementsMatch(t, operation.DiscoveredZones[machineTypeStandardD4sV5], []string{"1", "2", "3"})
 }
 
 func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuffixes(t *testing.T) {
@@ -493,7 +494,7 @@ func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuf
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "Standard_D4s_v5"
+	machineType := machineTypeStandardD4sV5
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -503,7 +504,7 @@ func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuf
 		fixture.NewAzureProviderSpec(t, false),
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactoryWithHyperV(map[string][]string{}, map[string]string{
-			"Standard_D4s_v5": "-gen2",
+			machineTypeStandardD4sV5: "-gen2",
 		}, nil))
 
 	// when
@@ -513,7 +514,7 @@ func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuf
 	assert.NoError(t, err)
 	assert.Zero(t, repeat)
 	assert.Empty(t, operation.DiscoveredZones)
-	assert.Equal(t, "-gen2", operation.MachineImageVersionSuffixes["Standard_D4s_v5"])
+	assert.Equal(t, "-gen2", operation.MachineImageVersionSuffixes[machineTypeStandardD4sV5])
 }
 
 func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
@@ -528,7 +529,7 @@ func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
 	operation.RuntimeID = instance.RuntimeID
-	machineType := "Standard_D4s_v5"
+	machineType := machineTypeStandardD4sV5
 	operation.ProvisioningParameters.Parameters.MachineType = &machineType
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)

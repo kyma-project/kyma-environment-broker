@@ -49,8 +49,10 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", provider))
 		return operation, 0, nil
 	}
-	if zonesDiscoveryEnabled && len(operation.DiscoveredZones) > 0 {
-		log.Info("Available zones already discovered, skipping")
+	zonesAlreadyDone := !zonesDiscoveryEnabled || len(operation.DiscoveredZones) > 0
+	suffixesAlreadyDone := provider != runtime.Azure || len(operation.MachineImageVersionSuffixes) > 0
+	if zonesAlreadyDone && suffixesAlreadyDone {
+		log.Info("Zones and machine image version suffixes already discovered, skipping")
 		return operation, 0, nil
 	}
 
