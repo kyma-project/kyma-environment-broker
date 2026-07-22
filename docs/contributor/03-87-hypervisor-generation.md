@@ -41,7 +41,7 @@ The Azure ResourceSKUs API call is shared between zone discovery and hypervisor 
 
 | Environment Variable                                          | Helm Value                                           | Default | Description                                                         |
 |---------------------------------------------------------------|------------------------------------------------------|---------|---------------------------------------------------------------------|
-| `APP_INFRASTRUCTURE_MANAGER_USE_MACHINE_IMAGE_VERSION_SUFFIX` | `infrastructureManager.useMachineImageVersionSuffix` | `false` | Enables automatic machine image version suffix detection for Azure. |
+| **APP_INFRASTRUCTURE_MANAGER_USE_MACHINE_IMAGE_VERSION_SUFFIX** | `infrastructureManager.useMachineImageVersionSuffix` | `false` | Enables automatic machine image version suffix detection for Azure. |
 
 ## Upgrading `machineImageVersion`
 
