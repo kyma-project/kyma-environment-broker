@@ -4,6 +4,7 @@ import sys
 
 token = os.getenv('GITHUB_TOKEN')
 repo = os.getenv('REPOSITORY')
+github_output = os.getenv('GITHUB_OUTPUT')
 headers = {'Authorization': f'token {token}'}
 
 response = requests.get(f'https://api.github.com/repos/{repo}/releases/latest', headers=headers)
@@ -39,5 +40,10 @@ else:
     next_version = f'{major}.{minor}.{int(patch) + 1}'
     reason = f'patch bump, no kind/feature PRs since {latest_version}'
 
-print(next_version)
+if github_output:
+    with open(github_output, 'a') as f:
+        f.write(f'version={next_version}\n')
+else:
+    print(next_version)
+
 print(f'::notice ::Auto-detected version: {next_version} ({reason})', file=sys.stderr)

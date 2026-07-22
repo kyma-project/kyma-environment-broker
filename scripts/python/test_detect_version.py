@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 from unittest.mock import MagicMock, patch
 
 _module_source = open("scripts/python/detect_version.py").read()
@@ -33,20 +35,23 @@ def _run_detect(latest_version, pr_pages):
         for page in built_pages
     ]
 
-    captured = []
-
     def fake_get(url, headers=None):
         return call_queue.pop(0)
 
-    def fake_print(*a, **_):
-        captured.append(str(a[0]))
+    with tempfile.NamedTemporaryFile(mode='r', suffix='.env', delete=False) as tmp:
+        tmp_path = tmp.name
 
-    with patch.dict("os.environ", ENV):
-        with patch("requests.get", side_effect=fake_get):
-            with patch("builtins.print", side_effect=fake_print):
+    try:
+        env = {**ENV, "GITHUB_OUTPUT": tmp_path}
+        with patch.dict("os.environ", env):
+            with patch("requests.get", side_effect=fake_get):
                 exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
 
-    return captured[0]
+        with open(tmp_path) as f:
+            output = dict(line.strip().split("=", 1) for line in f if "=" in line)
+        return output["version"]
+    finally:
+        os.unlink(tmp_path)
 
 
 def test_patch_bump_no_feature_prs():
@@ -103,17 +108,21 @@ def test_prs_before_release_ignored():
         MagicMock(json=lambda: [old_pr, new_pr], raise_for_status=lambda: None),
         MagicMock(json=lambda: [], raise_for_status=lambda: None),
     ]
-    captured = []
 
     def fake_get(url, headers=None):
         return call_queue.pop(0)
 
-    def fake_print(*a, **_):
-        captured.append(str(a[0]))
+    with tempfile.NamedTemporaryFile(mode='r', suffix='.env', delete=False) as tmp:
+        tmp_path = tmp.name
 
-    with patch.dict("os.environ", ENV):
-        with patch("requests.get", side_effect=fake_get):
-            with patch("builtins.print", side_effect=fake_print):
+    try:
+        env = {**ENV, "GITHUB_OUTPUT": tmp_path}
+        with patch.dict("os.environ", env):
+            with patch("requests.get", side_effect=fake_get):
                 exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
 
-    assert captured[0] == "1.2.4"
+        with open(tmp_path) as f:
+            output = dict(line.strip().split("=", 1) for line in f if "=" in line)
+        assert output["version"] == "1.2.4"
+    finally:
+        os.unlink(tmp_path)

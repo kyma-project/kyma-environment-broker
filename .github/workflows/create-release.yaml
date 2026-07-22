@@ -73,11 +73,10 @@ jobs:
           REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
         run: |
           if [ "${{ inputs.name }}" = "detect-version" ]; then
-            VERSION=$(python3 scripts/python/detect_version.py)
+            python3 scripts/python/detect_version.py
           else
-            VERSION="${{ inputs.name }}"
+            echo "version=${{ inputs.name }}" >> $GITHUB_OUTPUT
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   validate-release:
     name: Validate release
