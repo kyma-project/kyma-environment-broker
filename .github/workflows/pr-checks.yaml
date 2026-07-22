@@ -22,7 +22,7 @@ jobs:
         run: | 
           echo "Draft PRs are not checked"
           exit 1
-      - name: Check if author is kyma-gopher-bot
+      - name: Check if author is kyma-gopher
         if: ${{ github.event.pull_request.user.login == 'kyma-gopher[bot]' }}
         run: |
           echo "PRs from kyma-gopher are automatically green"
