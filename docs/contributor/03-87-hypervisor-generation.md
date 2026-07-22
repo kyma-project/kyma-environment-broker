@@ -7,7 +7,7 @@
 Some Azure machine types require a Generation 2 (Gen2) hypervisor-compatible machine image version. For example, `Standard_D2s_v6` cannot boot with a Gen1 image and requires the `-gen2` image variant. Kyma Environment Broker (KEB) automatically detects the supported hypervisor generation for each Azure machine type and appends the appropriate suffix (for example, `-gen2`) to the machine image version when creating or updating a Runtime CR.
 
 > ### Note:
-> This feature is Azure-only. For other cloud providers, the machine image version is used as-is.
+> This feature is Azure-only. For other infrastructure providers, the machine image version is used as-is.
 
 ## How It Works
 
