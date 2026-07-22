@@ -7,9 +7,11 @@ This file contains functions which can be used to provision/update/deprovision a
 import requests
 import subprocess
 import uuid
+import datetime
 
 KEB_BASE_URL = "http://localhost:8080"
 KEB_SERVICE_ID = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+VERBOSE = True
 
 _DEFAULT_REGIONS = {
     "aws": "eu-central-1",
@@ -166,7 +168,7 @@ def deprovision(instance_id, plan_id):
 
 
 def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", plan="aws",
-              user_id="testing@script.sap", region="", parameters={}, validate=False):
+              user_id="testing@script.sap", region="", platform_region="", parameters={}, validate=False):
     if instance_id == "":
         instance_id = str(uuid.uuid4())
 
@@ -176,8 +178,11 @@ def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", 
     plan_id = plan_info["id"]
 
     parameters = dict(parameters)
-    if "region" not in parameters:
-        parameters["region"] = region or _default_region(plan_name_lower)
+    if plan_name_lower == "trial":
+        parameters.pop("region", None)
+    else:
+        if "region" not in parameters:
+            parameters["region"] = region or _default_region(plan_name_lower)
     if "name" not in parameters:
         suffix = str(uuid.uuid4())[:4]
         parameters["name"] = "testing-cluster-" + suffix
@@ -185,18 +190,27 @@ def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", 
     if validate:
         _validate_parameters(plan_info["create_schema"], parameters)
 
+    context = {
+        "globalaccount_id": global_account_id,
+        "subaccount_id": subaccount_id,
+        "user_id": user_id,
+        "sm_operator_credentials": {
+            "clientid": "clientid",
+            "clientsecret": "clientsecret",
+            "url": "https://service-manager.example.com",
+            "sm_url": "https://service-manager.example.com",
+        },
+    }
+
     payload = {
         "service_id": KEB_SERVICE_ID,
         "plan_id": plan_id,
-        "context": {
-            "globalaccount_id": global_account_id,
-            "subaccount_id": subaccount_id,
-            "user_id": user_id
-        },
+        "context": context,
         "parameters": parameters
     }
 
-    url = f"{KEB_BASE_URL}/oauth/v2/service_instances/{instance_id}?accepts_incomplete=true"
+    path_region = f"/{platform_region}" if platform_region else ""
+    url = f"{KEB_BASE_URL}/oauth{path_region}/v2/service_instances/{instance_id}?accepts_incomplete=true"
     response = execute_request(method="PUT", url=url, payload=payload)
     if response.status_code == 202:
         print("Provisioning request accepted.")
@@ -248,7 +262,86 @@ def update_runtime_status(instance_id, state):
         print(f"Error occurred while updating runtime status: {e}")
 
 
-VERBOSE = True
+_DEFAULT_MODULES = {
+    "channel": "fast",
+    "list": [
+        {"name": "istio", "channel": ""},
+        {"name": "api-gateway"},
+        {"name": "btp-operator"},
+        {"name": "nats"},
+        {"name": "telemetry"},
+    ],
+}
+
+
+_TRIAL_PLATFORM_REGIONS = ["cf-eu10", "cf-us10"]
+
+
+def provision_many(n, global_account_id="ga-id", plan="trial", region="", platform_region="", parameters={}, validate=False):
+    runtimes = []
+    for i in range(n):
+        params = dict(parameters)
+        if "modules" not in params:
+            params["modules"] = _DEFAULT_MODULES
+        if plan.lower() == "trial":
+            pr = _TRIAL_PLATFORM_REGIONS[0] if i < (n + 1) // 2 else _TRIAL_PLATFORM_REGIONS[1]
+        else:
+            pr = platform_region
+        r = provision(
+            global_account_id=global_account_id,
+            subaccount_id=str(uuid.uuid4()),
+            plan=plan,
+            region=region,
+            platform_region=pr,
+            parameters=params,
+            validate=validate,
+        )
+        if r:
+            runtimes.append(r)
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"instances_{timestamp}.txt"
+    with open(filename, "w") as f:
+        for r in runtimes:
+            f.write(r.instance_id + "\n")
+    print(f"Instance IDs written to {filename}")
+
+    return runtimes
+
+
+def monitor_instances(runtimes):
+    instance_ids = [r.instance_id for r in runtimes]
+    params = [("instance_id", iid) for iid in instance_ids]
+    url = f"{KEB_BASE_URL}/runtimes"
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    data = response.json().get("data", [])
+    by_id = {item["instanceID"]: item for item in data}
+
+    succeeded, failed, in_progress = [], [], []
+    for iid in instance_ids:
+        item = by_id.get(iid)
+        if item is None:
+            in_progress.append(iid)
+            continue
+        state = item.get("status", {}).get("state", "")
+        if state == "succeeded":
+            succeeded.append(iid)
+        elif state == "failed":
+            failed.append(iid)
+        else:
+            in_progress.append(iid)
+
+    print(f"succeeded: {len(succeeded)}, failed: {len(failed)}, in_progress: {len(in_progress)}")
+    return {"succeeded": succeeded, "failed": failed, "in_progress": in_progress}
+
+
+def deprovision_many(runtimes):
+    for r in runtimes:
+        r.deprovision()
+
+
 
 
 def execute_request(method, url, payload, headers=None):

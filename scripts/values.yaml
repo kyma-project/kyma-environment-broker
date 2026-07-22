@@ -1,4 +1,5 @@
 broker:
+  onlySingleTrialPerGA: "false"
   additionalVolumeSizeGiPlans: "aws,gcp,azure,sap-converged-cloud,alicloud,preview,build-runtime-aws,build-runtime-gcp,build-runtime-azure,build-runtime-alicloud"
   additionalVolumeSizeGiMaxSize: 1000
   dynamicVolumeSizeEnabled: "true"
@@ -516,3 +517,5 @@ hap:
     - gdch
 
 subscriptionGardenerResource: CredentialsBinding
+infrastructureManager:
+  defaultTrialProvider: "AWS"
