@@ -47,8 +47,8 @@ jobs:
           echo "PR URL: $PR_URL"
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
 
-          echo "Waiting 60s for checks to start and complete..."
-          sleep 60
+          echo "Waiting 300s for checks to start and complete..."
+          sleep 300
 
           echo "=== pr-checks and notable-changes check status ==="
           gh pr checks "$PR_NUMBER" --repo kyma-project/kyma-environment-broker || true
