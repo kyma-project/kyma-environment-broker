@@ -160,7 +160,8 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 }
 
 // inRange returns true if the YYYY-MM-DD date string d falls within [tr.From, tr.To).
-// An empty tr (both zero) always returns true.
+// An empty tr (both zero) always returns true. Single-bounded ranges are supported:
+// a zero From means unbounded start; a zero To means unbounded end.
 func inRange(d string, tr TimeRange) bool {
 	if tr.From.IsZero() && tr.To.IsZero() {
 		return true

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -43,3 +44,35 @@ func TestBuildFilteredStats_TrendsUsesSuppliedParamsWhenProvEmpty(t *testing.T) 
 }
 
 func strPtr(s string) *string { return &s }
+
+func TestMatchRangeKey_AllTime(t *testing.T) {
+	assert.Equal(t, "all", matchRangeKey(analytics.TimeRange{}))
+}
+
+func TestMatchRangeKey_SevenDays(t *testing.T) {
+	tr := analytics.TimeRange{From: time.Now().UTC().AddDate(0, 0, -7)}
+	assert.Equal(t, "7d", matchRangeKey(tr))
+}
+
+func TestMatchRangeKey_ThirtyDays(t *testing.T) {
+	tr := analytics.TimeRange{From: time.Now().UTC().AddDate(0, 0, -30)}
+	assert.Equal(t, "30d", matchRangeKey(tr))
+}
+
+func TestMatchRangeKey_NinetyDays(t *testing.T) {
+	tr := analytics.TimeRange{From: time.Now().UTC().AddDate(0, 0, -90)}
+	assert.Equal(t, "90d", matchRangeKey(tr))
+}
+
+func TestMatchRangeKey_CustomRange(t *testing.T) {
+	tr := analytics.TimeRange{From: time.Now().UTC().AddDate(0, 0, -45)}
+	assert.Equal(t, "", matchRangeKey(tr))
+}
+
+func TestMatchRangeKey_WithToDate(t *testing.T) {
+	tr := analytics.TimeRange{
+		From: time.Now().UTC().AddDate(0, 0, -7),
+		To:   time.Now().UTC(),
+	}
+	assert.Equal(t, "", matchRangeKey(tr))
+}
