@@ -140,6 +140,7 @@ func PlainProvisioningParams(params []ProvisioningParamsWithID) []internal.Provi
 
 // OpEventsToProvParamsInRange derives ProvisioningParamsWithID from provision events in events,
 // filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+// Uses ParsedProv when available to avoid redundant JSON unmarshalling.
 func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningParamsWithID {
 	result := make([]ProvisioningParamsWithID, 0, len(events))
 	for _, ev := range events {
@@ -149,10 +150,16 @@ func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningP
 		if !inRange(ev.CreatedAt, tr) {
 			continue
 		}
-		p, err := parseProvisioningParameters(ev.RawParams)
-		if err != nil {
-			slog.Warn("analytics: skipping malformed provisioning_parameters in op event", "instance_id", ev.InstanceID, "error", err)
-			continue
+		var p internal.ProvisioningParameters
+		if ev.ParsedProv != nil {
+			p = *ev.ParsedProv
+		} else {
+			var err error
+			p, err = parseProvisioningParameters(ev.RawParams)
+			if err != nil {
+				slog.Warn("analytics: skipping malformed provisioning_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+				continue
+			}
 		}
 		result = append(result, ProvisioningParamsWithID{InstanceID: ev.InstanceID, Params: p})
 	}
@@ -161,6 +168,7 @@ func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningP
 
 // OpEventsToUpdateParamsInRange derives UpdateParamsWithID from update events in events,
 // filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+// Uses ParsedUpdate when available to avoid redundant JSON unmarshalling.
 func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParamsWithID {
 	result := make([]UpdateParamsWithID, 0, len(events))
 	for _, ev := range events {
@@ -171,9 +179,13 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 			continue
 		}
 		var params internal.UpdatingParametersDTO
-		if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
-			slog.Warn("analytics: skipping malformed updating_parameters in op event", "instance_id", ev.InstanceID, "error", err)
-			continue
+		if ev.ParsedUpdate != nil {
+			params = *ev.ParsedUpdate
+		} else {
+			if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
+				slog.Warn("analytics: skipping malformed updating_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+				continue
+			}
 		}
 		result = append(result, UpdateParamsWithID{InstanceID: ev.InstanceID, Params: params})
 	}
