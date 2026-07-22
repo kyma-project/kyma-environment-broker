@@ -61,15 +61,31 @@ func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planI
 	provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
 	updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
 	plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-	combined := analytics.AggregateCombined(provParams, updateParams)
+
+	// Run independent aggregations in parallel.
+	var (
+		provisioning  analytics.ParameterStats
+		updates       analytics.ParameterStats
+		combined      analytics.ParameterStats
+		distributions []analytics.DistributionStat
+	)
+	var wg sync.WaitGroup
+	wg.Add(4)
+	go func() { defer wg.Done(); provisioning = analytics.AggregateProvisioning(provParams) }()
+	go func() { defer wg.Done(); updates = analytics.AggregateUpdates(provParams, updateParams) }()
+	go func() { defer wg.Done(); combined = analytics.AggregateCombined(provParams, updateParams) }()
+	go func() { defer wg.Done(); distributions = analytics.BuildDistributions(provParams) }()
+	wg.Wait()
+
+	trends := analytics.BuildTrends(opEvents, trendParams)
 	resp := analytics.StatsResponse{
 		TotalInstances: len(provParams),
 		TotalUpdates:   len(updateParams),
-		Provisioning:   analytics.AggregateProvisioning(provParams),
-		Updates:        analytics.AggregateUpdates(provParams, updateParams),
+		Provisioning:   provisioning,
+		Updates:        updates,
 		Combined:       combined,
-		Distributions:  analytics.BuildDistributions(provParams),
-		Trends:         analytics.BuildTrends(opEvents, trendParams),
+		Distributions:  distributions,
+		Trends:         trends,
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
 	}

@@ -45,11 +45,15 @@ type UpdateParamsWithID struct {
 }
 
 // OpEvent is a single provisioning or update operation used for trend computation.
+// ParsedProv and ParsedUpdate are pre-parsed at fetch time to avoid repeated JSON
+// unmarshalling during aggregation and trend computation.
 type OpEvent struct {
-	InstanceID string
-	CreatedAt  string // YYYY-MM-DD
-	Type       string // "provision" or "update"
-	RawParams  string // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
+	InstanceID  string
+	CreatedAt   string // YYYY-MM-DD
+	Type        string // "provision" or "update"
+	RawParams   string // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
+	ParsedProv  *internal.ProvisioningParameters  // non-nil for provision events
+	ParsedUpdate *internal.UpdatingParametersDTO  // non-nil for update events
 }
 
 // FetchOpEventsInRange returns all succeeded provisioning and update operations on active
@@ -85,14 +89,31 @@ WHERE o.type IN ('provision', 'update')
 		return nil, fmt.Errorf("fetching op events: %w", err)
 	}
 
-	result := make([]OpEvent, len(rows))
-	for i, row := range rows {
-		result[i] = OpEvent{
+	result := make([]OpEvent, 0, len(rows))
+	for _, row := range rows {
+		ev := OpEvent{
 			InstanceID: row.InstanceID,
 			CreatedAt:  row.CreatedDate,
 			Type:       row.Type,
 			RawParams:  row.RawParams,
 		}
+		switch row.Type {
+		case "provision":
+			p, err := parseProvisioningParameters(row.RawParams)
+			if err != nil {
+				slog.Warn("analytics: skipping malformed provisioning_parameters", "instance_id", row.InstanceID, "error", err)
+				continue
+			}
+			ev.ParsedProv = &p
+		case "update":
+			var params internal.UpdatingParametersDTO
+			if err := json.Unmarshal([]byte(row.RawParams), &params); err != nil {
+				slog.Warn("analytics: skipping malformed updating_parameters", "instance_id", row.InstanceID, "error", err)
+				continue
+			}
+			ev.ParsedUpdate = &params
+		}
+		result = append(result, ev)
 	}
 	return result, nil
 }
