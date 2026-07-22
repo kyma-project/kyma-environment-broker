@@ -13,7 +13,7 @@ Some Azure machine types require a Generation 2 (Gen2) hypervisor-compatible mac
 
 ### Detection
 
-During provisioning or update, the [`Discover_Available_Zones_CredentialsBinding`](../../internal/process/steps/discover_available_zones_cb.go) step queries the Azure ResourceSKUs API for the instance's subscription and region. For each machine type involved in the operation, it reads the `HyperVGenerations` capability from the SKU response. The possible values are:
+During provisioning or update, the [`Discover_Available_Zones_CredentialsBinding`](../../internal/process/steps/discover_available_zones_cb.go) step queries the Azure ResourceSKUs API for the instance's subscription and region. For each machine type involved in the operation, it reads the `HyperVGenerations` capability from the SKU response. The possible values are the following:
 
 - `V1` — Gen1 only, no suffix appended
 - `V2` — Gen2 only, suffix `-gen2` appended
