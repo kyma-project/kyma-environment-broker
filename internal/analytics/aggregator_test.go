@@ -996,3 +996,43 @@ func TestBuildTrend_UpdateRawParamsIsUpdatingParametersDTO(t *testing.T) {
 	assert.Equal(t, 0, trend.Points[0].Count)
 	assert.Equal(t, 1, trend.Points[1].Count)
 }
+
+// ---------------------------------------------------------------------------
+// BuildTrends (single-pass multi-param)
+// ---------------------------------------------------------------------------
+
+// TestBuildTrends_MatchesBuildTrend verifies that BuildTrends produces the same output
+// as calling BuildTrend individually for each parameter when all params share the same
+// active days (so the shared day axis introduces no extra points).
+func TestBuildTrends_MatchesBuildTrend(t *testing.T) {
+	// Both machineType and gvisor change on day 1 only, so allEventDays == {"2024-01-01"}
+	// for both params, and the outputs should be identical to per-param BuildTrend calls.
+	mt := "m6i.xlarge"
+	p := internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{
+			MachineType: &mt,
+			Gvisor:      &pkg.GvisorDTO{Enabled: true},
+		},
+	}
+	raw, _ := json.Marshal(p)
+	events := []OpEvent{
+		{InstanceID: "i1", CreatedAt: "2024-01-01", Type: "provision", RawParams: string(raw)},
+	}
+	params := []string{"machineType", "gvisor"}
+
+	got := BuildTrends(events, params)
+	require.Len(t, got, len(params))
+
+	for i, param := range params {
+		want := BuildTrend(events, param)
+		assert.Equal(t, want.Parameter, got[i].Parameter, "param %s: parameter name mismatch", param)
+		assert.Equal(t, want.Points, got[i].Points, "param %s: points mismatch", param)
+	}
+}
+
+// TestBuildTrends_EmptyParamsReturnsNil verifies the early-exit for an empty params slice.
+func TestBuildTrends_EmptyParamsReturnsNil(t *testing.T) {
+	events := []OpEvent{provEvent("i1", "2024-01-01", "m6i.xlarge")}
+	got := BuildTrends(events, nil)
+	assert.Nil(t, got)
+}
