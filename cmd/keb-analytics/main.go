@@ -35,13 +35,75 @@ type Config struct {
 	RefreshInterval time.Duration `envconfig:"default=1h"`
 }
 
+// rangeCache holds pre-computed stats for a single time window.
+type rangeCache struct {
+	provParams   []analytics.ProvisioningParamsWithID
+	updateParams []analytics.UpdateParamsWithID
+	resp         analytics.StatsResponse // unfiltered stats for this window
+}
+
+// cache is the top-level in-memory store populated on each refresh.
 type cache struct {
-	resp          analytics.StatsResponse
-	provParams    []analytics.ProvisioningParamsWithID
-	updateParams  []analytics.UpdateParamsWithID
-	opEvents      []analytics.OpEvent
-	plans         []string
-	regionsByPlan map[string][]string
+	opEvents      []analytics.OpEvent   // full history, shared across all windows
+	byRange       map[string]rangeCache // keys: "all", "7d", "30d", "90d"
+	plans         []string              // from the "all" window
+	regionsByPlan map[string][]string   // from the "all" window
+	cachedAt      time.Time
+	nextRefreshAt time.Time
+}
+
+// buildRangeCache computes provParams, updateParams and the unfiltered StatsResponse
+// for the given time window from the shared opEvents slice.
+// Trends are intentionally built from the full opEvents history regardless of the window:
+// this means the Trends field in the 7d/30d/90d responses is identical to the "all" response,
+// providing continuous historical context on the trend chart even when a narrow period is selected.
+func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planIDToName map[string]string, trendParams []string) rangeCache {
+	provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
+	updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
+	plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
+	combined := analytics.AggregateCombined(provParams, updateParams)
+	resp := analytics.StatsResponse{
+		TotalInstances: len(provParams),
+		TotalUpdates:   len(updateParams),
+		Provisioning:   analytics.AggregateProvisioning(provParams),
+		Updates:        analytics.AggregateUpdates(provParams, updateParams),
+		Combined:       combined,
+		Distributions:  analytics.BuildDistributions(provParams),
+		Trends:         analytics.BuildTrends(opEvents, trendParams),
+		Plans:          plans,
+		RegionsByPlan:  regionsByPlan,
+	}
+	return rangeCache{provParams: provParams, updateParams: updateParams, resp: resp}
+}
+
+// matchRangeKey returns the cache key ("7d", "30d", "90d", "all") if the TimeRange
+// matches one of the pre-computed windows (within 1-day tolerance for client clock skew).
+// Returns "" if no match — caller must slice from opEvents in-memory.
+func matchRangeKey(tr analytics.TimeRange) string {
+	if tr.From.IsZero() && tr.To.IsZero() {
+		return "all"
+	}
+	if !tr.To.IsZero() {
+		return "" // bounded "to" not a standard window
+	}
+	age := time.Since(tr.From)
+	const tolerance = 25 * time.Hour
+	switch {
+	case abs(age-7*24*time.Hour) < tolerance:
+		return "7d"
+	case abs(age-30*24*time.Hour) < tolerance:
+		return "30d"
+	case abs(age-90*24*time.Hour) < tolerance:
+		return "90d"
+	}
+	return ""
+}
+
+func abs(d time.Duration) time.Duration {
+	if d < 0 {
+		return -d
+	}
+	return d
 }
 
 func main() {
@@ -86,58 +148,85 @@ func main() {
 	}
 
 	var (
-		mu sync.RWMutex
-		c  cache
+		mu         sync.RWMutex
+		c          cache
+		refreshing bool
 	)
 
-	refresh := func() {
-		// Single query: fetch all op events (provision + update) for active instances.
-		// provParams and updateParams are derived in-memory, eliminating two extra round-trips.
+	var refresh func()
+
+	// runRefresh executes refresh() under a refreshing flag, safe for concurrent callers.
+	// A second call while one is already in progress is a no-op.
+	var refreshMu sync.Mutex
+	runRefresh := func() {
+		if !refreshMu.TryLock() {
+			return // already in progress
+		}
+		defer refreshMu.Unlock()
+
+		mu.Lock()
+		refreshing = true
+		mu.Unlock()
+
+		refresh()
+
+		mu.Lock()
+		refreshing = false
+		mu.Unlock()
+	}
+
+	refresh = func() {
 		opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 		if err != nil {
 			slog.Error("failed to fetch op events", "error", err)
 			return
 		}
-		provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
-		updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, analytics.TimeRange{})
 
-		plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
-		provisioning := analytics.AggregateProvisioning(provParams)
-		updates := analytics.AggregateUpdates(updateParams)
-		combined := analytics.AggregateCombined(provParams, updateParams)
-		trendParams := analytics.TrendParamsFrom(combined)
-		trends := analytics.BuildTrends(opEvents, trendParams)
-		resp := analytics.StatsResponse{
-			TotalInstances: len(provParams),
-			TotalUpdates:   len(updateParams),
-			Provisioning:   provisioning,
-			Updates:        updates,
-			Combined:       combined,
-			Distributions:  analytics.BuildDistributions(provParams),
-			Trends:         trends,
-			Plans:          plans,
-			RegionsByPlan:  regionsByPlan,
+		now := time.Now().UTC()
+		windows := map[string]analytics.TimeRange{
+			"all": {},
+			"7d":  {From: now.AddDate(0, 0, -7)},
+			"30d": {From: now.AddDate(0, 0, -30)},
+			"90d": {From: now.AddDate(0, 0, -90)},
 		}
+
+		// Build the "all" window first to derive trendParams used by all windows.
+		allRC := buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, nil)
+		trendParams := analytics.TrendParamsFrom(allRC.resp.Combined)
+
+		// Rebuild "all" with trendParams so its Trends field is populated.
+		allRC = buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, trendParams)
+
+		byRange := make(map[string]rangeCache, len(windows))
+		byRange["all"] = allRC
+		for key, tr := range windows {
+			if key == "all" {
+				continue
+			}
+			byRange[key] = buildRangeCache(opEvents, tr, planIDToName, trendParams)
+		}
+
+		plans, regionsByPlan := allRC.resp.Plans, allRC.resp.RegionsByPlan
 
 		mu.Lock()
 		c = cache{
-			resp:          resp,
-			provParams:    provParams,
-			updateParams:  updateParams,
 			opEvents:      opEvents,
+			byRange:       byRange,
 			plans:         plans,
 			regionsByPlan: regionsByPlan,
+			cachedAt:      now,
+			nextRefreshAt: now.Add(cfg.RefreshInterval),
 		}
 		mu.Unlock()
-		slog.Info("stats cache refreshed", "total_instances", resp.TotalInstances)
+		slog.Info("stats cache refreshed", "total_instances", allRC.resp.TotalInstances)
 	}
 
-	refresh()
+	runRefresh()
 	go func() {
 		ticker := time.NewTicker(cfg.RefreshInterval)
 		defer ticker.Stop()
 		for range ticker.C {
-			refresh()
+			runRefresh()
 		}
 	}()
 
@@ -153,29 +242,40 @@ func main() {
 		planFilter := r.URL.Query().Get("plan")
 		regionFilter := r.URL.Query().Get("region")
 
-		var data analytics.StatsResponse
+		mu.RLock()
+		snapshot := c
+		mu.RUnlock()
 
-		if tr.From.IsZero() && tr.To.IsZero() {
-			// Use cached full dataset; filter in memory if needed.
-			mu.RLock()
-			snapshot := c
-			mu.RUnlock()
-
-			if planFilter == "" && regionFilter == "" {
-				data = snapshot.resp
-			} else {
-				data = buildFilteredStats(snapshot.provParams, snapshot.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, analytics.TrendParamsFrom(snapshot.resp.Combined))
-			}
-		} else {
-			// Time-range query: slice the in-memory cache — no DB round-trip needed.
-			mu.RLock()
-			snapshot := c
-			mu.RUnlock()
-			provParams := analytics.OpEventsToProvParamsInRange(snapshot.opEvents, tr)
-			updateParams := analytics.OpEventsToUpdateParamsInRange(snapshot.opEvents, tr)
-			trendParams := analytics.TrendParamsFrom(snapshot.resp.Combined)
-			data = buildFilteredStats(provParams, updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
+		if snapshot.byRange == nil {
+			http.Error(w, "data not yet available, try again shortly", http.StatusServiceUnavailable)
+			return
 		}
+
+		// Resolve the rangeCache to use — pre-computed if the window matches, otherwise
+		// slice from the full opEvents in-memory (no DB query in either path).
+		var rc rangeCache
+		if key := matchRangeKey(tr); key != "" {
+			rc = snapshot.byRange[key]
+		} else {
+			// Custom date range: derive in-memory from cached opEvents.
+			allCombined := snapshot.byRange["all"].resp.Combined
+			trendParams := analytics.TrendParamsFrom(allCombined)
+			rc = buildRangeCache(snapshot.opEvents, tr, planIDToName, trendParams)
+		}
+
+		var data analytics.StatsResponse
+		if planFilter == "" && regionFilter == "" {
+			data = rc.resp
+			// Always use the full plan/region index for dropdowns.
+			data.Plans = snapshot.plans
+			data.RegionsByPlan = snapshot.regionsByPlan
+		} else {
+			allCombined := snapshot.byRange["all"].resp.Combined
+			trendParams := analytics.TrendParamsFrom(allCombined)
+			data = buildFilteredStats(rc.provParams, rc.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
+		}
+		data.CachedAt = snapshot.cachedAt.Format(time.RFC3339)
+		data.NextRefreshAt = snapshot.nextRefreshAt.Format(time.RFC3339)
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -188,8 +288,29 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		refresh()
-		w.WriteHeader(http.StatusNoContent)
+		go runRefresh()
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		mu.RLock()
+		isRefreshing := refreshing
+		cachedAt := c.cachedAt
+		nextRefreshAt := c.nextRefreshAt
+		mu.RUnlock()
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"refreshing":      isRefreshing,
+			"cached_at":       cachedAt.Format(time.RFC3339),
+			"next_refresh_at": nextRefreshAt.Format(time.RFC3339),
+		}); err != nil {
+			slog.Error("failed to encode status", "error", err)
+		}
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +354,7 @@ func buildFilteredStats(
 		TotalInstances: len(filtered),
 		TotalUpdates:   len(updateParams),
 		Provisioning:   analytics.AggregateProvisioning(filtered),
-		Updates:        analytics.AggregateUpdates(updateParams),
+		Updates:        analytics.AggregateUpdates(filtered, updateParams),
 		Combined:       combined,
 		Distributions:  analytics.BuildDistributions(filtered),
 		Trends:         trends,

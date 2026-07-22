@@ -33,6 +33,7 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"kubeconfig":                behaviorSkip,
 	"shootName":                 behaviorSkip,
 	"shootDomain":               behaviorSkip,
+	"provider":                  behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
 	"modules":                   behaviorModules,
@@ -248,19 +249,63 @@ func AggregateProvisioning(params []ProvisioningParamsWithID) ParameterStats {
 	return toParameterStats(counts, len(plain))
 }
 
-// AggregateUpdates computes parameter usage stats from a slice of UpdateParamsWithID.
-func AggregateUpdates(params []UpdateParamsWithID) ParameterStats {
-	counts := make(map[string]map[string]int)
-	for _, p := range params {
-		walkFields(p.Params, updatingFieldConfig, counts)
+// activeInstanceSet builds a set of instance IDs from provParams for fast membership checks.
+func activeInstanceSet(provParams []ProvisioningParamsWithID) map[string]struct{} {
+	active := make(map[string]struct{}, len(provParams))
+	for _, p := range provParams {
+		active[p.InstanceID] = struct{}{}
 	}
-	return toParameterStats(counts, len(params))
+	return active
+}
+
+// AggregateUpdates computes per-instance parameter usage stats for update operations.
+// Only update ops from active instances (present in provParams) are counted.
+// SetCount = distinct active instances that had the parameter set in at least one update.
+// Total = number of active instances.
+// Note: a parameter is considered "set" only when walkFields records a non-nil/non-zero value
+// for it. An update op that explicitly clears a field (sets it to nil/zero) will not be counted
+// for that parameter — this conflates "was set to a non-zero value" with "was touched".
+// This is pre-existing behaviour and matches the semantics of the provisioning aggregator.
+func AggregateUpdates(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
+	active := activeInstanceSet(provParams)
+	instancesWithParam := make(map[string]map[string]struct{})
+	for _, p := range updateParams {
+		if _, ok := active[p.InstanceID]; !ok {
+			continue
+		}
+		counts := make(map[string]map[string]int)
+		walkFields(p.Params, updatingFieldConfig, counts)
+		for param := range counts {
+			if _, ok := instancesWithParam[param]; !ok {
+				instancesWithParam[param] = make(map[string]struct{})
+			}
+			instancesWithParam[param][p.InstanceID] = struct{}{}
+		}
+	}
+	total := len(provParams)
+	var result []ParameterStat
+	for param, instances := range instancesWithParam {
+		result = append(result, ParameterStat{
+			Parameter: param,
+			SetCount:  len(instances),
+			Total:     total,
+		})
+	}
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].SetCount != result[j].SetCount {
+			return result[i].SetCount > result[j].SetCount
+		}
+		return result[i].Parameter < result[j].Parameter
+	})
+	return ParameterStats{Parameters: result}
 }
 
 // AggregateCombined computes per-instance parameter usage: an instance is counted as
-// "using" a parameter if it was set in its provisioning operation OR in any update operation.
-// total = number of unique instance IDs across both provParams and updateParams.
+// "using" a parameter if it was set in its provisioning operation OR in at least one
+// update operation. Only active instances (present in provParams) are considered.
+// total = number of unique active instances (from provParams).
 func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
+	active := activeInstanceSet(provParams)
 	// instancesWithParam[param] = set of instance IDs that have the param set
 	instancesWithParam := make(map[string]map[string]struct{})
 	allInstances := make(map[string]struct{})
@@ -282,7 +327,9 @@ func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []Upd
 	}
 
 	for _, p := range updateParams {
-		allInstances[p.InstanceID] = struct{}{}
+		if _, ok := active[p.InstanceID]; !ok {
+			continue
+		}
 		counts := make(map[string]map[string]int)
 		walkFields(p.Params, updatingFieldConfig, counts)
 		for param := range counts {

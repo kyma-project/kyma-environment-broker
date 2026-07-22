@@ -292,7 +292,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				TotalInstances: len(provParams),
 				TotalUpdates:   len(updateParams),
 				Provisioning:   analytics.AggregateProvisioning(provParams),
-				Updates:        analytics.AggregateUpdates(updateParams),
+				Updates:        analytics.AggregateUpdates(provParams, updateParams),
 				Combined:       analytics.AggregateCombined(provParams, updateParams),
 				Distributions:  analytics.BuildDistributions(provParams),
 				Plans:          plans,
