@@ -57,7 +57,7 @@ func TestDiscoverAvailableZonesCBStep_ZonesDiscoveryDisabled(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -90,7 +90,7 @@ func TestDiscoverAvailableZonesCBStep_FailWhenNoSubscriptionSecretName(t *testin
 	assert.NoError(t, err)
 
 	step := NewDiscoverAvailableZonesCBStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClientWithCredentialsBindings(),
-		fixture.NewFakeFactory(map[string][]string{}, nil))
+		fixture.NewFakeFactory(map[string][]string{}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -143,7 +143,7 @@ func TestDiscoverAvailableZonesCBStep_SubscriptionSecretNameFromOperation(t *tes
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -199,7 +199,7 @@ func TestDiscoverAvailableZonesCBStep_RegionFromProviderValues(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -235,7 +235,7 @@ func TestDiscoverAvailableZonesCBStep_MachineTypeFromProviderValues(t *testing.T
 		fixture.CreateGardenerClientWithCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
 			"m5.large": {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -270,7 +270,7 @@ func TestDiscoverAvailableZonesCBStep_AWSRepeatWhenError(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDiscoverAvailableZonesCBStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true),
-		fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("AWS error")))
+		fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("AWS error")), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -321,7 +321,7 @@ func TestDiscoverAvailableZonesCBStep_AWSProvisioningHappyPath(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -373,7 +373,7 @@ func TestDiscoverAvailableZonesCBStep_AWSUpdateHappyPath(t *testing.T) {
 		fixture.NewFakeFactory(map[string][]string{
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil))
+		}, nil), false)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -426,7 +426,7 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 		fixture.NewFakeFactory(map[string][]string{
 			machineTypeStandardD4sV5: {"1", "2", "3"},
 			"Standard_F8s_v2":        {"1", "2", "3"},
-		}, nil))
+		}, nil), true)
 
 	// when
 	// Logs should contain: "discovering zones using credentials binding azure-unclaimed region=westeurope"
@@ -470,7 +470,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
 			machineTypeStandardD4sV5: {"1", "2", "3"},
-		}, nil))
+		}, nil), true)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -505,7 +505,7 @@ func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuf
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactoryWithHyperV(map[string][]string{}, map[string]string{
 			machineTypeStandardD4sV5: "-gen2",
-		}, nil))
+		}, nil), true)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -538,7 +538,7 @@ func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
 		memoryStorage,
 		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
-		fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("Azure API error")))
+		fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("Azure API error")), true)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())

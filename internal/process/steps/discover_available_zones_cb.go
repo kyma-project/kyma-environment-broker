@@ -19,19 +19,21 @@ import (
 )
 
 type DiscoverAvailableZonesCBStep struct {
-	operationManager *process.OperationManager
-	instanceStorage  storage.Instances
-	providerSpec     *configuration.ProviderSpec
-	gardenerClient   *gardener.Client
-	factory          hyperscalers.Factory
+	operationManager             *process.OperationManager
+	instanceStorage              storage.Instances
+	providerSpec                 *configuration.ProviderSpec
+	gardenerClient               *gardener.Client
+	factory                      hyperscalers.Factory
+	useMachineImageVersionSuffix bool
 }
 
-func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory) *DiscoverAvailableZonesCBStep {
+func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory, useMachineImageVersionSuffix bool) *DiscoverAvailableZonesCBStep {
 	step := &DiscoverAvailableZonesCBStep{
-		instanceStorage: db.Instances(),
-		providerSpec:    providerSpec,
-		gardenerClient:  gardenerClient,
-		factory:         factory,
+		instanceStorage:              db.Instances(),
+		providerSpec:                 providerSpec,
+		gardenerClient:               gardenerClient,
+		factory:                      factory,
+		useMachineImageVersionSuffix: useMachineImageVersionSuffix,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
@@ -45,12 +47,13 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 	provider := runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)
 	zonesDiscoveryEnabled := s.providerSpec.ZonesDiscovery(provider)
 
-	if !zonesDiscoveryEnabled && provider != runtime.Azure {
+	azureSuffixNeeded := provider == runtime.Azure && s.useMachineImageVersionSuffix
+	if !zonesDiscoveryEnabled && !azureSuffixNeeded {
 		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", provider))
 		return operation, 0, nil
 	}
 	zonesAlreadyDone := !zonesDiscoveryEnabled || len(operation.DiscoveredZones) > 0
-	suffixesAlreadyDone := provider != runtime.Azure || len(operation.MachineImageVersionSuffixes) > 0
+	suffixesAlreadyDone := !azureSuffixNeeded || len(operation.MachineImageVersionSuffixes) > 0
 	if zonesAlreadyDone && suffixesAlreadyDone {
 		log.Info("Zones and machine image version suffixes already discovered, skipping")
 		return operation, 0, nil
@@ -120,7 +123,7 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 			discoveredZones[machineType] = zones
 		}
 
-		if provider == runtime.Azure {
+		if azureSuffixNeeded {
 			suffix, err := client.HyperVGeneration(context.Background(), machineType)
 			if err != nil {
 				return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get HyperV generation for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
