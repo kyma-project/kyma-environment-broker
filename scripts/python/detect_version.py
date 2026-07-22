@@ -10,17 +10,24 @@ response = requests.get(f'https://api.github.com/repos/{repo}/releases/latest', 
 response.raise_for_status()
 latest_release = response.json()
 latest_release_date = latest_release['created_at']
-latest_version = latest_release['name']
+latest_version = latest_release['name'].lstrip('v')
 
-response = requests.get(
-    f'https://api.github.com/repos/{repo}/pulls?state=closed&sort=updated&direction=desc',
-    headers=headers,
-)
-response.raise_for_status()
-prs_since = [
-    pr for pr in response.json()
-    if pr['merged_at'] is not None and pr['merged_at'] > latest_release_date
-]
+prs_since = []
+page = 1
+while True:
+    response = requests.get(
+        f'https://api.github.com/repos/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page={page}',
+        headers=headers,
+    )
+    response.raise_for_status()
+    page_prs = response.json()
+    if not page_prs:
+        break
+    merged = [pr for pr in page_prs if pr['merged_at'] is not None and pr['merged_at'] > latest_release_date]
+    prs_since.extend(merged)
+    if len(merged) < len(page_prs):
+        break
+    page += 1
 
 has_feature = any('kind/feature' in [label['name'] for label in pr['labels']] for pr in prs_since)
 

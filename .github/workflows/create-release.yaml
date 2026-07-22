@@ -42,6 +42,10 @@ on:
         type: boolean
         description: 'Do not publish'
         default: false
+    outputs:
+      version:
+        description: 'Resolved release version'
+        value: ${{ jobs.detect-version.outputs.version }}
 
 jobs:
   detect-version:

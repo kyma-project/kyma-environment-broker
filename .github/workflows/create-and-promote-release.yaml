@@ -28,5 +28,5 @@ jobs:
     needs: create-release
     uses: "./.github/workflows/promote-keb-to-dev.yaml"
     with:
-      releaseTag: ${{ inputs.name }}
+      releaseTag: ${{ needs.create-release.outputs.version }}
     secrets: inherit

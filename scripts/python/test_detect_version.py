@@ -1,70 +1,119 @@
-import importlib.util
 import sys
-import types
 from unittest.mock import MagicMock, patch
 
-# Load detect_version as a module without executing its top-level code
-spec = importlib.util.spec_from_file_location("detect_version", "scripts/python/detect_version.py")
 _module_source = open("scripts/python/detect_version.py").read()
 
+ENV = {"GITHUB_TOKEN": "test-token", "REPOSITORY": "owner/repo"}
+RELEASE_DATE = "2024-01-01T00:00:00Z"
+MERGED_DATE = "2024-02-01T00:00:00Z"
+OLD_DATE = "2023-12-01T00:00:00Z"
 
-def _run_detect(latest_version, prs, monkeypatch_env):
-    """Execute detect_version logic with mocked API responses and return printed version."""
-    latest_release = {"name": latest_version, "created_at": "2024-01-01T00:00:00Z"}
-    pr_list = [
-        {
-            "merged_at": "2024-02-01T00:00:00Z",
-            "labels": [{"name": label} for label in labels],
-        }
-        for labels in prs
-    ]
 
-    responses = [
+def _make_pr(labels, merged_at=MERGED_DATE):
+    return {"merged_at": merged_at, "labels": [{"name": l} for l in labels]}
+
+
+def _run_detect(latest_version, pr_pages):
+    """
+    Execute detect_version with mocked API. pr_pages is a list of pages,
+    each page being a list of label-lists. An empty terminal page is appended
+    automatically to satisfy the pagination loop.
+    """
+    latest_release = {"name": latest_version, "created_at": RELEASE_DATE}
+
+    built_pages = [
+        [_make_pr(labels) for labels in page]
+        for page in pr_pages
+    ] + [[]]  # terminal empty page
+
+    call_queue = [
         MagicMock(json=lambda lr=latest_release: lr, raise_for_status=lambda: None),
-        MagicMock(json=lambda pl=pr_list: pl, raise_for_status=lambda: None),
+    ] + [
+        MagicMock(json=lambda p=page: p, raise_for_status=lambda: None)
+        for page in built_pages
     ]
 
     captured = []
 
     def fake_get(url, headers=None):
-        return responses.pop(0)
+        return call_queue.pop(0)
 
-    with patch.dict("os.environ", monkeypatch_env):
+    def fake_print(*a, **_):
+        captured.append(str(a[0]))
+
+    with patch.dict("os.environ", ENV):
         with patch("requests.get", side_effect=fake_get):
-            with patch("builtins.print", side_effect=lambda *a, **kw: captured.append(str(a[0]))):
+            with patch("builtins.print", side_effect=fake_print):
                 exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
 
-    return captured[0]  # first print is the version
-
-
-ENV = {"GITHUB_TOKEN": "test-token", "REPOSITORY": "owner/repo"}
+    return captured[0]
 
 
 def test_patch_bump_no_feature_prs():
-    version = _run_detect("1.2.3", [["kind/enhancement"], ["kind/bug"]], ENV)
-    assert version == "1.2.4"
+    assert _run_detect("1.2.3", [[["kind/enhancement"], ["kind/bug"]]]) == "1.2.4"
 
 
 def test_minor_bump_with_feature_pr():
-    version = _run_detect("1.2.3", [["kind/feature"], ["kind/bug"]], ENV)
-    assert version == "1.3.0"
+    assert _run_detect("1.2.3", [[["kind/feature"], ["kind/bug"]]]) == "1.3.0"
 
 
 def test_minor_bump_resets_patch_to_zero():
-    version = _run_detect("1.2.9", [["kind/feature"]], ENV)
-    assert version == "1.3.0"
+    assert _run_detect("1.2.9", [[["kind/feature"]]]) == "1.3.0"
 
 
 def test_patch_bump_no_prs():
-    version = _run_detect("1.2.3", [], ENV)
-    assert version == "1.2.4"
+    assert _run_detect("1.2.3", []) == "1.2.4"
 
 
 def test_major_version_preserved():
-    version = _run_detect("2.0.0", [["kind/enhancement"]], ENV)
-    assert version == "2.0.1"
+    assert _run_detect("2.0.0", [[["kind/enhancement"]]]) == "2.0.1"
 
 
 def test_minor_bump_major_version_preserved():
-    version = _run_detect("2.5.3", [["kind/feature"]], ENV)
-    assert version == "2.6.0"
+    assert _run_detect("2.5.3", [[["kind/feature"]]]) == "2.6.0"
+
+
+def test_v_prefix_stripped():
+    assert _run_detect("v1.2.3", [[["kind/enhancement"]]]) == "1.2.4"
+
+
+def test_v_prefix_with_feature():
+    assert _run_detect("v2.3.0", [[["kind/feature"]]]) == "2.4.0"
+
+
+def test_pagination_feature_on_second_page():
+    page1 = [["kind/enhancement"]] * 100
+    page2 = [["kind/feature"]]
+    assert _run_detect("1.0.0", [page1, page2]) == "1.1.0"
+
+
+def test_pagination_no_feature_across_pages():
+    page1 = [["kind/enhancement"]] * 100
+    page2 = [["kind/bug"]] * 50
+    assert _run_detect("1.0.0", [page1, page2]) == "1.0.1"
+
+
+def test_prs_before_release_ignored():
+    latest_release = {"name": "1.2.3", "created_at": RELEASE_DATE}
+    old_pr = _make_pr(["kind/feature"], merged_at=OLD_DATE)
+    new_pr = _make_pr(["kind/enhancement"], merged_at=MERGED_DATE)
+
+    call_queue = [
+        MagicMock(json=lambda: latest_release, raise_for_status=lambda: None),
+        MagicMock(json=lambda: [old_pr, new_pr], raise_for_status=lambda: None),
+        MagicMock(json=lambda: [], raise_for_status=lambda: None),
+    ]
+    captured = []
+
+    def fake_get(url, headers=None):
+        return call_queue.pop(0)
+
+    def fake_print(*a, **_):
+        captured.append(str(a[0]))
+
+    with patch.dict("os.environ", ENV):
+        with patch("requests.get", side_effect=fake_get):
+            with patch("builtins.print", side_effect=fake_print):
+                exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
+
+    assert captured[0] == "1.2.4"
