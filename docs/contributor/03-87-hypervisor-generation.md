@@ -31,7 +31,7 @@ The suffix is concatenated with the base `machineImageVersion` config value when
   - Kyma worker: suffix applied when the machine type changes; otherwise the existing image version is kept.
   - Additional worker node pools: suffix applied when a pool is new or its machine type changes; existing unchanged pools keep their existing image version.
 
-Example: if `machineImageVersion` is `2150.3.0` and the machine type supports Gen2, the Runtime CR receives `2150.3.0-gen2`.
+Example: If `machineImageVersion` is `2150.3.0` and the machine type supports Gen2, the Runtime CR receives `2150.3.0-gen2`.
 
 ### Caching
 
