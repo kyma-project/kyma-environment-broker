@@ -25,6 +25,11 @@ const (
 	behaviorOIDC                            // emit 0 (nil), 1 (single), or len(List) (multi)
 )
 
+const (
+	opTypeProvision = "provision"
+	opTypeUpdate    = "update"
+)
+
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
 // Fields not listed default to behaviorValue. Keys are JSON tag names.
 var provisioningFieldConfig = map[string]fieldBehavior{
@@ -510,7 +515,7 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 		var nowSet bool
 
 		switch ev.Type {
-		case "provision":
+		case opTypeProvision:
 			var params pkg.ProvisioningParametersDTO
 			if ev.ParsedProv != nil {
 				params = ev.ParsedProv.Parameters
@@ -523,7 +528,7 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 			}
 			nowSet = isParamSet(params, provisioningFieldConfig, param)
 			dayProvisioned[ev.CreatedAt]++
-		case "update":
+		case opTypeUpdate:
 			var updParams internal.UpdatingParametersDTO
 			if ev.ParsedUpdate != nil {
 				updParams = *ev.ParsedUpdate
@@ -592,6 +597,75 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 	return TrendStat{Parameter: param, Points: points}
 }
 
+// applyProvEventToTrends updates state/dayDelta for a provision event across all params.
+// Returns false if the event should be skipped (parse error).
+func applyProvEventToTrends(ev OpEvent, params []string, state []bool, dayDelta []map[string]int) bool {
+	var provDTO pkg.ProvisioningParametersDTO
+	if ev.ParsedProv != nil {
+		provDTO = ev.ParsedProv.Parameters
+	} else {
+		p, err := parseProvisioningParameters(ev.RawParams)
+		if err != nil {
+			return false
+		}
+		provDTO = p.Parameters
+	}
+	evCounts := make(map[string]map[string]int)
+	walkFields(provDTO, provisioningFieldConfig, evCounts)
+	for i, param := range params {
+		wasSet := state[i]
+		nowSet := evCounts[param] != nil
+		state[i] = nowSet
+		if delta := trendDelta(wasSet, nowSet); delta != 0 {
+			dayDelta[i][ev.CreatedAt] += delta
+		}
+	}
+	return true
+}
+
+// applyUpdateEventToTrends updates state/dayDelta for an update event across all params.
+// Returns false if the event should be skipped (parse error).
+func applyUpdateEventToTrends(ev OpEvent, params []string, state []bool, dayDelta []map[string]int) bool {
+	var updParams internal.UpdatingParametersDTO
+	if ev.ParsedUpdate != nil {
+		updParams = *ev.ParsedUpdate
+	} else {
+		if err := json.Unmarshal([]byte(ev.RawParams), &updParams); err != nil {
+			return false
+		}
+	}
+	evCounts := make(map[string]map[string]int)
+	walkFields(updParams, updatingFieldConfig, evCounts)
+	for i, param := range params {
+		wasSet := state[i]
+		var nowSet bool
+		if evCounts[param] != nil {
+			nowSet = true
+		} else if _, inConfig := updatingFieldConfig[param]; inConfig {
+			nowSet = false // param updatable and absent → nullified
+		} else {
+			nowSet = wasSet // not updatable → unchanged
+		}
+		state[i] = nowSet
+		if delta := trendDelta(wasSet, nowSet); delta != 0 {
+			dayDelta[i][ev.CreatedAt] += delta
+		}
+	}
+	return true
+}
+
+// trendDelta returns +1 if the param transitioned from unset→set, -1 for set→unset, 0 otherwise.
+func trendDelta(wasSet, nowSet bool) int {
+	switch {
+	case nowSet && !wasSet:
+		return 1
+	case !nowSet && wasSet:
+		return -1
+	default:
+		return 0
+	}
+}
+
 // BuildTrends computes daily trend lines for all given parameters in a single pass over events.
 // Each event is processed once; all per-param states are updated simultaneously.
 // Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
@@ -620,77 +694,13 @@ func BuildTrends(events []OpEvent, params []string) []TrendStat {
 
 	for _, ev := range events {
 		state := getState(ev.InstanceID)
-
 		switch ev.Type {
-		case "provision":
-			var provDTO pkg.ProvisioningParametersDTO
-			if ev.ParsedProv != nil {
-				provDTO = ev.ParsedProv.Parameters
-			} else {
-				p, err := parseProvisioningParameters(ev.RawParams)
-				if err != nil {
-					continue
-				}
-				provDTO = p.Parameters
+		case opTypeProvision:
+			if applyProvEventToTrends(ev, params, state, dayDelta) {
+				dayProvisioned[ev.CreatedAt]++
 			}
-			dayProvisioned[ev.CreatedAt]++
-
-			// Walk once to get all set params for this event.
-			evCounts := make(map[string]map[string]int)
-			walkFields(provDTO, provisioningFieldConfig, evCounts)
-
-			for i, param := range params {
-				wasSet := state[i]
-				nowSet := evCounts[param] != nil
-				state[i] = nowSet
-				delta := 0
-				if nowSet && !wasSet {
-					delta = 1
-				} else if !nowSet && wasSet {
-					delta = -1
-				}
-				if delta != 0 {
-					dayDelta[i][ev.CreatedAt] += delta
-				}
-			}
-
-		case "update":
-			var updParams internal.UpdatingParametersDTO
-			if ev.ParsedUpdate != nil {
-				updParams = *ev.ParsedUpdate
-			} else {
-				if err := json.Unmarshal([]byte(ev.RawParams), &updParams); err != nil {
-					continue
-				}
-			}
-
-			// Walk once to get all set params for this update event.
-			evCounts := make(map[string]map[string]int)
-			walkFields(updParams, updatingFieldConfig, evCounts)
-
-			for i, param := range params {
-				wasSet := state[i]
-				var nowSet bool
-				if evCounts[param] != nil {
-					nowSet = true
-				} else if _, inConfig := updatingFieldConfig[param]; inConfig {
-					// param is updatable and absent from this op → nullified
-					nowSet = false
-				} else {
-					// param not updatable — state unchanged
-					nowSet = wasSet
-				}
-				state[i] = nowSet
-				delta := 0
-				if nowSet && !wasSet {
-					delta = 1
-				} else if !nowSet && wasSet {
-					delta = -1
-				}
-				if delta != 0 {
-					dayDelta[i][ev.CreatedAt] += delta
-				}
-			}
+		case opTypeUpdate:
+			applyUpdateEventToTrends(ev, params, state, dayDelta)
 		}
 	}
 

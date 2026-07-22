@@ -48,11 +48,11 @@ type UpdateParamsWithID struct {
 // ParsedProv and ParsedUpdate are pre-parsed at fetch time to avoid repeated JSON
 // unmarshalling during aggregation and trend computation.
 type OpEvent struct {
-	InstanceID  string
-	CreatedAt   string // YYYY-MM-DD
-	Type        string // "provision" or "update"
-	RawParams   string // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
-	ParsedProv  *internal.ProvisioningParameters  // non-nil for provision events
+	InstanceID   string
+	CreatedAt    string                           // YYYY-MM-DD
+	Type         string                           // "provision" or "update"
+	RawParams    string                           // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
+	ParsedProv   *internal.ProvisioningParameters // non-nil for provision events
 	ParsedUpdate *internal.UpdatingParametersDTO  // non-nil for update events
 }
 
