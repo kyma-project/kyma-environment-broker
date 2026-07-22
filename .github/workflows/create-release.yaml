@@ -6,7 +6,6 @@ env:
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
   GIT_EMAIL: team-gopher+1@sap.com
   GIT_NAME: kyma-gopher-bot
-  BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 permissions:
   contents: write
@@ -16,8 +15,8 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'Create release'
-        default: ""
+        description: 'Release version (leave "detect-version" to auto-detect from PR labels)'
+        default: "detect-version"
         required: true
       skip-sec-file-and-chart-bump:
         type: boolean
@@ -31,8 +30,8 @@ on:
     inputs:
       name:
         type: string
-        description: 'Create release'
-        default: ""
+        description: 'Release version (leave "detect-version" to auto-detect from PR labels)'
+        default: "detect-version"
         required: true
       skip-sec-file-and-chart-bump:
         type: boolean
@@ -44,8 +43,40 @@ on:
         default: false
 
 jobs:
+  detect-version:
+    name: Detect version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.detect.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install requirements
+        run: pip install -r scripts/python/requirements.txt
+
+      - name: Detect or pass through version
+        id: detect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
+        run: |
+          if [ "${{ inputs.name }}" = "detect-version" ]; then
+            VERSION=$(python3 scripts/python/detect_version.py)
+          else
+            VERSION="${{ inputs.name }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
   validate-release:
     name: Validate release
+    needs: [detect-version]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -55,13 +86,13 @@ jobs:
 
       - name: Check if tag already exists
         run: |
-          if [ $(git tag -l ${{ inputs.name }}) ]; then
-            echo "::error ::Tag ${{ inputs.name }} already exists"
+          if [ $(git tag -l ${{ needs.detect-version.outputs.version }}) ]; then
+            echo "::error ::Tag ${{ needs.detect-version.outputs.version }} already exists"
             exit 1
           fi
 
       - name: Check for existing artifacts from previous release runs
-        run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
+        run: "./scripts/check_artifacts_existence.sh ${{ needs.detect-version.outputs.version }}"
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -76,13 +107,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
-          NAME: ${{ inputs.name }}
+          NAME: ${{ needs.detect-version.outputs.version }}
         run: python3 scripts/python/release_label_validator.py
 
       - name: Validate notable changes
         run: |
-          if [ -d "notable-changes/${{ inputs.name }}" ]; then
-            echo "Notable changes for release ${{ inputs.name }} already exist. Please remove the folder and run the release pipeline again."
+          if [ -d "notable-changes/${{ needs.detect-version.outputs.version }}" ]; then
+            echo "Notable changes for release ${{ needs.detect-version.outputs.version }} already exist. Please remove the folder and run the release pipeline again."
             exit 1
           fi
 
@@ -91,128 +122,128 @@ jobs:
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
 
   build-keb-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
       context: .
-      build-args: VERSION=${{ inputs.name }}
-      tags: ${{ inputs.name }}
+      build-args: VERSION=${{ needs.detect-version.outputs.version }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-environments-cleanup-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environments-cleanup-job
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=environmentscleanup
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-deprovision-retrigger-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-deprovision-retrigger-job
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=deprovisionretrigger
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-expirator-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-expirator-job
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=expirator
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-runtime-reconciler-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-runtime-reconciler
       dockerfile: Dockerfile.runtimereconciler
       context: .
       build-args: BIN=runtime-reconciler
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-subaccount-cleanup-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-subaccount-cleanup-job
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=accountcleanup
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-subaccount-sync-image:
-    needs: [validate-release]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-subaccount-sync
       dockerfile: Dockerfile.subaccountsync
       context: .
       build-args: BIN=subaccount-sync
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-schema-migrator-image:
-    needs: [ validate-release ]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-broker-schema-migrator
       dockerfile: Dockerfile.schemamigrator
       context: .
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-service-binding-cleanup-image:
-    needs: [ validate-release ]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-service-binding-cleanup-job
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=servicebindingcleanup
-      tags: ${{ inputs.name }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   build-keb-analytics-image:
-    needs: [ validate-release ]
+    needs: [detect-version, validate-release]
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: keb-analytics
       dockerfile: Dockerfile.keb-analytics
       context: .
-      build-args: VERSION=${{ inputs.name }}
-      tags: ${{ inputs.name }}
+      build-args: VERSION=${{ needs.detect-version.outputs.version }}
+      tags: ${{ needs.detect-version.outputs.version }}
 
   run-keb-chart-integration-tests:
     name: Validate KEB chart
-    needs: [build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image]
+    needs: [detect-version, build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image]
     uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     secrets: inherit
     with:
       last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
       release: "true"
-      version: ${{ inputs.name }}
-      
+      version: ${{ needs.detect-version.outputs.version }}
+
   run-performance-tests:
     name: Performance tests
-    needs: [ build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image ]
+    needs: [detect-version, build-keb-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-schema-migrator-image, build-service-binding-cleanup-image, build-keb-analytics-image]
     uses: "./.github/workflows/run-performance-tests-reusable.yaml"
     secrets: inherit
     with:
       # Release Configuration
       release: "true"
-      version: ${{ inputs.name }}
-      
+      version: ${{ needs.detect-version.outputs.version }}
+
       # Test Configuration
       instances-number: "100"
       updates-number: "300"
-      
+
       # Timing Configuration
       kim-delay-seconds: "0"
       provisioning-max-step-processing-time: "30s"
@@ -220,12 +251,12 @@ jobs:
       deprovisioning-max-step-processing-time: "30s"
       baseline-monitoring-minutes: "0"
       post-test-monitoring-minutes: "0"
-      
+
       # Workers Configuration
       provisioning-workers-amount: "25"
       update-workers-amount: "25"
       deprovisioning-workers-amount: "25"
-      
+
       # Leak Detection Thresholds (use defaults)
       memory-growth-threshold-percent: "70"
       goroutine-increase-threshold: "50"
@@ -234,8 +265,10 @@ jobs:
 
   bumps:
     name: Bump sec-scanners-config, KEB chart
-    needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests, run-performance-tests]
+    needs: [detect-version, validate-release, run-unit-tests, run-keb-chart-integration-tests, run-performance-tests]
     runs-on: ubuntu-latest
+    env:
+      BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ needs.detect-version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -244,19 +277,19 @@ jobs:
       - run: git pull
 
       - name: Create notable changes folder
-        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
+        run: ./scripts/create_notable_changes_dir.sh ${{ needs.detect-version.outputs.version }}
 
       - name: Update sec-scanners-config.yaml
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
-        run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
+        run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ needs.detect-version.outputs.version }}
 
       - name: Update component-config.yaml
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
-        run: scripts/create_component_config.sh ${{ inputs.name }}
+        run: scripts/create_component_config.sh ${{ needs.detect-version.outputs.version }}
 
       - name: Bump KEB chart
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
-        run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
+        run: scripts/bump_keb_chart.sh ${{ needs.detect-version.outputs.version }} "release"
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -292,7 +325,7 @@ jobs:
             echo "Nothing changed, no need to create PR"
             echo "PR_NUMBER=-1" >> $GITHUB_ENV
           else
-            PR_STATUS=$(scripts/create_bump_pr.sh ${{ inputs.name }})
+            PR_STATUS=$(scripts/create_bump_pr.sh ${{ needs.detect-version.outputs.version }})
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
@@ -333,11 +366,11 @@ jobs:
             echo "Bump sha: ${{ github.sha }}"
             if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
               echo "::error ::a PR have been merged before merging the bump PR. Don't rerun this workflow. Create a new release with the same version"
-              exit 1 
+              exit 1
           fi
           else
             echo "Step skipped"
-          fi   
+          fi
 
       - name: Save latest commit ref
         id: pull-ref
@@ -356,7 +389,7 @@ jobs:
 
   create-draft:
     name: Create draft release
-    needs: bumps
+    needs: [detect-version, bumps]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -374,13 +407,13 @@ jobs:
           echo "Bump sha: ${{ needs.bumps.outputs.latest_commit}}"
           if [ "$COMMIT_SHA" != "${{ needs.bumps.outputs.latest_commit}}" ]; then
             echo "::error ::a PR was merged after the bumps. Don't rerun this workflow, create a new release with the same version"
-            exit 1 
+            exit 1
           fi
-        
+
       - name: Create lightweight tag
         run: |
-          git tag ${{ inputs.name }}
-          git push origin ${{ inputs.name }}
+          git tag ${{ needs.detect-version.outputs.version }}
+          git push origin ${{ needs.detect-version.outputs.version }}
 
       - name: Create draft release
         id: create-draft
@@ -388,27 +421,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
-          gh release create ${{ inputs.name }} \
+          gh release create ${{ needs.detect-version.outputs.version }} \
           --draft \
-          --title "${{ inputs.name }}" \
+          --title "${{ needs.detect-version.outputs.version }}" \
           --generate-notes \
           --verify-tag
-          
+
       - name: Add notable changes to release draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
-          if gh api repos/${REPOSITORY}/contents/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
-            echo "Notable changes found."          
-          
-            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/notable-changes/${{ inputs.name }}"
-            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
-          
-            BODY=$(gh release view ${{ inputs.name }} --json body --jq .body)
+          if gh api repos/${REPOSITORY}/contents/notable-changes/${{ needs.detect-version.outputs.version }} --jq '. | length > 0' >/dev/null 2>&1; then
+            echo "Notable changes found."
+
+            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/notable-changes/${{ needs.detect-version.outputs.version }}"
+            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [notable-changes/${{ needs.detect-version.outputs.version }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
+
+            BODY=$(gh release view ${{ needs.detect-version.outputs.version }} --json body --jq .body)
             UPDATED_BODY="${BODY}${NOTABLE_CHANGES}"
 
-            gh release edit ${{ inputs.name }} --notes "${UPDATED_BODY}"
+            gh release edit ${{ needs.detect-version.outputs.version }} --notes "${UPDATED_BODY}"
           else
             echo "No notable changes found for this release."
           fi
@@ -422,12 +455,12 @@ jobs:
           echo "Bump sha: ${{ needs.bumps.outputs.latest_commit}}"
           if [ "$COMMIT_SHA" != "${{ needs.bumps.outputs.latest_commit}}" ]; then
             echo "::error ::a PR may have been merged before the tag and draft release were created. Delete the tag and the draft release. Don't rerun this workflow. Create a new release with the same version"
-            exit 1 
+            exit 1
           fi
 
   publish-release:
     name: Publish release
-    needs: [bumps, create-draft]
+    needs: [detect-version, bumps, create-draft]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     steps:
@@ -445,7 +478,7 @@ jobs:
           OUTPUT=$(helm package ./resources/keb -d ./)
           FILENAME=$(echo $OUTPUT | grep -o '[^ ]*.tgz')
           echo "KEB_CHART=$FILENAME" >> $GITHUB_ENV
-        
+
       - name: Upload packaged KEB chart to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -453,19 +486,19 @@ jobs:
         run: |
           [[ ! -e ${KEB_CHART} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
 
-          gh release upload ${{ inputs.name }} --clobber ${KEB_CHART}
+          gh release upload ${{ needs.detect-version.outputs.version }} --clobber ${KEB_CHART}
 
       - name: Update KEB chart metadata
         run: |
           git checkout gh-pages
-          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${{ inputs.name }} --merge ./index.yaml ./
+          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${{ needs.detect-version.outputs.version }} --merge ./index.yaml ./
 
       - name: Commit KEB chart metadata to gh-pages branch
         run: |
           git config --global user.email ${{ env.GIT_EMAIL }}
           git config --global user.name ${{ env.GIT_NAME }}
           git add index.yaml
-          git commit -m "Update KEB chart metadata with version ${{ inputs.name }}"
+          git commit -m "Update KEB chart metadata with version ${{ needs.detect-version.outputs.version }}"
           git push origin gh-pages
 
       - name: Publish release
@@ -473,4 +506,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }} # We do use bot token here to trigger workflow uploading logs
         run: |
           git checkout main
-          gh release edit ${{ inputs.name }} --draft=false
+          gh release edit ${{ needs.detect-version.outputs.version }} --draft=false
