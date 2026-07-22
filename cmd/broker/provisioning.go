@@ -52,7 +52,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount),
 		},
 		{
-			step: steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory),
+			step: steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory, cfg.InfrastructureManager.UseMachineImageVersionSuffix),
 		},
 		{
 			step: provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),

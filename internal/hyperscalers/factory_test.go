@@ -32,7 +32,7 @@ func TestNewFactory_NoAzureCache(t *testing.T) {
 
 func TestNewFactoryWithAzureCache_NilFetcherNoCache(t *testing.T) {
 	spec := newFactoryTestSpec(t)
-	f := NewFactoryWithAzureCache(context.Background(), spec, nil, false)
+	f := NewFactoryWithAzureCache(context.Background(), spec, nil)
 	factory := f.(*hyperscalerFactory)
 	assert.Nil(t, factory.azureCache, "azureCache must be nil when fetcher is nil")
 }
@@ -43,7 +43,7 @@ func TestNewFactoryWithAzureCache_CacheCreatedWhenFetcherProvided(t *testing.T) 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	f := NewFactoryWithAzureCache(ctx, spec, fetcher, false)
+	f := NewFactoryWithAzureCache(ctx, spec, fetcher)
 	factory := f.(*hyperscalerFactory)
 	assert.NotNil(t, factory.azureCache)
 }
@@ -76,7 +76,7 @@ func TestNewPerCallFromSecret_AzureNeverUsesCachedClient(t *testing.T) {
 
 	f := NewFactoryWithAzureCache(ctx, spec, func() (azure.AzureCredentials, error) {
 		return newFactoryTestCredentials(), nil
-	}, false)
+	})
 
 	client, err := f.NewPerCallFromSecret(context.Background(), pkg.Azure, newFactoryTestSecret(), "westeurope")
 	require.NoError(t, err)
