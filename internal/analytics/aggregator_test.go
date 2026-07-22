@@ -27,6 +27,17 @@ func TestWalkFields_SkipsConfiguredFields(t *testing.T) {
 	assert.False(t, found, "zones should be skipped")
 }
 
+func TestWalkFields_SkipsProvider(t *testing.T) {
+	aws := pkg.CloudProvider("AWS")
+	dto := pkg.ProvisioningParametersDTO{
+		Provider: &aws,
+	}
+	counts := make(map[string]map[string]int)
+	walkFields(dto, provisioningFieldConfig, counts)
+	_, found := counts["provider"]
+	assert.False(t, found, "provider should be skipped")
+}
+
 func TestWalkFields_CountsArrayLength(t *testing.T) {
 	dto := pkg.ProvisioningParametersDTO{
 		RuntimeAdministrators: []string{"admin1", "admin2"},
@@ -197,22 +208,43 @@ func TestAggregateProvisioning_RanksParameters(t *testing.T) {
 	}
 }
 
-func TestAggregateUpdates_CountsSetFields(t *testing.T) {
-	params := []UpdateParamsWithID{
+func TestAggregateUpdates_CountsDistinctActiveInstances(t *testing.T) {
+	provParams := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{}},
+		{InstanceID: "i2", Params: internal.ProvisioningParameters{}},
+		{InstanceID: "i3", Params: internal.ProvisioningParameters{}},
+	}
+	// i1 updated twice with machineType, i2 once, i3 without — i1 must not be double-counted
+	updateParams := []UpdateParamsWithID{
 		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m6i.xlarge")}},
-		{InstanceID: "i2", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m5.xlarge")}},
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m5.xlarge")}},
+		{InstanceID: "i2", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m6i.xlarge")}},
 		{InstanceID: "i3", Params: internal.UpdatingParametersDTO{}},
 	}
-	stats := AggregateUpdates(params)
-	// every parameter entry must carry the full total
+	stats := AggregateUpdates(provParams, updateParams)
 	for _, p := range stats.Parameters {
-		assert.Equal(t, 3, p.Total, "parameter %s: expected Total=3", p.Parameter)
+		assert.Equal(t, 3, p.Total, "parameter %s: Total must equal active instance count", p.Parameter)
 	}
-	// machineType was set on 2 of 3 update ops → SetCount=2
+	// machineType set on i1 and i2 (distinct active instances) → SetCount=2
 	assert.Equal(t, 2, stats.CountFor("machineType"))
-	// highest-SetCount parameter must be first
 	if len(stats.Parameters) > 1 {
 		assert.GreaterOrEqual(t, stats.Parameters[0].SetCount, stats.Parameters[1].SetCount)
+	}
+}
+
+func TestAggregateUpdates_IgnoresInactiveInstances(t *testing.T) {
+	provParams := []ProvisioningParamsWithID{
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{}},
+	}
+	// i2 is not in provParams (deprovisioned) — its update must not be counted
+	updateParams := []UpdateParamsWithID{
+		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m6i.xlarge")}},
+		{InstanceID: "i2", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m6i.xlarge")}},
+	}
+	stats := AggregateUpdates(provParams, updateParams)
+	assert.Equal(t, 1, stats.CountFor("machineType"))
+	for _, p := range stats.Parameters {
+		assert.Equal(t, 1, p.Total)
 	}
 }
 
@@ -287,15 +319,19 @@ func TestAggregateCombined_InstanceCountedOnceForSameParam(t *testing.T) {
 	assert.Equal(t, 1, stats.CountFor("machineType"))
 }
 
-func TestAggregateCombined_TotalIsProvisioningCount(t *testing.T) {
+func TestAggregateCombined_TotalIsDistinctInstanceCount(t *testing.T) {
 	provParams := []ProvisioningParamsWithID{
 		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr("m6i.xlarge")}}},
 		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 		{InstanceID: "i3", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{}}},
 	}
-	stats := AggregateCombined(provParams, nil)
+	// i4 appears only in updates — it is deprovisioned and must NOT be counted in Total.
+	updateParams := []UpdateParamsWithID{
+		{InstanceID: "i4", Params: internal.UpdatingParametersDTO{MachineType: strPtr("m5.xlarge")}},
+	}
+	stats := AggregateCombined(provParams, updateParams)
 	for _, p := range stats.Parameters {
-		assert.Equal(t, 3, p.Total, "Total must equal the number of unique provisioned instances")
+		assert.Equal(t, 3, p.Total, "Total must equal active instance count (provParams only)")
 	}
 }
 

@@ -337,13 +337,17 @@ func createAzureSecret(name, namespace string) *unstructured.Unstructured {
 }
 
 func NewAzureProviderSpecWithZonesDiscovery(t *testing.T) *configuration.ProviderSpec {
-	spec := `
+	return NewAzureProviderSpec(t, true)
+}
+
+func NewAzureProviderSpec(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
+	spec := fmt.Sprintf(`
 azure:
-  zonesDiscovery: true
+  zonesDiscovery: %t
   regions:
     westeurope:
       displayName: "West Europe"
-`
+`, zonesDiscovery)
 	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
 	require.NoError(t, err)
 	return providerSpec

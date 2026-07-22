@@ -57,7 +57,7 @@ type OpEvent struct {
 func (r *DBReader) FetchOpEventsInRange(tr TimeRange) ([]OpEvent, error) {
 	q := `
 SELECT o.instance_id, TO_CHAR(o.created_at, 'YYYY-MM-DD') AS created_date, o.type,
-       CASE WHEN o.type = 'provision' THEN o.provisioning_parameters ELSE o.data->'updating_parameters' END AS raw_params
+       COALESCE(CASE WHEN o.type = 'provision' THEN o.provisioning_parameters::text ELSE o.data->>'updating_parameters' END, '{}') AS raw_params
 FROM operations o
 JOIN instances i ON i.instance_id = o.instance_id
 WHERE o.type IN ('provision', 'update')
@@ -160,13 +160,15 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 }
 
 // inRange returns true if the YYYY-MM-DD date string d falls within [tr.From, tr.To).
-// An empty tr (both zero) always returns true.
+// An empty tr (both zero) always returns true. Single-bounded ranges are supported:
+// a zero From means unbounded start; a zero To means unbounded end.
 func inRange(d string, tr TimeRange) bool {
 	if tr.From.IsZero() && tr.To.IsZero() {
 		return true
 	}
 	t, err := time.Parse("2006-01-02", d)
 	if err != nil {
+		slog.Warn("analytics: skipping event with unparseable date", "date", d, "error", err)
 		return false
 	}
 	if !tr.From.IsZero() && t.Before(tr.From) {
