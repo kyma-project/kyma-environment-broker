@@ -23,12 +23,12 @@ jobs:
           echo "Draft PRs are not checked"
           exit 1
       - name: Check if author is kyma-gopher-bot
-        if: ${{ github.event.pull_request.user.login == 'app/kyma-gopher' }}
+        if: ${{ github.event.pull_request.user.login == 'kyma-gopher[bot]' }}
         run: |
           echo "PRs from kyma-gopher are automatically green"
           exit 0
       - uses: wechuli/allcheckspassed@204ff63e89eabdc8086f0c50b91f675bcf37c8f6
-        if: ${{ github.event.pull_request.user.login != 'app/kyma-gopher' }}
+        if: ${{ github.event.pull_request.user.login != 'kyma-gopher[bot]' }}
         with:
           delay: '1'
           retries: '15'
