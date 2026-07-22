@@ -45,7 +45,7 @@ The Azure ResourceSKUs API call is shared between zone discovery and hypervisor 
 
 ## Upgrading `machineImageVersion`
 
-When upgrading the `machineImageVersion` (for example, from `2150.3.0` to a newer release), verify whether the new version also has a corresponding `-gen2` variant available in Azure. KEB selects the suffix based on what the Azure API reports for the SKU — if a Gen2 image variant is not published for the new version, instances using Gen2-capable machine types will fail to provision or update.
+When upgrading the `machineImageVersion` (for example, from `2150.3.0` to a newer release), verify whether the new version also has a corresponding `-gen2` variant available in Azure. KEB selects the suffix based on what the Azure API reports for the SKU. If a Gen2 image variant is not published for the new version, instances using Gen2-capable machine types fail to provision or update.
 
 If an existing worker already uses a `-gen2` image version, that suffix must be preserved after the upgrade. If a worker does not use `-gen2`, the suffix must not be introduced during the upgrade.
 
