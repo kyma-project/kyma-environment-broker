@@ -196,7 +196,6 @@ plansConfiguration:
         - "eu-central-1"
 
   gdch:
-    disableNetworking: true
     disableColocateControlPlane: true
     disableGvisor: true
     regularMachines:
