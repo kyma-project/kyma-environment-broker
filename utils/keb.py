@@ -160,11 +160,9 @@ def deprovision(instance_id, plan_id):
     url = f"{KEB_BASE_URL}/oauth/v2/service_instances/{instance_id}?service_id={KEB_SERVICE_ID}&plan_id={plan_id}"
     response = execute_request("DELETE", url, payload=None)
     if response.status_code == 200 or response.status_code == 202:
-        print("Deprovisioning request successful.")
+        print(f"Deprovisioning accepted | instance: {instance_id}")
     else:
-        print("Failed to deprovision the instance.")
-        print("Status Code:", response.status_code)
-        print("Response:", response.text)
+        print(f"Deprovisioning failed | instance: {instance_id} | status: {response.status_code} | {response.text}")
 
 
 def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", plan="aws",
@@ -213,16 +211,14 @@ def provision(global_account_id="ga-id", instance_id="", subaccount_id="sa-id", 
     url = f"{KEB_BASE_URL}/oauth{path_region}/v2/service_instances/{instance_id}?accepts_incomplete=true"
     response = execute_request(method="PUT", url=url, payload=payload)
     if response.status_code == 202:
-        print("Provisioning request accepted.")
-        print("Operation ID:", response.json().get("operation"))
-        return Runtime(instance_id, response.json().get("operation"), plan_id, plan_name_lower)
+        operation_id = response.json().get("operation")
+        print(f"Provisioning accepted | instance: {instance_id} | operation: {operation_id}")
+        return Runtime(instance_id, operation_id, plan_id, plan_name_lower)
     elif response.status_code == 200:
-        print("Provisioning request successful.")
+        print(f"Provisioning accepted | instance: {instance_id}")
         return Runtime(instance_id, None, plan_id, plan_name_lower)
     else:
-        print("Failed to provision the instance.")
-        print("Status Code:", response.status_code)
-        print("Response:", response.text)
+        print(f"Provisioning failed | instance: {instance_id} | status: {response.status_code} | {response.text}")
 
 
 def update_runtime_status(instance_id, state):
@@ -278,6 +274,8 @@ _TRIAL_PLATFORM_REGIONS = ["cf-eu10", "cf-us10"]
 
 
 def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-keb-integration", plan="trial", region="", platform_region="", parameters={}, validate=False):
+    global VERBOSE
+    saved_verbose, VERBOSE = VERBOSE, False
     runtimes = []
     for i in range(n):
         params = dict(parameters)
@@ -287,6 +285,7 @@ def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-k
             pr = _TRIAL_PLATFORM_REGIONS[0] if i < (n + 1) // 2 else _TRIAL_PLATFORM_REGIONS[1]
         else:
             pr = platform_region
+        print(f"[{i+1}/{n}] Provisioning...")
         r = provision(
             global_account_id=global_account_id,
             subaccount_id=subaccount_id,
@@ -305,7 +304,7 @@ def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-k
         for r in runtimes:
             f.write(r.instance_id + "\n")
     print(f"Instance IDs written to {filename}")
-
+    VERBOSE = saved_verbose
     return runtimes
 
 
@@ -342,14 +341,20 @@ def monitor_instances(runtimes_or_file):
 
 
 def deprovision_many(runtimes_or_file):
+    global VERBOSE
+    saved_verbose, VERBOSE = VERBOSE, False
     if isinstance(runtimes_or_file, str):
         plan_id = _get_plan("trial")["id"]
         with open(runtimes_or_file) as f:
-            for iid in f.read().strip().split():
-                deprovision(iid, plan_id)
+            ids = f.read().strip().split()
+        for i, iid in enumerate(ids, 1):
+            print(f"[{i}/{len(ids)}] Deprovisioning {iid}...")
+            deprovision(iid, plan_id)
     else:
-        for r in runtimes_or_file:
+        for i, r in enumerate(runtimes_or_file, 1):
+            print(f"[{i}/{len(runtimes_or_file)}] Deprovisioning {r.instance_id}...")
             r.deprovision()
+    VERBOSE = saved_verbose
 
 
 
@@ -366,3 +371,68 @@ def execute_request(method, url, payload, headers=None):
     if VERBOSE:
         print(f"Received response with status code: {response.status_code} and body: {response.text}")
     return response
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="KEB provisioning utility")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    p = subparsers.add_parser("provision", help="Provision N instances")
+    p.add_argument("n", type=int)
+    p.add_argument("--global-account-id", default="ga-id")
+    p.add_argument("--subaccount-id", default="github-actions-keb-integration")
+    p.add_argument("--plan", default="trial")
+    p.add_argument("--region", default="")
+
+    m = subparsers.add_parser("monitor", help="Monitor instances from a file")
+    m.add_argument("file")
+    m.add_argument("--interval", type=int, default=0, help="Poll every N seconds until all done (0 = single check)")
+
+    d = subparsers.add_parser("deprovision", help="Deprovision instances from a file")
+    d.add_argument("file")
+
+    s = subparsers.add_parser("simulate-provisioning-flow", help="Watch for Runtime CRs and simulate KIM/KLM after a delay")
+    s.add_argument("--delay", type=int, default=900, help="Seconds to wait after CR creation before setting Ready (default: 900)")
+    s.add_argument("--poll", type=int, default=10, help="Seconds between checks for new Runtime CRs (default: 10)")
+
+    args = parser.parse_args()
+
+    if args.command == "provision":
+        provision_many(args.n, global_account_id=args.global_account_id, subaccount_id=args.subaccount_id, plan=args.plan, region=args.region)
+    elif args.command == "monitor":
+        import time
+        while True:
+            result = monitor_instances(args.file)
+            if args.interval == 0 or not result["in_progress"]:
+                break
+            print(f"Polling again in {args.interval}s...")
+            time.sleep(args.interval)
+    elif args.command == "deprovision":
+        deprovision_many(args.file)
+    elif args.command == "simulate-provisioning-flow":
+        import time
+        from datetime import datetime, timezone
+        processed = set()
+        print(f"Watching for Runtime CRs (delay={args.delay}s, poll={args.poll}s)... Press Ctrl+C to stop.")
+        while True:
+            result = subprocess.run(
+                ["kubectl", "get", "runtime", "-n", "kcp-system", "-o",
+                 "jsonpath={range .items[*]}{.metadata.name},{.metadata.creationTimestamp}{'\\n'}{end}"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for line in result.stdout.decode().strip().splitlines():
+                if not line:
+                    continue
+                rid, ts = line.split(",", 1)
+                if rid in processed:
+                    continue
+                created = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                age = (datetime.now(timezone.utc) - created).total_seconds()
+                wait = args.delay - age
+                if wait > 0:
+                    print(f"Runtime {rid} created {int(age)}s ago, firing in {int(wait)}s")
+                else:
+                    print(f"Running provisioning flow for {rid}...")
+                    subprocess.run(["make", "run-provisioning-flow", f"RUNTIME_ID={rid}"], check=False)
+                    processed.add(rid)
+            time.sleep(args.poll)
