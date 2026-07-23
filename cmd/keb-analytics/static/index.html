@@ -371,7 +371,6 @@
         x: new Date(p.date + 'T00:00:00Z').getTime(),
         y: p.count
       }));
-      const maxCount = points.length > 0 ? Math.max(...points.map(p => p.y)) : 1;
       const chart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
@@ -409,7 +408,6 @@
             },
             y: {
               beginAtZero: true,
-              max: Math.max(maxCount, 1),
               title: { display: true, text: 'Number of active instances' },
               ticks: { stepSize: 1, precision: 0 }
             }
