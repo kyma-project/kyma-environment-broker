@@ -51,3 +51,13 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{- define "istio.waypointLabels" }}
+istio.io/ingress-use-waypoint: "true"
+istio.io/use-waypoint: waypoint
+{{- end }}
+
+{{- define "istio.ambientLabels" }}
+istio.io/dataplane-mode: ambient
+sidecar.istio.io/inject: "false"
+{{- end }}

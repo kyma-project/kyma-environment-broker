@@ -11,7 +11,14 @@ spec:
         - source:
             namespaces:
               - istio-system
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.analytics.name }}
+{{ else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ .Values.analytics.name }}
+{{- end }}
 {{- end }}

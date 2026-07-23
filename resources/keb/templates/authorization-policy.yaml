@@ -21,10 +21,17 @@ spec:
               - /swagger*
               - /schema*
               {{- end }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{ else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.name" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -38,10 +45,17 @@ spec:
         - operation:
             paths:
               - /metrics
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{ else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -54,10 +68,17 @@ spec:
     - from:
         - source:
             namespaces: ["kcp-system"]
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
       app.kubernetes.io/name: kyma-environment-broker
+{{ else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -90,10 +111,17 @@ spec:
     - key: request.auth.claims[scp]
       values:
       - broker:write
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{ else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -137,11 +165,17 @@ spec:
 {{- with .Values.runtimeAllowedPrincipals }}
 {{ tpl . $ | indent 10 }}
 {{- end }}
-
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -184,10 +218,17 @@ spec:
 {{- with .Values.runtimeAllowedPrincipals }}
 {{ tpl . $ | indent 10 }}
 {{- end }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -219,10 +260,17 @@ spec:
     - key: request.auth.claims[groups]
       values:
       - {{ .Values.oidc.groups.orchestrations }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
       
 ---
 apiVersion: security.istio.io/v1beta1
@@ -253,10 +301,17 @@ spec:
     - key: request.auth.claims[groups]
       values:
       - {{ .Values.oidc.groups.orchestrations }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -270,10 +325,17 @@ spec:
     - operation:
         paths:
         - /additional_properties
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -305,7 +367,14 @@ spec:
       - {{ .Values.oidc.groups.admin }}
       - {{ .Values.oidc.groups.operator }}
       - {{ .Values.oidc.groups.viewer }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
