@@ -83,6 +83,7 @@ aws:
       displayName: "ap-southeast-2 (Asia Pacific, Sydney)"
       zones: [ "a", "b", "c" ]
 azure:
+  zonesDiscovery: true
   machines:
     "Standard_D2s_v5": "Standard_D2s_v5 (2vCPU, 8GB RAM)"
     "Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)"

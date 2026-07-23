@@ -120,6 +120,7 @@ type suiteOptions struct {
 	cfg               *Config
 	withMetrics       bool
 	kcrVolumeProvider broker.VolumeSizeProvider
+	factory           hyperscalers.Factory
 }
 
 // WithConfig sets a custom Config. Defaults to fixConfig() when omitted.
@@ -135,6 +136,11 @@ func WithMetrics() SuiteOption {
 // WithKCRVolumeProvider sets a custom KCR volume size provider.
 func WithKCRVolumeProvider(p broker.VolumeSizeProvider) SuiteOption {
 	return func(o *suiteOptions) { o.kcrVolumeProvider = p }
+}
+
+// WithFactory sets a custom hyperscaler factory.
+func WithFactory(f hyperscalers.Factory) SuiteOption {
+	return func(o *suiteOptions) { o.factory = f }
 }
 
 func NewBrokerSuiteTest(t *testing.T, opts ...SuiteOption) *BrokerSuiteTest {
@@ -212,7 +218,12 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		require.Empty(t, rulesService.ValidationInfo.PlanErrors)
 	}
 
-	factory := fixture.NewFakeFactory(fixDiscoveredZones(), nil)
+	var factory hyperscalers.Factory
+	if o.factory != nil {
+		factory = o.factory
+	} else {
+		factory = fixture.NewFakeFactory(fixDiscoveredZones(), nil)
+	}
 
 	err = cfg.Initialise()
 	require.NoError(t, err)
@@ -271,7 +282,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		ts.router.HandleFunc("/analytics/stats", func(w http.ResponseWriter, r *http.Request) {
 			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 			if err != nil {
-				http.Error(w, "failed to fetch op events", http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("failed to fetch op events: %v", err), http.StatusInternalServerError)
 				return
 			}
 			provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
@@ -281,7 +292,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				TotalInstances: len(provParams),
 				TotalUpdates:   len(updateParams),
 				Provisioning:   analytics.AggregateProvisioning(provParams),
-				Updates:        analytics.AggregateUpdates(updateParams),
+				Updates:        analytics.AggregateUpdates(provParams, updateParams),
 				Combined:       analytics.AggregateCombined(provParams, updateParams),
 				Distributions:  analytics.BuildDistributions(provParams),
 				Plans:          plans,
@@ -440,10 +451,11 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 	s.t.Helper()
 	resp := s.CallAPI("GET", "analytics/stats", "")
-	defer func() { _ = resp.Body.Close() }()
-	require.Equal(s.t, http.StatusOK, resp.StatusCode)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(s.t, http.StatusOK, resp.StatusCode, "GET /analytics/stats returned non-200: %s", string(body))
 	var stats analytics.StatsResponse
-	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(&stats))
+	require.NoError(s.t, json.NewDecoder(bytes.NewReader(body)).Decode(&stats))
 	return stats
 }
 
@@ -1117,6 +1129,30 @@ func fixSecrets() []runtime.Object {
 			Data: map[string][]byte{
 				"accessKeyID":     []byte("test-key"),
 				"secretAccessKey": []byte("test-secret"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure-eu-access",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
 			},
 		},
 	}
