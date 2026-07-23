@@ -337,9 +337,15 @@ def monitor_instances(runtimes):
     return {"succeeded": succeeded, "failed": failed, "in_progress": in_progress}
 
 
-def deprovision_many(runtimes):
-    for r in runtimes:
-        r.deprovision()
+def deprovision_many(runtimes_or_file):
+    if isinstance(runtimes_or_file, str):
+        plan_id = _get_plan("trial")["id"]
+        with open(runtimes_or_file) as f:
+            for iid in f.read().strip().split():
+                deprovision(iid, plan_id)
+    else:
+        for r in runtimes_or_file:
+            r.deprovision()
 
 
 
