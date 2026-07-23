@@ -336,10 +336,9 @@ func TestAggregateCombined_TotalIsDistinctInstanceCount(t *testing.T) {
 }
 
 func TestAggregateCombined_SortedBySetCountDescThenName(t *testing.T) {
-	machineType := "m6i.xlarge"
 	provParams := []ProvisioningParamsWithID{
-		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: &machineType}}},
-		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: &machineType}}},
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr(testMachineType)}}},
+		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr(testMachineType)}}},
 	}
 	updateParams := []UpdateParamsWithID{
 		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{
@@ -995,4 +994,74 @@ func TestBuildTrend_UpdateRawParamsIsUpdatingParametersDTO(t *testing.T) {
 	require.Len(t, trend.Points, 2)
 	assert.Equal(t, 0, trend.Points[0].Count)
 	assert.Equal(t, 1, trend.Points[1].Count)
+}
+
+// ---------------------------------------------------------------------------
+// BuildTrends (single-pass multi-param)
+// ---------------------------------------------------------------------------
+
+// TestBuildTrends_MatchesBuildTrend verifies that BuildTrends produces the same output
+// as calling BuildTrend individually for each parameter when all params share the same
+// active days (so the shared day axis introduces no extra points).
+func TestBuildTrends_MatchesBuildTrend(t *testing.T) {
+	// Both machineType and gvisor change on day 1 only, so allEventDays == {"2024-01-01"}
+	// for both params, and the outputs should be identical to per-param BuildTrend calls.
+	mt := "m6i.xlarge"
+	p := internal.ProvisioningParameters{
+		Parameters: pkg.ProvisioningParametersDTO{
+			MachineType: &mt,
+			Gvisor:      &pkg.GvisorDTO{Enabled: true},
+		},
+	}
+	raw, _ := json.Marshal(p)
+	events := []OpEvent{
+		{InstanceID: "i1", CreatedAt: "2024-01-01", Type: "provision", RawParams: string(raw)},
+	}
+	params := []string{"machineType", "gvisor"}
+
+	got := BuildTrends(events, params)
+	require.Len(t, got, len(params))
+
+	for i, param := range params {
+		want := BuildTrend(events, param)
+		assert.Equal(t, want.Parameter, got[i].Parameter, "param %s: parameter name mismatch", param)
+		assert.Equal(t, want.Points, got[i].Points, "param %s: points mismatch", param)
+	}
+}
+
+// TestBuildTrends_EmptyParamsReturnsNil verifies the early-exit for an empty params slice.
+func TestBuildTrends_EmptyParamsReturnsNil(t *testing.T) {
+	events := []OpEvent{provEvent("i1", "2024-01-01", "m6i.xlarge")}
+	got := BuildTrends(events, nil)
+	assert.Nil(t, got)
+}
+
+// TestBuildTrends_SharedDayAxisAddsFlat documents that BuildTrends emits a point on every
+// day in the union of all params' active days, even for params with no activity on that day.
+// This differs from BuildTrend (singular), which only emits points on days with actual deltas
+// or provisioning events for that specific param.
+func TestBuildTrends_SharedDayAxisAddsFlat(t *testing.T) {
+	// i1 provisioned with machineType on day 1 (no gvisor).
+	// i2 provisioned with gvisor on day 3 (no machineType).
+	// Day 2 is expanded by expandDayRange between day 1 and day 3.
+	events := []OpEvent{
+		provEvent("i1", "2024-01-01", "m6i.xlarge"),
+		provEventGvisor("i2", "2024-01-03"),
+	}
+	got := BuildTrends(events, []string{"machineType", "gvisor"})
+	require.Len(t, got, 2)
+
+	// Both params share the full day range 2024-01-01 .. 2024-01-03 (3 points each).
+	assert.Len(t, got[0].Points, 3, "machineType should have 3 points (shared axis)")
+	assert.Len(t, got[1].Points, 3, "gvisor should have 3 points (shared axis)")
+
+	// machineType: set on day 1, stays flat through days 2–3.
+	assert.Equal(t, 1, got[0].Points[0].Count) // day 1: provisioned
+	assert.Equal(t, 1, got[0].Points[1].Count) // day 2: flat (no activity)
+	assert.Equal(t, 1, got[0].Points[2].Count) // day 3: flat (gvisor provision, not machineType)
+
+	// gvisor: zero through days 1–2, set on day 3.
+	assert.Equal(t, 0, got[1].Points[0].Count) // day 1: not set
+	assert.Equal(t, 0, got[1].Points[1].Count) // day 2: flat
+	assert.Equal(t, 1, got[1].Points[2].Count) // day 3: provisioned with gvisor
 }
