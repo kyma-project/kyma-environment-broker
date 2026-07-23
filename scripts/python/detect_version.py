@@ -5,7 +5,7 @@ import sys
 token = os.getenv('GITHUB_TOKEN')
 repo = os.getenv('REPOSITORY')
 github_output = os.getenv('GITHUB_OUTPUT')
-headers = {'Authorization': f'token {token}'}
+headers = {'Authorization': f'token {token}'} if token else {}
 
 response = requests.get(f'https://api.github.com/repos/{repo}/releases/latest', headers=headers)
 response.raise_for_status()
