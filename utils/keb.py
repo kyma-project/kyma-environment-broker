@@ -277,7 +277,7 @@ _DEFAULT_MODULES = {
 _TRIAL_PLATFORM_REGIONS = ["cf-eu10", "cf-us10"]
 
 
-def provision_many(n, global_account_id="ga-id", plan="trial", region="", platform_region="", parameters={}, validate=False):
+def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-keb-integration", plan="trial", region="", platform_region="", parameters={}, validate=False):
     runtimes = []
     for i in range(n):
         params = dict(parameters)
@@ -289,7 +289,7 @@ def provision_many(n, global_account_id="ga-id", plan="trial", region="", platfo
             pr = platform_region
         r = provision(
             global_account_id=global_account_id,
-            subaccount_id=str(uuid.uuid4()),
+            subaccount_id=subaccount_id,
             plan=plan,
             region=region,
             platform_region=pr,
