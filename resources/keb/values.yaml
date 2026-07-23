@@ -395,7 +395,7 @@ infrastructureManager:
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "true"
   # If true, appends a machine-type-specific suffix (for example, "-gen2") to the machine image version for Azure workers.
-  useMachineImageVersionSuffix: false
+  useMachineImageVersionSuffix: true
   # If true, provisions trial and freemium clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 
