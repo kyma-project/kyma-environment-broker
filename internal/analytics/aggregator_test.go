@@ -336,10 +336,9 @@ func TestAggregateCombined_TotalIsDistinctInstanceCount(t *testing.T) {
 }
 
 func TestAggregateCombined_SortedBySetCountDescThenName(t *testing.T) {
-	machineType := "m6i.xlarge"
 	provParams := []ProvisioningParamsWithID{
-		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: &machineType}}},
-		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: &machineType}}},
+		{InstanceID: "i1", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr(testMachineType)}}},
+		{InstanceID: "i2", Params: internal.ProvisioningParameters{Parameters: pkg.ProvisioningParametersDTO{MachineType: strPtr(testMachineType)}}},
 	}
 	updateParams := []UpdateParamsWithID{
 		{InstanceID: "i1", Params: internal.UpdatingParametersDTO{
