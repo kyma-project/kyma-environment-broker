@@ -76,6 +76,11 @@ jobs:
           else
             echo "version=${{ inputs.name }}" >> $GITHUB_OUTPUT
           fi
+          version=$(grep '^version=' "$GITHUB_OUTPUT" | tail -1 | cut -d= -f2)
+          if [ -z "$version" ]; then
+            echo "::error ::Failed to resolve release version"
+            exit 1
+          fi
 
   validate-release:
     name: Validate release
