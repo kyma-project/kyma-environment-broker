@@ -41,6 +41,10 @@ else:
     next_version = f'{major}.{minor}.{int(patch) + 1}'
     reason = f'patch bump, no kind/feature PRs since {latest_version}'
 
+if not next_version:
+    print('::error ::Resolved version is empty', file=sys.stderr)
+    sys.exit(1)
+
 if github_output:
     with open(github_output, 'a') as f:
         f.write(f'version={next_version}\n')
