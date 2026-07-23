@@ -138,7 +138,6 @@ def test_early_exit_on_old_updated_at():
     call_queue = [
         MagicMock(json=lambda: latest_release, raise_for_status=lambda: None),
         MagicMock(json=lambda: [old_pr, new_pr], raise_for_status=lambda: None),
-        MagicMock(json=lambda: [], raise_for_status=lambda: None),
     ]
 
     def fake_get(url, headers=None):
