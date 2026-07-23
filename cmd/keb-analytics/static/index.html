@@ -66,28 +66,27 @@
   <p id="error"></p>
 
   <div id="tab-bar" style="display:flex;border-bottom:2px solid #ccc;margin-bottom:1rem">
-    <button class="tab-btn active" data-tab="combined">Combined</button>
-    <button class="tab-btn"        data-tab="provisioning">Provisioning</button>
+    <button class="tab-btn active" data-tab="provisioning">Provisioning</button>
     <button class="tab-btn"        data-tab="update">Update</button>
+    <button class="tab-btn"        data-tab="combined">Provisioning or Update</button>
     <button class="tab-btn"        data-tab="distribution">Value Distribution</button>
     <button class="tab-btn"        data-tab="trends">Trends</button>
   </div>
 
-  <div id="tab-combined" class="tab-pane">
+  <div id="tab-combined" class="tab-pane" style="display:none">
     <p class="tab-info">An active instance is counted as using a parameter if it was set in its provisioning <em>or</em> in any of its update operations. Each instance is counted at most once per parameter. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="combinedChart"></canvas></div>
     <p id="combined-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
-  <div id="tab-provisioning" class="tab-pane" style="display:none">
+  <div id="tab-provisioning" class="tab-pane">
     <p class="tab-info">Each active instance is counted once per parameter if that parameter was set in its provisioning operation. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="provChart"></canvas></div>
     <p id="provisioning-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
   <div id="tab-update" class="tab-pane" style="display:none">
-    <p class="tab-info">Each succeeded update operation is counted once per parameter if that parameter was set in that update. Percentage is out of all update operations on active instances.</p>
-    <p id="update-total"></p>
+    <p class="tab-info">An active instance is counted as using a parameter if that parameter was set in at least one of its update operations. Each instance is counted at most once per parameter. Percentage is out of all active instances.</p>
     <div class="chart-container"><canvas id="updateChart"></canvas></div>
     <p id="update-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
@@ -123,7 +122,7 @@
   <script>
     const charts = [];
     let currentData = null; // last fetched StatsResponse (full, unfiltered by plan/region)
-    let activeTab = 'combined';
+    let activeTab = 'provisioning';
 
     function destroyCharts() {
       charts.forEach(c => c.destroy());
@@ -216,7 +215,7 @@
       charts.push(chart);
     }
 
-    function renderUpdateBar(canvasId, stats, totalUpdates) {
+    function renderUpdateBar(canvasId, stats) {
       if (!stats || !stats.parameters || stats.parameters.length === 0) {
         setNoData('update', true);
         return;
@@ -224,7 +223,7 @@
       setNoData('update', false);
       const labels = stats.parameters.map(p => {
         const pct = p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0;
-        return p.parameter + '  (' + p.set_count + ' times / ' + pct + '%)';
+        return p.parameter + '  (' + p.set_count + ' instances / ' + pct + '%)';
       });
       const pct = stats.parameters.map(p =>
         p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
@@ -233,11 +232,11 @@
         type: 'bar',
         data: {
           labels,
-          datasets: [{ label: '% of update operations with parameter set', data: pct,
+          datasets: [{ label: '% of active instances with parameter updated', data: pct,
             backgroundColor: 'rgba(54,162,235,0.6)' }]
         },
         options: { indexAxis: 'y', scales: {
-          x: { max: 100, title: { display: true, text: '% of update operations' } },
+          x: { max: 100, title: { display: true, text: '% of active instances' } },
           y: { reverse: true, title: { display: true, text: 'Parameter' } }
         } }
       });
@@ -350,10 +349,9 @@
 
     const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function fmtDate(isoDate) {
-      // isoDate is YYYY-MM-DD; returns "Jan 03" or "Jan 03 2025" (year shown in January only)
+      // isoDate is YYYY-MM-DD; returns "28 May 2027" style
       const d = new Date(isoDate + 'T00:00:00Z');
-      const label = MON[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0');
-      return d.getUTCMonth() === 0 ? label + ' ' + d.getUTCFullYear() : label;
+      return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
     }
 
     function renderTrendTab(data) {
@@ -372,7 +370,6 @@
         x: new Date(p.date + 'T00:00:00Z').getTime(),
         y: p.count
       }));
-      const maxCount = points.length > 0 ? Math.max(...points.map(p => p.y)) : 1;
       const chart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
@@ -410,7 +407,6 @@
             },
             y: {
               beginAtZero: true,
-              max: Math.max(maxCount, 1),
               title: { display: true, text: 'Number of active instances' },
               ticks: { stepSize: 1, precision: 0 }
             }
@@ -423,9 +419,8 @@
     function renderActiveTab(data) {
       destroyCharts();
       document.getElementById('error').textContent = '';
-      document.getElementById('update-total').textContent = '';
       document.getElementById('total').textContent =
-        'Total active instances: ' + data.total_instances + ' (filtered by current period / plan / region selection)';
+        'Total active instances: ' + data.total_instances + ', updated ' + data.total_updates + ' times (filtered by current period / plan / region selection)';
 
       // Hide all no-data messages before re-rendering.
       ['combined','provisioning','update','distribution','trends'].forEach(t => setNoData(t, false));
@@ -435,9 +430,7 @@
       } else if (activeTab === 'provisioning') {
         renderBar('provChart', data.provisioning);
       } else if (activeTab === 'update') {
-        document.getElementById('update-total').textContent =
-          'Total update operations: ' + data.total_updates;
-        renderUpdateBar('updateChart', data.updates, data.total_updates);
+        renderUpdateBar('updateChart', data.updates);
       } else if (activeTab === 'distribution') {
         renderDistTab(data);
       } else if (activeTab === 'trends') {
