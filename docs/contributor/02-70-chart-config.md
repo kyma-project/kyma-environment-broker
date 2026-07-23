@@ -172,7 +172,7 @@
 | infrastructureManager.<br>machineImageVersion | Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used. | `` |
 | infrastructureManager.<br>maxPods | Sets the maximum number of Pods per node for global accounts in the max Pods allowlist. | `200` |
 | infrastructureManager.<br>multiZoneCluster | If true, enables provisioning of clusters with nodes distributed across multiple availability zones. | `true` |
-| infrastructureManager.<br>useMachineImageVersionSuffix | If true, appends a machine-type-specific suffix (for example, "-gen2") to the machine image version for Azure workers. | `False` |
+| infrastructureManager.<br>useMachineImageVersionSuffix | If true, appends a machine-type-specific suffix (for example, "-gen2") to the machine image version for Azure workers. | `True` |
 | infrastructureManager.<br>useSmallerMachineTypes | If true, provisions trial and freemium clusters using smaller machine types. | `false` |
 | kubeconfig.<br>allowOrigins | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint. | `*` |
 | kymaDashboardConfig.<br>landscapeURL | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes. | `https://dashboard.dev.kyma.cloud.sap` |
