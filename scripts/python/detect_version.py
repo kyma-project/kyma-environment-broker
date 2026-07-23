@@ -11,7 +11,7 @@ response = requests.get(f'https://api.github.com/repos/{repo}/releases/latest', 
 response.raise_for_status()
 latest_release = response.json()
 latest_release_date = latest_release['created_at']
-latest_version = latest_release['name'].lstrip('v')
+latest_version = latest_release['name'].removeprefix('v')
 
 prs_since = []
 page = 1

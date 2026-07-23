@@ -6,7 +6,6 @@ env:
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
   GIT_EMAIL: 4345220+kyma-gopher[bot]@users.noreply.github.com
   GIT_NAME: kyma-gopher
-  BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 permissions:
   contents: write
