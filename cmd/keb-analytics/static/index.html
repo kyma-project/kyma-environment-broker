@@ -350,10 +350,9 @@
 
     const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     function fmtDate(isoDate) {
-      // isoDate is YYYY-MM-DD; returns "Jan 03" or "Jan 03 2025" (year shown in January only)
+      // isoDate is YYYY-MM-DD; returns "28 May 2027" style
       const d = new Date(isoDate + 'T00:00:00Z');
-      const label = MON[d.getUTCMonth()] + ' ' + String(d.getUTCDate()).padStart(2, '0');
-      return d.getUTCMonth() === 0 ? label + ' ' + d.getUTCFullYear() : label;
+      return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
     }
 
     function renderTrendTab(data) {
