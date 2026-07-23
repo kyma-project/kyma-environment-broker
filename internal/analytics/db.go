@@ -129,15 +129,6 @@ func parseProvisioningParameters(raw string) (internal.ProvisioningParameters, e
 	return p, nil
 }
 
-// PlainProvisioningParams extracts just the ProvisioningParameters slice from ProvisioningParamsWithID.
-func PlainProvisioningParams(params []ProvisioningParamsWithID) []internal.ProvisioningParameters {
-	result := make([]internal.ProvisioningParameters, len(params))
-	for i, p := range params {
-		result[i] = p.Params
-	}
-	return result
-}
-
 // OpEventsToProvParamsInRange derives ProvisioningParamsWithID from provision events in events,
 // filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
 // Uses ParsedProv when available to avoid redundant JSON unmarshalling.
