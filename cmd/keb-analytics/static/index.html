@@ -215,7 +215,7 @@
       charts.push(chart);
     }
 
-    function renderUpdateBar(canvasId, stats, totalUpdates) {
+    function renderUpdateBar(canvasId, stats) {
       if (!stats || !stats.parameters || stats.parameters.length === 0) {
         setNoData('update', true);
         return;
@@ -430,7 +430,7 @@
       } else if (activeTab === 'provisioning') {
         renderBar('provChart', data.provisioning);
       } else if (activeTab === 'update') {
-        renderUpdateBar('updateChart', data.updates, data.total_updates);
+        renderUpdateBar('updateChart', data.updates);
       } else if (activeTab === 'distribution') {
         renderDistTab(data);
       } else if (activeTab === 'trends') {
