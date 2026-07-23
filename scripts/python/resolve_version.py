@@ -26,7 +26,8 @@ while True:
         break
     merged = [pr for pr in page_prs if pr['merged_at'] is not None and pr['merged_at'] > latest_release_date]
     prs_since.extend(merged)
-    if len(page_prs) < 100:
+    oldest_updated = min(pr['updated_at'] for pr in page_prs)
+    if len(page_prs) < 100 or oldest_updated <= latest_release_date:
         break
     page += 1
 
