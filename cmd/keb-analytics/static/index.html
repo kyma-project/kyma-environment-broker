@@ -67,8 +67,8 @@
 
   <div id="tab-bar" style="display:flex;border-bottom:2px solid #ccc;margin-bottom:1rem">
     <button class="tab-btn active" data-tab="provisioning">Provisioning</button>
-    <button class="tab-btn"        data-tab="combined">Provisioning and Update</button>
-    <button class="tab-btn"        data-tab="update">Updates</button>
+    <button class="tab-btn"        data-tab="update">Update</button>
+    <button class="tab-btn"        data-tab="combined">Provisioning or Update</button>
     <button class="tab-btn"        data-tab="distribution">Value Distribution</button>
     <button class="tab-btn"        data-tab="trends">Trends</button>
   </div>
@@ -86,7 +86,7 @@
   </div>
 
   <div id="tab-update" class="tab-pane" style="display:none">
-    <p class="tab-info">Each succeeded update operation is counted once per parameter if that parameter was set in that update. Percentage is out of all update operations on active instances.</p>
+    <p class="tab-info">An active instance is counted as using a parameter if that parameter was set in at least one of its update operations. Each instance is counted at most once per parameter. Percentage is out of all active instances.</p>
     <p id="update-total"></p>
     <div class="chart-container"><canvas id="updateChart"></canvas></div>
     <p id="update-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
@@ -224,7 +224,7 @@
       setNoData('update', false);
       const labels = stats.parameters.map(p => {
         const pct = p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0;
-        return p.parameter + '  (' + p.set_count + ' times / ' + pct + '%)';
+        return p.parameter + '  (' + p.set_count + ' instances / ' + pct + '%)';
       });
       const pct = stats.parameters.map(p =>
         p.total > 0 ? ((p.set_count / p.total) * 100).toFixed(1) : 0
@@ -233,11 +233,11 @@
         type: 'bar',
         data: {
           labels,
-          datasets: [{ label: '% of update operations with parameter set', data: pct,
+          datasets: [{ label: '% of active instances with parameter updated', data: pct,
             backgroundColor: 'rgba(54,162,235,0.6)' }]
         },
         options: { indexAxis: 'y', scales: {
-          x: { max: 100, title: { display: true, text: '% of update operations' } },
+          x: { max: 100, title: { display: true, text: '% of active instances' } },
           y: { reverse: true, title: { display: true, text: 'Parameter' } }
         } }
       });
