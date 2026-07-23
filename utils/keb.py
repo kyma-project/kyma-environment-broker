@@ -309,8 +309,12 @@ def provision_many(n, global_account_id="ga-id", plan="trial", region="", platfo
     return runtimes
 
 
-def monitor_instances(runtimes):
-    instance_ids = [r.instance_id for r in runtimes]
+def monitor_instances(runtimes_or_file):
+    if isinstance(runtimes_or_file, str):
+        with open(runtimes_or_file) as f:
+            instance_ids = f.read().strip().split()
+    else:
+        instance_ids = [r.instance_id for r in runtimes_or_file]
     params = [("instance_id", iid) for iid in instance_ids]
     url = f"{KEB_BASE_URL}/runtimes"
     response = requests.get(url, params=params)
