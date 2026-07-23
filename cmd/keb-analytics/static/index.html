@@ -66,20 +66,20 @@
   <p id="error"></p>
 
   <div id="tab-bar" style="display:flex;border-bottom:2px solid #ccc;margin-bottom:1rem">
-    <button class="tab-btn active" data-tab="combined">Combined</button>
-    <button class="tab-btn"        data-tab="provisioning">Provisioning</button>
-    <button class="tab-btn"        data-tab="update">Update</button>
+    <button class="tab-btn active" data-tab="provisioning">Provisioning</button>
+    <button class="tab-btn"        data-tab="combined">Provisioning and Update</button>
+    <button class="tab-btn"        data-tab="update">Updates</button>
     <button class="tab-btn"        data-tab="distribution">Value Distribution</button>
     <button class="tab-btn"        data-tab="trends">Trends</button>
   </div>
 
-  <div id="tab-combined" class="tab-pane">
+  <div id="tab-combined" class="tab-pane" style="display:none">
     <p class="tab-info">An active instance is counted as using a parameter if it was set in its provisioning <em>or</em> in any of its update operations. Each instance is counted at most once per parameter. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="combinedChart"></canvas></div>
     <p id="combined-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
   </div>
 
-  <div id="tab-provisioning" class="tab-pane" style="display:none">
+  <div id="tab-provisioning" class="tab-pane">
     <p class="tab-info">Each active instance is counted once per parameter if that parameter was set in its provisioning operation. Total = number of active instances.</p>
     <div class="chart-container"><canvas id="provChart"></canvas></div>
     <p id="provisioning-nodata" class="no-data" style="display:none">No data for the selected filters.</p>
@@ -123,7 +123,7 @@
   <script>
     const charts = [];
     let currentData = null; // last fetched StatsResponse (full, unfiltered by plan/region)
-    let activeTab = 'combined';
+    let activeTab = 'provisioning';
 
     function destroyCharts() {
       charts.forEach(c => c.destroy());
