@@ -40,3 +40,5 @@ fi
 if [[ -n "$DEPROVISIONING_WORKERS" ]]; then
   yq e ".deprovisioning.workersAmount = $DEPROVISIONING_WORKERS" -i "$VALUES_FILE"
 fi
+
+yq e ".infrastructureManager.useMachineImageVersionSuffix = false" -i "$VALUES_FILE"
