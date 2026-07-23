@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'Release version (leave "detect-version" to auto-detect from PR labels)'
-        default: "detect-version"
+        description: 'Release version (leave "auto" to detect from PR labels)'
+        default: "auto"
         required: true
 
 permissions:

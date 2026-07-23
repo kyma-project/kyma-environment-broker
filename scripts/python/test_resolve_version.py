@@ -3,7 +3,7 @@ import sys
 import tempfile
 from unittest.mock import MagicMock, patch
 
-_module_source = open("scripts/python/detect_version.py").read()
+_module_source = open("scripts/python/resolve_version.py").read()
 
 ENV = {"GITHUB_TOKEN": "test-token", "REPOSITORY": "owner/repo"}
 RELEASE_DATE = "2024-01-01T00:00:00Z"
@@ -45,7 +45,7 @@ def _run_detect(latest_version, pr_pages):
         env = {**ENV, "GITHUB_OUTPUT": tmp_path}
         with patch.dict("os.environ", env):
             with patch("requests.get", side_effect=fake_get):
-                exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
+                exec(compile(_module_source, "resolve_version.py", "exec"), {})  # noqa: S102
 
         with open(tmp_path) as f:
             output = dict(line.strip().split("=", 1) for line in f if "=" in line)
@@ -119,7 +119,7 @@ def test_prs_before_release_ignored():
         env = {**ENV, "GITHUB_OUTPUT": tmp_path}
         with patch.dict("os.environ", env):
             with patch("requests.get", side_effect=fake_get):
-                exec(compile(_module_source, "detect_version.py", "exec"), {})  # noqa: S102
+                exec(compile(_module_source, "resolve_version.py", "exec"), {})  # noqa: S102
 
         with open(tmp_path) as f:
             output = dict(line.strip().split("=", 1) for line in f if "=" in line)
