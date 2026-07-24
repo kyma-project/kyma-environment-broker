@@ -25,6 +25,11 @@ const (
 	behaviorOIDC                            // emit 0 (nil), 1 (single), or len(List) (multi)
 )
 
+const (
+	opTypeProvision = "provision"
+	opTypeUpdate    = "update"
+)
+
 // provisioningFieldConfig controls per-field behavior for ProvisioningParametersDTO.
 // Fields not listed default to behaviorValue. Keys are JSON tag names.
 var provisioningFieldConfig = map[string]fieldBehavior{
@@ -33,6 +38,7 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"kubeconfig":                behaviorSkip,
 	"shootName":                 behaviorSkip,
 	"shootDomain":               behaviorSkip,
+	"provider":                  behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
 	"modules":                   behaviorModules,
@@ -240,53 +246,95 @@ func buildCounts(params []ProvisioningParamsWithID) map[string]map[string]int {
 
 // AggregateProvisioning computes parameter usage stats from a slice of ProvisioningParameters.
 func AggregateProvisioning(params []ProvisioningParamsWithID) ParameterStats {
-	plain := PlainProvisioningParams(params)
-	counts := make(map[string]map[string]int)
-	for _, p := range plain {
-		walkFields(p.Parameters, provisioningFieldConfig, counts)
-	}
-	return toParameterStats(counts, len(plain))
+	return toParameterStats(buildCounts(params), len(params))
 }
 
-// AggregateUpdates computes parameter usage stats from a slice of UpdateParamsWithID.
-func AggregateUpdates(params []UpdateParamsWithID) ParameterStats {
-	counts := make(map[string]map[string]int)
-	for _, p := range params {
-		walkFields(p.Params, updatingFieldConfig, counts)
+// activeInstanceSet builds a set of instance IDs from provParams for fast membership checks.
+func activeInstanceSet(provParams []ProvisioningParamsWithID) map[string]struct{} {
+	active := make(map[string]struct{}, len(provParams))
+	for _, p := range provParams {
+		active[p.InstanceID] = struct{}{}
 	}
-	return toParameterStats(counts, len(params))
+	return active
+}
+
+// AggregateUpdates computes per-instance parameter usage stats for update operations.
+// Only update ops from active instances (present in provParams) are counted.
+// SetCount = distinct active instances that had the parameter set in at least one update.
+// Total = number of active instances.
+// Note: a parameter is considered "set" only when walkFields records a non-nil/non-zero value
+// for it. An update op that explicitly clears a field (sets it to nil/zero) will not be counted
+// for that parameter — this conflates "was set to a non-zero value" with "was touched".
+// This is pre-existing behaviour and matches the semantics of the provisioning aggregator.
+func AggregateUpdates(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
+	active := activeInstanceSet(provParams)
+	instancesWithParam := make(map[string]map[string]struct{})
+	for _, p := range updateParams {
+		if _, ok := active[p.InstanceID]; !ok {
+			continue
+		}
+		counts := make(map[string]map[string]int)
+		walkFields(p.Params, updatingFieldConfig, counts)
+		for param := range counts {
+			if _, ok := instancesWithParam[param]; !ok {
+				instancesWithParam[param] = make(map[string]struct{})
+			}
+			instancesWithParam[param][p.InstanceID] = struct{}{}
+		}
+	}
+	total := len(provParams)
+	var result []ParameterStat
+	for param, instances := range instancesWithParam {
+		result = append(result, ParameterStat{
+			Parameter: param,
+			SetCount:  len(instances),
+			Total:     total,
+		})
+	}
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].SetCount != result[j].SetCount {
+			return result[i].SetCount > result[j].SetCount
+		}
+		return result[i].Parameter < result[j].Parameter
+	})
+	return ParameterStats{Parameters: result}
 }
 
 // AggregateCombined computes per-instance parameter usage: an instance is counted as
-// "using" a parameter if it was set in its provisioning operation OR in any update operation.
-// total = number of unique instance IDs across both provParams and updateParams.
+// "using" a parameter if it was set in its provisioning operation OR in at least one
+// update operation. Only active instances (present in provParams) are considered.
+// total = number of unique active instances (from provParams).
 func AggregateCombined(provParams []ProvisioningParamsWithID, updateParams []UpdateParamsWithID) ParameterStats {
+	active := activeInstanceSet(provParams)
 	// instancesWithParam[param] = set of instance IDs that have the param set
 	instancesWithParam := make(map[string]map[string]struct{})
 	allInstances := make(map[string]struct{})
 
-	record := func(instanceID, param string) {
+	addInstance := func(instanceID, param string) {
 		if _, ok := instancesWithParam[param]; !ok {
 			instancesWithParam[param] = make(map[string]struct{})
 		}
 		instancesWithParam[param][instanceID] = struct{}{}
 	}
 
+	// Reuse the shared per-instance counts from buildCounts (one walk per instance).
 	for _, p := range provParams {
 		allInstances[p.InstanceID] = struct{}{}
-		counts := make(map[string]map[string]int)
-		walkFields(p.Params.Parameters, provisioningFieldConfig, counts)
-		for param := range counts {
-			record(p.InstanceID, param)
+		singleCounts := make(map[string]map[string]int)
+		walkFields(p.Params.Parameters, provisioningFieldConfig, singleCounts)
+		for param := range singleCounts {
+			addInstance(p.InstanceID, param)
 		}
 	}
 
 	for _, p := range updateParams {
-		allInstances[p.InstanceID] = struct{}{}
+		if _, ok := active[p.InstanceID]; !ok {
+			continue
+		}
 		counts := make(map[string]map[string]int)
 		walkFields(p.Params, updatingFieldConfig, counts)
 		for param := range counts {
-			record(p.InstanceID, param)
+			addInstance(p.InstanceID, param)
 		}
 	}
 
@@ -467,19 +515,29 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 		var nowSet bool
 
 		switch ev.Type {
-		case "provision":
-			p, err := parseProvisioningParameters(ev.RawParams)
-			if err != nil {
-				continue
+		case opTypeProvision:
+			var params pkg.ProvisioningParametersDTO
+			if ev.ParsedProv != nil {
+				params = ev.ParsedProv.Parameters
+			} else {
+				p, err := parseProvisioningParameters(ev.RawParams)
+				if err != nil {
+					continue
+				}
+				params = p.Parameters
 			}
-			nowSet = isParamSet(p.Parameters, provisioningFieldConfig, param)
+			nowSet = isParamSet(params, provisioningFieldConfig, param)
 			dayProvisioned[ev.CreatedAt]++
-		case "update":
-			var params internal.UpdatingParametersDTO
-			if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
-				continue
+		case opTypeUpdate:
+			var updParams internal.UpdatingParametersDTO
+			if ev.ParsedUpdate != nil {
+				updParams = *ev.ParsedUpdate
+			} else {
+				if err := json.Unmarshal([]byte(ev.RawParams), &updParams); err != nil {
+					continue
+				}
 			}
-			if isParamSet(params, updatingFieldConfig, param) {
+			if isParamSet(updParams, updatingFieldConfig, param) {
 				nowSet = true
 			} else if _, inConfig := updatingFieldConfig[param]; inConfig {
 				// param is updatable and absent from this op → nullified
@@ -539,11 +597,149 @@ func BuildTrend(events []OpEvent, param string) TrendStat {
 	return TrendStat{Parameter: param, Points: points}
 }
 
-// BuildTrends computes daily trend lines for each of the given parameters.
+// applyProvEventToTrends updates state/dayDelta for a provision event across all params.
+// Returns false if the event should be skipped (parse error).
+func applyProvEventToTrends(ev OpEvent, params []string, state []bool, dayDelta []map[string]int) bool {
+	var provDTO pkg.ProvisioningParametersDTO
+	if ev.ParsedProv != nil {
+		provDTO = ev.ParsedProv.Parameters
+	} else {
+		p, err := parseProvisioningParameters(ev.RawParams)
+		if err != nil {
+			return false
+		}
+		provDTO = p.Parameters
+	}
+	evCounts := make(map[string]map[string]int)
+	walkFields(provDTO, provisioningFieldConfig, evCounts)
+	for i, param := range params {
+		wasSet := state[i]
+		nowSet := evCounts[param] != nil
+		state[i] = nowSet
+		if delta := trendDelta(wasSet, nowSet); delta != 0 {
+			dayDelta[i][ev.CreatedAt] += delta
+		}
+	}
+	return true
+}
+
+// applyUpdateEventToTrends updates state/dayDelta for an update event across all params.
+// Returns false if the event should be skipped (parse error).
+func applyUpdateEventToTrends(ev OpEvent, params []string, state []bool, dayDelta []map[string]int) bool {
+	var updParams internal.UpdatingParametersDTO
+	if ev.ParsedUpdate != nil {
+		updParams = *ev.ParsedUpdate
+	} else {
+		if err := json.Unmarshal([]byte(ev.RawParams), &updParams); err != nil {
+			return false
+		}
+	}
+	evCounts := make(map[string]map[string]int)
+	walkFields(updParams, updatingFieldConfig, evCounts)
+	for i, param := range params {
+		wasSet := state[i]
+		var nowSet bool
+		if evCounts[param] != nil {
+			nowSet = true
+		} else if _, inConfig := updatingFieldConfig[param]; inConfig {
+			nowSet = false // param updatable and absent → nullified
+		} else {
+			nowSet = wasSet // not updatable → unchanged
+		}
+		state[i] = nowSet
+		if delta := trendDelta(wasSet, nowSet); delta != 0 {
+			dayDelta[i][ev.CreatedAt] += delta
+		}
+	}
+	return true
+}
+
+// trendDelta returns +1 if the param transitioned from unset→set, -1 for set→unset, 0 otherwise.
+func trendDelta(wasSet, nowSet bool) int {
+	switch {
+	case nowSet && !wasSet:
+		return 1
+	case !nowSet && wasSet:
+		return -1
+	default:
+		return 0
+	}
+}
+
+// BuildTrends computes daily trend lines for all given parameters in a single pass over events.
+// Each event is processed once; all per-param states are updated simultaneously.
+// Events must be sorted by created_at ASC (as returned by FetchOpEventsInRange).
 func BuildTrends(events []OpEvent, params []string) []TrendStat {
-	result := make([]TrendStat, 0, len(params))
-	for _, p := range params {
-		result = append(result, BuildTrend(events, p))
+	if len(params) == 0 {
+		return nil
+	}
+
+	// Per-instance, per-param state: instanceState[instanceID][paramIdx] = isSet
+	instanceState := make(map[string][]bool)
+	getState := func(id string) []bool {
+		if s, ok := instanceState[id]; ok {
+			return s
+		}
+		s := make([]bool, len(params))
+		instanceState[id] = s
+		return s
+	}
+
+	// Accumulate deltas and provisioned counts by day, per param.
+	dayDelta := make([]map[string]int, len(params))
+	for i := range dayDelta {
+		dayDelta[i] = make(map[string]int)
+	}
+	dayProvisioned := make(map[string]int) // shared across all params
+
+	for _, ev := range events {
+		state := getState(ev.InstanceID)
+		switch ev.Type {
+		case opTypeProvision:
+			if applyProvEventToTrends(ev, params, state, dayDelta) {
+				dayProvisioned[ev.CreatedAt]++
+			}
+		case opTypeUpdate:
+			applyUpdateEventToTrends(ev, params, state, dayDelta)
+		}
+	}
+
+	// Collect all active days.
+	allEventDays := make(map[string]struct{})
+	for d := range dayProvisioned {
+		allEventDays[d] = struct{}{}
+	}
+	for i := range dayDelta {
+		for d := range dayDelta[i] {
+			allEventDays[d] = struct{}{}
+		}
+	}
+
+	var allDays []string
+	if len(allEventDays) > 0 {
+		sorted := make([]string, 0, len(allEventDays))
+		for d := range allEventDays {
+			sorted = append(sorted, d)
+		}
+		sort.Strings(sorted)
+		allDays = expandDayRange(sorted[0], sorted[len(sorted)-1])
+	}
+
+	result := make([]TrendStat, len(params))
+	for i, param := range params {
+		if len(allDays) == 0 {
+			result[i] = TrendStat{Parameter: param, Points: nil}
+			continue
+		}
+		points := make([]TrendPoint, 0, len(allDays))
+		running := 0
+		runningTotal := 0
+		for _, day := range allDays {
+			running += dayDelta[i][day]
+			runningTotal += dayProvisioned[day]
+			points = append(points, TrendPoint{Date: day, Count: running, Total: runningTotal})
+		}
+		result[i] = TrendStat{Parameter: param, Points: points}
 	}
 	return result
 }

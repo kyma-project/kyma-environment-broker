@@ -52,4 +52,6 @@ type StatsResponse struct {
 	Trends         []TrendStat         `json:"trends"`
 	Plans          []string            `json:"plans"`
 	RegionsByPlan  map[string][]string `json:"regions_by_plan"`
+	CachedAt       string              `json:"cached_at"`       // RFC3339 timestamp of last cache refresh
+	NextRefreshAt  string              `json:"next_refresh_at"` // RFC3339 timestamp of next scheduled refresh
 }

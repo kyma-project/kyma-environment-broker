@@ -78,7 +78,7 @@ jobs:
           git clone "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -124,7 +124,7 @@ jobs:
           # needed by gh cli for GitHub enterprise
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
-          prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
+          prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A app/kyma-gopher --state open --json headRefName | jq -r '.[] | .headRefName')
 
           if  echo $prs | tr " " '\n' | grep -F -q -x ${BRANCH_NAME}; then
               echo "PR already exists, no need to create new one"

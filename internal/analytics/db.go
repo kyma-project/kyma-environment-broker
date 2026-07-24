@@ -45,11 +45,15 @@ type UpdateParamsWithID struct {
 }
 
 // OpEvent is a single provisioning or update operation used for trend computation.
+// ParsedProv and ParsedUpdate are pre-parsed at fetch time to avoid repeated JSON
+// unmarshalling during aggregation and trend computation.
 type OpEvent struct {
-	InstanceID string
-	CreatedAt  string // YYYY-MM-DD
-	Type       string // "provision" or "update"
-	RawParams  string // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
+	InstanceID   string
+	CreatedAt    string                           // YYYY-MM-DD
+	Type         string                           // "provision" or "update"
+	RawParams    string                           // provisioning_parameters JSON for provision ops; updating_parameters JSON for update ops
+	ParsedProv   *internal.ProvisioningParameters // non-nil for provision events
+	ParsedUpdate *internal.UpdatingParametersDTO  // non-nil for update events
 }
 
 // FetchOpEventsInRange returns all succeeded provisioning and update operations on active
@@ -85,14 +89,31 @@ WHERE o.type IN ('provision', 'update')
 		return nil, fmt.Errorf("fetching op events: %w", err)
 	}
 
-	result := make([]OpEvent, len(rows))
-	for i, row := range rows {
-		result[i] = OpEvent{
+	result := make([]OpEvent, 0, len(rows))
+	for _, row := range rows {
+		ev := OpEvent{
 			InstanceID: row.InstanceID,
 			CreatedAt:  row.CreatedDate,
 			Type:       row.Type,
 			RawParams:  row.RawParams,
 		}
+		switch row.Type {
+		case "provision":
+			p, err := parseProvisioningParameters(row.RawParams)
+			if err != nil {
+				slog.Warn("analytics: skipping malformed provisioning_parameters", "instance_id", row.InstanceID, "error", err)
+				continue
+			}
+			ev.ParsedProv = &p
+		case "update":
+			var params internal.UpdatingParametersDTO
+			if err := json.Unmarshal([]byte(row.RawParams), &params); err != nil {
+				slog.Warn("analytics: skipping malformed updating_parameters", "instance_id", row.InstanceID, "error", err)
+				continue
+			}
+			ev.ParsedUpdate = &params
+		}
+		result = append(result, ev)
 	}
 	return result, nil
 }
@@ -108,17 +129,9 @@ func parseProvisioningParameters(raw string) (internal.ProvisioningParameters, e
 	return p, nil
 }
 
-// PlainProvisioningParams extracts just the ProvisioningParameters slice from ProvisioningParamsWithID.
-func PlainProvisioningParams(params []ProvisioningParamsWithID) []internal.ProvisioningParameters {
-	result := make([]internal.ProvisioningParameters, len(params))
-	for i, p := range params {
-		result[i] = p.Params
-	}
-	return result
-}
-
 // OpEventsToProvParamsInRange derives ProvisioningParamsWithID from provision events in events,
 // filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+// Uses ParsedProv when available to avoid redundant JSON unmarshalling.
 func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningParamsWithID {
 	result := make([]ProvisioningParamsWithID, 0, len(events))
 	for _, ev := range events {
@@ -128,10 +141,16 @@ func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningP
 		if !inRange(ev.CreatedAt, tr) {
 			continue
 		}
-		p, err := parseProvisioningParameters(ev.RawParams)
-		if err != nil {
-			slog.Warn("analytics: skipping malformed provisioning_parameters in op event", "instance_id", ev.InstanceID, "error", err)
-			continue
+		var p internal.ProvisioningParameters
+		if ev.ParsedProv != nil {
+			p = *ev.ParsedProv
+		} else {
+			var err error
+			p, err = parseProvisioningParameters(ev.RawParams)
+			if err != nil {
+				slog.Warn("analytics: skipping malformed provisioning_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+				continue
+			}
 		}
 		result = append(result, ProvisioningParamsWithID{InstanceID: ev.InstanceID, Params: p})
 	}
@@ -140,6 +159,7 @@ func OpEventsToProvParamsInRange(events []OpEvent, tr TimeRange) []ProvisioningP
 
 // OpEventsToUpdateParamsInRange derives UpdateParamsWithID from update events in events,
 // filtering to those whose CreatedAt falls within tr. An empty tr returns all events.
+// Uses ParsedUpdate when available to avoid redundant JSON unmarshalling.
 func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParamsWithID {
 	result := make([]UpdateParamsWithID, 0, len(events))
 	for _, ev := range events {
@@ -150,9 +170,13 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 			continue
 		}
 		var params internal.UpdatingParametersDTO
-		if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
-			slog.Warn("analytics: skipping malformed updating_parameters in op event", "instance_id", ev.InstanceID, "error", err)
-			continue
+		if ev.ParsedUpdate != nil {
+			params = *ev.ParsedUpdate
+		} else {
+			if err := json.Unmarshal([]byte(ev.RawParams), &params); err != nil {
+				slog.Warn("analytics: skipping malformed updating_parameters in op event", "instance_id", ev.InstanceID, "error", err)
+				continue
+			}
 		}
 		result = append(result, UpdateParamsWithID{InstanceID: ev.InstanceID, Params: params})
 	}
@@ -160,7 +184,8 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 }
 
 // inRange returns true if the YYYY-MM-DD date string d falls within [tr.From, tr.To).
-// An empty tr (both zero) always returns true.
+// An empty tr (both zero) always returns true. Single-bounded ranges are supported:
+// a zero From means unbounded start; a zero To means unbounded end.
 func inRange(d string, tr TimeRange) bool {
 	if tr.From.IsZero() && tr.To.IsZero() {
 		return true

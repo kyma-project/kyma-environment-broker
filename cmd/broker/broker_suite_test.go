@@ -292,7 +292,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				TotalInstances: len(provParams),
 				TotalUpdates:   len(updateParams),
 				Provisioning:   analytics.AggregateProvisioning(provParams),
-				Updates:        analytics.AggregateUpdates(updateParams),
+				Updates:        analytics.AggregateUpdates(provParams, updateParams),
 				Combined:       analytics.AggregateCombined(provParams, updateParams),
 				Distributions:  analytics.BuildDistributions(provParams),
 				Plans:          plans,
@@ -1134,6 +1134,18 @@ func fixSecrets() []runtime.Object {
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sb-azure",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure-eu-access",
 				Namespace: "kyma",
 			},
 			Data: map[string][]byte{

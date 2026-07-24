@@ -274,7 +274,7 @@ jobs:
           # Skip if PR already exists for this branch
           prs=$(gh pr list \
             -R "${PRODUCT_RUNTIME_REPO_URL}" \
-            -A "${{ vars.GIT_USER_NAME }}" \
+            -A "app/kyma-gopher" \
             --state open \
             --json headRefName \
             | jq -r '.[] | .headRefName')
