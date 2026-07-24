@@ -282,7 +282,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 		ts.router.HandleFunc("/analytics/stats", func(w http.ResponseWriter, r *http.Request) {
 			opEvents, err := reader.FetchOpEventsInRange(analytics.TimeRange{})
 			if err != nil {
-				http.Error(w, "failed to fetch op events", http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("failed to fetch op events: %v", err), http.StatusInternalServerError)
 				return
 			}
 			provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
@@ -292,7 +292,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				TotalInstances: len(provParams),
 				TotalUpdates:   len(updateParams),
 				Provisioning:   analytics.AggregateProvisioning(provParams),
-				Updates:        analytics.AggregateUpdates(updateParams),
+				Updates:        analytics.AggregateUpdates(provParams, updateParams),
 				Combined:       analytics.AggregateCombined(provParams, updateParams),
 				Distributions:  analytics.BuildDistributions(provParams),
 				Plans:          plans,
@@ -451,10 +451,11 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 func (s *BrokerSuiteTest) GetAnalyticsStats() analytics.StatsResponse {
 	s.t.Helper()
 	resp := s.CallAPI("GET", "analytics/stats", "")
-	defer func() { _ = resp.Body.Close() }()
-	require.Equal(s.t, http.StatusOK, resp.StatusCode)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(s.t, http.StatusOK, resp.StatusCode, "GET /analytics/stats returned non-200: %s", string(body))
 	var stats analytics.StatsResponse
-	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(&stats))
+	require.NoError(s.t, json.NewDecoder(bytes.NewReader(body)).Decode(&stats))
 	return stats
 }
 
@@ -1133,6 +1134,18 @@ func fixSecrets() []runtime.Object {
 		&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sb-azure",
+				Namespace: "kyma",
+			},
+			Data: map[string][]byte{
+				"clientID":       []byte("test-client-id"),
+				"clientSecret":   []byte("test-client-secret"),
+				"tenantID":       []byte("test-tenant-id"),
+				"subscriptionID": []byte("test-subscription-id"),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sb-azure-eu-access",
 				Namespace: "kyma",
 			},
 			Data: map[string][]byte{

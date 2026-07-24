@@ -226,7 +226,7 @@ func TestUpdateWithACL(t *testing.T) {
 	assert.Equal(t, 1, stats.TotalInstances)
 	assert.Equal(t, 1, stats.Provisioning.CountFor("region"))
 	assert.Equal(t, 1, stats.Provisioning.CountFor("accessControlList"))
-	assert.Equal(t, 2, stats.Updates.CountFor("accessControlList"))
+	assert.Equal(t, 1, stats.Updates.CountFor("accessControlList"))
 	assert.Equal(t, 1, stats.Updates.CountFor("oidc"))
 }
 

@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'Create release'
-        default: ""
+        description: 'Release version (leave "auto" to detect from PR labels)'
+        default: "auto"
         required: true
 
 permissions:
@@ -28,5 +28,5 @@ jobs:
     needs: create-release
     uses: "./.github/workflows/promote-keb-to-dev.yaml"
     with:
-      releaseTag: ${{ inputs.name }}
+      releaseTag: ${{ needs.create-release.outputs.version }}
     secrets: inherit
