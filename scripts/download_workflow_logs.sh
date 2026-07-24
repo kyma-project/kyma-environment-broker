@@ -55,7 +55,13 @@ run_id=$(retry_gh_api gh api \
   -H "Accept: application/vnd.github+json" \
   "/repos/${REPO}/actions/workflows/${workflow_id}/runs" | jq -r --arg workflow_title_filter "$WORKFLOW_TITLE" '.workflow_runs[] | select(.display_title | test($workflow_title_filter; "i")) | .id' | head -n 1)
 if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
-  echo "No runs found for workflow: $WORKFLOW_NAME with title filter: $WORKFLOW_TITLE"
+  echo "No runs found matching title '$WORKFLOW_TITLE', falling back to most recent completed run..."
+  run_id=$(retry_gh_api gh api \
+    -H "Accept: application/vnd.github+json" \
+    "/repos/${REPO}/actions/workflows/${workflow_id}/runs?status=completed&per_page=1" | jq -r '.workflow_runs[0].id')
+fi
+if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+  echo "No runs found for workflow: $WORKFLOW_NAME"
   exit 1
 fi
 
