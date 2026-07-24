@@ -282,7 +282,7 @@ def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-k
         if "modules" not in params:
             params["modules"] = _DEFAULT_MODULES
         if plan.lower() == "trial":
-            pr = _TRIAL_PLATFORM_REGIONS[0] if i < (n + 1) // 2 else _TRIAL_PLATFORM_REGIONS[1]
+            pr = _TRIAL_PLATFORM_REGIONS[i % len(_TRIAL_PLATFORM_REGIONS)]
         else:
             pr = platform_region
         print(f"[{i+1}/{n}] Provisioning...")
@@ -436,3 +436,6 @@ if __name__ == "__main__":
                     subprocess.run(["make", "run-provisioning-flow", f"RUNTIME_ID={rid}"], check=False)
                     processed.add(rid)
             time.sleep(args.poll)
+
+14:39 start provisioningu 5k
+14:51 koniec
