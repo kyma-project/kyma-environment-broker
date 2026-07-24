@@ -64,7 +64,7 @@ jobs:
         run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -259,7 +259,7 @@ jobs:
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
           cache: 'pip'
