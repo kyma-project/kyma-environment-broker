@@ -316,10 +316,16 @@ def monitor_instances(runtimes_or_file):
         instance_ids = [r.instance_id for r in runtimes_or_file]
     params = [("instance_id", iid) for iid in instance_ids]
     url = f"{KEB_BASE_URL}/runtimes"
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-
-    data = response.json().get("data", [])
+    data = []
+    page = 1
+    while True:
+        response = requests.get(url, params=params + [("page", page), ("pageSize", 100)])
+        response.raise_for_status()
+        body = response.json()
+        data.extend(body.get("data", []))
+        if len(data) >= body.get("totalCount", 0):
+            break
+        page += 1
     by_id = {item["instanceID"]: item for item in data}
 
     succeeded, failed, in_progress = [], [], []
@@ -436,6 +442,3 @@ if __name__ == "__main__":
                     subprocess.run(["make", "run-provisioning-flow", f"RUNTIME_ID={rid}"], check=False)
                     processed.add(rid)
             time.sleep(args.poll)
-
-14:39 start provisioningu 5k
-14:51 koniec
