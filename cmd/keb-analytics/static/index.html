@@ -107,9 +107,10 @@
 
   <div id="tab-trends" class="tab-pane" style="display:none">
     <p class="tab-info">
-      How many active instances had this parameter set on each day.
-      The count goes up when a new instance is created with the parameter, or an existing instance is updated to set it.
+      How many active instances had this parameter set on each day, shown across the full history.
+      The count goes up when a new instance is provisioned with the parameter set, or an existing instance is updated to set it.
       It goes down when an instance is updated to remove the parameter.
+      Period, plan, and region filters have no effect on this chart — it always shows all-time data.
     </p>
     <div id="trend-controls" class="sub-controls">
       <label for="trendParam">Parameter:</label>
@@ -123,6 +124,7 @@
     const charts = [];
     let currentData = null; // last fetched StatsResponse (full, unfiltered by plan/region)
     let activeTab = 'provisioning';
+    let savedFilters = null; // filter values saved while Trends tab is active
 
     function destroyCharts() {
       charts.forEach(c => c.destroy());
@@ -370,6 +372,7 @@
         x: new Date(p.date + 'T00:00:00Z').getTime(),
         y: p.count
       }));
+
       const chart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
@@ -420,7 +423,9 @@
       destroyCharts();
       document.getElementById('error').textContent = '';
       document.getElementById('total').textContent =
-        'Total active instances: ' + data.total_instances + ', updated ' + data.total_updates + ' times (filtered by current period / plan / region selection)';
+        'Total active instances: ' + data.total_instances +
+        (activeTab !== 'trends' ? ', updated ' + data.total_updates + ' times' : '') +
+        ' (filtered by current period / plan / region selection)';
 
       // Hide all no-data messages before re-rendering.
       ['combined','provisioning','update','distribution','trends'].forEach(t => setNoData(t, false));
@@ -444,6 +449,27 @@
       document.getElementById('tab-' + name).style.display = '';
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === name);
+      });
+      const trendsActive = name === 'trends';
+      if (trendsActive && !savedFilters) {
+        // Save current filter values, then reset dropdowns to "all" while disabled.
+        savedFilters = {
+          period: document.getElementById('period').value,
+          plan:   document.getElementById('plan').value,
+          region: document.getElementById('region').value,
+        };
+        document.getElementById('period').value = '';
+        document.getElementById('plan').value   = '';
+        document.getElementById('region').value = '';
+      } else if (savedFilters) {
+        // Restore saved values when leaving Trends.
+        document.getElementById('period').value = savedFilters.period;
+        document.getElementById('plan').value   = savedFilters.plan;
+        document.getElementById('region').value = savedFilters.region;
+        savedFilters = null;
+      }
+      ['period', 'plan', 'region'].forEach(id => {
+        document.getElementById(id).disabled = trendsActive;
       });
       if (currentData) renderActiveTab(currentData);
     }
@@ -479,6 +505,12 @@
       let data;
       try {
         const resp = await fetch(buildUrl());
+        if (!resp.ok) {
+          const text = await resp.text();
+          document.getElementById('error').textContent =
+            'Failed to load stats: HTTP ' + resp.status + ' — ' + text.trim();
+          return;
+        }
         data = await resp.json();
       } catch(e) {
         document.getElementById('error').textContent = 'Failed to load stats: ' + e;
