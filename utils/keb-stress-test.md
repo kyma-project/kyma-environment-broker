@@ -54,7 +54,7 @@ The stress test consists of three steps:
 Run the following command to provision N trial instances for a given global account:
 
 ```bash
-python3 utils/keb.py provision <N> --global-account-id <global-account-id>
+python3 keb.py provision <N> --global-account-id <global-account-id>
 ```
 
 The instance IDs are saved to a timestamped file, for example `instances_20260724_143900.txt`.
@@ -64,7 +64,7 @@ The instance IDs are saved to a timestamped file, for example `instances_2026072
 Poll instance states until all are `succeeded` or `failed`:
 
 ```bash
-python3 utils/keb.py monitor instances_<timestamp>.txt --interval 30
+python3 keb.py monitor instances_<timestamp>.txt --interval 30
 ```
 
 ## Step 3: Deprovision Instances
@@ -72,18 +72,18 @@ python3 utils/keb.py monitor instances_<timestamp>.txt --interval 30
 Deprovision all instances from the instances file:
 
 ```bash
-python3 utils/keb.py deprovision instances_<timestamp>.txt
+python3 keb.py deprovision instances_<timestamp>.txt
 ```
 
 ## Full Example
 
 ```bash
 # Provision 100 trial instances
-python3 utils/keb.py provision 100 --global-account-id my-global-account-id
+python3 keb.py provision 100 --global-account-id my-global-account-id
 
 # Monitor until all instances succeed or fail
-python3 utils/keb.py monitor $(ls -t instances_*.txt | head -1) --interval 30
+python3 keb.py monitor $(ls -t instances_*.txt | head -1) --interval 30
 
 # Deprovision all instances
-python3 utils/keb.py deprovision $(ls -t instances_*.txt | head -1)
+python3 keb.py deprovision $(ls -t instances_*.txt | head -1)
 ```
