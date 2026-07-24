@@ -319,7 +319,7 @@ def monitor_instances(runtimes_or_file):
     data = []
     page = 1
     while True:
-        response = requests.get(url, params=params + [("page", page), ("pageSize", 100)])
+        response = requests.get(url, params=params + [("page", page), ("page_size", 100)])
         response.raise_for_status()
         body = response.json()
         data.extend(body.get("data", []))
