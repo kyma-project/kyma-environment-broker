@@ -232,7 +232,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 					),
 					Image: &gardener.ShootMachineImage{
 						Name:    s.config.MachineImage,
-						Version: ptr.String(s.config.MachineImageVersion + operation.MachineImageVersionSuffixes[DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)]),
+						Version: &s.config.MachineImageVersion,
 					},
 				},
 				Maximum:        scalerMax,

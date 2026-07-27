@@ -68,18 +68,13 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		log.Info(fmt.Sprintf("Zones for %s additional worker node pool: %v", additionalWorkerNodePool.Name, workerZones))
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
-		machineImageVersion := p.imConfig.MachineImageVersion + operation.MachineImageVersionSuffixes[additionalWorkerNodePool.MachineType]
-		if workerExists && isAdditionalWorkerPoolUnchanged(operation, additionalWorkerNodePool) &&
-			currentAdditionalWorker.Machine.Image != nil && currentAdditionalWorker.Machine.Image.Version != nil {
-			machineImageVersion = *currentAdditionalWorker.Machine.Image.Version
-		}
 		worker := gardener.Worker{
 			Name: additionalWorkerNodePool.Name,
 			Machine: gardener.Machine{
 				Type: p.ResolveMachineType(operation, additionalWorkerNodePool, workerExists, currentAdditionalWorker, log),
 				Image: &gardener.ShootMachineImage{
 					Name:    p.imConfig.MachineImage,
-					Version: &machineImageVersion,
+					Version: &p.imConfig.MachineImageVersion,
 				},
 			},
 			Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
