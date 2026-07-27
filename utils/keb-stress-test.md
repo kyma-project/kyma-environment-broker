@@ -29,9 +29,9 @@ broker:
   onlySingleTrialPerGA: "false"
 ```
 
-### Whitelist the Subaccount to Skip Quota Checks
+### Allowlist the Subaccount to Skip Quota Checks
 
-To allow the test subaccount to provision beyond its quota limits, add it to the quota whitelist:
+To allow the test subaccount to provision beyond its quota limits, add it to the quota allowlist:
 
 ```yaml
 quotaWhitelistedSubaccountIds: |-
@@ -41,41 +41,29 @@ quotaWhitelistedSubaccountIds: |-
 
 The default subaccount ID used by `keb.py` is `github-actions-keb-integration`.
 
-## Scenario
+## Procedure
 
-The stress test consists of three steps:
+ 1. To provision N trial instances for a given global account, run the following command:
 
-1. **Provision** — create N trial instances in bulk.
-2. **Monitor** — poll instance states until all are `succeeded` or `failed`.
-3. **Deprovision** — clean up all provisioned instances.
+    ```bash
+    python3 keb.py provision <N> --global-account-id <global-account-id>
+    ```
 
-## Step 1: Provision Instances
+    The instance IDs are saved to a timestamped file, for example `instances_20260724_143900.txt`.
 
-Run the following command to provision N trial instances for a given global account:
+ 2. Monitor instances: Poll instance states until all are `succeeded` or `failed`.
 
-```bash
-python3 keb.py provision <N> --global-account-id <global-account-id>
-```
+    ```bash
+    python3 keb.py monitor instances_<timestamp>.txt --interval 30
+    ```
 
-The instance IDs are saved to a timestamped file, for example `instances_20260724_143900.txt`.
+ 3. Deprovision all instances from the instances file.
 
-## Step 2: Monitor Instances
+    ```bash
+    python3 keb.py deprovision instances_<timestamp>.txt
+    ```
 
-Poll instance states until all are `succeeded` or `failed`:
-
-```bash
-python3 keb.py monitor instances_<timestamp>.txt --interval 30
-```
-
-## Step 3: Deprovision Instances
-
-Deprovision all instances from the instances file:
-
-```bash
-python3 keb.py deprovision instances_<timestamp>.txt
-```
-
-## Full Example
+### Full Example
 
 ```bash
 # Provision 100 trial instances

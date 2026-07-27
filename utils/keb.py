@@ -276,36 +276,38 @@ _TRIAL_PLATFORM_REGIONS = ["cf-eu10", "cf-us10"]
 def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-keb-integration", plan="trial", region="", platform_region="", parameters={}, validate=False):
     global VERBOSE
     saved_verbose, VERBOSE = VERBOSE, False
-    runtimes = []
-    for i in range(n):
-        params = dict(parameters)
-        if "modules" not in params:
-            params["modules"] = _DEFAULT_MODULES
-        if plan.lower() == "trial":
-            pr = _TRIAL_PLATFORM_REGIONS[i % len(_TRIAL_PLATFORM_REGIONS)]
-        else:
-            pr = platform_region
-        print(f"[{i+1}/{n}] Provisioning...")
-        r = provision(
-            global_account_id=global_account_id,
-            subaccount_id=subaccount_id,
-            plan=plan,
-            region=region,
-            platform_region=pr,
-            parameters=params,
-            validate=validate,
-        )
-        if r:
-            runtimes.append(r)
+    try:
+        runtimes = []
+        for i in range(n):
+            params = dict(parameters)
+            if "modules" not in params:
+                params["modules"] = _DEFAULT_MODULES
+            if plan.lower() == "trial":
+                pr = _TRIAL_PLATFORM_REGIONS[i % len(_TRIAL_PLATFORM_REGIONS)]
+            else:
+                pr = platform_region
+            print(f"[{i+1}/{n}] Provisioning...")
+            r = provision(
+                global_account_id=global_account_id,
+                subaccount_id=subaccount_id,
+                plan=plan,
+                region=region,
+                platform_region=pr,
+                parameters=params,
+                validate=validate,
+            )
+            if r:
+                runtimes.append(r)
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"instances_{timestamp}.txt"
-    with open(filename, "w") as f:
-        for r in runtimes:
-            f.write(r.instance_id + "\n")
-    print(f"Instance IDs written to {filename}")
-    VERBOSE = saved_verbose
-    return runtimes
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"instances_{timestamp}.txt"
+        with open(filename, "w") as f:
+            for r in runtimes:
+                f.write(r.instance_id + "\n")
+        print(f"Instance IDs written to {filename}")
+        return runtimes
+    finally:
+        VERBOSE = saved_verbose
 
 
 def monitor_instances(runtimes_or_file):
@@ -349,18 +351,20 @@ def monitor_instances(runtimes_or_file):
 def deprovision_many(runtimes_or_file):
     global VERBOSE
     saved_verbose, VERBOSE = VERBOSE, False
-    if isinstance(runtimes_or_file, str):
-        plan_id = _get_plan("trial")["id"]
-        with open(runtimes_or_file) as f:
-            ids = f.read().strip().split()
-        for i, iid in enumerate(ids, 1):
-            print(f"[{i}/{len(ids)}] Deprovisioning {iid}...")
-            deprovision(iid, plan_id)
-    else:
-        for i, r in enumerate(runtimes_or_file, 1):
-            print(f"[{i}/{len(runtimes_or_file)}] Deprovisioning {r.instance_id}...")
-            r.deprovision()
-    VERBOSE = saved_verbose
+    try:
+        if isinstance(runtimes_or_file, str):
+            plan_id = _get_plan("trial")["id"]
+            with open(runtimes_or_file) as f:
+                ids = f.read().strip().split()
+            for i, iid in enumerate(ids, 1):
+                print(f"[{i}/{len(ids)}] Deprovisioning {iid}...")
+                deprovision(iid, plan_id)
+        else:
+            for i, r in enumerate(runtimes_or_file, 1):
+                print(f"[{i}/{len(runtimes_or_file)}] Deprovisioning {r.instance_id}...")
+                r.deprovision()
+    finally:
+        VERBOSE = saved_verbose
 
 
 
@@ -399,7 +403,7 @@ if __name__ == "__main__":
     d.add_argument("file")
 
     s = subparsers.add_parser("simulate-provisioning-flow", help="Watch for Runtime CRs and simulate KIM/KLM after a delay")
-    s.add_argument("--delay", type=int, default=900, help="Seconds to wait after CR creation before setting Ready (default: 900)")
+    s.add_argument("--delay", type=int, default=720, help="Seconds to wait after CR creation before setting Ready (default: 720)")
     s.add_argument("--poll", type=int, default=10, help="Seconds between checks for new Runtime CRs (default: 10)")
 
     args = parser.parse_args()
