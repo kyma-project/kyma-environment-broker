@@ -49,7 +49,7 @@ The default subaccount ID used by `keb.py` is `github-actions-keb-integration`.
     python3 keb.py provision <N> --global-account-id <global-account-id> [--concurrent <threads>]
     ```
 
-    The `--concurrent` flag controls how many provisioning requests are in-flight at the same time (default: `1` — sequential). For large N, increase this to reduce total submission time 
+    The `--concurrent` flag controls how many provisioning requests are in-flight at the same time (default: `1` — sequential). For large N, increase this to reduce total submission time. 
 
     The instance IDs are saved to a timestamped file, for example `instances_20260724_143900.txt`.
 
