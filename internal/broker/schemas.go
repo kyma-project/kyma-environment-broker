@@ -433,7 +433,7 @@ func insertVolumeSize(displayName string, volGb int) string {
 	// Find last ')' — may have trailing text after it (e.g. " - note")
 	idx := strings.LastIndex(name, ")")
 	if idx < 0 {
-		return fmt.Sprintf("%s, %dGi volume%s", displayName, volGb, suffix)
+		return fmt.Sprintf("%s, %dGi volume%s", name, volGb, suffix)
 	}
 	return fmt.Sprintf("%s, %dGi volume)%s%s", name[:idx], volGb, name[idx+1:], suffix)
 }
