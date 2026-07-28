@@ -273,31 +273,34 @@ _DEFAULT_MODULES = {
 _TRIAL_PLATFORM_REGIONS = ["cf-eu10", "cf-us10"]
 
 
-def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-keb-integration", plan="trial", region="", platform_region="", parameters={}, validate=False):
+def provision_many(n, global_account_id="ga-id", subaccount_id="github-actions-keb-integration", plan="trial", region="", platform_region="", parameters={}, validate=False, num_concurrent=1):
+    from concurrent.futures import ThreadPoolExecutor
     global VERBOSE
     saved_verbose, VERBOSE = VERBOSE, False
+
+    def _provision_one(i):
+        params = dict(parameters)
+        if "modules" not in params:
+            params["modules"] = _DEFAULT_MODULES
+        if plan.lower() == "trial":
+            pr = _TRIAL_PLATFORM_REGIONS[i % len(_TRIAL_PLATFORM_REGIONS)]
+        else:
+            pr = platform_region
+        print(f"[{i+1}/{n}] Provisioning...")
+        return provision(
+            global_account_id=global_account_id,
+            subaccount_id=subaccount_id,
+            plan=plan,
+            region=region,
+            platform_region=pr,
+            parameters=params,
+            validate=validate,
+        )
+
     try:
-        runtimes = []
-        for i in range(n):
-            params = dict(parameters)
-            if "modules" not in params:
-                params["modules"] = _DEFAULT_MODULES
-            if plan.lower() == "trial":
-                pr = _TRIAL_PLATFORM_REGIONS[i % len(_TRIAL_PLATFORM_REGIONS)]
-            else:
-                pr = platform_region
-            print(f"[{i+1}/{n}] Provisioning...")
-            r = provision(
-                global_account_id=global_account_id,
-                subaccount_id=subaccount_id,
-                plan=plan,
-                region=region,
-                platform_region=pr,
-                parameters=params,
-                validate=validate,
-            )
-            if r:
-                runtimes.append(r)
+        with ThreadPoolExecutor(max_workers=num_concurrent) as executor:
+            results = list(executor.map(_provision_one, range(n)))
+        runtimes = [r for r in results if r]
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"instances_{timestamp}.txt"
@@ -394,6 +397,7 @@ if __name__ == "__main__":
     p.add_argument("--subaccount-id", default="github-actions-keb-integration")
     p.add_argument("--plan", default="trial")
     p.add_argument("--region", default="")
+    p.add_argument("--concurrent", type=int, default=1, help="Number of concurrent provisioning requests (default: 1)")
 
     m = subparsers.add_parser("monitor", help="Monitor instances from a file")
     m.add_argument("file")
@@ -409,7 +413,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "provision":
-        provision_many(args.n, global_account_id=args.global_account_id, subaccount_id=args.subaccount_id, plan=args.plan, region=args.region)
+        provision_many(args.n, global_account_id=args.global_account_id, subaccount_id=args.subaccount_id, plan=args.plan, region=args.region, num_concurrent=args.concurrent)
     elif args.command == "monitor":
         import time
         while True:

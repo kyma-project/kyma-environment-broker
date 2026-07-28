@@ -46,8 +46,10 @@ The default subaccount ID used by `keb.py` is `github-actions-keb-integration`.
  1. To provision N trial instances for a given global account, run the following command:
 
     ```bash
-    python3 keb.py provision <N> --global-account-id <global-account-id>
+    python3 keb.py provision <N> --global-account-id <global-account-id> [--concurrent <threads>]
     ```
+
+    The `--concurrent` flag controls how many provisioning requests are in-flight at the same time (default: `1` — sequential). For large N, increase this to reduce total submission time 
 
     The instance IDs are saved to a timestamped file, for example `instances_20260724_143900.txt`.
 
@@ -66,8 +68,8 @@ The default subaccount ID used by `keb.py` is `github-actions-keb-integration`.
 ### Full Example
 
 ```bash
-# Provision 100 trial instances
-python3 keb.py provision 100 --global-account-id my-global-account-id
+# Provision 100 trial instances (5 concurrent requests)
+python3 keb.py provision 100 --global-account-id my-global-account-id --concurrent 5
 
 # Monitor until all instances succeed or fail
 python3 keb.py monitor $(ls -t instances_*.txt | head -1) --interval 30
