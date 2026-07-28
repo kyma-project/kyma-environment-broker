@@ -706,7 +706,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				Type:            "string",
 				Enum:            ToInterfaceSlice(machineTypes),
 				EnumDisplayName: machineTypesDisplay,
-				Description:     "Specifies the type of the virtual machine.",
+				Description:     "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>.",
 			},
 			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, rejectUnsupportedParameters),
 		},
@@ -858,7 +858,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength:       1,
 					Enum:            ToInterfaceSlice(machineTypes),
 					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
+					Description:     "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
 				},
 				HAZones: &Type{
 					Type:        "boolean",

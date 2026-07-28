@@ -52,7 +52,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
+            "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -212,7 +212,7 @@
         "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
         "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
       },
-      "description": "Specifies the type of the virtual machine.",
+      "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>.",
       "enum": [
         "g_c2_m8",
         "g_c4_m16",
