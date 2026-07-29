@@ -2,7 +2,7 @@
 
 # Internal Provisioning Parameters
 
-These parameters are fields of the `ProvisioningParametersDTO` struct in [`common/runtime/model.go`](../../common/runtime/model.go). They are used internally by Kyma Environment Broker (KEB) but are not exposed to users using the Open Service Broker (OSB) provisioning API.
+These parameters belong to the `ProvisioningParameters` struct in [`internal/dto.go`](../../internal/dto.go) and its embedded `ProvisioningParametersDTO` sub-struct in [`common/runtime/model.go`](../../common/runtime/model.go). They are used internally by Kyma Environment Broker (KEB) but are not exposed to users using the Open Service Broker (OSB) provisioning API.
 
 For user-facing provisioning parameters, see [Service Description](../user/03-10-service-description.md).
 
@@ -26,3 +26,5 @@ For user-facing provisioning parameters, see [Service Description](../user/03-10
 | **shootName** | string | Name of the Gardener Shoot resource. |
 | **shootDomain** | string | Domain of the Gardener Shoot resource. |
 | **kubeconfig** | string | Kubeconfig for the Kyma runtime. |
+| **maxSurge** | int | Maximum number of virtual machines created during an update. |
+| **maxUnavailable** | int | Maximum number of virtual machines unavailable during an update. |

@@ -50,14 +50,14 @@ You can configure the following provisioning parameters:
 | **oidc.groupsClaim<sup>1</sup>**                 | string | Provides an OIDC groups claim for a Kyma runtime.                                           |    No    | `groups`                                                                                                 |
 | **oidc.issuerURL<sup>1</sup>**                   | string | Provides an OIDC issuer URL for a Kyma runtime.                                             |    No    | None                                                                                                     |
 | **oidc.signingAlgs<sup>1</sup>**                 | string | Provides the OIDC signing algorithms for a Kyma runtime.                                    |    No    | `RS256`                                                                                                  |
-| **oidc.usernameClaim<sup>1</sup>**               | string | Provides an OIDC username claim for a Kyma runtime.                                         |    No    | email                                                                                                    |
+| **oidc.usernameClaim<sup>1</sup>**               | string | Provides an OIDC username claim for a Kyma runtime.                                         |    No    | `email`                                                                                                  |
 | **oidc.usernamePrefix<sup>1</sup>**              | string | Provides an OIDC username prefix for a Kyma runtime.                                        |    No    | None                                                                                                     |
 | **oidc.encodedJwksArray<sup>1</sup>**            | string | Provides the JWKS array encoded in base64. To remove a previously set value, enter `-`.     |    No    | None                                                                                                     |
 | **oidc.groupsPrefix<sup>1</sup>**                | string | Provides a prefix for group name claim mappings.                                            |    No    | None                                                                                                     |
 | **oidc.requiredClaims<sup>1</sup>**              | array  | Provides a list of `key=value` pairs that describe required claims in the ID Token.         |    No    | None                                                                                                     |
 | **administrators<sup>1</sup>**                   | string | Provides administrators for a Kyma runtime.                                                 |    No    | If no other value is provided, the email address of the provisioning user is used                        |
 | **additionalWorkerNodePools<sup>1</sup>**        | array  | Defines a custom list of additional worker node pools.                                      |    No    | None                                                                                                     |
-| **networking.nodes**                             | string | The CIDR range for nodes.                                                                   |   Yes    | `10.250.0.0/16`                                                                                          |
+| **networking.nodes**                             | string | The CIDR range for nodes. Required when `networking` is specified.                          |    No    | `10.250.0.0/16`                                                                                          |
 | **networking.pods**                              | string | The CIDR range for pods.                                                                    |    No    | `10.96.0.0/13`                                                                                           |
 | **networking.services**                          | string | The CIDR range for services.                                                                |    No    | `10.104.0.0/13`                                                                                          |
 | **networking.dualStack**                         | bool   | Enables dual-stack networking. Available for AWS only.                                      |    No    | `false`                                                                                                  |
@@ -84,6 +84,9 @@ Microsoft Azure
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`           |
 | **accessControlList<sup>1</sup>**      | object | Specifies the IP ranges that can access the Kubernetes API.                     |    No    | None              |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                                   |    No    | `false`           |
+<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
+| **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`           |
+| **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                             |    No    | `false`           |
 
 </details>
 
@@ -100,6 +103,8 @@ Azure Lite
 | **autoScalerMax<sup>1</sup>**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed. |    No    | `20`              |
 | **colocateControlPlane**       | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`           |
 | **auditLogAccess<sup>1</sup>** | bool   | Enables direct read access to audit log data.                                   |    No    | `false`           |
+<!-- TODO: confirm whether gvisor should be included in user-facing docs (internal users only) -->
+| **gvisor.enabled<sup>1</sup>** | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`           |
 
 </details>
 
@@ -120,6 +125,9 @@ AWS
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`       |
 | **accessControlList<sup>1</sup>**      | object | Specifies the IP ranges that can access the Kubernetes API.                     |    No    | None          |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                                   |    No    | `false`       |
+<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
+| **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`       |
+| **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                             |    No    | `false`       |
 
 
 </details>
@@ -141,6 +149,9 @@ Google Cloud
 | **autoScalerMax<sup>1</sup>**          | int    | Specifies the maximum number of virtual machines to create.           |    No    | `20`            |
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region. |    No    | `false`         |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                         |    No    | `false`         |
+<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
+| **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                 |    No    | `false`         |
+| **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                   |    No    | `false`         |
 
 
 </details>
@@ -201,6 +212,8 @@ Alibaba Cloud
 | **autoScalerMin<sup>1</sup>** | int    | Specifies the minimum number of virtual machines to create.           |    No    | `3`             |
 | **autoScalerMax<sup>1</sup>** | int    | Specifies the maximum number of virtual machines to create.           |    No    | `20`            |
 | **colocateControlPlane**      | bool   | Colocates both the control plane and worker nodes in the same region. |    No    | `false`         |
+<!-- TODO: confirm whether ingressFiltering should be included in user-facing docs (internal users only) -->
+| **ingressFiltering<sup>1</sup>** | bool | Controls ingress traffic filtering.                                  |    No    | `false`         |
 
 </details>
 
