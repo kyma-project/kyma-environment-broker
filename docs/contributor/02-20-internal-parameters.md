@@ -22,7 +22,7 @@ For user-facing provisioning parameters, see [Service Description](../user/03-10
 | **context.sm_operator_credentials.xsappname** | string | XSApp name for the SAP BTP service operator. |
 | **context.user_id** | string | User ID for a Kyma runtime. |
 | **volumeSizeGb** | int | Root volume size in GB. Set by the provider configuration, not user-configurable. |
-| **zones** | string | Availability zones. Set by the provider configuration, not user-configurable. |
+| **zones** | []string | Availability zones. Set by the provider configuration, not user-configurable. |
 | **shootName** | string | Name of the Gardener Shoot resource. |
 | **shootDomain** | string | Domain of the Gardener Shoot resource. |
 | **kubeconfig** | string | Kubeconfig for the Kyma runtime. |
