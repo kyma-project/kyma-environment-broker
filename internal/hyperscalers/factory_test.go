@@ -89,6 +89,7 @@ func newFactoryTestSpec(t *testing.T) *configuration.ProviderSpec {
 	spec, err := configuration.NewProviderSpec(strings.NewReader(`
 azure:
   zonesDiscovery: true
+  clientConfiguration: public
   regions:
     westeurope:
       displayName: "West Europe"

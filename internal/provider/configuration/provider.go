@@ -27,6 +27,7 @@ type providerDTO struct {
 	MachineDisplayNames      map[string]string              `yaml:"machines"`
 	RegionsSupportingMachine map[string]map[string][]string `yaml:"regionsSupportingMachine,omitempty"`
 	ZonesDiscovery           bool                           `yaml:"zonesDiscovery"`
+	ClientConfiguration      string                         `yaml:"clientConfiguration,omitempty"`
 	DualStack                bool                           `yaml:"dualStack,omitempty"`
 	MachinesVersions         map[string]string              `yaml:"machinesVersions,omitempty"`
 }
@@ -185,6 +186,16 @@ func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.ZonesDiscovery
+}
+
+// AzureClientConfiguration returns the configured Azure cloud environment name
+// ("public", "china", "usgov") or "" when auto-discovery is requested.
+func (p *ProviderSpec) AzureClientConfiguration() string {
+	providerData := p.findProviderDTO(runtime.Azure)
+	if providerData == nil {
+		return ""
+	}
+	return providerData.ClientConfiguration
 }
 
 func (p *ProviderSpec) ZonesDiscoveryProviders() []runtime.CloudProvider {

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -39,7 +40,7 @@ func buildCacheSpec(machineNames []string) *configuration.ProviderSpec {
 
 // mockSKUsClientFactory returns a SKUsClientFactory that always returns the given API.
 func mockSKUsClientFactory(api ResourceSKUsAPI) SKUsClientFactory {
-	return func(_ string, _ *azidentity.ClientSecretCredential) (ResourceSKUsAPI, error) {
+	return func(_ string, _ *azidentity.ClientSecretCredential, _ cloud.Configuration) (ResourceSKUsAPI, error) {
 		return api, nil
 	}
 }
@@ -48,6 +49,7 @@ func newTestCache(spec *configuration.ProviderSpec, skus []*armcompute.ResourceS
 	return &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
+		clientConfigName:  "public",
 		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: mockSKUsClientFactory(&mockSKUsAPI{skus: skus, err: apiErr}),
 	}
@@ -57,6 +59,7 @@ func newTestCacheWithMock(spec *configuration.ProviderSpec, api ResourceSKUsAPI)
 	return &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
+		clientConfigName:  "public",
 		skusClientFactory: mockSKUsClientFactory(api),
 	}
 }
@@ -201,6 +204,7 @@ func TestAzureCache_FillAllRetryLogsOnlyAfterAllAttempts(t *testing.T) {
 	cache := &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
+		clientConfigName:  "public",
 		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: mockSKUsClientFactory(failThenSucceedAPI),
 	}
@@ -215,12 +219,13 @@ func TestAzureCache_FillAllRetryExhausted(t *testing.T) {
 	spec := buildCacheSpec([]string{"Standard_D4s_v5"})
 
 	cache := &AzureCache{
-		data:         make(map[string]map[string][]string),
-		providerSpec: spec,
+		data:             make(map[string]map[string][]string),
+		providerSpec:     spec,
+		clientConfigName: "public",
 		secretFetcher: func() (AzureCredentials, error) {
 			return buildAzureCredentials(), nil
 		},
-		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential) (ResourceSKUsAPI, error) {
+		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential, _ cloud.Configuration) (ResourceSKUsAPI, error) {
 			return &mockSKUsAPI{err: assert.AnError}, nil
 		},
 	}
@@ -234,10 +239,11 @@ func TestAzureCache_ClientFactoryError_NoRetry(t *testing.T) {
 	spec := buildCacheSpec([]string{"Standard_D4s_v5"})
 	var attempts int
 	cache := &AzureCache{
-		data:          make(map[string]map[string][]string),
-		providerSpec:  spec,
-		secretFetcher: func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
-		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential) (ResourceSKUsAPI, error) {
+		data:              make(map[string]map[string][]string),
+		providerSpec:      spec,
+		clientConfigName:  "public",
+		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
+		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential, _ cloud.Configuration) (ResourceSKUsAPI, error) {
 			attempts++
 			return nil, assert.AnError
 		},

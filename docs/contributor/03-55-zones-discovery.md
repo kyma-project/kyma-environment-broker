@@ -46,6 +46,31 @@ The subscription secret is used only for validation. Its name is logged to suppo
 
 Azure `ResourceSKUs` API returns zone-level restrictions (`restrictions[type=Zone]`) which indicate that a given machine type is not available in a specific zone for the subscription. KEB automatically excludes restricted zones from the available zone list.
 
+### Microsoft Azure — Cloud Environment Configuration
+
+Azure operates separate cloud environments with different API endpoints and token issuers. KEB supports three environments:
+
+| Value | Environment | Token endpoint | ARM endpoint |
+|---|---|---|---|
+| `public` | Azure Public | `login.microsoftonline.com` | `management.azure.com` |
+| `china` | Azure China (Mooncake) | `login.chinacloudapi.cn` | `management.chinacloudapi.cn` |
+| `usgov` | Azure US Government | `login.microsoftonline.us` | `management.usgovcloudapi.net` |
+
+Configure the environment under the `azure` provider block:
+
+```yaml
+providersConfiguration:
+  azure:
+    zonesDiscovery: true
+    clientConfiguration: china  # optional; omit to enable auto-discovery
+```
+
+**Explicit configuration (recommended for production):** When `clientConfiguration` is set, KEB uses that cloud directly with no network overhead.
+
+**Auto-discovery (default when `clientConfiguration` is omitted):** KEB probes each environment in order (public → china → usgov) by requesting an OAuth token. The first environment that accepts the credentials is used. The result is cached for the lifetime of the process — probing happens only once, regardless of how many zone discovery calls are made. US Government support is included in the code but is not currently deployed with Azure.
+
+> **Note:** Explicit `clientConfiguration` is recommended to eliminate the probe overhead and to make the deployment intent explicit.
+
 ## Zones Discovery
 
 If **zonesDiscovery** is enabled, KEB performs the `Discover_Available_Zones` step using hyperscaler credentials from the subscription secret resolved in the `Resolve_Subscription_Secret` step.
