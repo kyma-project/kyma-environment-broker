@@ -116,33 +116,27 @@ func NewFakeFactory(zones map[string][]string, err error) *FakeFactory {
 	return &FakeFactory{zones: zones, err: err}
 }
 
-func NewFakeFactoryWithHyperV(zones map[string][]string, hyperVGens map[string]string, err error) *FakeFactory {
-	return &FakeFactory{zones: zones, hyperVGens: hyperVGens, err: err}
-}
-
 type FakeFactory struct {
-	zones      map[string][]string
-	hyperVGens map[string]string
-	err        error
+	zones map[string][]string
+	err   error
 }
 
 func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &fakeProviderClient{zones: f.zones, hyperVGens: f.hyperVGens}, nil
+	return &fakeProviderClient{zones: f.zones}, nil
 }
 
 func (f *FakeFactory) NewPerCallFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &fakeProviderClient{zones: f.zones, hyperVGens: f.hyperVGens}, nil
+	return &fakeProviderClient{zones: f.zones}, nil
 }
 
 type fakeProviderClient struct {
-	zones      map[string][]string
-	hyperVGens map[string]string
+	zones map[string][]string
 }
 
 func (f *fakeProviderClient) AvailableZones(_ context.Context, machineType string) ([]string, error) {
@@ -155,10 +149,6 @@ func (f *fakeProviderClient) AvailableZonesCount(ctx context.Context, machineTyp
 		return 0, err
 	}
 	return len(zones), nil
-}
-
-func (f *fakeProviderClient) HyperVGeneration(_ context.Context, machineType string) (string, error) {
-	return f.hyperVGens[machineType], nil
 }
 
 func CreateGardenerClientWithCredentialsBindings() *gardener.Client {

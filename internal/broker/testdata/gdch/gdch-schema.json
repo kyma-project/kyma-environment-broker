@@ -8,6 +8,7 @@
     "autoScalerMax",
     "additionalWorkerNodePools",
     "modules",
+    "networking",
     "oidc",
     "administrators",
     "auditLogAccess"
@@ -86,7 +87,7 @@
               "n3-standard-64-gdc": "n3-standard-64-gdc (64vCPU, 256GB RAM)",
               "n3-standard-8-gdc": "n3-standard-8-gdc (8vCPU, 32GB RAM)"
             },
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
+            "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>. The machine type marked with “*” has limited availability and generates high cost. You can update your virtual machine type only within the general-purpose machine types. You cannot perform updates on compute-intensive machine types. To use a different compute-intensive machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "enum": [
               "n3-standard-2-gdc",
               "n3-standard-4-gdc",
@@ -197,7 +198,7 @@
         "n3-standard-64-gdc": "n3-standard-64-gdc (64vCPU, 256GB RAM)",
         "n3-standard-8-gdc": "n3-standard-8-gdc (8vCPU, 32GB RAM)"
       },
-      "description": "Specifies the type of the virtual machine.",
+      "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>.",
       "enum": [
         "n3-standard-2-gdc",
         "n3-standard-4-gdc",
@@ -336,6 +337,34 @@
       "pattern": "^[a-zA-Z0-9-]*$",
       "title": "Cluster Name",
       "type": "string"
+    },
+    "networking": {
+      "additionalProperties": false,
+      "description": "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another.",
+      "properties": {
+        "nodes": {
+          "default": "10.250.0.0/16",
+          "description": "CIDR range for Nodes, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Nodes",
+          "type": "string"
+        },
+        "pods": {
+          "default": "10.96.0.0/13",
+          "description": "CIDR range for Pods, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Pods",
+          "type": "string"
+        },
+        "services": {
+          "default": "10.104.0.0/13",
+          "description": "CIDR range for Services, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Services",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "type": "object"
     },
     "oidc": {
       "description": "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
