@@ -69,7 +69,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
+            "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>. The machine type marked with “*” has limited availability and generates high cost. You can update your virtual machine type only within the general-purpose machine types. You cannot perform updates on compute-intensive machine types. To use a different compute-intensive machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
