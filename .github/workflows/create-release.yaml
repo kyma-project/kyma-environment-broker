@@ -27,6 +27,10 @@ on:
         type: boolean
         description: 'Do not publish'
         default: false
+      force:
+        type: boolean
+        description: 'Skip version validation (use when intentionally skipping versions)'
+        default: false
   workflow_call:
     inputs:
       name:
@@ -41,6 +45,10 @@ on:
       dry-run:
         type: boolean
         description: 'Do not publish'
+        default: false
+      force:
+        type: boolean
+        description: 'Skip version validation (use when intentionally skipping versions)'
         default: false
 
 jobs:
@@ -77,6 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
           NAME: ${{ inputs.name }}
+          FORCE: ${{ inputs.force }}
         run: python3 scripts/python/release_label_validator.py
 
       - name: Validate notable changes
