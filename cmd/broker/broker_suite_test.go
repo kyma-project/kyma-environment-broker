@@ -274,6 +274,11 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				http.Error(w, fmt.Sprintf("failed to fetch op events: %v", err), http.StatusInternalServerError)
 				return
 			}
+			activeInstanceParams, err := reader.FetchActiveInstanceParams()
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to fetch active instance params: %v", err), http.StatusInternalServerError)
+				return
+			}
 			provParams := analytics.OpEventsToProvParamsInRange(opEvents, analytics.TimeRange{})
 			updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, analytics.TimeRange{})
 			plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
@@ -283,7 +288,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 				Provisioning:   analytics.AggregateProvisioning(provParams),
 				Updates:        analytics.AggregateUpdates(provParams, updateParams),
 				Combined:       analytics.AggregateCombined(provParams, updateParams),
-				Distributions:  analytics.BuildDistributions(provParams),
+				Distributions:  analytics.BuildDistributions(activeInstanceParams),
 				Plans:          plans,
 				RegionsByPlan:  regionsByPlan,
 			}
