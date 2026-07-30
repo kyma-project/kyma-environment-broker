@@ -413,17 +413,27 @@ func (s *SchemaService) machineDisplayNames(cp pkg.CloudProvider, machines []str
 	for machineType, displayName := range names {
 		resolved := strings.ToLower(s.providerSpec.ResolveMachineType(cp, machineType))
 		if volGb, ok := providerSizes[resolved]; ok {
-			switch {
-			case strings.HasSuffix(displayName, ")*"):
-				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)*", strings.TrimSuffix(displayName, ")*"), volGb)
-			case strings.HasSuffix(displayName, ")"):
-				enriched[machineType] = fmt.Sprintf("%s, %dGi volume)", strings.TrimSuffix(displayName, ")"), volGb)
-			default:
-				enriched[machineType] = fmt.Sprintf("%s, %dGi volume", displayName, volGb)
-			}
+			enriched[machineType] = insertVolumeSize(displayName, volGb)
 		} else {
 			enriched[machineType] = displayName
 		}
 	}
 	return enriched
+}
+
+// insertVolumeSize inserts ", <n>Gi volume" before the last closing parenthesis in the display name.
+// If the name contains no parenthesis group it appends to the end.
+func insertVolumeSize(displayName string, volGb int) string {
+	suffix := ""
+	name := displayName
+	if strings.HasSuffix(name, "*") {
+		suffix = "*"
+		name = strings.TrimSuffix(name, "*")
+	}
+	// Find last ')' — may have trailing text after it (e.g. " - note")
+	idx := strings.LastIndex(name, ")")
+	if idx < 0 {
+		return fmt.Sprintf("%s, %dGi volume%s", name, volGb, suffix)
+	}
+	return fmt.Sprintf("%s, %dGi volume)%s%s", name[:idx], volGb, name[idx+1:], suffix)
 }

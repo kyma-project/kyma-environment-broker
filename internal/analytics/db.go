@@ -183,6 +183,34 @@ func OpEventsToUpdateParamsInRange(events []OpEvent, tr TimeRange) []UpdateParam
 	return result
 }
 
+// FetchActiveInstanceParams returns the current provisioning parameters for all active instances
+// by querying the instances table directly. This reflects the merged current state (not historical
+// operation params), making it suitable for value distribution computation.
+func (r *DBReader) FetchActiveInstanceParams() ([]ProvisioningParamsWithID, error) {
+	q := `
+SELECT instance_id, provisioning_parameters
+FROM instances
+WHERE deleted_at = '0001-01-01 00:00:00+00'`
+	var rows []struct {
+		InstanceID             string `db:"instance_id"`
+		ProvisioningParameters string `db:"provisioning_parameters"`
+	}
+	_, err := r.session.SelectBySql(q).Load(&rows)
+	if err != nil {
+		return nil, fmt.Errorf("fetching active instance params: %w", err)
+	}
+	result := make([]ProvisioningParamsWithID, 0, len(rows))
+	for _, row := range rows {
+		p, err := parseProvisioningParameters(row.ProvisioningParameters)
+		if err != nil {
+			slog.Warn("analytics: skipping instance with malformed provisioning_parameters", "instance_id", row.InstanceID, "error", err)
+			continue
+		}
+		result = append(result, ProvisioningParamsWithID{InstanceID: row.InstanceID, Params: p})
+	}
+	return result, nil
+}
+
 // inRange returns true if the YYYY-MM-DD date string d falls within [tr.From, tr.To).
 // An empty tr (both zero) always returns true. Single-bounded ranges are supported:
 // a zero From means unbounded start; a zero To means unbounded end.

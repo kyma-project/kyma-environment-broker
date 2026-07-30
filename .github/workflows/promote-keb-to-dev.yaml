@@ -35,7 +35,7 @@ jobs:
 
       - name: Generate enterprise bot token
         id: enterprise-bot-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
@@ -78,7 +78,7 @@ jobs:
           git clone "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
           cache: 'pip'

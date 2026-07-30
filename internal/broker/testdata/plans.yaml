@@ -182,7 +182,6 @@ alicloud:
     default: ["ap-southeast-1","eu-central-1","eu-west-1"]
 
 gdch:
-  disableNetworking: true
   disableColocateControlPlane: true
   disableGvisor: true
   volumeSizeGb: 80

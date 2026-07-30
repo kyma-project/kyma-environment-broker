@@ -39,6 +39,7 @@ var provisioningFieldConfig = map[string]fieldBehavior{
 	"shootName":                 behaviorSkip,
 	"shootDomain":               behaviorSkip,
 	"provider":                  behaviorSkip,
+	"maxSurge":                  behaviorSkip,
 	"administrators":            behaviorCount,
 	"additionalWorkerNodePools": behaviorCount,
 	"modules":                   behaviorModules,

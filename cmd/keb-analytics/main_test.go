@@ -36,7 +36,7 @@ func TestBuildFilteredStats_TrendsUsesSuppliedParamsWhenProvEmpty(t *testing.T) 
 	trendParams := []string{"machineType"}
 
 	// provParams is empty (simulates a 7-day window where nothing was provisioned).
-	resp := buildFilteredStats(nil, nil, opEvents, "", "", nil, nil, nil, trendParams)
+	resp := buildFilteredStats(nil, nil, opEvents, nil, "", "", nil, nil, nil, trendParams)
 
 	require.NotEmpty(t, resp.Trends, "trends must be non-empty when trendParams are supplied")
 	assert.Equal(t, "machineType", resp.Trends[0].Parameter)
