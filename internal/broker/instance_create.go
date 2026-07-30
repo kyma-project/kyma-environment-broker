@@ -507,11 +507,6 @@ func (b *ProvisionEndpoint) validateTrialPlanConstraints(details domain.Provisio
 		if err != nil {
 			return fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
 		}
-
-		if count > 0 {
-			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
-			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
-		}
 	}
 	return nil
 }
