@@ -56,3 +56,40 @@ func TestResolveCloudConfig_ExplicitName_Invalid(t *testing.T) {
 	_, err := ResolveCloudConfig(context.Background(), creds, "invalid")
 	require.Error(t, err)
 }
+
+func TestResolveCloudConfig_AutoDiscovery_FirstSucceeds(t *testing.T) {
+	creds := AzureCredentials{}
+	callCount := 0
+
+	got, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
+		callCount++
+		return cfg.ActiveDirectoryAuthorityHost == cloud.AzurePublic.ActiveDirectoryAuthorityHost
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, cloud.AzurePublic.ActiveDirectoryAuthorityHost, got.ActiveDirectoryAuthorityHost)
+	assert.Equal(t, 1, callCount, "should stop after first success")
+}
+
+func TestResolveCloudConfig_AutoDiscovery_SecondSucceeds(t *testing.T) {
+	creds := AzureCredentials{}
+
+	got, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
+		return cfg.ActiveDirectoryAuthorityHost == cloud.AzureChina.ActiveDirectoryAuthorityHost
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, cloud.AzureChina.ActiveDirectoryAuthorityHost, got.ActiveDirectoryAuthorityHost)
+}
+
+func TestResolveCloudConfig_AutoDiscovery_AllFail(t *testing.T) {
+	creds := AzureCredentials{}
+
+	_, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, _ cloud.Configuration) bool {
+		return false
+	})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "auto-discovery failed")
+}
+

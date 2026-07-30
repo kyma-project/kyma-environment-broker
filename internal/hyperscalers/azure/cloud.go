@@ -26,11 +26,27 @@ func CloudConfigFromName(name string) (cloud.Configuration, error) {
 	}
 }
 
+// probeFunc is a function that tests whether credentials authenticate against a given cloud.
+// Replaceable in tests to avoid real Azure API calls.
+type probeFunc func(ctx context.Context, creds AzureCredentials, cfg cloud.Configuration) bool
+
+var probeOrder = []cloud.Configuration{
+	cloud.AzurePublic,
+	cloud.AzureChina,
+	cloud.AzureGovernment,
+}
+
+var probeOrderNames = []string{"public", "china", "usgov"}
+
 // ResolveCloudConfig returns the cloud.Configuration to use for the given credentials.
 // When configName is non-empty it maps directly to the SDK constant — no network calls.
 // When configName is empty it probes Public → China → US Gov and returns the first that succeeds.
 // Intended to be called once at KEB startup before the cache and HTTP server are started.
 func ResolveCloudConfig(ctx context.Context, creds AzureCredentials, configName string) (cloud.Configuration, error) {
+	return resolveCloudConfig(ctx, creds, configName, probeCloud)
+}
+
+func resolveCloudConfig(ctx context.Context, creds AzureCredentials, configName string, probe probeFunc) (cloud.Configuration, error) {
 	if configName != "" {
 		cfg, err := CloudConfigFromName(configName)
 		if err != nil {
@@ -40,15 +56,8 @@ func ResolveCloudConfig(ctx context.Context, creds AzureCredentials, configName 
 		return cfg, nil
 	}
 
-	var probeOrder = []cloud.Configuration{
-		cloud.AzurePublic,
-		cloud.AzureChina,
-		cloud.AzureGovernment,
-	}
-	var probeOrderNames = []string{"public", "china", "usgov"}
-
 	for i, cfg := range probeOrder {
-		if probeCloud(ctx, creds, cfg) {
+		if probe(ctx, creds, cfg) {
 			slog.Info("Azure cloud auto-discovered", "cloud", probeOrderNames[i])
 			return cfg, nil
 		}

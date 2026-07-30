@@ -775,21 +775,18 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 // When zones discovery is enabled and credentials are available, the cloud is auto-discovered at startup.
 // Falls back to AzurePublic only when no explicit configuration is provided and discovery is not possible.
 func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, rulesService *rules.RulesService, secretFetcher *azurehyperscaler.SecretFetcher, log *slog.Logger) (azurecloud.Configuration, error) {
+	if !providerSpec.ZonesDiscovery(pkg.Azure) {
+		return azurecloud.AzurePublic, nil
+	}
+
 	// Explicit configuration always wins — no network calls needed.
 	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
 		return azurehyperscaler.CloudConfigFromName(configName)
 	}
 
-	// Without zones discovery there is no secretFetcher to probe with.
-	// Default to AzurePublic which is correct for the vast majority of deployments.
-	if !providerSpec.ZonesDiscovery(pkg.Azure) {
-		return azurecloud.AzurePublic, nil
-	}
-
 	fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
 	if err != nil {
-		log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", err))
-		return azurecloud.AzurePublic, nil
+		return azurecloud.Configuration{}, fmt.Errorf("Azure cloud auto-discovery not possible: %w", err)
 	}
 	*secretFetcher = fetcher
 
