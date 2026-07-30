@@ -87,6 +87,13 @@ try:
             print(f"\nVersion {new_ver} skips more than one increment over the latest release {latest_ver}.")
             print("If this is intentional, re-run the workflow with force=true.")
             sys.exit(1)
+
+        if new_parts <= latest_parts:
+            new_ver = os.getenv('NAME')
+            latest_ver = latest_release['name']
+            print(f"\nVersion {new_ver} does not increment over the latest release {latest_ver}.")
+            print("If this is intentional, re-run the workflow with force=true.")
+            sys.exit(1)
 except ValueError:
     print("\nWarning: could not parse version numbers for increment check, skipping")
 
