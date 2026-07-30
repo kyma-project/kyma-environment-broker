@@ -20,6 +20,9 @@ spec:
       labels:
         app.kubernetes.io/name: runtime-reconciler
         app.kubernetes.io/instance: {{ .Values.namePrefix }}
+        {{- if .Values.global.istio.ambient.enabled }}
+        {{- include "istio.ambientLabels" . | nindent 8 }}
+        {{- end }}           
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}

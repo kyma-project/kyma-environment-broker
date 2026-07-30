@@ -83,6 +83,8 @@ global:
     gateway: "kyma-system/kyma-gateway"
     proxy:
       port: 15020
+    ambient:
+      enabled: false
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
   secrets:

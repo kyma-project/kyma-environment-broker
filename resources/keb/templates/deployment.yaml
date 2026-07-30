@@ -27,6 +27,9 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
         app.kubernetes.io/instance: {{ .Values.namePrefix }}
+        {{- if .Values.global.istio.ambient.enabled }}
+        {{- include "istio.ambientLabels" . | nindent 8 }}
+        {{- end }}        
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app-config.yaml") . | sha256sum }}
     spec:

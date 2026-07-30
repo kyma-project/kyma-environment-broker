@@ -14,7 +14,14 @@ spec:
     - issuer: {{ tpl .Values.oidc.issuer $ }}
       jwksUri: {{ tpl (print .Values.oidc.issuer "/oauth2/certs") $ }}
   {{- end }}
+{{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+{{- else }}
+  targetRefs:
+  - kind: Service
+    group: ""
+    name: {{ include "kyma-env-broker.fullname" . }}
+{{- end }}
