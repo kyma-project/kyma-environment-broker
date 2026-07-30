@@ -33,7 +33,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	azurehyperscaler "github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
+	azurecloud "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -388,21 +388,11 @@ func main() {
 	// to handle credential rotation without restarting KEB.
 	// Only built when Azure zones discovery is enabled.
 	var azureSecretFetcher azurehyperscaler.SecretFetcher
-	azureCloudConfig := cloud.AzurePublic
-	if providerSpec.ZonesDiscovery(pkg.Azure) {
-		var fetchErr error
-		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService, log)
-		if fetchErr != nil {
-			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
-		} else {
-			creds, credsErr := azureSecretFetcher()
-			if credsErr != nil {
-				fatalOnError(fmt.Errorf("failed to fetch Azure credentials for cloud discovery: %w", credsErr), log)
-			}
-			azureCloudConfig, fetchErr = azurehyperscaler.ResolveCloudConfig(ctx, creds, providerSpec.AzureClientConfiguration())
-			fatalOnError(fetchErr, log)
-		}
-	}
+	// Resolve the Azure cloud environment from explicit config or auto-discovery.
+	// This must happen before the HTTP server starts so all Azure clients use the correct endpoints.
+	// Falls back to AzurePublic only when no clientConfiguration is set and zones discovery is disabled.
+	azureCloudConfig, err := resolveAzureCloudConfig(ctx, providerSpec, gardenerClient, rulesService, &azureSecretFetcher, log)
+	fatalOnError(err, log)
 	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher, azureCloudConfig)
 
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
@@ -778,4 +768,34 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 		}
 		return creds, nil
 	}, nil
+}
+
+// resolveAzureCloudConfig determines the Azure cloud environment to use for all Azure API calls.
+// When clientConfiguration is set explicitly, it is used directly with no network calls.
+// When zones discovery is enabled and credentials are available, the cloud is auto-discovered at startup.
+// Falls back to AzurePublic only when no explicit configuration is provided and discovery is not possible.
+func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, rulesService *rules.RulesService, secretFetcher *azurehyperscaler.SecretFetcher, log *slog.Logger) (azurecloud.Configuration, error) {
+	// Explicit configuration always wins — no network calls needed.
+	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
+		return azurehyperscaler.CloudConfigFromName(configName)
+	}
+
+	// Without zones discovery there is no secretFetcher to probe with.
+	// Default to AzurePublic which is correct for the vast majority of deployments.
+	if !providerSpec.ZonesDiscovery(pkg.Azure) {
+		return azurecloud.AzurePublic, nil
+	}
+
+	fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
+	if err != nil {
+		log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", err))
+		return azurecloud.AzurePublic, nil
+	}
+	*secretFetcher = fetcher
+
+	creds, err := fetcher()
+	if err != nil {
+		return azurecloud.Configuration{}, fmt.Errorf("failed to fetch Azure credentials for cloud discovery: %w", err)
+	}
+	return azurehyperscaler.ResolveCloudConfig(ctx, creds, "")
 }

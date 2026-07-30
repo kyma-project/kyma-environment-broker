@@ -69,8 +69,12 @@ func probeCloud(ctx context.Context, creds AzureCredentials, cfg cloud.Configura
 	if err != nil {
 		return false
 	}
+	svc, ok := cfg.Services[cloud.ResourceManager]
+	if !ok || svc.Audience == "" {
+		return false
+	}
 	_, err = credential.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{cfg.Services[cloud.ResourceManager].Audience + "/.default"},
+		Scopes: []string{svc.Audience + "/.default"},
 	})
 	return err == nil
 }

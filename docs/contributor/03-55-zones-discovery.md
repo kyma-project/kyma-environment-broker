@@ -65,11 +65,12 @@ providersConfiguration:
     clientConfiguration: china  # optional; omit to enable auto-discovery
 ```
 
-**Explicit configuration (recommended for production):** When `clientConfiguration` is set, KEB uses that cloud directly with no network overhead.
+**Explicit configuration (recommended):** When `clientConfiguration` is set, KEB uses that cloud directly. No network calls are made during discovery.
 
-**Auto-discovery (default when `clientConfiguration` is omitted):** KEB probes each environment in order (public → china → usgov) by requesting an OAuth token. The first environment that accepts the credentials is used. The result is cached for the lifetime of the process — probing happens only once, regardless of how many zone discovery calls are made. US Government support is included in the code but is not currently deployed with Azure.
+**Auto-discovery (default when `clientConfiguration` is omitted):** At startup, before the HTTP server accepts any requests, KEB probes each environment in order (public → china → usgov) using a single OAuth token request per candidate. The first environment that accepts the credentials is used for all subsequent API calls. If all probes fail, KEB does not start.
 
-> **Note:** Explicit `clientConfiguration` is recommended to eliminate the probe overhead and to make the deployment intent explicit.
+> ### Note:
+> Explicit `clientConfiguration` is recommended for production deployments. Auto-discovery adds 1–3 OAuth token requests to the startup sequence and requires all credentials to belong to the same cloud environment.
 
 ## Zones Discovery
 
