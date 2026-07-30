@@ -32,8 +32,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	azurehyperscaler "github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
-
-	azurecloud "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -50,6 +48,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
+	azurecloud "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -770,18 +769,32 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 	}, nil
 }
 
-// resolveAzureCloudConfig determines the Azure cloud environment to use for all Azure API calls.
+// resolveAzureCloudConfig determines the Azure cloud environment to use for all Azure API calls
+// and populates secretFetcher when zones discovery is enabled.
 // When clientConfiguration is set explicitly, it is used directly with no network calls.
-// When zones discovery is enabled and credentials are available, the cloud is auto-discovered at startup.
-// Falls back to AzurePublic only when no explicit configuration is provided and discovery is not possible.
+// resolveAzureCloudConfig determines the Azure cloud environment for zone discovery API calls
+// and populates secretFetcher when zones discovery is enabled.
+// When clientConfiguration is set explicitly, it is used directly with no network calls.
+// When zones discovery is enabled without explicit config, the cloud is auto-discovered at startup.
+// Returns AzurePublic when zones discovery is disabled and no explicit config is set.
 func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, rulesService *rules.RulesService, secretFetcher *azurehyperscaler.SecretFetcher, log *slog.Logger) (azurecloud.Configuration, error) {
-	if !providerSpec.ZonesDiscovery(pkg.Azure) {
-		return azurecloud.AzurePublic, nil
+	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
+		cfg, err := azurehyperscaler.CloudConfigFromName(configName)
+		if err != nil {
+			return azurecloud.Configuration{}, err
+		}
+		if providerSpec.ZonesDiscovery(pkg.Azure) {
+			fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
+			if err != nil {
+				return azurecloud.Configuration{}, fmt.Errorf("failed to build Azure secret fetcher: %w", err)
+			}
+			*secretFetcher = fetcher
+		}
+		return cfg, nil
 	}
 
-	// Explicit configuration always wins — no network calls needed.
-	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
-		return azurehyperscaler.CloudConfigFromName(configName)
+	if !providerSpec.ZonesDiscovery(pkg.Azure) {
+		return azurecloud.AzurePublic, nil
 	}
 
 	fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
