@@ -1,0 +1,13 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: aws
+    shared: "true"
+  name: aws-shared
+  namespace: garden-kyma-dev
+provider:
+  type: aws
+credentialsRef:
+  name: aws-secret
+  namespace: garden-kyma-dev

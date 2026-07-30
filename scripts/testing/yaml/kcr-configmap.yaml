@@ -9,6 +9,10 @@ data:
       node:
         machine_types:
           aws:
+            mi.large:
+              default_volume_size: "80Gi"
+            mi.xlarge:
+              default_volume_size: "80Gi"
             m6i.large:
               default_volume_size: "80Gi"
             m6i.xlarge:

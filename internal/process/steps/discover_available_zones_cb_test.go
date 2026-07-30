@@ -57,7 +57,7 @@ func TestDiscoverAvailableZonesCBStep_ZonesDiscoveryDisabled(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -90,7 +90,7 @@ func TestDiscoverAvailableZonesCBStep_FailWhenNoSubscriptionSecretName(t *testin
 	assert.NoError(t, err)
 
 	step := NewDiscoverAvailableZonesCBStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true), fixture.CreateGardenerClientWithCredentialsBindings(),
-		fixture.NewFakeFactory(map[string][]string{}, nil), false)
+		fixture.NewFakeFactory(map[string][]string{}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -143,7 +143,7 @@ func TestDiscoverAvailableZonesCBStep_SubscriptionSecretNameFromOperation(t *tes
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -199,7 +199,7 @@ func TestDiscoverAvailableZonesCBStep_RegionFromProviderValues(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -235,7 +235,7 @@ func TestDiscoverAvailableZonesCBStep_MachineTypeFromProviderValues(t *testing.T
 		fixture.CreateGardenerClientWithCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
 			"m5.large": {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -270,7 +270,7 @@ func TestDiscoverAvailableZonesCBStep_AWSRepeatWhenError(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDiscoverAvailableZonesCBStep(memoryStorage, fixture.NewProviderSpecWithZonesDiscovery(t, true),
-		fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("AWS error")), false)
+		fixture.CreateGardenerClientWithCredentialsBindings(), fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("AWS error")))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -321,7 +321,7 @@ func TestDiscoverAvailableZonesCBStep_AWSProvisioningHappyPath(t *testing.T) {
 			"m6i.large":   {"ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"},
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -373,7 +373,7 @@ func TestDiscoverAvailableZonesCBStep_AWSUpdateHappyPath(t *testing.T) {
 		fixture.NewFakeFactory(map[string][]string{
 			"g6.xlarge":   {"ap-southeast-2a", "ap-southeast-2c"},
 			"g4dn.xlarge": {"ap-southeast-2b"},
-		}, nil), false)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -426,7 +426,7 @@ func TestDiscoverAvailableZonesCBStep_AzureProvisioningHappyPath(t *testing.T) {
 		fixture.NewFakeFactory(map[string][]string{
 			machineTypeStandardD4sV5: {"1", "2", "3"},
 			"Standard_F8s_v2":        {"1", "2", "3"},
-		}, nil), true)
+		}, nil))
 
 	// when
 	// Logs should contain: "discovering zones using credentials binding azure-unclaimed region=westeurope"
@@ -470,7 +470,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
 		fixture.NewFakeFactory(map[string][]string{
 			machineTypeStandardD4sV5: {"1", "2", "3"},
-		}, nil), true)
+		}, nil))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -480,41 +480,6 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 	assert.Zero(t, repeat)
 	assert.Len(t, operation.DiscoveredZones, 1)
 	assert.ElementsMatch(t, operation.DiscoveredZones[machineTypeStandardD4sV5], []string{"1", "2", "3"})
-}
-
-func TestDiscoverAvailableZonesCBStep_AzureZonesDiscoveryDisabledStillFetchesSuffixes(t *testing.T) {
-	// given
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance := fixture.FixInstance(instanceID)
-	instance.SubscriptionSecretName = fixture.AzureUnclaimedSecretName
-	err := memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-
-	operation := fixture.FixProvisioningOperation(operationID, instanceID)
-	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
-	operation.RuntimeID = instance.RuntimeID
-	machineType := machineTypeStandardD4sV5
-	operation.ProvisioningParameters.Parameters.MachineType = &machineType
-	err = memoryStorage.Operations().InsertOperation(operation)
-	assert.NoError(t, err)
-
-	step := NewDiscoverAvailableZonesCBStep(
-		memoryStorage,
-		fixture.NewAzureProviderSpec(t, false),
-		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
-		fixture.NewFakeFactoryWithHyperV(map[string][]string{}, map[string]string{
-			machineTypeStandardD4sV5: "-gen2",
-		}, nil), true)
-
-	// when
-	operation, repeat, err := step.Run(operation, fixLogger())
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-	assert.Empty(t, operation.DiscoveredZones)
-	assert.Equal(t, "-gen2", operation.MachineImageVersionSuffixes[machineTypeStandardD4sV5])
 }
 
 func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
@@ -538,7 +503,7 @@ func TestDiscoverAvailableZonesCBStep_AzureRepeatWhenError(t *testing.T) {
 		memoryStorage,
 		fixture.NewAzureProviderSpecWithZonesDiscovery(t),
 		fixture.CreateGardenerClientWithAzureCredentialsBindings(),
-		fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("Azure API error")), true)
+		fixture.NewFakeFactory(map[string][]string{}, fmt.Errorf("Azure API error")))
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())

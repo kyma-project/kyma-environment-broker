@@ -82,7 +82,7 @@ func TestSchemaService_GDCH(t *testing.T) {
 	validateSchema(t, Marshal(update), "gdch/update-gdch-schema.json")
 
 	props := (*create)["properties"].(map[string]interface{})
-	assert.NotContains(t, props, "networking", "networking must be absent from GDCH schema")
+	assert.Contains(t, props, "networking", "networking must be present in GDCH schema")
 	assert.NotContains(t, props, "colocateControlPlane", "colocateControlPlane must be absent from GDCH schema")
 	assert.NotContains(t, props, "gvisor", "gvisor must be absent from GDCH schema")
 }
