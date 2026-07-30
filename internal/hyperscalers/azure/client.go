@@ -9,6 +9,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
@@ -39,15 +40,10 @@ type AzureClient struct {
 	cacheLoaded  bool
 }
 
-func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, clientConfigName string) (*AzureClient, error) {
+func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, cloudConfig cloud.Configuration) (*AzureClient, error) {
 	creds, err := ExtractCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract Azure credentials: %w", err)
-	}
-
-	cloudConfig, err := ResolveCloudConfig(ctx, creds, clientConfigName)
-	if err != nil {
-		return nil, fmt.Errorf("while resolving Azure cloud configuration: %w", err)
 	}
 
 	credential, err := azidentity.NewClientSecretCredential(creds.TenantID, creds.ClientID, creds.ClientSecret,

@@ -32,6 +32,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	azurehyperscaler "github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/machinesavailability"
 	"github.com/kyma-project/kyma-environment-broker/internal/metrics"
@@ -386,14 +388,22 @@ func main() {
 	// to handle credential rotation without restarting KEB.
 	// Only built when Azure zones discovery is enabled.
 	var azureSecretFetcher azurehyperscaler.SecretFetcher
+	azureCloudConfig := cloud.AzurePublic
 	if providerSpec.ZonesDiscovery(pkg.Azure) {
 		var fetchErr error
 		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService, log)
 		if fetchErr != nil {
 			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
+		} else {
+			creds, credsErr := azureSecretFetcher()
+			if credsErr != nil {
+				fatalOnError(fmt.Errorf("failed to fetch Azure credentials for cloud discovery: %w", credsErr), log)
+			}
+			azureCloudConfig, fetchErr = azurehyperscaler.ResolveCloudConfig(ctx, creds, providerSpec.AzureClientConfiguration())
+			fatalOnError(fetchErr, log)
 		}
 	}
-	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher)
+	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher, azureCloudConfig)
 
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 
@@ -757,7 +767,7 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
 		}
 		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
-		log.Info("refreshing Azure zone cache using credential binding", "name", cb.GetName())
+		log.Info("fetching Azure credentials", "credentialBinding", cb.GetName())
 		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
 		if err != nil {
 			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)

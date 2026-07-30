@@ -55,18 +55,18 @@ type AzureCache struct {
 	providerSpec      *configuration.ProviderSpec
 	secretFetcher     SecretFetcher
 	skusClientFactory SKUsClientFactory
-	clientConfigName  string
+	cloudConfig       cloud.Configuration
 }
 
 // NewAzureCache creates a new AzureCache and starts a background goroutine that fills
 // all configured regions and refreshes them every hour. It does not block startup.
-func NewAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher SecretFetcher, clientConfigName string) *AzureCache {
+func NewAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher SecretFetcher, cloudConfig cloud.Configuration) *AzureCache {
 	c := &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      providerSpec,
 		secretFetcher:     secretFetcher,
 		skusClientFactory: defaultSKUsClientFactory,
-		clientConfigName:  clientConfigName,
+		cloudConfig:       cloudConfig,
 	}
 	go c.run(ctx)
 	return c
@@ -115,15 +115,10 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 		slog.Error(fmt.Sprintf("failed to fetch Azure credentials for cache refresh: %s", err))
 		return
 	}
-	cloudConfig, err := ResolveCloudConfig(ctx, creds, c.clientConfigName)
-	if err != nil {
-		slog.Error(fmt.Sprintf("failed to resolve Azure cloud configuration for cache refresh: %s", err))
-		return
-	}
 	azureRegions := c.providerSpec.Regions(pkg.Azure)
 	succeeded := 0
 	for _, region := range azureRegions {
-		if err := c.fillRegionWithRetry(ctx, creds, cloudConfig, region); err != nil {
+		if err := c.fillRegionWithRetry(ctx, creds, c.cloudConfig, region); err != nil {
 			slog.Error(fmt.Sprintf("failed to fill Azure zone cache for region %s after %d retries: %s", region, cacheRetries, err))
 		} else {
 			succeeded++

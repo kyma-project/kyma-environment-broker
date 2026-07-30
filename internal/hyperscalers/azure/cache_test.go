@@ -49,7 +49,7 @@ func newTestCache(spec *configuration.ProviderSpec, skus []*armcompute.ResourceS
 	return &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
-		clientConfigName:  "public",
+		cloudConfig:       cloud.AzurePublic,
 		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: mockSKUsClientFactory(&mockSKUsAPI{skus: skus, err: apiErr}),
 	}
@@ -59,7 +59,7 @@ func newTestCacheWithMock(spec *configuration.ProviderSpec, api ResourceSKUsAPI)
 	return &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
-		clientConfigName:  "public",
+		cloudConfig:       cloud.AzurePublic,
 		skusClientFactory: mockSKUsClientFactory(api),
 	}
 }
@@ -204,7 +204,7 @@ func TestAzureCache_FillAllRetryLogsOnlyAfterAllAttempts(t *testing.T) {
 	cache := &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
-		clientConfigName:  "public",
+		cloudConfig:       cloud.AzurePublic,
 		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: mockSKUsClientFactory(failThenSucceedAPI),
 	}
@@ -221,7 +221,7 @@ func TestAzureCache_FillAllRetryExhausted(t *testing.T) {
 	cache := &AzureCache{
 		data:             make(map[string]map[string][]string),
 		providerSpec:     spec,
-		clientConfigName: "public",
+		cloudConfig:      cloud.AzurePublic,
 		secretFetcher: func() (AzureCredentials, error) {
 			return buildAzureCredentials(), nil
 		},
@@ -241,7 +241,7 @@ func TestAzureCache_ClientFactoryError_NoRetry(t *testing.T) {
 	cache := &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      spec,
-		clientConfigName:  "public",
+		cloudConfig:       cloud.AzurePublic,
 		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential, _ cloud.Configuration) (ResourceSKUsAPI, error) {
 			attempts++
