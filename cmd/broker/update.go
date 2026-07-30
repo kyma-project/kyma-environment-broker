@@ -43,7 +43,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage: "runtime_resource",
-			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory),
+			step:  steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory, cfg.InfrastructureManager.UseMachineImageVersionSuffix),
 		},
 		{
 			stage: "runtime_resource",

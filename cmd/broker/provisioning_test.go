@@ -14,6 +14,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
@@ -4075,4 +4076,79 @@ func (s *BrokerSuiteTest) verifyMultiAccountBehavior(t *testing.T, instanceIDs [
 		uniqueBindings[runtime.Spec.Shoot.SecretBindingName] = true
 	}
 	assert.GreaterOrEqual(t, len(uniqueBindings), minExpectedBindings, testDescription)
+}
+
+func TestProvisioning_AzureImageVersionSuffix(t *testing.T) {
+	hyperVGens := map[string]string{
+		"Standard_D2s_v5": "-gen2",
+		"Standard_D4_v3":  "",
+	}
+	azureZones := map[string][]string{
+		"Standard_D2s_v5": {"1", "2", "3"},
+		"Standard_D4_v3":  {"1", "2", "3"},
+	}
+
+	cfg := fixConfig()
+	cfg.ProvidersConfigurationFilePath = providersZonesDiscovery
+	cfg.InfrastructureManager.UseMachineImageVersionSuffix = true
+
+	factory := fixture.NewFakeFactoryWithHyperV(azureZones, hyperVGens, nil)
+	suite := NewBrokerSuiteTest(t, WithConfig(cfg), WithFactory(factory))
+	defer suite.TearDown()
+
+	iid := uuid.New().String()
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster",
+				"region": "westeurope",
+				"machineType": "Standard_D2s_v5",
+				"additionalWorkerNodePools": [
+					{
+						"name": "gen2-pool",
+						"machineType": "Standard_D2s_v5",
+						"haZones": true,
+						"autoScalerMin": 3,
+						"autoScalerMax": 10
+					},
+					{
+						"name": "no-gen2-pool",
+						"machineType": "Standard_D4_v3",
+						"haZones": true,
+						"autoScalerMin": 3,
+						"autoScalerMax": 10
+					}
+				]
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+	// kyma worker uses Standard_D2s_v5 which has -gen2 suffix
+	require.NotNil(t, runtime.Spec.Shoot.Provider.Workers[0].Machine.Image)
+	assert.Equal(t, "12345.6-gen2", *runtime.Spec.Shoot.Provider.Workers[0].Machine.Image.Version)
+
+	require.NotNil(t, runtime.Spec.Shoot.Provider.AdditionalWorkers)
+	require.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+
+	for _, w := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+		require.NotNil(t, w.Machine.Image)
+		switch w.Name {
+		case "gen2-pool":
+			assert.Equal(t, "12345.6-gen2", *w.Machine.Image.Version)
+		case "no-gen2-pool":
+			assert.Equal(t, "12345.6", *w.Machine.Image.Version)
+		}
+	}
 }

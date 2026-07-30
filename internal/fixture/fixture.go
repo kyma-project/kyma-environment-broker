@@ -116,27 +116,33 @@ func NewFakeFactory(zones map[string][]string, err error) *FakeFactory {
 	return &FakeFactory{zones: zones, err: err}
 }
 
+func NewFakeFactoryWithHyperV(zones map[string][]string, hyperVGens map[string]string, err error) *FakeFactory {
+	return &FakeFactory{zones: zones, hyperVGens: hyperVGens, err: err}
+}
+
 type FakeFactory struct {
-	zones map[string][]string
-	err   error
+	zones      map[string][]string
+	hyperVGens map[string]string
+	err        error
 }
 
 func (f *FakeFactory) NewFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &fakeProviderClient{zones: f.zones}, nil
+	return &fakeProviderClient{zones: f.zones, hyperVGens: f.hyperVGens}, nil
 }
 
 func (f *FakeFactory) NewPerCallFromSecret(_ context.Context, _ pkg.CloudProvider, _ *unstructured.Unstructured, _ string) (hyperscalers.ProviderClient, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return &fakeProviderClient{zones: f.zones}, nil
+	return &fakeProviderClient{zones: f.zones, hyperVGens: f.hyperVGens}, nil
 }
 
 type fakeProviderClient struct {
-	zones map[string][]string
+	zones      map[string][]string
+	hyperVGens map[string]string
 }
 
 func (f *fakeProviderClient) AvailableZones(_ context.Context, machineType string) ([]string, error) {
@@ -149,6 +155,10 @@ func (f *fakeProviderClient) AvailableZonesCount(ctx context.Context, machineTyp
 		return 0, err
 	}
 	return len(zones), nil
+}
+
+func (f *fakeProviderClient) HyperVGeneration(_ context.Context, machineType string) (string, error) {
+	return f.hyperVGens[machineType], nil
 }
 
 func CreateGardenerClientWithCredentialsBindings() *gardener.Client {
@@ -327,13 +337,17 @@ func createAzureSecret(name, namespace string) *unstructured.Unstructured {
 }
 
 func NewAzureProviderSpecWithZonesDiscovery(t *testing.T) *configuration.ProviderSpec {
-	spec := `
+	return NewAzureProviderSpec(t, true)
+}
+
+func NewAzureProviderSpec(t *testing.T, zonesDiscovery bool) *configuration.ProviderSpec {
+	spec := fmt.Sprintf(`
 azure:
-  zonesDiscovery: true
+  zonesDiscovery: %t
   regions:
     westeurope:
       displayName: "West Europe"
-`
+`, zonesDiscovery)
 	providerSpec, err := configuration.NewProviderSpec(strings.NewReader(spec))
 	require.NoError(t, err)
 	return providerSpec

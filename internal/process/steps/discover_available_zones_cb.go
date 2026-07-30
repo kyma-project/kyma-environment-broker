@@ -19,19 +19,21 @@ import (
 )
 
 type DiscoverAvailableZonesCBStep struct {
-	operationManager *process.OperationManager
-	instanceStorage  storage.Instances
-	providerSpec     *configuration.ProviderSpec
-	gardenerClient   *gardener.Client
-	factory          hyperscalers.Factory
+	operationManager             *process.OperationManager
+	instanceStorage              storage.Instances
+	providerSpec                 *configuration.ProviderSpec
+	gardenerClient               *gardener.Client
+	factory                      hyperscalers.Factory
+	useMachineImageVersionSuffix bool
 }
 
-func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory) *DiscoverAvailableZonesCBStep {
+func NewDiscoverAvailableZonesCBStep(db storage.BrokerStorage, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory, useMachineImageVersionSuffix bool) *DiscoverAvailableZonesCBStep {
 	step := &DiscoverAvailableZonesCBStep{
-		instanceStorage: db.Instances(),
-		providerSpec:    providerSpec,
-		gardenerClient:  gardenerClient,
-		factory:         factory,
+		instanceStorage:              db.Instances(),
+		providerSpec:                 providerSpec,
+		gardenerClient:               gardenerClient,
+		factory:                      factory,
+		useMachineImageVersionSuffix: useMachineImageVersionSuffix,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.KEBDependency)
 	return step
@@ -43,12 +45,17 @@ func (s *DiscoverAvailableZonesCBStep) Name() string {
 
 func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	provider := runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)
-	if !s.providerSpec.ZonesDiscovery(provider) {
-		log.Info(fmt.Sprintf("Zones discovery disabled for provider %s, skipping", provider))
+	zonesDiscoveryEnabled := s.providerSpec.ZonesDiscovery(provider)
+
+	azureSuffixNeeded := provider == runtime.Azure && s.useMachineImageVersionSuffix
+	if !zonesDiscoveryEnabled && !azureSuffixNeeded {
+		log.Info(fmt.Sprintf("Zones discovery disabled and machine image version suffix not needed for provider %s, skipping", provider))
 		return operation, 0, nil
 	}
-	if len(operation.DiscoveredZones) > 0 {
-		log.Info("Available zones already discovered, skipping")
+	zonesAlreadyDone := !zonesDiscoveryEnabled || len(operation.DiscoveredZones) > 0
+	suffixesAlreadyDone := !azureSuffixNeeded || len(operation.MachineImageVersionSuffixes) > 0
+	if zonesAlreadyDone && suffixesAlreadyDone {
+		log.Info("Zones and machine image version suffixes already discovered, skipping")
 		return operation, 0, nil
 	}
 
@@ -87,31 +94,47 @@ func (s *DiscoverAvailableZonesCBStep) Run(operation internal.Operation, log *sl
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to create %s client", provider), err, 10*time.Second, time.Minute, log)
 	}
 
-	discoveredZones := make(map[string][]string)
+	machineTypes := make(map[string]struct{})
 	switch operation.Type {
 	case internal.OperationTypeProvision:
-		discoveredZones[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = []string{}
+		machineTypes[DefaultIfParamNotSet(operation.ProviderValues.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType)] = struct{}{}
 		for _, pool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
-			discoveredZones[pool.MachineType] = []string{}
+			machineTypes[pool.MachineType] = struct{}{}
 		}
 	case internal.OperationTypeUpdate:
+		if operation.UpdatingParameters.MachineType != nil {
+			machineTypes[*operation.UpdatingParameters.MachineType] = struct{}{}
+		}
 		for _, pool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			discoveredZones[pool.MachineType] = []string{}
+			machineTypes[pool.MachineType] = struct{}{}
 		}
 	}
 
-	for machineType := range discoveredZones {
-		zones, err := client.AvailableZones(context.Background(), machineType)
-		if err != nil {
-			return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
+	discoveredZones := make(map[string][]string)
+	machineImageVersionSuffixes := make(map[string]string)
+	for machineType := range machineTypes {
+		if zonesDiscoveryEnabled {
+			zones, err := client.AvailableZones(context.Background(), machineType)
+			if err != nil {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get available zones for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
+			}
+			shuffleZones(zones)
+			log.Info(fmt.Sprintf("Available zones for machine type %s in region %s: %v", machineType, operation.ProviderValues.Region, zones))
+			discoveredZones[machineType] = zones
 		}
-		rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
-		log.Info(fmt.Sprintf("Available zones for machine type %s in region %s: %v", machineType, operation.ProviderValues.Region, zones))
-		discoveredZones[machineType] = zones
+
+		if azureSuffixNeeded {
+			suffix, err := client.HyperVGeneration(context.Background(), machineType)
+			if err != nil {
+				return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get HyperV generation for machine type %s", machineType), err, 10*time.Second, time.Minute, log)
+			}
+			machineImageVersionSuffixes[machineType] = suffix
+		}
 	}
 
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.DiscoveredZones = discoveredZones
+		op.MachineImageVersionSuffixes = machineImageVersionSuffixes
 	}, log)
 }
 
@@ -120,4 +143,10 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
+}
+
+// shuffleZones randomizes zone order so that different instances spread across
+// availability zones instead of all landing in the first zone returned by the API.
+func shuffleZones(zones []string) {
+	rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
 }
