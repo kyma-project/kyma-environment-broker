@@ -26,11 +26,11 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
-{{ else }}
+{{- else }}
   targetRefs:
   - kind: Service
     group: ""
-    name: {{ include "kyma-env-broker.name" . }}
+    name: {{ include "kyma-env-broker.fullname" . }}
 {{- end }}
 ---
 apiVersion: security.istio.io/v1beta1
@@ -50,7 +50,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
-{{ else }}
+{{- else }}
   targetRefs:
   - kind: Service
     group: ""
@@ -73,7 +73,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
       app.kubernetes.io/name: kyma-environment-broker
-{{ else }}
+{{- else }}
   targetRefs:
   - kind: Service
     group: ""
@@ -116,7 +116,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
-{{ else }}
+{{- else }}
   targetRefs:
   - kind: Service
     group: ""
