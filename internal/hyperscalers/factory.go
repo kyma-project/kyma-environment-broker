@@ -13,8 +13,8 @@ import (
 )
 
 type hyperscalerFactory struct {
-	providerSpec    *configuration.ProviderSpec
-	azureCache      *azure.AzureCache
+	providerSpec     *configuration.ProviderSpec
+	azureCache       *azure.AzureCache
 	azureCloudConfig cloud.Configuration
 }
 
@@ -34,8 +34,8 @@ func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.P
 		azureCache = azure.NewAzureCache(ctx, providerSpec, secretFetcher, cloudConfig)
 	}
 	return &hyperscalerFactory{
-		providerSpec:    providerSpec,
-		azureCache:      azureCache,
+		providerSpec:     providerSpec,
+		azureCache:       azureCache,
 		azureCloudConfig: cloudConfig,
 	}
 }

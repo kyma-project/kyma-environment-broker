@@ -769,30 +769,11 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 	}, nil
 }
 
-// resolveAzureCloudConfig determines the Azure cloud environment to use for all Azure API calls
-// and populates secretFetcher when zones discovery is enabled.
-// When clientConfiguration is set explicitly, it is used directly with no network calls.
 // resolveAzureCloudConfig determines the Azure cloud environment for zone discovery API calls
-// and populates secretFetcher when zones discovery is enabled.
+// and populates secretFetcher. Called only when zones discovery is enabled.
 // When clientConfiguration is set explicitly, it is used directly with no network calls.
-// When zones discovery is enabled without explicit config, the cloud is auto-discovered at startup.
-// Returns AzurePublic when zones discovery is disabled and no explicit config is set.
+// Otherwise the cloud is auto-discovered by probing Public → China → US Gov at startup.
 func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, rulesService *rules.RulesService, secretFetcher *azurehyperscaler.SecretFetcher, log *slog.Logger) (azurecloud.Configuration, error) {
-	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
-		cfg, err := azurehyperscaler.CloudConfigFromName(configName)
-		if err != nil {
-			return azurecloud.Configuration{}, err
-		}
-		if providerSpec.ZonesDiscovery(pkg.Azure) {
-			fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
-			if err != nil {
-				return azurecloud.Configuration{}, fmt.Errorf("failed to build Azure secret fetcher: %w", err)
-			}
-			*secretFetcher = fetcher
-		}
-		return cfg, nil
-	}
-
 	if !providerSpec.ZonesDiscovery(pkg.Azure) {
 		return azurecloud.AzurePublic, nil
 	}
@@ -802,6 +783,10 @@ func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.Pr
 		return azurecloud.Configuration{}, fmt.Errorf("Azure cloud auto-discovery not possible: %w", err)
 	}
 	*secretFetcher = fetcher
+
+	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
+		return azurehyperscaler.CloudConfigFromName(configName)
+	}
 
 	creds, err := fetcher()
 	if err != nil {

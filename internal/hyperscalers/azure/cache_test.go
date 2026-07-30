@@ -219,9 +219,9 @@ func TestAzureCache_FillAllRetryExhausted(t *testing.T) {
 	spec := buildCacheSpec([]string{"Standard_D4s_v5"})
 
 	cache := &AzureCache{
-		data:             make(map[string]map[string][]string),
-		providerSpec:     spec,
-		cloudConfig:      cloud.AzurePublic,
+		data:         make(map[string]map[string][]string),
+		providerSpec: spec,
+		cloudConfig:  cloud.AzurePublic,
 		secretFetcher: func() (AzureCredentials, error) {
 			return buildAzureCredentials(), nil
 		},
@@ -239,10 +239,10 @@ func TestAzureCache_ClientFactoryError_NoRetry(t *testing.T) {
 	spec := buildCacheSpec([]string{"Standard_D4s_v5"})
 	var attempts int
 	cache := &AzureCache{
-		data:              make(map[string]map[string][]string),
-		providerSpec:      spec,
-		cloudConfig:       cloud.AzurePublic,
-		secretFetcher:     func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
+		data:          make(map[string]map[string][]string),
+		providerSpec:  spec,
+		cloudConfig:   cloud.AzurePublic,
+		secretFetcher: func() (AzureCredentials, error) { return buildAzureCredentials(), nil },
 		skusClientFactory: func(_ string, _ *azidentity.ClientSecretCredential, _ cloud.Configuration) (ResourceSKUsAPI, error) {
 			attempts++
 			return nil, assert.AnError

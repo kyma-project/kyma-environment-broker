@@ -92,4 +92,3 @@ func TestResolveCloudConfig_AutoDiscovery_AllFail(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "auto-discovery failed")
 }
-
