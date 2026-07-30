@@ -129,9 +129,7 @@ AWS
 | **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`       |
 | **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                             |    No    | `false`       |
 
-
 </details>
-
 
 You can configure the following provisioning parameters for Google Cloud:
 
@@ -153,7 +151,6 @@ Google Cloud
 | **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                 |    No    | `false`         |
 | **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                   |    No    | `false`         |
 
-
 </details>
 
 You can configure the following provisioning parameters for SAP Cloud Infrastructure:
@@ -173,7 +170,6 @@ SAP Cloud Infrastructure
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region. |    No    | `false`       |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                         |    No    | `false`       |
 
-
 </details>
 
 You can configure the following provisioning parameters for Google Distributed Cloud Hosted (GDCH):
@@ -192,9 +188,6 @@ Google Distributed Cloud Hosted
 | **region**                     | string | Defines the cluster region.                                                                |   Yes    | None                |
 | **autoScalerMin<sup>1</sup>**  | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`                 |
 | **autoScalerMax<sup>1</sup>**  | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `10`                |
-| **maxSurge<sup>1</sup>**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`                 |
-| **maxUnavailable<sup>1</sup>** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`                 |
-
 
 </details>
 
