@@ -44,8 +44,8 @@ type rangeCache struct {
 
 // cache is the top-level in-memory store populated on each refresh.
 type cache struct {
-	opEvents             []analytics.OpEvent                   // full history, shared across all windows
-	byRange              map[string]rangeCache                 // keys: "all", "7d", "30d", "90d"
+	opEvents             []analytics.OpEvent                  // full history, shared across all windows
+	byRange              map[string]rangeCache                // keys: "all", "7d", "30d", "90d"
 	activeInstanceParams []analytics.ProvisioningParamsWithID // current state from instances table
 	plans                []string                             // from the "all" window
 	regionsByPlan        map[string][]string                  // from the "all" window
