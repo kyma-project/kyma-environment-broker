@@ -30,13 +30,14 @@ func CloudConfigFromName(name string) (cloud.Configuration, error) {
 // Replaceable in tests to avoid real Azure API calls.
 type probeFunc func(ctx context.Context, creds AzureCredentials, cfg cloud.Configuration) bool
 
-var probeOrder = []cloud.Configuration{
-	cloud.AzurePublic,
-	cloud.AzureChina,
-	cloud.AzureGovernment,
+var probeOrder = []struct {
+	name string
+	cfg  cloud.Configuration
+}{
+	{"public", cloud.AzurePublic},
+	{"china", cloud.AzureChina},
+	{"usgov", cloud.AzureGovernment},
 }
-
-var probeOrderNames = []string{"public", "china", "usgov"}
 
 // ResolveCloudConfig returns the cloud.Configuration to use for the given credentials.
 // When configName is non-empty it maps directly to the SDK constant — no network calls.
@@ -56,12 +57,12 @@ func resolveCloudConfig(ctx context.Context, creds AzureCredentials, configName 
 		return cfg, nil
 	}
 
-	for i, cfg := range probeOrder {
-		if probe(ctx, creds, cfg) {
-			slog.Info("Azure cloud auto-discovered", "cloud", probeOrderNames[i])
-			return cfg, nil
+	for _, p := range probeOrder {
+		if probe(ctx, creds, p.cfg) {
+			slog.Info("Azure cloud auto-discovered", "cloud", p.name)
+			return p.cfg, nil
 		}
-		slog.Info("Azure cloud probe failed", "cloud", probeOrderNames[i])
+		slog.Info("Azure cloud probe failed", "cloud", p.name)
 	}
 	return cloud.Configuration{}, fmt.Errorf("Azure cloud auto-discovery failed: credentials did not authenticate against any cloud (public, china, usgov)")
 }

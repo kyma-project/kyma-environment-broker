@@ -57,6 +57,17 @@ func TestResolveCloudConfig_ExplicitName_Invalid(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestResolveCloudConfig_ExplicitName_NeverProbes(t *testing.T) {
+	called := false
+	_, err := resolveCloudConfig(context.Background(), AzureCredentials{}, "china",
+		func(_ context.Context, _ AzureCredentials, _ cloud.Configuration) bool {
+			called = true
+			return false
+		})
+	require.NoError(t, err)
+	assert.False(t, called, "probe must not be called when configName is set")
+}
+
 func TestResolveCloudConfig_AutoDiscovery_FirstSucceeds(t *testing.T) {
 	creds := AzureCredentials{}
 	callCount := 0
