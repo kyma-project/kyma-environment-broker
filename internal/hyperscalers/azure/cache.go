@@ -35,7 +35,7 @@ type AzureCredentials struct {
 // Called on every cache refresh to pick up rotated credentials.
 type SecretFetcher func() (AzureCredentials, error)
 
-// SKUsClientFactory creates a ResourceSKUsAPI from credentials and cloud configuration.
+// SKUsClientFactory creates a ResourceSKUsAPI (SKU = Stock-Keeping Unit) from credentials and cloud configuration.
 // Replaceable in tests to avoid real Azure API calls.
 type SKUsClientFactory func(subscriptionID string, credential *azidentity.ClientSecretCredential, cloudConfig cloud.Configuration) (ResourceSKUsAPI, error)
 
