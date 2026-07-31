@@ -38,3 +38,15 @@ func GvkByName(name string) (schema.GroupVersionKind, error) {
 	}
 	return gvk, nil
 }
+
+func GvrByName(name string) (schema.GroupVersionResource, error) {
+	gvk, err := GvkByName(name)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+	return schema.GroupVersionResource{
+		Group:    gvk.Group,
+		Version:  gvk.Version,
+		Resource: strings.ToLower(gvk.Kind + "s"),
+	}, nil
+}

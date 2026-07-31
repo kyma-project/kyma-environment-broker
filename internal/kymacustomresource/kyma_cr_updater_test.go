@@ -30,6 +30,15 @@ const (
 	usedForProductionTestValue = "USED_FOR_PRODUCTION"
 )
 
+// Runtime CR K8s data
+const (
+	runtimeGroup    = "infrastructuremanager.kyma-project.io"
+	runtimeVersion  = "v1"
+	runtimeResource = "runtimes"
+	runtimeKind     = "Runtime"
+	runtimeCRName1  = "runtime-cr-1"
+)
+
 const (
 	subaccountID = "subaccount-id-1"
 	interval     = 100 * time.Millisecond
@@ -49,12 +58,27 @@ func TestUpdater(t *testing.T) {
 	listGVK := gvk
 	listGVK.Kind += "List"
 
+	runtimeGVR := schema.GroupVersionResource{Group: runtimeGroup, Version: runtimeVersion, Resource: runtimeResource}
+	runtimeGVKVal := runtimeGVR.GroupVersion().WithKind(runtimeKind)
+	runtimeListGVK := runtimeGVKVal
+	runtimeListGVK.Kind += "List"
+
 	var kymaKind, kymaKindList unstructured.Unstructured
 	kymaKind.SetGroupVersionKind(gvk)
 	kymaKindList.SetGroupVersionKind(listGVK)
 
+	var runtimeKindObj, runtimeKindList unstructured.Unstructured
+	runtimeKindObj.SetGroupVersionKind(runtimeGVKVal)
+	runtimeKindList.SetGroupVersionKind(runtimeListGVK)
+
 	scheme := runtime.NewScheme()
 	scheme.AddKnownTypes(gvr.GroupVersion(), &kymaKind, &kymaKindList)
+	scheme.AddKnownTypes(runtimeGVR.GroupVersion(), &runtimeKindObj, &runtimeKindList)
+
+	listKinds := map[schema.GroupVersionResource]string{
+		gvr:        listGVK.Kind,
+		runtimeGVR: runtimeListGVK.Kind,
+	}
 
 	t.Run("should not update Kyma CRs when the queue is empty", func(t *testing.T) {
 		// given
@@ -66,8 +90,8 @@ func TestUpdater(t *testing.T) {
 		require.NoError(t, unstructured.SetNestedField(mockKymaCR.Object, nil, "metadata", "creationTimestamp"))
 
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
-		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
+		fakeK8sClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mockKymaCR)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, runtimeGVR, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -102,8 +126,8 @@ func TestUpdater(t *testing.T) {
 		})
 		assert.False(t, queue.IsEmpty())
 
-		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
+		fakeK8sClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mockKymaCR)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, runtimeGVR, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -147,8 +171,8 @@ func TestUpdater(t *testing.T) {
 		})
 		assert.False(t, queue.IsEmpty())
 
-		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
+		fakeK8sClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mockKymaCR1, mockKymaCR2)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, runtimeGVR, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -198,8 +222,8 @@ func TestUpdater(t *testing.T) {
 		})
 		assert.False(t, queue.IsEmpty())
 
-		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
+		fakeK8sClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mockKymaCR1, mockKymaCR2)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, runtimeGVR, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -225,6 +249,61 @@ func TestUpdater(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotContains(t, actual.GetLabels(), BetaEnabledLabelKey)
 		assert.NotContains(t, actual.GetLabels(), UsedForProductionLabelKey)
+		assert.True(t, queue.IsEmpty())
+	})
+
+	t.Run("should update Runtime CR with used-for-production label but not beta label", func(t *testing.T) {
+		// given
+		mockKymaCR := &unstructured.Unstructured{}
+		mockKymaCR.SetGroupVersionKind(gvk)
+		mockKymaCR.SetName(kymaCRName1)
+		mockKymaCR.SetNamespace(namespace)
+		mockKymaCR.SetLabels(map[string]string{subaccountIdLabelKey: subaccountID})
+		require.NoError(t, unstructured.SetNestedField(mockKymaCR.Object, nil, "metadata", "creationTimestamp"))
+
+		mockRuntimeCR := &unstructured.Unstructured{}
+		mockRuntimeCR.SetGroupVersionKind(runtimeGVKVal)
+		mockRuntimeCR.SetName(runtimeCRName1)
+		mockRuntimeCR.SetNamespace(namespace)
+		mockRuntimeCR.SetLabels(map[string]string{subaccountIdLabelKey: subaccountID})
+		require.NoError(t, unstructured.SetNestedField(mockRuntimeCR.Object, nil, "metadata", "creationTimestamp"))
+
+		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
+		queue.Insert(syncqueues.QueueElement{
+			SubaccountID:      subaccountID,
+			BetaEnabled:       "true",
+			UsedForProduction: usedForProductionTestValue,
+			ModifiedAt:        time.Now().Unix(),
+		})
+
+		fakeK8sClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mockKymaCR, mockRuntimeCR)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, runtimeGVR, timeout, context.TODO(), log)
+		require.NoError(t, err)
+
+		// when
+		go func(t *testing.T) {
+			require.NoError(t, updater.Run())
+		}(t)
+
+		// then - Kyma CR gets both labels
+		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
+			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName1, metav1.GetOptions{})
+			require.NoError(t, err)
+			return isBetaEnabledTrue(actual.GetLabels()[BetaEnabledLabelKey]) && actual.GetLabels()[UsedForProductionLabelKey] == usedForProductionTestValue, nil
+		})
+		require.NoError(t, err)
+
+		// then - Runtime CR gets used-for-production but NOT beta
+		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
+			actual, err := fakeK8sClient.Resource(runtimeGVR).Namespace(namespace).Get(context.TODO(), runtimeCRName1, metav1.GetOptions{})
+			require.NoError(t, err)
+			return actual.GetLabels()[UsedForProductionLabelKey] == usedForProductionTestValue, nil
+		})
+		require.NoError(t, err)
+
+		actualRuntime, err := fakeK8sClient.Resource(runtimeGVR).Namespace(namespace).Get(context.TODO(), runtimeCRName1, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.NotContains(t, actualRuntime.GetLabels(), BetaEnabledLabelKey)
 		assert.True(t, queue.IsEmpty())
 	})
 }
