@@ -44,12 +44,13 @@ type rangeCache struct {
 
 // cache is the top-level in-memory store populated on each refresh.
 type cache struct {
-	opEvents      []analytics.OpEvent   // full history, shared across all windows
-	byRange       map[string]rangeCache // keys: "all", "7d", "30d", "90d"
-	plans         []string              // from the "all" window
-	regionsByPlan map[string][]string   // from the "all" window
-	cachedAt      time.Time
-	nextRefreshAt time.Time
+	opEvents             []analytics.OpEvent                  // full history, shared across all windows
+	byRange              map[string]rangeCache                // keys: "all", "7d", "30d", "90d"
+	activeInstanceParams []analytics.ProvisioningParamsWithID // current state from instances table
+	plans                []string                             // from the "all" window
+	regionsByPlan        map[string][]string                  // from the "all" window
+	cachedAt             time.Time
+	nextRefreshAt        time.Time
 }
 
 // buildRangeCache computes provParams, updateParams and the unfiltered StatsResponse
@@ -57,7 +58,9 @@ type cache struct {
 // Trends are intentionally built from the full opEvents history regardless of the window:
 // this means the Trends field in the 7d/30d/90d responses is identical to the "all" response,
 // providing continuous historical context on the trend chart even when a narrow period is selected.
-func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planIDToName map[string]string, trendParams []string) rangeCache {
+// Distributions are built from activeInstanceParams (current state from the instances table)
+// rather than provParams (historical operation params), so they reflect the actual current state.
+func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planIDToName map[string]string, trendParams []string, activeInstanceParams []analytics.ProvisioningParamsWithID) rangeCache {
 	provParams := analytics.OpEventsToProvParamsInRange(opEvents, tr)
 	updateParams := analytics.OpEventsToUpdateParamsInRange(opEvents, tr)
 	plans, regionsByPlan := analytics.BuildPlanRegionIndex(provParams, planIDToName)
@@ -74,7 +77,7 @@ func buildRangeCache(opEvents []analytics.OpEvent, tr analytics.TimeRange, planI
 	go func() { defer wg.Done(); provisioning = analytics.AggregateProvisioning(provParams) }()
 	go func() { defer wg.Done(); updates = analytics.AggregateUpdates(provParams, updateParams) }()
 	go func() { defer wg.Done(); combined = analytics.AggregateCombined(provParams, updateParams) }()
-	go func() { defer wg.Done(); distributions = analytics.BuildDistributions(provParams) }()
+	go func() { defer wg.Done(); distributions = analytics.BuildDistributions(activeInstanceParams) }()
 	wg.Wait()
 
 	trends := analytics.BuildTrends(opEvents, trendParams)
@@ -198,6 +201,12 @@ func main() {
 			return
 		}
 
+		activeInstanceParams, err := reader.FetchActiveInstanceParams()
+		if err != nil {
+			slog.Error("failed to fetch active instance params", "error", err)
+			return
+		}
+
 		now := time.Now().UTC()
 		windows := map[string]analytics.TimeRange{
 			"all": {},
@@ -207,11 +216,11 @@ func main() {
 		}
 
 		// Build the "all" window first to derive trendParams used by all windows.
-		allRC := buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, nil)
+		allRC := buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, nil, activeInstanceParams)
 		trendParams := analytics.TrendParamsFrom(allRC.resp.Combined)
 
 		// Rebuild "all" with trendParams so its Trends field is populated.
-		allRC = buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, trendParams)
+		allRC = buildRangeCache(opEvents, analytics.TimeRange{}, planIDToName, trendParams, activeInstanceParams)
 
 		byRange := make(map[string]rangeCache, len(windows))
 		byRange["all"] = allRC
@@ -219,19 +228,20 @@ func main() {
 			if key == "all" {
 				continue
 			}
-			byRange[key] = buildRangeCache(opEvents, tr, planIDToName, trendParams)
+			byRange[key] = buildRangeCache(opEvents, tr, planIDToName, trendParams, activeInstanceParams)
 		}
 
 		plans, regionsByPlan := allRC.resp.Plans, allRC.resp.RegionsByPlan
 
 		mu.Lock()
 		c = cache{
-			opEvents:      opEvents,
-			byRange:       byRange,
-			plans:         plans,
-			regionsByPlan: regionsByPlan,
-			cachedAt:      now,
-			nextRefreshAt: now.Add(cfg.RefreshInterval),
+			opEvents:             opEvents,
+			byRange:              byRange,
+			activeInstanceParams: activeInstanceParams,
+			plans:                plans,
+			regionsByPlan:        regionsByPlan,
+			cachedAt:             now,
+			nextRefreshAt:        now.Add(cfg.RefreshInterval),
 		}
 		mu.Unlock()
 		slog.Info("stats cache refreshed", "total_instances", allRC.resp.TotalInstances)
@@ -276,7 +286,7 @@ func main() {
 			// Custom date range: derive in-memory from cached opEvents.
 			allCombined := snapshot.byRange["all"].resp.Combined
 			trendParams := analytics.TrendParamsFrom(allCombined)
-			rc = buildRangeCache(snapshot.opEvents, tr, planIDToName, trendParams)
+			rc = buildRangeCache(snapshot.opEvents, tr, planIDToName, trendParams, snapshot.activeInstanceParams)
 		}
 
 		var data analytics.StatsResponse
@@ -288,7 +298,7 @@ func main() {
 		} else {
 			allCombined := snapshot.byRange["all"].resp.Combined
 			trendParams := analytics.TrendParamsFrom(allCombined)
-			data = buildFilteredStats(rc.provParams, rc.updateParams, snapshot.opEvents, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
+			data = buildFilteredStats(rc.provParams, rc.updateParams, snapshot.opEvents, snapshot.activeInstanceParams, planFilter, regionFilter, planIDToName, snapshot.plans, snapshot.regionsByPlan, trendParams)
 		}
 		data.CachedAt = snapshot.cachedAt.Format(time.RFC3339)
 		data.NextRefreshAt = snapshot.nextRefreshAt.Format(time.RFC3339)
@@ -344,6 +354,8 @@ func main() {
 // buildFilteredStats filters provParams/updateParams by plan and region, then aggregates.
 // plans and regionsByPlan are always the full unfiltered index (for dropdown population).
 // opEvents are unfiltered (trends are not affected by plan/region filter).
+// activeInstanceParams is the current state from the instances table; it is also filtered by
+// plan/region so that distributions reflect the selected subset of active instances.
 // trendParams is the list of parameter names to build trends for; it must come from the
 // full (unfiltered) combined stats so that trends remain populated even when the selected
 // time-range window contains no provisioning operations.
@@ -351,6 +363,7 @@ func buildFilteredStats(
 	provParams []analytics.ProvisioningParamsWithID,
 	updateParams []analytics.UpdateParamsWithID,
 	opEvents []analytics.OpEvent,
+	activeInstanceParams []analytics.ProvisioningParamsWithID,
 	planFilter, regionFilter string,
 	planIDToName map[string]string,
 	plans []string,
@@ -358,11 +371,14 @@ func buildFilteredStats(
 	trendParams []string,
 ) analytics.StatsResponse {
 	filtered := provParams
+	filteredActive := activeInstanceParams
 	if planFilter != "" {
 		filtered = analytics.FilterByPlan(filtered, planFilter, planIDToName)
+		filteredActive = analytics.FilterByPlan(filteredActive, planFilter, planIDToName)
 	}
 	if regionFilter != "" {
 		filtered = analytics.FilterByRegion(filtered, regionFilter)
+		filteredActive = analytics.FilterByRegion(filteredActive, regionFilter)
 	}
 	combined := analytics.AggregateCombined(filtered, updateParams)
 	trends := analytics.BuildTrends(opEvents, trendParams)
@@ -372,7 +388,7 @@ func buildFilteredStats(
 		Provisioning:   analytics.AggregateProvisioning(filtered),
 		Updates:        analytics.AggregateUpdates(filtered, updateParams),
 		Combined:       combined,
-		Distributions:  analytics.BuildDistributions(filtered),
+		Distributions:  analytics.BuildDistributions(filteredActive),
 		Trends:         trends,
 		Plans:          plans,
 		RegionsByPlan:  regionsByPlan,
