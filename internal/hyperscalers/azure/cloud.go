@@ -49,12 +49,7 @@ func ResolveCloudConfig(ctx context.Context, creds AzureCredentials, configName 
 
 func resolveCloudConfig(ctx context.Context, creds AzureCredentials, configName string, probe probeFunc) (cloud.Configuration, error) {
 	if configName != "" {
-		cfg, err := CloudConfigFromName(configName)
-		if err != nil {
-			return cloud.Configuration{}, err
-		}
-		slog.Info("Azure cloud configured explicitly", "cloud", configName)
-		return cfg, nil
+		return CloudConfigFromName(configName)
 	}
 
 	for _, p := range probeOrder {

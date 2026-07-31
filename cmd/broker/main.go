@@ -785,7 +785,12 @@ func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.Pr
 	*secretFetcher = fetcher
 
 	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
-		return azurehyperscaler.CloudConfigFromName(configName)
+		cfg, err := azurehyperscaler.CloudConfigFromName(configName)
+		if err != nil {
+			return azurecloud.Configuration{}, err
+		}
+		log.Info("Azure cloud configured explicitly", "cloud", configName)
+		return cfg, nil
 	}
 
 	creds, err := fetcher()
