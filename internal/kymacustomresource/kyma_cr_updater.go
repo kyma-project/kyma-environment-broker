@@ -64,10 +64,9 @@ func (u *Updater) Run() error {
 
 		ctxWithTimeout, cancel := context.WithTimeout(u.ctx, k8sRequestInterval)
 
-		retryRequired := u.patchKymaCRs(item.SubaccountID, item.BetaEnabled, item.UsedForProduction, ctxWithTimeout)
-		// Short-circuit is intentional: if Kyma patch fails, Runtime patch is skipped so both CRs
-		// remain on the old value and will be retried together, preserving label consistency.
-		retryRequired = retryRequired || u.patchRuntimeCRs(item.SubaccountID, item.UsedForProduction, ctxWithTimeout)
+		kymaRetry := u.patchKymaCRs(item.SubaccountID, item.BetaEnabled, item.UsedForProduction, ctxWithTimeout)
+		runtimeRetry := u.patchRuntimeCRs(item.SubaccountID, item.UsedForProduction, ctxWithTimeout)
+		retryRequired := kymaRetry || runtimeRetry
 
 		cancel()
 		if retryRequired {
