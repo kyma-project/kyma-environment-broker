@@ -39,6 +39,10 @@ func (f *hyperscalerFactory) NewFromSecret(ctx context.Context, provider pkg.Clo
 	case pkg.AWS:
 		return aws.NewClientFromSecret(ctx, f.providerSpec, secret, region)
 	case pkg.Azure:
+		// Use the global cache when available and ready — zero latency, no API call.
+		// Falls back to a per-call client when the cache is not yet ready (lazy fill in progress).
+		// Note: the cached client uses zone data from the startup secret, not the caller-provided
+		// secret. This is intentional — the cache trades per-subscription accuracy for speed.
 		if f.azureCache != nil && f.azureCache.Ready(region) {
 			return azure.NewCachedClient(f.azureCache, region, f.providerSpec), nil
 		}

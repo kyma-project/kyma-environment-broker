@@ -175,6 +175,15 @@ func (p *ProviderSpec) ValidateZonesDiscovery() error {
 				}
 			}
 		}
+
+		if cp := runtime.CloudProviderFromString(string(provider)); cp == runtime.Azure {
+			if providerDTO.ClientConfiguration != "" {
+				validValues := map[string]struct{}{"public": {}, "china": {}, "usgov": {}}
+				if _, ok := validValues[providerDTO.ClientConfiguration]; !ok {
+					return fmt.Errorf("invalid clientConfiguration %q for Azure provider: must be one of public, china, usgov", providerDTO.ClientConfiguration)
+				}
+			}
+		}
 	}
 
 	return nil
