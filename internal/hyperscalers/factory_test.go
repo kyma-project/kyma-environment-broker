@@ -24,13 +24,6 @@ func newFactoryTestCredentials() azure.AzureCredentials {
 	}
 }
 
-func TestNewFactory_NoAzureCache(t *testing.T) {
-	spec := newFactoryTestSpec(t)
-	f := NewFactory(spec)
-	factory := f.(*hyperscalerFactory)
-	assert.Nil(t, factory.azureCache)
-}
-
 func TestNewFactoryWithAzureCache_NilFetcherNoCache(t *testing.T) {
 	spec := newFactoryTestSpec(t)
 	f := NewFactoryWithAzureCache(context.Background(), spec, nil, cloud.AzurePublic)

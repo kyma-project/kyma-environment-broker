@@ -778,24 +778,34 @@ func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.Pr
 		return azurecloud.AzurePublic, nil
 	}
 
-	fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
-	if err != nil {
-		return azurecloud.Configuration{}, fmt.Errorf("Azure cloud auto-discovery not possible: %w", err)
-	}
-	*secretFetcher = fetcher
-
+	// Explicit configuration: resolve cloud without credentials.
+	// Secret fetcher is still needed for cache refresh, but its failure is non-fatal —
+	// KEB falls back to per-call mode without the global cache.
 	if configName := providerSpec.AzureClientConfiguration(); configName != "" {
 		cfg, err := azurehyperscaler.CloudConfigFromName(configName)
 		if err != nil {
 			return azurecloud.Configuration{}, err
 		}
 		log.Info("Azure cloud configured explicitly", "cloud", configName)
+		fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
+		if err != nil {
+			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", err))
+		} else {
+			*secretFetcher = fetcher
+		}
 		return cfg, nil
 	}
+
+	// Auto-discovery: secret fetcher is required to obtain credentials for probing.
+	fetcher, err := buildAzureSecretFetcher(gardenerClient, rulesService, log)
+	if err != nil {
+		return azurecloud.Configuration{}, fmt.Errorf("Azure cloud auto-discovery not possible: %w", err)
+	}
+	*secretFetcher = fetcher
 
 	creds, err := fetcher()
 	if err != nil {
 		return azurecloud.Configuration{}, fmt.Errorf("failed to fetch Azure credentials for cloud discovery: %w", err)
 	}
-	return azurehyperscaler.ResolveCloudConfig(ctx, creds, "")
+	return azurehyperscaler.ResolveCloudConfig(ctx, creds)
 }

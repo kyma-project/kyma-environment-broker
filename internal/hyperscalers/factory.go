@@ -18,16 +18,10 @@ type hyperscalerFactory struct {
 	azureCloudConfig cloud.Configuration
 }
 
-// NewFactory creates a new Factory without a global Azure zone cache.
-// All zone discovery calls go directly to the hyperscaler API.
-func NewFactory(providerSpec *configuration.ProviderSpec) Factory {
-	return &hyperscalerFactory{providerSpec: providerSpec}
-}
-
 // NewFactoryWithAzureCache creates a Factory with a global Azure zone cache.
 // cloudConfig is resolved once at KEB startup and reused for all Azure clients.
 // secretFetcher is called on every cache refresh to handle credential rotation.
-// If secretFetcher is nil or Azure zones discovery is disabled, behaves like NewFactory.
+// If secretFetcher is nil or Azure zones discovery is disabled, no cache is built.
 func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher azure.SecretFetcher, cloudConfig cloud.Configuration) Factory {
 	var azureCache *azure.AzureCache
 	if secretFetcher != nil && providerSpec.ZonesDiscovery(pkg.Azure) {

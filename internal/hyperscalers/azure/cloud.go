@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
+
+const azureCloudProbeTimeout = 10 * time.Second
 
 // CloudConfigFromName maps a human-readable cloud name to the corresponding SDK constant.
 // Accepted values: "public", "china", "usgov".
@@ -39,19 +42,13 @@ var probeOrder = []struct {
 	{"usgov", cloud.AzureGovernment},
 }
 
-// ResolveCloudConfig returns the cloud.Configuration to use for the given credentials.
-// When configName is non-empty it maps directly to the SDK constant — no network calls.
-// When configName is empty it probes Public → China → US Gov and returns the first that succeeds.
-// Intended to be called once at KEB startup before the cache and HTTP server are started.
-func ResolveCloudConfig(ctx context.Context, creds AzureCredentials, configName string) (cloud.Configuration, error) {
-	return resolveCloudConfig(ctx, creds, configName, probeCloud)
+// ResolveCloudConfig probes Public → China → US Gov and returns the first cloud
+// that accepts the credentials. Intended to be called once at KEB startup.
+func ResolveCloudConfig(ctx context.Context, creds AzureCredentials) (cloud.Configuration, error) {
+	return resolveCloudConfig(ctx, creds, probeCloud)
 }
 
-func resolveCloudConfig(ctx context.Context, creds AzureCredentials, configName string, probe probeFunc) (cloud.Configuration, error) {
-	if configName != "" {
-		return CloudConfigFromName(configName)
-	}
-
+func resolveCloudConfig(ctx context.Context, creds AzureCredentials, probe probeFunc) (cloud.Configuration, error) {
 	for _, p := range probeOrder {
 		if probe(ctx, creds, p.cfg) {
 			slog.Info("Azure cloud auto-discovered", "cloud", p.name)
@@ -78,7 +75,9 @@ func probeCloud(ctx context.Context, creds AzureCredentials, cfg cloud.Configura
 	if !ok || svc.Audience == "" {
 		return false
 	}
-	_, err = credential.GetToken(ctx, policy.TokenRequestOptions{
+	probeCtx, cancel := context.WithTimeout(ctx, azureCloudProbeTimeout)
+	defer cancel()
+	_, err = credential.GetToken(probeCtx, policy.TokenRequestOptions{
 		Scopes: []string{svc.Audience + "/.default"},
 	})
 	return err == nil

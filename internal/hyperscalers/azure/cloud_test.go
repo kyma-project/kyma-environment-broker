@@ -33,46 +33,11 @@ func TestCloudConfigFromName_Unknown(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown Azure cloud")
 }
 
-func TestResolveCloudConfig_ExplicitName(t *testing.T) {
-	// With an explicit name, ResolveCloudConfig must return the correct constant
-	// without any network probe — credentials can be empty/invalid.
-	creds := AzureCredentials{}
-
-	got, err := ResolveCloudConfig(context.Background(), creds, "china")
-	require.NoError(t, err)
-	assert.Equal(t, cloud.AzureChina, got)
-
-	got, err = ResolveCloudConfig(context.Background(), creds, "public")
-	require.NoError(t, err)
-	assert.Equal(t, cloud.AzurePublic, got)
-
-	got, err = ResolveCloudConfig(context.Background(), creds, "usgov")
-	require.NoError(t, err)
-	assert.Equal(t, cloud.AzureGovernment, got)
-}
-
-func TestResolveCloudConfig_ExplicitName_Invalid(t *testing.T) {
-	creds := AzureCredentials{}
-	_, err := ResolveCloudConfig(context.Background(), creds, "invalid")
-	require.Error(t, err)
-}
-
-func TestResolveCloudConfig_ExplicitName_NeverProbes(t *testing.T) {
-	called := false
-	_, err := resolveCloudConfig(context.Background(), AzureCredentials{}, "china",
-		func(_ context.Context, _ AzureCredentials, _ cloud.Configuration) bool {
-			called = true
-			return false
-		})
-	require.NoError(t, err)
-	assert.False(t, called, "probe must not be called when configName is set")
-}
-
-func TestResolveCloudConfig_AutoDiscovery_FirstSucceeds(t *testing.T) {
+func TestResolveCloudConfig_FirstSucceeds(t *testing.T) {
 	creds := AzureCredentials{}
 	callCount := 0
 
-	got, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
+	got, err := resolveCloudConfig(context.Background(), creds, func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
 		callCount++
 		return cfg.ActiveDirectoryAuthorityHost == cloud.AzurePublic.ActiveDirectoryAuthorityHost
 	})
@@ -82,10 +47,10 @@ func TestResolveCloudConfig_AutoDiscovery_FirstSucceeds(t *testing.T) {
 	assert.Equal(t, 1, callCount, "should stop after first success")
 }
 
-func TestResolveCloudConfig_AutoDiscovery_SecondSucceeds(t *testing.T) {
+func TestResolveCloudConfig_SecondSucceeds(t *testing.T) {
 	creds := AzureCredentials{}
 
-	got, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
+	got, err := resolveCloudConfig(context.Background(), creds, func(_ context.Context, _ AzureCredentials, cfg cloud.Configuration) bool {
 		return cfg.ActiveDirectoryAuthorityHost == cloud.AzureChina.ActiveDirectoryAuthorityHost
 	})
 
@@ -93,10 +58,10 @@ func TestResolveCloudConfig_AutoDiscovery_SecondSucceeds(t *testing.T) {
 	assert.Equal(t, cloud.AzureChina.ActiveDirectoryAuthorityHost, got.ActiveDirectoryAuthorityHost)
 }
 
-func TestResolveCloudConfig_AutoDiscovery_AllFail(t *testing.T) {
+func TestResolveCloudConfig_AllFail(t *testing.T) {
 	creds := AzureCredentials{}
 
-	_, err := resolveCloudConfig(context.Background(), creds, "", func(_ context.Context, _ AzureCredentials, _ cloud.Configuration) bool {
+	_, err := resolveCloudConfig(context.Background(), creds, func(_ context.Context, _ AzureCredentials, _ cloud.Configuration) bool {
 		return false
 	})
 
