@@ -20,7 +20,7 @@ providersConfiguration:
     zonesDiscovery: true
 ```
 
-If both a static configuration and `zonesDiscovery` are provided, a warning is logged on KEB's start to indicate that static zones are ignored.
+If both a static configuration and **zonesDiscovery** are provided, a warning is logged on KEB's start to indicate that static zones are ignored.
 
 Example log entries:
 
@@ -58,7 +58,7 @@ Azure operates separate cloud environments with different API endpoints and toke
 | `china` | Azure China (Mooncake) | `login.chinacloudapi.cn` | `management.chinacloudapi.cn` |
 | `usgov` | Azure US Government | `login.microsoftonline.us` | `management.usgovcloudapi.net` |
 
-To configure the environment, set `clientConfiguration` under the `azure` provider block:
+To configure the environment, set **clientConfiguration** under the `azure` provider block:
 
 ```yaml
 providersConfiguration:
@@ -67,16 +67,17 @@ providersConfiguration:
     clientConfiguration: china  # optional; omit to enable auto-discovery
 ```
 
-**Explicit configuration (recommended):** When `clientConfiguration` is set, KEB uses that cloud directly. No network calls are made during discovery.
+You can configure **clientConfiguration** in one of the following ways:
 
-**Auto-discovery (default when `clientConfiguration` is omitted):** At startup, before the HTTP server accepts any requests, KEB probes each environment in order (public, china, usgov) using a single OAuth token request per candidate. The first environment that accepts the credentials is used for all subsequent API calls. If all probes fail, KEB doesn't start.
+- Explicit configuration (recommended): When **clientConfiguration** is set, KEB uses that cloud directly. No network calls are made during discovery.
+- Auto-discovery (default when **clientConfiguration** is omitted): At startup, before the HTTP server accepts any requests, KEB probes each environment in order (`public`, `china`, `usgov`) using a single OAuth token request per candidate. The first environment that accepts the credentials is used for all subsequent API calls. If all probes fail, KEB doesn't start.
 
 > ### Note:
-> Explicit `clientConfiguration` is recommended for production deployments. Auto-discovery adds 1-3 OAuth token requests to the startup sequence and requires all credentials to belong to the same cloud environment.
+> Explicit **clientConfiguration** is recommended for production deployments. Auto-discovery adds 1-3 OAuth token requests to the startup sequence and requires all credentials to belong to the same cloud environment.
 
 ## Zones Discovery
 
-If `zonesDiscovery` is enabled, KEB performs the `Discover_Available_Zones` step using hyperscaler credentials from the subscription secret resolved in the `Resolve_Subscription_Secret` step.
+If **zonesDiscovery** is enabled, KEB performs the `Discover_Available_Zones` step using hyperscaler credentials from the subscription secret resolved in the `Resolve_Subscription_Secret` step.
 
 During provisioning, KEB queries all available zones for each unique machine type across both the Kyma worker node pool and additional worker node pools. During updates, it queries zones only for the additional worker node pools. Each unique machine type is queried only once, even if it's referenced by multiple worker node pools.
 

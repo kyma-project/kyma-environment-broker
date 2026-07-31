@@ -19,11 +19,11 @@ KEB now supports the following Azure cloud environments:
 | `china` | Azure China (Mooncake) |
 | `usgov` | Azure US Government |
 
-When `clientConfiguration` isn't set, KEB auto-discovers the correct environment at startup by probing each cloud in order (public, china, usgov) using a single OAuth token request per candidate. The result is determined before the HTTP server starts accepting requests. If all probes fail, KEB doesn't start.
+When **clientConfiguration** isn't set, KEB auto-discovers the correct environment at startup by probing each cloud in order (`public`, `china`, `usgov`) using a single OAuth token request per candidate. The result is determined before the HTTP server starts accepting requests. If all probes fail, KEB doesn't start.
 
 ## Procedure
 
-To configure the Azure cloud environment explicitly, set `clientConfiguration` in the `providersConfig` ConfigMap under the `azure` section:
+To configure the Azure cloud environment explicitly, set **clientConfiguration** in the `providersConfig` ConfigMap under the `azure` section:
 
 ```yaml
 azure:
@@ -37,14 +37,14 @@ Restart KEB after applying the configuration change.
 
 Verify the correct cloud environment is used by checking KEB startup logs.
 
-When using explicit configuration:
+When using explicit configuration, confirm the startup logs contain the following entries:
 
 ```json
 {"level":"INFO","msg":"Azure cloud configured explicitly","cloud":"china"}
 {"level":"INFO","msg":"Azure zone cache filled (12/12 regions)"}
 ```
 
-When using auto-discovery:
+When using auto-discovery, confirm the startup logs contain the following entries:
 
 ```json
 {"level":"INFO","msg":"Azure cloud probe failed","cloud":"public"}
