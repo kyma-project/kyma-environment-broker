@@ -81,7 +81,7 @@ try:
         if new_major > latest_major + 1:
             skip_detected = True
         elif new_major == latest_major + 1:
-            if new_minor > 0 or new_patch > 0:
+            if new_minor != 0 or new_patch != 0:
                 skip_detected = True
         elif new_major == latest_major:
             if new_minor > latest_minor + 1:
