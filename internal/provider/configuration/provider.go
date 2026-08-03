@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 
 	"gopkg.in/yaml.v3"
@@ -178,9 +179,18 @@ func (p *ProviderSpec) ValidateZonesDiscovery() error {
 
 		if cp := runtime.CloudProviderFromString(string(provider)); cp == runtime.Azure {
 			if providerDTO.ClientConfiguration != "" {
-				validValues := map[string]struct{}{"public": {}, "china": {}, "usgov": {}}
+				validValues := map[string]struct{}{
+					hyperscaler.AzureCloudPublic:       {},
+					hyperscaler.AzureCloudChina:        {},
+					hyperscaler.AzureCloudUSGovernment: {},
+				}
 				if _, ok := validValues[providerDTO.ClientConfiguration]; !ok {
-					return fmt.Errorf("invalid clientConfiguration %q for Azure provider: must be one of public, china, usgov", providerDTO.ClientConfiguration)
+					return fmt.Errorf("invalid clientConfiguration %q for Azure provider: must be one of %s, %s, %s",
+						providerDTO.ClientConfiguration,
+						hyperscaler.AzureCloudPublic,
+						hyperscaler.AzureCloudChina,
+						hyperscaler.AzureCloudUSGovernment,
+					)
 				}
 			}
 		}

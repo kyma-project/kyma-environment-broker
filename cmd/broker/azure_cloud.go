@@ -28,25 +28,29 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 	labelSelector := subscriptions.NewLabelSelectorFromRuleset(matchedRule).BuildAnySubscription()
 
 	return func() (azurehyperscaler.AzureCredentials, error) {
-		credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("while getting Azure credentials bindings: %w", err)
-		}
-		if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
-		}
-		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
-		log.Info("fetching Azure credentials", "credentialBinding", cb.GetName())
-		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)
-		}
-		creds, err := azurehyperscaler.ExtractCredentials(secret)
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("failed to extract Azure credentials: %w", err)
-		}
-		return creds, nil
+		return fetchAzureCredentials(gardenerClient, labelSelector, log)
 	}, nil
+}
+
+func fetchAzureCredentials(gardenerClient *gardener.Client, labelSelector string, log *slog.Logger) (azurehyperscaler.AzureCredentials, error) {
+	credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
+	if err != nil {
+		return azurehyperscaler.AzureCredentials{}, fmt.Errorf("while getting Azure credentials bindings: %w", err)
+	}
+	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
+		return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
+	}
+	cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
+	log.Info("fetching Azure credentials", "credentialBinding", cb.GetName())
+	secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
+	if err != nil {
+		return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)
+	}
+	creds, err := azurehyperscaler.ExtractCredentials(secret)
+	if err != nil {
+		return azurehyperscaler.AzureCredentials{}, fmt.Errorf("failed to extract Azure credentials: %w", err)
+	}
+	return creds, nil
 }
 
 // resolveAzureCloudConfig determines the Azure cloud environment for zone discovery API calls.
