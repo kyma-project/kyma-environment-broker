@@ -7,6 +7,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
@@ -37,18 +40,26 @@ type AzureClient struct {
 	cacheLoaded  bool
 }
 
-func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string) (*AzureClient, error) {
+func NewClientFromSecret(ctx context.Context, providerSpec *configuration.ProviderSpec, secret *unstructured.Unstructured, region string, cloudConfig cloud.Configuration) (*AzureClient, error) {
 	creds, err := ExtractCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract Azure credentials: %w", err)
 	}
 
-	credential, err := azidentity.NewClientSecretCredential(creds.TenantID, creds.ClientID, creds.ClientSecret, nil)
+	credential, err := azidentity.NewClientSecretCredential(creds.TenantID, creds.ClientID, creds.ClientSecret,
+		&azidentity.ClientSecretCredentialOptions{
+			ClientOptions: azcore.ClientOptions{Cloud: cloudConfig},
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("while creating Azure credential: %w", err)
 	}
 
-	skusClient, err := armcompute.NewResourceSKUsClient(creds.SubscriptionID, credential, nil)
+	skusClient, err := armcompute.NewResourceSKUsClient(creds.SubscriptionID, credential,
+		&arm.ClientOptions{
+			ClientOptions: azcore.ClientOptions{Cloud: cloudConfig},
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("while creating Azure ResourceSKUs client: %w", err)
 	}

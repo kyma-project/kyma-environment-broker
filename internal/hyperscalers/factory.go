@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/aws"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
@@ -12,28 +13,24 @@ import (
 )
 
 type hyperscalerFactory struct {
-	providerSpec *configuration.ProviderSpec
-	azureCache   *azure.AzureCache
-}
-
-// NewFactory creates a new Factory without a global Azure zone cache.
-// All zone discovery calls go directly to the hyperscaler API.
-func NewFactory(providerSpec *configuration.ProviderSpec) Factory {
-	return &hyperscalerFactory{providerSpec: providerSpec}
+	providerSpec     *configuration.ProviderSpec
+	azureCache       *azure.AzureCache
+	azureCloudConfig cloud.Configuration
 }
 
 // NewFactoryWithAzureCache creates a Factory with a global Azure zone cache.
-// The cache fills lazily in the background — KEB startup is not blocked.
+// cloudConfig is resolved once at KEB startup and reused for all Azure clients.
 // secretFetcher is called on every cache refresh to handle credential rotation.
-// If secretFetcher is nil or Azure zones discovery is disabled, behaves like NewFactory.
-func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher azure.SecretFetcher) Factory {
+// If secretFetcher is nil or Azure zones discovery is disabled, no cache is built.
+func NewFactoryWithAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher azure.SecretFetcher, cloudConfig cloud.Configuration) Factory {
 	var azureCache *azure.AzureCache
 	if secretFetcher != nil && providerSpec.ZonesDiscovery(pkg.Azure) {
-		azureCache = azure.NewAzureCache(ctx, providerSpec, secretFetcher)
+		azureCache = azure.NewAzureCache(ctx, providerSpec, secretFetcher, cloudConfig)
 	}
 	return &hyperscalerFactory{
-		providerSpec: providerSpec,
-		azureCache:   azureCache,
+		providerSpec:     providerSpec,
+		azureCache:       azureCache,
+		azureCloudConfig: cloudConfig,
 	}
 }
 
@@ -42,14 +39,14 @@ func (f *hyperscalerFactory) NewFromSecret(ctx context.Context, provider pkg.Clo
 	case pkg.AWS:
 		return aws.NewClientFromSecret(ctx, f.providerSpec, secret, region)
 	case pkg.Azure:
-		// Use global cache if available and ready for this region — zero latency.
-		// Falls back to per-call client if cache is not yet ready (lazy fill in progress).
+		// Use the global cache when available and ready — zero latency, no API call.
+		// Falls back to a per-call client when the cache is not yet ready (lazy fill in progress).
 		// Note: the cached client uses zone data from the startup secret, not the caller-provided
 		// secret. This is intentional — the cache trades per-subscription accuracy for speed.
 		if f.azureCache != nil && f.azureCache.Ready(region) {
 			return azure.NewCachedClient(f.azureCache, region, f.providerSpec), nil
 		}
-		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region)
+		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.azureCloudConfig)
 	default:
 		return nil, fmt.Errorf("zone discovery not supported for provider %s", provider)
 	}
@@ -63,7 +60,7 @@ func (f *hyperscalerFactory) NewPerCallFromSecret(ctx context.Context, provider 
 	case pkg.AWS:
 		return aws.NewClientFromSecret(ctx, f.providerSpec, secret, region)
 	case pkg.Azure:
-		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region)
+		return azure.NewClientFromSecret(ctx, f.providerSpec, secret, region, f.azureCloudConfig)
 	default:
 		return nil, fmt.Errorf("zone discovery not supported for provider %s", provider)
 	}
