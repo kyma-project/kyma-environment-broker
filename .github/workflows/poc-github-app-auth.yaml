@@ -24,6 +24,56 @@ jobs:
           echo "App slug: ${{ steps.token.outputs.app-slug }}"
           gh pr list --repo kyma-project/kyma-environment-broker --limit 3
 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Get bot user ID
+        id: bot-id
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          APP_SLUG: ${{ steps.token.outputs.app-slug }}
+        run: |
+          BOT_USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq '.id')
+          echo "bot-user-id=${BOT_USER_ID}" >> "$GITHUB_OUTPUT"
+          echo "Bot user ID: ${BOT_USER_ID}"
+
+      - name: Create test commit and draft PR
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          APP_SLUG: ${{ steps.token.outputs.app-slug }}
+          BOT_USER_ID: ${{ steps.bot-id.outputs.bot-user-id }}
+          BRANCH: poc-bot-test-${{ github.run_id }}
+        run: |
+          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git config user.name "${APP_SLUG}[bot]"
+          git checkout -b "${BRANCH}"
+          echo "poc test run ${{ github.run_id }}" >> poc-test.txt
+          git add poc-test.txt
+          git commit -m "poc: test bot commit attribution"
+          git push origin "${BRANCH}"
+          PR_URL=$(gh pr create \
+            --repo kyma-project/kyma-environment-broker \
+            --head "${BRANCH}" \
+            --base github-apps-tests \
+            --title "POC: bot attribution test (${{ github.run_id }})" \
+            --body "Automated test PR to verify GitHub App bot attribution. Will be closed automatically." \
+            --draft)
+          echo "pr-url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "PR created: ${PR_URL}"
+
+      - name: Cleanup
+        if: always()
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          PR_URL: ${{ steps.create-pr.outputs.pr-url }}
+        run: |
+          if [ -n "${PR_URL}" ]; then
+            gh pr close "${PR_URL}" --delete-branch || true
+          fi
+
   test-enterprise-app:
     name: Test enterprise App token
     runs-on: ubuntu-latest
@@ -44,3 +94,66 @@ jobs:
         run: |
           echo "App installation ID: ${{ steps.enterprise-token.outputs.installation-id }}"
           gh pr list --repo kyma/management-plane-charts --limit 3
+
+      - name: Get bot user ID from GHE
+        id: bot-id
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          APP_SLUG: ${{ steps.enterprise-token.outputs.app-slug }}
+        run: |
+          BOT_USER_ID=$(gh api --hostname "${GH_HOST}" "/users/${APP_SLUG}[bot]" --jq '.id' 2>/dev/null || echo "")
+          if [ -z "${BOT_USER_ID}" ]; then
+            echo "Warning: could not fetch bot user ID from GHE, falling back to 0"
+            BOT_USER_ID="0"
+          fi
+          echo "bot-user-id=${BOT_USER_ID}" >> "$GITHUB_OUTPUT"
+          echo "Bot user ID: ${BOT_USER_ID}"
+
+      - name: Clone management-plane-charts
+        env:
+          REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+        run: git clone "${REPO_URL}" management-plane-charts
+
+      - name: Create test commit and draft PR
+        id: create-pr
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          APP_SLUG: ${{ steps.enterprise-token.outputs.app-slug }}
+          BOT_USER_ID: ${{ steps.bot-id.outputs.bot-user-id }}
+          BRANCH: poc-bot-test-${{ github.run_id }}
+          REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+        run: |
+          cd management-plane-charts
+          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git config user.name "${APP_SLUG}[bot]"
+          git checkout -b "${BRANCH}"
+          echo "poc test run ${{ github.run_id }}" >> poc-test.txt
+          git add poc-test.txt
+          git commit -m "poc: test bot commit attribution"
+          git remote set-url origin "${REPO_URL}"
+          git push origin "${BRANCH}"
+          PR_URL=$(gh pr create \
+            --repo kyma/management-plane-charts \
+            --head "${BRANCH}" \
+            --title "POC: bot attribution test (${{ github.run_id }})" \
+            --body "Automated test PR to verify GitHub App bot attribution. Will be closed automatically." \
+            --draft)
+          echo "pr-url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "PR created: ${PR_URL}"
+
+      - name: Cleanup
+        if: always()
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          BRANCH: poc-bot-test-${{ github.run_id }}
+          PR_URL: ${{ steps.create-pr.outputs.pr-url }}
+        run: |
+          if [ -n "${PR_URL}" ]; then
+            gh pr close "${PR_URL}" || true
+          fi
+          gh api --hostname "${GH_HOST}" \
+            --method DELETE \
+            "/repos/kyma/management-plane-charts/git/refs/heads/${BRANCH}" || true
