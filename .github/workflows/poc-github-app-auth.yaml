@@ -85,14 +85,16 @@ jobs:
           client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
+          owner: kyma
           repositories: management-plane-charts
 
       - name: Verify token works on enterprise
         env:
-          GH_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
           echo "App installation ID: ${{ steps.enterprise-token.outputs.installation-id }}"
+          echo "App slug: ${{ steps.enterprise-token.outputs.app-slug }}"
           gh pr list --repo kyma/management-plane-charts --limit 3
 
       - name: Get bot user ID from GHE
@@ -137,6 +139,7 @@ jobs:
           PR_URL=$(gh pr create \
             --repo kyma/management-plane-charts \
             --head "${BRANCH}" \
+            --base chart/keb-sap \
             --title "POC: bot attribution test (${{ github.run_id }})" \
             --body "Automated test PR to verify GitHub App bot attribution. Will be closed automatically." \
             --draft)
