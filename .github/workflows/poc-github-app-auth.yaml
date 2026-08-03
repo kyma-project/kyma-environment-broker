@@ -128,7 +128,7 @@ jobs:
           REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
         run: |
           cd management-plane-charts
-          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.${GH_HOST}"
           git config user.name "${APP_SLUG}[bot]"
           git checkout -b "${BRANCH}"
           echo "poc test run ${{ github.run_id }}" >> poc-test.txt
