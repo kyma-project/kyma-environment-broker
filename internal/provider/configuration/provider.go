@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 
 	"gopkg.in/yaml.v3"
@@ -27,6 +28,7 @@ type providerDTO struct {
 	MachineDisplayNames      map[string]string              `yaml:"machines"`
 	RegionsSupportingMachine map[string]map[string][]string `yaml:"regionsSupportingMachine,omitempty"`
 	ZonesDiscovery           bool                           `yaml:"zonesDiscovery"`
+	ClientConfiguration      string                         `yaml:"clientConfiguration,omitempty"`
 	DualStack                bool                           `yaml:"dualStack,omitempty"`
 	MachinesVersions         map[string]string              `yaml:"machinesVersions,omitempty"`
 }
@@ -174,6 +176,24 @@ func (p *ProviderSpec) ValidateZonesDiscovery() error {
 				}
 			}
 		}
+
+		if cp := runtime.CloudProviderFromString(string(provider)); cp == runtime.Azure {
+			if providerDTO.ClientConfiguration != "" {
+				validValues := map[string]struct{}{
+					hyperscaler.AzureCloudPublic:       {},
+					hyperscaler.AzureCloudChina:        {},
+					hyperscaler.AzureCloudUSGovernment: {},
+				}
+				if _, ok := validValues[providerDTO.ClientConfiguration]; !ok {
+					return fmt.Errorf("invalid clientConfiguration %q for Azure provider: must be one of %s, %s, %s",
+						providerDTO.ClientConfiguration,
+						hyperscaler.AzureCloudPublic,
+						hyperscaler.AzureCloudChina,
+						hyperscaler.AzureCloudUSGovernment,
+					)
+				}
+			}
+		}
 	}
 
 	return nil
@@ -185,6 +205,16 @@ func (p *ProviderSpec) ZonesDiscovery(cp runtime.CloudProvider) bool {
 		return false
 	}
 	return providerData.ZonesDiscovery
+}
+
+// AzureClientConfiguration returns the configured Azure cloud environment name
+// ("public", "china", "usgov") or "" when auto-discovery is requested.
+func (p *ProviderSpec) AzureClientConfiguration() string {
+	providerData := p.findProviderDTO(runtime.Azure)
+	if providerData == nil {
+		return ""
+	}
+	return providerData.ClientConfiguration
 }
 
 func (p *ProviderSpec) ZonesDiscoveryProviders() []runtime.CloudProvider {

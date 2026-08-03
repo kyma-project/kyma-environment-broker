@@ -7,6 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -32,12 +35,14 @@ type AzureCredentials struct {
 // Called on every cache refresh to pick up rotated credentials.
 type SecretFetcher func() (AzureCredentials, error)
 
-// SKUsClientFactory creates a ResourceSKUsAPI (SKU = Stock-Keeping Unit) from credentials.
+// SKUsClientFactory creates a ResourceSKUsAPI (SKU = Stock-Keeping Unit) from credentials and cloud configuration.
 // Replaceable in tests to avoid real Azure API calls.
-type SKUsClientFactory func(subscriptionID string, credential *azidentity.ClientSecretCredential) (ResourceSKUsAPI, error)
+type SKUsClientFactory func(subscriptionID string, credential *azidentity.ClientSecretCredential, cloudConfig cloud.Configuration) (ResourceSKUsAPI, error)
 
-func defaultSKUsClientFactory(subscriptionID string, credential *azidentity.ClientSecretCredential) (ResourceSKUsAPI, error) {
-	return armcompute.NewResourceSKUsClient(subscriptionID, credential, nil)
+func defaultSKUsClientFactory(subscriptionID string, credential *azidentity.ClientSecretCredential, cloudConfig cloud.Configuration) (ResourceSKUsAPI, error) {
+	return armcompute.NewResourceSKUsClient(subscriptionID, credential, &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{Cloud: cloudConfig},
+	})
 }
 
 // AzureCache is a global cache of available zones per region and machine type.
@@ -50,16 +55,18 @@ type AzureCache struct {
 	providerSpec      *configuration.ProviderSpec
 	secretFetcher     SecretFetcher
 	skusClientFactory SKUsClientFactory
+	cloudConfig       cloud.Configuration
 }
 
 // NewAzureCache creates a new AzureCache and starts a background goroutine that fills
 // all configured regions and refreshes them every hour. It does not block startup.
-func NewAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher SecretFetcher) *AzureCache {
+func NewAzureCache(ctx context.Context, providerSpec *configuration.ProviderSpec, secretFetcher SecretFetcher, cloudConfig cloud.Configuration) *AzureCache {
 	c := &AzureCache{
 		data:              make(map[string]map[string][]string),
 		providerSpec:      providerSpec,
 		secretFetcher:     secretFetcher,
 		skusClientFactory: defaultSKUsClientFactory,
+		cloudConfig:       cloudConfig,
 	}
 	go c.run(ctx)
 	return c
@@ -111,7 +118,7 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 	azureRegions := c.providerSpec.Regions(pkg.Azure)
 	succeeded := 0
 	for _, region := range azureRegions {
-		if err := c.fillRegionWithRetry(ctx, creds, region); err != nil {
+		if err := c.fillRegionWithRetry(ctx, creds, c.cloudConfig, region); err != nil {
 			slog.Error(fmt.Sprintf("failed to fill Azure zone cache for region %s after %d retries: %s", region, cacheRetries, err))
 		} else {
 			succeeded++
@@ -120,12 +127,16 @@ func (c *AzureCache) fillAll(ctx context.Context) {
 	slog.Info(fmt.Sprintf("Azure zone cache filled (%d/%d regions)", succeeded, len(azureRegions)))
 }
 
-func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredentials, region string) error {
-	credential, err := azidentity.NewClientSecretCredential(creds.TenantID, creds.ClientID, creds.ClientSecret, nil)
+func (c *AzureCache) fillRegionWithRetry(ctx context.Context, creds AzureCredentials, cloudConfig cloud.Configuration, region string) error {
+	credential, err := azidentity.NewClientSecretCredential(creds.TenantID, creds.ClientID, creds.ClientSecret,
+		&azidentity.ClientSecretCredentialOptions{
+			ClientOptions: azcore.ClientOptions{Cloud: cloudConfig},
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("while creating Azure credential: %w", err)
 	}
-	skusClient, err := c.skusClientFactory(creds.SubscriptionID, credential)
+	skusClient, err := c.skusClientFactory(creds.SubscriptionID, credential, cloudConfig)
 	if err != nil {
 		return fmt.Errorf("while creating Azure ResourceSKUs client: %w", err)
 	}

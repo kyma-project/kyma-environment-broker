@@ -41,13 +41,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/quota"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/subscriptions"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
 	"github.com/kyma-project/kyma-environment-broker/internal/version"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
+	azurecloud "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -386,14 +386,19 @@ func main() {
 	// to handle credential rotation without restarting KEB.
 	// Only built when Azure zones discovery is enabled.
 	var azureSecretFetcher azurehyperscaler.SecretFetcher
+	azureCloudConfig := azurecloud.AzurePublic
 	if providerSpec.ZonesDiscovery(pkg.Azure) {
-		var fetchErr error
-		azureSecretFetcher, fetchErr = buildAzureSecretFetcher(gardenerClient, rulesService, log)
+		azureCloudConfig, err = resolveAzureCloudConfig(ctx, providerSpec, gardenerClient, rulesService, log)
+		fatalOnError(err, log)
+
+		fetcher, fetchErr := buildAzureSecretFetcher(gardenerClient, rulesService, log)
 		if fetchErr != nil {
 			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
+		} else {
+			azureSecretFetcher = fetcher
 		}
 	}
-	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher)
+	factory := hyperscalers.NewFactoryWithAzureCache(ctx, providerSpec, azureSecretFetcher, azureCloudConfig)
 
 	log.Info(fmt.Sprintf("Number of globalAccountIds for max pods: %d", len(cfg.MaxPodsWhitelistedGlobalAccountIds)))
 
@@ -732,40 +737,4 @@ func resolvedMachineTypesForKCR(providerSpec *configuration.ProviderSpec, enable
 		}
 	}
 	return result
-}
-
-// buildAzureSecretFetcher returns a SecretFetcher that fetches the first available Azure
-// credentials secret from Gardener on each call. This ensures credential rotation is
-// picked up on every cache refresh without restarting KEB.
-func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService, log *slog.Logger) (azurehyperscaler.SecretFetcher, error) {
-	attr := &rules.ProvisioningAttributes{
-		Plan:        "azure",
-		Hyperscaler: "azure",
-	}
-	matchedRule, found := rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
-	if !found {
-		return nil, fmt.Errorf("no matching rule for azure hyperscaler")
-	}
-	labelSelector := subscriptions.NewLabelSelectorFromRuleset(matchedRule).BuildAnySubscription()
-
-	return func() (azurehyperscaler.AzureCredentials, error) {
-		credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("while getting Azure credentials bindings: %w", err)
-		}
-		if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("no Azure credentials bindings found for selector %q", labelSelector)
-		}
-		cb := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
-		log.Info("refreshing Azure zone cache using credential binding", "name", cb.GetName())
-		secret, err := gardenerClient.GetSecret(cb.GetSecretRefNamespace(), cb.GetSecretRefName())
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("unable to get Azure secret %s/%s: %w", cb.GetSecretRefNamespace(), cb.GetSecretRefName(), err)
-		}
-		creds, err := azurehyperscaler.ExtractCredentials(secret)
-		if err != nil {
-			return azurehyperscaler.AzureCredentials{}, fmt.Errorf("failed to extract Azure credentials: %w", err)
-		}
-		return creds, nil
-	}, nil
 }
