@@ -12,8 +12,8 @@ jobs:
         id: token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.KEB_BOT_APP_ID }}
-          private-key: ${{ secrets.KEB_BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
           repositories: kyma-environment-broker
 
       - name: Verify token works
@@ -82,8 +82,8 @@ jobs:
         id: enterprise-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.KEB_TOOLS_BOT_APP_ID }}
-          private-key: ${{ secrets.KEB_TOOLS_BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
           repositories: management-plane-charts
 
