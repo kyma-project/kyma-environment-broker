@@ -35,7 +35,7 @@ func configureInformer(informer *cache.SharedIndexInformer, handlers cache.Resou
 	fatalOnError(err)
 }
 
-func kymaEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger, alwaysUseDB bool) cache.ResourceEventHandlerFuncs {
+func kymaCREventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger, alwaysGetSubaccountFromDB bool) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			u, ok := obj.(*unstructured.Unstructured)
@@ -43,11 +43,11 @@ func kymaEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger
 				logger.Error(fmt.Sprintf("added Kyma CR is not an Unstructured: %s", obj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
+			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getKymaCRRequiredData(u, logger, stateReconciler, alwaysGetSubaccountFromDB)
 			if err != nil {
 				return
 			}
-			stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction})
+			stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), resourceStateType{kymaState: kymaStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction}})
 			data, err := stateReconciler.accountsClient.GetSubaccountData(subaccountID)
 			if err != nil {
 				logger.Warn(fmt.Sprintf("while getting data for subaccount:%s", err))
@@ -61,12 +61,12 @@ func kymaEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger
 				logger.Error(fmt.Sprintf("updated Kyma CR is not an Unstructured: %s", newObj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
+			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getKymaCRRequiredData(u, logger, stateReconciler, alwaysGetSubaccountFromDB)
 			if err != nil {
 				return
 			}
 			if !reflect.DeepEqual(oldObj.(*unstructured.Unstructured).GetLabels(), u.GetLabels()) {
-				stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction})
+				stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), resourceStateType{kymaState: kymaStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction}})
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -85,7 +85,7 @@ func kymaEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger
 	}
 }
 
-func runtimeEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger) cache.ResourceEventHandlerFuncs {
+func runtimeCREventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			u, ok := obj.(*unstructured.Unstructured)

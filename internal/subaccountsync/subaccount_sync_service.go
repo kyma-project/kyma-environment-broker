@@ -33,12 +33,18 @@ var eventTypes = []string{"Subaccount_Creation", "Subaccount_Update"}
 type (
 	subaccountIDType string
 	runtimeIDType    string
-	runtimeStateType struct {
-		betaEnabled              string
-		usedForProduction        string
-		usedForProductionRuntime string
+	kymaStateType    struct {
+		betaEnabled       string
+		usedForProduction string
 	}
-	subaccountRuntimesType map[runtimeIDType]runtimeStateType
+	runtimeCRStateType struct {
+		usedForProduction string
+	}
+	resourceStateType struct {
+		kymaState      kymaStateType
+		runtimeCRState runtimeCRStateType
+	}
+	subaccountRuntimesType map[runtimeIDType]resourceStateType
 	subaccountsSetType     map[subaccountIDType]struct{}
 	subaccountStateType    struct {
 		cisState       CisStateType
@@ -161,10 +167,10 @@ func (s *SyncService) Run() {
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(s.k8sClient, time.Minute, "kcp-system", nil)
 	informer := factory.ForResource(s.kymaGVR).Informer()
 
-	configureInformer(&informer, kymaEventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.informer)
+	configureInformer(&informer, kymaCREventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.kymaInformer)
 
 	runtimeInformer := factory.ForResource(s.runtimeGVR).Informer()
-	configureInformer(&runtimeInformer, runtimeEventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
+	configureInformer(&runtimeInformer, runtimeCREventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
 
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
@@ -213,7 +219,7 @@ func getSubaccountIDFromDB(runtimeID string, db storage.BrokerStorage) (string, 
 	return subaccountID, nil
 }
 
-func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysUseDB bool) (string, string, string, string, error) {
+func getKymaCRRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysGetSubaccountFromDB bool) (string, string, string, string, error) {
 	labels := u.GetLabels()
 	subaccountID := labels[subaccountIDLabel]
 	runtimeID := labels[runtimeIDLabel]
@@ -224,7 +230,7 @@ func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateRec
 		runtimeID = u.GetName()
 	}
 	var err error
-	if subaccountID == "" || alwaysUseDB {
+	if subaccountID == "" || alwaysGetSubaccountFromDB {
 		subaccountID, err = getSubaccountIDFromDB(runtimeID, stateReconciler.db)
 		if err != nil {
 			return "", "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)
