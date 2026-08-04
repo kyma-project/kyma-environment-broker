@@ -465,6 +465,23 @@ jobs:
           git checkout main
           git pull
 
+      - name: Generate bot token for git identity
+        id: bot-token-identity
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
+          repositories: kyma-environment-broker
+
+      - name: Get bot user ID
+        env:
+          GH_TOKEN: ${{ steps.bot-token-identity.outputs.token }}
+          APP_SLUG: ${{ steps.bot-token-identity.outputs.app-slug }}
+        run: |
+          BOT_USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq '.id')
+          echo "GIT_EMAIL=${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com" >> "$GITHUB_ENV"
+          echo "GIT_NAME=${APP_SLUG}" >> "$GITHUB_ENV"
+
       - name: Package KEB chart
         run: |
           OUTPUT=$(helm package ./resources/keb -d ./)
