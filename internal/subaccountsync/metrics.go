@@ -3,10 +3,10 @@ package subaccountsync
 import "github.com/prometheus/client_golang/prometheus"
 
 type Metrics struct {
-	queue       prometheus.Gauge
-	timeInQueue prometheus.Gauge
-	dryRun      prometheus.Gauge
-	queueOps    *prometheus.CounterVec
+	queue           prometheus.Gauge
+	timeInQueue     prometheus.Gauge
+	dryRun          prometheus.Gauge
+	queueOps        *prometheus.CounterVec
 	cisRequests     *prometheus.CounterVec
 	states          *prometheus.GaugeVec
 	informer        *prometheus.CounterVec
