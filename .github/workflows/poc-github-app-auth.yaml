@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-name-variants:
-    name: Test user.name variants
+  test-static-email:
+    name: Test static email attribution
     runs-on: ubuntu-latest
     steps:
       - name: Generate token
@@ -21,61 +21,25 @@ jobs:
         with:
           token: ${{ steps.token.outputs.token }}
 
-      - name: Get bot user ID
-        id: bot-id
+      - name: Create commit with static email (repo var style)
+        id: create-pr
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          APP_SLUG: ${{ steps.token.outputs.app-slug }}
+          BRANCH: poc-static-email-${{ github.run_id }}
         run: |
-          BOT_USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq '.id')
-          echo "bot-user-id=${BOT_USER_ID}" >> "$GITHUB_OUTPUT"
-
-      - name: Create commit with user.name WITHOUT [bot]
-        id: pr-without-bot
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          APP_SLUG: ${{ steps.token.outputs.app-slug }}
-          BOT_USER_ID: ${{ steps.bot-id.outputs.bot-user-id }}
-          BRANCH: poc-name-test-no-bot-${{ github.run_id }}
-        run: |
-          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
-          git config user.name "${APP_SLUG}"
+          git config user.email "307071130+kyma-gopher[bot]@users.noreply.github.com"
+          git config user.name "kyma-gopher"
           git checkout -b "${BRANCH}"
-          echo "test without [bot] in name" >> poc-test.txt
+          echo "poc static email test ${{ github.run_id }}" >> poc-test.txt
           git add poc-test.txt
-          git commit -m "poc: user.name WITHOUT [bot]"
+          git commit -m "poc: test static email attribution"
           git push origin "${BRANCH}"
           PR_URL=$(gh pr create \
             --repo kyma-project/kyma-environment-broker \
             --head "${BRANCH}" \
             --base github-apps-tests \
-            --title "POC: name WITHOUT [bot] (${{ github.run_id }})" \
-            --body "Testing: correct email, user.name = kyma-gopher (no [bot])" \
-            --draft)
-          echo "pr-url=${PR_URL}" >> "$GITHUB_OUTPUT"
-          echo "PR: ${PR_URL}"
-
-      - name: Create commit with user.name WITH [bot]
-        id: pr-with-bot
-        env:
-          GH_TOKEN: ${{ steps.token.outputs.token }}
-          APP_SLUG: ${{ steps.token.outputs.app-slug }}
-          BOT_USER_ID: ${{ steps.bot-id.outputs.bot-user-id }}
-          BRANCH: poc-name-test-with-bot-${{ github.run_id }}
-        run: |
-          git config user.email "${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
-          git config user.name "${APP_SLUG}[bot]"
-          git checkout -b "${BRANCH}"
-          echo "test with [bot] in name" >> poc-test.txt
-          git add poc-test.txt
-          git commit -m "poc: user.name WITH [bot]"
-          git push origin "${BRANCH}"
-          PR_URL=$(gh pr create \
-            --repo kyma-project/kyma-environment-broker \
-            --head "${BRANCH}" \
-            --base github-apps-tests \
-            --title "POC: name WITH [bot] (${{ github.run_id }})" \
-            --body "Testing: correct email, user.name = kyma-gopher[bot]" \
+            --title "POC: static email test (${{ github.run_id }})" \
+            --body "Testing: hardcoded 307071130+kyma-gopher[bot]@users.noreply.github.com" \
             --draft)
           echo "pr-url=${PR_URL}" >> "$GITHUB_OUTPUT"
           echo "PR: ${PR_URL}"
@@ -84,8 +48,65 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          PR_WITHOUT: ${{ steps.pr-without-bot.outputs.pr-url }}
-          PR_WITH: ${{ steps.pr-with-bot.outputs.pr-url }}
+          PR_URL: ${{ steps.create-pr.outputs.pr-url }}
         run: |
-          [ -n "${PR_WITHOUT}" ] && gh pr close "${PR_WITHOUT}" --delete-branch || true
-          [ -n "${PR_WITH}" ] && gh pr close "${PR_WITH}" --delete-branch || true
+          [ -n "${PR_URL}" ] && gh pr close "${PR_URL}" --delete-branch || true
+
+  test-static-email-ghe:
+    name: Test static email attribution on GHE
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate enterprise token
+        id: enterprise-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
+          private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
+          github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
+          owner: kyma
+          repositories: management-plane-charts
+
+      - name: Clone management-plane-charts
+        env:
+          REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+        run: git clone "${REPO_URL}" management-plane-charts
+
+      - name: Create commit with static email
+        id: create-pr
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          BRANCH: poc-static-email-ghe-${{ github.run_id }}
+          REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
+        run: |
+          cd management-plane-charts
+          git config user.email "200427+kyma-gopher[bot]@users.noreply.${{ vars.GH_TOOLS_HOST }}"
+          git config user.name "kyma-gopher"
+          git checkout -b "${BRANCH}"
+          echo "poc static email ghe test ${{ github.run_id }}" >> poc-test.txt
+          git add poc-test.txt
+          git commit -m "poc: test static email attribution on GHE"
+          git remote set-url origin "${REPO_URL}"
+          git push origin "${BRANCH}"
+          PR_URL=$(gh pr create \
+            --repo kyma/management-plane-charts \
+            --head "${BRANCH}" \
+            --base chart/keb-sap \
+            --title "POC: static email GHE test (${{ github.run_id }})" \
+            --body "Testing: hardcoded 200427+kyma-gopher[bot]@users.noreply.github.tools.sap" \
+            --draft)
+          echo "pr-url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "PR: ${PR_URL}"
+
+      - name: Cleanup
+        if: always()
+        env:
+          GH_ENTERPRISE_TOKEN: ${{ steps.enterprise-token.outputs.token }}
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+          BRANCH: poc-static-email-ghe-${{ github.run_id }}
+          PR_URL: ${{ steps.create-pr.outputs.pr-url }}
+        run: |
+          [ -n "${PR_URL}" ] && gh pr close "${PR_URL}" || true
+          gh api --hostname "${GH_HOST}" \
+            --method DELETE \
+            "/repos/kyma/management-plane-charts/git/refs/heads/${BRANCH}" || true
