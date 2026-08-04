@@ -69,7 +69,7 @@ jobs:
       - name: Clone management-plane-charts
         env:
           REPO_URL: https://x-access-token:${{ steps.enterprise-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/management-plane-charts.git
-        run: git clone "${REPO_URL}" management-plane-charts
+        run: git clone --branch chart/keb-sap "${REPO_URL}" management-plane-charts
 
       - name: Create commit with static email
         id: create-pr
