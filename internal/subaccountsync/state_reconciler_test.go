@@ -686,6 +686,33 @@ func TestOutdatedPredicate(t *testing.T) {
 		}
 		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
+	t.Run("should detect drift when Runtime CR usedForProduction differs from CIS", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION", usedForProductionRuntime: "NOT_USED_FOR_PRODUCTION"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state))
+	})
+	t.Run("should not detect drift when Runtime CR usedForProduction matches CIS", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION", usedForProductionRuntime: "USED_FOR_PRODUCTION"},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
+	})
+	t.Run("should not detect drift when Runtime CR not yet seen (startup case)", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION", usedForProductionRuntime: ""},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
+	})
 }
 
 func TestStateReconciler(t *testing.T) {
@@ -1508,6 +1535,49 @@ func TestStateReconciler(t *testing.T) {
 		assert.Equal(t, "NOT_SET", element.UsedForProduction)
 	})
 
+}
+
+func TestReconcileRuntimeResourceUpdate(t *testing.T) {
+	t.Run("should enqueue subaccount when Runtime CR label differs from CIS", func(t *testing.T) {
+		reconciler := createNewReconciler(nil)
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"})
+		reconciler.reconcileCisAccount(subaccountId1, CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime})
+		reconciler.syncQueue.Extract()
+
+		reconciler.reconcileRuntimeResourceUpdate(subaccountId1, runtimeId11, "NOT_USED_FOR_PRODUCTION")
+
+		assert.False(t, reconciler.syncQueue.IsEmpty())
+		element, ok := reconciler.syncQueue.Extract()
+		assert.True(t, ok)
+		assert.Equal(t, subaccountId1, element.SubaccountID)
+	})
+	t.Run("should not enqueue subaccount when Runtime CR label matches CIS", func(t *testing.T) {
+		reconciler := createNewReconciler(nil)
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"})
+		reconciler.reconcileCisAccount(subaccountId1, CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime})
+		reconciler.syncQueue.Extract()
+
+		reconciler.reconcileRuntimeResourceUpdate(subaccountId1, runtimeId11, "USED_FOR_PRODUCTION")
+
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+	})
+	t.Run("should create state for unknown subaccount without enqueuing", func(t *testing.T) {
+		reconciler := createNewReconciler(nil)
+
+		reconciler.reconcileRuntimeResourceUpdate(subaccountId1, runtimeId11, "USED_FOR_PRODUCTION")
+
+		assert.Equal(t, 1, len(reconciler.inMemoryState))
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+	})
+	t.Run("should not enqueue when Runtime CR not yet seen before CIS state arrives", func(t *testing.T) {
+		reconciler := createNewReconciler(nil)
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"})
+		reconciler.reconcileCisAccount(subaccountId1, CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: veryOldTime})
+		reconciler.syncQueue.Extract()
+
+		// Runtime CR not yet processed by informer — usedForProductionRuntime stays ""
+		assert.True(t, reconciler.syncQueue.IsEmpty())
+	})
 }
 
 // test fixtures

@@ -7,9 +7,10 @@ type Metrics struct {
 	timeInQueue prometheus.Gauge
 	dryRun      prometheus.Gauge
 	queueOps    *prometheus.CounterVec
-	cisRequests *prometheus.CounterVec
-	states      *prometheus.GaugeVec
-	informer    *prometheus.CounterVec
+	cisRequests     *prometheus.CounterVec
+	states          *prometheus.GaugeVec
+	informer        *prometheus.CounterVec
+	runtimeInformer *prometheus.CounterVec
 }
 
 func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
@@ -34,6 +35,11 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Name:      "informer",
 			Help:      "Informer stats.",
 		}, []string{"event"}),
+		runtimeInformer: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "runtime_informer",
+			Help:      "Runtime informer stats.",
+		}, []string{"event"}),
 		queue: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Name:      "priority_queue_size",
@@ -50,6 +56,6 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Help:      "Resources are not updated.",
 		}),
 	}
-	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue, m.dryRun)
+	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.runtimeInformer, m.cisRequests, m.timeInQueue, m.dryRun)
 	return m
 }

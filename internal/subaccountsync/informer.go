@@ -5,15 +5,39 @@ import (
 	"log/slog"
 	"reflect"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
 )
 
-func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *stateReconcilerType, logger *slog.Logger, metrics *Metrics, alwaysUseDB bool) {
+func configureInformer(informer *cache.SharedIndexInformer, handlers cache.ResourceEventHandlerFuncs, counter *prometheus.CounterVec) {
 	_, err := (*informer).AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			metrics.informer.With(prometheus.Labels{"event": "add"}).Inc()
+			counter.With(prometheus.Labels{"event": "add"}).Inc()
+			if handlers.AddFunc != nil {
+				handlers.AddFunc(obj)
+			}
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			counter.With(prometheus.Labels{"event": "update"}).Inc()
+			if handlers.UpdateFunc != nil {
+				handlers.UpdateFunc(oldObj, newObj)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			counter.With(prometheus.Labels{"event": "delete"}).Inc()
+			if handlers.DeleteFunc != nil {
+				handlers.DeleteFunc(obj)
+			}
+		},
+	})
+	fatalOnError(err)
+}
+
+func kymaEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger, alwaysUseDB bool) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
 			u, ok := obj.(*unstructured.Unstructured)
 			if !ok {
 				logger.Error(fmt.Sprintf("added Kyma CR is not an Unstructured: %s", obj))
@@ -23,7 +47,6 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			if err != nil {
 				return
 			}
-
 			stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction})
 			data, err := stateReconciler.accountsClient.GetSubaccountData(subaccountID)
 			if err != nil {
@@ -33,7 +56,6 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			metrics.informer.With(prometheus.Labels{"event": "update"}).Inc()
 			u, ok := newObj.(*unstructured.Unstructured)
 			if !ok {
 				logger.Error(fmt.Sprintf("updated Kyma CR is not an Unstructured: %s", newObj))
@@ -48,7 +70,6 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			metrics.informer.With(prometheus.Labels{"event": "delete"}).Inc()
 			u, ok := obj.(*unstructured.Unstructured)
 			if !ok {
 				logger.Error(fmt.Sprintf("deleted Kyma CR is not an Unstructured: %s", obj))
@@ -57,11 +78,46 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			logger.Info(fmt.Sprintf("Kyma CR deleted: %s", u.GetName()))
 			subaccountID, runtimeID, _ := getDataFromLabels(u)
 			if subaccountID == "" || runtimeID == "" {
-				// deleted kyma resource without subaccount label or runtime label - no need to make fuss, silently ignore
 				return
 			}
 			stateReconciler.deleteRuntimeFromState(subaccountIDType(subaccountID), runtimeIDType(runtimeID))
 		},
-	})
-	fatalOnError(err)
+	}
+}
+
+func runtimeEventHandlers(stateReconciler *stateReconcilerType, logger *slog.Logger) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				logger.Error(fmt.Sprintf("added Runtime CR is not an Unstructured: %s", obj))
+				return
+			}
+			labels := u.GetLabels()
+			subaccountID := labels[subaccountIDLabel]
+			runtimeID := labels[runtimeIDLabel]
+			if subaccountID == "" || runtimeID == "" {
+				logger.Warn(fmt.Sprintf("Runtime CR %s has no subaccount or runtime label, skipping", u.GetName()))
+				return
+			}
+			stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[kymacustomresource.UsedForProductionLabelKey])
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			u, ok := newObj.(*unstructured.Unstructured)
+			if !ok {
+				logger.Error(fmt.Sprintf("updated Runtime CR is not an Unstructured: %s", newObj))
+				return
+			}
+			if !reflect.DeepEqual(oldObj.(*unstructured.Unstructured).GetLabels(), u.GetLabels()) {
+				labels := u.GetLabels()
+				subaccountID := labels[subaccountIDLabel]
+				runtimeID := labels[runtimeIDLabel]
+				if subaccountID == "" || runtimeID == "" {
+					logger.Warn(fmt.Sprintf("Runtime CR %s has no subaccount or runtime label, skipping", u.GetName()))
+					return
+				}
+				stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[kymacustomresource.UsedForProductionLabelKey])
+			}
+		},
+	}
 }

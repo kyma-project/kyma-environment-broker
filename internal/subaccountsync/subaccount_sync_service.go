@@ -34,8 +34,9 @@ type (
 	subaccountIDType string
 	runtimeIDType    string
 	runtimeStateType struct {
-		betaEnabled       string
-		usedForProduction string
+		betaEnabled              string
+		usedForProduction        string
+		usedForProductionRuntime string
 	}
 	subaccountRuntimesType map[runtimeIDType]runtimeStateType
 	subaccountsSetType     map[subaccountIDType]struct{}
@@ -160,7 +161,10 @@ func (s *SyncService) Run() {
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(s.k8sClient, time.Minute, "kcp-system", nil)
 	informer := factory.ForResource(s.kymaGVR).Informer()
 
-	configureInformer(&informer, &stateReconciler, logger.With("component", "informer"), metrics, s.cfg.AlwaysSubaccountFromDatabase)
+	configureInformer(&informer, kymaEventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.informer)
+
+	runtimeInformer := factory.ForResource(s.runtimeGVR).Informer()
+	configureInformer(&runtimeInformer, runtimeEventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
 
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
@@ -177,6 +181,7 @@ func (s *SyncService) Run() {
 		logger.Info("Resource update is disabled")
 	}
 
+	go runtimeInformer.Run(s.ctx.Done())
 	informer.Run(s.ctx.Done())
 }
 

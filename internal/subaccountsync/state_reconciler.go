@@ -271,6 +271,30 @@ func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID suba
 	reconciler.setMetrics()
 }
 
+func (reconciler *stateReconcilerType) reconcileRuntimeResourceUpdate(subaccountID subaccountIDType, runtimeID runtimeIDType, usedForProduction string) {
+	reconciler.mutex.Lock()
+	defer reconciler.mutex.Unlock()
+
+	state, ok := reconciler.inMemoryState[subaccountID]
+	if !ok {
+		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state - creating state", subaccountID))
+		reconciler.inMemoryState[subaccountID] = subaccountStateType{
+			resourcesState: subaccountRuntimesType{runtimeID: runtimeStateType{usedForProductionRuntime: usedForProduction}},
+		}
+		return
+	}
+	if state.resourcesState == nil {
+		state.resourcesState = make(subaccountRuntimesType)
+	}
+	existing := state.resourcesState[runtimeID]
+	existing.usedForProductionRuntime = usedForProduction
+	state.resourcesState[runtimeID] = existing
+	reconciler.inMemoryState[subaccountID] = state
+	reconciler.logger.Debug(fmt.Sprintf("subaccount %s runtime CR state updated, check if outdated", subaccountID))
+	reconciler.enqueueSubaccountIfOutdated(subaccountID, state)
+	reconciler.setMetrics()
+}
+
 // mark state pending delete and remove runtime from subaccount state
 func (reconciler *stateReconcilerType) deleteRuntimeFromState(subaccountID subaccountIDType, runtimeID runtimeIDType) {
 	reconciler.mutex.Lock()
@@ -327,6 +351,7 @@ func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccoun
 			outdated = outdated || (cisState.BetaEnabled && !isBetaEnabledTrue(runtimeState.betaEnabled))
 			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 			outdated = outdated || cisState.UsedForProduction != runtimeState.usedForProduction
+			outdated = outdated || (runtimeState.usedForProductionRuntime != "" && cisState.UsedForProduction != runtimeState.usedForProductionRuntime)
 		}
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", subaccountID, len(runtimes), outdated))
 	} else {
