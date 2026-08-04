@@ -165,12 +165,11 @@ func (s *SyncService) Run() {
 	stateReconciler.recreateStateFromDB()
 
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(s.k8sClient, time.Minute, "kcp-system", nil)
-	informer := factory.ForResource(s.kymaGVR).Informer()
+	kymaCRInformer := factory.ForResource(s.kymaGVR).Informer()
+	configureInformer(&kymaCRInformer, kymaCREventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.kymaInformer)
 
-	configureInformer(&informer, kymaCREventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.kymaInformer)
-
-	runtimeInformer := factory.ForResource(s.runtimeGVR).Informer()
-	configureInformer(&runtimeInformer, runtimeCREventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
+	runtimeCRInformer := factory.ForResource(s.runtimeGVR).Informer()
+	configureInformer(&runtimeCRInformer, runtimeCREventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
 
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
@@ -187,8 +186,9 @@ func (s *SyncService) Run() {
 		logger.Info("Resource update is disabled")
 	}
 
-	go runtimeInformer.Run(s.ctx.Done())
-	informer.Run(s.ctx.Done())
+	factory.Start(s.ctx.Done())
+	factory.WaitForCacheSync(s.ctx.Done())
+	<-s.ctx.Done()
 }
 
 func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
