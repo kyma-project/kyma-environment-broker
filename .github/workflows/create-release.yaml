@@ -4,8 +4,6 @@ run-name: Create release ${{ inputs.name }}
 env:
   IMAGE_REPO: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
-  GIT_EMAIL: 4345220+kyma-gopher[bot]@users.noreply.github.com
-  GIT_NAME: kyma-gopher
   BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 permissions:
@@ -296,6 +294,14 @@ jobs:
           client-id: ${{ vars.GOPHER_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
           repositories: kyma-environment-broker
+
+      - name: Get bot user ID
+        env:
+          GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+          APP_SLUG: ${{ steps.bot-token.outputs.app-slug }}
+        run: |
+          BOT_USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq '.id')
+          echo "GIT_EMAIL=${BOT_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com" >> "$GITHUB_ENV"
 
       - name: Create PR if anything changed
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
