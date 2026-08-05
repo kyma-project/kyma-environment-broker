@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -26,9 +27,10 @@ func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client,
 	return step
 }
 
-func NewCheckRuntimeResourceProvisioningStep(os storage.Operations, k8sClient client.Client, runtimeResourceStateRetry internal.RetryTuple, changeDescriptionThreshold time.Duration) *checkRuntimeResourceProvisioning {
+func NewCheckRuntimeResourceProvisioningStep(os storage.Operations, k8sClient client.Client, gardenerClient *gardener.Client, runtimeResourceStateRetry internal.RetryTuple, changeDescriptionThreshold time.Duration) *checkRuntimeResourceProvisioning {
 	step := &checkRuntimeResourceProvisioning{
 		k8sClient:                  k8sClient,
+		gardenerClient:             gardenerClient,
 		runtimeResourceStateRetry:  runtimeResourceStateRetry,
 		changeDescriptionThreshold: changeDescriptionThreshold,
 	}
@@ -44,6 +46,7 @@ type checkRuntimeResource struct {
 
 type checkRuntimeResourceProvisioning struct {
 	k8sClient                  client.Client
+	gardenerClient             *gardener.Client
 	operationManager           *process.OperationManager
 	runtimeResourceStateRetry  internal.RetryTuple
 	changeDescriptionThreshold time.Duration
@@ -96,19 +99,23 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 	log.Info(fmt.Sprintf("Runtime resource state: %s", state))
 	if state == imv1.RuntimeStateReady {
 		return operation, 0, nil
-	} else {
-		if time.Since(operation.CreatedAt) > s.changeDescriptionThreshold {
-			var backoff time.Duration
-			operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-				op.Description = ProvisioningTakesLongerMessage(s.runtimeResourceStateRetry.Timeout)
-			}, log)
-			if backoff != 0 {
-				log.Error("cannot save the operation")
-				return operation, 5 * time.Second, nil
-			}
-		}
-		return s.RetryOrFail(operation, log, runtime)
 	}
+	if state == imv1.RuntimeStateFailed {
+		log.Info(fmt.Sprintf("Runtime resource status: %v; failing operation", runtime.Status))
+		s.markCBDirty(operation, log)
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("Runtime resource in %s state", imv1.RuntimeStateFailed), nil, log)
+	}
+	if time.Since(operation.CreatedAt) > s.changeDescriptionThreshold {
+		var backoff time.Duration
+		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+			op.Description = ProvisioningTakesLongerMessage(s.runtimeResourceStateRetry.Timeout)
+		}, log)
+		if backoff != 0 {
+			log.Error("cannot save the operation")
+			return operation, 5 * time.Second, nil
+		}
+	}
+	return s.RetryOrFail(operation, log, runtime)
 }
 
 func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
@@ -128,12 +135,23 @@ func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operat
 			))
 		}
 		log.Error("failing operation and removing Runtime CR")
-		err = s.k8sClient.Delete(context.Background(), runtime)
-		if err != nil {
-			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err))
+		s.markCBDirty(operation, log)
+		deleteErr := s.k8sClient.Delete(context.Background(), runtime)
+		if deleteErr != nil {
+			log.Warn(fmt.Sprintf("unable to delete Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, deleteErr))
 		}
 	}
 	return retryOperation, retry, err
+}
+
+func (s *checkRuntimeResourceProvisioning) markCBDirty(operation internal.Operation, log *slog.Logger) {
+	cbName := ""
+	if operation.ProvisioningParameters.Parameters.TargetSecret != nil {
+		cbName = *operation.ProvisioningParameters.Parameters.TargetSecret
+	}
+	if err := s.gardenerClient.MarkCredentialsBindingDirty(context.Background(), cbName, log); err != nil {
+		log.Warn(fmt.Sprintf("failed to mark credentials binding dirty: %s", err))
+	}
 }
 
 func (s *checkRuntimeResource) GetRuntimeResource(name string, namespace string) (*imv1.Runtime, error) {

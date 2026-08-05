@@ -61,14 +61,14 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
 		{
-			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec, cfg.GlobalAccounts(), kcrVolumeProvider, cfg.Broker.AuditLogAccess),
+			step: provisioning.NewCreateRuntimeResourceStep(db, k8sClient, gardenerClient, cfg.InfrastructureManager, defaultOIDC, workersProvider, providerSpec, cfg.GlobalAccounts(), kcrVolumeProvider, cfg.Broker.AuditLogAccess),
 		},
 		{
-			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
+			step: steps.NewCheckRuntimeResourceProvisioningStep(db.Operations(), k8sClient, gardenerClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}, provisioningTakesLongThreshold),
 		},
 		{
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
+			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider, gardenerClient),
 		},
 		{
 			step: provisioning.NewApplyKymaStep(db.Operations(), k8sClient),

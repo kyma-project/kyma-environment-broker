@@ -38,7 +38,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		operation := fixProvisioningOperationWithClusterIDAndCredentials(k8sClient)
 		expectedSecretData := createExpectedSecretData(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.ServiceManagerClusterID)
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient), kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""))
 
 		// when
 		_, _, err = step.Run(operation, fixLogger())
@@ -70,7 +70,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.RuntimeID = ""
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient), kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""))
 
 		// when
 		processedOperation, _, _ := step.Run(operation, fixLogger())
@@ -107,7 +107,7 @@ func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 		operation := fixProvisioningOperationWithClusterIDAndCredentials(k8sClient)
 		expectedSecretData := createExpectedSecretData(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.ServiceManagerClusterID)
 
-		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient), kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""))
 
 		// when
 		_, _, err = step.Run(operation, fixLogger())
@@ -189,7 +189,7 @@ func TestInjectBTPOperatorCredentialsStep_P6_CredentialsBindingMarkedDirtyOnOper
 	})
 	fakeGardenerClient := kgardener.NewDynamicFakeClient(claimedCB)
 
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient), kgardener.NewClient(fakeGardenerClient, gardenerNS))
 
 	// when
 	op, _, _ := step.Run(operation, fixLogger())

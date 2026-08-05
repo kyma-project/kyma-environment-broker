@@ -26,6 +26,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -43,6 +44,7 @@ type CreateRuntimeResourceStep struct {
 	operationManager  *process.OperationManager
 	instanceStorage   storage.Instances
 	k8sClient         client.Client
+	gardenerClient    *kebgardener.Client
 	config            broker.InfrastructureManager
 	oidcDefaultValues pkg.OIDCConfigDTO
 	workersProvider   *workers.Provider
@@ -53,12 +55,13 @@ type CreateRuntimeResourceStep struct {
 	auditLogAccess    bool
 }
 
-func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
+func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, gardenerClient *kebgardener.Client, infrastructureManagerConfig broker.InfrastructureManager,
 	oidcDefaultValues pkg.OIDCConfigDTO, workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, gaCfg config.GlobalAccountsConfig, kcrVolumeProvider *provider.KCRVolumeProvider,
 	auditLogAccess bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   db.Instances(),
 		k8sClient:         k8sClient,
+		gardenerClient:    gardenerClient,
 		config:            infrastructureManagerConfig,
 		oidcDefaultValues: oidcDefaultValues,
 		workersProvider:   workersProvider,
@@ -100,6 +103,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 			if kebError.IsTemporaryError(err) {
 				return s.operationManager.RetryOperation(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, kcpRetryInterval, kcpRetryTimeout, log)
 			}
+			s.markCBDirty(context.Background(), operation, log)
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}
 		err = s.k8sClient.Create(context.Background(), runtimeCR)
@@ -502,6 +506,16 @@ func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration(toleranc
 			Type: gardener.FailureToleranceType(*tolerance),
 		},
 	},
+	}
+}
+
+func (s *CreateRuntimeResourceStep) markCBDirty(ctx context.Context, operation internal.Operation, log *slog.Logger) {
+	cbName := ""
+	if operation.ProvisioningParameters.Parameters.TargetSecret != nil {
+		cbName = *operation.ProvisioningParameters.Parameters.TargetSecret
+	}
+	if err := s.gardenerClient.MarkCredentialsBindingDirty(ctx, cbName, log); err != nil {
+		log.Warn(fmt.Sprintf("failed to mark credentials binding dirty: %s", err))
 	}
 }
 

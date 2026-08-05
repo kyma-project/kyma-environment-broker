@@ -57,6 +57,28 @@ func (c *Client) GetCredentialsBinding(name string) (*CredentialsBinding, error)
 	return NewCredentialsBinding(*binding), err
 }
 
+func (c *Client) MarkCredentialsBindingDirty(ctx context.Context, name string, log interface{ Info(string, ...any) }) error {
+	if name == "" {
+		log.Info("MarkCredentialsBindingDirty: no credentials binding name, skipping")
+		return nil
+	}
+	binding, err := c.Resource(CredentialsBindingResource).Namespace(c.namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("getting credentials binding %s: %w", name, err)
+	}
+	labels := binding.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[DirtyLabelKey] = "true"
+	binding.SetLabels(labels)
+	_, err = c.Resource(CredentialsBindingResource).Namespace(c.namespace).Update(ctx, binding, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("updating credentials binding %s: %w", name, err)
+	}
+	return nil
+}
+
 func (c *Client) GetCredentialsBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()

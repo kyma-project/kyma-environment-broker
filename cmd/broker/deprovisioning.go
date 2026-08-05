@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"k8s.io/client-go/dynamic"
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 
@@ -17,7 +17,7 @@ import (
 
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
-	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient *kebgardener.Client, gardenerNamespace string, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -39,10 +39,10 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db, kcpClient),
 		},
 		{
-			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
+			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, gardenerClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
-			step: deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace),
+			step: deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient.Interface, gardenerNamespace),
 		},
 		{
 			step: deprovisioning.NewArchivingStep(db),

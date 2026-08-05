@@ -124,7 +124,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime(imv1.RuntimeStateReady)
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(gardener.NewDynamicFakeClient(), ""), internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		_, backoff, err := step.Run(operation, fixLogger())
@@ -145,7 +145,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
 		// force immediate timeout
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(gardener.NewDynamicFakeClient(), ""), internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		op, backoff, _ := step.Run(operation, fixLogger())
@@ -170,7 +170,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime("In Progress")
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(gardener.NewDynamicFakeClient(), ""), internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		postOperation, backoff, err := step.Run(operation, fixLogger())
@@ -194,7 +194,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		existingRuntime := createRuntime("In Progress")
 		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(gardener.NewDynamicFakeClient(), ""), internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 		// when
 		postOperation, backoff, err := step.Run(operation, fixLogger())
@@ -257,7 +257,7 @@ func TestCheckRuntimeResourceProvisioningStep_P4_CredentialsBindingMarkedDirtyOn
 	})
 	fakeGardenerClient := gardener.NewDynamicFakeClient(claimedCB)
 
-	step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+	step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(fakeGardenerClient, gardenerNS), internal.RetryTuple{Timeout: -1 * ProvisioningTimeoutForTesting, Interval: 2 * time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 	// when
 	op, backoff, _ := step.Run(operation, fixLogger())
@@ -299,7 +299,7 @@ func TestCheckRuntimeResourceProvisioningStep_P5_CredentialsBindingMarkedDirtyOn
 	})
 	fakeGardenerClient := gardener.NewDynamicFakeClient(claimedCB)
 
-	step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+	step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, gardener.NewClient(fakeGardenerClient, gardenerNS), internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
 
 	// when
 	op, backoff, _ := step.Run(operation, fixLogger())

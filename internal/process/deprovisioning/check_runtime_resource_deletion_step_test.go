@@ -32,7 +32,7 @@ func TestCheckRuntimeResourceDeletionStep_ResourceNotExists(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().Build()
 
 	// when
-	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, time.Minute)
+	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), time.Minute)
 	_, backoff, err := step.Run(op, fixLogger())
 
 	// then
@@ -52,7 +52,7 @@ func TestCheckRuntimeResourceDeletionStep_Run(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, "runtime-name")).Build()
 
 	// when
-	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, time.Minute)
+	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), time.Minute)
 	_, backoff, err := step.Run(op, fixLogger())
 
 	// then
@@ -94,7 +94,7 @@ func TestCheckRuntimeResourceDeletionStep_D1_CredentialsBindingMarkedDirtyOnTime
 	fakeGardenerClient := kgardener.NewDynamicFakeClient(claimedCB)
 
 	// Negative timeout forces immediate failure
-	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, -1*time.Second)
+	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, kgardener.NewClient(fakeGardenerClient, testNamespace), -1*time.Second)
 
 	// when
 	result, backoff, _ := step.Run(op, fixLogger())

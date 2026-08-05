@@ -104,7 +104,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -149,7 +149,7 @@ func TestCreateRuntimeResourceStep_CreateACL(t *testing.T) {
 	}
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -208,7 +208,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -285,7 +285,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -338,7 +338,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -368,7 +368,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -413,7 +413,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -472,7 +472,7 @@ func TestCreateRuntimeResourceStep_HandleOIDCWithJwks(t *testing.T) {
 		}(),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -575,7 +575,7 @@ func TestCreateRuntimeResourceStep_HandleAdditionalOIDCWithJWKS(t *testing.T) {
 		},
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -613,7 +613,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -642,7 +642,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -671,7 +671,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithNoConfig(t *
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -700,7 +700,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithConfiguredNo
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -731,7 +731,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testin
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -779,7 +779,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -850,7 +850,7 @@ func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
 			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
 			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
 			operation.CloudProvider = string(testCase.cloudProvider)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, infrastructureManagerConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), infrastructureManagerConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 			_, repeat, err := step.Run(operation, fixLogger())
 
 			// then
@@ -893,7 +893,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin(t *testi
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -946,7 +946,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testi
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -997,7 +997,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1049,7 +1049,7 @@ func TestCreateRuntimeResourceStep_DualStack(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1095,7 +1095,7 @@ func TestCreateRuntimeResourceStep_DualStackDisabled(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1132,7 +1132,7 @@ func TestCreateRuntimeResourceStep_DualStackNotSet(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1168,7 +1168,7 @@ func TestCreateRuntimeResourceStep_DualStackIgnoredForUnsupportedPlan(t *testing
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, newTestProviderSpecWithDualStack(), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1209,7 +1209,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1255,7 +1255,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *test
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1331,7 +1331,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
@@ -1385,7 +1385,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
@@ -1446,7 +1446,7 @@ func TestCreateRuntimeResourceStep_AWS_ZonesDiscovery(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1491,7 +1491,7 @@ func TestCreateRuntimeResourceStep_Free_ZonesDiscovery(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixture.NewProviderSpecWithZonesDiscovery(t, true), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1525,7 +1525,7 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersNilHandling(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1558,7 +1558,7 @@ func TestCreateRuntimeResourceStep_AdditionalWorkersEmptyHandling(t *testing.T) 
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -1612,7 +1612,7 @@ func TestCreateRuntimeResourceStep_GvisorOnMainWorker(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
@@ -1686,7 +1686,7 @@ func TestCreateRuntimeResourceStep_GvisorIsolation(t *testing.T) {
 
 			cli := getClientForTests(t)
 			providerSpec := fixture.NewProviderSpecWithZonesDiscovery(t, false)
-			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec, config.GlobalAccountsConfig{}, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), providerSpec, config.GlobalAccountsConfig{}, nil, false)
 
 			// when
 			_, repeat, err := step.Run(operation, fixLogger())
@@ -1998,7 +1998,7 @@ meters:
 	cli := getClientForTests(t)
 	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -2052,7 +2052,7 @@ meters:
 	cli := getClientForTests(t)
 	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, false)), fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, false)), fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -2112,7 +2112,7 @@ aws:
 	cli := getClientForTests(t)
 	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
 	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, providerSpec, config.GlobalAccountsConfig{}, kcrProvider, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, providerSpec, config.GlobalAccountsConfig{}, kcrProvider, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -2146,7 +2146,7 @@ func TestCreateRuntimeResourceStep_AdditionalVolumeSizeGi(t *testing.T) {
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, nil, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -2183,6 +2183,7 @@ func TestCreateRuntimeResourceStep_P3_CredentialsBindingMarkedDirtyOnOperationFa
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
 	// Use a machine type that is NOT in the KCR ConfigMap → lookupVolumeSize returns plain error → OperationFailed
 	operation.ProvisioningParameters.Parameters.MachineType = ptr.String("unknown-machine-type")
+	operation.ProvisioningParameters.Parameters.TargetSecret = ptr.String(cbName)
 	instance.SubscriptionSecretName = cbName
 	assertInsertions(t, memoryStorage, instance, operation)
 
@@ -2211,7 +2212,7 @@ meters:
 	})
 	fakeGardenerClient := kgardener.NewDynamicFakeClient(claimedCB)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, kgardener.NewClient(fakeGardenerClient, gardenerNS), inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
 
 	// when
 	op, repeat, _ := step.Run(operation, fixLogger())

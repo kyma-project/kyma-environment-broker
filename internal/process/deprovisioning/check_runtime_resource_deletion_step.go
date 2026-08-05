@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"time"
 
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -20,13 +22,17 @@ import (
 
 type CheckRuntimeResourceDeletionStep struct {
 	operationManager                        *process.OperationManager
+	instanceStorage                         storage.Instances
 	kcpClient                               client.Client
+	gardenerClient                          *kebgardener.Client
 	checkRuntimeResourceDeletionStepTimeout time.Duration
 }
 
-func NewCheckRuntimeResourceDeletionStep(db storage.BrokerStorage, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
+func NewCheckRuntimeResourceDeletionStep(db storage.BrokerStorage, kcpClient client.Client, gardenerClient *kebgardener.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
 	step := &CheckRuntimeResourceDeletionStep{
 		kcpClient:                               kcpClient,
+		instanceStorage:                         db.Instances(),
+		gardenerClient:                          gardenerClient,
 		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
@@ -67,7 +73,11 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 
 	if err == nil {
 		logger.Info("Runtime resource still exists")
-		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, step.checkRuntimeResourceDeletionStepTimeout, logger)
+		result, backoff, retryErr := step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, step.checkRuntimeResourceDeletionStepTimeout, logger)
+		if result.State == domain.Failed {
+			step.markCBDirty(operation, logger)
+		}
+		return result, backoff, retryErr
 	}
 
 	if !errors.IsNotFound(err) {
@@ -83,4 +93,15 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 	return step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.RuntimeResourceName = ""
 	}, logger)
+}
+
+func (step *CheckRuntimeResourceDeletionStep) markCBDirty(operation internal.Operation, logger *slog.Logger) {
+	instance, err := step.instanceStorage.GetByID(operation.InstanceID)
+	if err != nil {
+		logger.Warn(fmt.Sprintf("failed to get instance for CB dirty marking: %s", err))
+		return
+	}
+	if err := step.gardenerClient.MarkCredentialsBindingDirty(context.Background(), instance.SubscriptionSecretName, logger); err != nil {
+		logger.Warn(fmt.Sprintf("failed to mark credentials binding dirty: %s", err))
+	}
 }

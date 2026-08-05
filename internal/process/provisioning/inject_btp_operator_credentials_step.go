@@ -1,12 +1,14 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -28,11 +30,13 @@ type K8sClientProvider interface {
 type InjectBTPOperatorCredentialsStep struct {
 	operationManager  *process.OperationManager
 	k8sClientProvider K8sClientProvider
+	gardenerClient    *kebgardener.Client
 }
 
-func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider K8sClientProvider) *InjectBTPOperatorCredentialsStep {
+func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider K8sClientProvider, gardenerClient *kebgardener.Client) *InjectBTPOperatorCredentialsStep {
 	step := &InjectBTPOperatorCredentialsStep{
 		k8sClientProvider: k8sClientProvider,
+		gardenerClient:    gardenerClient,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.BtpManagerDependency)
 	return step
@@ -46,6 +50,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 
 	if operation.RuntimeID == "" {
 		log.Error("Runtime ID is empty")
+		s.markCBDirty(operation, log)
 		return s.operationManager.OperationFailed(operation, "Runtime ID is empty", nil, log)
 	}
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
@@ -81,4 +86,14 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		return operation, updateSecretBackoff, nil
 	}
 	return operation, 0, nil
+}
+
+func (s *InjectBTPOperatorCredentialsStep) markCBDirty(operation internal.Operation, log *slog.Logger) {
+	cbName := ""
+	if operation.ProvisioningParameters.Parameters.TargetSecret != nil {
+		cbName = *operation.ProvisioningParameters.Parameters.TargetSecret
+	}
+	if err := s.gardenerClient.MarkCredentialsBindingDirty(context.Background(), cbName, log); err != nil {
+		log.Warn(fmt.Sprintf("failed to mark credentials binding dirty: %s", err))
+	}
 }
