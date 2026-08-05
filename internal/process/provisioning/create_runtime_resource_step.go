@@ -26,8 +26,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"

@@ -8,8 +8,8 @@ import (
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 
-	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/google/uuid"
+	kebgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"

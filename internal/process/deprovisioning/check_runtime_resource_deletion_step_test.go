@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	kgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	kgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -25,7 +25,7 @@ func TestCheckRuntimeResourceDeletionStep_ResourceNotExists(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	op.RuntimeResourceName = "runtime-name"
+	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	assert.NoError(t, memoryStorage.Operations().InsertOperation(op))
@@ -45,11 +45,11 @@ func TestCheckRuntimeResourceDeletionStep_Run(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	op.RuntimeResourceName = "runtime-name"
+	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
 	assert.NoError(t, memoryStorage.Operations().InsertOperation(op))
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, "runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 
 	// when
 	step := NewCheckRuntimeResourceDeletionStep(memoryStorage, kcpClient, kgardener.NewClient(kgardener.NewDynamicFakeClient(), ""), time.Minute)
@@ -78,13 +78,13 @@ func TestCheckRuntimeResourceDeletionStep_D1_CredentialsBindingMarkedDirtyOnTime
 	assert.NoError(t, memoryStorage.Instances().Insert(instance))
 
 	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
-	op.RuntimeResourceName = "runtime-name"
+	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	op.CreatedAt = op.CreatedAt.Add(-2 * time.Hour) // force timeout
 	assert.NoError(t, memoryStorage.Operations().InsertOperation(op))
 
 	// Runtime still exists → step keeps retrying until timeout
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, "runtime-name")).Build()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 
 	// Claimed CB (tenantName set, not shared)
 	claimedCB := newDeletionCheckCBHelper(cbName, testNamespace, map[string]string{
