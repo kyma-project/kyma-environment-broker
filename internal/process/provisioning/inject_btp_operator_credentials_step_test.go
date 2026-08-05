@@ -9,6 +9,7 @@ import (
 
 	btpoperatorcredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 
+	kgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -17,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apicorev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -158,3 +160,56 @@ func createExpectedSecretData(credentials *internal.ServiceManagerOperatorCreden
 		"cluster_id":   []byte(clusterID),
 	}
 }
+
+func TestInjectBTPOperatorCredentialsStep_P6_CredentialsBindingMarkedDirtyOnOperationFailed(t *testing.T) {
+	// P6 (RED): When InjectBTPOperatorCredentialsStep calls OperationFailed (empty RuntimeID),
+	// the claimed CredentialsBinding must be marked dirty=true.
+	// Currently fails because the step has no gardener client.
+
+	// given
+	const cbName = "aws-claimed"
+	const gardenerNS = "test"
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	schm := internal.NewSchemeForTests(t)
+	err := apiextensionsv1.AddToScheme(schm)
+	assert.NoError(t, err)
+
+	k8sClient := fake.NewClientBuilder().WithScheme(schm).Build()
+
+	operation := fixture.FixProvisioningOperation("op-p6", "inst-p6")
+	operation.RuntimeID = ""
+	operation.ProvisioningParameters.Parameters.TargetSecret = strPtr(cbName)
+
+	// Claimed CB
+	claimedCB := newInjectBTPCBHelper(cbName, gardenerNS, map[string]string{
+		"hyperscalerType": "aws",
+		"tenantName":      "some-ga",
+	})
+	fakeGardenerClient := kgardener.NewDynamicFakeClient(claimedCB)
+
+	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// when
+	op, _, _ := step.Run(operation, fixLogger())
+
+	// then
+	assert.Equal(t, domain.Failed, op.State)
+
+	// RED assertion: claimed CB must be dirty after OperationFailed — currently fails.
+	gotCB, err := fakeGardenerClient.Resource(kgardener.CredentialsBindingResource).Namespace(gardenerNS).Get(context.Background(), cbName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "true", gotCB.GetLabels()["dirty"])
+}
+
+func newInjectBTPCBHelper(name, namespace string, labels map[string]string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{}
+	u.SetName(name)
+	u.SetNamespace(namespace)
+	u.SetLabels(labels)
+	u.SetGroupVersionKind(kgardener.CredentialsBindingGVK)
+	return u
+}
+
+func strPtr(s string) *string { return &s }

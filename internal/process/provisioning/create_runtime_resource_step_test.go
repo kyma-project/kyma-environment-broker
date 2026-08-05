@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	kgardener "github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -29,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -2163,4 +2165,72 @@ func TestCreateRuntimeResourceStep_AdditionalVolumeSizeGi(t *testing.T) {
 	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
 	// AWS base volume is 80Gi; AdditionalVolumeSizeGi = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
+}
+
+func TestCreateRuntimeResourceStep_P3_CredentialsBindingMarkedDirtyOnOperationFailed(t *testing.T) {
+	// P3 (RED): When CreateRuntimeResourceStep calls OperationFailed (because KCR volume
+	// lookup fails with a non-temporary error), the claimed CredentialsBinding must be
+	// marked dirty=true. Currently fails because the step has no gardener client.
+
+	// given
+	const cbName = "aws-claimed"
+	const gardenerNS = "test"
+
+	assert.NoError(t, imv1.AddToScheme(scheme.Scheme))
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone"}
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region", inputConfig, pkg.AWS)
+	// Use a machine type that is NOT in the KCR ConfigMap → lookupVolumeSize returns plain error → OperationFailed
+	operation.ProvisioningParameters.Parameters.MachineType = ptr.String("unknown-machine-type")
+	instance.SubscriptionSecretName = cbName
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	// ConfigMap exists but has no entry for "unknown-machine-type"
+	kcrConfigMap := &coreV1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "consumption-reporter-config", Namespace: "kcp-system"},
+		Data: map[string]string{
+			"nodemeterconfig.yaml": `
+meters:
+  node:
+    machine_types:
+      aws:
+        m6i.4xlarge:
+          default_volume_size: "84Gi"
+`,
+		},
+	}
+	cli := getClientForTests(t)
+	kcrK8sClient := fake.NewClientBuilder().WithObjects(kcrConfigMap).Build()
+	kcrProvider := provider.NewKCRVolumeProvider(kcrK8sClient, "consumption-reporter-config")
+
+	// Claimed CB (tenantName set, not shared)
+	claimedCB := newCreateRuntimeCBHelper(cbName, gardenerNS, map[string]string{
+		"hyperscalerType": "aws",
+		"tenantName":      instance.GlobalAccountID,
+	})
+	fakeGardenerClient := kgardener.NewDynamicFakeClient(claimedCB)
+
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, fixture.NewProviderSpecWithZonesDiscovery(t, false), config.GlobalAccountsConfig{}, kcrProvider, false)
+
+	// when
+	op, repeat, _ := step.Run(operation, fixLogger())
+
+	// then
+	assert.Zero(t, repeat)
+	assert.Equal(t, domain.Failed, op.State)
+
+	// RED assertion: claimed CB must be dirty after OperationFailed — currently fails.
+	gotCB, err := fakeGardenerClient.Resource(kgardener.CredentialsBindingResource).Namespace(gardenerNS).Get(context.Background(), cbName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "true", gotCB.GetLabels()["dirty"])
+}
+
+func newCreateRuntimeCBHelper(name, namespace string, labels map[string]string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{}
+	u.SetName(name)
+	u.SetNamespace(namespace)
+	u.SetLabels(labels)
+	u.SetGroupVersionKind(kgardener.CredentialsBindingGVK)
+	return u
 }
