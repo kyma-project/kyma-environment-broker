@@ -323,6 +323,9 @@ func createSubscriptions(t *testing.T, gardenerClient *dynamicFake.FakeDynamicCl
 		"sb-azure": {
 			"hyperscalerType": "azure",
 		},
+		"sb-azure-2": {
+			"hyperscalerType": "azure",
+		},
 		"sb-aws": {
 			"hyperscalerType": "aws",
 		},
