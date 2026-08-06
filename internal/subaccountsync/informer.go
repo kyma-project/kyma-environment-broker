@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"reflect"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
@@ -100,7 +100,7 @@ func runtimeCREventHandlers(stateReconciler *stateReconcilerType, logger *slog.L
 				logger.Warn(fmt.Sprintf("Runtime CR %s has no subaccount or runtime label, skipping", u.GetName()))
 				return
 			}
-			stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[kymacustomresource.UsedForProductionLabelKey])
+			stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[customresources.UsedForProductionLabelKey])
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			u, ok := newObj.(*unstructured.Unstructured)
@@ -116,7 +116,7 @@ func runtimeCREventHandlers(stateReconciler *stateReconcilerType, logger *slog.L
 					logger.Warn(fmt.Sprintf("Runtime CR %s has no subaccount or runtime label, skipping", u.GetName()))
 					return
 				}
-				stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[kymacustomresource.UsedForProductionLabelKey])
+				stateReconciler.reconcileRuntimeResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), labels[customresources.UsedForProductionLabelKey])
 			}
 		},
 	}

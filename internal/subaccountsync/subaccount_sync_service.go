@@ -10,7 +10,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/prometheus/client_golang/prometheus"
@@ -60,7 +60,7 @@ type (
 		db             storage.BrokerStorage
 		syncQueue      queues.MultiConsumerPriorityQueue
 		logger         *slog.Logger
-		updater        *kymacustomresource.Updater
+		updater        *customresources.Updater
 		metrics        *Metrics
 		eventWindow    *EventWindow
 	}
@@ -130,11 +130,11 @@ func (s *SyncService) Run() {
 	})
 
 	// create updater if needed
-	var updater *kymacustomresource.Updater
+	var updater *customresources.Updater
 	var err error
 	if s.cfg.UpdateResources {
 		logger.Debug("Resource update is enabled, creating updater")
-		updater, err = kymacustomresource.NewUpdater(
+		updater, err = customresources.NewUpdater(
 			s.k8sClient,
 			priorityQueue,
 			s.kymaGVR,
@@ -223,8 +223,8 @@ func getKymaCRRequiredData(u *unstructured.Unstructured, logger *slog.Logger, st
 	labels := u.GetLabels()
 	subaccountID := labels[subaccountIDLabel]
 	runtimeID := labels[runtimeIDLabel]
-	betaEnabled := labels[kymacustomresource.BetaEnabledLabelKey]
-	usedForProduction := labels[kymacustomresource.UsedForProductionLabelKey]
+	betaEnabled := labels[customresources.BetaEnabledLabelKey]
+	usedForProduction := labels[customresources.UsedForProductionLabelKey]
 	if runtimeID == "" {
 		logger.Warn(fmt.Sprintf("Kyma resource has no runtime label, falling back to resource name: %s", u.GetName()))
 		runtimeID = u.GetName()
