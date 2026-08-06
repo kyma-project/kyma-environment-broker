@@ -42,6 +42,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -1149,31 +1150,16 @@ func newHyperscalerClient(
 	}
 	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
 
-	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(parsedRule)
-	labelSelector := labelSelectorBuilder.BuildAnySubscription()
-
+	labelSelector := subscriptions.NewLabelSelectorFromRuleset(parsedRule).BuildAnySubscription()
 	log.Info(fmt.Sprintf("getting credentials binding with selector %q", labelSelector))
-	credentialsBindings, err := gardenerClient.GetCredentialsBindings(labelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
-	}
-	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-		return nil, fmt.Errorf("no credentials bindings found for selector %q", labelSelector)
-	}
-	credentialsBinding := gardener.NewCredentialsBinding(credentialsBindings.Items[0])
 
-	log.Info(fmt.Sprintf("getting subscription credentials with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
-	secret, err := gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
-	}
-
-	client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create hyperscaler client: %w", err)
-	}
-
-	log.Info(fmt.Sprintf("validating zones for region=%s secret=%s/%s", values.Region, credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
-
-	return client, nil
+	return hyperscalers.WithBindingRetry(ctx, gardenerClient, labelSelector, log,
+		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (hyperscalers.ProviderClient, error) {
+			log.Info(fmt.Sprintf("validating zones for region=%s secret=%s/%s", values.Region, cb.GetSecretRefNamespace(), cb.GetSecretRefName()))
+			client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create hyperscaler client from binding %s: %w", cb.GetName(), err)
+			}
+			return client, nil
+		})
 }
