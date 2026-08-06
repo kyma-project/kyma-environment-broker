@@ -4,9 +4,9 @@ run-name: Create release ${{ inputs.name }}
 env:
   IMAGE_REPO: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
-  GIT_EMAIL: 4345220+kyma-gopher[bot]@users.noreply.github.com
-  GIT_NAME: kyma-gopher
   BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
+  GIT_EMAIL: ${{ vars.GIT_USER_EMAIL }}
+  GIT_NAME: ${{ vars.GIT_USER_NAME }}
 
 permissions:
   contents: write
@@ -293,7 +293,7 @@ jobs:
         id: bot-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          client-id: ${{ vars.GOPHER_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
           repositories: kyma-environment-broker
 
@@ -480,8 +480,8 @@ jobs:
 
       - name: Commit KEB chart metadata to gh-pages branch
         run: |
-          git config --global user.email ${{ env.GIT_EMAIL }}
-          git config --global user.name ${{ env.GIT_NAME }}
+          git config --global user.email "${{ env.GIT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_NAME }}"
           git add index.yaml
           git commit -m "Update KEB chart metadata with version ${{ inputs.name }}"
           git push origin gh-pages
@@ -490,7 +490,7 @@ jobs:
         id: bot-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.GOPHER_BOT_APP_ID }}
+          client-id: ${{ vars.GOPHER_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_BOT_APP_PRIVATE_KEY }}
           repositories: kyma-environment-broker
 

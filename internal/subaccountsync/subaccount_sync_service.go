@@ -64,19 +64,21 @@ type SyncService struct {
 	ctx             context.Context
 	cfg             Config
 	kymaGVR         schema.GroupVersionResource
+	runtimeGVR      schema.GroupVersionResource
 	db              storage.BrokerStorage
 	k8sClient       dynamic.Interface
 	metricsRegistry *prometheus.Registry
 }
 
 func NewSyncService(appName string, ctx context.Context,
-	cfg Config, kymaGVR schema.GroupVersionResource, db storage.BrokerStorage,
+	cfg Config, kymaGVR schema.GroupVersionResource, runtimeGVR schema.GroupVersionResource, db storage.BrokerStorage,
 	dynamicClient dynamic.Interface, metricsRegistry *prometheus.Registry) *SyncService {
 	return &SyncService{
 		appName:         appName,
 		ctx:             ctx,
 		cfg:             cfg,
 		kymaGVR:         kymaGVR,
+		runtimeGVR:      runtimeGVR,
 		db:              db,
 		k8sClient:       dynamicClient,
 		metricsRegistry: metricsRegistry,
@@ -129,6 +131,7 @@ func (s *SyncService) Run() {
 			s.k8sClient,
 			priorityQueue,
 			s.kymaGVR,
+			s.runtimeGVR,
 			s.cfg.SyncQueueSleepInterval,
 			s.ctx,
 			logger.With("component", "updater"))

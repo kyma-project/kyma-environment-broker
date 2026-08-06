@@ -42,17 +42,17 @@ jobs:
     steps:
       - name: Validate required variables
         run: |
-          [ -z "${{ vars.GIT_USER_EMAIL }}" ]       && echo "GIT_USER_EMAIL is required"       && exit 1
-          [ -z "${{ vars.GIT_USER_NAME }}" ]        && echo "GIT_USER_NAME is required"        && exit 1
-          [ -z "${{ vars.GH_TOOLS_HOST }}" ]        && echo "GH_TOOLS_HOST is required"        && exit 1
-          [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ] && echo "PK_RUNTIME_REPO_NAME is required" && exit 1
+          [ -z "${{ vars.GH_TOOLS_HOST }}" ]             && echo "GH_TOOLS_HOST is required"             && exit 1
+          [ -z "${{ vars.GIT_TOOLS_USER_EMAIL }}" ]      && echo "GIT_TOOLS_USER_EMAIL is required"      && exit 1
+          [ -z "${{ vars.GIT_USER_NAME }}" ]             && echo "GIT_USER_NAME is required"             && exit 1
+          [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ]      && echo "PK_RUNTIME_REPO_NAME is required"      && exit 1
           echo "Validated"
 
       - name: Generate enterprise bot token
         id: enterprise-bot-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
+          client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
           owner: kyma
@@ -220,7 +220,7 @@ jobs:
       - name: Setup git
         if: steps.detect.outputs.has_changes == 'true'
         run: |
-          git config --global user.email "${{ vars.GIT_USER_EMAIL }}"
+          git config --global user.email "${{ vars.GIT_TOOLS_USER_EMAIL }}"
           git config --global user.name "${{ vars.GIT_USER_NAME }}"
 
       - name: Clone product-kyma-runtime
