@@ -351,7 +351,8 @@ func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccoun
 			outdated = outdated || (cisState.BetaEnabled && !isBetaEnabledTrue(resourceState.kymaState.betaEnabled))
 			outdated = outdated || (!cisState.BetaEnabled && resourceState.kymaState.betaEnabled != "false")
 			outdated = outdated || cisState.UsedForProduction != resourceState.kymaState.usedForProduction
-			outdated = outdated || (resourceState.runtimeCRState.usedForProduction != "" && cisState.UsedForProduction != resourceState.runtimeCRState.usedForProduction)
+			outdated = outdated || resourceState.runtimeCRState.usedForProduction == ""
+			outdated = outdated || cisState.UsedForProduction != resourceState.runtimeCRState.usedForProduction
 		}
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", subaccountID, len(runtimes), outdated))
 	} else {
