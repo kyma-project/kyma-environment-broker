@@ -54,6 +54,10 @@ func WithBindingRetry[T any](
 	var lastErr error
 
 	for _, idx := range candidates {
+		if err := ctx.Err(); err != nil {
+			return zero, err
+		}
+
 		cb := gardener.NewCredentialsBinding(items[idx])
 		log.Info("trying credentials binding", "name", cb.GetName(), "index", idx)
 

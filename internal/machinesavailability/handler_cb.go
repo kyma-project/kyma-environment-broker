@@ -80,7 +80,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			MachineTypes: []MachineType{},
 		}
 
-		secret, err := h.getSecret(strings.ToLower(string(provider)))
+		secret, err := h.getSecret(provider)
 		if err != nil {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
@@ -141,7 +141,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 	httputil.WriteResponse(w, http.StatusOK, providersData)
 }
 
-func (h *HandlerCB) getSecret(provider string) (*unstructured.Unstructured, error) {
+func (h *HandlerCB) getSecret(provider runtime.CloudProvider) (*unstructured.Unstructured, error) {
 	matchedRule, err := h.matchRule(provider)
 	if err != nil {
 		return nil, err
@@ -153,14 +153,17 @@ func (h *HandlerCB) getSecret(provider string) (*unstructured.Unstructured, erro
 	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
 	return hyperscalers.WithBindingRetry(context.Background(), h.gardenerClient, labelSelector, h.logger,
 		func(_ context.Context, _ *gardener.CredentialsBinding, secret *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+			if _, err := h.factory.NewFromSecret(context.Background(), provider, secret, ""); err != nil {
+				return nil, fmt.Errorf("secret format validation failed: %w", err)
+			}
 			return secret, nil
 		})
 }
 
-func (h *HandlerCB) matchRule(provider string) (rules.Result, error) {
+func (h *HandlerCB) matchRule(provider runtime.CloudProvider) (rules.Result, error) {
 	attr := &rules.ProvisioningAttributes{
-		Plan:        provider,
-		Hyperscaler: provider,
+		Plan:        strings.ToLower(string(provider)),
+		Hyperscaler: strings.ToLower(string(provider)),
 	}
 
 	matchedRule, found := h.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
