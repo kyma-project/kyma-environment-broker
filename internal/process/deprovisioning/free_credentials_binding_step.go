@@ -11,6 +11,7 @@ import (
 	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 )
@@ -20,8 +21,9 @@ type FreeCredentialsBindingStep struct {
 	instanceStorage  storage.Instances
 	operationStorage storage.Operations
 
-	gardenerClient dynamic.Interface
-	gardenerNS     string
+	gardenerClient   dynamic.Interface
+	gardenerNS       string
+	shootWaitTimeout time.Duration
 }
 
 const freeCredentialsBindingStepName = "Free_Credentials_Binding_Step"
@@ -33,12 +35,17 @@ func checkIfLabelIsTrue(val string) bool {
 var _ process.Step = &FreeCredentialsBindingStep{}
 
 func NewFreeCredentialsBindingStep(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string) *FreeCredentialsBindingStep {
+	return newFreeCredentialsBindingStepWithShootTimeout(os, is, gardenerClient, namespace, time.Hour)
+}
+
+func newFreeCredentialsBindingStepWithShootTimeout(os storage.Operations, is storage.Instances, gardenerClient dynamic.Interface, namespace string, shootWaitTimeout time.Duration) *FreeCredentialsBindingStep {
 	return &FreeCredentialsBindingStep{
 		operationManager: process.NewOperationManager(os, freeCredentialsBindingStepName, kebErr.KEBDependency),
 		instanceStorage:  is,
 		operationStorage: os,
 		gardenerClient:   gardenerClient,
 		gardenerNS:       namespace,
+		shootWaitTimeout: shootWaitTimeout,
 	}
 }
 
@@ -98,7 +105,11 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		// shoots could be not migrated yet, that's why check also secretBindingName field
 		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
 			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, retrying", credentialsBindingName, sh.GetName()))
-			return s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s referencing credentials binding still exists, waiting for deletion", sh.GetName()), nil, 10*time.Second, time.Hour, logger)
+			result, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s referencing credentials binding still exists, waiting for deletion", sh.GetName()), nil, 10*time.Second, s.shootWaitTimeout, logger)
+			if result.State == domain.Failed {
+				s.markCredentialsBindingDirty(credentialsBindingName, logger)
+			}
+			return result, backoff, retryErr
 		}
 	}
 
@@ -143,4 +154,21 @@ func (s *FreeCredentialsBindingStep) findCredentialsBindingName(operation intern
 	}
 	logger.Info(fmt.Sprintf("Found subscription secret name from the provisioning operation parameters: %s", *provisioningOp.ProvisioningParameters.Parameters.TargetSecret))
 	return *provisioningOp.ProvisioningParameters.Parameters.TargetSecret, nil
+}
+
+func (s *FreeCredentialsBindingStep) markCredentialsBindingDirty(credentialsBindingName string, logger *slog.Logger) {
+	cb, err := s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(s.gardenerNS).Get(context.Background(), credentialsBindingName, metav1.GetOptions{})
+	if err != nil {
+		logger.Warn(fmt.Sprintf("failed to get credentials binding %s for dirty marking: %s", credentialsBindingName, err))
+		return
+	}
+	labels := cb.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels["dirty"] = "true"
+	cb.SetLabels(labels)
+	if _, err = s.gardenerClient.Resource(gardener.CredentialsBindingResource).Namespace(s.gardenerNS).Update(context.Background(), cb, metav1.UpdateOptions{}); err != nil {
+		logger.Warn(fmt.Sprintf("failed to mark credentials binding %s as dirty: %s", credentialsBindingName, err))
+	}
 }
