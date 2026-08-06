@@ -1052,7 +1052,7 @@ func TestStateReconciler(t *testing.T) {
 		assert.Equal(t, "USED_FOR_PRODUCTION", element.UsedForProduction)
 
 		// then we got confirmation that the update was applied
-		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}})
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}, runtimeCRState: runtimeCRStateType{usedForProduction: "USED_FOR_PRODUCTION"}})
 
 		// then we get older event from CIS with false label
 		reconciler.reconcileCisEvent(fixCisUpdateEvent(subaccountId1, "false", "NOT_USED_FOR_PRODUCTION", oldTime))
@@ -1173,7 +1173,7 @@ func TestStateReconciler(t *testing.T) {
 		assert.Equal(t, "USED_FOR_PRODUCTION", element.UsedForProduction)
 
 		// and update resource so update event comes from informer
-		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}})
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}, runtimeCRState: runtimeCRStateType{usedForProduction: "USED_FOR_PRODUCTION"}})
 
 		// then comes app restart
 		newReconciler := createNewReconciler(brokerStorage)
@@ -1181,7 +1181,7 @@ func TestStateReconciler(t *testing.T) {
 		newReconciler.recreateStateFromDB()
 		// when
 		// initial add event from the kyma resource, first runtime, no label
-		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}})
+		reconciler.reconcileResourceUpdate(subaccountId1, runtimeId11, resourceStateType{kymaState: kymaStateType{betaEnabled: "true", usedForProduction: "USED_FOR_PRODUCTION"}, runtimeCRState: runtimeCRStateType{usedForProduction: "USED_FOR_PRODUCTION"}})
 		reconciler.reconcileCisAccount(subaccountId1, CisStateType{BetaEnabled: true, UsedForProduction: "USED_FOR_PRODUCTION", ModifiedDate: oldTime})
 		// queue should be empty - no difference, resource is up-to-date
 		assert.True(t, reconciler.syncQueue.IsEmpty())
