@@ -157,7 +157,7 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 
 	// then
 	require.NoError(t, err)
-	assert.Zero(t, repeat)
+	assert.NotZero(t, repeat)
 
 	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
 	require.NoError(t, err)

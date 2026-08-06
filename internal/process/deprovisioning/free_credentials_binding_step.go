@@ -97,8 +97,8 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		sh := gardener.Shoot{Unstructured: shoot}
 		// shoots could be not migrated yet, that's why check also secretBindingName field
 		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
-			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, nothing to free", credentialsBindingName, sh.GetName()))
-			return operation, 0, nil
+			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, retrying", credentialsBindingName, sh.GetName()))
+			return s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s referencing credentials binding still exists, waiting for deletion", sh.GetName()), nil, 10*time.Second, time.Hour, logger)
 		}
 	}
 
