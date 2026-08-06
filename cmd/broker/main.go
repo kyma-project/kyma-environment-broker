@@ -391,7 +391,7 @@ func main() {
 		azureCloudConfig, err = resolveAzureCloudConfig(ctx, providerSpec, gardenerClient, rulesService, log)
 		fatalOnError(err, log)
 
-		fetcher, fetchErr := buildAzureSecretFetcher(gardenerClient, rulesService, log)
+		fetcher, fetchErr := buildAzureSecretFetcher(gardenerClient, rulesService, azureCloudConfig, log)
 		if fetchErr != nil {
 			log.Warn(fmt.Sprintf("Azure zone cache unavailable, falling back to per-call mode: %s", fetchErr))
 		} else {

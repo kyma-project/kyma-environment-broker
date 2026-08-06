@@ -19,7 +19,7 @@ import (
 // credentials secret from Gardener on each call, retrying up to 4 different
 // credential bindings if one is missing or malformed. This ensures credential
 // rotation is picked up on every cache refresh without restarting KEB.
-func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService, log *slog.Logger) (azurehyperscaler.SecretFetcher, error) {
+func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rules.RulesService, cloudConfig azurecloud.Configuration, log *slog.Logger) (azurehyperscaler.SecretFetcher, error) {
 	attr := &rules.ProvisioningAttributes{
 		Plan:        "azure",
 		Hyperscaler: "azure",
@@ -31,17 +31,20 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 	labelSelector := subscriptions.NewLabelSelectorFromRuleset(matchedRule).BuildAnySubscription()
 
 	return func() (azurehyperscaler.AzureCredentials, error) {
-		return fetchAzureCredentials(gardenerClient, labelSelector, log)
+		return fetchAzureCredentials(gardenerClient, labelSelector, cloudConfig, log)
 	}, nil
 }
 
-func fetchAzureCredentials(gardenerClient *gardener.Client, labelSelector string, log *slog.Logger) (azurehyperscaler.AzureCredentials, error) {
+func fetchAzureCredentials(gardenerClient *gardener.Client, labelSelector string, cloudConfig azurecloud.Configuration, log *slog.Logger) (azurehyperscaler.AzureCredentials, error) {
 	return hyperscalers.WithBindingRetry(context.Background(), gardenerClient, labelSelector, log,
-		func(_ context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (azurehyperscaler.AzureCredentials, error) {
+		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (azurehyperscaler.AzureCredentials, error) {
 			log.Info("fetching Azure credentials", "credentialBinding", cb.GetName())
 			creds, err := azurehyperscaler.ExtractCredentials(secret)
 			if err != nil {
 				return azurehyperscaler.AzureCredentials{}, fmt.Errorf("failed to extract Azure credentials from binding %s: %w", cb.GetName(), err)
+			}
+			if !azurehyperscaler.ProbeCloud(ctx, creds, cloudConfig) {
+				return azurehyperscaler.AzureCredentials{}, fmt.Errorf("credentials from binding %s failed cloud probe", cb.GetName())
 			}
 			return creds, nil
 		})
