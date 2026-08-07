@@ -119,8 +119,7 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 	}
 	for _, shoot := range shootlist.Items {
 		sh := gardener.Shoot{Unstructured: shoot}
-		// shoots could be not migrated yet, that's why check also secretBindingName field
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
 			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, nothing to free", credentialsBindingName, sh.GetName()))
 			return operation, 0, nil
 		}
@@ -180,7 +179,7 @@ func (s *FreeCredentialsBindingStep) isLastShootReferencingCB(credentialsBinding
 		if sh.GetName() == ownShootName {
 			continue
 		}
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
 			return false
 		}
 	}
