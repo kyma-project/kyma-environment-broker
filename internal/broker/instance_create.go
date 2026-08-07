@@ -564,12 +564,14 @@ func (b *ProvisionEndpoint) getDiscoveredZones(ctx context.Context, values inter
 			kymaMachineType = *parameters.MachineType
 		}
 
-		discoveredZones[kymaMachineType] = 0
+		machineTypes := []string{kymaMachineType}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
-			discoveredZones[additionalWorkerNodePool.MachineType] = 0
+			machineTypes = append(machineTypes, additionalWorkerNodePool.MachineType)
 		}
 
-		if err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, provisioningParameters, values, discoveredZones); err != nil {
+		var err error
+		discoveredZones, err = newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, provisioningParameters, values, machineTypes)
+		if err != nil {
 			logger.Error(fmt.Sprintf("unable to validate zones for %s: %s", values.ProviderType, err))
 			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusUnprocessableEntity, FailedToValidateZonesMsg)
 		}
@@ -1122,8 +1124,8 @@ func newHyperscalerClient(
 	factory hyperscalers.Factory,
 	provisioningParameters internal.ProvisioningParameters,
 	values internal.ProviderValues,
-	discoveredZones map[string]int,
-) error {
+	machineTypes []string,
+) (map[string]int, error) {
 	provider := pkg.CloudProviderFromString(values.ProviderType)
 
 	log.Info("Zones discovery enabled, validating zone count using subscription secret")
@@ -1137,32 +1139,28 @@ func newHyperscalerClient(
 
 	parsedRule, found := rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
 	if !found {
-		return fmt.Errorf("no matching rule for provisioning attributes %q", attr)
+		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
 	}
 	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
 
 	labelSelector := subscriptions.NewLabelSelectorFromRuleset(parsedRule).BuildAnySubscription()
 	log.Info(fmt.Sprintf("getting credentials binding with selector %q", labelSelector))
 
-	_, err := hyperscalers.WithBindingRetry(ctx, gardenerClient, labelSelector, log,
-		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (struct{}, error) {
+	return hyperscalers.WithRetry(ctx, gardenerClient, labelSelector, log,
+		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (map[string]int, error) {
 			log.Info(fmt.Sprintf("validating zones for region=%s secret=%s/%s", values.Region, cb.GetSecretRefNamespace(), cb.GetSecretRefName()))
 			client, err := factory.NewFromSecret(ctx, provider, secret, values.Region)
 			if err != nil {
-				return struct{}{}, fmt.Errorf("unable to create hyperscaler client from binding %s: %w", cb.GetName(), err)
+				return nil, fmt.Errorf("unable to create hyperscaler client from binding %s: %w", cb.GetName(), err)
 			}
-			localZones := make(map[string]int, len(discoveredZones))
-			for machineType := range discoveredZones {
+			zones := make(map[string]int, len(machineTypes))
+			for _, machineType := range machineTypes {
 				count, err := client.AvailableZonesCount(ctx, machineType)
 				if err != nil {
-					return struct{}{}, fmt.Errorf("unable to get available zones for binding %s: %w", cb.GetName(), err)
+					return nil, fmt.Errorf("unable to get available zones for binding %s: %w", cb.GetName(), err)
 				}
-				localZones[machineType] = count
+				zones[machineType] = count
 			}
-			for k, v := range localZones {
-				discoveredZones[k] = v
-			}
-			return struct{}{}, nil
+			return zones, nil
 		})
-	return err
 }

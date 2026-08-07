@@ -102,9 +102,9 @@ func TestCandidateIndices_Zero(t *testing.T) {
 
 // --- withBindingRetry ---
 
-func TestWithBindingRetry_NoBindings(t *testing.T) {
+func TestWithRetry_NoBindings(t *testing.T) {
 	gc := newTestGardenerClient(t)
-	_, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	_, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, _ *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			return "ok", nil
 		})
@@ -112,12 +112,12 @@ func TestWithBindingRetry_NoBindings(t *testing.T) {
 	assert.Contains(t, err.Error(), "no credentials bindings found")
 }
 
-func TestWithBindingRetry_FirstBindingSucceeds(t *testing.T) {
+func TestWithRetry_FirstBindingSucceeds(t *testing.T) {
 	gc := newTestGardenerClient(t,
 		fixBinding("cb-0"),
 		fixSecret("cb-0"),
 	)
-	result, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	result, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, cb *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			return cb.GetName(), nil
 		})
@@ -125,14 +125,14 @@ func TestWithBindingRetry_FirstBindingSucceeds(t *testing.T) {
 	assert.Equal(t, "cb-0", result)
 }
 
-func TestWithBindingRetry_FirstSecretMissing_SecondSucceeds(t *testing.T) {
+func TestWithRetry_FirstSecretMissing_SecondSucceeds(t *testing.T) {
 	// cb-0's secret does not exist; cb-1 has its secret
 	gc := newTestGardenerClient(t,
 		fixBinding("cb-0"),
 		fixBinding("cb-1"),
 		fixSecret("cb-1"),
 	)
-	result, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	result, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, cb *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			return cb.GetName(), nil
 		})
@@ -140,13 +140,13 @@ func TestWithBindingRetry_FirstSecretMissing_SecondSucceeds(t *testing.T) {
 	assert.Equal(t, "cb-1", result)
 }
 
-func TestWithBindingRetry_AllBindingsFail_AttemptFn(t *testing.T) {
+func TestWithRetry_AllBindingsFail_AttemptFn(t *testing.T) {
 	gc := newTestGardenerClient(t,
 		fixBinding("cb-0"),
 		fixSecret("cb-0"),
 	)
 	callErr := errors.New("invalid credentials")
-	_, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	_, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, _ *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			return "", callErr
 		})
@@ -154,7 +154,7 @@ func TestWithBindingRetry_AllBindingsFail_AttemptFn(t *testing.T) {
 	assert.ErrorIs(t, err, callErr)
 }
 
-func TestWithBindingRetry_FirstAttemptFails_SecondSucceeds(t *testing.T) {
+func TestWithRetry_FirstAttemptFails_SecondSucceeds(t *testing.T) {
 	// Two bindings, both secrets exist. Attempt fn fails for cb-0 but succeeds for any other.
 	gc := newTestGardenerClient(t,
 		fixBinding("cb-0"),
@@ -162,7 +162,7 @@ func TestWithBindingRetry_FirstAttemptFails_SecondSucceeds(t *testing.T) {
 		fixSecret("cb-0"),
 		fixSecret("cb-1"),
 	)
-	result, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	result, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, cb *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			if cb.GetName() == "cb-0" {
 				return "", fmt.Errorf("expired credentials for %s", cb.GetName())
@@ -173,7 +173,7 @@ func TestWithBindingRetry_FirstAttemptFails_SecondSucceeds(t *testing.T) {
 	assert.NotEqual(t, "cb-0", result)
 }
 
-func TestWithBindingRetry_AllAttemptsExhausted(t *testing.T) {
+func TestWithRetry_AllAttemptsExhausted(t *testing.T) {
 	// Provide enough bindings so at least 2 unique candidates are tried, all fail.
 	gc := newTestGardenerClient(t,
 		fixBinding("cb-0"),
@@ -183,7 +183,7 @@ func TestWithBindingRetry_AllAttemptsExhausted(t *testing.T) {
 		fixSecret("cb-1"),
 		fixSecret("cb-2"),
 	)
-	_, err := WithBindingRetry(context.Background(), gc, testLabelSelector, testLogger(),
+	_, err := WithRetry(context.Background(), gc, testLabelSelector, testLogger(),
 		func(_ context.Context, _ *gardener.CredentialsBinding, _ *unstructured.Unstructured) (string, error) {
 			return "", errors.New("probe failed")
 		})

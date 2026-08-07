@@ -28,11 +28,11 @@ func candidateIndices(n int) []int {
 	return result
 }
 
-// WithBindingRetry lists credentials bindings matching labelSelector, then tries each
+// WithRetry lists credentials bindings matching labelSelector, then tries each
 // candidate index (first, middle, last, random — up to 4 unique attempts).
 // For each candidate it fetches the Gardener secret and calls attempt. Returns the
 // first successful result. If all attempts fail, returns the last error.
-func WithBindingRetry[T any](
+func WithRetry[T any](
 	ctx context.Context,
 	gc *gardener.Client,
 	labelSelector string,

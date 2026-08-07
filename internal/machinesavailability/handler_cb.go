@@ -151,7 +151,7 @@ func (h *HandlerCB) getSecret(provider runtime.CloudProvider) (*unstructured.Uns
 	labelSelector := labelSelectorBuilder.BuildAnySubscription()
 
 	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
-	return hyperscalers.WithBindingRetry(context.Background(), h.gardenerClient, labelSelector, h.logger,
+	return hyperscalers.WithRetry(context.Background(), h.gardenerClient, labelSelector, h.logger,
 		func(_ context.Context, _ *gardener.CredentialsBinding, secret *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 			if _, err := h.factory.NewFromSecret(context.Background(), provider, secret, ""); err != nil {
 				return nil, fmt.Errorf("secret format validation failed: %w", err)

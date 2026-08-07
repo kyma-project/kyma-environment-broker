@@ -36,7 +36,7 @@ func buildAzureSecretFetcher(gardenerClient *gardener.Client, rulesService *rule
 }
 
 func fetchAzureCredentials(gardenerClient *gardener.Client, labelSelector string, cloudConfig azurecloud.Configuration, log *slog.Logger) (azurehyperscaler.AzureCredentials, error) {
-	return hyperscalers.WithBindingRetry(context.Background(), gardenerClient, labelSelector, log,
+	return hyperscalers.WithRetry(context.Background(), gardenerClient, labelSelector, log,
 		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (azurehyperscaler.AzureCredentials, error) {
 			log.Info("fetching Azure credentials", "credentialBinding", cb.GetName())
 			creds, err := azurehyperscaler.ExtractCredentials(secret)
@@ -74,7 +74,7 @@ func resolveAzureCloudConfig(ctx context.Context, providerSpec *configuration.Pr
 	}
 	labelSelector := subscriptions.NewLabelSelectorFromRuleset(matchedRule).BuildAnySubscription()
 
-	return hyperscalers.WithBindingRetry(ctx, gardenerClient, labelSelector, log,
+	return hyperscalers.WithRetry(ctx, gardenerClient, labelSelector, log,
 		func(ctx context.Context, cb *gardener.CredentialsBinding, secret *unstructured.Unstructured) (azurecloud.Configuration, error) {
 			creds, err := azurehyperscaler.ExtractCredentials(secret)
 			if err != nil {
