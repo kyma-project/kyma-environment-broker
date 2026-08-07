@@ -49,6 +49,12 @@ func ResolveCloudConfig(ctx context.Context, creds AzureCredentials) (cloud.Conf
 	return resolveCloudConfig(ctx, creds, probeCloud)
 }
 
+// ProbeCloud attempts to acquire an Azure ARM token using the given cloud configuration.
+// Returns true if authentication succeeds. Exported for use in credential validation.
+func ProbeCloud(ctx context.Context, creds AzureCredentials, cfg cloud.Configuration) bool {
+	return probeCloud(ctx, creds, cfg)
+}
+
 func resolveCloudConfig(ctx context.Context, creds AzureCredentials, probe probeFunc) (cloud.Configuration, error) {
 	for _, p := range probeOrder {
 		if probe(ctx, creds, p.cfg) {
