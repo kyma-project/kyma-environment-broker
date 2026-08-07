@@ -94,17 +94,35 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		return operation, 0, nil
 	}
 
-	// Only wait for the current instance's own shoot to be deleted.
-	// Other shoots may legitimately reference the same shared credentials binding.
+	// Wait for the current instance's own shoot to be deleted before checking other references.
+	// This handles the race where KIM is still asynchronously deleting the shoot.
 	if operation.ShootName != "" {
 		_, err = s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).Get(context.Background(), operation.ShootName, metav1.GetOptions{})
 		if err == nil {
 			logger.Info(fmt.Sprintf("Shoot %s for this instance still exists, waiting for deletion before releasing credentials binding %s", operation.ShootName, credentialsBindingName))
 			result, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s still exists, waiting for deletion", operation.ShootName), nil, 10*time.Second, s.shootWaitTimeout, logger)
 			if result.State == domain.Failed {
-				s.markCredentialsBindingDirty(credentialsBindingName, logger)
+				// Timed out waiting — mark dirty only if no other shoot references this CB.
+				if s.isLastShootReferencingCB(credentialsBindingName, operation.ShootName, logger) {
+					s.markCredentialsBindingDirty(credentialsBindingName, logger)
+				}
 			}
 			return result, backoff, retryErr
+		}
+	}
+
+	// Own shoot is gone — check if any other shoot still references the CB.
+	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		msg := fmt.Sprintf("listing Gardener shoots in namespace %s", s.gardenerNS)
+		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, logger)
+	}
+	for _, shoot := range shootlist.Items {
+		sh := gardener.Shoot{Unstructured: shoot}
+		// shoots could be not migrated yet, that's why check also secretBindingName field
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
+			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, nothing to free", credentialsBindingName, sh.GetName()))
+			return operation, 0, nil
 		}
 	}
 
@@ -149,6 +167,24 @@ func (s *FreeCredentialsBindingStep) findCredentialsBindingName(operation intern
 	}
 	logger.Info(fmt.Sprintf("Found subscription secret name from the provisioning operation parameters: %s", *provisioningOp.ProvisioningParameters.Parameters.TargetSecret))
 	return *provisioningOp.ProvisioningParameters.Parameters.TargetSecret, nil
+}
+
+func (s *FreeCredentialsBindingStep) isLastShootReferencingCB(credentialsBindingName, ownShootName string, logger *slog.Logger) bool {
+	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(fmt.Sprintf("failed to list shoots to check CB references: %s", err))
+		return false
+	}
+	for _, shoot := range shootlist.Items {
+		sh := gardener.Shoot{Unstructured: shoot}
+		if sh.GetName() == ownShootName {
+			continue
+		}
+		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *FreeCredentialsBindingStep) markCredentialsBindingDirty(credentialsBindingName string, logger *slog.Logger) {
