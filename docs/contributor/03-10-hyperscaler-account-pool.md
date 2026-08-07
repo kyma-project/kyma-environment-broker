@@ -14,7 +14,7 @@ The Secrets are stored in a Gardener seed cluster that HAP points to. They are a
 
 This diagram shows the HAP workflow:
 
-![hap-workflow](../assets/hap-flow.drawio.svg)
+![hap-workflow](../assets/hap-flow.drawio.png)
 
 Before a new cluster is provisioned, KEB queries for a Secret based on the **tenantName** and **hyperscalerType** labels.
 If a Secret is found, KEB uses the credentials stored in this Secret. If a matching Secret is not found, KEB queries again for an unassigned Secret for a given hyperscaler and adds the **tenantName** label to claim the account and use the credentials for provisioning.
