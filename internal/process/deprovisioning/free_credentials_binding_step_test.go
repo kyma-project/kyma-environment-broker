@@ -23,6 +23,7 @@ import (
 
 const subscriptionSecretName = "sb-01"
 const testNamespace = "test-ns"
+const testShootName = "shoot-for-this-instance"
 
 func TestFreeCredentialsBinding_SubscriptionSecretNameFromInstance(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
@@ -139,7 +140,7 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = "shoot-for-this-instance"
+	operation.ShootName = testShootName
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
@@ -150,7 +151,7 @@ func TestFreeCredentialsBinding_ReleasingBlocked_ifShootExists(t *testing.T) {
 		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID,
 		}),
-		newShoot("shoot-for-this-instance"),
+		newShoot(testShootName),
 	)
 	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
 
@@ -170,7 +171,7 @@ func TestFreeCredentialsBinding_MarkedDirtyOnTimeout_ifShootStillExists(t *testi
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = "shoot-for-this-instance"
+	operation.ShootName = testShootName
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
@@ -184,7 +185,7 @@ func TestFreeCredentialsBinding_MarkedDirtyOnTimeout_ifShootStillExists(t *testi
 		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID,
 		}),
-		newShoot("shoot-for-this-instance"),
+		newShoot(testShootName),
 	)
 	// negative timeout forces immediate failure on first call
 	step := newFreeCredentialsBindingStepWithShootTimeout(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace, -1*time.Second)
@@ -222,7 +223,7 @@ func TestFreeCredentialsBinding_MarkedDirty_WhenOtherInstanceShootExists(t *test
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = "shoot-for-this-instance"
+	operation.ShootName = testShootName
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
@@ -253,7 +254,7 @@ func TestFreeCredentialsBinding_NotReleased_WhenAnotherShootReferencesCredential
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = "shoot-for-this-instance"
+	operation.ShootName = testShootName
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
@@ -284,7 +285,7 @@ func TestFreeCredentialsBinding_NotMarkedDirtyOnTimeout_ifOtherShootReferencesCr
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = "shoot-for-this-instance"
+	operation.ShootName = testShootName
 	instance := fixGCPInstance(operation.InstanceID)
 	instance.SubscriptionSecretName = subscriptionSecretName
 	instance.GlobalAccountID = operation.GlobalAccountID
@@ -298,7 +299,7 @@ func TestFreeCredentialsBinding_NotMarkedDirtyOnTimeout_ifOtherShootReferencesCr
 		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
 			"tenantName": instance.GlobalAccountID,
 		}),
-		newShoot("shoot-for-this-instance"),
+		newShoot(testShootName),
 		newShootWithCredentialsBindingRef("shoot-for-other-instance", subscriptionSecretName),
 	)
 	// negative timeout forces immediate failure on first call
