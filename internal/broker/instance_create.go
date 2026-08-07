@@ -1151,12 +1151,16 @@ func newHyperscalerClient(
 			if err != nil {
 				return struct{}{}, fmt.Errorf("unable to create hyperscaler client from binding %s: %w", cb.GetName(), err)
 			}
+			localZones := make(map[string]int, len(discoveredZones))
 			for machineType := range discoveredZones {
 				count, err := client.AvailableZonesCount(ctx, machineType)
 				if err != nil {
 					return struct{}{}, fmt.Errorf("unable to get available zones for binding %s: %w", cb.GetName(), err)
 				}
-				discoveredZones[machineType] = count
+				localZones[machineType] = count
+			}
+			for k, v := range localZones {
+				discoveredZones[k] = v
 			}
 			return struct{}{}, nil
 		})
