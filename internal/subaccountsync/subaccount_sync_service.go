@@ -10,7 +10,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,11 +33,18 @@ var eventTypes = []string{"Subaccount_Creation", "Subaccount_Update"}
 type (
 	subaccountIDType string
 	runtimeIDType    string
-	runtimeStateType struct {
+	kymaStateType    struct {
 		betaEnabled       string
 		usedForProduction string
 	}
-	subaccountRuntimesType map[runtimeIDType]runtimeStateType
+	runtimeCRStateType struct {
+		usedForProduction string
+	}
+	resourceStateType struct {
+		kymaState      kymaStateType
+		runtimeCRState runtimeCRStateType
+	}
+	subaccountRuntimesType map[runtimeIDType]resourceStateType
 	subaccountsSetType     map[subaccountIDType]struct{}
 	subaccountStateType    struct {
 		cisState       CisStateType
@@ -53,7 +60,7 @@ type (
 		db             storage.BrokerStorage
 		syncQueue      queues.MultiConsumerPriorityQueue
 		logger         *slog.Logger
-		updater        *kymacustomresource.Updater
+		updater        *customresources.Updater
 		metrics        *Metrics
 		eventWindow    *EventWindow
 	}
@@ -123,11 +130,11 @@ func (s *SyncService) Run() {
 	})
 
 	// create updater if needed
-	var updater *kymacustomresource.Updater
+	var updater *customresources.Updater
 	var err error
 	if s.cfg.UpdateResources {
 		logger.Debug("Resource update is enabled, creating updater")
-		updater, err = kymacustomresource.NewUpdater(
+		updater, err = customresources.NewUpdater(
 			s.k8sClient,
 			priorityQueue,
 			s.kymaGVR,
@@ -158,9 +165,11 @@ func (s *SyncService) Run() {
 	stateReconciler.recreateStateFromDB()
 
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(s.k8sClient, time.Minute, "kcp-system", nil)
-	informer := factory.ForResource(s.kymaGVR).Informer()
+	kymaCRInformer := factory.ForResource(s.kymaGVR).Informer()
+	configureInformer(&kymaCRInformer, kymaCREventHandlers(&stateReconciler, logger.With("component", "informer"), s.cfg.AlwaysSubaccountFromDatabase), metrics.kymaInformer)
 
-	configureInformer(&informer, &stateReconciler, logger.With("component", "informer"), metrics, s.cfg.AlwaysSubaccountFromDatabase)
+	runtimeCRInformer := factory.ForResource(s.runtimeGVR).Informer()
+	configureInformer(&runtimeCRInformer, runtimeCREventHandlers(&stateReconciler, logger.With("component", "runtime-informer")), metrics.runtimeInformer)
 
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
@@ -177,7 +186,9 @@ func (s *SyncService) Run() {
 		logger.Info("Resource update is disabled")
 	}
 
-	informer.Run(s.ctx.Done())
+	factory.Start(s.ctx.Done())
+	factory.WaitForCacheSync(s.ctx.Done())
+	<-s.ctx.Done()
 }
 
 func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logger *slog.Logger, cisRequests *prometheus.CounterVec) *RateLimitedCisClient {
@@ -208,18 +219,18 @@ func getSubaccountIDFromDB(runtimeID string, db storage.BrokerStorage) (string, 
 	return subaccountID, nil
 }
 
-func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysUseDB bool) (string, string, string, string, error) {
+func getKymaCRRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysGetSubaccountFromDB bool) (string, string, string, string, error) {
 	labels := u.GetLabels()
 	subaccountID := labels[subaccountIDLabel]
 	runtimeID := labels[runtimeIDLabel]
-	betaEnabled := labels[kymacustomresource.BetaEnabledLabelKey]
-	usedForProduction := labels[kymacustomresource.UsedForProductionLabelKey]
+	betaEnabled := labels[customresources.BetaEnabledLabelKey]
+	usedForProduction := labels[customresources.UsedForProductionLabelKey]
 	if runtimeID == "" {
 		logger.Warn(fmt.Sprintf("Kyma resource has no runtime label, falling back to resource name: %s", u.GetName()))
 		runtimeID = u.GetName()
 	}
 	var err error
-	if subaccountID == "" || alwaysUseDB {
+	if subaccountID == "" || alwaysGetSubaccountFromDB {
 		subaccountID, err = getSubaccountIDFromDB(runtimeID, stateReconciler.db)
 		if err != nil {
 			return "", "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)

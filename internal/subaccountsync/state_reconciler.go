@@ -248,7 +248,7 @@ func (reconciler *stateReconcilerType) reconcileCisEvent(event Event) {
 	reconciler.setMetrics()
 }
 
-func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID subaccountIDType, runtimeID runtimeIDType, runtimeState runtimeStateType) {
+func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID subaccountIDType, runtimeID runtimeIDType, resourceState resourceStateType) {
 	reconciler.mutex.Lock()
 	defer reconciler.mutex.Unlock()
 
@@ -257,17 +257,41 @@ func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID suba
 		// we create new state, there is no state for this subaccount yet (no data from CIS to compare)
 		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state - creating state", subaccountID))
 		reconciler.inMemoryState[subaccountID] = subaccountStateType{
-			resourcesState: subaccountRuntimesType{runtimeID: runtimeState},
+			resourcesState: subaccountRuntimesType{runtimeID: resourceState},
 		}
 	} else {
 		if state.resourcesState == nil {
 			state.resourcesState = make(subaccountRuntimesType)
 		}
-		state.resourcesState[runtimeID] = runtimeState
+		state.resourcesState[runtimeID] = resourceState
 		reconciler.inMemoryState[subaccountID] = state
 		reconciler.logger.Debug(fmt.Sprintf("subaccount %s found in state, check if outdated", subaccountID))
 		reconciler.enqueueSubaccountIfOutdated(subaccountID, state)
 	}
+	reconciler.setMetrics()
+}
+
+func (reconciler *stateReconcilerType) reconcileRuntimeResourceUpdate(subaccountID subaccountIDType, runtimeID runtimeIDType, usedForProduction string) {
+	reconciler.mutex.Lock()
+	defer reconciler.mutex.Unlock()
+
+	state, ok := reconciler.inMemoryState[subaccountID]
+	if !ok {
+		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state - creating state", subaccountID))
+		reconciler.inMemoryState[subaccountID] = subaccountStateType{
+			resourcesState: subaccountRuntimesType{runtimeID: resourceStateType{runtimeCRState: runtimeCRStateType{usedForProduction: usedForProduction}}},
+		}
+		return
+	}
+	if state.resourcesState == nil {
+		state.resourcesState = make(subaccountRuntimesType)
+	}
+	existing := state.resourcesState[runtimeID]
+	existing.runtimeCRState.usedForProduction = usedForProduction
+	state.resourcesState[runtimeID] = existing
+	reconciler.inMemoryState[subaccountID] = state
+	reconciler.logger.Debug(fmt.Sprintf("subaccount %s runtime CR state updated, check if outdated", subaccountID))
+	reconciler.enqueueSubaccountIfOutdated(subaccountID, state)
 	reconciler.setMetrics()
 }
 
@@ -321,12 +345,14 @@ func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccoun
 	if state.resourcesState != nil && state.cisState.ModifiedDate > 0 {
 		runtimes := state.resourcesState
 		cisState := state.cisState
-		for _, runtimeState := range runtimes {
-			outdated = outdated || runtimeState.betaEnabled == ""
-			outdated = outdated || runtimeState.usedForProduction == ""
-			outdated = outdated || (cisState.BetaEnabled && !isBetaEnabledTrue(runtimeState.betaEnabled))
-			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
-			outdated = outdated || cisState.UsedForProduction != runtimeState.usedForProduction
+		for _, resourceState := range runtimes {
+			outdated = outdated || resourceState.kymaState.betaEnabled == ""
+			outdated = outdated || resourceState.kymaState.usedForProduction == ""
+			outdated = outdated || (cisState.BetaEnabled && !isBetaEnabledTrue(resourceState.kymaState.betaEnabled))
+			outdated = outdated || (!cisState.BetaEnabled && resourceState.kymaState.betaEnabled != "false")
+			outdated = outdated || cisState.UsedForProduction != resourceState.kymaState.usedForProduction
+			outdated = outdated || resourceState.runtimeCRState.usedForProduction == ""
+			outdated = outdated || cisState.UsedForProduction != resourceState.runtimeCRState.usedForProduction
 		}
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", subaccountID, len(runtimes), outdated))
 	} else {
