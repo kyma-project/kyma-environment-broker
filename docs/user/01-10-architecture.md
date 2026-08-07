@@ -2,7 +2,7 @@
 
 # Kyma Environment Broker Architecture
 
-![KEB architecture](../assets/keb-arch.drawio.svg)
+![KEB architecture](../assets/keb-arch.drawio.png)
 
 1. The user sends a request to create a new cluster with SAP BTP, Kyma runtime.
 2. KEB creates a Runtime resource.
