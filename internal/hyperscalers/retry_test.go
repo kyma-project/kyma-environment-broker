@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sort"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -72,10 +71,7 @@ func TestCandidateIndices_One(t *testing.T) {
 
 func TestCandidateIndices_Two(t *testing.T) {
 	got := candidateIndices(2)
-	sorted := append([]int{}, got...)
-	sort.Ints(sorted)
-	assert.Equal(t, []int{0, 1}, sorted)
-	assert.Len(t, got, 2)
+	assert.Equal(t, []int{0, 1}, got)
 }
 
 func TestCandidateIndices_Ten(t *testing.T) {

@@ -16,6 +16,13 @@ func candidateIndices(n int) []int {
 	if n <= 0 {
 		return nil
 	}
+	if n <= 4 {
+		result := make([]int, n)
+		for i := range result {
+			result[i] = i
+		}
+		return result
+	}
 	seen := make(map[int]struct{}, 4)
 	var result []int
 	for _, idx := range []int{0, n / 2, n - 1, rand.IntN(n)} {
