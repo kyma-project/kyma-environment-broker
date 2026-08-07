@@ -94,18 +94,13 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		return operation, 0, nil
 	}
 
-	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		msg := fmt.Sprintf("listing Gardener shoots in namespace %s", s.gardenerNS)
-		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, logger)
-	}
-
-	for _, shoot := range shootlist.Items {
-		sh := gardener.Shoot{Unstructured: shoot}
-		// shoots could be not migrated yet, that's why check also secretBindingName field
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName || sh.GetSpecSecretBindingName() == credentialsBindingName {
-			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, retrying", credentialsBindingName, sh.GetName()))
-			result, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s referencing credentials binding still exists, waiting for deletion", sh.GetName()), nil, 10*time.Second, s.shootWaitTimeout, logger)
+	// Only wait for the current instance's own shoot to be deleted.
+	// Other shoots may legitimately reference the same shared credentials binding.
+	if operation.ShootName != "" {
+		_, err = s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).Get(context.Background(), operation.ShootName, metav1.GetOptions{})
+		if err == nil {
+			logger.Info(fmt.Sprintf("Shoot %s for this instance still exists, waiting for deletion before releasing credentials binding %s", operation.ShootName, credentialsBindingName))
+			result, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s still exists, waiting for deletion", operation.ShootName), nil, 10*time.Second, s.shootWaitTimeout, logger)
 			if result.State == domain.Failed {
 				s.markCredentialsBindingDirty(credentialsBindingName, logger)
 			}
