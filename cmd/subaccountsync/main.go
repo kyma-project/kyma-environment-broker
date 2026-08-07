@@ -14,7 +14,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -149,7 +148,7 @@ func createDynamicK8sClient() dynamic.Interface {
 }
 
 func getResourceKindProvider(configProvider kebConfig.ConfigMapConfigProvider) schema.GroupVersionResource {
-	resourceKindProvider := kymacustomresource.NewResourceKindProvider(configProvider)
+	resourceKindProvider := customresources.NewResourceKindProvider(configProvider)
 	kymaGVR, err := resourceKindProvider.DefaultGvr()
 	fatalOnError(err)
 	return kymaGVR

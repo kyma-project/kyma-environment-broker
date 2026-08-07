@@ -3,13 +3,14 @@ package subaccountsync
 import "github.com/prometheus/client_golang/prometheus"
 
 type Metrics struct {
-	queue       prometheus.Gauge
-	timeInQueue prometheus.Gauge
-	dryRun      prometheus.Gauge
-	queueOps    *prometheus.CounterVec
-	cisRequests *prometheus.CounterVec
-	states      *prometheus.GaugeVec
-	informer    *prometheus.CounterVec
+	queue           prometheus.Gauge
+	timeInQueue     prometheus.Gauge
+	dryRun          prometheus.Gauge
+	queueOps        *prometheus.CounterVec
+	cisRequests     *prometheus.CounterVec
+	states          *prometheus.GaugeVec
+	kymaInformer    *prometheus.CounterVec
+	runtimeInformer *prometheus.CounterVec
 }
 
 func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
@@ -29,10 +30,15 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Name:      "cis_requests",
 			Help:      "CIS requests.",
 		}, []string{"endpoint", "status"}),
-		informer: prometheus.NewCounterVec(prometheus.CounterOpts{
+		kymaInformer: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
-			Name:      "informer",
-			Help:      "Informer stats.",
+			Name:      "kyma_informer",
+			Help:      "Kyma informer stats.",
+		}, []string{"event"}),
+		runtimeInformer: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "runtime_informer",
+			Help:      "Runtime informer stats.",
 		}, []string{"event"}),
 		queue: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
@@ -50,6 +56,6 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Help:      "Resources are not updated.",
 		}),
 	}
-	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue, m.dryRun)
+	reg.MustRegister(m.queue, m.queueOps, m.states, m.kymaInformer, m.runtimeInformer, m.cisRequests, m.timeInQueue, m.dryRun)
 	return m
 }

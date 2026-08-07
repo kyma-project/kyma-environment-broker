@@ -1,4 +1,4 @@
-package kymacustomresource
+package customresources
 
 import (
 	"context"
