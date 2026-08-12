@@ -44,6 +44,7 @@
 | global.ingress.<br>domainName | - | `localhost` |
 | global.istio.gateway | - | `kyma-system/kyma-gateway` |
 | global.istio.proxy.<br>port | - | `15020` |
+| global.istio.ambient.<br>enabled | - | `True` |
 | global.kyma_environment_<br>broker.<br>serviceAccountName | - | `kcp-kyma-environment-broker` |
 | global.secrets.<br>enabled | - | `True` |
 | global.secrets.<br>mechanism | - | `vso` |
