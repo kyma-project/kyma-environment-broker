@@ -621,29 +621,18 @@ func (b *UpdateEndpoint) insertActionForPlanUpgrade(updateStorage []string, prev
 }
 
 func (b *UpdateEndpoint) discoverZones(ctx context.Context, providerValues internal.ProviderValues, params internal.UpdatingParametersDTO, logger *slog.Logger, instance *internal.Instance) (map[string]int, error) {
-	discoveredZones := make(map[string]int)
+	var machineTypes []string
 	if params.MachineType != nil {
-		discoveredZones[*params.MachineType] = 0
+		machineTypes = append(machineTypes, *params.MachineType)
 	}
-
 	for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
-		discoveredZones[additionalWorkerNodePool.MachineType] = 0
+		machineTypes = append(machineTypes, additionalWorkerNodePool.MachineType)
 	}
 
-	client, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, instance.Parameters, providerValues)
-
+	discoveredZones, err := newHyperscalerClient(ctx, logger, b.rulesService, b.gardenerClient, b.factory, instance.Parameters, providerValues, machineTypes)
 	if err != nil {
-		logger.Error(fmt.Sprintf("unable to create %s hyperscaler client: %s", providerValues.ProviderType, err))
+		logger.Error(fmt.Sprintf("unable to validate zones for %s: %s", providerValues.ProviderType, err))
 		return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-	}
-
-	for machineType := range discoveredZones {
-		zonesCount, err := client.AvailableZonesCount(ctx, machineType)
-		if err != nil {
-			logger.Error(fmt.Sprintf("unable to get available zones: %s", err))
-			return nil, apiresponses.NewFailureResponse(errors.New(FailedToValidateZonesMsg), http.StatusBadRequest, FailedToValidateZonesMsg)
-		}
-		discoveredZones[machineType] = zonesCount
 	}
 
 	return discoveredZones, nil

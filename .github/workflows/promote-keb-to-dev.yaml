@@ -27,9 +27,9 @@ jobs:
     steps:
       - name: Validate required environment variables
         run: |
-          [ -z "${{ vars.GIT_USER_EMAIL }}" ] && echo "GIT_USER_EMAIL is required" && exit 1
-          [ -z "${{ vars.GIT_USER_NAME }}" ] && echo "GIT_USER_NAME is required" && exit 1
           [ -z "${{ vars.GH_TOOLS_HOST }}" ] && echo "GH_TOOLS_HOST is required" && exit 1
+          [ -z "${{ vars.GIT_TOOLS_USER_EMAIL }}" ] && echo "GIT_TOOLS_USER_EMAIL is required" && exit 1
+          [ -z "${{ vars.GIT_USER_NAME }}" ] && echo "GIT_USER_NAME is required" && exit 1
           [ -z "${{ vars.MP_CHARTS_REPO_NAME }}" ] && echo "MP_CHARTS_REPO_NAME is required" && exit 1
           echo "Validated"
 
@@ -37,7 +37,7 @@ jobs:
         id: enterprise-bot-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
+          client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
           github-api-url: https://${{ vars.GH_TOOLS_HOST }}/api/v3
           owner: kyma
@@ -73,8 +73,8 @@ jobs:
         env:
           MANAGEMENT_PLANE_CHARTS_WITH_USER: "https://x-access-token:${{ steps.enterprise-bot-token.outputs.token }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
         run: |
-          git config --global user.email ${{ vars.GIT_USER_EMAIL }}
-          git config --global user.name ${{ vars.GIT_USER_NAME }}
+          git config --global user.email "${{ vars.GIT_TOOLS_USER_EMAIL }}"
+          git config --global user.name "${{ vars.GIT_USER_NAME }}"
           git clone "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
 
       - name: Setup python

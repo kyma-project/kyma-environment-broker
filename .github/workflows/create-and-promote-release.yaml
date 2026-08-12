@@ -8,6 +8,10 @@ on:
         description: 'Create release'
         default: ""
         required: true
+      force:
+        type: boolean
+        description: 'Skip version validation (use when intentionally skipping versions)'
+        default: false
 
 permissions:
   contents: write
@@ -19,6 +23,7 @@ jobs:
     uses: "./.github/workflows/create-release.yaml"
     with:
       name: ${{ inputs.name }}
+      force: ${{ inputs.force }}
       skip-sec-file-and-chart-bump: false
       dry-run: false
     secrets: inherit

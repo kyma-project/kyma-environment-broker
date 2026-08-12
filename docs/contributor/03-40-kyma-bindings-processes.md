@@ -13,7 +13,7 @@ The following diagram shows the flow of creating a service binding in Kyma Envir
 > ### Note:
 > On the diagram, "error" refers to a foreseen error in the process, not a server error.
 
-![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
+![Bindings Create Flow](../assets/bindings-create-flow.drawio.png)
 
 The creation process is divided into three parts: configuration check, validation request, and binding creation.
 
@@ -54,7 +54,7 @@ Binding creation consists of the following steps:
 
 ## Fetching a Kyma Binding
 
-![Get Binding Flow](../assets/bindings-get-flow.drawio.svg)
+![Get Binding Flow](../assets/bindings-get-flow.drawio.png)
 
 The process starts with a GET request sent to the KEB API.
 KEB checks if the Kyma instance exists. The found instance must not be deprovisioned or suspended. Otherwise, the endpoint doesn't return bindings for such an instance. 
@@ -62,7 +62,7 @@ Existing bindings are retrieved by instance ID and binding ID. If any bindings e
 
 ## Deleting a Kyma Binding
 
-![Delete Binding Flow](../assets/bindings-delete-flow.drawio.svg)
+![Delete Binding Flow](../assets/bindings-delete-flow.drawio.png)
 
 The process starts with a DELETE request sent to the KEB API. The first instruction is to check if the Kyma instance that the request refers to exists.
 Any bindings of non-existing instances are treated as orphaned and removed. The next step is to conditionally delete the binding's ClusterRole, ClusterRoleBinding, and ServiceAccount, given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of the Kyma cluster, this is unnecessary because the cluster is removed anyway.

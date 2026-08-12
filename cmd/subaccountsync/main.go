@@ -12,8 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -71,6 +71,10 @@ func main() {
 	// create Kyma GVR
 	kymaGVR := getResourceKindProvider(kebConfig.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, kebConfig.RuntimeConfigurationRequiredFields))
 
+	// create Runtime GVR
+	runtimeGVR, err := customresources.GvrByName(customresources.RuntimeCr)
+	fatalOnError(err)
+
 	// create DB connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, dbConn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
@@ -99,7 +103,7 @@ func main() {
 	dynamicK8sClient := createDynamicK8sClient()
 
 	// create service
-	syncService := subsync.NewSyncService(AppPrefix, ctx, cfg, kymaGVR, db, dynamicK8sClient, metricsRegistry)
+	syncService := subsync.NewSyncService(AppPrefix, ctx, cfg, kymaGVR, runtimeGVR, db, dynamicK8sClient, metricsRegistry)
 	syncService.Run()
 }
 
@@ -144,7 +148,7 @@ func createDynamicK8sClient() dynamic.Interface {
 }
 
 func getResourceKindProvider(configProvider kebConfig.ConfigMapConfigProvider) schema.GroupVersionResource {
-	resourceKindProvider := kymacustomresource.NewResourceKindProvider(configProvider)
+	resourceKindProvider := customresources.NewResourceKindProvider(configProvider)
 	kymaGVR, err := resourceKindProvider.DefaultGvr()
 	fatalOnError(err)
 	return kymaGVR

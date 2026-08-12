@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers/azure"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -23,16 +24,9 @@ func newFactoryTestCredentials() azure.AzureCredentials {
 	}
 }
 
-func TestNewFactory_NoAzureCache(t *testing.T) {
-	spec := newFactoryTestSpec(t)
-	f := NewFactory(spec)
-	factory := f.(*hyperscalerFactory)
-	assert.Nil(t, factory.azureCache)
-}
-
 func TestNewFactoryWithAzureCache_NilFetcherNoCache(t *testing.T) {
 	spec := newFactoryTestSpec(t)
-	f := NewFactoryWithAzureCache(context.Background(), spec, nil)
+	f := NewFactoryWithAzureCache(context.Background(), spec, nil, cloud.AzurePublic)
 	factory := f.(*hyperscalerFactory)
 	assert.Nil(t, factory.azureCache, "azureCache must be nil when fetcher is nil")
 }
@@ -43,7 +37,7 @@ func TestNewFactoryWithAzureCache_CacheCreatedWhenFetcherProvided(t *testing.T) 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	f := NewFactoryWithAzureCache(ctx, spec, fetcher)
+	f := NewFactoryWithAzureCache(ctx, spec, fetcher, cloud.AzurePublic)
 	factory := f.(*hyperscalerFactory)
 	assert.NotNil(t, factory.azureCache)
 }
@@ -76,7 +70,7 @@ func TestNewPerCallFromSecret_AzureNeverUsesCachedClient(t *testing.T) {
 
 	f := NewFactoryWithAzureCache(ctx, spec, func() (azure.AzureCredentials, error) {
 		return newFactoryTestCredentials(), nil
-	})
+	}, cloud.AzurePublic)
 
 	client, err := f.NewPerCallFromSecret(context.Background(), pkg.Azure, newFactoryTestSecret(), "westeurope")
 	require.NoError(t, err)
@@ -89,6 +83,7 @@ func newFactoryTestSpec(t *testing.T) *configuration.ProviderSpec {
 	spec, err := configuration.NewProviderSpec(strings.NewReader(`
 azure:
   zonesDiscovery: true
+  clientConfiguration: public
   regions:
     westeurope:
       displayName: "West Europe"
