@@ -80,7 +80,7 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 			MachineTypes: []MachineType{},
 		}
 
-		secret, err := h.getSecret(strings.ToLower(string(provider)))
+		secret, err := h.getSecret(provider)
 		if err != nil {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
@@ -141,29 +141,29 @@ func (h *HandlerCB) getMachinesAvailability(w http.ResponseWriter, req *http.Req
 	httputil.WriteResponse(w, http.StatusOK, providersData)
 }
 
-func (h *HandlerCB) getSecret(provider string) (*unstructured.Unstructured, error) {
+func (h *HandlerCB) getSecret(provider runtime.CloudProvider) (*unstructured.Unstructured, error) {
 	matchedRule, err := h.matchRule(provider)
 	if err != nil {
 		return nil, err
 	}
 
-	credentialsBinding, err := h.getCredentialsBindingForRule(matchedRule)
-	if err != nil {
-		return nil, err
-	}
+	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(matchedRule)
+	labelSelector := labelSelectorBuilder.BuildAnySubscription()
 
-	h.logger.Info(fmt.Sprintf("getting subscription secret with name %s/%s", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName()))
-	secret, err := h.gardenerClient.GetSecret(credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get secret %s/%s: %w", credentialsBinding.GetSecretRefNamespace(), credentialsBinding.GetSecretRefName(), err)
-	}
-	return secret, nil
+	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
+	return hyperscalers.WithRetry(context.Background(), h.gardenerClient, labelSelector, h.logger,
+		func(_ context.Context, _ *gardener.CredentialsBinding, secret *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+			if _, err := h.factory.NewFromSecret(context.Background(), provider, secret, ""); err != nil {
+				return nil, fmt.Errorf("secret format validation failed: %w", err)
+			}
+			return secret, nil
+		})
 }
 
-func (h *HandlerCB) matchRule(provider string) (rules.Result, error) {
+func (h *HandlerCB) matchRule(provider runtime.CloudProvider) (rules.Result, error) {
 	attr := &rules.ProvisioningAttributes{
-		Plan:        provider,
-		Hyperscaler: provider,
+		Plan:        strings.ToLower(string(provider)),
+		Hyperscaler: strings.ToLower(string(provider)),
 	}
 
 	matchedRule, found := h.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
@@ -173,20 +173,4 @@ func (h *HandlerCB) matchRule(provider string) (rules.Result, error) {
 
 	h.logger.Info(fmt.Sprintf("matched rule: %q", matchedRule.Rule()))
 	return matchedRule, nil
-}
-
-func (h *HandlerCB) getCredentialsBindingForRule(matchedRule rules.Result) (*gardener.CredentialsBinding, error) {
-	labelSelectorBuilder := subscriptions.NewLabelSelectorFromRuleset(matchedRule)
-	labelSelector := labelSelectorBuilder.BuildAnySubscription()
-
-	h.logger.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelector))
-	credentialsBindings, err := h.gardenerClient.GetCredentialsBindings(labelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
-	}
-	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
-		return nil, fmt.Errorf("no credentials bindings found for selector %q", labelSelector)
-	}
-
-	return gardener.NewCredentialsBinding(credentialsBindings.Items[0]), nil
 }

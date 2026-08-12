@@ -51,3 +51,35 @@ func TestUnknownName(t *testing.T) {
 	_, err := GvkByName("unknown")
 	assert.ErrorContains(t, err, "unknown name")
 }
+
+func TestGvrByName(t *testing.T) {
+	tests := []struct {
+		name             string
+		expectedResource string
+		expectedGroup    string
+		expectedVersion  string
+	}{
+		{
+			name:             "runtime",
+			expectedResource: "runtimes",
+			expectedGroup:    "infrastructuremanager.kyma-project.io",
+			expectedVersion:  "v1",
+		},
+		{
+			name:             "kyma",
+			expectedResource: "kymas",
+			expectedGroup:    "operator.kyma-project.io",
+			expectedVersion:  "v1beta2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gvr, err := GvrByName(tt.name)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedResource, gvr.Resource)
+			assert.Equal(t, tt.expectedGroup, gvr.Group)
+			assert.Equal(t, tt.expectedVersion, gvr.Version)
+		})
+	}
+}
