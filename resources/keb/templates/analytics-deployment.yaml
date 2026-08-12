@@ -16,6 +16,9 @@ spec:
       labels:
         app.kubernetes.io/name: {{ .Values.analytics.name }}
         app.kubernetes.io/instance: {{ .Values.namePrefix }}
+        {{- if .Values.global.istio.ambient.enabled }}
+        {{- include "istio.ambientLabels" . | nindent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.analytics.serviceAccountName }}
       serviceAccountName: {{ .Values.analytics.serviceAccountName }}
