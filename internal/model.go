@@ -178,9 +178,9 @@ type ProviderValues struct {
 }
 
 type GroupedOperations struct {
-	ProvisionOperations      []ProvisioningOperation
-	DeprovisionOperations    []DeprovisioningOperation
-	UpdateOperations         []UpdatingOperation
+	ProvisionOperations   []ProvisioningOperation
+	DeprovisionOperations []DeprovisioningOperation
+	UpdateOperations      []UpdatingOperation
 }
 
 func (o *Operation) IsFinished() bool {
