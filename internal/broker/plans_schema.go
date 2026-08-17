@@ -909,10 +909,12 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 					Type:        "string",
 					MinLength:   1,
 					Description: "Specifies the taint key.",
+					Pattern:     `^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$`,
 				},
 				Value: Type{
 					Type:        "string",
 					Description: "Specifies the taint value.",
+					Pattern:     `^([a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?)?$`,
 				},
 				Effect: Type{
 					Type:        "string",
@@ -939,9 +941,12 @@ func NewLabelsSchema() *KeyValueType {
 		Description: "Use labels to identify, filter, and organize objects.",
 		ControlType: "keyvalue",
 		PatternProperties: map[string]interface{}{
-			".*": map[string]interface{}{"type": "string"},
+			".*": map[string]interface{}{
+				"type":    "string",
+				"pattern": `^([a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?)?$`,
+			},
 		},
-		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+		PropertyNames: map[string]interface{}{"pattern": `^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$`},
 	}
 }
 
@@ -953,7 +958,7 @@ func NewAnnotationsSchema() *KeyValueType {
 		PatternProperties: map[string]interface{}{
 			".*": map[string]interface{}{"type": "string"},
 		},
-		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+		PropertyNames: map[string]interface{}{"pattern": `^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$`},
 	}
 }
 

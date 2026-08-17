@@ -76,11 +76,12 @@
             "description": "Use labels to identify, filter, and organize objects.",
             "patternProperties": {
               ".*": {
+                "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?)?$",
                 "type": "string"
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
             },
             "type": "object"
           },
@@ -93,7 +94,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
             },
             "type": "object"
           },
@@ -124,11 +125,13 @@
                 "key": {
                   "description": "Specifies the taint key.",
                   "minLength": 1,
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
                 },
                 "value": {
                   "description": "Specifies the taint value.",
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?)?$"
                 }
               },
               "required": [
@@ -164,17 +167,17 @@
       "minimum": 2,
       "type": "integer"
     },
-    "machineType":{
-      "_enumDisplayName":{
-        "Standard_D4s_v5":"Standard_D4s_v5 (4vCPU, 16GB RAM)",
-        "Standard_D4_v3":"Standard_D4_v3 (4vCPU, 16GB RAM)"
+    "machineType": {
+      "_enumDisplayName": {
+        "Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)",
+        "Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"
       },
       "description": "Specifies the type of the virtual machine.",
-      "enum":[
+      "enum": [
         "Standard_D4s_v5",
         "Standard_D4_v3"
       ],
-      "type":"string"
+      "type": "string"
     },
     "modules": {
       "description": "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
