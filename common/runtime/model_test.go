@@ -17,7 +17,7 @@ func TestAdditionalWorkerNodePoolValidateLabels(t *testing.T) {
 		require.NoError(t, pool.ValidateLabels(map[string]string{k: "v"}, "pool-1"), "expected valid key: %q", k)
 	}
 
-	invalidKeys := []string{"my.label.()", "key with space", "/no-name"}
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
 	for _, k := range invalidKeys {
 		err := pool.ValidateLabels(map[string]string{k: "v"}, "pool-1")
 		require.Error(t, err, "expected invalid key: %q", k)
@@ -52,7 +52,7 @@ func TestAdditionalWorkerNodePoolValidateAnnotations(t *testing.T) {
 	require.NoError(t, pool.ValidateAnnotations(map[string]string{"app": "value(with)parens"}, "pool-1"))
 
 	// invalid keys
-	invalidKeys := []string{"my.label.()", "key with space", "/no-name"}
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
 	for _, k := range invalidKeys {
 		err := pool.ValidateAnnotations(map[string]string{k: "any-value"}, "pool-1")
 		require.Error(t, err, "expected invalid key: %q", k)
@@ -69,7 +69,7 @@ func TestAdditionalWorkerNodePoolValidateTaints(t *testing.T) {
 		require.NoError(t, err, "expected valid taint key: %q", k)
 	}
 
-	invalidKeys := []string{"my.label.()", "key with space", "/no-name"}
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
 	for _, k := range invalidKeys {
 		err := pool.ValidateTaints([]TaintDTO{{Key: k, Effect: TaintEffectNoSchedule}}, "pool-1")
 		require.Error(t, err, "expected invalid taint key: %q", k)

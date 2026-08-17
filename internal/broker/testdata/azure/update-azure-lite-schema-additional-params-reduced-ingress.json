@@ -78,7 +78,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
             },
             "type": "object"
           },
@@ -91,7 +91,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
             },
             "type": "object"
           },
@@ -123,7 +123,7 @@
                   "description": "Specifies the taint key.",
                   "minLength": 1,
                   "type": "string",
-                  "pattern": "^([a-zA-Z0-9][-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9]/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?([a-zA-Z0-9][-a-zA-Z0-9_.]*)?[a-zA-Z0-9]$"
                 },
                 "value": {
                   "description": "Specifies the taint value.",
