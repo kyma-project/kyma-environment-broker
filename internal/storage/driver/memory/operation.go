@@ -201,6 +201,9 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 		case internal.OperationTypeUpgradeCluster:
 			continue
 
+		case internal.OperationTypeUpgradeKyma:
+			continue
+
 		case internal.OperationTypeUpdate:
 			grouped.UpdateOperations = append(grouped.UpdateOperations, internal.UpdatingOperation{Operation: op})
 		default:
