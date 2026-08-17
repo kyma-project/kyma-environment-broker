@@ -2,13 +2,15 @@
 
 # Subaccount Sync
 
-Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma custom
+Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma and Runtime custom
 resource (CR) labels with subaccount attributes.
 
 ## Details
 
 The `operator.kyma-project.io/beta` and `operator.kyma-project.io/used-for-production` labels of all Kyma CRs for a given subaccount are synchronized 
 with the `Enable beta features` and `Used for Production` attributes respectively.
+
+The `operator.kyma-project.io/used-for-production` label of all Runtime CRs for a given subaccount is synchronized with the `Used for Production` attribute.
 The current state of the attributes is persisted in the `subaccount_states` database table.
 
 See the table structure:
@@ -25,8 +27,9 @@ The application periodically performs the following actions:
 * Fetches data for selected subaccounts from CIS Account service
 * Fetches events from CIS Event service for configurable time window
 * Monitors Kyma CRs using an informer and detects changes in the labels
+* Monitors Runtime CRs using an informer and detects changes in the label
 * Persists the desired (set in CIS) state of the attributes in the database
-* Updates the labels of the Kyma CRs if the state of the attributes has changed
+* Updates the labels of the Kyma CRs and Runtime CRs if the state of the attributes has changed
 
 ## Prerequisites
 
@@ -36,7 +39,7 @@ The application periodically performs the following actions:
 ### Dry-Run Mode
 
 Dry-run mode does not perform any changes on the control plane. Setting **SUBACCOUNT_SYNC_UPDATE_RESOURCES** to `false` runs the application in dry run mode.
-The updater is not created and no changes are made to the Kyma CRs. The application only fetches
+The updater is not created and no changes are made to the Kyma CRs or Runtime CRs. The application only fetches
 data from CIS and updates the database.
 Differences between the desired and current state of the attributes cause that the queue is filled with entries.
 Since this is an augmented queue with one entry per subaccount, its length does not exceed the number of subaccounts.
