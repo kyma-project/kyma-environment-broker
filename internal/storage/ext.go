@@ -45,7 +45,6 @@ type InstancesArchived interface {
 type Operations interface {
 	Provisioning
 	Deprovisioning
-	UpgradeCluster
 	Updating
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
@@ -81,13 +80,6 @@ type Deprovisioning interface {
 	GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error)
 	GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error)
 	UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error)
-}
-
-type UpgradeCluster interface {
-	InsertUpgradeClusterOperation(operation internal.UpgradeClusterOperation) error
-	UpdateUpgradeClusterOperation(operation internal.UpgradeClusterOperation) (*internal.UpgradeClusterOperation, error)
-	GetUpgradeClusterOperationByID(operationID string) (*internal.UpgradeClusterOperation, error)
-	ListUpgradeClusterOperationsByInstanceID(instanceID string) ([]internal.UpgradeClusterOperation, error)
 }
 
 type Updating interface {

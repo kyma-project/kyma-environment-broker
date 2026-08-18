@@ -367,8 +367,6 @@ func (s *instances) matchState(state dbmodel.InstanceState, op *internal.Operati
 		return op.Type == internal.OperationTypeProvision && op.State == domain.InProgress
 	case dbmodel.InstanceDeprovisioning:
 		return op.Type == internal.OperationTypeDeprovision && op.State == domain.InProgress
-	case dbmodel.InstanceUpgrading:
-		return op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress
 	case dbmodel.InstanceUpdating:
 		return op.Type == internal.OperationTypeUpdate && op.State == domain.InProgress
 	case dbmodel.InstanceDeprovisioned:
