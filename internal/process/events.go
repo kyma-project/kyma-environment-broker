@@ -30,12 +30,6 @@ type DeprovisioningStepProcessed struct {
 	Operation    internal.DeprovisioningOperation
 }
 
-type UpgradeClusterStepProcessed struct {
-	StepProcessed
-	OldOperation internal.UpgradeClusterOperation
-	Operation    internal.UpgradeClusterOperation
-}
-
 type ProvisioningSucceeded struct {
 	Operation internal.ProvisioningOperation
 }

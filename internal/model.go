@@ -160,6 +160,10 @@ type Operation struct {
 
 	// RawParameters stores the verbatim JSON payload submitted by the caller (not modified by merging)
 	RawParameters json.RawMessage `json:"rawParameters,omitempty"`
+
+	// RuntimeResourceCreatedAt stores when the broker started tracking the Runtime CR provisioning readiness retries.
+	// Used for timeout calculation that starts from the first runtime provisioning check, not OSB request arrival.
+	RuntimeResourceCreatedAt *time.Time `json:"runtimeResourceCreatedAt,omitempty"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)
@@ -178,10 +182,9 @@ type ProviderValues struct {
 }
 
 type GroupedOperations struct {
-	ProvisionOperations      []ProvisioningOperation
-	DeprovisionOperations    []DeprovisioningOperation
-	UpgradeClusterOperations []UpgradeClusterOperation
-	UpdateOperations         []UpdatingOperation
+	ProvisionOperations   []ProvisioningOperation
+	DeprovisionOperations []DeprovisioningOperation
+	UpdateOperations      []UpdatingOperation
 }
 
 func (o *Operation) IsFinished() bool {
@@ -291,11 +294,6 @@ type DeprovisioningOperation struct {
 }
 
 type UpdatingOperation struct {
-	Operation
-}
-
-// UpgradeClusterOperation holds all information about upgrade cluster (shoot) operation
-type UpgradeClusterOperation struct {
 	Operation
 }
 
