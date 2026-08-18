@@ -253,7 +253,7 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotZero(t, backoff)
 		assert.NotNil(t, postOperation2.RuntimeResourceCreatedAt)
-		assert.Equal(t, firstTimestamp, postOperation2.RuntimeResourceCreatedAt, "RuntimeResourceCreatedAt should not change on retry")
+		assert.True(t, firstTimestamp.Equal(*postOperation2.RuntimeResourceCreatedAt), "RuntimeResourceCreatedAt should not change on retry")
 	})
 
 	t.Run("timeout calculated from RuntimeResourceCreatedAt not operation.CreatedAt", func(t *testing.T) {
