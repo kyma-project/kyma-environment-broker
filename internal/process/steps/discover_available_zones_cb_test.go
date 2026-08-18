@@ -344,7 +344,7 @@ func TestDiscoverAvailableZonesCBStep_AWSUpdateHappyPath(t *testing.T) {
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
-	operation := fixture.FixUpdatingOperation(operationID, instanceID).Operation
+	operation := fixture.FixUpdatingOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.RuntimeID = instance.RuntimeID
 	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
@@ -449,7 +449,7 @@ func TestDiscoverAvailableZonesCBStep_AzureUpdateHappyPath(t *testing.T) {
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
-	operation := fixture.FixUpdatingOperation(operationID, instanceID).Operation
+	operation := fixture.FixUpdatingOperation(operationID, instanceID)
 	operation.InstanceDetails.ProviderValues = &internal.ProviderValues{ProviderType: "azure", Region: "westeurope"}
 	operation.RuntimeID = instance.RuntimeID
 	operation.UpdatingParameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{

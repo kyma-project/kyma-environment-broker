@@ -222,7 +222,7 @@ func TestRuntimeHandler(t *testing.T) {
 		updOp2 := fixture.FixUpdatingOperation(fixRandomID(), testID2)
 		updOp2.State = domain.Failed
 		updOp2.CreatedAt = updOp2.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpdatingOperation(updOp2)
+		err = operations.InsertOperation(updOp2)
 		require.NoError(t, err)
 
 		provOp3 := fixture.FixProvisioningOperation(fixRandomID(), testID3)
@@ -231,7 +231,7 @@ func TestRuntimeHandler(t *testing.T) {
 		updOp3 := fixture.FixUpdatingOperation(fixRandomID(), testID3)
 		updOp3.State = domain.Failed
 		updOp3.CreatedAt = updOp3.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpdatingOperation(updOp3)
+		err = operations.InsertOperation(updOp3)
 		require.NoError(t, err)
 		deprovOp3 := fixture.FixDeprovisioningOperation(fixRandomID(), testID3)
 		deprovOp3.State = domain.Succeeded
@@ -531,7 +531,7 @@ func TestRuntimeHandler(t *testing.T) {
 		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpdatingOperation(updOp)
+		err = operations.InsertOperation(updOp)
 		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
@@ -739,7 +739,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpdatingOperation(updOp)
+		err = operations.InsertOperation(updOp)
 		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
@@ -845,7 +845,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID1)
 		updOp.State = domain.Succeeded
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpdatingOperation(updOp)
+		err = operations.InsertOperation(updOp)
 		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(db, 4, "", k8sClient, log)

@@ -17,15 +17,13 @@ import (
 type operations struct {
 	mu sync.Mutex
 
-	operations       map[string]internal.Operation
-	updateOperations map[string]internal.UpdatingOperation
+	operations map[string]internal.Operation
 }
 
 // NewOperation creates in-memory storage for OSB operations.
 func NewOperation() *operations {
 	return &operations{
-		operations:       make(map[string]internal.Operation, 0),
-		updateOperations: make(map[string]internal.UpdatingOperation, 0),
+		operations: make(map[string]internal.Operation, 0),
 	}
 }
 
@@ -187,7 +185,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
 		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
-		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+		UpdateOperations:         make([]internal.Operation, 0),
 		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
 
@@ -206,7 +204,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			continue
 
 		case internal.OperationTypeUpdate:
-			grouped.UpdateOperations = append(grouped.UpdateOperations, internal.UpdatingOperation{Operation: op})
+			grouped.UpdateOperations = append(grouped.UpdateOperations, op)
 		default:
 			panic("Invalid type of operation")
 		}
@@ -214,7 +212,10 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
 	s.sortDeprovisioningByCreatedAtDesc(grouped.DeprovisionOperations)
-	s.sortUpdateByCreatedAt(grouped.UpdateOperations)
+	s.sortOperationsByCreatedAtDesc(grouped.UpgradeClusterOperations)
+	sort.Slice(grouped.UpdateOperations, func(i, j int) bool {
+		return grouped.UpdateOperations[i].CreatedAt.Before(grouped.UpdateOperations[j].CreatedAt)
+	})
 
 	return &grouped, nil
 }
@@ -318,20 +319,6 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 			}
 		}
 	}
-	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			if len(types) > 0 {
-				for _, t := range types {
-					if op.Type == t {
-						rows = append(rows, op.Operation)
-					}
-				}
-			} else {
-				rows = append(rows, op.Operation)
-			}
-		}
-	}
-
 	if len(rows) == 0 {
 		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
 	}
@@ -352,11 +339,6 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	for _, op := range s.operations {
 		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			rows = append(rows, op)
-		}
-	}
-	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			rows = append(rows, op.Operation)
 		}
 	}
 
@@ -398,26 +380,11 @@ func (s *operations) GetOperationByID(operationID string) (*internal.Operation, 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var res *internal.Operation
-
-	provisionOp, exists := s.operations[operationID]
-	if exists {
-		res = &provisionOp
-	}
-	updateOp, exists := s.updateOperations[operationID]
-	if exists {
-		res = &updateOp.Operation
-	}
 	op, exists := s.operations[operationID]
-	if exists {
-		res = &op
-	}
-
-	if res == nil {
+	if !exists {
 		return nil, dberr.NotFound("Operation with id %s not exist", operationID)
 	}
-
-	return res, nil
+	return &op, nil
 }
 
 func (s *operations) GetNotFinishedOperationsByType(opType internal.OperationType) ([]internal.Operation, error) {
@@ -448,13 +415,6 @@ func (s *operations) GetOperationsForIDs(opIdList []string) ([]internal.Operatio
 	defer s.mu.Unlock()
 
 	ops := make([]internal.Operation, 0)
-	for _, opID := range opIdList {
-		for _, op := range s.updateOperations {
-			if op.Operation.ID == opID {
-				ops = append(ops, op.Operation)
-			}
-		}
-	}
 	for _, opID := range opIdList {
 		for _, op := range s.operations {
 			if op.ID == opID {
@@ -550,77 +510,8 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 		nil
 }
 
-func (s *operations) InsertUpdatingOperation(operation internal.UpdatingOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.ID
-	if _, exists := s.updateOperations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.updateOperations[id] = operation
-	return nil
-}
-
 func (s *operations) ListShortOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
 	panic("not implemented")
-}
-
-func (s *operations) GetUpdatingOperationByID(operationID string) (*internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, op := range s.updateOperations {
-		if op.ID == operationID {
-			return &op, nil
-		}
-	}
-
-	return nil, dberr.NotFound("instance update operation with ID %s not found", operationID)
-}
-
-func (s *operations) UpdateUpdatingOperation(op internal.UpdatingOperation) (*internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.updateOperations[op.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update updating operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.updateOperations[op.ID] = op
-
-	return &op, nil
-}
-
-func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	operations := make([]internal.UpdatingOperation, 0)
-	for _, v := range s.updateOperations {
-		if instanceID != v.InstanceID {
-			continue
-		}
-
-		operations = append(operations, v)
-	}
-
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
-	})
-
-	return operations, nil
-}
-
-func (s *operations) sortUpdateByCreatedAt(operations []internal.UpdatingOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
-	})
 }
 
 func (s *operations) sortProvisioningByCreatedAtDesc(operations []internal.ProvisioningOperation) {

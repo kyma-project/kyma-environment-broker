@@ -184,7 +184,7 @@ type ProviderValues struct {
 type GroupedOperations struct {
 	ProvisionOperations      []ProvisioningOperation
 	DeprovisionOperations    []DeprovisioningOperation
-	UpdateOperations         []UpdatingOperation
+	UpdateOperations         []Operation
 	UpgradeClusterOperations []Operation
 }
 
@@ -291,10 +291,6 @@ type MonitoringData struct {
 
 // DeprovisioningOperation holds all information about de-provisioning operation
 type DeprovisioningOperation struct {
-	Operation
-}
-
-type UpdatingOperation struct {
 	Operation
 }
 

@@ -48,7 +48,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	err = operations.InsertOperation(operation)
@@ -70,7 +70,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -98,7 +98,7 @@ func TestUpdateRuntimeStep_RunUpdateACL(t *testing.T) {
 	runtime := fixRuntimeResourceWithACL(runtimeResourceName, []string{"7.7.7.8/30"})
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtime).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -128,7 +128,7 @@ func TestUpdateRuntimeStep_RunDeleteACL(t *testing.T) {
 	runtime := fixRuntimeResourceWithACL(runtimeResourceName, []string{"7.7.7.8/30"})
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtime).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -157,7 +157,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	expectedOIDCConfig := imv1.OIDCConfig{
@@ -205,7 +205,7 @@ func TestUpdateRuntimeStep_RunUpdateRemoveJWKSConfig(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidcWithJWKS(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters.OIDC.EncodedJwksArray = "-"
@@ -254,7 +254,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	expectedOIDCConfig := imv1.OIDCConfig{
@@ -302,7 +302,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -387,7 +387,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -515,7 +515,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -585,7 +585,7 @@ func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
 				MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction,
 				IngressFilteringPlans: []string{"aws", "gcp", "azure"}}
 
-			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+			operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 			operation.RuntimeResourceName = runtimeResourceName
 			operation.KymaResourceNamespace = kcpSystemNamespace
 			operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -636,7 +636,7 @@ func TestUpdateRuntimeStep_RunUpdateSingleOIDCRequiredClaimsDash(t *testing.T) {
 	}}
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(initialRuntime).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters.OIDC.OIDCConfigDTO.RequiredClaims = []string{"-"}
@@ -667,7 +667,7 @@ func TestUpdateRuntimeStep_ZonesDiscovery(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = runtimeResourceName
@@ -754,7 +754,7 @@ func TestUpdateRuntimeStep_GvisorOnMainWorker(t *testing.T) {
 			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithCRI(runtimeResourceName, tc.initialCRI)).Build()
 			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
-			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+			operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 			operation.ProviderValues = &internal.ProviderValues{}
 			operation.RuntimeResourceName = runtimeResourceName
 			operation.KymaResourceNamespace = kcpSystemNamespace
@@ -793,7 +793,7 @@ func TestUpdateRuntimeStep_GvisorOnMainAndAdditionalWorkers(t *testing.T) {
 		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
 		fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = runtimeResourceName
@@ -886,7 +886,7 @@ aws:
 `))
 	require.NoError(t, err)
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = runtimeResourceName
@@ -983,7 +983,7 @@ aws:
 `))
 	require.NoError(t, err)
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = runtimeResourceName
@@ -1032,7 +1032,7 @@ func TestUpdateRuntimeStep_SkipMachineTypeUpdateWhenMachineTypeParameterIsNil(t 
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
@@ -1062,7 +1062,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeSizeGi_PersistedFromPreviousUpdate(t 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
@@ -1460,7 +1460,7 @@ meters:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{
@@ -1535,7 +1535,7 @@ meters:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
@@ -1619,7 +1619,7 @@ meters:
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, &configuration.ProviderSpec{}), fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
 	autoScalerMax := 10
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
@@ -1708,7 +1708,7 @@ meters:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{
@@ -1797,7 +1797,7 @@ aws:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws", DefaultMachineType: "m7i.large"}
@@ -1873,7 +1873,7 @@ aws:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, workers.NewProvider(broker.InfrastructureManager{}, providerSpec), fixValuesProvider(), whitelist.Set{}, providerSpec, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
@@ -1945,7 +1945,7 @@ meters:
 	db := storage.NewMemoryStorage()
 	step := NewUpdateRuntimeStep(db, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, kcrProvider, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	operation.ProviderValues = &internal.ProviderValues{
@@ -1983,7 +1983,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnMainWorker(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(runtimeResourceName)).Build()
 	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, broker.InfrastructureManager{}, &workers.Provider{}, fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{}
 	operation.RuntimeResourceName = runtimeResourceName
 	operation.KymaResourceNamespace = kcpSystemNamespace
@@ -2018,7 +2018,7 @@ func TestUpdateRuntimeStep_AdditionalVolumeSizeGiOnAdditionalWorkers(t *testing.
 		workers.NewProvider(broker.InfrastructureManager{}, fixture.NewProviderSpecWithZonesDiscovery(t, true)),
 		fixValuesProvider(), whitelist.Set{}, &configuration.ProviderSpec{}, nil, false)
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.RuntimeResourceName = runtimeResourceName

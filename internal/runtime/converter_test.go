@@ -62,13 +62,11 @@ func TestConverting_Updating(t *testing.T) {
 	// when
 	dto, _ := svc.NewDTO(instance)
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
-	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{{
-		Operation: internal.Operation{
-			CreatedAt:     time.Now().Add(time.Second),
-			ID:            "prov-id",
-			State:         domain.InProgress,
-			UpdatedPlanID: broker.BuildRuntimeAWSPlanID,
-		},
+	svc.ApplyUpdateOperations(&dto, []internal.Operation{{
+		CreatedAt:     time.Now().Add(time.Second),
+		ID:            "prov-id",
+		State:         domain.InProgress,
+		UpdatedPlanID: broker.BuildRuntimeAWSPlanID,
 	}}, 1)
 
 	// then
@@ -84,12 +82,10 @@ func TestConverting_UpdateFailed(t *testing.T) {
 	// when
 	dto, _ := svc.NewDTO(instance)
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
-	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{{
-		Operation: internal.Operation{
-			CreatedAt: time.Now().Add(time.Second),
-			ID:        "prov-id",
-			State:     domain.Failed,
-		},
+	svc.ApplyUpdateOperations(&dto, []internal.Operation{{
+		CreatedAt: time.Now().Add(time.Second),
+		ID:        "prov-id",
+		State:     domain.Failed,
 	}}, 1)
 
 	// then
@@ -193,12 +189,10 @@ func TestConverting_SuspendedAndUpdated(t *testing.T) {
 	dto, _ := svc.NewDTO(instance)
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
 	svc.ApplySuspensionOperations(&dto, fixSuspensionOperation(domain.Succeeded, time.Now().Add(time.Second)))
-	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{{
-		Operation: internal.Operation{
-			CreatedAt: time.Now().Add(2 * time.Second),
-			ID:        "prov-id",
-			State:     domain.Succeeded,
-		},
+	svc.ApplyUpdateOperations(&dto, []internal.Operation{{
+		CreatedAt: time.Now().Add(2 * time.Second),
+		ID:        "prov-id",
+		State:     domain.Succeeded,
 	}}, 1)
 
 	// then
@@ -214,12 +208,10 @@ func TestConverting_SuspendedAndUpdateFAiled(t *testing.T) {
 	dto, _ := svc.NewDTO(instance)
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
 	svc.ApplySuspensionOperations(&dto, fixSuspensionOperation(domain.Succeeded, time.Now().Add(time.Second)))
-	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{{
-		Operation: internal.Operation{
-			CreatedAt: time.Now().Add(2 * time.Second),
-			ID:        "prov-id",
-			State:     domain.Failed,
-		},
+	svc.ApplyUpdateOperations(&dto, []internal.Operation{{
+		CreatedAt: time.Now().Add(2 * time.Second),
+		ID:        "prov-id",
+		State:     domain.Failed,
 	}}, 1)
 
 	// then
@@ -415,23 +407,21 @@ func TestApplyOperation_UpdateRawParametersShowsOnlySubmittedFields(t *testing.T
 	svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
 
 	rawUpdateParams := json.RawMessage(`{"autoScalerMax":21}`)
-	updateOp := internal.UpdatingOperation{
-		Operation: internal.Operation{
-			CreatedAt:     time.Now().Add(time.Second),
-			ID:            "upd-id",
-			State:         domain.Succeeded,
-			RawParameters: rawUpdateParams,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: runtime.ProvisioningParametersDTO{
-					// merged state contains more fields than submitted
-					Name: "merged-name",
-				},
+	updateOp := internal.Operation{
+		CreatedAt:     time.Now().Add(time.Second),
+		ID:            "upd-id",
+		State:         domain.Succeeded,
+		RawParameters: rawUpdateParams,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			Parameters: runtime.ProvisioningParametersDTO{
+				// merged state contains more fields than submitted
+				Name: "merged-name",
 			},
 		},
 	}
 
 	// when
-	svc.ApplyUpdateOperations(&dto, []internal.UpdatingOperation{updateOp}, 1)
+	svc.ApplyUpdateOperations(&dto, []internal.Operation{updateOp}, 1)
 
 	// then
 	require.Len(t, dto.Status.Update.Data, 1)

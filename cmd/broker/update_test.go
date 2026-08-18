@@ -2411,7 +2411,14 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, internal.OperationTypeDeprovision, lastOp.Type, "last operation should be type deprovision")
 
-	updateOps, err := suite.db.Operations().ListUpdatingOperationsByInstanceID(iid)
+	allOps, err := suite.db.Operations().ListOperationsByInstanceID(iid)
+	require.NoError(t, err)
+	var updateOps []internal.Operation
+	for _, op := range allOps {
+		if op.Type == internal.OperationTypeUpdate {
+			updateOps = append(updateOps, op)
+		}
+	}
 	require.NoError(t, err)
 	assert.Len(t, updateOps, 0, "should not create any update operations")
 }

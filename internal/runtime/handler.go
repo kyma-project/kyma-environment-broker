@@ -388,11 +388,7 @@ func (h *Handler) addLastOperationToRuntime(dto *pkg.RuntimeDTO) error {
 		h.converter.ApplyUpgradingClusterOperations(dto, []internal.Operation{*lastOp}, 1)
 
 	case internal.OperationTypeUpdate:
-		updOp, err := h.operationsDb.GetUpdatingOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching update operation for instance %s: %w", dto.InstanceID, err)
-		}
-		h.converter.ApplyUpdateOperations(dto, []internal.UpdatingOperation{*updOp}, 1)
+		h.converter.ApplyUpdateOperations(dto, []internal.Operation{*lastOp}, 1)
 
 	default:
 		return fmt.Errorf("unsupported operation type: %s", lastOp.Type)

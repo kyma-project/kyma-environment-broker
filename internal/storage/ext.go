@@ -45,7 +45,6 @@ type InstancesArchived interface {
 type Operations interface {
 	Provisioning
 	Deprovisioning
-	Updating
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
 	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
@@ -80,13 +79,6 @@ type Deprovisioning interface {
 	GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error)
 	GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error)
 	UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error)
-}
-
-type Updating interface {
-	InsertUpdatingOperation(operation internal.UpdatingOperation) error
-	GetUpdatingOperationByID(operationID string) (*internal.UpdatingOperation, error)
-	ListUpdatingOperationsByInstanceID(instanceID string) ([]internal.UpdatingOperation, error)
-	UpdateUpdatingOperation(operation internal.UpdatingOperation) (*internal.UpdatingOperation, error)
 }
 
 type Events interface {
