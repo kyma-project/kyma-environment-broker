@@ -777,8 +777,8 @@ func (f *fixedVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (m
 }
 
 func TestSchemaKeyPatternMatchesBackendValidation(t *testing.T) {
-	keyPattern := regexp.MustCompile(`^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$`)
-	valuePattern := regexp.MustCompile(`^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$`)
+	keyPattern := regexp.MustCompile(k8sLabelKeyPattern)
+	valuePattern := regexp.MustCompile(k8sLabelValuePattern)
 
 	validKeys := []string{"app", "app.kubernetes.io/name", "a", "x-y.z_1", "MyName", "123-abc", "a/name"}
 	for _, k := range validKeys {
