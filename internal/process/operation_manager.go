@@ -127,10 +127,25 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 	return op, retry, err
 }
 
-func (om *OperationManager) RetryOperationWithCreatedAt(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	log.Debug("Retry Operation was called", "message", errorMessage)
+func (om *OperationManager) RetryOperationForRuntimeResourceProvisioning(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	log.Debug("Retry Operation for runtime resource provisioning check was called", "message", errorMessage)
 
-	sinceCreation := time.Since(operation.CreatedAt)
+	// Store timestamp on first execution of Check_RuntimeResource_Provisioning step
+	if operation.RuntimeResourceCreatedAt == nil {
+		now := time.Now()
+		operation.RuntimeResourceCreatedAt = &now
+		// Update the operation to persist the timestamp
+		updatedOp, backoff, updateErr := om.UpdateOperation(operation, func(op *internal.Operation) {
+			op.RuntimeResourceCreatedAt = operation.RuntimeResourceCreatedAt
+		}, log)
+		if backoff != 0 {
+			log.Warn("Failed to persist runtime resource creation time, will retry")
+			return updatedOp, backoff, updateErr
+		}
+		operation = updatedOp
+	}
+
+	sinceCreation := time.Since(*operation.RuntimeResourceCreatedAt)
 
 	if sinceCreation <= maxTime {
 		remainingTime := maxTime - sinceCreation
