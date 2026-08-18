@@ -112,7 +112,7 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 }
 
 func (s *checkRuntimeResourceProvisioning) RetryOrFail(operation internal.Operation, log *slog.Logger, runtime *imv1.Runtime) (internal.Operation, time.Duration, error) {
-	retryOperation, retry, err := s.operationManager.RetryOperationWithCreatedAt(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
+	retryOperation, retry, err := s.operationManager.RetryOperationForRuntimeResourceProvisioning(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
 	if retryOperation.State == domain.Failed {
 		log.Error(fmt.Sprintf("runtime resource state: %s", runtime.Status.State))
 		log.Error(fmt.Sprintf("runtime resource provisioningCompleted: %v", runtime.Status.ProvisioningCompleted))
