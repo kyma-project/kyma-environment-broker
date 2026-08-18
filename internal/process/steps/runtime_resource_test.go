@@ -183,9 +183,6 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		// given
 		operation := createFakeProvisioningOp("4")
 		operation.CreatedAt = time.Now().Add(-1*ProvisioningTakesLongerThanUsualForTesting - 20*time.Second)
-		// Simulate that RuntimeResourceCreatedAt was set long ago (step has been running for a while)
-		runtimeResourceCreatedAt := time.Now().Add(-1*ProvisioningTakesLongerThanUsualForTesting - 20*time.Second)
-		operation.RuntimeResourceCreatedAt = &runtimeResourceCreatedAt
 		operation.Description = "Operation created"
 		err = os.InsertOperation(operation)
 		assert.NoError(t, err)
