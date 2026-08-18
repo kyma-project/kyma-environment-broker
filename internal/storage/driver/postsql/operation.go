@@ -147,9 +147,10 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	}
 
 	grouped := internal.GroupedOperations{
-		ProvisionOperations:   make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations: make([]internal.DeprovisioningOperation, 0),
-		UpdateOperations:      make([]internal.UpdatingOperation, 0),
+		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
 
 	for _, op := range operations {
@@ -169,7 +170,11 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
 
 		case internal.OperationTypeUpgradeCluster:
-			continue
+			ret, err := s.toOperation(&op, internal.Operation{})
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, ret)
 		case internal.OperationTypeUpdate:
 			ret, err := s.toUpdateOperation(&op)
 			if err != nil {

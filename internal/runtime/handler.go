@@ -340,6 +340,13 @@ func (h *Handler) addAllOperationsToRuntime(dto *pkg.RuntimeDTO) error {
 	}
 	h.converter.ApplyUpdateOperations(dto, uOprs, totalCount)
 
+	ucOprs := operationsGroup.UpgradeClusterOperations
+	ucTotalCount := len(ucOprs)
+	if len(ucOprs) > numberOfUpgradeOperationsToReturn {
+		ucOprs = ucOprs[:numberOfUpgradeOperationsToReturn]
+	}
+	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, ucTotalCount)
+
 	return nil
 }
 

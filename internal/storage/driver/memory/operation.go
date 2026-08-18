@@ -185,9 +185,10 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	defer s.mu.Unlock()
 
 	grouped := internal.GroupedOperations{
-		ProvisionOperations:   make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations: make([]internal.DeprovisioningOperation, 0),
-		UpdateOperations:      make([]internal.UpdatingOperation, 0),
+		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
 
 	for _, op := range s.operations {
@@ -199,7 +200,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, internal.DeprovisioningOperation{Operation: op})
 
 		case internal.OperationTypeUpgradeCluster:
-			continue
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, op)
 
 		case internal.OperationTypeUpgradeKyma:
 			continue
