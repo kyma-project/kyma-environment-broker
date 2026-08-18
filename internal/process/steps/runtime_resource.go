@@ -97,7 +97,8 @@ func (s *checkRuntimeResourceProvisioning) Run(operation internal.Operation, log
 	if state == imv1.RuntimeStateReady {
 		return operation, 0, nil
 	} else {
-		if time.Since(operation.CreatedAt) > s.changeDescriptionThreshold {
+		// Check if we should update description based on RuntimeResourceCreatedAt
+		if operation.RuntimeResourceCreatedAt != nil && time.Since(*operation.RuntimeResourceCreatedAt) > s.changeDescriptionThreshold {
 			var backoff time.Duration
 			operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 				op.Description = ProvisioningTakesLongerMessage(s.runtimeResourceStateRetry.Timeout)
