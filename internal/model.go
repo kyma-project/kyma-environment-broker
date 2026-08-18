@@ -161,8 +161,8 @@ type Operation struct {
 	// RawParameters stores the verbatim JSON payload submitted by the caller (not modified by merging)
 	RawParameters json.RawMessage `json:"rawParameters,omitempty"`
 
-	// RuntimeResourceCreatedAt stores when the Runtime CR was created during provisioning
-	// Used for timeout calculation that starts from Runtime CR creation, not OSB request arrival
+	// RuntimeResourceCreatedAt stores when the broker started tracking the Runtime CR provisioning readiness retries.
+	// Used for timeout calculation that starts from the first runtime provisioning check, not OSB request arrival.
 	RuntimeResourceCreatedAt *time.Time `json:"runtimeResourceCreatedAt,omitempty"`
 }
 
