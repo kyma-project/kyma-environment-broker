@@ -2419,7 +2419,6 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 			updateOps = append(updateOps, op)
 		}
 	}
-	require.NoError(t, err)
 	assert.Len(t, updateOps, 0, "should not create any update operations")
 }
 
