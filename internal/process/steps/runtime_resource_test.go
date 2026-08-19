@@ -203,6 +203,82 @@ func TestCheckRuntimeResourceProvisioningStep(t *testing.T) {
 		dbOperation, _ := os.GetOperationByID("4")
 		assert.Equal(t, ProvisioningTakesLongerMessage(ProvisioningTimeoutForTesting), dbOperation.Description)
 	})
+
+	t.Run("set RuntimeResourceCreatedAt on first execution", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("5")
+		assert.Nil(t, operation.RuntimeResourceCreatedAt)
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+
+		// when
+		postOperation, backoff, err := step.Run(operation, fixLogger())
+
+		// then
+		assert.NoError(t, err)
+		assert.NotZero(t, backoff)
+		assert.NotNil(t, postOperation.RuntimeResourceCreatedAt)
+
+		dbOperation, _ := os.GetOperationByID("5")
+		assert.NotNil(t, dbOperation.RuntimeResourceCreatedAt)
+	})
+
+	t.Run("preserve RuntimeResourceCreatedAt across retries", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("6")
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: ProvisioningTimeoutForTesting, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+
+		// when - first execution
+		postOperation1, _, _ := step.Run(operation, fixLogger())
+		firstTimestamp := postOperation1.RuntimeResourceCreatedAt
+		assert.NotNil(t, firstTimestamp)
+
+		time.Sleep(10 * time.Millisecond) // ensure time has passed
+
+		// when - second execution (retry)
+		postOperation2, backoff, err := step.Run(postOperation1, fixLogger())
+
+		// then
+		assert.NoError(t, err)
+		assert.NotZero(t, backoff)
+		assert.NotNil(t, postOperation2.RuntimeResourceCreatedAt)
+		assert.True(t, firstTimestamp.Equal(*postOperation2.RuntimeResourceCreatedAt), "RuntimeResourceCreatedAt should not change on retry")
+	})
+
+	t.Run("timeout calculated from RuntimeResourceCreatedAt not operation.CreatedAt", func(t *testing.T) {
+		// given
+		operation := createFakeProvisioningOp("7")
+		// Simulate operation that was in queue for 2 hours before step executed
+		operation.CreatedAt = time.Now().Add(-2 * time.Hour)
+		err = os.InsertOperation(operation)
+		assert.NoError(t, err)
+
+		existingRuntime := createRuntime("In Progress")
+		k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
+
+		// Set timeout to 30 seconds - if calculated from CreatedAt, it would immediately fail
+		step := NewCheckRuntimeResourceProvisioningStep(os, k8sClient, internal.RetryTuple{Timeout: 30 * time.Second, Interval: time.Second}, ProvisioningTakesLongerThanUsualForTesting)
+
+		// when - first execution sets RuntimeResourceCreatedAt to now
+		postOperation, backoff, err := step.Run(operation, fixLogger())
+
+		// then - should NOT timeout because RuntimeResourceCreatedAt is recent
+		assert.NoError(t, err)
+		assert.NotZero(t, backoff, "Should retry, not timeout")
+		assert.NotEqual(t, domain.Failed, postOperation.State, "Should NOT fail due to timeout")
+		assert.NotNil(t, postOperation.RuntimeResourceCreatedAt)
+	})
 }
 
 func createRuntime(state imv1.State) imv1.Runtime {

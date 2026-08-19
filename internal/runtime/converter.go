@@ -16,7 +16,7 @@ type Converter interface {
 	NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error)
 	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation)
 	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation)
-	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int)
+	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
 	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.UpdatingOperation, totalCount int)
 	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation)
 	ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.ProvisioningOperation)
@@ -151,7 +151,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 	return toReturn, nil
 }
 
-func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int) {
+func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -159,7 +159,7 @@ func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []
 	dto.Status.UpgradingCluster.Data = make([]pkg.Operation, 0)
 	for _, o := range oprs {
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		dto.Status.UpgradingCluster.Data = append(dto.Status.UpgradingCluster.Data, op)
 	}
 	dto.Status.UpgradingCluster.TotalCount = totalCount
