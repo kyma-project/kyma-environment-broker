@@ -165,8 +165,8 @@ Each label entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **{key}** | Yes | A valid Kubernetes label key. Must be a qualified name: alphanumeric characters, `-`, `_`, or `.`, starting and ending with an alphanumeric character (max 63 characters). An optional DNS subdomain prefix (max 253 characters) separated by `/` is allowed, for example `app.kubernetes.io/name`. |
-| **{value}** | No | A valid Kubernetes label value. Must start and end with an alphanumeric character, can contain `-`, `_`, or `.` (max 63 characters), or be empty. |
+| **{key}** | Yes | A valid Kubernetes label key of up to 63 characters. Must be a qualified name: alphanumeric characters, `-`, `_`, or `.`, starting and ending with an alphanumeric character. An optional DNS subdomain prefix of up to 253 characters, separated by `/`, is allowed; for example, `app.kubernetes.io/name`. |
+| **{value}** | No | A valid Kubernetes label value of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. Can be empty. |
 
 For the full format specification, see the [Kubernetes label syntax documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set).
 
@@ -252,7 +252,7 @@ Each annotation entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **{key}** | Yes | A valid Kubernetes annotation key. Must follow the same format as label keys: alphanumeric characters, `-`, `_`, or `.`, starting and ending with an alphanumeric character (max 63 characters), with an optional DNS subdomain prefix. |
+| **{key}** | Yes | A valid Kubernetes label value of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. An optional DNS subdomain prefix (max 253 characters) is allowed. |
 | **{value}** | No | Any string. Annotation values are unrestricted. |
 
 For the full key format specification, see the [Kubernetes label syntax documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set).
@@ -339,8 +339,8 @@ Each taint object has the following properties:
 
 | Property | Required | Allowed values |
 |----------|----------|----------------|
-| **key** | Yes | A valid Kubernetes label key: alphanumeric characters, `-`, `_`, or `.`, starting and ending with an alphanumeric character (max 63 characters), with an optional DNS subdomain prefix. |
-| **value** | No | A valid Kubernetes label value: alphanumeric characters, `-`, `_`, or `.`, starting and ending with an alphanumeric character (max 63 characters), or empty. |
+| **key** | Yes | A valid Kubernetes label key of up to 63 characters. Must start and end with an alphanumeric character, but may include `-`, `_`, or `.`. An optional DNS subdomain prefix of up to 253 characters is allowed. |
+| **value** | No | A valid Kubernetes label value of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. Can be empty.  |
 | **effect** | Yes | `NoSchedule`, `PreferNoSchedule`, `NoExecute` |
 
 For the full format specification, see the [Kubernetes taint documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/).
