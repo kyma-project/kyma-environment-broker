@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"regexp"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
@@ -15,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -772,4 +774,36 @@ type fixedVolumeSizeProvider struct {
 
 func (f *fixedVolumeSizeProvider) CloudProviderVolumeSizes(_ context.Context) (map[pkg.CloudProvider]map[string]int, error) {
 	return f.sizes, nil
+}
+
+func TestSchemaKeyPatternMatchesBackendValidation(t *testing.T) {
+	keyPattern := regexp.MustCompile(k8sLabelKeyPattern)
+	valuePattern := regexp.MustCompile(k8sLabelValuePattern)
+
+	validKeys := []string{"app", "app.kubernetes.io/name", "a", "x-y.z_1", "MyName", "123-abc", "a/name"}
+	for _, k := range validKeys {
+		assert.True(t, keyPattern.MatchString(k), "schema should accept key: %q", k)
+		assert.Empty(t, k8svalidation.IsQualifiedName(k), "backend should accept key: %q", k)
+	}
+
+	invalidKeys := []string{
+		"my.label.()", "key with space", "/no-name", "",
+		"this-key-is-way-too-long-and-exceeds-the-sixty-three-character-limit",
+	}
+	for _, k := range invalidKeys {
+		assert.False(t, keyPattern.MatchString(k), "schema should reject key: %q", k)
+		assert.NotEmpty(t, k8svalidation.IsQualifiedName(k), "backend should reject key: %q", k)
+	}
+
+	validValues := []string{"v1", "my-value", "", "a.b_c-d", "MyValue"}
+	for _, v := range validValues {
+		assert.True(t, valuePattern.MatchString(v), "schema should accept value: %q", v)
+		assert.Empty(t, k8svalidation.IsValidLabelValue(v), "backend should accept value: %q", v)
+	}
+
+	invalidValues := []string{"value!", "value with space", "prod@dc1"}
+	for _, v := range invalidValues {
+		assert.False(t, valuePattern.MatchString(v), "schema should reject value: %q", v)
+		assert.NotEmpty(t, k8svalidation.IsValidLabelValue(v), "backend should reject value: %q", v)
+	}
 }

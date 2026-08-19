@@ -17,6 +17,16 @@ const (
 	nonHAAutoscalerMaxMinimumValue = 1
 	autoscalerMaximumValue         = 300
 	autoscalerMaxDefaultValue      = 20
+
+	// k8sLabelKeyPattern mirrors k8s.io/apimachinery IsLabelKey:
+	// optional DNS subdomain prefix (max 253 chars) + "/" + name part (max 63 chars).
+	// Used for labels, annotations, and taint keys — all follow the same K8s qualified name format.
+	// If apimachinery bumps validation rules, update this regex and verify with TestSchemaKeyPatternMatchesBackendValidation.
+	k8sLabelKeyPattern = `^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$`
+	// k8sLabelValuePattern mirrors k8s.io/apimachinery IsLabelValue:
+	// alphanumeric start/end, middle can contain '-', '_', '.', max 63 chars, or empty string.
+	// Used for label values and taint values — annotation values are unrestricted.
+	k8sLabelValuePattern = `^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$`
 )
 
 type RootSchema struct {
@@ -909,10 +919,12 @@ func NewTaintsSchema(rejectUnsupportedParameters bool) *TaintsType {
 					Type:        "string",
 					MinLength:   1,
 					Description: "Specifies the taint key.",
+					Pattern:     k8sLabelKeyPattern,
 				},
 				Value: Type{
 					Type:        "string",
 					Description: "Specifies the taint value.",
+					Pattern:     k8sLabelValuePattern,
 				},
 				Effect: Type{
 					Type:        "string",
@@ -939,9 +951,12 @@ func NewLabelsSchema() *KeyValueType {
 		Description: "Use labels to identify, filter, and organize objects.",
 		ControlType: "keyvalue",
 		PatternProperties: map[string]interface{}{
-			".*": map[string]interface{}{"type": "string"},
+			".*": map[string]interface{}{
+				"type":    "string",
+				"pattern": k8sLabelValuePattern,
+			},
 		},
-		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+		PropertyNames: map[string]interface{}{"pattern": k8sLabelKeyPattern},
 	}
 }
 
@@ -953,7 +968,7 @@ func NewAnnotationsSchema() *KeyValueType {
 		PatternProperties: map[string]interface{}{
 			".*": map[string]interface{}{"type": "string"},
 		},
-		PropertyNames: map[string]interface{}{"pattern": "^.+$"},
+		PropertyNames: map[string]interface{}{"pattern": k8sLabelKeyPattern},
 	}
 }
 
