@@ -252,10 +252,10 @@ Each annotation entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **{key}** | Yes | A valid Kubernetes annotation key of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. An optional DNS subdomain prefix of up to 253 characters, separated by `/`, is allowed; for example, `app.kubernetes.io/component`. |
+| **{key}** | Yes | A valid Kubernetes annotation key of up to 63 characters, including alphanumeric characters, `-`, `_`, or `.`. Must start and end with an alphanumeric character. An optional DNS subdomain prefix of up to 253 characters must be separated by `/`. For example, `app.kubernetes.io/component`. |
 | **{value}** | No | Any string. Annotation values are unrestricted. |
 
-For the full key format specification, see the [Kubernetes label syntax documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set).
+For the full key format specification, see the [Kubernetes annotations syntax documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/#syntax-and-character-set).
 
 ### Provisioning with Annotations
 
@@ -339,11 +339,10 @@ Each taint object has the following properties:
 
 | Property | Required | Allowed values |
 |----------|----------|----------------|
-| **key** | Yes | A valid Kubernetes taint key of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. An optional DNS subdomain prefix of up to 253 characters, separated by `/`, is allowed. |
+| **key** | Yes | A valid Kubernetes taint key of up to 63 characters, including alphanumeric characters, `-`, `_`, or `.`. Must start and end with an alphanumeric character. An optional DNS subdomain prefix of up to 253 characters must be separated by `/`. |
 | **value** | No | A valid Kubernetes taint value of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. Can be empty. |
 | **effect** | Yes | `NoSchedule`, `PreferNoSchedule`, `NoExecute` |
 
-For the full format specification, see the [Kubernetes taint documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/).
 
 The combination of **key** and **effect** must be unique within a single worker node pool. Using the same **key** with different **effect** values is allowed.
 
