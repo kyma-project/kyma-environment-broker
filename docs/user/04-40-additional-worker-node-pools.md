@@ -165,7 +165,7 @@ Each label entry has the following properties:
 
 | Property | Required | Description |
 |----------|----------|-------------|
-| **{key}** | Yes | A valid Kubernetes label key of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. An optional DNS subdomain prefix of up to 253 characters, separated by `/`, is allowed; for example, `app.kubernetes.io/name`. |
+| **{key}** | Yes | A valid Kubernetes label key of up to 63 characters, including alphanumeric characters, `-`, `_`, or `.`. Must start and end with an alphanumeric character. An optional DNS subdomain prefix of up to 253 characters must be separated by `/`. For example, `app.kubernetes.io/name`. |
 | **{value}** | No | A valid Kubernetes label value of up to 63 characters. Must start and end with an alphanumeric character and may contain `-`, `_`, or `.`. Can be empty. |
 
 For the full format specification, see the [Kubernetes label syntax documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set).
