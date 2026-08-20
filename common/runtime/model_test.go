@@ -12,13 +12,32 @@ import (
 func TestAdditionalWorkerNodePoolValidateLabels(t *testing.T) {
 	pool := AdditionalWorkerNodePool{Name: "pool-1"}
 
-	require.NoError(t, pool.ValidateLabels(map[string]string{"env": "prod"}, "pool-1"))
+	validKeys := []string{"app", "app.kubernetes.io/name", "a", "x-y.z_1", "MyName", "123-abc"}
+	for _, k := range validKeys {
+		require.NoError(t, pool.ValidateLabels(map[string]string{k: "v"}, "pool-1"), "expected valid key: %q", k)
+	}
+
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
+	for _, k := range invalidKeys {
+		err := pool.ValidateLabels(map[string]string{k: "v"}, "pool-1")
+		require.Error(t, err, "expected invalid key: %q", k)
+		assert.Contains(t, err.Error(), "label key", "key: %q", k)
+	}
+
 	require.NoError(t, pool.ValidateLabels(nil, "pool-1"))
 	require.NoError(t, pool.ValidateLabels(map[string]string{}, "pool-1"))
 
-	err := pool.ValidateLabels(map[string]string{"": "value"}, "pool-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "label key must not be empty")
+	validValues := []string{"v1", "my-value", "", "a.b_c-d"}
+	for _, v := range validValues {
+		require.NoError(t, pool.ValidateLabels(map[string]string{"app": v}, "pool-1"), "expected valid value: %q", v)
+	}
+
+	invalidValues := []string{"value!", "value with space"}
+	for _, v := range invalidValues {
+		err := pool.ValidateLabels(map[string]string{"app": v}, "pool-1")
+		require.Error(t, err, "expected invalid value: %q", v)
+		assert.Contains(t, err.Error(), "label value", "value: %q", v)
+	}
 }
 
 func TestAdditionalWorkerNodePoolValidateAnnotations(t *testing.T) {
@@ -28,9 +47,47 @@ func TestAdditionalWorkerNodePoolValidateAnnotations(t *testing.T) {
 	require.NoError(t, pool.ValidateAnnotations(nil, "pool-1"))
 	require.NoError(t, pool.ValidateAnnotations(map[string]string{}, "pool-1"))
 
-	err := pool.ValidateAnnotations(map[string]string{"": "value"}, "pool-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "annotation key must not be empty")
+	// annotation values are unrestricted
+	require.NoError(t, pool.ValidateAnnotations(map[string]string{"app": "value with spaces!"}, "pool-1"))
+	require.NoError(t, pool.ValidateAnnotations(map[string]string{"app": "value(with)parens"}, "pool-1"))
+
+	// invalid keys
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
+	for _, k := range invalidKeys {
+		err := pool.ValidateAnnotations(map[string]string{k: "any-value"}, "pool-1")
+		require.Error(t, err, "expected invalid key: %q", k)
+		assert.Contains(t, err.Error(), "annotation key", "key: %q", k)
+	}
+}
+
+func TestAdditionalWorkerNodePoolValidateTaints(t *testing.T) {
+	pool := AdditionalWorkerNodePool{Name: "pool-1"}
+
+	validKeys := []string{"app", "app.kubernetes.io/name", "a", "x-y.z_1"}
+	for _, k := range validKeys {
+		err := pool.ValidateTaints([]TaintDTO{{Key: k, Effect: TaintEffectNoSchedule}}, "pool-1")
+		require.NoError(t, err, "expected valid taint key: %q", k)
+	}
+
+	invalidKeys := []string{"my.label.()", "key with space", "/no-name", ""}
+	for _, k := range invalidKeys {
+		err := pool.ValidateTaints([]TaintDTO{{Key: k, Effect: TaintEffectNoSchedule}}, "pool-1")
+		require.Error(t, err, "expected invalid taint key: %q", k)
+		assert.Contains(t, err.Error(), "taint key", "key: %q", k)
+	}
+
+	validValues := []string{"v1", "my-value", "", "a.b_c-d"}
+	for _, v := range validValues {
+		err := pool.ValidateTaints([]TaintDTO{{Key: "app", Value: v, Effect: TaintEffectNoSchedule}}, "pool-1")
+		require.NoError(t, err, "expected valid taint value: %q", v)
+	}
+
+	invalidValues := []string{"value!", "value with space"}
+	for _, v := range invalidValues {
+		err := pool.ValidateTaints([]TaintDTO{{Key: "app", Value: v, Effect: TaintEffectNoSchedule}}, "pool-1")
+		require.Error(t, err, "expected invalid taint value: %q", v)
+		assert.Contains(t, err.Error(), "taint value", "value: %q", v)
+	}
 }
 
 func TestAdditionalWorkerNodePoolUnmarshalJSON(t *testing.T) {

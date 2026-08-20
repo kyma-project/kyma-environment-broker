@@ -18,12 +18,6 @@ type ProvisioningStepProcessed struct {
 	Operation internal.ProvisioningOperation
 }
 
-type UpdatingStepProcessed struct {
-	StepProcessed
-	OldOperation internal.UpdatingOperation
-	Operation    internal.UpdatingOperation
-}
-
 type DeprovisioningStepProcessed struct {
 	StepProcessed
 	OldOperation internal.DeprovisioningOperation

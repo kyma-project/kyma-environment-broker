@@ -147,9 +147,10 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	}
 
 	grouped := internal.GroupedOperations{
-		ProvisionOperations:   make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations: make([]internal.DeprovisioningOperation, 0),
-		UpdateOperations:      make([]internal.UpdatingOperation, 0),
+		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		UpdateOperations:         make([]internal.Operation, 0),
+		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
 
 	for _, op := range operations {
@@ -169,13 +170,25 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
 
 		case internal.OperationTypeUpgradeCluster:
-			continue
-		case internal.OperationTypeUpdate:
-			ret, err := s.toUpdateOperation(&op)
+			var upgradeOp internal.Operation
+			if err := json.Unmarshal([]byte(op.Data), &upgradeOp); err != nil {
+				return nil, fmt.Errorf("while unmarshalling upgrade cluster operation data: %w", err)
+			}
+			ret, err := s.toOperation(&op, upgradeOp)
 			if err != nil {
 				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
 			}
-			grouped.UpdateOperations = append(grouped.UpdateOperations, *ret)
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, ret)
+		case internal.OperationTypeUpdate:
+			var updateOp internal.Operation
+			if err := json.Unmarshal([]byte(op.Data), &updateOp); err != nil {
+				return nil, fmt.Errorf("while unmarshalling update operation data: %w", err)
+			}
+			ret, err := s.toOperation(&op, updateOp)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.UpdateOperations = append(grouped.UpdateOperations, ret)
 		case internal.OperationTypeUpgradeKyma:
 			continue
 		default:
@@ -476,79 +489,6 @@ func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.O
 	return ret, nil
 }
 
-func (s *operations) InsertUpdatingOperation(operation internal.UpdatingOperation) error {
-	dto, err := s.updateOperationToDTO(&operation)
-	if err != nil {
-		return fmt.Errorf("while converting update operation (id: %s): %w", operation.Operation.ID, err)
-	}
-
-	return s.insert(dto)
-}
-
-func (s *operations) GetUpdatingOperationByID(operationID string) (*internal.UpdatingOperation, error) {
-	operation, err := s.getByID(operationID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting operation by ID: %w", err)
-	}
-
-	ret, err := s.toUpdateOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperation) (*internal.UpdatingOperation, error) {
-	session := s.Factory.NewWriteSession()
-	operation.UpdatedAt = time.Now()
-	dto, err := s.updateOperationToDTO(&operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
-	}
-
-	var lastErr error
-	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		lastErr = session.UpdateOperation(dto)
-		if lastErr != nil && dberr.IsNotFound(lastErr) {
-			_, lastErr = s.Factory.NewReadSession().GetOperationByID(operation.Operation.ID)
-			if lastErr != nil {
-				return false, nil
-			}
-
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			return false, lastErr
-		}
-		return true, nil
-	})
-	operation.Version = operation.Version + 1
-	return &operation, lastErr
-}
-
-// ListUpdatingOperationsByInstanceID Lists all update operations for the given instance
-func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]internal.UpdatingOperation, error) {
-	session := s.Factory.NewReadSession()
-	operations := []dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpdate)
-		if lastErr != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-	ret, err := s.toUpdateOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
 func (s *operations) DeleteByID(operationID string) error {
 	return s.Factory.NewWriteSession().DeleteOperationByID(operationID)
 }
@@ -754,53 +694,6 @@ func (s *operations) toOperationList(ops []dbmodel.OperationDTO) ([]internal.Ope
 			return nil, fmt.Errorf("while converting to upgrade kyma operation: %w", err)
 		}
 		result = append(result, o)
-	}
-
-	return result, nil
-}
-
-func (s *operations) updateOperationToDTO(op *internal.UpdatingOperation) (dbmodel.OperationDTO, error) {
-	serialized, err := json.Marshal(op)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing update data %v: %w", op, err)
-	}
-
-	ret, err := s.operationToDB(op.Operation)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
-	}
-	ret.Data = string(serialized)
-	ret.Type = internal.OperationTypeUpdate
-	return ret, nil
-}
-
-func (s *operations) toUpdateOperation(op *dbmodel.OperationDTO) (*internal.UpdatingOperation, error) {
-	if op.Type != internal.OperationTypeUpdate {
-		return nil, fmt.Errorf("expected operation type update, but was %s", op.Type)
-	}
-	var operation internal.UpdatingOperation
-	var err error
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data")
-	}
-	operation.Operation, err = s.toOperation(op, operation.Operation)
-	if err != nil {
-		return nil, err
-	}
-
-	return &operation, nil
-}
-
-func (s *operations) toUpdateOperationList(ops []dbmodel.OperationDTO) ([]internal.UpdatingOperation, error) {
-	result := make([]internal.UpdatingOperation, 0)
-
-	for _, op := range ops {
-		o, err := s.toUpdateOperation(&op)
-		if err != nil {
-			return nil, fmt.Errorf("while converting to upgrade cluster operation: %w", err)
-		}
-		result = append(result, *o)
 	}
 
 	return result, nil

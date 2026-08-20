@@ -182,9 +182,10 @@ type ProviderValues struct {
 }
 
 type GroupedOperations struct {
-	ProvisionOperations   []ProvisioningOperation
-	DeprovisionOperations []DeprovisioningOperation
-	UpdateOperations      []UpdatingOperation
+	ProvisionOperations      []ProvisioningOperation
+	DeprovisionOperations    []DeprovisioningOperation
+	UpdateOperations         []Operation
+	UpgradeClusterOperations []Operation
 }
 
 func (o *Operation) IsFinished() bool {
@@ -290,10 +291,6 @@ type MonitoringData struct {
 
 // DeprovisioningOperation holds all information about de-provisioning operation
 type DeprovisioningOperation struct {
-	Operation
-}
-
-type UpdatingOperation struct {
 	Operation
 }
 

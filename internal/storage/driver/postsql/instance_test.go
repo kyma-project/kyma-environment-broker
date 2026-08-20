@@ -201,7 +201,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		// provisioning precedes update
 		op4 := fixture.FixProvisioningOperation("op4", "C1")
 		op4.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
-		op5 := fixture.FixUpdatingOperation("op5", "C1").Operation
+		op5 := fixture.FixUpdatingOperation("op5", "C1")
 		op5.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
 		op5.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
 
@@ -211,7 +211,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		// but the instance is already deleted
 		op7 := fixture.FixProvisioningOperation("op7", "B1")
 		op7.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
-		op8 := fixture.FixUpdatingOperation("op8", "B1").Operation
+		op8 := fixture.FixUpdatingOperation("op8", "B1")
 		op8.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
 		op8.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
 
@@ -1117,7 +1117,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 	instance0 := fixInstance(instanceData{val: "inst1"})
 	_ = instanceStorage.Insert(*instance0)
 	operation0_0 := fixProvisionOperation(instance0.InstanceID)
-	operation0_1 := fixture.FixUpdatingOperation("op0_1", instance0.InstanceID).Operation
+	operation0_1 := fixture.FixUpdatingOperation("op0_1", instance0.InstanceID)
 	operation0_1.State = domain.InProgress
 
 	_ = operationStorage.InsertOperation(operation0_0)
@@ -1132,12 +1132,12 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 
 	_ = operationStorage.InsertOperation(operation1_0)
 
-	op := fixture.FixUpdatingOperation(fmt.Sprintf("op1__%s", instance1.InstanceID), instance1.InstanceID).Operation
+	op := fixture.FixUpdatingOperation(fmt.Sprintf("op1__%s", instance1.InstanceID), instance1.InstanceID)
 	op.CreatedAt = time.Now().Add(-3 * time.Second)
 	op.State = domain.Succeeded
 	_ = operationStorage.InsertOperation(op)
 
-	operation1_1 := fixture.FixUpdatingOperation("op1_1", instance1.InstanceID).Operation
+	operation1_1 := fixture.FixUpdatingOperation("op1_1", instance1.InstanceID)
 	operation1_1.State = domain.InProgress
 	_ = operationStorage.InsertOperation(operation1_1)
 	_ = instanceStorage.UpdateInstanceLastOperation(instance1.InstanceID, operation1_1.ID)

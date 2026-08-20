@@ -56,14 +56,38 @@
             "type": "string",
             "minLength": 1,
             "enum": [
-              "m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge",
-              "m6i.8xlarge", "m6i.12xlarge", "m6i.16xlarge", "m5.large",
-              "m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge",
-              "m5.12xlarge", "m5.16xlarge", "c7i.large", "c7i.xlarge",
-              "c7i.2xlarge", "c7i.4xlarge", "c7i.8xlarge", "c7i.12xlarge",
-              "c7i.16xlarge", "g6.xlarge", "g6.2xlarge", "g6.4xlarge",
-              "g6.8xlarge", "g6.12xlarge", "g6.16xlarge", "g4dn.xlarge",
-              "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.12xlarge",
+              "m6i.large",
+              "m6i.xlarge",
+              "m6i.2xlarge",
+              "m6i.4xlarge",
+              "m6i.8xlarge",
+              "m6i.12xlarge",
+              "m6i.16xlarge",
+              "m5.large",
+              "m5.xlarge",
+              "m5.2xlarge",
+              "m5.4xlarge",
+              "m5.8xlarge",
+              "m5.12xlarge",
+              "m5.16xlarge",
+              "c7i.large",
+              "c7i.xlarge",
+              "c7i.2xlarge",
+              "c7i.4xlarge",
+              "c7i.8xlarge",
+              "c7i.12xlarge",
+              "c7i.16xlarge",
+              "g6.xlarge",
+              "g6.2xlarge",
+              "g6.4xlarge",
+              "g6.8xlarge",
+              "g6.12xlarge",
+              "g6.16xlarge",
+              "g4dn.xlarge",
+              "g4dn.2xlarge",
+              "g4dn.4xlarge",
+              "g4dn.8xlarge",
+              "g4dn.12xlarge",
               "g4dn.16xlarge"
             ],
             "_enumDisplayName": {
@@ -127,11 +151,12 @@
             "description": "Use labels to identify, filter, and organize objects.",
             "patternProperties": {
               ".*": {
+                "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$",
                 "type": "string"
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
             },
             "type": "object"
           },
@@ -144,7 +169,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
             },
             "type": "object"
           },
@@ -175,11 +200,13 @@
                 "key": {
                   "description": "Specifies the taint key.",
                   "minLength": 1,
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
                 },
                 "value": {
                   "description": "Specifies the taint value.",
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$"
                 }
               },
               "required": [
@@ -229,18 +256,18 @@
     },
     "machineType": {
       "_enumDisplayName": {
-        "m5.large":     "m5.large (2vCPU, 8GB RAM)",
-        "m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
-        "m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
-        "m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
-        "m5.8xlarge":   "m5.8xlarge (32vCPU, 128GB RAM)",
-        "m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
-        "m5.16xlarge":  "m5.16xlarge (64vCPU, 256GB RAM)",
-        "m6i.large":    "m6i.large (2vCPU, 8GB RAM)",
-        "m6i.xlarge":   "m6i.xlarge (4vCPU, 16GB RAM)",
-        "m6i.2xlarge":  "m6i.2xlarge (8vCPU, 32GB RAM)",
-        "m6i.4xlarge":  "m6i.4xlarge (16vCPU, 64GB RAM)",
-        "m6i.8xlarge":  "m6i.8xlarge (32vCPU, 128GB RAM)",
+        "m5.large": "m5.large (2vCPU, 8GB RAM)",
+        "m5.xlarge": "m5.xlarge (4vCPU, 16GB RAM)",
+        "m5.2xlarge": "m5.2xlarge (8vCPU, 32GB RAM)",
+        "m5.4xlarge": "m5.4xlarge (16vCPU, 64GB RAM)",
+        "m5.8xlarge": "m5.8xlarge (32vCPU, 128GB RAM)",
+        "m5.12xlarge": "m5.12xlarge (48vCPU, 192GB RAM)",
+        "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)",
+        "m6i.large": "m6i.large (2vCPU, 8GB RAM)",
+        "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)",
+        "m6i.2xlarge": "m6i.2xlarge (8vCPU, 32GB RAM)",
+        "m6i.4xlarge": "m6i.4xlarge (16vCPU, 64GB RAM)",
+        "m6i.8xlarge": "m6i.8xlarge (32vCPU, 128GB RAM)",
         "m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
         "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)"
       },
