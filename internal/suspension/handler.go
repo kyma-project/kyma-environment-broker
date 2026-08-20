@@ -58,7 +58,7 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 		isActivated = *instance.Parameters.ErsContext.Active
 	}
 
-	lastDeprovisioning, err := h.operations.GetLastOperationByTypes(instance.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
+	lastDeprovisioning, err := h.operations.GetLastOperationByTypesWithAllStates(instance.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	// there was an error - fail
 	if err != nil && !dberr.IsNotFound(err) {
 		return false, err

@@ -47,6 +47,10 @@ type Operations interface {
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
 	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
+	// GetLastOperationByTypesWithAllStates is like GetLastOperationByTypes but also returns operations in pending state.
+	// Use instead of GetLastOperationByTypes when a just-inserted (pending) operation must not be missed, e.g. to guard
+	// against creating a duplicate while the worker has not yet picked up the previous one.
+	GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error)
 	GetLastOperationWithAllStates(instanceID string) (*internal.Operation, error)
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)

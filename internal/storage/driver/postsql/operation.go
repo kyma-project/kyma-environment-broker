@@ -255,6 +255,26 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 	return &operation, nil
 }
 
+// GetLastOperationByTypesWithAllStates returns Operation (with one of given types) for given instance ID including pending state. Returns an error if the operation does not exist.
+func (s *operations) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	session := s.Factory.NewReadSession()
+	dto, dbErr := session.GetLastOperationByTypesWithAllStates(instanceID, types)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+
+	operation := internal.Operation{}
+	err := json.Unmarshal([]byte(dto.Data), &operation)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshalling operation data: %w", err)
+	}
+	operation, err = s.toOperation(&dto, operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
+}
+
 // GetLastOperationWithAllStates returns last Operation for given instance ID. Returns an error if the operation does not exist.
 func (s *operations) GetLastOperationWithAllStates(instanceID string) (*internal.Operation, error) {
 	session := s.Factory.NewReadSession()

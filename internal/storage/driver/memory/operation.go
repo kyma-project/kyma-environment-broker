@@ -270,6 +270,37 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 	return &rows[0], nil
 }
 
+// GetLastOperationByTypesWithAllStates returns Operation (with one of given types) for given instance ID including pending state.
+func (s *operations) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var rows []internal.Operation
+
+	for _, op := range s.operations {
+		if op.InstanceID == instanceID {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op)
+					}
+				}
+			} else {
+				rows = append(rows, op)
+			}
+		}
+	}
+	if len(rows) == 0 {
+		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].CreatedAt.After(rows[j].CreatedAt)
+	})
+
+	return &rows[0], nil
+}
+
 func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -478,6 +478,38 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, provisioning.ID, operation.ID)
 	})
+
+	t.Run("Last operation based on types including pending", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		nonPending := fixture.FixOperation("non-pending-id", "inst-id", internal.OperationTypeDeprovision)
+		nonPending.State = domain.Succeeded
+		nonPending.CreatedAt = nonPending.CreatedAt.Truncate(time.Millisecond)
+
+		pending := fixture.FixOperation("pending-id", "inst-id", internal.OperationTypeDeprovision)
+		pending.State = internal.OperationStatePending
+		pending.CreatedAt = pending.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
+
+		svc := brokerStorage.Operations()
+		require.NoError(t, svc.InsertOperation(nonPending))
+		require.NoError(t, svc.InsertOperation(pending))
+
+		// GetLastOperationByTypes excludes pending — returns the older succeeded one
+		op, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeDeprovision})
+		require.NoError(t, err)
+		assert.Equal(t, nonPending.ID, op.ID)
+
+		// GetLastOperationByTypesWithAllStates includes pending — returns the newer pending one
+		op, err = svc.GetLastOperationByTypesWithAllStates("inst-id", []internal.OperationType{internal.OperationTypeDeprovision})
+		require.NoError(t, err)
+		assert.Equal(t, pending.ID, op.ID)
+	})
 }
 
 func TestOperation_ModeGCM(t *testing.T) {
