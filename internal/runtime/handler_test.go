@@ -236,7 +236,7 @@ func TestRuntimeHandler(t *testing.T) {
 		deprovOp3 := fixture.FixDeprovisioningOperation(fixRandomID(), testID3)
 		deprovOp3.State = domain.Succeeded
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
-		err = operations.InsertDeprovisioningOperation(deprovOp3)
+		err = operations.InsertOperation(deprovOp3)
 		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
@@ -331,16 +331,14 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		err = operations.InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         suspensionOpId,
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: testID1,
-				Temporary:  true,
-				Type:       internal.OperationTypeDeprovision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         suspensionOpId,
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: testID1,
+			Temporary:  true,
+			Type:       internal.OperationTypeDeprovision,
 		})
 		require.NoError(t, err)
 
@@ -457,29 +455,25 @@ func TestRuntimeHandler(t *testing.T) {
 		err := instances.Insert(testInstance1)
 		require.NoError(t, err)
 
-		err = operations.InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         suspensionOpId,
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: testInstance1.InstanceID,
-				Temporary:  true,
-				Type:       internal.OperationTypeDeprovision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         suspensionOpId,
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: testInstance1.InstanceID,
+			Temporary:  true,
+			Type:       internal.OperationTypeDeprovision,
 		})
 		require.NoError(t, err)
 
-		err = operations.InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         deprovisioningOpId,
-				Version:    0,
-				CreatedAt:  time.Now().Add(1 * time.Hour),
-				UpdatedAt:  time.Now().Add(1 * time.Hour),
-				InstanceID: testInstance1.InstanceID,
-				Temporary:  false,
-				Type:       internal.OperationTypeDeprovision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         deprovisioningOpId,
+			Version:    0,
+			CreatedAt:  time.Now().Add(1 * time.Hour),
+			UpdatedAt:  time.Now().Add(1 * time.Hour),
+			InstanceID: testInstance1.InstanceID,
+			Temporary:  false,
+			Type:       internal.OperationTypeDeprovision,
 		})
 		require.NoError(t, err)
 

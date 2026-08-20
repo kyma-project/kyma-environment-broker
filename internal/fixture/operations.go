@@ -108,10 +108,8 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 	return o
 }
 
-func FixDeprovisioningOperation(operationId, instanceId string) internal.DeprovisioningOperation {
-	return internal.DeprovisioningOperation{
-		Operation: FixDeprovisioningOperationAsOperation(operationId, instanceId),
-	}
+func FixDeprovisioningOperation(operationId, instanceId string) internal.Operation {
+	return FixDeprovisioningOperationAsOperation(operationId, instanceId)
 }
 
 func FixDeprovisioningOperationAsOperation(operationId, instanceId string) internal.Operation {

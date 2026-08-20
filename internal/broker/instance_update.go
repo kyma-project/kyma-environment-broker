@@ -204,7 +204,7 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 		return domain.UpdateServiceSpec{}, err
 	}
 
-	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	lastDeprovisioningOperation, err := b.operationStorage.GetLastOperationByTypes(instance.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	if err != nil && !dberr.IsNotFound(err) {
 		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
@@ -764,7 +764,7 @@ func (b *UpdateEndpoint) handleSubaccountMoveRequest(instance *internal.Instance
 }
 
 func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.ProvisioningOperation) (*bool, error) {
-	deprovisioning, dErr := b.operationStorage.GetDeprovisioningOperationByInstanceID(id)
+	deprovisioning, dErr := b.operationStorage.GetLastOperationByTypes(id, []internal.OperationType{internal.OperationTypeDeprovision})
 	if dErr != nil && !dberr.IsNotFound(dErr) {
 		b.log.Error(fmt.Sprintf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error()))
 		return nil, dErr

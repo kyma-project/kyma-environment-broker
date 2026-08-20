@@ -39,7 +39,7 @@ func (s *StartStep) Run(operation internal.Operation, log *slog.Logger) (interna
 		return operation, 0, nil
 	}
 
-	deprovisionOp, err := s.operationStorage.GetDeprovisioningOperationByInstanceID(operation.InstanceID)
+	deprovisionOp, err := s.operationStorage.GetLastOperationByTypes(operation.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	if err != nil && !dberr.IsNotFound(err) {
 		log.Error(fmt.Sprintf("Unable to get deprovisioning operation: %s", err.Error()))
 		return operation, time.Second, nil

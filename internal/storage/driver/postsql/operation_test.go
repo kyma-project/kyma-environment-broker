@@ -329,44 +329,42 @@ func TestOperation(t *testing.T) {
 		svc := brokerStorage.Operations()
 
 		// when
-		err = svc.InsertDeprovisioningOperation(givenOperation)
+		err = svc.InsertOperation(givenOperation)
 		require.NoError(t, err)
 
 		ops, err := svc.GetNotFinishedOperationsByType(internal.OperationTypeDeprovision)
 		require.NoError(t, err)
 		assert.Len(t, ops, 1)
-		assertOperation(t, givenOperation.Operation, ops[0])
+		assertOperation(t, givenOperation, ops[0])
 		assertRuntimeOperation(t, ops[0])
 
-		gotOperation, err := svc.GetDeprovisioningOperationByID("operation-id")
+		gotOperation, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 
 		op, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
-		assert.Equal(t, givenOperation.Operation.ID, op.ID)
+		assert.Equal(t, givenOperation.ID, op.ID)
 
 		// then
-		assertDeprovisioningOperation(t, givenOperation, *gotOperation)
+		assertOperation(t, givenOperation, *gotOperation)
 
 		// when
 		gotOperation.Description = "new modified description"
-		_, err = svc.UpdateDeprovisioningOperation(*gotOperation)
+		_, err = svc.UpdateOperation(*gotOperation)
 		require.NoError(t, err)
 
 		// then
-		gotOperation2, err := svc.GetDeprovisioningOperationByID("operation-id")
+		gotOperation2, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 
 		assert.Equal(t, "new modified description", gotOperation2.Description)
 
 		// given
-		err = svc.InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         "other-op-id",
-				InstanceID: "inst-id",
-				CreatedAt:  time.Now().Add(1 * time.Hour),
-				UpdatedAt:  time.Now().Add(1 * time.Hour),
-			},
+		err = svc.InsertOperation(internal.Operation{
+			ID:         "other-op-id",
+			InstanceID: "inst-id",
+			CreatedAt:  time.Now().Add(1 * time.Hour),
+			UpdatedAt:  time.Now().Add(1 * time.Hour),
 		})
 		require.NoError(t, err)
 	})
@@ -519,18 +517,6 @@ func TestOperation_ModeGCM(t *testing.T) {
 func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
 	assert.Equal(t, fixture.GlobalAccountId, operation.RuntimeOperation.GlobalAccountID)
 	assert.Equal(t, fixture.Region, operation.RuntimeOperation.Region)
-}
-
-func assertDeprovisioningOperation(t *testing.T, expected, got internal.DeprovisioningOperation) {
-	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
-	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
-	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
-
-	expected.CreatedAt = got.CreatedAt
-	expected.UpdatedAt = got.UpdatedAt
-	expected.FinishedStages = got.FinishedStages
-
-	assert.Equal(t, expected, got)
 }
 
 func assertOperation(t *testing.T, expected, got internal.Operation) {

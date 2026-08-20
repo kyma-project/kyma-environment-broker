@@ -113,12 +113,12 @@ func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log *sl
 }
 
 func (h *handler) suspendInstance(instance *internal.Instance, log *slog.Logger) (*internal.Instance, string, error) {
-	lastDeprovisioningOp, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	lastDeprovisioningOp, err := h.operations.GetLastOperationWithAllStates(instance.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
 		return instance, "", err
 	}
 
-	if lastDeprovisioningOp != nil {
+	if lastDeprovisioningOp != nil && lastDeprovisioningOp.Type == internal.OperationTypeDeprovision {
 		opType := "deprovisioning"
 		if lastDeprovisioningOp.Temporary {
 			opType = "suspension"
@@ -144,7 +144,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *slog.Logger)
 
 	opID := uuid.New().String()
 	suspensionOp := internal.NewSuspensionOperationWithID(opID, instance)
-	if err := h.operations.InsertDeprovisioningOperation(suspensionOp); err != nil {
+	if err := h.operations.InsertOperation(suspensionOp); err != nil {
 		return instance, "", err
 	}
 	h.deprovisioningQueue.Add(suspensionOp.ID)

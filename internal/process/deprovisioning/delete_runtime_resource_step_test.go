@@ -28,12 +28,12 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceDoesNotExists(t *testing.T) {
 	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
-	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	err = memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
-	_, backoff, err := step.Run(op.Operation, fixLogger())
+	_, backoff, err := step.Run(op, fixLogger())
 
 	// then
 
@@ -50,13 +50,13 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
-	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	err = memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
-	_, backoff, err := step.Run(op.Operation, fixLogger())
+	_, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -72,13 +72,13 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(
 	op.RuntimeResourceName = runtimeResourceName
 	op.KymaResourceNamespace = kymaNamespace
 	memoryStorage := storage.NewMemoryStorage()
-	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	err = memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource(kymaNamespace, runtimeResourceName)).Build()
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
-	_, backoff, err := step.Run(op.Operation, fixLogger())
+	_, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.NoError(t, err)

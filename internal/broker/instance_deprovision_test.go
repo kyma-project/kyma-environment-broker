@@ -54,7 +54,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingInstance(t *testing.T) {
 
 	// then
 	require.NoError(t, err)
-	operation, err := memoryStorage.Operations().GetDeprovisioningOperationByInstanceID(instanceID)
+	operation, err := memoryStorage.Operations().GetLastOperationWithAllStates(instanceID)
 	require.NoError(t, err)
 	assert.Equal(t, domain.LastOperationState("pending"), operation.State)
 }
@@ -65,7 +65,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	err := memoryStorage.Instances().Insert(fixInstance())
 	require.NoError(t, err)
 
-	err = memoryStorage.Operations().InsertDeprovisioningOperation(fixDeprovisioningOperation(domain.InProgress))
+	err = memoryStorage.Operations().InsertOperation(fixDeprovisioningOperation(domain.InProgress))
 	require.NoError(t, err)
 
 	queue := &automock.Queue{}
@@ -80,7 +80,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	require.NoError(t, err)
 	assert.Equal(t, operationID, res.OperationData)
 
-	operation, err := memoryStorage.Operations().GetDeprovisioningOperationByInstanceID(instanceID)
+	operation, err := memoryStorage.Operations().GetLastOperationWithAllStates(instanceID)
 	require.NoError(t, err)
 	assert.Equal(t, domain.InProgress, operation.State)
 	assert.Equal(t, "", operation.ProvisionerOperationID)
@@ -92,7 +92,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	err := memoryStorage.Instances().Insert(fixInstance())
 	require.NoError(t, err)
 
-	err = memoryStorage.Operations().InsertDeprovisioningOperation(fixDeprovisioningOperation(domain.Failed))
+	err = memoryStorage.Operations().InsertOperation(fixDeprovisioningOperation(domain.Failed))
 	require.NoError(t, err)
 
 	queue := &automock.Queue{}
@@ -107,12 +107,12 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, operationID, res.OperationData)
 
-	operation, err := memoryStorage.Operations().GetDeprovisioningOperationByInstanceID(instanceID)
+	operation, err := memoryStorage.Operations().GetLastOperationWithAllStates(instanceID)
 	require.NoError(t, err)
 	assert.Equal(t, domain.LastOperationState("pending"), operation.State)
 }
 
-func fixDeprovisioningOperation(state domain.LastOperationState) internal.DeprovisioningOperation {
+func fixDeprovisioningOperation(state domain.LastOperationState) internal.Operation {
 	deprovisioningOperation := fixture.FixDeprovisioningOperation(operationID, instanceID)
 	deprovisioningOperation.State = state
 

@@ -15,10 +15,10 @@ import (
 type Converter interface {
 	NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error)
 	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation)
-	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation)
+	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.Operation)
 	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
 	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
-	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation)
+	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation)
 	ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.ProvisioningOperation)
 }
 
@@ -54,13 +54,13 @@ func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *intern
 	}
 }
 
-func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation) {
+func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.Operation) {
 	if dOpr != nil {
 		if dOpr.State == internal.OperationStatePending {
 			return
 		}
 		dto.Status.Deprovisioning = &pkg.Operation{}
-		c.applyOperation(&dOpr.Operation, dto.Status.Deprovisioning)
+		c.applyOperation(dOpr, dto.Status.Deprovisioning)
 		c.adjustRuntimeState(dto)
 	}
 }
@@ -167,7 +167,7 @@ func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []
 	c.adjustRuntimeState(dto)
 }
 
-func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation) {
+func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -179,7 +179,7 @@ func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []intern
 			continue
 		}
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		suspension.Data = append(suspension.Data, op)
 	}
 	suspension.TotalCount = len(suspension.Data)

@@ -150,7 +150,7 @@ func TestExpiration(t *testing.T) {
 		deprovisioningOpID := "inst-trial-03-failed-deprovisioning"
 		deprovisioningOp := fixture.FixDeprovisioningOperation(deprovisioningOpID, instanceID)
 		deprovisioningOp.State = domain.Failed
-		err = storage.Operations().InsertDeprovisioningOperation(deprovisioningOp)
+		err = storage.Operations().InsertOperation(deprovisioningOp)
 		require.NoError(t, err)
 
 		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
@@ -186,7 +186,7 @@ func TestExpiration(t *testing.T) {
 		deprovisioningOp := fixture.FixDeprovisioningOperation(deprovisioningOpID, instanceID)
 		deprovisioningOp.Temporary = true
 		deprovisioningOp.State = domain.InProgress
-		err = storage.Operations().InsertDeprovisioningOperation(deprovisioningOp)
+		err = storage.Operations().InsertOperation(deprovisioningOp)
 		require.NoError(t, err)
 
 		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
@@ -234,7 +234,7 @@ func TestExpiration(t *testing.T) {
 		suspensionOp := fixture.FixDeprovisioningOperation(suspensionOpID, instanceID)
 		suspensionOp.Temporary = true
 		suspensionOp.State = domain.Succeeded
-		err = storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+		err = storage.Operations().InsertOperation(suspensionOp)
 		require.NoError(t, err)
 
 		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
@@ -280,7 +280,7 @@ func TestExpiration(t *testing.T) {
 		suspensionOp.Temporary = true
 		suspensionOp.State = domain.Succeeded
 		suspensionOp.ExcutedButNotCompleted = []string{"step-1", "step-2"}
-		err = storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+		err = storage.Operations().InsertOperation(suspensionOp)
 		require.NoError(t, err)
 
 		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
@@ -314,11 +314,11 @@ func TestExpiration(t *testing.T) {
 		var newOperationIDResp temp
 		require.NoError(t, json.Unmarshal(body, &newOperationIDResp))
 
-		newSuspensionOp, err := storage.Operations().GetDeprovisioningOperationByID(newOperationIDResp.Operation)
+		newSuspensionOp, err := storage.Operations().GetOperationByID(newOperationIDResp.Operation)
 		require.NoError(t, err)
 
 		newSuspensionOp.State = domain.InProgress
-		_, err = storage.Operations().UpdateDeprovisioningOperation(*newSuspensionOp)
+		_, err = storage.Operations().UpdateOperation(*newSuspensionOp)
 		require.NoError(t, err)
 
 		actualOp, err := storage.Operations().GetLastOperation(instanceID)

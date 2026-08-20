@@ -50,7 +50,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixDeprovisioningOperation("op-id", "iid")
 				op.State = domain.InProgress
-				err := os.InsertDeprovisioningOperation(op)
+				err := os.InsertOperation(op)
 				require.NoError(t, err)
 			},
 			expectedRepeat: true,

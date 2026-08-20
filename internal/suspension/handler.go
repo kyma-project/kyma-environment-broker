@@ -58,7 +58,7 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 		isActivated = *instance.Parameters.ErsContext.Active
 	}
 
-	lastDeprovisioning, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	lastDeprovisioning, err := h.operations.GetLastOperationByTypes(instance.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	// there was an error - fail
 	if err != nil && !dberr.IsNotFound(err) {
 		return false, err
@@ -74,7 +74,7 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 		}
 		if !isActivated {
 			// instance is inactive and incoming context update is suspension - verify if KEB should retrigger the operation
-			if lastDeprovisioning.State == domain.Failed {
+			if lastDeprovisioning != nil && lastDeprovisioning.State == domain.Failed {
 				l.Info(fmt.Sprintf("triggering suspension again for instance id %s", instance.InstanceID))
 				return true, h.suspend(instance, l)
 			}
@@ -103,21 +103,22 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 }
 
 func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log *slog.Logger) error {
-	lastDeprovisioning, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	lastDeprovisioning, err := h.operations.GetLastOperationWithAllStates(instance.InstanceID)
 	// there was an error - fail
 	if err != nil && !dberr.IsNotFound(err) {
 		return err
 	}
 
-	// no error, operation exists and is in progress
-	if err == nil && (lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == internal.OperationStatePending) {
+	// no error, operation exists and is in progress or pending
+	if err == nil && lastDeprovisioning.Type == internal.OperationTypeDeprovision &&
+		(lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == internal.OperationStatePending) {
 		log.Info("Suspension already started")
 		return nil
 	}
 
 	id := uuid.New().String()
 	operation := internal.NewSuspensionOperationWithID(id, instance)
-	err = h.operations.InsertDeprovisioningOperation(operation)
+	err = h.operations.InsertOperation(operation)
 	if err != nil {
 		return err
 	}

@@ -256,24 +256,20 @@ func TestConverting_ProvisioningParams(t *testing.T) {
 	assert.Equal(t, instance.Parameters.Parameters, dto.Parameters)
 }
 
-func fixSuspensionOperation(state domain.LastOperationState, createdAt time.Time) []internal.DeprovisioningOperation {
-	return []internal.DeprovisioningOperation{{
-		Operation: internal.Operation{
-			CreatedAt: createdAt,
-			ID:        "s-id",
-			State:     state,
-			Temporary: true,
-		},
+func fixSuspensionOperation(state domain.LastOperationState, createdAt time.Time) []internal.Operation {
+	return []internal.Operation{{
+		CreatedAt: createdAt,
+		ID:        "s-id",
+		State:     state,
+		Temporary: true,
 	}}
 }
 
-func fixDeprovisionOperation(state domain.LastOperationState, createdAt time.Time) *internal.DeprovisioningOperation {
-	return &internal.DeprovisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt: createdAt,
-			ID:        "s-id",
-			State:     state,
-		},
+func fixDeprovisionOperation(state domain.LastOperationState, createdAt time.Time) *internal.Operation {
+	return &internal.Operation{
+		CreatedAt: createdAt,
+		ID:        "s-id",
+		State:     state,
 	}
 }
 
