@@ -85,7 +85,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	require.NoError(t, err)
 	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
-	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
 	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
 	require.NoError(t, err)
@@ -376,7 +376,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	require.NoError(t, err)
 	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
-	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -491,7 +491,7 @@ func fixProvisioningOperation(id string) internal.ProvisioningOperation {
 	return internal.ProvisioningOperation{Operation: provisioningOperation}
 }
 
-func fixSuspensionOperation() internal.DeprovisioningOperation {
+func fixSuspensionOperation() internal.Operation {
 	deprovisioningOperation := fixture.FixDeprovisioningOperation("id", instanceID)
 	deprovisioningOperation.Temporary = true
 
@@ -526,7 +526,7 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	require.NoError(t, err)
 	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
-	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
 	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
 	require.NoError(t, err)

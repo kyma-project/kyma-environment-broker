@@ -184,7 +184,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.Operation, 0),
 		UpdateOperations:         make([]internal.Operation, 0),
 		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
@@ -195,7 +195,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.ProvisionOperations = append(grouped.ProvisionOperations, internal.ProvisioningOperation{Operation: op})
 
 		case internal.OperationTypeDeprovision:
-			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, internal.DeprovisioningOperation{Operation: op})
+			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, op)
 
 		case internal.OperationTypeUpgradeCluster:
 			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, op)
@@ -211,7 +211,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	}
 
 	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
-	s.sortDeprovisioningByCreatedAtDesc(grouped.DeprovisionOperations)
+	s.sortOperationsByCreatedAtDesc(grouped.DeprovisionOperations)
 	s.sortOperationsByCreatedAtDesc(grouped.UpgradeClusterOperations)
 	sort.Slice(grouped.UpdateOperations, func(i, j int) bool {
 		return grouped.UpdateOperations[i].CreatedAt.Before(grouped.UpdateOperations[j].CreatedAt)
@@ -240,66 +240,6 @@ func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.O
 	return operations, nil
 }
 
-func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.ID
-	if _, exists := s.operations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.operations[id] = operation.Operation
-	return nil
-}
-
-func (s *operations) GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	op, exists := s.operations[operationID]
-	if !exists {
-		return nil, dberr.NotFound("instance deprovisioning operation with id %s not found", operationID)
-	}
-	return &internal.DeprovisioningOperation{Operation: op}, nil
-}
-
-func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []internal.DeprovisioningOperation
-
-	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.Type == internal.OperationTypeDeprovision {
-			result = append(result, internal.DeprovisioningOperation{Operation: op})
-		}
-	}
-	if len(result) != 0 {
-		s.sortDeprovisioningByCreatedAtDesc(result)
-		return &result[0], nil
-	}
-
-	return nil, dberr.NotFound("instance deprovisioning operation with instanceID %s not found", instanceID)
-}
-
-func (s *operations) UpdateDeprovisioningOperation(op internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.operations[op.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update deprovisioning operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.operations[op.ID] = op.Operation
-
-	return &op, nil
-}
-
 func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -308,6 +248,37 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 
 	for _, op := range s.operations {
 		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op)
+					}
+				}
+			} else {
+				rows = append(rows, op)
+			}
+		}
+	}
+	if len(rows) == 0 {
+		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].CreatedAt.After(rows[j].CreatedAt)
+	})
+
+	return &rows[0], nil
+}
+
+// GetLastOperationByTypesWithAllStates returns Operation (with one of given types) for given instance ID including pending state.
+func (s *operations) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var rows []internal.Operation
+
+	for _, op := range s.operations {
+		if op.InstanceID == instanceID {
 			if len(types) > 0 {
 				for _, t := range types {
 					if op.Type == t {
@@ -521,12 +492,6 @@ func (s *operations) sortProvisioningByCreatedAtDesc(operations []internal.Provi
 }
 
 func (s *operations) sortOperationsByCreatedAtDesc(operations []internal.Operation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.After(operations[j].CreatedAt)
-	})
-}
-
-func (s *operations) sortDeprovisioningByCreatedAtDesc(operations []internal.DeprovisioningOperation) {
 	sort.Slice(operations, func(i, j int) bool {
 		return operations[i].CreatedAt.After(operations[j].CreatedAt)
 	})

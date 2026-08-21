@@ -844,7 +844,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.Temporary = true
 		deprovOp3.State = domain.Succeeded
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
-		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
+		err = brokerStorage.Operations().InsertOperation(deprovOp3)
 		require.NoError(t, err)
 		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", deprovOp3.ID)
 		require.NoError(t, err)
@@ -925,7 +925,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.Temporary = true
 		deprovOp3.State = domain.Succeeded
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
-		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
+		err = brokerStorage.Operations().InsertOperation(deprovOp3)
 		require.NoError(t, err)
 		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
 		require.NoError(t, err)
@@ -1000,7 +1000,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.Temporary = true
 		deprovOp3.State = domain.Succeeded
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
-		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
+		err = brokerStorage.Operations().InsertOperation(deprovOp3)
 		require.NoError(t, err)
 		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
 		require.NoError(t, err)
@@ -1062,7 +1062,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp2.Temporary = true
 		deprovOp2.State = domain.Succeeded
 		deprovOp2.CreatedAt = deprovOp2.CreatedAt.Add(2 * time.Minute)
-		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp2)
+		err = brokerStorage.Operations().InsertOperation(deprovOp2)
 		require.NoError(t, err)
 		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst2", provOp2.ID)
 		require.NoError(t, err)
@@ -1076,7 +1076,7 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.Temporary = true
 		deprovOp3.State = domain.Succeeded
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
-		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
+		err = brokerStorage.Operations().InsertOperation(deprovOp3)
 		require.NoError(t, err)
 		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
 		require.NoError(t, err)
@@ -1147,7 +1147,7 @@ func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 	_ = instanceStorage.Insert(*instance2)
 
 	operation2_0 := fixProvisionOperation(instance2.InstanceID)
-	operation2_1 := fixDeprovisionOperation(instance2.InstanceID).Operation
+	operation2_1 := fixDeprovisionOperation(instance2.InstanceID)
 	operation2_1.State = domain.InProgress
 
 	_ = operationStorage.InsertOperation(operation2_0)
@@ -1285,7 +1285,7 @@ func fixProvisionOperation(instanceId string) internal.Operation {
 	return fixture.FixProvisioningOperation(operationId, instanceId)
 
 }
-func fixDeprovisionOperation(instanceId string) internal.DeprovisioningOperation {
+func fixDeprovisionOperation(instanceId string) internal.Operation {
 	operationId := fmt.Sprintf("%s-%d", instanceId, rand.Int())
 	return fixture.FixDeprovisioningOperation(operationId, instanceId)
 }

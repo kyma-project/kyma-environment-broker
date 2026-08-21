@@ -171,31 +171,31 @@ func TestConflict(t *testing.T) {
 			givenOperation.State = domain.InProgress
 			givenOperation.ProvisionerOperationID = targetOperationID
 
-			svc := brokerStorage.Deprovisioning()
+			svc := brokerStorage.Operations()
 
-			err = svc.InsertDeprovisioningOperation(givenOperation)
+			err = svc.InsertOperation(givenOperation)
 			require.NoError(t, err)
 
 			// when
-			gotOperation1, err := svc.GetDeprovisioningOperationByID("operation-001")
+			gotOperation1, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
 
-			gotOperation2, err := svc.GetDeprovisioningOperationByID("operation-001")
+			gotOperation2, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
 
 			// when
 			gotOperation1.Description = descriptionModified1
 			gotOperation2.Description = descriptionModified2
-			_, err = svc.UpdateDeprovisioningOperation(*gotOperation1)
+			_, err = svc.UpdateOperation(*gotOperation1)
 			require.NoError(t, err)
 
-			_, err = svc.UpdateDeprovisioningOperation(*gotOperation2)
+			_, err = svc.UpdateOperation(*gotOperation2)
 
 			// then
 			assertError(t, dberr.CodeConflict, err)
 
 			// when
-			err = svc.InsertDeprovisioningOperation(*gotOperation1)
+			err = svc.InsertOperation(*gotOperation1)
 
 			// then
 			assertError(t, dberr.CodeAlreadyExists, err)

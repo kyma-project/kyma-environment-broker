@@ -70,7 +70,7 @@ func prepareProvisionedInstance(t *testing.T, s storage.BrokerStorage) {
 func prepareDeprovisioningOperation(t *testing.T, s storage.BrokerStorage, state domain.LastOperationState) internal.Operation {
 	dOperation := fixture.FixDeprovisioningOperation("dop-id", testInstanceID)
 	dOperation.State = state
-	err := s.Operations().InsertOperation(dOperation.Operation)
+	err := s.Operations().InsertOperation(dOperation)
 	assert.NoError(t, err)
-	return dOperation.Operation
+	return dOperation
 }

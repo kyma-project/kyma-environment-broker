@@ -21,7 +21,7 @@ type DeprovisionEndpoint struct {
 	log *slog.Logger
 
 	instancesStorage  storage.Instances
-	operationsStorage storage.Deprovisioning
+	operationsStorage storage.Operations
 
 	queue              Queue
 	operationBlocklist blocklist.OperationBlocklist
@@ -60,7 +60,7 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
 
 	// check if operation with the same instance ID is already created
-	existingOperation, errStorage := b.operationsStorage.GetDeprovisioningOperationByInstanceID(instanceID)
+	existingOperation, errStorage := b.operationsStorage.GetLastOperationByTypesWithAllStates(instanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	if errStorage != nil && !dberr.IsNotFound(errStorage) {
 		logger.Error(fmt.Sprintf("cannot get existing operation from storage %s", errStorage))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot get existing operation from storage")
@@ -102,7 +102,7 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	if v := ctx.Value(userAgentKey); v != nil {
 		operation.UserAgent = v.(string)
 	}
-	err = b.operationsStorage.InsertDeprovisioningOperation(operation)
+	err = b.operationsStorage.InsertOperation(operation)
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot save operation: %s", err))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot save operation")

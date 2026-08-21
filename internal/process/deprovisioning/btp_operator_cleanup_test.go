@@ -230,7 +230,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		_, _, err = step.Run(op.Operation, log)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -270,7 +270,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		_, _, err = step.Run(op.Operation, log)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -310,7 +310,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		_, _, err = step.Run(op.Operation, log)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -333,7 +333,7 @@ func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	_, backoff, err := step.Run(op.Operation, log)
+	_, backoff, err := step.Run(op, log)
 
 	// then
 	assert.NoError(t, err)
@@ -355,7 +355,7 @@ func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	_, backoff, err := step.Run(op.Operation, log)
+	_, backoff, err := step.Run(op, log)
 
 	// then
 	assert.NoError(t, err)
@@ -393,7 +393,7 @@ func TestBTPOperatorCleanupStep_ErrorCollection(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		_, backoff, err := step.Run(op.Operation, log)
+		_, backoff, err := step.Run(op, log)
 
 		// then
 		// handleError consumes the error and returns backoff for retry instead
@@ -425,7 +425,7 @@ func TestBTPOperatorCleanupStep_ErrorCollection(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		_, backoff, err := step.Run(op.Operation, log)
+		_, backoff, err := step.Run(op, log)
 
 		// then
 		// handleError consumes the error and returns backoff for retry instead

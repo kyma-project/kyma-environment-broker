@@ -148,7 +148,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.Operation, 0),
 		UpdateOperations:         make([]internal.Operation, 0),
 		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
@@ -163,11 +163,15 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.ProvisionOperations = append(grouped.ProvisionOperations, *ret)
 
 		case internal.OperationTypeDeprovision:
-			ret, err := s.toDeprovisioningOperation(&op)
+			var deprovOp internal.Operation
+			if err := json.Unmarshal([]byte(op.Data), &deprovOp); err != nil {
+				return nil, fmt.Errorf("while unmarshalling deprovisioning operation data: %w", err)
+			}
+			ret, err := s.toOperation(&op, deprovOp)
 			if err != nil {
 				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
 			}
-			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
+			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, ret)
 
 		case internal.OperationTypeUpgradeCluster:
 			var upgradeOp internal.Operation
@@ -197,60 +201,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	}
 
 	return &grouped, nil
-}
-
-// InsertDeprovisioningOperation insert new DeprovisioningOperation to storage
-func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
-
-	dto, err := s.deprovisioningOperationToDTO(&operation)
-	if err != nil {
-		return fmt.Errorf("while converting Operation to DTO: %w", err)
-	}
-
-	return s.insert(dto)
-}
-
-// GetDeprovisioningOperationByID fetches the DeprovisioningOperation by given ID, returns error if not found
-func (s *operations) GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error) {
-	operation, err := s.getByID(operationID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting operation by ID: %w", err)
-	}
-
-	ret, err := s.toDeprovisioningOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// GetDeprovisioningOperationByInstanceID fetches the latest DeprovisioningOperation by given instanceID, returns error if not found
-func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error) {
-	operation, err := s.getByTypeAndInstanceID(instanceID, internal.OperationTypeDeprovision)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := s.toDeprovisioningOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// UpdateDeprovisioningOperation updates DeprovisioningOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error) {
-	operation.UpdatedAt = time.Now()
-
-	dto, err := s.deprovisioningOperationToDTO(&operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
-	}
-
-	lastErr := s.update(dto)
-	operation.Version = operation.Version + 1
-	return &operation, lastErr
 }
 
 // GetLastOperation returns Operation for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
@@ -289,6 +239,26 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
 	session := s.Factory.NewReadSession()
 	dto, dbErr := session.GetLastOperation(instanceID, types)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+
+	operation := internal.Operation{}
+	err := json.Unmarshal([]byte(dto.Data), &operation)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshalling operation data: %w", err)
+	}
+	operation, err = s.toOperation(&dto, operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
+}
+
+// GetLastOperationByTypesWithAllStates returns Operation (with one of given types) for given instance ID including pending state. Returns an error if the operation does not exist.
+func (s *operations) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	session := s.Factory.NewReadSession()
+	dto, dbErr := session.GetLastOperationByTypesWithAllStates(instanceID, types)
 	if dbErr != nil {
 		return nil, dbErr
 	}
@@ -641,39 +611,6 @@ func (s *operations) provisioningOperationToDTO(op *internal.ProvisioningOperati
 	}
 	ret.Data = string(serialized)
 	ret.Type = internal.OperationTypeProvision
-	return ret, nil
-}
-
-func (s *operations) toDeprovisioningOperation(op *dbmodel.OperationDTO) (*internal.DeprovisioningOperation, error) {
-	if op.Type != internal.OperationTypeDeprovision {
-		return nil, fmt.Errorf("expected operation type Deprovision, but was %s", op.Type)
-	}
-	var operation internal.DeprovisioningOperation
-	var err error
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data: %w", err)
-	}
-	operation.Operation, err = s.toOperation(op, operation.Operation)
-	if err != nil {
-		return nil, err
-	}
-
-	return &operation, nil
-}
-
-func (s *operations) deprovisioningOperationToDTO(op *internal.DeprovisioningOperation) (dbmodel.OperationDTO, error) {
-	serialized, err := json.Marshal(op)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing deprovisioning data %v: %w", op, err)
-	}
-
-	ret, err := s.operationToDB(op.Operation)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
-	}
-	ret.Data = string(serialized)
-	ret.Type = internal.OperationTypeDeprovision
 	return ret, nil
 }
 

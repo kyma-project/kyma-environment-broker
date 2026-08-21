@@ -321,7 +321,7 @@ func (h *Handler) addAllOperationsToRuntime(dto *pkg.RuntimeDTO) error {
 	}
 
 	deprovOprs := operationsGroup.DeprovisionOperations
-	var deprovOp *internal.DeprovisioningOperation
+	var deprovOp *internal.Operation
 	if len(deprovOprs) != 0 {
 		for _, op := range deprovOprs {
 			if !op.Temporary {
@@ -374,14 +374,10 @@ func (h *Handler) addLastOperationToRuntime(dto *pkg.RuntimeDTO) error {
 		}
 
 	case internal.OperationTypeDeprovision:
-		deprovOp, err := h.operationsDb.GetDeprovisioningOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching deprovisioning operation for instance %s: %w", dto.InstanceID, err)
-		}
-		if deprovOp.Temporary {
-			h.converter.ApplySuspensionOperations(dto, []internal.DeprovisioningOperation{*deprovOp})
+		if lastOp.Temporary {
+			h.converter.ApplySuspensionOperations(dto, []internal.Operation{*lastOp})
 		} else {
-			h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
+			h.converter.ApplyDeprovisioningOperation(dto, lastOp)
 		}
 
 	case internal.OperationTypeUpgradeCluster:

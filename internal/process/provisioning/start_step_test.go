@@ -24,7 +24,7 @@ func TestStartStep_RunIfDeprovisioningInProgress(t *testing.T) {
 
 	err := st.Instances().Insert(inst)
 	assert.NoError(t, err)
-	err = st.Operations().InsertDeprovisioningOperation(dOp)
+	err = st.Operations().InsertOperation(dOp)
 	assert.NoError(t, err)
 	err = st.Operations().InsertOperation(pOp)
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestStartStep_RunIfDeprovisioningDone(t *testing.T) {
 
 	err := st.Instances().Insert(inst)
 	assert.NoError(t, err)
-	err = st.Operations().InsertDeprovisioningOperation(dOp)
+	err = st.Operations().InsertOperation(dOp)
 	assert.NoError(t, err)
 	err = st.Operations().InsertOperation(pOp)
 	assert.NoError(t, err)

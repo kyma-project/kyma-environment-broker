@@ -211,6 +211,24 @@ func (r readSession) GetLastOperation(instanceID string, types []internal.Operat
 	return operation, nil
 }
 
+// GetLastOperationByTypesWithAllStates returns the last operation of given types for given instance ID, including pending state.
+func (r readSession) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
+	condition := dbr.Eq("instance_id", instanceID)
+	if len(types) > 0 {
+		condition = dbr.And(condition, dbr.Expr("type IN ?", types))
+	}
+	operation, err := r.getLastOperation(condition)
+	if err != nil {
+		switch {
+		case dberr.IsNotFound(err):
+			return dbmodel.OperationDTO{}, dberr.NotFound("for instance ID: %s %s", instanceID, err)
+		default:
+			return dbmodel.OperationDTO{}, err
+		}
+	}
+	return operation, nil
+}
+
 func (r readSession) GetLastOperationWithAllStates(instanceID string) (dbmodel.OperationDTO, dberr.Error) {
 	condition := dbr.Eq("instance_id", instanceID)
 	operation, err := r.getLastOperation(condition)

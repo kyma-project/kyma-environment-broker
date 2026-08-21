@@ -80,9 +80,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	prometheus.MustRegister(stepDurationCollector)
 
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
-	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
-	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	sub.Subscribe(process.OperationStepProcessed{}, stepDurationCollector.OnOperationStepProcessed)
 	sub.Subscribe(process.OperationFinished{}, opStats.UpdateMetrics)
 	sub.Subscribe(process.OperationFinished{}, opResult.UpdateMetrics)

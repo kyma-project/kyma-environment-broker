@@ -183,7 +183,7 @@ type ProviderValues struct {
 
 type GroupedOperations struct {
 	ProvisionOperations      []ProvisioningOperation
-	DeprovisionOperations    []DeprovisioningOperation
+	DeprovisionOperations    []Operation
 	UpdateOperations         []Operation
 	UpgradeClusterOperations []Operation
 }
@@ -289,11 +289,6 @@ type MonitoringData struct {
 	Password string `json:"password"`
 }
 
-// DeprovisioningOperation holds all information about de-provisioning operation
-type DeprovisioningOperation struct {
-	Operation
-}
-
 type RuntimeState struct {
 	ID string `json:"id"`
 
@@ -381,30 +376,28 @@ func NewProvisioningOperationWithID(operationID, instanceID string, parameters P
 	}, nil
 }
 
-// NewDeprovisioningOperationWithID creates a fresh (just starting) instance of the DeprovisioningOperation with provided ID
-func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (DeprovisioningOperation, error) {
+// NewDeprovisioningOperationWithID creates a fresh (just starting) instance of the deprovisioning Operation with provided ID
+func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (Operation, error) {
 	details, err := instance.GetInstanceDetails()
 	if err != nil {
-		return DeprovisioningOperation{}, err
+		return Operation{}, err
 	}
-	return DeprovisioningOperation{
-		Operation: Operation{
-			RuntimeOperation: RuntimeOperation{
-				GlobalAccountID: instance.GlobalAccountID,
-				Region:          instance.ProviderRegion,
-			},
-			ID:                     operationID,
-			Version:                0,
-			Description:            "Operation created",
-			InstanceID:             instance.InstanceID,
-			State:                  OperationStatePending,
-			CreatedAt:              time.Now(),
-			UpdatedAt:              time.Now(),
-			Type:                   OperationTypeDeprovision,
-			InstanceDetails:        details,
-			FinishedStages:         make([]string, 0),
-			ProvisioningParameters: instance.Parameters,
+	return Operation{
+		RuntimeOperation: RuntimeOperation{
+			GlobalAccountID: instance.GlobalAccountID,
+			Region:          instance.ProviderRegion,
 		},
+		ID:                     operationID,
+		Version:                0,
+		Description:            "Operation created",
+		InstanceID:             instance.InstanceID,
+		State:                  OperationStatePending,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Type:                   OperationTypeDeprovision,
+		InstanceDetails:        details,
+		FinishedStages:         make([]string, 0),
+		ProvisioningParameters: instance.Parameters,
 	}, nil
 }
 
@@ -447,23 +440,21 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 	return op
 }
 
-// NewSuspensionOperationWithID creates a fresh (just starting) instance of the DeprovisioningOperation which does not remove the instance.
-func NewSuspensionOperationWithID(operationID string, instance *Instance) DeprovisioningOperation {
-	return DeprovisioningOperation{
-		Operation: Operation{
-			ID:                     operationID,
-			Version:                0,
-			Description:            "Operation created",
-			InstanceID:             instance.InstanceID,
-			State:                  OperationStatePending,
-			CreatedAt:              time.Now(),
-			UpdatedAt:              time.Now(),
-			Type:                   OperationTypeDeprovision,
-			InstanceDetails:        instance.InstanceDetails,
-			ProvisioningParameters: instance.Parameters,
-			FinishedStages:         make([]string, 0),
-			Temporary:              true,
-		},
+// NewSuspensionOperationWithID creates a fresh (just starting) suspension Operation (does not remove the instance).
+func NewSuspensionOperationWithID(operationID string, instance *Instance) Operation {
+	return Operation{
+		ID:                     operationID,
+		Version:                0,
+		Description:            "Operation created",
+		InstanceID:             instance.InstanceID,
+		State:                  OperationStatePending,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Type:                   OperationTypeDeprovision,
+		InstanceDetails:        instance.InstanceDetails,
+		ProvisioningParameters: instance.Parameters,
+		FinishedStages:         make([]string, 0),
+		Temporary:              true,
 	}
 }
 
