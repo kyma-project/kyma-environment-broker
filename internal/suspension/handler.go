@@ -103,14 +103,14 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 }
 
 func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log *slog.Logger) error {
-	lastDeprovisioning, err := h.operations.GetLastOperationWithAllStates(instance.InstanceID)
+	lastDeprovisioning, err := h.operations.GetLastOperationByTypesWithAllStates(instance.InstanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	// there was an error - fail
 	if err != nil && !dberr.IsNotFound(err) {
 		return err
 	}
 
 	// no error, operation exists and is in progress or pending
-	if err == nil && lastDeprovisioning.Type == internal.OperationTypeDeprovision &&
+	if err == nil &&
 		(lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == internal.OperationStatePending) {
 		log.Info("Suspension already started")
 		return nil

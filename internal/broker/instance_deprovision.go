@@ -60,14 +60,14 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
 
 	// check if operation with the same instance ID is already created
-	existingOperation, errStorage := b.operationsStorage.GetLastOperationWithAllStates(instanceID)
+	existingOperation, errStorage := b.operationsStorage.GetLastOperationByTypesWithAllStates(instanceID, []internal.OperationType{internal.OperationTypeDeprovision})
 	if errStorage != nil && !dberr.IsNotFound(errStorage) {
 		logger.Error(fmt.Sprintf("cannot get existing operation from storage %s", errStorage))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot get existing operation from storage")
 	}
 
 	// temporary deprovisioning means suspension
-	previousOperationIsNotTemporary := existingOperation != nil && existingOperation.Type == internal.OperationTypeDeprovision && !existingOperation.Temporary
+	previousOperationIsNotTemporary := existingOperation != nil && !existingOperation.Temporary
 	if previousOperationIsNotTemporary {
 		switch {
 		// there is an ongoing operation
