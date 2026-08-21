@@ -17,17 +17,13 @@ import (
 type operations struct {
 	mu sync.Mutex
 
-	operations               map[string]internal.Operation
-	upgradeClusterOperations map[string]internal.UpgradeClusterOperation
-	updateOperations         map[string]internal.UpdatingOperation
+	operations map[string]internal.Operation
 }
 
 // NewOperation creates in-memory storage for OSB operations.
 func NewOperation() *operations {
 	return &operations{
-		operations:               make(map[string]internal.Operation, 0),
-		upgradeClusterOperations: make(map[string]internal.UpgradeClusterOperation, 0),
-		updateOperations:         make(map[string]internal.UpdatingOperation, 0),
+		operations: make(map[string]internal.Operation, 0),
 	}
 }
 
@@ -188,9 +184,9 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
-		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
-		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
-		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+		DeprovisionOperations:    make([]internal.Operation, 0),
+		UpdateOperations:         make([]internal.Operation, 0),
+		UpgradeClusterOperations: make([]internal.Operation, 0),
 	}
 
 	for _, op := range s.operations {
@@ -199,22 +195,27 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			grouped.ProvisionOperations = append(grouped.ProvisionOperations, internal.ProvisioningOperation{Operation: op})
 
 		case internal.OperationTypeDeprovision:
-			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, internal.DeprovisioningOperation{Operation: op})
+			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, op)
 
 		case internal.OperationTypeUpgradeCluster:
-			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, internal.UpgradeClusterOperation{Operation: op})
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, op)
+
+		case internal.OperationTypeUpgradeKyma:
+			continue
 
 		case internal.OperationTypeUpdate:
-			grouped.UpdateOperations = append(grouped.UpdateOperations, internal.UpdatingOperation{Operation: op})
+			grouped.UpdateOperations = append(grouped.UpdateOperations, op)
 		default:
 			panic("Invalid type of operation")
 		}
 	}
 
 	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
-	s.sortDeprovisioningByCreatedAtDesc(grouped.DeprovisionOperations)
-	s.sortUpgradeClusterByCreatedAt(grouped.UpgradeClusterOperations)
-	s.sortUpdateByCreatedAt(grouped.UpdateOperations)
+	s.sortOperationsByCreatedAtDesc(grouped.DeprovisionOperations)
+	s.sortOperationsByCreatedAtDesc(grouped.UpgradeClusterOperations)
+	sort.Slice(grouped.UpdateOperations, func(i, j int) bool {
+		return grouped.UpdateOperations[i].CreatedAt.Before(grouped.UpdateOperations[j].CreatedAt)
+	})
 
 	return &grouped, nil
 }
@@ -239,107 +240,6 @@ func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.O
 	return operations, nil
 }
 
-func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.ID
-	if _, exists := s.operations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.operations[id] = operation.Operation
-	return nil
-}
-
-func (s *operations) GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	op, exists := s.operations[operationID]
-	if !exists {
-		return nil, dberr.NotFound("instance deprovisioning operation with id %s not found", operationID)
-	}
-	return &internal.DeprovisioningOperation{Operation: op}, nil
-}
-
-func (s *operations) GetDeprovisioningOperationByInstanceID(instanceID string) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []internal.DeprovisioningOperation
-
-	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.Type == internal.OperationTypeDeprovision {
-			result = append(result, internal.DeprovisioningOperation{Operation: op})
-		}
-	}
-	if len(result) != 0 {
-		s.sortDeprovisioningByCreatedAtDesc(result)
-		return &result[0], nil
-	}
-
-	return nil, dberr.NotFound("instance deprovisioning operation with instanceID %s not found", instanceID)
-}
-
-func (s *operations) UpdateDeprovisioningOperation(op internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.operations[op.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update deprovisioning operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.operations[op.ID] = op.Operation
-
-	return &op, nil
-}
-
-func (s *operations) InsertUpgradeClusterOperation(operation internal.UpgradeClusterOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.Operation.ID
-	if _, exists := s.upgradeClusterOperations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.upgradeClusterOperations[id] = operation
-	return nil
-}
-
-func (s *operations) GetUpgradeClusterOperationByID(operationID string) (*internal.UpgradeClusterOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	op, exists := s.upgradeClusterOperations[operationID]
-	if !exists {
-		return nil, dberr.NotFound("instance upgradeCluster operation with id %s not found", operationID)
-	}
-	return &op, nil
-}
-
-func (s *operations) UpdateUpgradeClusterOperation(op internal.UpgradeClusterOperation) (*internal.UpgradeClusterOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.upgradeClusterOperations[op.Operation.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.Operation.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update upgradeKyma operation with id %s (for instance id %s) - conflict", op.Operation.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.upgradeClusterOperations[op.Operation.ID] = op
-
-	return &op, nil
-}
-
 func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -359,33 +259,37 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 			}
 		}
 	}
-	for _, op := range s.upgradeClusterOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			if len(types) > 0 {
-				for _, t := range types {
-					if op.Type == t {
-						rows = append(rows, op.Operation)
-					}
-				}
-			} else {
-				rows = append(rows, op.Operation)
-			}
-		}
-	}
-	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			if len(types) > 0 {
-				for _, t := range types {
-					if op.Type == t {
-						rows = append(rows, op.Operation)
-					}
-				}
-			} else {
-				rows = append(rows, op.Operation)
-			}
-		}
+	if len(rows) == 0 {
+		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
 	}
 
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].CreatedAt.After(rows[j].CreatedAt)
+	})
+
+	return &rows[0], nil
+}
+
+// GetLastOperationByTypesWithAllStates returns Operation (with one of given types) for given instance ID including pending state.
+func (s *operations) GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var rows []internal.Operation
+
+	for _, op := range s.operations {
+		if op.InstanceID == instanceID {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op)
+					}
+				}
+			} else {
+				rows = append(rows, op)
+			}
+		}
+	}
 	if len(rows) == 0 {
 		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
 	}
@@ -406,16 +310,6 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	for _, op := range s.operations {
 		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			rows = append(rows, op)
-		}
-	}
-	for _, op := range s.upgradeClusterOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			rows = append(rows, op.Operation)
-		}
-	}
-	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
-			rows = append(rows, op.Operation)
 		}
 	}
 
@@ -457,30 +351,11 @@ func (s *operations) GetOperationByID(operationID string) (*internal.Operation, 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var res *internal.Operation
-
-	provisionOp, exists := s.operations[operationID]
-	if exists {
-		res = &provisionOp
-	}
-	upgradeClusterOp, exists := s.upgradeClusterOperations[operationID]
-	if exists {
-		res = &upgradeClusterOp.Operation
-	}
-	updateOp, exists := s.updateOperations[operationID]
-	if exists {
-		res = &updateOp.Operation
-	}
 	op, exists := s.operations[operationID]
-	if exists {
-		res = &op
-	}
-
-	if res == nil {
+	if !exists {
 		return nil, dberr.NotFound("Operation with id %s not exist", operationID)
 	}
-
-	return res, nil
+	return &op, nil
 }
 
 func (s *operations) GetNotFinishedOperationsByType(opType internal.OperationType) ([]internal.Operation, error) {
@@ -511,21 +386,6 @@ func (s *operations) GetOperationsForIDs(opIdList []string) ([]internal.Operatio
 	defer s.mu.Unlock()
 
 	ops := make([]internal.Operation, 0)
-	for _, opID := range opIdList {
-		for _, op := range s.updateOperations {
-			if op.Operation.ID == opID {
-				ops = append(ops, op.Operation)
-			}
-		}
-	}
-	for _, opID := range opIdList {
-		for _, op := range s.upgradeClusterOperations {
-			if op.Operation.ID == opID {
-				ops = append(ops, op.Operation)
-			}
-		}
-	}
-
 	for _, opID := range opIdList {
 		for _, op := range s.operations {
 			if op.ID == opID {
@@ -621,104 +481,8 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 		nil
 }
 
-func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string) ([]internal.UpgradeClusterOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Empty filter means get all
-	operations := s.filterUpgradeClusterByInstanceID(instanceID, dbmodel.OperationFilter{})
-
-	if len(operations) != 0 {
-		s.sortUpgradeClusterByCreatedAtDesc(operations)
-		return operations, nil
-	}
-
-	return nil, dberr.NotFound("instance upgrade operations with instanceID %s not found", instanceID)
-}
-
-func (s *operations) InsertUpdatingOperation(operation internal.UpdatingOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.ID
-	if _, exists := s.updateOperations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.updateOperations[id] = operation
-	return nil
-}
-
 func (s *operations) ListShortOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
 	panic("not implemented")
-}
-
-func (s *operations) GetUpdatingOperationByID(operationID string) (*internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, op := range s.updateOperations {
-		if op.ID == operationID {
-			return &op, nil
-		}
-	}
-
-	return nil, dberr.NotFound("instance update operation with ID %s not found", operationID)
-}
-
-func (s *operations) UpdateUpdatingOperation(op internal.UpdatingOperation) (*internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.updateOperations[op.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update updating operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.updateOperations[op.ID] = op
-
-	return &op, nil
-}
-
-func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]internal.UpdatingOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	operations := make([]internal.UpdatingOperation, 0)
-	for _, v := range s.updateOperations {
-		if instanceID != v.InstanceID {
-			continue
-		}
-
-		operations = append(operations, v)
-	}
-
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
-	})
-
-	return operations, nil
-}
-
-func (s *operations) sortUpgradeClusterByCreatedAt(operations []internal.UpgradeClusterOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
-	})
-}
-
-func (s *operations) sortUpgradeClusterByCreatedAtDesc(operations []internal.UpgradeClusterOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.After(operations[j].CreatedAt)
-	})
-}
-
-func (s *operations) sortUpdateByCreatedAt(operations []internal.UpdatingOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
-	})
 }
 
 func (s *operations) sortProvisioningByCreatedAtDesc(operations []internal.ProvisioningOperation) {
@@ -733,12 +497,6 @@ func (s *operations) sortOperationsByCreatedAtDesc(operations []internal.Operati
 	})
 }
 
-func (s *operations) sortDeprovisioningByCreatedAtDesc(operations []internal.DeprovisioningOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.After(operations[j].CreatedAt)
-	})
-}
-
 func (s *operations) sortByCreatedAt(operations []internal.Operation) {
 	sort.Slice(operations, func(i, j int) bool {
 		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
@@ -747,9 +505,6 @@ func (s *operations) sortByCreatedAt(operations []internal.Operation) {
 
 func (s *operations) getAll() ([]internal.Operation, error) {
 	ops := make([]internal.Operation, 0)
-	for _, op := range s.upgradeClusterOperations {
-		ops = append(ops, op.Operation)
-	}
 	for _, op := range s.operations {
 		ops = append(ops, op)
 	}
@@ -770,22 +525,6 @@ func (s *operations) filterAll(filter dbmodel.OperationFilter) ([]internal.Opera
 		result = append(result, op)
 	}
 	return result, nil
-}
-
-func (s *operations) filterUpgradeClusterByInstanceID(instanceID string, filter dbmodel.OperationFilter) []internal.UpgradeClusterOperation {
-	operations := make([]internal.UpgradeClusterOperation, 0)
-	for _, v := range s.upgradeClusterOperations {
-		if instanceID != "" && instanceID != v.InstanceID {
-			continue
-		}
-		if ok := matchFilter(string(v.State), filter.States, s.equalFilter); !ok {
-			continue
-		}
-
-		operations = append(operations, v)
-	}
-
-	return operations
 }
 
 func (s *operations) equalFilter(a, b string) bool {

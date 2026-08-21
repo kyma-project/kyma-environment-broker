@@ -24,7 +24,7 @@ func TestUpdateKymaStep_PlanNotChanged(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.KymaResourceNamespace = kcpSystemNamespace
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestUpdateKymaStep_HappyPath(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.UpdatedPlanID = broker.AWSPlanID
 	operation.KymaTemplate = fixture.KymaTemplate
 	err = operations.InsertOperation(operation)
@@ -75,7 +75,7 @@ func TestUpdateKymaStep_KymaTemplateFromProvider(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.UpdatedPlanID = broker.AWSPlanID
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestUpdateKymaStep_NoKymaNamespace(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.KymaResourceNamespace = ""
 	operation.UpdatedPlanID = broker.AWSPlanID
 	err = operations.InsertOperation(operation)
@@ -126,7 +126,7 @@ func TestUpdateKymaStep_NoKymaNameInOperation(t *testing.T) {
 	db := storage.NewMemoryStorage()
 
 	operations := db.Operations()
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.UpdatedPlanID = broker.AWSPlanID
 	operation.KymaResourceName = ""
 	operation.RuntimeID = ""
@@ -157,7 +157,7 @@ func TestUpdateKymaStep_NoKymaNameInInstance(t *testing.T) {
 	db := storage.NewMemoryStorage()
 
 	operations := db.Operations()
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.UpdatedPlanID = broker.AWSPlanID
 	operation.KymaResourceName = ""
 	operation.RuntimeID = ""
@@ -186,7 +186,7 @@ func TestUpdateKymaStep_NoKymaResource(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	operations := db.Operations()
 
-	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.UpdatedPlanID = broker.AWSPlanID
 	operation.KymaTemplate = fixture.KymaTemplate
 	err = operations.InsertOperation(operation)

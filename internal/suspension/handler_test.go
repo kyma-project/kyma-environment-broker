@@ -40,7 +40,7 @@ func TestSuspension(t *testing.T) {
 	assert.True(t, changed, "handler to change active flag")
 
 	// then
-	op, _ := st.Operations().GetDeprovisioningOperationByInstanceID("instance-id")
+	op, _ := st.Operations().GetLastOperationWithAllStates("instance-id")
 	assertQueue(t, deprovisioning, op.ID)
 	assertQueue(t, provisioning)
 
@@ -59,17 +59,15 @@ func TestSuspension_Retrigger(t *testing.T) {
 		instance := fixInstance(fixInactiveErsContext())
 		err := st.Instances().Insert(*instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         "suspended-op-id",
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: instance.InstanceID,
-				State:      domain.Succeeded,
-				Temporary:  true,
-				Type:       internal.OperationTypeDeprovision,
-			},
+		err = st.Operations().InsertOperation(internal.Operation{
+			ID:         "suspended-op-id",
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: instance.InstanceID,
+			State:      domain.Succeeded,
+			Temporary:  true,
+			Type:       internal.OperationTypeDeprovision,
 		})
 		require.NoError(t, err)
 
@@ -79,7 +77,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 		assert.False(t, changed, "handler to not change active flag")
 
 		// then
-		op, _ := st.Operations().GetDeprovisioningOperationByInstanceID("instance-id")
+		op, _ := st.Operations().GetLastOperationWithAllStates("instance-id")
 		assertQueue(t, deprovisioning)
 		assertQueue(t, provisioning)
 
@@ -97,17 +95,15 @@ func TestSuspension_Retrigger(t *testing.T) {
 		instance := fixInstance(fixInactiveErsContext())
 		err := st.Instances().Insert(*instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
-			Operation: internal.Operation{
-				ID:         "suspended-op-id",
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: instance.InstanceID,
-				State:      domain.Failed,
-				Temporary:  true,
-				Type:       internal.OperationTypeDeprovision,
-			},
+		err = st.Operations().InsertOperation(internal.Operation{
+			ID:         "suspended-op-id",
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: instance.InstanceID,
+			State:      domain.Failed,
+			Temporary:  true,
+			Type:       internal.OperationTypeDeprovision,
 		})
 		require.NoError(t, err)
 
@@ -117,7 +113,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 		assert.True(t, changed, "handler to change active flag")
 
 		// then
-		op, _ := st.Operations().GetDeprovisioningOperationByInstanceID("instance-id")
+		op, _ := st.Operations().GetLastOperationWithAllStates("instance-id")
 		assertQueue(t, deprovisioning, op.ID)
 		assertQueue(t, provisioning)
 
@@ -152,7 +148,7 @@ func TestUnsuspension(t *testing.T) {
 
 	deprovisioningOperation := fixture.FixDeprovisioningOperation("d-op", "instance-id")
 	deprovisioningOperation.Temporary = true
-	err = st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	err = st.Operations().InsertOperation(deprovisioningOperation)
 	require.NoError(t, err)
 
 	// when
@@ -187,7 +183,7 @@ func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
 	require.NoError(t, err)
 	deprovisioningOperation := fixture.FixDeprovisioningOperation("d-op", "instance-id")
 	deprovisioningOperation.Temporary = false
-	err = st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	err = st.Operations().InsertOperation(deprovisioningOperation)
 	require.NoError(t, err)
 
 	// when

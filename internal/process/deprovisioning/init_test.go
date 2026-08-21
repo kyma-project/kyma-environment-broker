@@ -41,7 +41,7 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	prepareProvisionedInstance(t, memoryStorage)
 	uOp := fixture.FixUpdatingOperation("uop-id", testInstanceID)
 	uOp.State = domain.InProgress
-	err := memoryStorage.Operations().InsertOperation(uOp.Operation)
+	err := memoryStorage.Operations().InsertOperation(uOp)
 	assert.NoError(t, err)
 	dOp := prepareDeprovisioningOperation(t, memoryStorage, internal.OperationStatePending)
 
@@ -70,7 +70,7 @@ func prepareProvisionedInstance(t *testing.T, s storage.BrokerStorage) {
 func prepareDeprovisioningOperation(t *testing.T, s storage.BrokerStorage, state domain.LastOperationState) internal.Operation {
 	dOperation := fixture.FixDeprovisioningOperation("dop-id", testInstanceID)
 	dOperation.State = state
-	err := s.Operations().InsertOperation(dOperation.Operation)
+	err := s.Operations().InsertOperation(dOperation)
 	assert.NoError(t, err)
-	return dOperation.Operation
+	return dOperation
 }

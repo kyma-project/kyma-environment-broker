@@ -41,7 +41,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpdatingOperation("op-id", "iid")
 				op.State = domain.InProgress
-				err := os.InsertUpdatingOperation(op)
+				err := os.InsertOperation(op)
 				require.NoError(t, err)
 			},
 			expectedRepeat: true,
@@ -50,7 +50,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixDeprovisioningOperation("op-id", "iid")
 				op.State = domain.InProgress
-				err := os.InsertDeprovisioningOperation(op)
+				err := os.InsertOperation(op)
 				require.NoError(t, err)
 			},
 			expectedRepeat: true,
@@ -66,7 +66,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			step := NewInitialisationStep(db)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = internal.OperationStatePending
-			err = ops.InsertOperation(updatingOperation.Operation)
+			err = ops.InsertOperation(updatingOperation)
 			require.NoError(t, err)
 			tc.beforeFunc(ops)
 			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -74,7 +74,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			}))
 
 			// when
-			_, d, err := step.Run(updatingOperation.Operation, log)
+			_, d, err := step.Run(updatingOperation, log)
 
 			// then
 			require.NoError(t, err)

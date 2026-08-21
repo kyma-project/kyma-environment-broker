@@ -15,10 +15,10 @@ import (
 type Converter interface {
 	NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error)
 	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation)
-	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation)
-	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int)
-	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.UpdatingOperation, totalCount int)
-	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation)
+	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.Operation)
+	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
+	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
+	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation)
 	ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.ProvisioningOperation)
 }
 
@@ -54,13 +54,13 @@ func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *intern
 	}
 }
 
-func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation) {
+func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.Operation) {
 	if dOpr != nil {
 		if dOpr.State == internal.OperationStatePending {
 			return
 		}
 		dto.Status.Deprovisioning = &pkg.Operation{}
-		c.applyOperation(&dOpr.Operation, dto.Status.Deprovisioning)
+		c.applyOperation(dOpr, dto.Status.Deprovisioning)
 		c.adjustRuntimeState(dto)
 	}
 }
@@ -151,7 +151,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 	return toReturn, nil
 }
 
-func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int) {
+func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -159,7 +159,7 @@ func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []
 	dto.Status.UpgradingCluster.Data = make([]pkg.Operation, 0)
 	for _, o := range oprs {
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		dto.Status.UpgradingCluster.Data = append(dto.Status.UpgradingCluster.Data, op)
 	}
 	dto.Status.UpgradingCluster.TotalCount = totalCount
@@ -167,7 +167,7 @@ func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []
 	c.adjustRuntimeState(dto)
 }
 
-func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation) {
+func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -179,7 +179,7 @@ func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []intern
 			continue
 		}
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		suspension.Data = append(suspension.Data, op)
 	}
 	suspension.TotalCount = len(suspension.Data)
@@ -208,7 +208,7 @@ func (c *converter) ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []inte
 	c.adjustRuntimeState(dto)
 }
 
-func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.UpdatingOperation, totalCount int) {
+func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -222,7 +222,7 @@ func (c *converter) ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.U
 	dto.Status.Update.TotalCount = totalCount
 	for _, o := range oprs {
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		dto.Status.Update.Data = append(dto.Status.Update.Data, op)
 	}
 	c.adjustRuntimeState(dto)

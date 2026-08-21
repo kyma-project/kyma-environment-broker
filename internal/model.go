@@ -160,6 +160,10 @@ type Operation struct {
 
 	// RawParameters stores the verbatim JSON payload submitted by the caller (not modified by merging)
 	RawParameters json.RawMessage `json:"rawParameters,omitempty"`
+
+	// RuntimeResourceCreatedAt stores when the broker started tracking the Runtime CR provisioning readiness retries.
+	// Used for timeout calculation that starts from the first runtime provisioning check, not OSB request arrival.
+	RuntimeResourceCreatedAt *time.Time `json:"runtimeResourceCreatedAt,omitempty"`
 }
 
 // ProviderValues contains values which are specific to particular plans (and provisioning parameters)
@@ -179,9 +183,9 @@ type ProviderValues struct {
 
 type GroupedOperations struct {
 	ProvisionOperations      []ProvisioningOperation
-	DeprovisionOperations    []DeprovisioningOperation
-	UpgradeClusterOperations []UpgradeClusterOperation
-	UpdateOperations         []UpdatingOperation
+	DeprovisionOperations    []Operation
+	UpdateOperations         []Operation
+	UpgradeClusterOperations []Operation
 }
 
 func (o *Operation) IsFinished() bool {
@@ -285,20 +289,6 @@ type MonitoringData struct {
 	Password string `json:"password"`
 }
 
-// DeprovisioningOperation holds all information about de-provisioning operation
-type DeprovisioningOperation struct {
-	Operation
-}
-
-type UpdatingOperation struct {
-	Operation
-}
-
-// UpgradeClusterOperation holds all information about upgrade cluster (shoot) operation
-type UpgradeClusterOperation struct {
-	Operation
-}
-
 type RuntimeState struct {
 	ID string `json:"id"`
 
@@ -386,30 +376,28 @@ func NewProvisioningOperationWithID(operationID, instanceID string, parameters P
 	}, nil
 }
 
-// NewDeprovisioningOperationWithID creates a fresh (just starting) instance of the DeprovisioningOperation with provided ID
-func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (DeprovisioningOperation, error) {
+// NewDeprovisioningOperationWithID creates a fresh (just starting) instance of the deprovisioning Operation with provided ID
+func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (Operation, error) {
 	details, err := instance.GetInstanceDetails()
 	if err != nil {
-		return DeprovisioningOperation{}, err
+		return Operation{}, err
 	}
-	return DeprovisioningOperation{
-		Operation: Operation{
-			RuntimeOperation: RuntimeOperation{
-				GlobalAccountID: instance.GlobalAccountID,
-				Region:          instance.ProviderRegion,
-			},
-			ID:                     operationID,
-			Version:                0,
-			Description:            "Operation created",
-			InstanceID:             instance.InstanceID,
-			State:                  OperationStatePending,
-			CreatedAt:              time.Now(),
-			UpdatedAt:              time.Now(),
-			Type:                   OperationTypeDeprovision,
-			InstanceDetails:        details,
-			FinishedStages:         make([]string, 0),
-			ProvisioningParameters: instance.Parameters,
+	return Operation{
+		RuntimeOperation: RuntimeOperation{
+			GlobalAccountID: instance.GlobalAccountID,
+			Region:          instance.ProviderRegion,
 		},
+		ID:                     operationID,
+		Version:                0,
+		Description:            "Operation created",
+		InstanceID:             instance.InstanceID,
+		State:                  OperationStatePending,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Type:                   OperationTypeDeprovision,
+		InstanceDetails:        details,
+		FinishedStages:         make([]string, 0),
+		ProvisioningParameters: instance.Parameters,
 	}, nil
 }
 
@@ -452,23 +440,21 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 	return op
 }
 
-// NewSuspensionOperationWithID creates a fresh (just starting) instance of the DeprovisioningOperation which does not remove the instance.
-func NewSuspensionOperationWithID(operationID string, instance *Instance) DeprovisioningOperation {
-	return DeprovisioningOperation{
-		Operation: Operation{
-			ID:                     operationID,
-			Version:                0,
-			Description:            "Operation created",
-			InstanceID:             instance.InstanceID,
-			State:                  OperationStatePending,
-			CreatedAt:              time.Now(),
-			UpdatedAt:              time.Now(),
-			Type:                   OperationTypeDeprovision,
-			InstanceDetails:        instance.InstanceDetails,
-			ProvisioningParameters: instance.Parameters,
-			FinishedStages:         make([]string, 0),
-			Temporary:              true,
-		},
+// NewSuspensionOperationWithID creates a fresh (just starting) suspension Operation (does not remove the instance).
+func NewSuspensionOperationWithID(operationID string, instance *Instance) Operation {
+	return Operation{
+		ID:                     operationID,
+		Version:                0,
+		Description:            "Operation created",
+		InstanceID:             instance.InstanceID,
+		State:                  OperationStatePending,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Type:                   OperationTypeDeprovision,
+		InstanceDetails:        instance.InstanceDetails,
+		ProvisioningParameters: instance.Parameters,
+		FinishedStages:         make([]string, 0),
+		Temporary:              true,
 	}
 }
 

@@ -41,7 +41,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
             },
             "type": "object"
           },
@@ -70,11 +70,12 @@
             "description": "Use labels to identify, filter, and organize objects.",
             "patternProperties": {
               ".*": {
+                "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$",
                 "type": "string"
               }
             },
             "propertyNames": {
-              "pattern": "^.+$"
+              "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
             },
             "type": "object"
           },
@@ -133,11 +134,13 @@
                 "key": {
                   "description": "Specifies the taint key.",
                   "minLength": 1,
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,251}[a-zA-Z0-9])?/)?[a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?$"
                 },
                 "value": {
                   "description": "Specifies the taint value.",
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^([a-zA-Z0-9]([-a-zA-Z0-9_.]{0,61}[a-zA-Z0-9])?)?$"
                 }
               },
               "required": [
@@ -226,7 +229,7 @@
                 "regular": "Regular - default version"
               },
               "default": "fast",
-              "description": "For the default modules, specifies your preferred default release channel: regular or fast. For details, see \u003ca href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US\u0026q=IPv#modules\u003eModules\u003c/a\u003e.",
+              "description": "For the default modules, specifies your preferred default release channel: regular or fast. For details, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US&q=IPv#modules>Modules</a>.",
               "enum": [
                 "regular",
                 "fast"
@@ -236,7 +239,7 @@
             },
             "default": {
               "default": true,
-              "description": "Check the default modules in the \u003ca href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud\u003edefault modules table\u003c/a\u003e.",
+              "description": "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
               "readOnly": true,
               "title": "Use Default",
               "type": "boolean"
@@ -259,7 +262,7 @@
                 "regular": "Regular - default version"
               },
               "default": "fast",
-              "description": "Specifies your preferred release channel, regular or fast, for all modules in your custom list. You can change this setting for individual modules if needed. For details, see \u003ca href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US\u0026q=IPv#modules\u003eModules\u003c/a\u003e.",
+              "description": "Specifies your preferred release channel, regular or fast, for all modules in your custom list. You can change this setting for individual modules if needed. For details, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment?locale=en-US&q=IPv#modules>Modules</a>.",
               "enum": [
                 "regular",
                 "fast"
@@ -268,7 +271,7 @@
               "type": "string"
             },
             "list": {
-              "description": "Check a module technical name on this \u003ca href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud\u003ewebsite\u003c/a\u003e. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+              "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
               "items": {
                 "_controlsOrder": [
                   "name",
@@ -308,7 +311,7 @@
                     "type": "string"
                   },
                   "name": {
-                    "description": "Check a module technical name on this \u003ca href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud\u003ewebsite\u003c/a\u003e. You can only use a module technical name once.",
+                    "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once.",
                     "minLength": 1,
                     "title": "Name",
                     "type": "string"

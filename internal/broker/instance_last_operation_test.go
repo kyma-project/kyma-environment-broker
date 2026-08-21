@@ -61,7 +61,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
 		updateOp.State = internal.OperationStatePending
-		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
+		err := memoryStorage.Operations().InsertOperation(updateOp)
 		assert.NoError(t, err)
 
 		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
@@ -89,7 +89,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
 		updateOp.State = internal.OperationStateRetrying
-		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
+		err := memoryStorage.Operations().InsertOperation(updateOp)
 		assert.NoError(t, err)
 
 		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
@@ -120,7 +120,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
 		updateOp.State = internal.OperationStateCanceling
-		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
+		err := memoryStorage.Operations().InsertOperation(updateOp)
 		assert.NoError(t, err)
 
 		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
@@ -150,7 +150,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
 		updateOp.State = internal.OperationStateCanceled
-		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
+		err := memoryStorage.Operations().InsertOperation(updateOp)
 		assert.NoError(t, err)
 
 		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())

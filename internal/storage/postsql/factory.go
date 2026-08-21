@@ -25,6 +25,7 @@ type ReadSession interface {
 	GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, dberr.Error)
 	GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error)
 	GetLastOperationWithAllStates(id string) (dbmodel.OperationDTO, dberr.Error)
+	GetLastOperationByTypesWithAllStates(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error)
 	GetOperationByID(opID string) (dbmodel.OperationDTO, dberr.Error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error)
 	CountNotFinishedOperationsByInstanceID(instanceID string) (int, dberr.Error)

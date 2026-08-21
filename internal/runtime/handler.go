@@ -293,18 +293,6 @@ func (h *Handler) getRuntimeNamesFromLastOperation(dto pkg.RuntimeDTO) (string, 
 	return runtimeResourceName, runtimeNamespaceName
 }
 
-func (h *Handler) takeLastClusterOperations(oprs []internal.UpgradeClusterOperation) ([]internal.UpgradeClusterOperation, int) {
-	toReturn := make([]internal.UpgradeClusterOperation, 0)
-	totalCount := 0
-	for _, op := range oprs {
-		if len(toReturn) < numberOfUpgradeOperationsToReturn {
-			toReturn = append(toReturn, op)
-		}
-		totalCount = totalCount + 1
-	}
-	return toReturn, totalCount
-}
-
 func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 	// Determine runtime modifiedAt timestamp based on the last operation of the runtime
 	last, err := h.operationsDb.GetLastOperation(dto.InstanceID)
@@ -333,7 +321,7 @@ func (h *Handler) addAllOperationsToRuntime(dto *pkg.RuntimeDTO) error {
 	}
 
 	deprovOprs := operationsGroup.DeprovisionOperations
-	var deprovOp *internal.DeprovisioningOperation
+	var deprovOp *internal.Operation
 	if len(deprovOprs) != 0 {
 		for _, op := range deprovOprs {
 			if !op.Temporary {
@@ -345,16 +333,19 @@ func (h *Handler) addAllOperationsToRuntime(dto *pkg.RuntimeDTO) error {
 	h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
 	h.converter.ApplySuspensionOperations(dto, deprovOprs)
 
-	ucOprs := operationsGroup.UpgradeClusterOperations
-	ucOprs, totalCount := h.takeLastClusterOperations(ucOprs)
-	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, totalCount)
-
 	uOprs := operationsGroup.UpdateOperations
-	totalCount = len(uOprs)
+	totalCount := len(uOprs)
 	if len(uOprs) > numberOfUpgradeOperationsToReturn {
 		uOprs = uOprs[0:numberOfUpgradeOperationsToReturn]
 	}
 	h.converter.ApplyUpdateOperations(dto, uOprs, totalCount)
+
+	ucOprs := operationsGroup.UpgradeClusterOperations
+	ucTotalCount := len(ucOprs)
+	if len(ucOprs) > numberOfUpgradeOperationsToReturn {
+		ucOprs = ucOprs[:numberOfUpgradeOperationsToReturn]
+	}
+	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, ucTotalCount)
 
 	return nil
 }
@@ -383,29 +374,17 @@ func (h *Handler) addLastOperationToRuntime(dto *pkg.RuntimeDTO) error {
 		}
 
 	case internal.OperationTypeDeprovision:
-		deprovOp, err := h.operationsDb.GetDeprovisioningOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching deprovisioning operation for instance %s: %w", dto.InstanceID, err)
-		}
-		if deprovOp.Temporary {
-			h.converter.ApplySuspensionOperations(dto, []internal.DeprovisioningOperation{*deprovOp})
+		if lastOp.Temporary {
+			h.converter.ApplySuspensionOperations(dto, []internal.Operation{*lastOp})
 		} else {
-			h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
+			h.converter.ApplyDeprovisioningOperation(dto, lastOp)
 		}
 
 	case internal.OperationTypeUpgradeCluster:
-		upgClusterOp, err := h.operationsDb.GetUpgradeClusterOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching upgrade cluster operation for instance %s: %w", dto.InstanceID, err)
-		}
-		h.converter.ApplyUpgradingClusterOperations(dto, []internal.UpgradeClusterOperation{*upgClusterOp}, 1)
+		h.converter.ApplyUpgradingClusterOperations(dto, []internal.Operation{*lastOp}, 1)
 
 	case internal.OperationTypeUpdate:
-		updOp, err := h.operationsDb.GetUpdatingOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching update operation for instance %s: %w", dto.InstanceID, err)
-		}
-		h.converter.ApplyUpdateOperations(dto, []internal.UpdatingOperation{*updOp}, 1)
+		h.converter.ApplyUpdateOperations(dto, []internal.Operation{*lastOp}, 1)
 
 	default:
 		return fmt.Errorf("unsupported operation type: %s", lastOp.Type)

@@ -18,24 +18,6 @@ type ProvisioningStepProcessed struct {
 	Operation internal.ProvisioningOperation
 }
 
-type UpdatingStepProcessed struct {
-	StepProcessed
-	OldOperation internal.UpdatingOperation
-	Operation    internal.UpdatingOperation
-}
-
-type DeprovisioningStepProcessed struct {
-	StepProcessed
-	OldOperation internal.DeprovisioningOperation
-	Operation    internal.DeprovisioningOperation
-}
-
-type UpgradeClusterStepProcessed struct {
-	StepProcessed
-	OldOperation internal.UpgradeClusterOperation
-	Operation    internal.UpgradeClusterOperation
-}
-
 type ProvisioningSucceeded struct {
 	Operation internal.ProvisioningOperation
 }
@@ -57,8 +39,4 @@ type OperationFailed struct {
 type OperationFinished struct {
 	Operation internal.Operation
 	PlanID    string
-}
-
-type DeprovisioningSucceeded struct {
-	Operation internal.DeprovisioningOperation
 }

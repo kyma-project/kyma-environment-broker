@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
 type State string
@@ -649,6 +650,14 @@ func (a AdditionalWorkerNodePool) ValidateTaints(taints []TaintDTO, poolName str
 		if t.Key == "" {
 			return fmt.Errorf("taint key must not be empty for %s additional worker node pool", poolName)
 		}
+		if errs := k8svalidation.IsQualifiedName(t.Key); len(errs) > 0 {
+			return fmt.Errorf("taint key %q is invalid for pool %q: %s", t.Key, poolName, strings.Join(errs, "; "))
+		}
+		if t.Value != "" {
+			if errs := k8svalidation.IsValidLabelValue(t.Value); len(errs) > 0 {
+				return fmt.Errorf("taint value %q for key %q is invalid for pool %q: %s", t.Value, t.Key, poolName, strings.Join(errs, "; "))
+			}
+		}
 		if _, ok := validEffects[t.Effect]; !ok {
 			return fmt.Errorf("taint effect %q is not valid for %s additional worker node pool, valid effects are: NoSchedule, PreferNoSchedule, NoExecute", t.Effect, poolName)
 		}
@@ -661,21 +670,26 @@ func (a AdditionalWorkerNodePool) ValidateTaints(taints []TaintDTO, poolName str
 	return nil
 }
 
-func validateKeyValueMap(m map[string]string, kind, poolName string) error {
-	for k := range m {
-		if k == "" {
-			return fmt.Errorf("%s key must not be empty for %s additional worker node pool", kind, poolName)
+func validateKeyValueMap(m map[string]string, kind, poolName string, validateValue bool) error {
+	for k, v := range m {
+		if errs := k8svalidation.IsQualifiedName(k); len(errs) > 0 {
+			return fmt.Errorf("%s key %q is invalid for pool %q: %s", kind, k, poolName, strings.Join(errs, "; "))
+		}
+		if validateValue {
+			if errs := k8svalidation.IsValidLabelValue(v); len(errs) > 0 {
+				return fmt.Errorf("%s value %q for key %q is invalid for pool %q: %s", kind, v, k, poolName, strings.Join(errs, "; "))
+			}
 		}
 	}
 	return nil
 }
 
 func (a AdditionalWorkerNodePool) ValidateLabels(labels map[string]string, poolName string) error {
-	return validateKeyValueMap(labels, "label", poolName)
+	return validateKeyValueMap(labels, "label", poolName, true)
 }
 
 func (a AdditionalWorkerNodePool) ValidateAnnotations(annotations map[string]string, poolName string) error {
-	return validateKeyValueMap(annotations, "annotation", poolName)
+	return validateKeyValueMap(annotations, "annotation", poolName, false)
 }
 
 func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) bool {

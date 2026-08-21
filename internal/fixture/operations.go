@@ -70,7 +70,7 @@ func FixOperation(operationID, instanceID string, operationType internal.Operati
 	return o
 }
 
-func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
+func FixUpdatingOperation(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
@@ -86,12 +86,10 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 			},
 		},
 	}
-	return internal.UpdatingOperation{
-		Operation: o,
-	}
+	return o
 }
 
-func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal.UpdatingOperation {
+func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
@@ -107,15 +105,11 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 			},
 		},
 	}
-	return internal.UpdatingOperation{
-		Operation: o,
-	}
+	return o
 }
 
-func FixDeprovisioningOperation(operationId, instanceId string) internal.DeprovisioningOperation {
-	return internal.DeprovisioningOperation{
-		Operation: FixDeprovisioningOperationAsOperation(operationId, instanceId),
-	}
+func FixDeprovisioningOperation(operationId, instanceId string) internal.Operation {
+	return FixDeprovisioningOperationAsOperation(operationId, instanceId)
 }
 
 func FixDeprovisioningOperationAsOperation(operationId, instanceId string) internal.Operation {
