@@ -69,10 +69,7 @@ func (c *OperationDurationCollector) OnOperationSucceeded(ctx context.Context, e
 
 	switch operationSucceeded.Operation.Type {
 	case internal.OperationTypeProvision:
-		provisioningOperation := process.ProvisioningSucceeded{
-			Operation: internal.ProvisioningOperation{Operation: operationSucceeded.Operation},
-		}
-		err := c.OnProvisioningSucceeded(ctx, provisioningOperation)
+		err := c.OnProvisioningSucceeded(ctx, process.ProvisioningSucceeded(operationSucceeded))
 		if err != nil {
 			return err
 		}

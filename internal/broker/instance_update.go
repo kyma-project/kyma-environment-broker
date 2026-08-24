@@ -243,8 +243,8 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 	}, nil
 }
 
-func (b *UpdateEndpoint) checkProvisioningState(instance *internal.Instance, logger *slog.Logger) (*internal.ProvisioningOperation, error) {
-	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
+func (b *UpdateEndpoint) checkProvisioningState(instance *internal.Instance, logger *slog.Logger) (*internal.Operation, error) {
+	lastProvisioningOperation, err := b.operationStorage.GetLastOperationByTypesWithAllStates(instance.InstanceID, []internal.OperationType{internal.OperationTypeProvision})
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return nil, fmt.Errorf("unable to process the update")
@@ -289,7 +289,7 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 		ersContext.ERSUpdate()
 }
 
-func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousInstance, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousInstance, instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.Operation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
 		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
@@ -679,7 +679,7 @@ func (b *UpdateEndpoint) shouldSkipNewOperation(previousInstance, currentInstanc
 	return true, lastOperation
 }
 
-func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger *slog.Logger) (*internal.Instance, bool, error) {
+func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.Operation, logger *slog.Logger) (*internal.Instance, bool, error) {
 	var ersContext internal.ERSContext
 	err := json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
@@ -763,7 +763,7 @@ func (b *UpdateEndpoint) handleSubaccountMoveRequest(instance *internal.Instance
 	return needUpdateCustomResources
 }
 
-func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.ProvisioningOperation) (*bool, error) {
+func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Operation) (*bool, error) {
 	deprovisioning, dErr := b.operationStorage.GetLastOperationByTypesWithAllStates(id, []internal.OperationType{internal.OperationTypeDeprovision})
 	if dErr != nil && !dberr.IsNotFound(dErr) {
 		b.log.Error(fmt.Sprintf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error()))

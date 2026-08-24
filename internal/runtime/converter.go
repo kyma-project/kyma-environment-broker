@@ -14,12 +14,12 @@ import (
 
 type Converter interface {
 	NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error)
-	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation)
+	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.Operation)
 	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.Operation)
 	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
 	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation, totalCount int)
 	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation)
-	ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.ProvisioningOperation)
+	ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation)
 }
 
 type converter struct {
@@ -40,10 +40,10 @@ func (c *converter) setRegionOrDefault(instance internal.Instance, runtime *pkg.
 	}
 }
 
-func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation) {
+func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.Operation) {
 	if pOpr != nil {
 		dto.Status.Provisioning = &pkg.Operation{}
-		c.applyOperation(&pOpr.Operation, dto.Status.Provisioning)
+		c.applyOperation(pOpr, dto.Status.Provisioning)
 		c.adjustRuntimeState(dto)
 		dto.SubscriptionSecretName = pOpr.ProvisioningParameters.Parameters.TargetSecret
 
@@ -190,7 +190,7 @@ func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []intern
 	c.adjustRuntimeState(dto)
 }
 
-func (c *converter) ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.ProvisioningOperation) {
+func (c *converter) ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.Operation) {
 	if len(oprs) <= 0 {
 		return
 	}
@@ -202,7 +202,7 @@ func (c *converter) ApplyUnsuspensionOperations(dto *pkg.RuntimeDTO, oprs []inte
 
 	for _, o := range oprs {
 		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
+		c.applyOperation(&o, &op)
 		dto.Status.Unsuspension.Data = append(dto.Status.Unsuspension.Data, op)
 	}
 	c.adjustRuntimeState(dto)

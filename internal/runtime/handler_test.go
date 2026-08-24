@@ -308,26 +308,22 @@ func TestRuntimeHandler(t *testing.T) {
 		err := instances.Insert(testInstance1)
 		require.NoError(t, err)
 
-		err = operations.InsertProvisioningOperation(internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         "first-provisioning-id",
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: testID1,
-				Type:       internal.OperationTypeProvision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         "first-provisioning-id",
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: testID1,
+			Type:       internal.OperationTypeProvision,
 		})
 		require.NoError(t, err)
-		err = operations.InsertProvisioningOperation(internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         unsuspensionOpId,
-				Version:    0,
-				CreatedAt:  time.Now().Add(1 * time.Hour),
-				UpdatedAt:  time.Now().Add(1 * time.Hour),
-				InstanceID: testID1,
-				Type:       internal.OperationTypeProvision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         unsuspensionOpId,
+			Version:    0,
+			CreatedAt:  time.Now().Add(1 * time.Hour),
+			UpdatedAt:  time.Now().Add(1 * time.Hour),
+			InstanceID: testID1,
+			Type:       internal.OperationTypeProvision,
 		})
 
 		require.NoError(t, err)
@@ -388,27 +384,23 @@ func TestRuntimeHandler(t *testing.T) {
 		err := instances.Insert(testInstance1)
 		require.NoError(t, err)
 
-		err = operations.InsertProvisioningOperation(internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         provisioningOpId,
-				Version:    0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-				InstanceID: testInstance1.InstanceID,
-				Type:       internal.OperationTypeProvision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         provisioningOpId,
+			Version:    0,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+			InstanceID: testInstance1.InstanceID,
+			Type:       internal.OperationTypeProvision,
 		})
 		require.NoError(t, err)
 
-		err = operations.InsertProvisioningOperation(internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         unsuspensionOpId,
-				Version:    0,
-				CreatedAt:  time.Now().Add(1 * time.Hour),
-				UpdatedAt:  time.Now().Add(1 * time.Hour),
-				InstanceID: testInstance1.InstanceID,
-				Type:       internal.OperationTypeProvision,
-			},
+		err = operations.InsertOperation(internal.Operation{
+			ID:         unsuspensionOpId,
+			Version:    0,
+			CreatedAt:  time.Now().Add(1 * time.Hour),
+			UpdatedAt:  time.Now().Add(1 * time.Hour),
+			InstanceID: testInstance1.InstanceID,
+			Type:       internal.OperationTypeProvision,
 		})
 		require.NoError(t, err)
 

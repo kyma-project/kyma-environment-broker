@@ -17,7 +17,6 @@ import (
 type BrokerStorage interface {
 	Instances() Instances
 	Operations() Operations
-	Provisioning() Provisioning
 	SubaccountStates() SubaccountStates
 	Events() Events
 	InstancesArchived() InstancesArchived
@@ -140,10 +139,6 @@ func (s storage) Instances() Instances {
 }
 
 func (s storage) Operations() Operations {
-	return s.operation
-}
-
-func (s storage) Provisioning() Provisioning {
 	return s.operation
 }
 

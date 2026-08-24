@@ -5,7 +5,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
-func ProvideURL(instance *internal.Instance, provisioningOperation *internal.ProvisioningOperation) string {
+func ProvideURL(instance *internal.Instance, provisioningOperation *internal.Operation) string {
 	if provisioningOperation.State == domain.Succeeded {
 		return instance.DashboardURL
 	}

@@ -264,7 +264,7 @@ func TestOperation(t *testing.T) {
 		assert.Len(t, ops, 3)
 		assertOperation(t, givenOperation, ops[0])
 
-		gotOperation, err := svc.GetProvisioningOperationByID("operation-id")
+		gotOperation, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 
 		op, err := svc.GetOperationByID("operation-id")
@@ -281,15 +281,15 @@ func TestOperation(t *testing.T) {
 		assert.Equal(t, latestOperation.ID, lastProvisioning.ID)
 
 		// then
-		assertOperation(t, givenOperation, gotOperation.Operation)
+		assertOperation(t, givenOperation, *gotOperation)
 
 		// when
 		gotOperation.Description = "new modified description"
-		_, err = svc.UpdateProvisioningOperation(*gotOperation)
+		_, err = svc.UpdateOperation(*gotOperation)
 		require.NoError(t, err)
 
 		// then
-		gotOperation2, err := svc.GetProvisioningOperationByID("operation-id")
+		gotOperation2, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 
 		assert.Equal(t, "new modified description", gotOperation2.Description)
@@ -301,9 +301,15 @@ func TestOperation(t *testing.T) {
 		assert.Equal(t, 2, stats[broker.TrialPlanID].Provisioning[domain.InProgress])
 
 		// when
-		opList, err := svc.ListProvisioningOperationsByInstanceID("inst-id")
+		allOps, err := svc.ListOperationsByInstanceID("inst-id")
 		// then
 		require.NoError(t, err)
+		var opList []internal.Operation
+		for _, op := range allOps {
+			if op.Type == internal.OperationTypeProvision {
+				opList = append(opList, op)
+			}
+		}
 		assert.Equal(t, 3, len(opList))
 	})
 

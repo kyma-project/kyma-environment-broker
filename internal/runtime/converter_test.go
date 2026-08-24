@@ -288,24 +288,20 @@ func fixInstance() internal.Instance {
 	}
 }
 
-func fixProvisioningOperation(state domain.LastOperationState, createdAt time.Time) *internal.ProvisioningOperation {
-	return &internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt: createdAt,
-			ID:        "prov-id",
-			State:     state,
-		},
+func fixProvisioningOperation(state domain.LastOperationState, createdAt time.Time) *internal.Operation {
+	return &internal.Operation{
+		CreatedAt: createdAt,
+		ID:        "prov-id",
+		State:     state,
 	}
 }
 
-func fixProvisioningOperationWithStagesAndVersion(state domain.LastOperationState, createdAt time.Time) *internal.ProvisioningOperation {
-	return &internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt:      createdAt,
-			ID:             "prov-id",
-			State:          state,
-			FinishedStages: []string{"start", "create_runtime", "check_kyma", "post_actions"},
-		},
+func fixProvisioningOperationWithStagesAndVersion(state domain.LastOperationState, createdAt time.Time) *internal.Operation {
+	return &internal.Operation{
+		CreatedAt:      createdAt,
+		ID:             "prov-id",
+		State:          state,
+		FinishedStages: []string{"start", "create_runtime", "check_kyma", "post_actions"},
 	}
 }
 
@@ -316,16 +312,14 @@ func TestApplyOperation_RawParametersUsedWhenSet(t *testing.T) {
 	dto, _ := svc.NewDTO(instance)
 
 	rawParams := json.RawMessage(`{"autoScalerMax":21}`)
-	op := &internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt:     time.Now(),
-			ID:            "op-id",
-			State:         domain.Succeeded,
-			RawParameters: rawParams,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: runtime.ProvisioningParametersDTO{
-					Name: "should-not-appear",
-				},
+	op := &internal.Operation{
+		CreatedAt:     time.Now(),
+		ID:            "op-id",
+		State:         domain.Succeeded,
+		RawParameters: rawParams,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			Parameters: runtime.ProvisioningParametersDTO{
+				Name: "should-not-appear",
 			},
 		},
 	}
@@ -345,15 +339,13 @@ func TestApplyOperation_FallbackToMergedStateWhenRawParametersEmpty(t *testing.T
 	svc := NewConverter("eu")
 	dto, _ := svc.NewDTO(instance)
 
-	op := &internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt: time.Now(),
-			ID:        "op-id",
-			State:     domain.Succeeded,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: runtime.ProvisioningParametersDTO{
-					Name: "from-merged-state",
-				},
+	op := &internal.Operation{
+		CreatedAt: time.Now(),
+		ID:        "op-id",
+		State:     domain.Succeeded,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			Parameters: runtime.ProvisioningParametersDTO{
+				Name: "from-merged-state",
 			},
 		},
 	}
@@ -374,13 +366,11 @@ func TestApplyOperation_SensitiveFieldsStrippedFromRawParameters(t *testing.T) {
 	dto, _ := svc.NewDTO(instance)
 
 	rawParams := json.RawMessage(`{"name":"test","kubeconfig":"secret","targetSecret":"also-secret"}`)
-	op := &internal.ProvisioningOperation{
-		Operation: internal.Operation{
-			CreatedAt:     time.Now(),
-			ID:            "op-id",
-			State:         domain.Succeeded,
-			RawParameters: rawParams,
-		},
+	op := &internal.Operation{
+		CreatedAt:     time.Now(),
+		ID:            "op-id",
+		State:         domain.Succeeded,
+		RawParameters: rawParams,
 	}
 
 	// when

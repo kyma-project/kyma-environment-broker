@@ -29,15 +29,6 @@ func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
 	}
 }
 
-// InsertProvisioningOperation insert new ProvisioningOperation to storage
-func (s *operations) InsertProvisioningOperation(operation internal.ProvisioningOperation) error {
-	dto, err := s.provisioningOperationToDTO(&operation)
-	if err != nil {
-		return fmt.Errorf("while inserting provisioning operation (id: %s): %w", operation.ID, err)
-	}
-	return s.insert(dto)
-}
-
 // InsertOperation insert new Operation to storage
 func (s *operations) InsertOperation(operation internal.Operation) error {
 	dto, err := s.operationToDTO(&operation)
@@ -47,36 +38,6 @@ func (s *operations) InsertOperation(operation internal.Operation) error {
 	}
 
 	return s.insert(dto)
-}
-
-// GetProvisioningOperationByID fetches the ProvisioningOperation by given ID, returns error if not found
-func (s *operations) GetProvisioningOperationByID(operationID string) (*internal.ProvisioningOperation, error) {
-	operation, err := s.getByID(operationID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting operation by ID: %w", err)
-	}
-
-	ret, err := s.toProvisioningOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// GetProvisioningOperationByInstanceID fetches the latest ProvisioningOperation by given instanceID, returns error if not found
-func (s *operations) GetProvisioningOperationByInstanceID(instanceID string) (*internal.ProvisioningOperation, error) {
-
-	operation, err := s.getByTypeAndInstanceID(instanceID, internal.OperationTypeProvision)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := s.toProvisioningOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
 }
 
 // UpdateOperation updates Operation, fails if not exists or optimistic locking failure occurs.
@@ -92,36 +53,6 @@ func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation
 	op.Version = op.Version + 1
 
 	return &op, lastErr
-}
-
-// UpdateProvisioningOperation updates ProvisioningOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateProvisioningOperation(op internal.ProvisioningOperation) (*internal.ProvisioningOperation, error) {
-	op.UpdatedAt = time.Now()
-	dto, err := s.provisioningOperationToDTO(&op)
-
-	if err != nil {
-		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
-	}
-
-	lastErr := s.update(dto)
-	op.Version = op.Version + 1
-
-	return &op, lastErr
-}
-
-func (s *operations) ListProvisioningOperationsByInstanceID(instanceID string) ([]internal.ProvisioningOperation, error) {
-
-	operations, err := s.listOperationsByInstanceIdAndType(instanceID, internal.OperationTypeProvision)
-	if err != nil {
-		return nil, fmt.Errorf("while loading operations list: %w", err)
-	}
-
-	ret, err := s.toProvisioningOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
 }
 
 func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
@@ -147,7 +78,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	}
 
 	grouped := internal.GroupedOperations{
-		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		ProvisionOperations:      make([]internal.Operation, 0),
 		DeprovisionOperations:    make([]internal.Operation, 0),
 		UpdateOperations:         make([]internal.Operation, 0),
 		UpgradeClusterOperations: make([]internal.Operation, 0),
@@ -156,11 +87,15 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	for _, op := range operations {
 		switch op.Type {
 		case internal.OperationTypeProvision:
-			ret, err := s.toProvisioningOperation(&op)
+			var provOp internal.Operation
+			if err := json.Unmarshal([]byte(op.Data), &provOp); err != nil {
+				return nil, fmt.Errorf("while unmarshalling provisioning operation data: %w", err)
+			}
+			ret, err := s.toOperation(&op, provOp)
 			if err != nil {
 				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
 			}
-			grouped.ProvisionOperations = append(grouped.ProvisionOperations, *ret)
+			grouped.ProvisionOperations = append(grouped.ProvisionOperations, ret)
 
 		case internal.OperationTypeDeprovision:
 			var deprovOp internal.Operation
@@ -553,37 +488,6 @@ func (s *operations) toOperations(op []dbmodel.OperationDTO) ([]internal.Operati
 	return operations, nil
 }
 
-func (s *operations) toProvisioningOperation(op *dbmodel.OperationDTO) (*internal.ProvisioningOperation, error) {
-	if op.Type != internal.OperationTypeProvision {
-		return nil, fmt.Errorf("expected operation type Provisioning, but was %s", op.Type)
-	}
-	var operation internal.ProvisioningOperation
-	var err error
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data: %w", err)
-	}
-	operation.Operation, err = s.toOperation(op, operation.Operation)
-	if err != nil {
-		return nil, err
-	}
-	return &operation, nil
-}
-
-func (s *operations) toProvisioningOperationList(ops []dbmodel.OperationDTO) ([]internal.ProvisioningOperation, error) {
-	result := make([]internal.ProvisioningOperation, 0)
-
-	for _, op := range ops {
-		o, err := s.toProvisioningOperation(&op)
-		if err != nil {
-			return nil, fmt.Errorf("while converting to upgrade kyma operation: %w", err)
-		}
-		result = append(result, *o)
-	}
-
-	return result, nil
-}
-
 func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDTO, error) {
 	serialized, err := json.Marshal(op)
 	if err != nil {
@@ -596,21 +500,6 @@ func (s *operations) operationToDTO(op *internal.Operation) (dbmodel.OperationDT
 	}
 
 	ret.Data = string(serialized)
-	return ret, nil
-}
-
-func (s *operations) provisioningOperationToDTO(op *internal.ProvisioningOperation) (dbmodel.OperationDTO, error) {
-	serialized, err := json.Marshal(op)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing provisioning data %v: %w", op, err)
-	}
-
-	ret, err := s.operationToDB(op.Operation)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
-	}
-	ret.Data = string(serialized)
-	ret.Type = internal.OperationTypeProvision
 	return ret, nil
 }
 
@@ -673,25 +562,6 @@ func (s *operations) insert(dto dbmodel.OperationDTO) error {
 	return lastErr
 }
 
-func (s *operations) getByTypeAndInstanceID(id string, opType internal.OperationType) (*dbmodel.OperationDTO, error) {
-	session := s.Factory.NewReadSession()
-	operation := dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operation, lastErr = session.GetOperationByTypeAndInstanceID(id, opType)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("operation does not exist")
-				return false, lastErr
-			}
-			return false, nil
-		}
-		return true, nil
-	})
-
-	return &operation, err
-}
-
 func (s *operations) update(operation dbmodel.OperationDTO) error {
 	session := s.Factory.NewWriteSession()
 
@@ -714,24 +584,6 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 		return true, nil
 	})
 	return lastErr
-}
-
-func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operationType internal.OperationType) ([]dbmodel.OperationDTO, error) {
-	session := s.Factory.NewReadSession()
-	operations := []dbmodel.OperationDTO{}
-	var lastErr dberr.Error
-
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
-		if lastErr != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-	return operations, lastErr
 }
 
 func (s *operations) listOperationsByInstanceId(instanceId string) ([]dbmodel.OperationDTO, error) {

@@ -149,7 +149,7 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log *slog.
 	operation.RuntimeID = ""
 	operation.DashboardURL = instance.DashboardURL
 
-	err = h.operations.InsertProvisioningOperation(operation)
+	err = h.operations.InsertOperation(operation)
 	if err != nil {
 		return err
 	}

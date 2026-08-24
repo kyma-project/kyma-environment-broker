@@ -43,8 +43,6 @@ type InstancesArchived interface {
 
 //go:generate mockery --name=Operations --output=automock --outpkg=mocks --case=underscore
 type Operations interface {
-	Provisioning
-
 	GetLastOperation(instanceID string) (*internal.Operation, error)
 	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
 	// GetLastOperationByTypesWithAllStates is like GetLastOperationByTypes but also returns operations in pending state.
@@ -67,14 +65,6 @@ type Operations interface {
 
 	DeleteByID(operationID string) error
 	GetAllOperations() ([]internal.Operation, error)
-}
-
-type Provisioning interface {
-	InsertProvisioningOperation(operation internal.ProvisioningOperation) error
-	GetProvisioningOperationByID(operationID string) (*internal.ProvisioningOperation, error)
-	GetProvisioningOperationByInstanceID(instanceID string) (*internal.ProvisioningOperation, error)
-	UpdateProvisioningOperation(operation internal.ProvisioningOperation) (*internal.ProvisioningOperation, error)
-	ListProvisioningOperationsByInstanceID(instanceID string) ([]internal.ProvisioningOperation, error)
 }
 
 type Events interface {

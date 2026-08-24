@@ -8,7 +8,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -182,7 +181,7 @@ type ProviderValues struct {
 }
 
 type GroupedOperations struct {
-	ProvisionOperations      []ProvisioningOperation
+	ProvisionOperations      []Operation
 	DeprovisionOperations    []Operation
 	UpdateOperations         []Operation
 	UpgradeClusterOperations []Operation
@@ -248,11 +247,6 @@ func (i *InstanceDetails) GetRuntimeResourceNamespace() string {
 		namespace = "kcp-system"
 	}
 	return namespace
-}
-
-// ProvisioningOperation holds all information about provisioning operation
-type ProvisioningOperation struct {
-	Operation
 }
 
 type InstanceArchived struct {
@@ -344,35 +338,28 @@ type BindingStats struct {
 	MinutesSinceEarliestExpiration float64 `db:"minutes_since_earliest_expiration"`
 }
 
-// NewProvisioningOperation creates a fresh (just starting) instance of the ProvisioningOperation
-func NewProvisioningOperation(instanceID string, parameters ProvisioningParameters) (ProvisioningOperation, error) {
-	return NewProvisioningOperationWithID(uuid.New().String(), instanceID, parameters)
-}
-
-// NewProvisioningOperationWithID creates a fresh (just starting) instance of the ProvisioningOperation with provided ID
-func NewProvisioningOperationWithID(operationID, instanceID string, parameters ProvisioningParameters) (ProvisioningOperation, error) {
-	return ProvisioningOperation{
-		Operation: Operation{
-			ID:                     operationID,
-			Version:                0,
-			Description:            "Operation created",
-			InstanceID:             instanceID,
-			State:                  domain.InProgress,
-			CreatedAt:              time.Now(),
-			UpdatedAt:              time.Now(),
-			Type:                   OperationTypeProvision,
-			ProvisioningParameters: parameters,
-			RuntimeOperation: RuntimeOperation{
-				GlobalAccountID: parameters.ErsContext.GlobalAccountID,
-			},
-			InstanceDetails: InstanceDetails{
-				SubAccountID: parameters.ErsContext.SubAccountID,
-				Kubeconfig:   parameters.Parameters.Kubeconfig,
-				EuAccess:     euaccess.IsEURestrictedAccess(parameters.PlatformRegion),
-			},
-			FinishedStages: make([]string, 0),
-			LastError:      kebError.LastError{},
+// NewProvisioningOperationWithID creates a fresh (just starting) instance of the provisioning Operation with provided ID
+func NewProvisioningOperationWithID(operationID, instanceID string, parameters ProvisioningParameters) (Operation, error) {
+	return Operation{
+		ID:                     operationID,
+		Version:                0,
+		Description:            "Operation created",
+		InstanceID:             instanceID,
+		State:                  domain.InProgress,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Type:                   OperationTypeProvision,
+		ProvisioningParameters: parameters,
+		RuntimeOperation: RuntimeOperation{
+			GlobalAccountID: parameters.ErsContext.GlobalAccountID,
 		},
+		InstanceDetails: InstanceDetails{
+			SubAccountID: parameters.ErsContext.SubAccountID,
+			Kubeconfig:   parameters.Parameters.Kubeconfig,
+			EuAccess:     euaccess.IsEURestrictedAccess(parameters.PlatformRegion),
+		},
+		FinishedStages: make([]string, 0),
+		LastError:      kebError.LastError{},
 	}, nil
 }
 

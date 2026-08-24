@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -84,9 +85,9 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	assert.Equal(t, "provisioning of instanceID d3d5dca4-5dc8-44ee-a825-755c2a3fb839 in progress", apierr.Error())
 
 	// when
-	op, _ := st.Operations().GetProvisioningOperationByInstanceID(instanceID)
+	op, _ := st.Operations().GetLastOperationByTypes(instanceID, []internal.OperationType{internal.OperationTypeProvision})
 	op.State = domain.Succeeded
-	_, err = st.Operations().UpdateProvisioningOperation(*op)
+	_, err = st.Operations().UpdateOperation(*op)
 	assert.NoError(t, err)
 
 	// then

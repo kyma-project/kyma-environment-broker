@@ -134,25 +134,25 @@ func TestConflict(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotOperation1, err := svc.GetProvisioningOperationByID("operation-001")
+			gotOperation1, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
 
-			gotOperation2, err := svc.GetProvisioningOperationByID("operation-001")
+			gotOperation2, err := svc.GetOperationByID("operation-001")
 			require.NoError(t, err)
 
 			// when
 			gotOperation1.Description = descriptionModified1
 			gotOperation2.Description = descriptionModified2
-			_, err = svc.UpdateProvisioningOperation(*gotOperation1)
+			_, err = svc.UpdateOperation(*gotOperation1)
 			require.NoError(t, err)
 
-			_, err = svc.UpdateProvisioningOperation(*gotOperation2)
+			_, err = svc.UpdateOperation(*gotOperation2)
 
 			// then
 			assertError(t, dberr.CodeConflict, err)
 
 			// when
-			err = svc.InsertProvisioningOperation(*gotOperation1)
+			err = svc.InsertOperation(*gotOperation1)
 
 			// then
 			assertError(t, dberr.CodeAlreadyExists, err)
