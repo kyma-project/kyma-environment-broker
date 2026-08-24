@@ -15,11 +15,11 @@ type StepProcessed struct {
 
 type ProvisioningStepProcessed struct {
 	StepProcessed
-	Operation internal.ProvisioningOperation
+	Operation internal.Operation
 }
 
 type ProvisioningSucceeded struct {
-	Operation internal.ProvisioningOperation
+	Operation internal.Operation
 }
 
 type OperationStepProcessed struct {

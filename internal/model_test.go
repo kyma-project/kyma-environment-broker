@@ -7,7 +7,7 @@ import (
 )
 
 func TestFinishStage(t *testing.T) {
-	operation, error := NewProvisioningOperation("1", ProvisioningParameters{})
+	operation, error := NewProvisioningOperationWithID("op-id", "1", ProvisioningParameters{})
 	assert.NoError(t, error)
 	assert.NotEmpty(t, operation)
 
@@ -45,7 +45,7 @@ func TestFinishStage(t *testing.T) {
 	})
 }
 
-func countStageOccurrences(operation ProvisioningOperation, stage string) int {
+func countStageOccurrences(operation Operation, stage string) int {
 	foundStages := 0
 	for _, v := range operation.FinishedStages {
 		if v == stage {

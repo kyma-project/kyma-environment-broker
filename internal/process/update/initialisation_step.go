@@ -108,7 +108,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger)
 }
 
 func (s *InitialisationStep) getRuntimeIdFromProvisioningOp(operation *internal.Operation) error {
-	provOp, err := s.operationStorage.GetProvisioningOperationByInstanceID(operation.InstanceID)
+	provOp, err := s.operationStorage.GetLastOperationByTypesWithAllStates(operation.InstanceID, []internal.OperationType{internal.OperationTypeProvision})
 	if err != nil {
 		return fmt.Errorf("cannot get last provisioning operation for runtime id")
 	}

@@ -107,7 +107,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, operation.InstanceID, instanceID)
 
@@ -265,7 +265,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
 
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, operation.InstanceID, otherInstanceID)
 
@@ -327,7 +327,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$", response.OperationData)
 		assert.NotEqual(t, instanceID, response.OperationData)
 
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, operation.InstanceID, instanceID)
 
@@ -607,7 +607,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID)
 		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL)
@@ -659,7 +659,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.List[0].ClientID)
 		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.List[0].IssuerURL)
@@ -920,7 +920,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NoError(t, err)
 
 		// then
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, instanceID, operation.InstanceID)
 		assert.Equal(t, globalAccountID, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
@@ -984,7 +984,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NoError(t, err)
 
 		// then
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, instanceID, operation.InstanceID)
 		assert.Equal(t, globalAccountID, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
@@ -1039,7 +1039,7 @@ func TestProvision_Provision(t *testing.T) {
 		require.NoError(t, err)
 
 		// then
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := memoryStorage.Operations().GetOperationByID(response.OperationData)
 		require.NoError(t, err)
 		assert.Equal(t, instanceID, operation.InstanceID)
 		assert.Equal(t, globalAccountID, operation.ProvisioningParameters.ErsContext.GlobalAccountID)

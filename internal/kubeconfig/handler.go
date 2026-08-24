@@ -81,7 +81,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	operation, err := h.operationStorage.GetProvisioningOperationByInstanceID(instanceID)
+	operation, err := h.operationStorage.GetLastOperationByTypesWithAllStates(instanceID, []internal.OperationType{internal.OperationTypeProvision})
 	switch {
 	case err == nil:
 	case dberr.IsNotFound(err):

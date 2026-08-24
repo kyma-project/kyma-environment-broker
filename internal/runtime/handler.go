@@ -362,13 +362,19 @@ func (h *Handler) addLastOperationToRuntime(dto *pkg.RuntimeDTO) error {
 
 	switch lastOp.Type {
 	case internal.OperationTypeProvision:
-		provOps, err := h.operationsDb.ListProvisioningOperationsByInstanceID(dto.InstanceID)
+		allOps, err := h.operationsDb.ListOperationsByInstanceID(dto.InstanceID)
 		if err != nil {
 			return fmt.Errorf("while fetching provisioning operations for instance %s: %w", dto.InstanceID, err)
 		}
+		var provOps []internal.Operation
+		for _, op := range allOps {
+			if op.Type == internal.OperationTypeProvision {
+				provOps = append(provOps, op)
+			}
+		}
 		lastProvOp := &provOps[0]
 		if len(provOps) > 1 {
-			h.converter.ApplyUnsuspensionOperations(dto, []internal.ProvisioningOperation{*lastProvOp})
+			h.converter.ApplyUnsuspensionOperations(dto, []internal.Operation{*lastProvOp})
 		} else {
 			h.converter.ApplyProvisioningOperation(dto, lastProvOp)
 		}

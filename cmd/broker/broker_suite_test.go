@@ -549,9 +549,9 @@ func (s *BrokerSuiteTest) CreateProvisionedRuntime(options RuntimeOptions) strin
 }
 
 func (s *BrokerSuiteTest) WaitForProvisioningState(operationID string, state domain.LastOperationState) {
-	var op *internal.ProvisioningOperation
+	var op *internal.Operation
 	err := s.poller.Invoke(func() (done bool, err error) {
-		op, err = s.db.Operations().GetProvisioningOperationByID(operationID)
+		op, err = s.db.Operations().GetOperationByID(operationID)
 		if err != nil {
 			return false, nil
 		}
@@ -612,9 +612,9 @@ func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {
 }
 
 func (s *BrokerSuiteTest) FinishProvisioningOperationByInfrastructureManager(operationID string) {
-	var op *internal.ProvisioningOperation
+	var op *internal.Operation
 	err := s.poller.Invoke(func() (done bool, err error) {
-		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
+		op, _ = s.db.Operations().GetOperationByID(operationID)
 		if op.RuntimeID != "" {
 			return true, nil
 		}

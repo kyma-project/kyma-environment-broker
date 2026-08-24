@@ -250,7 +250,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logParametersWithMaskedKubeconfig(parameters, logger)
 
 	// check if operation with instance ID already created
-	existingOperation, errStorage := b.operationsStorage.GetProvisioningOperationByInstanceID(instanceID)
+	existingOperation, errStorage := b.operationsStorage.GetLastOperationByTypesWithAllStates(instanceID, []internal.OperationType{internal.OperationTypeProvision})
 	switch {
 	case errStorage != nil && !dberr.IsNotFound(errStorage):
 		logger.Error(fmt.Sprintf("cannot get existing operation from storage %s", errStorage))
@@ -279,7 +279,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	operation.RawParameters = details.RawParameters
 	logger.Info(fmt.Sprintf("Runtime ShootDomain: %s", operation.ShootDomain))
 
-	err = b.operationsStorage.InsertOperation(operation.Operation)
+	err = b.operationsStorage.InsertOperation(operation)
 	if err != nil {
 		logger.Error(fmt.Sprintf("cannot save operation: %s", err))
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save operation")
@@ -892,7 +892,7 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	return parameters, nil
 }
 
-func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.ProvisioningOperation, input internal.ProvisioningParameters) (domain.ProvisionedServiceSpec, error) {
+func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Operation, input internal.ProvisioningParameters) (domain.ProvisionedServiceSpec, error) {
 
 	if !operation.ProvisioningParameters.IsEqual(input) {
 		err := fmt.Errorf("provisioning operation already exist")

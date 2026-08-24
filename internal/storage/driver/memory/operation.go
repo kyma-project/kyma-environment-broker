@@ -35,19 +35,6 @@ func (s *operations) DeleteByID(operationID string) error {
 	return nil
 }
 
-func (s *operations) InsertProvisioningOperation(operation internal.ProvisioningOperation) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := operation.ID
-	if _, exists := s.operations[id]; exists {
-		return dberr.AlreadyExists("instance operation with id %s already exist", id)
-	}
-
-	s.operations[id] = operation.Operation
-	return nil
-}
-
 func (s *operations) InsertOperation(operation internal.Operation) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -59,36 +46,6 @@ func (s *operations) InsertOperation(operation internal.Operation) error {
 
 	s.operations[id] = operation
 	return nil
-}
-
-func (s *operations) GetProvisioningOperationByID(operationID string) (*internal.ProvisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	op, exists := s.operations[operationID]
-	if !exists {
-		return nil, dberr.NotFound("instance provisioning operation with id %s not found", operationID)
-	}
-	return &internal.ProvisioningOperation{Operation: op}, nil
-}
-
-func (s *operations) GetProvisioningOperationByInstanceID(instanceID string) (*internal.ProvisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []internal.ProvisioningOperation
-
-	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.Type == internal.OperationTypeProvision {
-			result = append(result, internal.ProvisioningOperation{Operation: op})
-		}
-	}
-	if len(result) != 0 {
-		s.sortProvisioningByCreatedAtDesc(result)
-		return &result[0], nil
-	}
-
-	return nil, dberr.NotFound("instance provisioning operation with instanceID %s not found", instanceID)
 }
 
 func (s *operations) GetOperationByInstanceID(instanceID string) (*internal.Operation, error) {
@@ -110,23 +67,6 @@ func (s *operations) GetOperationByInstanceID(instanceID string) (*internal.Oper
 	return nil, dberr.NotFound("instance provisioning operation with instanceID %s not found", instanceID)
 }
 
-func (s *operations) UpdateProvisioningOperation(op internal.ProvisioningOperation) (*internal.ProvisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	oldOp, exists := s.operations[op.ID]
-	if !exists {
-		return nil, dberr.NotFound("instance operation with id %s not found", op.ID)
-	}
-	if oldOp.Version != op.Version {
-		return nil, dberr.Conflict("unable to update provisioning operation with id %s (for instance id %s) - conflict", op.ID, op.InstanceID)
-	}
-	op.Version = op.Version + 1
-	s.operations[op.ID] = op.Operation
-
-	return &op, nil
-}
-
 func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -142,25 +82,6 @@ func (s *operations) UpdateOperation(op internal.Operation) (*internal.Operation
 	s.operations[op.ID] = op
 
 	return &op, nil
-}
-
-func (s *operations) ListProvisioningOperationsByInstanceID(instanceID string) ([]internal.ProvisioningOperation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	operations := make([]internal.ProvisioningOperation, 0)
-	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.Type == internal.OperationTypeProvision {
-			operations = append(operations, internal.ProvisioningOperation{Operation: op})
-		}
-	}
-
-	if len(operations) != 0 {
-		s.sortProvisioningByCreatedAtDesc(operations)
-		return operations, nil
-	}
-
-	return nil, dberr.NotFound("instance provisioning operations with instanceID %s not found", instanceID)
 }
 
 func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
@@ -183,7 +104,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	defer s.mu.Unlock()
 
 	grouped := internal.GroupedOperations{
-		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		ProvisionOperations:      make([]internal.Operation, 0),
 		DeprovisionOperations:    make([]internal.Operation, 0),
 		UpdateOperations:         make([]internal.Operation, 0),
 		UpgradeClusterOperations: make([]internal.Operation, 0),
@@ -192,7 +113,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	for _, op := range s.operations {
 		switch op.Type {
 		case internal.OperationTypeProvision:
-			grouped.ProvisionOperations = append(grouped.ProvisionOperations, internal.ProvisioningOperation{Operation: op})
+			grouped.ProvisionOperations = append(grouped.ProvisionOperations, op)
 
 		case internal.OperationTypeDeprovision:
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, op)
@@ -210,7 +131,7 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 		}
 	}
 
-	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
+	s.sortOperationsByCreatedAtDesc(grouped.ProvisionOperations)
 	s.sortOperationsByCreatedAtDesc(grouped.DeprovisionOperations)
 	s.sortOperationsByCreatedAtDesc(grouped.UpgradeClusterOperations)
 	sort.Slice(grouped.UpdateOperations, func(i, j int) bool {
@@ -483,12 +404,6 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 
 func (s *operations) ListShortOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
 	panic("not implemented")
-}
-
-func (s *operations) sortProvisioningByCreatedAtDesc(operations []internal.ProvisioningOperation) {
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].CreatedAt.After(operations[j].CreatedAt)
-	})
 }
 
 func (s *operations) sortOperationsByCreatedAtDesc(operations []internal.Operation) {

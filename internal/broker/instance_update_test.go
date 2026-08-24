@@ -83,11 +83,11 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("02"))
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -155,7 +155,7 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -204,7 +204,7 @@ func TestUpgradePlan(t *testing.T) {
 	require.NoError(t, err)
 	provisioningOperation := fixProvisioningOperation("01")
 	provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-	err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+	err = st.Operations().InsertOperation(provisioningOperation)
 	require.NoError(t, err)
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
@@ -283,7 +283,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	provisioning.ProviderValues = &internal.ProviderValues{
 		ProviderType: "aws",
 	}
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -374,7 +374,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
@@ -426,7 +426,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -483,12 +483,12 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusNotFound, "Updating status code not matching")
 }
 
-func fixProvisioningOperation(id string) internal.ProvisioningOperation {
+func fixProvisioningOperation(id string) internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(id, instanceID)
 	provisioningOperation.ProviderValues = &internal.ProviderValues{
 		ProviderType: "aws",
 	}
-	return internal.ProvisioningOperation{Operation: provisioningOperation}
+	return provisioningOperation
 }
 
 func fixSuspensionOperation() internal.Operation {
@@ -524,11 +524,11 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 	err = st.Operations().InsertOperation(fixSuspensionOperation())
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("02"))
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -585,7 +585,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	provisioning.ProviderValues = &internal.ProviderValues{
 		ProviderType: "aws",
 	}
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -611,7 +611,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := st.Operations().GetOperationByID(response.OperationData)
 
 		// then
 		require.NoError(t, err)
@@ -639,7 +639,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := st.Operations().GetOperationByID(response.OperationData)
 
 		// then
 		require.NoError(t, err)
@@ -665,7 +665,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := st.Operations().GetOperationByID(response.OperationData)
 
 		// then
 		require.NoError(t, err)
@@ -695,7 +695,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	provisioning.ProviderValues = &internal.ProviderValues{
 		ProviderType: "aws",
 	}
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -738,7 +738,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := st.Operations().GetOperationByID(response.OperationData)
 
 		// then
 		require.NoError(t, err)
@@ -764,7 +764,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 			MaintenanceInfo: nil,
 		}, true)
 		require.NoError(t, err)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+		operation, err := st.Operations().GetOperationByID(response.OperationData)
 
 		// then
 		require.NoError(t, err)
@@ -888,7 +888,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -934,7 +934,7 @@ func TestHAZones(t *testing.T) {
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -976,7 +976,7 @@ func TestHAZones(t *testing.T) {
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -1032,7 +1032,7 @@ func TestHAZones(t *testing.T) {
 		st := storage.NewMemoryStorage()
 		err := st.Instances().Insert(instance)
 		require.NoError(t, err)
-		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -1077,7 +1077,7 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -1126,10 +1126,10 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = st.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 	// st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
-	// st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	// st.Operations().InsertOperation(fixProvisioningOperation("02"))
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -1178,7 +1178,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	err := storage.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = storage.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 
 	kcBuilder := &kcMock.KcBuilder{}
@@ -1261,7 +1261,7 @@ func TestSubaccountMovement(t *testing.T) {
 	err := storage.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = storage.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 
 	kcBuilder := &kcMock.KcBuilder{}
@@ -1349,7 +1349,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	err := storage.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err = storage.Operations().InsertOperation(fixProvisioningOperation("01"))
 	require.NoError(t, err)
 
 	kcBuilder := &kcMock.KcBuilder{}
@@ -1431,7 +1431,7 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	provisioning.ProviderValues = &internal.ProviderValues{
 		ProviderType: "azure",
 	}
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1466,7 +1466,7 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	provisioning.ProviderValues = &internal.ProviderValues{
 		ProviderType: "azure",
 	}
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1528,7 +1528,7 @@ func TestUpdateInternalOnlyMainMachineTypeForInternalUser(t *testing.T) {
 
 	op := fixProvisioningOperation("provisioning01")
 	op.ProvisioningParameters.Parameters.Region = ptr.String("eu-central-1")
-	err = st.Operations().InsertProvisioningOperation(op)
+	err = st.Operations().InsertOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1564,7 +1564,7 @@ func TestUpdateInternalOnlyMainMachineTypeForExternalCustomer(t *testing.T) {
 
 	provisioning := fixProvisioningOperation("provisioning01")
 	provisioning.ProviderValues.ProviderType = "aws"
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1599,7 +1599,7 @@ func TestUpdateInternalOnlyMachineForInternalUser(t *testing.T) {
 
 	op := fixProvisioningOperation("provisioning01")
 	op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
-	err = st.Operations().InsertProvisioningOperation(op)
+	err = st.Operations().InsertOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1679,7 +1679,7 @@ func TestUpdateInternalOnlyMachinesForExternalCustomer(t *testing.T) {
 			case broker.AzurePlanID:
 				provisioning.ProviderValues.ProviderType = "azure"
 			}
-			err = st.Operations().InsertProvisioningOperation(provisioning)
+			err = st.Operations().InsertOperation(provisioning)
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -1716,7 +1716,7 @@ func TestUpdateAutoScalerConfigurationInAdditionalWorkerNodePools(t *testing.T) 
 	require.NoError(t, err)
 	provisioning := fixProvisioningOperation("provisioning01")
 	provisioning.ProvisioningParameters.PlanID = broker.AWSPlanID
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1773,7 +1773,7 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	provisioning := fixProvisioningOperation("provisioning01")
 	provisioning.ProvisioningParameters.PlanID = broker.AWSPlanID
 	provisioning.ProvisioningParameters.Parameters.Region = ptr.String("westeurope")
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1844,7 +1844,7 @@ func TestMachineTypeUpdateInMultipleAdditionalWorkerNodePools(t *testing.T) {
 	require.NoError(t, err)
 	op := fixProvisioningOperation("provisioning01")
 	op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
-	err = st.Operations().InsertProvisioningOperation(op)
+	err = st.Operations().InsertOperation(op)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -1924,7 +1924,7 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools_FromAdditionalMachineToAdd
 			require.NoError(t, err)
 			op := fixProvisioningOperation("provisioning01")
 			op.ProvisioningParameters.Parameters.Region = ptr.String("brazilsouth")
-			err = st.Operations().InsertProvisioningOperation(op)
+			err = st.Operations().InsertOperation(op)
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -1973,7 +1973,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		require.NoError(t, err)
 		op := fixProvisioningOperation("provisioning01")
 		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
-		err = st.Operations().InsertProvisioningOperation(op)
+		err = st.Operations().InsertOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -2023,7 +2023,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		require.NoError(t, err)
 		op := fixProvisioningOperation("provisioning01")
 		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
-		err = st.Operations().InsertProvisioningOperation(op)
+		err = st.Operations().InsertOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -2087,7 +2087,7 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		require.NoError(t, err)
 		op := fixProvisioningOperation("provisioning01")
 		op.ProvisioningParameters.Parameters.Region = ptr.String("uksouth")
-		err = st.Operations().InsertProvisioningOperation(op)
+		err = st.Operations().InsertOperation(op)
 		require.NoError(t, err)
 
 		handler := &handler{}
@@ -2142,7 +2142,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		require.NoError(t, err)
 		provisioningOperation := fixProvisioningOperation("01")
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+		err = st.Operations().InsertOperation(provisioningOperation)
 		require.NoError(t, err)
 		quotaClient := &automock.QuotaClient{}
 		quotaClient.On("GetQuota", subAccountID, broker.BuildRuntimeAWSPlanName).Return(1, nil)
@@ -2172,7 +2172,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		require.NoError(t, err)
 		provisioningOperation := fixProvisioningOperation("01")
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+		err = st.Operations().InsertOperation(provisioningOperation)
 		require.NoError(t, err)
 		err = st.Instances().Insert(internal.Instance{
 			InstanceID:    otherInstanceID,
@@ -2214,7 +2214,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		require.NoError(t, err)
 		provisioningOperation := fixProvisioningOperation("01")
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+		err = st.Operations().InsertOperation(provisioningOperation)
 		require.NoError(t, err)
 		err = st.Instances().Insert(internal.Instance{
 			InstanceID:    otherInstanceID,
@@ -2256,7 +2256,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		require.NoError(t, err)
 		provisioningOperation := fixProvisioningOperation("01")
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+		err = st.Operations().InsertOperation(provisioningOperation)
 		require.NoError(t, err)
 		err = st.Instances().Insert(internal.Instance{
 			InstanceID:    otherInstanceID,
@@ -2298,7 +2298,7 @@ func TestQuotaLimitCheckDuringUpdate(t *testing.T) {
 		require.NoError(t, err)
 		provisioningOperation := fixProvisioningOperation("01")
 		provisioningOperation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+		err = st.Operations().InsertOperation(provisioningOperation)
 		require.NoError(t, err)
 		err = st.Instances().Insert(internal.Instance{
 			InstanceID:    otherInstanceID,
@@ -2347,7 +2347,7 @@ func TestZonesDiscoveryDuringUpdate(t *testing.T) {
 	err := st.Instances().Insert(instance)
 	require.NoError(t, err)
 	provisioning := fixProvisioningOperation("provisioning01")
-	err = st.Operations().InsertProvisioningOperation(provisioning)
+	err = st.Operations().InsertOperation(provisioning)
 	require.NoError(t, err)
 
 	handler := &handler{}
@@ -2465,7 +2465,7 @@ func TestUpdateClusterName(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -2575,7 +2575,7 @@ func TestUpdateWithoutOperation(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+			err = st.Operations().InsertOperation(provisioningOperation)
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -2637,7 +2637,7 @@ func TestUpdateWithoutOperationDependsOnLastOperation(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(provisioningOperation)
+			err = st.Operations().InsertOperation(provisioningOperation)
 			require.NoError(t, err)
 
 			update := fixUpdateOperation("update01", tc.lastOperationState)
@@ -2819,7 +2819,7 @@ func TestGvisorUpdate(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -2882,7 +2882,7 @@ func TestUpdateBlocklist(t *testing.T) {
 			Parameters:    internal.ProvisioningParameters{PlanID: broker.AWSPlanID},
 		}
 		require.NoError(t, st.Instances().Insert(instance))
-		require.NoError(t, st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01")))
+		require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
 
 		path := writeBlocklistYAML(t, `update: '"aws updates are blocked","plan=aws"'`)
 		bl, err := blocklist.ReadFromFile(path)
@@ -2913,7 +2913,7 @@ func TestUpdateBlocklist(t *testing.T) {
 			Parameters:    internal.ProvisioningParameters{PlanID: broker.AWSPlanID},
 		}
 		require.NoError(t, st.Instances().Insert(instance))
-		require.NoError(t, st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01")))
+		require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
 
 		path := writeBlocklistYAML(t, `update: '"blocked","plan=gcp"'`)
 		bl, err := blocklist.ReadFromFile(path)
@@ -2951,7 +2951,7 @@ func TestUpdateEndpoint_AdditionalVolumeSizeGiPersistedToInstance(t *testing.T) 
 	}
 	st := storage.NewMemoryStorage()
 	require.NoError(t, st.Instances().Insert(instance))
-	require.NoError(t, st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01")))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -2995,7 +2995,7 @@ func TestUpdateEndpoint_AdditionalVolumeSizeGi_NegativeValueRejected(t *testing.
 	require.NoError(t, st.Instances().Insert(instance))
 	provisioning := fixProvisioningOperation("01")
 	provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
-	require.NoError(t, st.Operations().InsertProvisioningOperation(provisioning))
+	require.NoError(t, st.Operations().InsertOperation(provisioning))
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -3036,7 +3036,7 @@ func TestUpdateEndpoint_AdditionalVolumeSizeGi_RejectedForExcludedPlan(t *testin
 	require.NoError(t, st.Instances().Insert(instance))
 	provisioning := fixProvisioningOperation("01")
 	provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "azure"}
-	require.NoError(t, st.Operations().InsertProvisioningOperation(provisioning))
+	require.NoError(t, st.Operations().InsertOperation(provisioning))
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -3088,7 +3088,7 @@ func TestUpdateAuditLogAccessForPlan(t *testing.T) {
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			err = st.Operations().InsertOperation(fixProvisioningOperation("provisioning01"))
 			require.NoError(t, err)
 
 			handler := &handler{}
@@ -3168,7 +3168,7 @@ func TestUpdateAuditLogAccess(t *testing.T) {
 			require.NoError(t, st.Instances().Insert(instance))
 			provisioning := fixProvisioningOperation("provisioning01")
 			provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
-			require.NoError(t, st.Operations().InsertProvisioningOperation(provisioning))
+			require.NoError(t, st.Operations().InsertOperation(provisioning))
 
 			handler := &handler{}
 			q := &automock.Queue{}

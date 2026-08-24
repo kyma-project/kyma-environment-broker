@@ -101,19 +101,17 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 				RuntimeID:  d.runtimeID,
 			}
 
-			operation := internal.ProvisioningOperation{
-				Operation: internal.Operation{
-					ID:         operationID,
-					InstanceID: instance.InstanceID,
-					State:      d.operationStatus,
-					Type:       internal.OperationTypeProvision,
-				},
+			operation := internal.Operation{
+				ID:         operationID,
+				InstanceID: instance.InstanceID,
+				State:      d.operationStatus,
+				Type:       internal.OperationTypeProvision,
 			}
 
 			db := storage.NewMemoryStorage()
 			err := db.Instances().Insert(instance)
 			require.NoError(t, err)
-			err = db.Operations().InsertProvisioningOperation(operation)
+			err = db.Operations().InsertOperation(operation)
 			require.NoError(t, err)
 
 			builder := &automock.KcBuilder{}

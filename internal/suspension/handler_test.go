@@ -157,7 +157,7 @@ func TestUnsuspension(t *testing.T) {
 	assert.True(t, changed, "handler to change active flag")
 
 	// then
-	op, err := st.Operations().GetProvisioningOperationByInstanceID("instance-id")
+	op, err := st.Operations().GetLastOperationByTypesWithAllStates("instance-id", []internal.OperationType{internal.OperationTypeProvision})
 	require.NoError(t, err)
 	assertQueue(t, deprovisioning)
 	assertQueue(t, provisioning, op.ID)
@@ -192,7 +192,7 @@ func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
 	assert.False(t, changed, "handler to not change active flag")
 
 	// then
-	_, err = st.Operations().GetProvisioningOperationByInstanceID("instance-id")
+	_, err = st.Operations().GetLastOperationByTypes("instance-id", []internal.OperationType{internal.OperationTypeProvision})
 	assert.True(t, dberr.IsNotFound(err))
 	assertQueue(t, deprovisioning)
 	assertQueue(t, provisioning)
@@ -219,7 +219,7 @@ func TestUnsuspensionForExpiredInstance(t *testing.T) {
 	assert.False(t, changed, "handler to not change active flag")
 
 	// then
-	_, err = st.Operations().GetProvisioningOperationByInstanceID("instance-id")
+	_, err = st.Operations().GetLastOperationByTypes("instance-id", []internal.OperationType{internal.OperationTypeProvision})
 	assert.True(t, dberr.IsNotFound(err))
 }
 

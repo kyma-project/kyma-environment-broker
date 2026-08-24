@@ -20,14 +20,14 @@ import (
 type GetInstanceEndpoint struct {
 	config            Config
 	instancesStorage  storage.Instances
-	operationsStorage storage.Provisioning
+	operationsStorage storage.Operations
 	kcBuilder         kubeconfig.KcBuilder
 	log               *slog.Logger
 }
 
 func NewGetInstance(cfg Config,
 	instancesStorage storage.Instances,
-	operationsStorage storage.Provisioning,
+	operationsStorage storage.Operations,
 	kcBuilder kubeconfig.KcBuilder,
 	log *slog.Logger,
 ) *GetInstanceEndpoint {
@@ -57,7 +57,7 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 	}
 
 	// check if provisioning still in progress
-	op, err := b.operationsStorage.GetProvisioningOperationByInstanceID(instanceID)
+	op, err := b.operationsStorage.GetLastOperationByTypesWithAllStates(instanceID, []internal.OperationType{internal.OperationTypeProvision})
 	if err != nil {
 		return domain.GetInstanceDetailsSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get operation for instanceID %s", instanceID), http.StatusNotFound, fmt.Sprintf("failed to get operation for instanceID %s", instanceID))
 	} else if op.State == domain.InProgress || op.State == domain.Failed {
