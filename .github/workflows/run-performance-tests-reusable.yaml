@@ -758,3 +758,54 @@ jobs:
           export FD_INCREASE_THRESHOLD=${{ inputs.fd-increase-threshold }}
           export DB_CONN_INCREASE_THRESHOLD=${{ inputs.db-conn-increase-threshold }}
           python3 scripts/python/compare_performance_metrics.py
+
+  run-5000-instance-test:
+    # Only run for nightly scheduled runs or manual workflow_dispatch, skip for PR/release
+    if: ${{ inputs.release == 'true' && inputs.version == '' }}
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
+
+      - name: Prepare values.yaml with 300 workers
+        run: scripts/testing/configure_keb_values.sh "30s" 300
+
+      - name: Install KEB chart
+        run: scripts/testing/install_keb.sh ${{ inputs.release }} ${{ inputs.version }}
+
+      - name: Populate database
+        run: scripts/testing/populate_performance_db.sh
+
+      - name: Start metrics collector
+        run: scripts/testing/start_metrics_collector.sh
+
+      - name: Provision 5000 instances
+        run: |
+          scripts/testing/provision_instances.sh 5000 4deee563-e5ec-4731-b9b1-53b42d855f0c azure-cluster northeurope http://localhost:30080
+          scripts/testing/assert_total_count.sh 5000 azure http://localhost:30080
+
+      - name: Simulate KIM with 12 minute delay
+        timeout-minutes: 300
+        env:
+          KIM_DELAY_SECONDS: 720
+        run: |
+          scripts/simulate_kim.sh
+          scripts/testing/wait_for_all_operations.sh azure 5000 provisioning http://localhost:30080
+
+      - name: Fetch metrics
+        run: |
+          scripts/testing/collect_provisioning_metrics.sh 4deee563-e5ec-4731-b9b1-53b42d855f0c
+          scripts/generate_charts.sh
+
+      - name: Upload metrics artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5000-instance-test-metrics
+          path: |
+            metrics/
+            charts/
