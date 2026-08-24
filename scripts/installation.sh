@@ -139,23 +139,46 @@ fi
 
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod to be in READY state..."
+
+# First, check if any pods with the label exist
+echo "Checking for kyma-environment-broker pods..."
+POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+if [[ -z "$POD_NAME" ]]; then
+  echo "ERROR: No kyma-environment-broker pod found with label app.kubernetes.io/name=kyma-environment-broker"
+  echo ""
+  echo "All pods in kcp-system namespace:"
+  kubectl get pods -n kcp-system -o wide
+  echo ""
+  echo "All deployments in kcp-system namespace:"
+  kubectl get deployments -n kcp-system
+  echo ""
+  echo "Checking for pods with any kyma-environment-broker label:"
+  kubectl get pods -n kcp-system -l app.kubernetes.io/instance=keb -o wide || true
+  exit 1
+fi
+
+echo "Found pod: $POD_NAME"
 kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=120s
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
-  echo "The kyma-environment-broker pod did not become READY within the timeout."
+  echo "ERROR: The kyma-environment-broker pod did not become READY within the timeout."
+  echo ""
+  echo "Pod details:"
+  kubectl get pod $POD_NAME -n kcp-system -o wide
+  echo ""
+  echo "Pod status:"
+  kubectl describe pod $POD_NAME -n kcp-system
+  echo ""
   echo "All pods in kcp-system:"
-  kubectl get pods -n kcp-system
-  echo "Fetching broker pod logs..."
-  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
-  if [[ -n "$POD_NAME" ]]; then
-    kubectl logs $POD_NAME -n kcp-system
-  else
-    echo "No broker pod found."
-  fi
-  echo "Fetching analytics pod logs..."
+  kubectl get pods -n kcp-system -o wide
+  echo ""
+  echo "Fetching broker pod logs:"
+  kubectl logs $POD_NAME -n kcp-system --all-containers=true --tail=100 || echo "Failed to fetch logs"
+  echo ""
+  echo "Fetching analytics pod logs (if exists)..."
   ANALYTICS_POD=$(kubectl get pod -l app.kubernetes.io/name=keb-analytics -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
   if [[ -n "$ANALYTICS_POD" ]]; then
-    kubectl logs $ANALYTICS_POD -n kcp-system
+    kubectl logs $ANALYTICS_POD -n kcp-system --all-containers=true --tail=100
   fi
   exit 1
 fi
