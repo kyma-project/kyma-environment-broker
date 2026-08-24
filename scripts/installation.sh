@@ -179,5 +179,6 @@ if [ $EXIT_CODE -ne 0 ]; then
   ANALYTICS_POD=$(kubectl get pod -l app.kubernetes.io/name=keb-analytics -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
   if [[ -n "$ANALYTICS_POD" ]]; then
     kubectl logs $ANALYTICS_POD -n kcp-system
+  fi
   exit 1
 fi
