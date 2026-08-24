@@ -771,10 +771,6 @@ jobs:
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
 
-      - name: Build and push Docker images to k3s registry
-        if: ${{ inputs.release == 'false' }}
-        run: ./scripts/testing/build-and-push-images.sh PR-${{ inputs.version }}
-
       - name: Prepare values.yaml with 300 workers
         run: scripts/testing/configure_keb_values.sh "30s" 300
 
