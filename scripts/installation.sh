@@ -178,7 +178,6 @@ if [ $EXIT_CODE -ne 0 ]; then
   echo "Fetching analytics pod logs (if exists)..."
   ANALYTICS_POD=$(kubectl get pod -l app.kubernetes.io/name=keb-analytics -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
   if [[ -n "$ANALYTICS_POD" ]]; then
-    kubectl logs $ANALYTICS_POD -n kcp-system --all-containers=true --tail=100
-  fi
+    kubectl logs $ANALYTICS_POD -n kcp-system
   exit 1
 fi
