@@ -153,8 +153,10 @@ while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
     break
   fi
   RETRY_COUNT=$((RETRY_COUNT + 1))
-  echo "Pod not found yet, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
-  sleep 2
+  if [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; then
+    echo "Pod not found yet, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+    sleep 2
+  fi
 done
 
 if [[ -z "$POD_NAME" ]]; then
