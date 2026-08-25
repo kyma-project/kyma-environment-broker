@@ -140,11 +140,25 @@ fi
 # Check if KEB pod is in READY state
 echo "Waiting for kyma-environment-broker pod to be in READY state..."
 
-# First, check if any pods with the label exist
+# First, wait for the pod to be created (with retry loop)
+# This is necessary because the deployment has a post-install hook annotation
 echo "Checking for kyma-environment-broker pods..."
-POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+MAX_RETRIES=30
+RETRY_COUNT=0
+POD_NAME=""
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$POD_NAME" ]]; then
+    echo "Found pod: $POD_NAME"
+    break
+  fi
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+  echo "Pod not found yet, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+  sleep 2
+done
+
 if [[ -z "$POD_NAME" ]]; then
-  echo "ERROR: No kyma-environment-broker pod found with label app.kubernetes.io/name=kyma-environment-broker"
+  echo "ERROR: No kyma-environment-broker pod found with label app.kubernetes.io/name=kyma-environment-broker after ${MAX_RETRIES} retries"
   echo ""
   echo "All pods in kcp-system namespace:"
   kubectl get pods -n kcp-system -o wide
@@ -157,7 +171,6 @@ if [[ -z "$POD_NAME" ]]; then
   exit 1
 fi
 
-echo "Found pod: $POD_NAME"
 kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=120s
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
