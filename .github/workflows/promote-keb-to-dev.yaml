@@ -55,15 +55,17 @@ jobs:
 
       - name: Validate given release tag
         if: inputs.releaseTag != 'use latest release'
+        env:
+          INPUT_TAG: ${{ inputs.releaseTag }}
         run: |
           tags=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/tags | jq -r '.[] | .name')
-          
-          if  echo $tags | tr " " '\n' | grep -F -q -x ${{ inputs.releaseTag }}; then
-              echo "TAG=${{ inputs.releaseTag }}" >> $GITHUB_ENV
+
+          if echo "$tags" | tr " " '\n' | grep -F -q -x "$INPUT_TAG"; then
+              echo "TAG=$INPUT_TAG" >> $GITHUB_ENV
               echo "tag found"
           else
-              echo "tag not found: ${{ inputs.releaseTag }}"
-              exit 1  
+              echo "tag not found: $INPUT_TAG"
+              exit 1
           fi
 
       - name: Set branch name
