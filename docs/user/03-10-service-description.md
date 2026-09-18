@@ -84,7 +84,6 @@ Microsoft Azure
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`           |
 | **accessControlList<sup>1</sup>**      | object | Specifies the IP ranges that can access the Kubernetes API.                     |    No    | None              |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                                   |    No    | `false`           |
-<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
 | **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`           |
 | **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                             |    No    | `false`           |
 
@@ -103,7 +102,6 @@ Azure Lite
 | **autoScalerMax<sup>1</sup>**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed. |    No    | `20`              |
 | **colocateControlPlane**       | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`           |
 | **auditLogAccess<sup>1</sup>** | bool   | Enables direct read access to audit log data.                                   |    No    | `false`           |
-<!-- TODO: confirm whether gvisor should be included in user-facing docs (internal users only) -->
 | **gvisor.enabled<sup>1</sup>** | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`           |
 
 </details>
@@ -125,7 +123,6 @@ AWS
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region.           |    No    | `false`       |
 | **accessControlList<sup>1</sup>**      | object | Specifies the IP ranges that can access the Kubernetes API.                     |    No    | None          |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                                   |    No    | `false`       |
-<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
 | **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                           |    No    | `false`       |
 | **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                             |    No    | `false`       |
 
@@ -147,7 +144,6 @@ Google Cloud
 | **autoScalerMax<sup>1</sup>**          | int    | Specifies the maximum number of virtual machines to create.           |    No    | `20`            |
 | **colocateControlPlane**               | bool   | Colocates both the control plane and worker nodes in the same region. |    No    | `false`         |
 | **auditLogAccess<sup>1</sup>**         | bool   | Enables direct read access to audit log data.                         |    No    | `false`         |
-<!-- TODO: confirm whether gvisor and ingressFiltering should be included in user-facing docs (internal users only) -->
 | **gvisor.enabled<sup>1</sup>**         | bool   | Enables gVisor sandbox for workloads.                                 |    No    | `false`         |
 | **ingressFiltering<sup>1</sup>**       | bool   | Controls ingress traffic filtering.                                   |    No    | `false`         |
 
@@ -205,7 +201,6 @@ Alibaba Cloud
 | **autoScalerMin<sup>1</sup>** | int    | Specifies the minimum number of virtual machines to create.           |    No    | `3`             |
 | **autoScalerMax<sup>1</sup>** | int    | Specifies the maximum number of virtual machines to create.           |    No    | `20`            |
 | **colocateControlPlane**      | bool   | Colocates both the control plane and worker nodes in the same region. |    No    | `false`         |
-<!-- TODO: confirm whether ingressFiltering should be included in user-facing docs (internal users only) -->
 | **ingressFiltering<sup>1</sup>** | bool | Controls ingress traffic filtering.                                  |    No    | `false`         |
 
 </details>
