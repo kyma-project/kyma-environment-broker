@@ -65,6 +65,10 @@ fix: go-lint-install ## try to fix automatically issues
 build-hap:
 	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o ../../$(ARTIFACTS)/hap
 
+.PHONY: build-for-codeql
+build-for-codeql: ## build all Go packages for CodeQL analysis (no output written)
+	go build -o /dev/null ./...
+
 ##@ Installation
 
 .PHONY: install
