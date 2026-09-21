@@ -1,0 +1,13 @@
+name: "CodeQL configuration"
+
+paths-ignore:
+  - "vendor/"
+  - "testing/e2e/skr/node_modules/"
+  - "files/swagger/"
+  - "**/*_test.go"
+  - "**/*.pb.go"
+  - "**/*_generated.go"
+  - "**/*zz_generated*.go"
+
+queries:
+  - uses: security-extended
