@@ -19,9 +19,9 @@ on:
         description: 'Create release'
         default: ""
         required: true
-      skip-sec-file-and-chart-bump:
+      skip-chart-bump:
         type: boolean
-        description: 'Do not bump sec file and chart'
+        description: 'Do not bump chart'
         default: false
       dry-run:
         type: boolean
@@ -38,9 +38,9 @@ on:
         description: 'Create release'
         default: ""
         required: true
-      skip-sec-file-and-chart-bump:
+      skip-chart-bump:
         type: boolean
-        description: 'Do not bump sec file and chart'
+        description: 'Do not bump chart'
         default: false
       dry-run:
         type: boolean
@@ -257,11 +257,11 @@ jobs:
         run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
 
       - name: Update component-config.yaml
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
+        if: ${{ !inputs.skip-chart-bump }}
         run: scripts/create_component_config.sh ${{ inputs.name }}
 
       - name: Bump KEB chart
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
+        if: ${{ !inputs.skip-chart-bump }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
       - name: Setup python
@@ -294,7 +294,7 @@ jobs:
           repositories: kyma-environment-broker
 
       - name: Create PR if anything changed
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
+        if: ${{ !inputs.skip-chart-bump }}
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: |
@@ -311,7 +311,7 @@ jobs:
           fi
 
       - name: Merge PR
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
+        if: ${{ !inputs.skip-chart-bump }}
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
           REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
@@ -323,7 +323,7 @@ jobs:
           fi
 
       - name: Await PR merge
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
+        if: ${{ !inputs.skip-chart-bump }}
         timeout-minutes: 45
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
