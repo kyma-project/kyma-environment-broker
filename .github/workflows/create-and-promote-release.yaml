@@ -24,7 +24,7 @@ jobs:
     with:
       name: ${{ inputs.name }}
       force: ${{ inputs.force }}
-      skip-sec-file-and-chart-bump: false
+      skip-chart-bump: false
       dry-run: false
     secrets: inherit
 
