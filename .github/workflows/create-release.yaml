@@ -243,7 +243,7 @@ jobs:
       db-conn-increase-threshold: "5"
 
   bumps:
-    name: Bump sec-scanners-config, KEB chart
+    name: Bump KEB chart
     needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests, run-performance-tests]
     runs-on: ubuntu-latest
     steps:
@@ -255,10 +255,6 @@ jobs:
 
       - name: Create notable changes folder
         run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
-
-      - name: Update sec-scanners-config.yaml
-        if: ${{ !inputs.skip-sec-file-and-chart-bump }}
-        run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
       - name: Update component-config.yaml
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}

@@ -12,12 +12,11 @@ set -o pipefail # prevents errors in a pipeline from being masked
 #   GIT_EMAIL                     - email setting for PR to be created
 #   GIT_NAME                      - user name setting for PR to be created
 #   KYMA_ENVIRONMENT_BROKER_REPO  - Kyma repository
-#   BUMP_CHART_AND_IMAGES         - branch with updated sec-scanners-config and KEB Chart
+#   BUMP_CHART_AND_IMAGES         - branch with updated KEB Chart
 
 TAG=$1
 
 # add changed files to stage
-git add sec-scanners-config.yaml
 git add component-config.yaml
 git add resources/keb/values.yaml
 git add resources/keb/Chart.yaml
@@ -39,7 +38,6 @@ git checkout -B ${BUMP_CHART_AND_IMAGES}
 
 #apply stashed changes
 git stash apply
-git add sec-scanners-config.yaml
 git add component-config.yaml
 git add resources/keb/values.yaml
 git add resources/keb/Chart.yaml
@@ -57,12 +55,12 @@ git config --global user.email ${GIT_EMAIL}
 git config --global user.name ${GIT_NAME}
 
 #commit and push changes
-git commit -m "Bump sec-scanners-config.yaml, component-config.yaml, KEB images and Chart to ${TAG}"
+git commit -m "Bump component-config.yaml, KEB images and Chart to ${TAG}"
 git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${KYMA_ENVIRONMENT_BROKER_REPO}.git
 git push --set-upstream origin ${BUMP_CHART_AND_IMAGES} -f
 
 #create PR
-pr_link=$(gh pr create -B main --title "Bump sec-scanners-config.yaml, component-config.yaml, KEB images and Chart to ${TAG}" --body "https://github.com/${KYMA_ENVIRONMENT_BROKER_REPO}/releases/tag/${TAG}" | tail -n 1)
+pr_link=$(gh pr create -B main --title "Bump component-config.yaml, KEB images and Chart to ${TAG}" --body "https://github.com/${KYMA_ENVIRONMENT_BROKER_REPO}/releases/tag/${TAG}" | tail -n 1)
 echo "Link for created PR: ${pr_link}"
 
 pr_number=$(echo "$pr_link" | awk -F'/' '{print $NF}')
