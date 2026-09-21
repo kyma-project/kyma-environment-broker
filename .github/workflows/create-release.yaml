@@ -243,7 +243,7 @@ jobs:
       db-conn-increase-threshold: "5"
 
   bumps:
-    name: Bump KEB chart
+    name: Bump component config and KEB chart
     needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests, run-performance-tests]
     runs-on: ubuntu-latest
     steps:
