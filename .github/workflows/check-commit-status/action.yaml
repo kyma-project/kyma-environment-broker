@@ -25,6 +25,8 @@ runs:
     - name: Check if commit status is not success
       shell: bash
       if: steps.wait.outputs.state != 'success'
+      env:
+        STATUS_NAME: ${{ inputs.statusName }}
       run: |
-        echo '${{ inputs.statusName }} failed.'
+        echo "$STATUS_NAME failed."
         exit 1

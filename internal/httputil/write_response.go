@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -18,7 +17,7 @@ func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
 	w.WriteHeader(code)
 	_, err = w.Write(data)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("could not write response %s", string(data)))
+		slog.Warn("could not write response", "data", string(data))
 	}
 }
 

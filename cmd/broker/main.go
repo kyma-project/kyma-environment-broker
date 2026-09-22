@@ -480,7 +480,7 @@ func main() {
 	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rec := httputil.NewResponseRecorder(w)
 		router.ServeHTTP(rec, r)
-		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
+		log.Info("Call handled", "method", r.Method, "url", r.URL.Path, "statusCode", rec.StatusCode, "size", rec.Size)
 	})
 	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
 }
