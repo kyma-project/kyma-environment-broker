@@ -151,12 +151,12 @@ func (s *DeprovisionRetriggerService) deprovisionInstance(instance internal.Inst
 func (s *DeprovisionRetriggerService) getInstanceReturned404(instanceID string) bool {
 	response, err := s.brokerClient.GetInstanceRequest(instanceID)
 	if err != nil || response == nil {
-		slog.Error("while trying to GET instance resource", "instanceID", instanceID, "error", err)
+		slog.Error(fmt.Sprintf("while trying to GET instance resource for %s: %s", instanceID, err))
 		return false
 	}
 	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusNotFound {
-		slog.Error("unexpectedly GET instance resource", "instanceID", instanceID, "statusCode", http.StatusText(response.StatusCode))
+		slog.Error(fmt.Sprintf("unexpectedly GET instance resource for %s: returned %s", instanceID, http.StatusText(response.StatusCode)))
 		return false
 	}
 	return true

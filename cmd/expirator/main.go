@@ -172,7 +172,7 @@ func (s *CleanupService) cleanupInstances(instances []internal.Instance) (int, i
 		suspensionUnderWay, err := s.expireInstance(instance)
 		if err != nil {
 			// ignoring errors - only logging
-			slog.Error("while sending expiration request", "instanceID", instance.InstanceID, "error", err)
+			slog.Error(fmt.Sprintf("while sending expiration request for instanceID: %s, error: %s", instance.InstanceID, err))
 			continue
 		}
 		if suspensionUnderWay {

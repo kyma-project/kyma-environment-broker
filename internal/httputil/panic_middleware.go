@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -12,8 +13,7 @@ func PanicRecoveryMiddleware(logger *slog.Logger) func(http.Handler) http.Handle
 			defer func() {
 				if rec := recover(); rec != nil {
 					stack := string(debug.Stack())
-					logger.Error("panic recovered in HTTP handler",
-						"panic", rec,
+					logger.Error(fmt.Sprintf("panic recovered in HTTP handler: %v", rec),
 						"path", r.URL.Path,
 						"method", r.Method,
 						"stack", stack)
