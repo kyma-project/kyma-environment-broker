@@ -14,6 +14,9 @@ on:
       - 'scripts/schemamigrator/**.sh'
       - '.github/workflows/pull-validate-schema-migrator.yaml'
 
+permissions:
+  contents: read
+
 jobs:
   validate-database-migrations:
     runs-on: ubuntu-latest

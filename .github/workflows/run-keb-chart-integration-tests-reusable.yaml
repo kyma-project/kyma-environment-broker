@@ -17,6 +17,9 @@ on:
         default: "0.0.0.0"
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   validate-keb-helm-chart:
     runs-on: ubuntu-latest
