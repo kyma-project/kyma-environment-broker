@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Notify MS Teams on failure
         env:
@@ -131,7 +131,7 @@ jobs:
           ./scripts/notify_teams.sh "$MESSAGE"
 
       - name: Notify slack channel about failure
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}

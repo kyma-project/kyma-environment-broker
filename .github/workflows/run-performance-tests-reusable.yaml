@@ -88,7 +88,7 @@ jobs:
       version: ${{ steps.get-version.outputs.k3s_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - id: get-version
         name: Get K3s version
@@ -101,7 +101,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -175,7 +175,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
 
@@ -193,7 +193,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -279,7 +279,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -351,7 +351,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
 
@@ -369,7 +369,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -441,7 +441,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
 
@@ -459,7 +459,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -577,7 +577,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
 
@@ -595,7 +595,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -712,7 +712,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -746,7 +746,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ inputs.post-test-monitoring-minutes > 0 || inputs.baseline-monitoring-minutes > 0 }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
 
@@ -766,7 +766,7 @@ jobs:
     needs: prepare-tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ needs.prepare-tests.outputs.version }} --wait"
@@ -803,7 +803,7 @@ jobs:
 
       - name: Upload metrics artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: 5000-instance-test-metrics
           path: |
