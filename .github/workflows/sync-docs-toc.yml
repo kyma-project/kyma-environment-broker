@@ -48,6 +48,20 @@ jobs:
           [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ]      && echo "PK_RUNTIME_REPO_NAME is required"      && exit 1
           echo "Validated"
 
+      - name: Validate tag inputs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_PREV_TAG: ${{ inputs.prev_tag }}
+          INPUT_CURR_TAG: ${{ inputs.current_tag }}
+        run: |
+          tag_re='^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'
+          if [[ -n "$INPUT_PREV_TAG" ]] && ! [[ "$INPUT_PREV_TAG" =~ $tag_re ]]; then
+            echo "::error::Invalid prev_tag: $INPUT_PREV_TAG"; exit 1
+          fi
+          if [[ -n "$INPUT_CURR_TAG" ]] && ! [[ "$INPUT_CURR_TAG" =~ $tag_re ]]; then
+            echo "::error::Invalid current_tag: $INPUT_CURR_TAG"; exit 1
+          fi
+
       - name: Generate enterprise bot token
         id: enterprise-bot-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
@@ -69,13 +83,15 @@ jobs:
         id: versions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_PREV_TAG: ${{ inputs.prev_tag }}
+          INPUT_CURR_TAG: ${{ inputs.current_tag }}
         run: |
           echo "should_continue=true" >> "$GITHUB_OUTPUT"
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            PREV_TAG="${{ inputs.prev_tag }}"
-            if [ -n "${{ inputs.current_tag }}" ]; then
-              CURRENT_TAG="${{ inputs.current_tag }}"
+            PREV_TAG="$INPUT_PREV_TAG"
+            if [ -n "$INPUT_CURR_TAG" ]; then
+              CURRENT_TAG="$INPUT_CURR_TAG"
             else
               CURRENT_TAG=$(gh release list \
                 --repo "$GITHUB_REPOSITORY" \

@@ -62,14 +62,18 @@ jobs:
           fetch-depth: 0
 
       - name: Check if tag already exists
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
-          if [ $(git tag -l ${{ inputs.name }}) ]; then
-            echo "::error ::Tag ${{ inputs.name }} already exists"
+          if [ $(git tag -l "$RELEASE_NAME") ]; then
+            echo "::error ::Tag $RELEASE_NAME already exists"
             exit 1
           fi
 
       - name: Check for existing artifacts from previous release runs
-        run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
+        run: "./scripts/check_artifacts_existence.sh $RELEASE_NAME"
 
       - name: Setup python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -89,9 +93,11 @@ jobs:
         run: python3 scripts/python/release_label_validator.py
 
       - name: Validate notable changes
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
-          if [ -d "notable-changes/${{ inputs.name }}" ]; then
-            echo "Notable changes for release ${{ inputs.name }} already exist. Please remove the folder and run the release pipeline again."
+          if [ -d "notable-changes/$RELEASE_NAME" ]; then
+            echo "Notable changes for release $RELEASE_NAME already exist. Please remove the folder and run the release pipeline again."
             exit 1
           fi
 
@@ -254,15 +260,21 @@ jobs:
       - run: git pull
 
       - name: Create notable changes folder
-        run: ./scripts/create_notable_changes_dir.sh ${{ inputs.name }}
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
+        run: ./scripts/create_notable_changes_dir.sh "$RELEASE_NAME"
 
       - name: Update component-config.yaml
         if: ${{ !inputs.skip-chart-bump }}
-        run: scripts/create_component_config.sh ${{ inputs.name }}
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
+        run: scripts/create_component_config.sh "$RELEASE_NAME"
 
       - name: Bump KEB chart
         if: ${{ !inputs.skip-chart-bump }}
-        run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
+        run: scripts/bump_keb_chart.sh "$RELEASE_NAME" "release"
 
       - name: Setup python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -297,16 +309,17 @@ jobs:
         if: ${{ !inputs.skip-chart-bump }}
         env:
           GH_TOKEN: ${{ steps.bot-token.outputs.token }}
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           prs=$(gh pr list -A app/kyma-gopher --state open --json headRefName | jq -r '.[] | .headRefName')
-          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_CHART_AND_IMAGES }}; then
+          if echo $prs | tr " " '\n' | grep -F -q -x "${{ env.BUMP_CHART_AND_IMAGES }}"; then
             echo "PR already exists, no need to create a new one"
             echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_CHART_AND_IMAGES }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
           elif [ -z "$(git status --porcelain)" ]; then
             echo "Nothing changed, no need to create PR"
             echo "PR_NUMBER=-1" >> $GITHUB_ENV
           else
-            PR_STATUS=$(scripts/create_bump_pr.sh ${{ inputs.name }})
+            PR_STATUS=$(scripts/create_bump_pr.sh "$RELEASE_NAME")
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
@@ -392,37 +405,41 @@ jobs:
           fi
         
       - name: Create lightweight tag
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
-          git tag ${{ inputs.name }}
-          git push origin ${{ inputs.name }}
+          git tag "$RELEASE_NAME"
+          git push origin "$RELEASE_NAME"
 
       - name: Create draft release
         id: create-draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
-          gh release create ${{ inputs.name }} \
+          gh release create "$RELEASE_NAME" \
           --draft \
-          --title "${{ inputs.name }}" \
+          --title "$RELEASE_NAME" \
           --generate-notes \
           --verify-tag
-          
+
       - name: Add notable changes to release draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
-          if gh api repos/${REPOSITORY}/contents/notable-changes/${{ inputs.name }} --jq '. | length > 0' >/dev/null 2>&1; then
-            echo "Notable changes found."          
-          
-            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/notable-changes/${{ inputs.name }}"
-            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [notable-changes/${{ inputs.name }}]('"${NOTABLE_CHANGES_URL}"') for detailed information.'
-          
-            BODY=$(gh release view ${{ inputs.name }} --json body --jq .body)
+          if gh api repos/${REPOSITORY}/contents/notable-changes/${RELEASE_NAME} --jq '. | length > 0' >/dev/null 2>&1; then
+            echo "Notable changes found."
+
+            NOTABLE_CHANGES_URL="https://github.com/${REPOSITORY}/tree/main/notable-changes/${RELEASE_NAME}"
+            NOTABLE_CHANGES=$'\n\n## Notable Changes\nSee [notable-changes/'"${RELEASE_NAME}"']('"${NOTABLE_CHANGES_URL}"') for detailed information.'
+
+            BODY=$(gh release view "$RELEASE_NAME" --json body --jq .body)
             UPDATED_BODY="${BODY}${NOTABLE_CHANGES}"
 
-            gh release edit ${{ inputs.name }} --notes "${UPDATED_BODY}"
+            gh release edit "$RELEASE_NAME" --notes "${UPDATED_BODY}"
           else
             echo "No notable changes found for this release."
           fi
@@ -463,23 +480,27 @@ jobs:
       - name: Upload packaged KEB chart to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           [[ ! -e ${KEB_CHART} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
 
-          gh release upload ${{ inputs.name }} --clobber ${KEB_CHART}
+          gh release upload "$RELEASE_NAME" --clobber ${KEB_CHART}
 
       - name: Update KEB chart metadata
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           git checkout gh-pages
-          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${{ inputs.name }} --merge ./index.yaml ./
+          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${RELEASE_NAME} --merge ./index.yaml ./
 
       - name: Commit KEB chart metadata to gh-pages branch
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           git config --global user.email "${{ env.GIT_EMAIL }}"
           git config --global user.name "${{ env.GIT_NAME }}"
           git add index.yaml
-          git commit -m "Update KEB chart metadata with version ${{ inputs.name }}"
+          git commit -m "Update KEB chart metadata with version ${RELEASE_NAME}"
           git push origin gh-pages
 
       - name: Generate bot token
@@ -493,6 +514,7 @@ jobs:
       - name: Publish release
         env:
           GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }} # We do use bot token here to trigger workflow uploading logs
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           git checkout main
-          gh release edit ${{ inputs.name }} --draft=false
+          gh release edit "$RELEASE_NAME" --draft=false
