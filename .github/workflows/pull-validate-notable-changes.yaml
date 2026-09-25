@@ -5,6 +5,9 @@ on:
     paths:
       - 'notable-changes-to-release/**'
 
+permissions:
+  contents: read
+
 jobs:
   validate-notable-changes:
     runs-on: ubuntu-latest

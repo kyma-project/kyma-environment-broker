@@ -7,6 +7,9 @@ on:
       - "**.md"
       - "component-config.yaml"
 
+permissions:
+  contents: read
+
 jobs:
   run-govulncheck:
     runs-on: ubuntu-latest
