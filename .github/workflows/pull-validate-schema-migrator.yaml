@@ -14,12 +14,15 @@ on:
       - 'scripts/schemamigrator/**.sh'
       - '.github/workflows/pull-validate-schema-migrator.yaml'
 
+permissions:
+  contents: read
+
 jobs:
   validate-database-migrations:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Validate migrations
         run: scripts/schemamigrator/validate.sh

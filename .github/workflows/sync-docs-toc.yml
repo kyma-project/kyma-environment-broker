@@ -48,9 +48,23 @@ jobs:
           [ -z "${{ vars.PK_RUNTIME_REPO_NAME }}" ]      && echo "PK_RUNTIME_REPO_NAME is required"      && exit 1
           echo "Validated"
 
+      - name: Validate tag inputs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_PREV_TAG: ${{ inputs.prev_tag }}
+          INPUT_CURR_TAG: ${{ inputs.current_tag }}
+        run: |
+          tag_re='^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'
+          if [[ -n "$INPUT_PREV_TAG" ]] && ! [[ "$INPUT_PREV_TAG" =~ $tag_re ]]; then
+            echo "::error::Invalid prev_tag: $INPUT_PREV_TAG"; exit 1
+          fi
+          if [[ -n "$INPUT_CURR_TAG" ]] && ! [[ "$INPUT_CURR_TAG" =~ $tag_re ]]; then
+            echo "::error::Invalid current_tag: $INPUT_CURR_TAG"; exit 1
+          fi
+
       - name: Generate enterprise bot token
         id: enterprise-bot-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
@@ -59,7 +73,7 @@ jobs:
           repositories: product-kyma-runtime,management-plane-charts
 
       - name: Checkout KEB
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -69,13 +83,15 @@ jobs:
         id: versions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_PREV_TAG: ${{ inputs.prev_tag }}
+          INPUT_CURR_TAG: ${{ inputs.current_tag }}
         run: |
           echo "should_continue=true" >> "$GITHUB_OUTPUT"
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            PREV_TAG="${{ inputs.prev_tag }}"
-            if [ -n "${{ inputs.current_tag }}" ]; then
-              CURRENT_TAG="${{ inputs.current_tag }}"
+            PREV_TAG="$INPUT_PREV_TAG"
+            if [ -n "$INPUT_CURR_TAG" ]; then
+              CURRENT_TAG="$INPUT_CURR_TAG"
             else
               CURRENT_TAG=$(gh release list \
                 --repo "$GITHUB_REPOSITORY" \
@@ -304,7 +320,7 @@ jobs:
 
       - name: Notify slack channel about failure
         if: ${{ !success() }}
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}

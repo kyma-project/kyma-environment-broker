@@ -28,7 +28,7 @@ jobs:
   e2e-provisioning-test-image:
     needs: restricted-gate
     if: always() && (needs.restricted-gate.result == 'success' || needs.restricted-gate.result == 'skipped')
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
     with:
       name: e2e-provisioning-test
       dockerfile: Dockerfile

@@ -19,7 +19,7 @@ jobs:
 
    kyma-environment-broker-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with:
         name:  kyma-environment-broker
         dockerfile: Dockerfile.keb
@@ -28,7 +28,7 @@ jobs:
 
    environments-cleanup-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environments-cleanup-job
          dockerfile: Dockerfile.job
@@ -37,7 +37,7 @@ jobs:
 
    deprovision-retrigger-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environment-deprovision-retrigger-job
          dockerfile: Dockerfile.job
@@ -46,7 +46,7 @@ jobs:
 
    expirator-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environment-expirator-job
          dockerfile: Dockerfile.job
@@ -55,7 +55,7 @@ jobs:
 
    runtime-reconciler-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environment-runtime-reconciler
          dockerfile: Dockerfile.runtimereconciler
@@ -64,7 +64,7 @@ jobs:
 
    subaccount-cleanup-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environment-subaccount-cleanup-job
          dockerfile: Dockerfile.job
@@ -73,7 +73,7 @@ jobs:
 
    subaccount-sync-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with: 
          name: kyma-environment-subaccount-sync
          dockerfile: Dockerfile.subaccountsync
@@ -82,7 +82,7 @@ jobs:
 
    schema-migrator-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with:
          name: kyma-environment-broker-schema-migrator
          dockerfile: Dockerfile.schemamigrator
@@ -90,7 +90,7 @@ jobs:
 
    service-binding-cleanup-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with:
          name: kyma-environment-service-binding-cleanup-job
          dockerfile: Dockerfile.job
@@ -99,7 +99,7 @@ jobs:
 
    keb-analytics-image:
       needs: restricted-gate
-      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
       with:
          name: keb-analytics
          dockerfile: Dockerfile.keb-analytics

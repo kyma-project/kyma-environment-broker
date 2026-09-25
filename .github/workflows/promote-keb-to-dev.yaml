@@ -20,6 +20,9 @@ on:
         default: 'use latest release'
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   promote:
     runs-on: ubuntu-latest
@@ -35,7 +38,7 @@ jobs:
 
       - name: Generate enterprise bot token
         id: enterprise-bot-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.GOPHER_TOOLS_BOT_APP_ID }}
           private-key: ${{ secrets.GOPHER_TOOLS_BOT_APP_PRIVATE_KEY }}
@@ -55,15 +58,17 @@ jobs:
 
       - name: Validate given release tag
         if: inputs.releaseTag != 'use latest release'
+        env:
+          INPUT_TAG: ${{ inputs.releaseTag }}
         run: |
           tags=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/tags | jq -r '.[] | .name')
-          
-          if  echo $tags | tr " " '\n' | grep -F -q -x ${{ inputs.releaseTag }}; then
-              echo "TAG=${{ inputs.releaseTag }}" >> $GITHUB_ENV
+
+          if echo "$tags" | tr " " '\n' | grep -F -q -x "$INPUT_TAG"; then
+              echo "TAG=$INPUT_TAG" >> $GITHUB_ENV
               echo "tag found"
           else
-              echo "tag not found: ${{ inputs.releaseTag }}"
-              exit 1  
+              echo "tag not found: $INPUT_TAG"
+              exit 1
           fi
 
       - name: Set branch name
@@ -78,7 +83,7 @@ jobs:
           git clone "${MANAGEMENT_PLANE_CHARTS_WITH_USER}"
 
       - name: Setup python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.9'
           cache: 'pip'
