@@ -3,7 +3,6 @@ package postsql
 import (
 	"fmt"
 	"log/slog"
-	"regexp"
 	"time"
 
 	"github.com/gocraft/dbr"
@@ -76,8 +75,7 @@ func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Dur
 	var connection *dbr.Connection
 	var err error
 
-	re := regexp.MustCompile(`password=.*?\s`)
-	slog.Info(re.ReplaceAllString(connString, ""))
+	slog.Info("Connecting to database")
 
 	for ; retryCount > 0; retryCount-- {
 		connection, err = dbr.Open("postgres", connString, nil)

@@ -82,6 +82,9 @@ on:
         description: 'Release version'
         default: ''
         required: false
+permissions:
+  contents: read
+
 jobs:
   run-performance-tests:
     name: Run performance tests with extended monitoring
