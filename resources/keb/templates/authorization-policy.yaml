@@ -41,7 +41,11 @@ metadata:
 spec:
   action: ALLOW
   rules:
-    - to:
+    - from:
+        - source:
+            namespaces:
+              - monitoring-system
+      to:
         - operation:
             paths:
               - /metrics
@@ -67,7 +71,8 @@ spec:
   rules:
     - from:
         - source:
-            namespaces: ["kcp-system"]
+            principals:
+              - cluster.local/ns/kcp-system/sa/{{ .Values.global.kyma_environment_broker.serviceAccountName }}
 {{- if not .Values.global.istio.ambient.enabled }}
   selector:
     matchLabels:
