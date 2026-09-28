@@ -108,7 +108,7 @@ jobs:
 
   build-keb-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
@@ -118,7 +118,7 @@ jobs:
 
   build-environments-cleanup-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environments-cleanup-job
       dockerfile: Dockerfile.job
@@ -128,7 +128,7 @@ jobs:
 
   build-deprovision-retrigger-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-deprovision-retrigger-job
       dockerfile: Dockerfile.job
@@ -138,7 +138,7 @@ jobs:
 
   build-expirator-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-expirator-job
       dockerfile: Dockerfile.job
@@ -148,7 +148,7 @@ jobs:
 
   build-runtime-reconciler-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-runtime-reconciler
       dockerfile: Dockerfile.runtimereconciler
@@ -158,7 +158,7 @@ jobs:
 
   build-subaccount-cleanup-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-subaccount-cleanup-job
       dockerfile: Dockerfile.job
@@ -168,7 +168,7 @@ jobs:
 
   build-subaccount-sync-image:
     needs: [validate-release]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-subaccount-sync
       dockerfile: Dockerfile.subaccountsync
@@ -178,7 +178,7 @@ jobs:
 
   build-schema-migrator-image:
     needs: [ validate-release ]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-broker-schema-migrator
       dockerfile: Dockerfile.schemamigrator
@@ -187,7 +187,7 @@ jobs:
 
   build-service-binding-cleanup-image:
     needs: [ validate-release ]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: kyma-environment-service-binding-cleanup-job
       dockerfile: Dockerfile.job
@@ -197,7 +197,7 @@ jobs:
 
   build-keb-analytics-image:
     needs: [ validate-release ]
-    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@5e3584e7419fd4b566a29fdd6a1154b16a35e731
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
     with:
       name: keb-analytics
       dockerfile: Dockerfile.keb-analytics
