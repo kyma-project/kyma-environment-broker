@@ -19,10 +19,10 @@ func AsTemporaryError(err error, context string, args ...interface{}) *Temporary
 	return &TemporaryError{message: msg}
 }
 
-func (te TemporaryError) Error() string        { return te.message }
-func (TemporaryError) Temporary() bool         { return true }
-func (TemporaryError) GetReason() Reason       { return KEBInternalCode }
-func (TemporaryError) GetComponent() Component { return KEBDependency }
+func (te *TemporaryError) Error() string        { return te.message }
+func (*TemporaryError) Temporary() bool         { return true }
+func (*TemporaryError) GetReason() Reason       { return KEBInternalCode }
+func (*TemporaryError) GetComponent() Component { return KEBDependency }
 
 func IsTemporaryError(err error) bool {
 	cause := UnwrapAll(err)
@@ -48,13 +48,13 @@ func WrapNewTemporaryError(err error) *WrapTemporaryError {
 	return &WrapTemporaryError{err: err}
 }
 
-func (wte WrapTemporaryError) Error() string { return wte.err.Error() }
-func (WrapTemporaryError) Temporary() bool   { return true }
+func (wte *WrapTemporaryError) Error() string { return wte.err.Error() }
+func (*WrapTemporaryError) Temporary() bool   { return true }
 
-func (wte WrapTemporaryError) GetReason() Reason {
+func (wte *WrapTemporaryError) GetReason() Reason {
 	return ReasonForError(wte.err, NotSet).GetReason()
 }
 
-func (wte WrapTemporaryError) GetComponent() Component {
+func (wte *WrapTemporaryError) GetComponent() Component {
 	return ReasonForError(wte.err, NotSet).GetComponent()
 }
