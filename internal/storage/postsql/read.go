@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"golang.org/x/exp/slices"
 
 	"github.com/gocraft/dbr"
 	"github.com/pivotal-cf/brokerapi/v12/domain"

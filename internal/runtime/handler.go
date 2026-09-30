@@ -8,16 +8,18 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
+	"slices"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"golang.org/x/exp/slices"
 
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"

@@ -7,10 +7,12 @@ import (
 	"runtime"
 	"strings"
 
+	"slices"
+
 	"github.com/gocraft/dbr"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"golang.org/x/exp/slices"
 )
 
 type migrationOrder int
