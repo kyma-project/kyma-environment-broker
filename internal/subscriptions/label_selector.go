@@ -40,7 +40,7 @@ type LabelSelectorBuilder struct {
 func NewLabelSelectorFromRuleset(rule ParsedRule) *LabelSelectorBuilder {
 	selector := &LabelSelectorBuilder{builder: strings.Builder{}}
 	selector.shared = rule.IsShared()
-	selector.builder.WriteString(fmt.Sprintf(hyperscalerTypeReqFmt, rule.Hyperscaler()))
+	fmt.Fprintf(&selector.builder, hyperscalerTypeReqFmt, rule.Hyperscaler())
 	if rule.IsEUAccess() {
 		selector.with(euAccessReq)
 	} else {

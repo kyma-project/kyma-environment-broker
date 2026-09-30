@@ -1,6 +1,6 @@
 module github.com/kyma-project/kyma-environment-broker
 
-go 1.26.5
+go 1.27.1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1
@@ -32,7 +32,6 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/vrischmann/envconfig v1.4.1
-	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/time v0.16.0
 	gopkg.in/yaml.v3 v3.0.1

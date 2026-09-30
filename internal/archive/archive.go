@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"slices"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"golang.org/x/exp/slices"
 )
 
 func NewInstanceArchivedFromOperationsAndInstance(instance internal.Instance, operations []internal.Operation) (internal.InstanceArchived, error) {

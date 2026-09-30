@@ -62,7 +62,7 @@ var updatingFieldConfig = map[string]fieldBehavior{
 // handleStructBehavior handles typed struct behaviors (modules, gvisor, acl, networking)
 // by type-asserting the reflect.Value directly. Returns true if the field was handled.
 func handleStructBehavior(behavior fieldBehavior, fv reflect.Value, key string, counts map[string]map[string]int) bool {
-	if fv.Kind() != reflect.Ptr || fv.IsNil() {
+	if fv.Kind() != reflect.Pointer || fv.IsNil() {
 		return behavior == behaviorModules || behavior == behaviorGvisor ||
 			behavior == behaviorACL || behavior == behaviorNetworking || behavior == behaviorOIDC
 	}
@@ -144,7 +144,7 @@ func walkFields(v interface{}, config map[string]fieldBehavior, counts map[strin
 		}
 
 		// Dereference pointers; skip nil
-		if fv.Kind() == reflect.Ptr {
+		if fv.Kind() == reflect.Pointer {
 			if fv.IsNil() {
 				continue
 			}

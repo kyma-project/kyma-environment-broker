@@ -722,7 +722,7 @@ func checkInternalOnlyMachinesUsage(planSpec *configuration.PlanSpecifications, 
 		if i > 0 {
 			errorMsg.WriteString(", ")
 		}
-		errorMsg.WriteString(fmt.Sprintf("%s (used in worker node pools: %s)", machineType, strings.Join(usedMachines[machineType], ", ")))
+		fmt.Fprintf(&errorMsg, "%s (used in worker node pools: %s)", machineType, strings.Join(usedMachines[machineType], ", "))
 	}
 
 	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
@@ -748,7 +748,7 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 	}
 
 	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("In the region %s, the following machine types are not available: ", region))
+	fmt.Fprintf(&errorMsg, "In the region %s, the following machine types are not available: ", region)
 
 	for i, machineType := range orderedMachineTypes {
 		if i > 0 {
@@ -756,9 +756,9 @@ func checkUnsupportedMachines(providerSpec ConfigurationProvider, provider pkg.C
 		}
 		availableRegions := providerSpec.SupportedRegions(provider, machineType)
 		if len(availableRegions) == 0 {
-			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), not supported in any region", machineType, strings.Join(unsupportedMachines[machineType], ", ")))
+			fmt.Fprintf(&errorMsg, "%s (used in: %s), not supported in any region", machineType, strings.Join(unsupportedMachines[machineType], ", "))
 		} else {
-			errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), strings.Join(availableRegions, ", ")))
+			fmt.Fprintf(&errorMsg, "%s (used in: %s), supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), strings.Join(availableRegions, ", "))
 		}
 	}
 
