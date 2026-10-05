@@ -186,6 +186,10 @@ data:
               default_volume_size: "50Gi"
             g_c64_m256:
               default_volume_size: "50Gi"
+            g_k_c6_m24_v2:
+              default_volume_size: "50Gi"
+            g_k_c8_m32_v2:
+              default_volume_size: "50Gi"
           alicloud:
             ecs.g9i.large:
               default_volume_size: "80Gi"

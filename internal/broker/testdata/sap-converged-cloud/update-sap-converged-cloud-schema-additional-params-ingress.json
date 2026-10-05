@@ -59,7 +59,9 @@
               "g_c12_m48",
               "g_c16_m64",
               "g_c32_m128",
-              "g_c64_m256"
+              "g_c64_m256",
+              "g_k_c6_m24",
+              "g_k_c8_m32"
             ],
             "_enumDisplayName": {
               "g_c2_m8": "g_c2_m8 (2vCPU, 8GB RAM)",
@@ -69,7 +71,9 @@
               "g_c12_m48": "g_c12_m48 (12vCPU, 48GB RAM)",
               "g_c16_m64": "g_c16_m64 (16vCPU, 64GB RAM)",
               "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
-              "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
+              "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)",
+              "g_k_c6_m24": "g_k_c6_m24 (6vCPU, 24GB RAM)",
+              "g_k_c8_m32": "g_k_c8_m32 (8vCPU, 32GB RAM)"
             }
           },
           "haZones": {
@@ -207,7 +211,9 @@
         "g_c12_m48": "g_c12_m48 (12vCPU, 48GB RAM)",
         "g_c16_m64": "g_c16_m64 (16vCPU, 64GB RAM)",
         "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
-        "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
+        "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)",
+        "g_k_c6_m24": "g_k_c6_m24 (6vCPU, 24GB RAM)",
+        "g_k_c8_m32": "g_k_c8_m32 (8vCPU, 32GB RAM)"
       },
       "description": "Specifies the type of the virtual machine. Where available, use the recommended version-agnostic machine type. For more information, see <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/provisioning-and-update-parameters-in-kyma-environment#machine-type>Machine Type</a>.",
       "enum": [
@@ -218,7 +224,9 @@
         "g_c12_m48",
         "g_c16_m64",
         "g_c32_m128",
-        "g_c64_m256"
+        "g_c64_m256",
+        "g_k_c6_m24",
+        "g_k_c8_m32"
       ],
       "type": "string"
     },
