@@ -1,0 +1,13 @@
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
+metadata:
+  labels:
+    hyperscalerType: openstack
+    shared: "true"
+  name: sap-converged-cloud
+  namespace: garden-kyma-dev
+provider:
+  type: openstack
+credentialsRef:
+  name: sap-converged-cloud-secret
+  namespace: garden-kyma-dev

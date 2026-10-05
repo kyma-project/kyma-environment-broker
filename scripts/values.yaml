@@ -5,7 +5,7 @@ broker:
   dynamicVolumeSizeEnabled: "true"
   subaccountMovementEnabled: "true"
   updateCustomResourcesLabelsOnAccountMove: "true"
-  enablePlans: "azure,gcp,azure_lite,trial,aws,alicloud,gdch"
+  enablePlans: "azure,gcp,azure_lite,trial,aws,alicloud,gdch,sap-converged-cloud,preview,free"
   
 metricsv2:
   # If true, enables metrics collection and Prometheus exposure.
@@ -30,6 +30,8 @@ plansConfiguration:
       - "g_c16_m64"
       - "g_c32_m128"
       - "g_c64_m256"
+      - "g_k_c6_m24"
+      - "g_k_c8_m32"
     regions:
       cf-eu20:
         - eu-de-1
@@ -451,6 +453,15 @@ providersConfiguration:
       "g_c16_m64": "g_c16_m64 (16vCPU, 64GB RAM)"
       "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)"
       "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
+      "g_k_c6_m24": "g_k_c6_m24 (6vCPU, 24GB RAM)"
+      "g_k_c8_m32": "g_k_c8_m32 (8vCPU, 32GB RAM)"
+    machinesVersions:
+      "{category}_k_c{cpu}_m{mem}": "{category}_k_c{cpu}_m{mem}_v2"
+    regionsSupportingMachine:
+      "g_k_":
+        eu-de-1: [a, b, d]
+        eu-de-2: [a, b]
+        na-us-2: [a, b]
     regions:
       eu-de-1:
         displayName: eu-de-1
@@ -508,7 +519,7 @@ hap:
     - gcp
     - gcp(PR=cf-sa30) -> PR
     - trial -> S
-    - sap-converged-cloud(HR=*) -> S
+    - sap-converged-cloud -> S
     - azure_lite
     - preview
     - free

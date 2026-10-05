@@ -8,6 +8,8 @@ sap-converged-cloud:
     - "g_c16_m64"
     - "g_c32_m128"
     - "g_c64_m256"
+    - "g_k_c6_m24"
+    - "g_k_c8_m32"
   additionalMachines:
   regions:
     cf-eu20: ["eu-de-1"]
