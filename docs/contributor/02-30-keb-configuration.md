@@ -16,7 +16,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |
 | **APP_BROKER_BINDING_&#x200b;EXPIRATION_SECONDS** | <code>600</code> | Default expiration time (in seconds) for a binding if not specified in the request. |
 | **APP_BROKER_BINDING_&#x200b;MAX_BINDINGS_COUNT** | <code>10</code> | Maximum number of non-expired bindings allowed per instance. |
-| **APP_BROKER_BINDING_&#x200b;MAX_EXPIRATION_&#x200b;SECONDS** | <code>7200</code> | Maximum allowed expiration time (in seconds) for a binding. |
+| **APP_BROKER_BINDING_&#x200b;MAX_EXPIRATION_&#x200b;SECONDS** | <code>86400</code> | Maximum allowed expiration time (in seconds) for a binding. |
 | **APP_BROKER_BINDING_&#x200b;MIN_EXPIRATION_&#x200b;SECONDS** | <code>600</code> | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener. |
 | **APP_BROKER_CHECK_&#x200b;QUOTA_LIMIT** | <code>false</code> | If true, validates during provisioning that the assigned quota for the subaccount is not exceeded. |
 | **APP_BROKER_DEFAULT_&#x200b;REQUEST_REGION** | <code>cf-eu10</code> | Default platform region for requests if not specified. |

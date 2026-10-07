@@ -38,7 +38,7 @@ import (
 
 const (
 	expirationSeconds    = 600
-	maxExpirationSeconds = 7200
+	maxExpirationSeconds = 86400
 	minExpirationSeconds = 600
 )
 

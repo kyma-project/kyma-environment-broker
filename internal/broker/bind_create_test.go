@@ -362,7 +362,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
-		MaxExpirationSeconds: 7200,
+		MaxExpirationSeconds: 86400,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
@@ -413,7 +413,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
-		MaxExpirationSeconds: 7200,
+		MaxExpirationSeconds: 86400,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
@@ -463,7 +463,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
-		MaxExpirationSeconds: 7200,
+		MaxExpirationSeconds: 86400,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
@@ -514,7 +514,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
-		MaxExpirationSeconds: 7200,
+		MaxExpirationSeconds: 86400,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
@@ -568,7 +568,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 			instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
-		MaxExpirationSeconds: 7200,
+		MaxExpirationSeconds: 86400,
 		MinExpirationSeconds: 600,
 		MaxBindingsCount:     10,
 	}
