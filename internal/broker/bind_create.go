@@ -29,7 +29,7 @@ type BindingConfig struct {
 	Enabled              bool          `envconfig:"default=false"`
 	BindablePlans        StringList    `envconfig:"default=aws"`
 	ExpirationSeconds    int           `envconfig:"default=600"`
-	MaxExpirationSeconds int           `envconfig:"default=7200"`
+	MaxExpirationSeconds int           `envconfig:"default=86400"`
 	MinExpirationSeconds int           `envconfig:"default=600"`
 	MaxBindingsCount     int           `envconfig:"default=10"`
 	CreateBindingTimeout time.Duration `envconfig:"default=15s"`

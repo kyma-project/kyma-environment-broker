@@ -29,9 +29,9 @@ If a feature flag for Kyma bindings is enabled, KEB performs the following steps
 
    | Name                   | Default | Description                            |
    |------------------------|---------|----------------------------------------|
-   | **expiration_seconds** | `600`   | Specifies in seconds how long the generated kubeconfig is valid. The default, and at the same time the minimum possible value, is `600` seconds (10 minutes). The maximum possible value is `7200` seconds (2 hours). |
+   | **expiration_seconds** | `600`   | Specifies in seconds how long the generated kubeconfig is valid. The default, and at the same time the minimum possible value, is `600` seconds (10 minutes). The maximum possible value is `86400` seconds (24 hours). |
 
-2. The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively.
+2. The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 86400 seconds, respectively.
 3. KEB checks the status of the instance. The instance must be provisioned for the binding creation.
 4. KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameters. If the binding exists, KEB checks the values of the parameters of the existing binding. The OSB API requires that a request to create a binding fails if an object has already been created and the request contains different parameters.
 5. If the found binding is not expired, KEB returns it in the response. If the found binding is expired and exists in the database, KEB responds with an error and a `Bad Request` status. This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the cleanup job removes the expired binding from the database. If the binding does not exist, the flow returns to the process's execution path, where no bindings exist in the database.

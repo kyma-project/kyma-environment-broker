@@ -93,7 +93,7 @@
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |
 | broker.binding.<br>expirationSeconds | Default expiration time (in seconds) for a binding if not specified in the request. | `600` |
 | broker.binding.<br>maxBindingsCount | Maximum number of non-expired bindings allowed per instance. | `10` |
-| broker.binding.<br>maxExpirationSeconds | Maximum allowed expiration time (in seconds) for a binding. | `7200` |
+| broker.binding.<br>maxExpirationSeconds | Maximum allowed expiration time (in seconds) for a binding. | `86400` |
 | broker.binding.<br>minExpirationSeconds | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener. | `600` |
 | broker.<br>defaultRequestRegion | Default platform region for requests if not specified. | `cf-eu10` |
 | broker.enablePlans | Comma-separated list of plan names enabled and available for provisioning in KEB. | `azure,gcp,azure_lite,trial,aws` |

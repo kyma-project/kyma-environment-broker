@@ -185,7 +185,7 @@ broker:
     # Maximum number of non-expired bindings allowed per instance.
     maxBindingsCount: 10
     # Maximum allowed expiration time (in seconds) for a binding.
-    maxExpirationSeconds: 7200
+    maxExpirationSeconds: 86400
     # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener.
     minExpirationSeconds: 600
   # Default platform region for requests if not specified.

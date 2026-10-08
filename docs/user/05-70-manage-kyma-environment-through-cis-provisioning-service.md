@@ -82,7 +82,7 @@ To manage a Kyma instance automatically, create a Kyma service binding. The Kyma
    INSTANCE_ID=$(curl -s -X POST "$PROVISIONING_SERVICE_URL/provisioning/v1/environments" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"environmentType\":\"$ENVIRONMENT_TYPE\",\"parameters\":{\"name\":\"$NAME\",\"region\":\"$REGION\"},\"planName\":\"$PLAN\",\"serviceName\":\"$SERVICE_NAME\",\"user\":\"$USER_ID\"}" | jq -r '.id')
    ```
 
-7. **Optional:** Set the **EXPIRATION_SECONDS** environment variable to the number of seconds (from 600 to 7200) after which a binding expires.
+7. **Optional:** Set the **EXPIRATION_SECONDS** environment variable to the number of seconds (from 600 to 86400) after which a binding expires.
 
    ```bash
    export EXPIRATION_SECONDS={EXPIRATION_SECONDS}
@@ -139,7 +139,7 @@ To manage a Kyma instance automatically, create a Kyma service binding. The Kyma
       ```
       
       > ### Note:
-      > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
+      > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (86400 seconds) passes.
 
 ## Next Steps
 

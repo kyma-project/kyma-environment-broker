@@ -197,7 +197,7 @@ func fixConfig() *Config {
 				Enabled:              true,
 				BindablePlans:        []string{"aws", "azure"},
 				ExpirationSeconds:    600,
-				MaxExpirationSeconds: 7200,
+				MaxExpirationSeconds: 86400,
 				MinExpirationSeconds: 600,
 				MaxBindingsCount:     10,
 				CreateBindingTimeout: 15 * time.Second,
