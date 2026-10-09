@@ -3,7 +3,7 @@ module github.com/kyma-project/kyma-environment-broker
 go 1.27.1
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.2
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 v6.4.0
 	github.com/aws/aws-sdk-go-v2 v1.47.1
@@ -46,7 +46,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
