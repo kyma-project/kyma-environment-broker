@@ -26,8 +26,7 @@ type Config struct {
 }
 
 func (cfg *Config) ConnectionURL() string {
-	url := fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User,
-		cfg.Password, cfg.Name, cfg.SSLMode)
+	url := fmt.Sprintf(connectionURLFormat, cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode)
 	if cfg.SSLMode != "disable" && cfg.SSLMode != "" {
 		url += fmt.Sprintf(" sslrootcert=%s", cfg.SSLRootCert)
 	}
