@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	pgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -115,11 +115,11 @@ func invokeMigration() error {
 	}
 
 	slog.Info("# WAITING FOR CONNECTION WITH DATABASE #")
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sql.Open("pgx", connectionString)
 
 	for i := 0; i < connRetries && err != nil; i++ {
 		slog.Error(fmt.Sprintf("Error while connecting to the database, %s. Retrying step", err))
-		db, err = sql.Open("postgres", connectionString)
+		db, err = sql.Open("pgx", connectionString)
 		time.Sleep(100 * time.Millisecond)
 	}
 
@@ -162,11 +162,11 @@ func invokeMigration() error {
 	}
 
 	slog.Info("# INITIALIZING DRIVER #")
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	driver, err := pgx.WithInstance(db, &pgx.Config{})
 
 	for i := 0; i < connRetries && err != nil; i++ {
 		slog.Error(fmt.Sprintf("Error during driver initialization, %s. Retrying step", err))
-		driver, err = postgres.WithInstance(db, &postgres.Config{})
+		driver, err = pgx.WithInstance(db, &pgx.Config{})
 		time.Sleep(100 * time.Millisecond)
 	}
 
@@ -223,18 +223,21 @@ func buildConnectionString() (string, error) {
 
 	dbName := os.Getenv("DB_NAME")
 
-	_, present := os.LookupEnv("DB_SSL")
+	sslMode, present := os.LookupEnv("DB_SSL")
 	if present {
-		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, os.Getenv("DB_SSL"))
+		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, sslMode)
 
 		_, present := os.LookupEnv("DB_SSLROOTCERT")
-		if present {
+		if present && sslMode != "disable" {
 			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
 		}
-	}
 
-	// hard-wire time zone as UTC to avoid issues with different time zones
-	dbName += "&timezone=UTC"
+		// hard-wire time zone as UTC to avoid issues with different time zones
+		dbName += "&timezone=UTC"
+	} else {
+		// hard-wire time zone as UTC to avoid issues with different time zones
+		dbName += "?timezone=UTC"
+	}
 
 	hostPort := net.JoinHostPort(
 		os.Getenv("DB_HOST"),
