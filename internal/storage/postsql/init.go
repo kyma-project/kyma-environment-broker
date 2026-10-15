@@ -1,13 +1,18 @@
 package postsql
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/gocraft/dbr"
-
-	"github.com/lib/pq"
+	"github.com/gocraft/dbr/dialect"
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -23,7 +28,7 @@ const (
 
 // InitializeDatabase opens database connection and initializes schema if it does not exist
 func InitializeDatabase(connectionURL string, retries int) (*dbr.Connection, error) {
-	connection, err := WaitForDatabaseAccess(connectionURL, retries, 300*time.Millisecond)
+	connection, err := WaitForDatabaseAccess(connectionURL, retries, time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -59,9 +64,8 @@ func CheckIfDatabaseInitialized(db *dbr.Connection) (bool, error) {
 	err := row.Scan(&tableName)
 
 	if err != nil {
-		psqlErr, converted := err.(*pq.Error)
-
-		if converted && psqlErr.Code == TableNotExistsError {
+		var psqlErr *pgconn.PgError
+		if errors.As(err, &psqlErr) && psqlErr.Code == TableNotExistsError {
 			return false, nil
 		}
 
@@ -72,16 +76,30 @@ func CheckIfDatabaseInitialized(db *dbr.Connection) (bool, error) {
 }
 
 func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Duration) (*dbr.Connection, error) {
-	var connection *dbr.Connection
-	var err error
-
 	slog.Info("Connecting to database")
 
+	connConfig, err := pgx.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("invalid connection string: %w", err)
+	}
+
+	afterConnect := stdlib.OptionAfterConnect(func(_ context.Context, conn *pgx.Conn) error {
+		conn.TypeMap().RegisterType(&pgtype.Type{
+			Name:  "timestamptz",
+			OID:   pgtype.TimestamptzOID,
+			Codec: &pgtype.TimestamptzCodec{ScanLocation: time.UTC},
+		})
+		conn.TypeMap().RegisterType(&pgtype.Type{
+			Name:  "timestamp",
+			OID:   pgtype.TimestampOID,
+			Codec: &pgtype.TimestampCodec{ScanLocation: time.UTC},
+		})
+		return nil
+	})
+
 	for ; retryCount > 0; retryCount-- {
-		connection, err = dbr.Open("postgres", connString, nil)
-		if err != nil {
-			return nil, fmt.Errorf("invalid connection string: %w", err)
-		}
+		sqlDB := stdlib.OpenDB(*connConfig, afterConnect)
+		connection := &dbr.Connection{DB: sqlDB, Dialect: dialect.PostgreSQL, EventReceiver: &dbr.NullEventReceiver{}}
 
 		err = connection.Ping()
 		if err == nil {

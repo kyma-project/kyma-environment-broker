@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/mocks"
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -197,7 +197,7 @@ func Test_buildConnectionString(t *testing.T) {
 
 		// then
 		assert.Nil(t, err)
-		assert.Equal(t, "postgres://user:pass@host:5432/dbname&timezone=UTC", connString)
+		assert.Equal(t, "postgres://user:pass@host:5432/dbname?timezone=UTC", connString)
 	})
 
 	t.Run("Should build connection string with SSL", func(t *testing.T) {

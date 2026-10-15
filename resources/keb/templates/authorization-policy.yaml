@@ -41,11 +41,7 @@ metadata:
 spec:
   action: ALLOW
   rules:
-    - from:
-        - source:
-            namespaces:
-              - monitoring-system
-      to:
+    - to:
         - operation:
             paths:
               - /metrics
