@@ -22,7 +22,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-project/infrastructure-manager v0.0.0-20260608110112-15beee3b62a9
 	github.com/labstack/gommon v0.5.0
