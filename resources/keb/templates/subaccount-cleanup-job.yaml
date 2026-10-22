@@ -114,8 +114,10 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.global.database.managedGCP.secretName }}
                       key: {{ .Values.global.database.managedGCP.sslModeSecretKey }}
+                {{- if eq .Values.global.database.cloudsqlproxy.enabled true }}
                 - name: APP_DATABASE_SSLROOTCERT
                   value: "{{ .Values.configPaths.cloudsqlSSLRootCert }}"
+                {{- end }}
                 - name: APP_DATABASE_USER
                   valueFrom:
                     secretKeyRef:
