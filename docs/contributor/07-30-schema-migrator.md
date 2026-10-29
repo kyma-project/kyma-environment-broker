@@ -22,6 +22,6 @@ Use the following environment variables to configure the application:
 | **DB_PASSWORD** | None | Specifies the user password for the database. |
 | **DB_PORT** | None | Specifies the port for the database. |
 | **DB_SSL** | None | Activates SSL mode for PostgreSQL. |
-| **DB_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **DB_SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. If not provided, the broker does not add sslrootcert parameter to the database connection string. |
 | **DB_USER** | None | Specifies the username for the database. |
 | **DIRECTION** | <code>up</code> | Defines the direction of the schema migration, either "up" or "down". |

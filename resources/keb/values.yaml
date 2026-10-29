@@ -50,31 +50,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.35.25
+      version: 1.35.27
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_expirator_job:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.35.25
+      version: 1.35.27
     kyma_environment_analytics:
       dir:
-      version: "1.35.25"
+      version: "1.35.27"
       repository: ""
       tag: ""
   ingress:
@@ -293,8 +293,8 @@ configPaths:
   skrOIDCDefaultValues: "/config/skrOIDCDefaultValues.yaml"
   # Path to the region mapping for trial environments.
   trialRegionMapping: "/config/trialRegionMapping.yaml"
-  # Path to the Cloud SQL SSL root certificate file.
-  cloudsqlSSLRootCert: "/secrets/cloudsql-sslrootcert/server-ca.pem"
+  # Path to the Cloud SQL SSL root certificate file. If not provided, the broker does not add sslrootcert parameter to the database connection string.
+  cloudsqlSSLRootCert: ""
 
 # If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"

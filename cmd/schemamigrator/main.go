@@ -227,9 +227,9 @@ func buildConnectionString() (string, error) {
 	if present {
 		dbName = fmt.Sprintf("%s?sslmode=%s", dbName, sslMode)
 
-		_, present := os.LookupEnv("DB_SSLROOTCERT")
-		if present && sslMode != "disable" {
-			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, os.Getenv("DB_SSLROOTCERT"))
+		sslRootCert := os.Getenv("DB_SSLROOTCERT")
+		if sslRootCert != "" && sslMode != "disable" {
+			dbName = fmt.Sprintf("%s&sslrootcert=%s", dbName, sslRootCert)
 		}
 
 		// hard-wire time zone as UTC to avoid issues with different time zones

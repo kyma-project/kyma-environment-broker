@@ -56,6 +56,6 @@ Use the following environment variables to configure the application:
 | **APP_DATABASE_PORT** | None | Specifies the port for the database. |
 | **APP_DATABASE_SECRET_&#x200b;KEY** | None | Specifies the Secret key for the database. |
 | **APP_DATABASE_SSLMODE** | None | Activates the SSL mode for PostgreSQL. |
-| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. |
+| **APP_DATABASE_&#x200b;SSLROOTCERT** | <code>/secrets/cloudsql-sslrootcert/server-ca.pem</code> | Path to the Cloud SQL SSL root certificate file. If not provided, the broker does not add sslrootcert parameter to the database connection string. |
 | **APP_DATABASE_USER** | None | Specifies the username for the database. |
 | **DATABASE_EMBEDDED** | <code>true</code> | - |
