@@ -22,23 +22,23 @@
 | global.images.cloudsql_<br>proxy.tag | - | `2.11.3-sap` |
 | global.images.container_<br>registry.path | - | `europe-docker.pkg.dev/kyma-project/prod` |
 | global.images.kyma_environment_<br>broker.dir | - | None |
-| global.images.kyma_environment_<br>broker.version | - | `1.35.25` |
+| global.images.kyma_environment_<br>broker.version | - | `1.35.27` |
 | global.images.kyma_environment_<br>broker_schema_migrator.<br>dir | - | None |
-| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.35.25` |
+| global.images.kyma_environment_<br>broker_schema_migrator.<br>version | - | `1.35.27` |
 | global.images.kyma_environments_<br>subaccount_cleanup_job.<br>dir | - | None |
-| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.35.25` |
+| global.images.kyma_environments_<br>subaccount_cleanup_job.<br>version | - | `1.35.27` |
 | global.images.kyma_environment_<br>expirator_job.dir | - | None |
-| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.35.25` |
+| global.images.kyma_environment_<br>expirator_job.<br>version | - | `1.35.27` |
 | global.images.kyma_environment_<br>deprovision_retrigger_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.35.25` |
+| global.images.kyma_environment_<br>deprovision_retrigger_<br>job.version | - | `1.35.27` |
 | global.images.kyma_environment_<br>runtime_reconciler.<br>dir | - | None |
-| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.35.25` |
+| global.images.kyma_environment_<br>runtime_reconciler.<br>version | - | `1.35.27` |
 | global.images.kyma_environment_<br>subaccount_sync.dir | - | None |
-| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.35.25` |
+| global.images.kyma_environment_<br>subaccount_sync.<br>version | - | `1.35.27` |
 | global.images.kyma_environment_<br>service_binding_cleanup_<br>job.dir | - | None |
-| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.35.25` |
+| global.images.kyma_environment_<br>service_binding_cleanup_<br>job.version | - | `1.35.27` |
 | global.images.kyma_environment_<br>analytics.dir | - | None |
-| global.images.kyma_environment_<br>analytics.version | - | `1.35.25` |
+| global.images.kyma_environment_<br>analytics.version | - | `1.35.27` |
 | global.images.kyma_environment_<br>analytics.repository | - | `` |
 | global.images.kyma_environment_<br>analytics.tag | - | `` |
 | global.ingress.<br>domainName | - | `localhost` |
@@ -141,7 +141,7 @@
 | configPaths.<br>skrDNSProvidersValues | Path to the DNS providers values. | `/config/skrDNSProvidersValues.yaml` |
 | configPaths.<br>skrOIDCDefaultValues | Path to the default OIDC values. | `/config/skrOIDCDefaultValues.yaml` |
 | configPaths.<br>trialRegionMapping | Path to the region mapping for trial environments. | `/config/trialRegionMapping.yaml` |
-| configPaths.<br>cloudsqlSSLRootCert | Path to the Cloud SQL SSL root certificate file. | `/secrets/cloudsql-sslrootcert/server-ca.pem` |
+| configPaths.<br>cloudsqlSSLRootCert | Path to the Cloud SQL SSL root certificate file. If not provided, the broker does not add sslrootcert parameter to the database connection string. | `` |
 | disableProcessOperationsInProgress | If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted. | `false` |
 | operationRecoveryDelay | Delay after startup before running a scan for in-progress operations, to recover operations orphaned during rolling deployments. | `2m` |
 | events.enabled | Enables or disables the events API and event storage for operation events (true/false). | `True` |
