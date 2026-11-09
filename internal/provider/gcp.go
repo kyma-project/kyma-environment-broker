@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"strings"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
@@ -129,4 +131,13 @@ func ZonesForGCPRegion(region string, zones []string) []string {
 	}
 
 	return fullNames
+}
+
+// GCPDiskType returns the appropriate disk type for a resolved GCP machine type.
+// N4 machines require hyperdisk-balanced; all others use the provider default.
+func GCPDiskType(resolvedMachineType, defaultDiskType string) string {
+	if strings.HasPrefix(resolvedMachineType, "n4-standard-") {
+		return "hyperdisk-balanced"
+	}
+	return defaultDiskType
 }

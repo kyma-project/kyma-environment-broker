@@ -2164,3 +2164,89 @@ func TestCreateRuntimeResourceStep_AdditionalVolumeSizeGi(t *testing.T) {
 	// AWS base volume is 80Gi; AdditionalVolumeSizeGi = 50 → expected 130Gi
 	assert.Equal(t, "130Gi", gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize)
 }
+
+func TestCreateRuntimeResourceStep_GCP_N4_UsesHyperdisk(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+
+	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west3", "platform-region", inputConfig, pkg.GCP)
+	machineType := "n-standard-4"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	cli := getClientForTests(t)
+	gcpProviderSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+gcp:
+  machinesVersions:
+    n-standard-{size}: n4-standard-{size}
+`))
+	require.NoError(t, err)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, gcpProviderSpec, config.GlobalAccountsConfig{}, nil, false)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	var gotRuntime imv1.Runtime
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &gotRuntime)
+	require.NoError(t, err)
+
+	assert.Equal(t, "n4-standard-4", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
+	assert.Equal(t, "hyperdisk-balanced", *gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
+}
+
+func TestCreateRuntimeResourceStep_GCP_N2_UsesPersistentDisk(t *testing.T) {
+	// given
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	inputConfig := broker.InfrastructureManager{MultiZoneCluster: true, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+
+	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "europe-west3", "platform-region", inputConfig, pkg.GCP)
+	machineType := "n2-standard-4"
+	operation.ProvisioningParameters.Parameters.MachineType = &machineType
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	gcpProviderSpec, err := configuration.NewProviderSpec(strings.NewReader(`
+gcp:
+  machinesVersions:
+    n-standard-{size}: n4-standard-{size}
+`))
+	require.NoError(t, err)
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, &workers.Provider{}, gcpProviderSpec, config.GlobalAccountsConfig{}, nil, false)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	var gotRuntime imv1.Runtime
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &gotRuntime)
+	require.NoError(t, err)
+
+	assert.Equal(t, "n2-standard-4", gotRuntime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume)
+	require.NotNil(t, gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
+	assert.Equal(t, "pd-balanced", *gotRuntime.Spec.Shoot.Provider.Workers[0].Volume.Type)
+}

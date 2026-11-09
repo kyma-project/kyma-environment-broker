@@ -220,7 +220,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	}
 	log.Info(fmt.Sprintf("Zones for Kyma worker node pool: %v", zones))
 
-	provider := imv1.Provider{
+	shootProvider := imv1.Provider{
 		Type: values.ProviderType,
 		Workers: []gardener.Worker{
 			{
@@ -248,7 +248,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	if s.kcrVolumeProvider != nil {
 		looked, err := s.kcrVolumeProvider.DefaultVolumeSizeGb(context.Background(),
 			pkg.CloudProviderFromString(values.ProviderType),
-			provider.Workers[0].Machine.Type)
+			shootProvider.Workers[0].Machine.Type)
 		if err != nil {
 			return imv1.Provider{}, err
 		}
@@ -258,12 +258,16 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		volGb += *add
 	}
 	vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
-	if values.DiskType != "" {
-		vol.Type = ptr.String(values.DiskType)
+	diskType := values.DiskType
+	if values.ProviderType == provider.GCPProviderType {
+		diskType = provider.GCPDiskType(shootProvider.Workers[0].Machine.Type, values.DiskType)
 	}
-	provider.Workers[0].Volume = vol
+	if diskType != "" {
+		vol.Type = ptr.String(diskType)
+	}
+	shootProvider.Workers[0].Volume = vol
 
-	provider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
+	shootProvider.Workers[0].CRI = workers.ToGardenerCRI(operation.ProvisioningParameters.Parameters.Gvisor)
 
 	var volumeOverrides map[string]int
 	if s.kcrVolumeProvider != nil {
@@ -287,18 +291,18 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 	if err != nil {
 		return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
 	}
-	provider.AdditionalWorkers = &additionalWorkers
+	shootProvider.AdditionalWorkers = &additionalWorkers
 
 	if s.globalAccounts.MaxPodsWhitelistedGlobalAccountIds.Contains(operation.GlobalAccountID) {
-		provider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
+		shootProvider.Workers[0].Kubernetes = &gardener.WorkerKubernetes{
 			Kubelet: &gardener.KubeletConfig{
 				MaxPods: &s.config.MaxPods,
 			},
 		}
 
-		if provider.AdditionalWorkers != nil {
-			for i := range *provider.AdditionalWorkers {
-				(*provider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
+		if shootProvider.AdditionalWorkers != nil {
+			for i := range *shootProvider.AdditionalWorkers {
+				(*shootProvider.AdditionalWorkers)[i].Kubernetes = &gardener.WorkerKubernetes{
 					Kubelet: &gardener.KubeletConfig{
 						MaxPods: &s.config.MaxPods,
 					},
@@ -307,7 +311,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(log *slog.Logger, operat
 		}
 	}
 
-	return provider, nil
+	return shootProvider, nil
 }
 
 func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation internal.Operation) imv1.Networking {

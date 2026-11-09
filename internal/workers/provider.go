@@ -98,8 +98,12 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			}
 			volGi += additionalWorkerNodePool.AdditionalVolumeSizeGi
 			vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGi)}
-			if values.DiskType != "" {
-				vol.Type = ptr.String(values.DiskType)
+			diskType := values.DiskType
+			if values.ProviderType == provider.GCPProviderType {
+				diskType = provider.GCPDiskType(worker.Machine.Type, values.DiskType)
+			}
+			if diskType != "" {
+				vol.Type = ptr.String(diskType)
 			}
 			worker.Volume = vol
 		}
