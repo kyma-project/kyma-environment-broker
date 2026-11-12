@@ -210,6 +210,10 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 		"shoots", sanitizeSliceForLog(filter.Shoots),
 		"plans", sanitizeSliceForLog(filter.Plans),
 		"states", filter.States,
+		"suspended", filter.Suspended,
+		"deletionAttempted", filter.DeletionAttempted,
+		"withBindings", filter.BindingExists,
+		"expired", filter.Expired,
 	)
 
 	instances, count, totalCount, err := h.listInstances(filter)
