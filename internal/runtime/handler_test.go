@@ -920,7 +920,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler.AttachRoutes(router)
 
 		// when
-		req, err := http.NewRequest("GET", "/runtimes?bindings=true", nil)
+		req, err := http.NewRequest("GET", "/runtimes?instance_id="+testID1+"&bindings=true", nil)
 		require.NoError(t, err)
 		router.ServeHTTP(rr, req)
 
@@ -1038,7 +1038,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler.AttachRoutes(router)
 
 		// when
-		req, err := http.NewRequest("GET", "/runtimes?actions=true", nil)
+		req, err := http.NewRequest("GET", "/runtimes?instance_id="+testID1+"&actions=true", nil)
 		require.NoError(t, err)
 		router.ServeHTTP(rr, req)
 
@@ -1080,7 +1080,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler.AttachRoutes(router)
 
 		// when
-		req, err := http.NewRequest("GET", "/runtimes?actions=true", nil)
+		req, err := http.NewRequest("GET", "/runtimes?instance_id="+testID1+"&actions=true", nil)
 		require.NoError(t, err)
 		router.ServeHTTP(rr, req)
 
@@ -1094,6 +1094,112 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.Len(t, out.Data[0].Actions, 2)
 		assert.Equal(t, out.Data[0].Actions[0].Type, pkg.SubaccountMovementActionType)
 		assert.Equal(t, out.Data[0].Actions[1].Type, pkg.PlanUpdateActionType)
+	})
+}
+
+func TestRuntimeHandler_ExtendedParamsGuard(t *testing.T) {
+	k8sClient := fake.NewClientBuilder().Build()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	t.Run("extended params without single-runtime filter returns 400", func(t *testing.T) {
+		db := storage.NewMemoryStorage()
+		instances := db.Instances()
+		err := instances.Insert(fixInstance(testID1, time.Now()))
+		require.NoError(t, err)
+		err = instances.Insert(fixInstance(testID2, time.Now()))
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		for _, param := range []string{"bindings=true", "actions=true", "runtime_config=true"} {
+			rr := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/runtimes?"+param, nil)
+			require.NoError(t, err)
+			router.ServeHTTP(rr, req)
+			assert.Equal(t, http.StatusBadRequest, rr.Code, "expected 400 for param: %s", param)
+		}
+	})
+
+	t.Run("extended params with single instance_id filter returns 200", func(t *testing.T) {
+		db := storage.NewMemoryStorage()
+		instances := db.Instances()
+		operations := db.Operations()
+		err := instances.Insert(fixInstance(testID1, time.Now()))
+		require.NoError(t, err)
+		err = instances.Insert(fixInstance(testID2, time.Now()))
+		require.NoError(t, err)
+		op := fixture.FixProvisioningOperation(fixRandomID(), testID1)
+		err = operations.InsertOperation(op)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		for _, param := range []string{"bindings=true", "actions=true", "runtime_config=true"} {
+			rr := httptest.NewRecorder()
+			req, err := http.NewRequest("GET", "/runtimes?instance_id="+testID1+"&"+param, nil)
+			require.NoError(t, err)
+			router.ServeHTTP(rr, req)
+			assert.Equal(t, http.StatusOK, rr.Code, "expected 200 for param: %s with instance_id filter", param)
+		}
+	})
+
+	t.Run("extended params with single runtime_id filter returns 200", func(t *testing.T) {
+		db := storage.NewMemoryStorage()
+		instances := db.Instances()
+		err := instances.Insert(fixInstance(testID1, time.Now()))
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		rr := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/runtimes?runtime_id="+testID1+"&bindings=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("extended params with single shoot filter returns 200", func(t *testing.T) {
+		db := storage.NewMemoryStorage()
+		instances := db.Instances()
+		inst := fixInstance(testID1, time.Now())
+		inst.InstanceDetails.ShootName = "Shoot-test"
+		err := instances.Insert(inst)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		rr := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/runtimes?shoot=Shoot-test&bindings=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("multiple instance_ids with extended params returns 400", func(t *testing.T) {
+		db := storage.NewMemoryStorage()
+		instances := db.Instances()
+		err := instances.Insert(fixInstance(testID1, time.Now()))
+		require.NoError(t, err)
+		err = instances.Insert(fixInstance(testID2, time.Now()))
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		rr := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/runtimes?instance_id="+testID1+"&instance_id="+testID2+"&bindings=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
 }
 

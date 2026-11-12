@@ -176,6 +176,10 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 	}
 }
 
+func isSingleRuntimeFilter(filter dbmodel.InstanceFilter) bool {
+	return len(filter.InstanceIDs) == 1 || len(filter.RuntimeIDs) == 1 || len(filter.Shoots) == 1
+}
+
 func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 	toReturn := make([]pkg.RuntimeDTO, 0)
 
@@ -192,6 +196,11 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 	runtimeResourceConfig := getBoolParam(pkg.RuntimeConfigParam, req)
 	bindings := getBoolParam(pkg.BindingsParam, req)
 	actions := getBoolParam(pkg.ActionsParam, req)
+
+	if (runtimeResourceConfig || bindings || actions) && !isSingleRuntimeFilter(filter) {
+		httputil.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("runtime_config, bindings, and actions parameters require exactly one of: instance_id, runtime_id, or shoot filter"))
+		return
+	}
 
 	instances, count, totalCount, err := h.listInstances(filter)
 	if err != nil {
