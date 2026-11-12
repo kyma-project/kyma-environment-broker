@@ -193,6 +193,23 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 	bindings := getBoolParam(pkg.BindingsParam, req)
 	actions := getBoolParam(pkg.ActionsParam, req)
 
+	h.logger.Info("GetRuntimes executed",
+		"pageSize", pageSize,
+		"page", page,
+		"opDetail", opDetail,
+		"runtimeResourceConfig", runtimeResourceConfig,
+		"bindings", bindings,
+		"actions", actions,
+		"globalAccountIDs", filter.GlobalAccountIDs,
+		"subAccountIDs", filter.SubAccountIDs,
+		"instanceIDs", filter.InstanceIDs,
+		"runtimeIDs", filter.RuntimeIDs,
+		"regions", filter.Regions,
+		"shoots", filter.Shoots,
+		"plans", filter.Plans,
+		"states", filter.States,
+	)
+
 	instances, count, totalCount, err := h.listInstances(filter)
 	if err != nil {
 		h.logger.Warn(fmt.Sprintf("unable to fetch instances: %s", err.Error()))
