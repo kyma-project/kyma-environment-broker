@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -194,19 +195,20 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 	actions := getBoolParam(pkg.ActionsParam, req)
 
 	h.logger.Info("GetRuntimes executed",
+		"url", sanitizeForLog(req.URL.RawQuery),
 		"pageSize", pageSize,
 		"page", page,
-		"opDetail", opDetail,
+		"opDetail", sanitizeForLog(string(opDetail)),
 		"runtimeResourceConfig", runtimeResourceConfig,
 		"bindings", bindings,
 		"actions", actions,
-		"globalAccountIDs", filter.GlobalAccountIDs,
-		"subAccountIDs", filter.SubAccountIDs,
-		"instanceIDs", filter.InstanceIDs,
-		"runtimeIDs", filter.RuntimeIDs,
-		"regions", filter.Regions,
-		"shoots", filter.Shoots,
-		"plans", filter.Plans,
+		"globalAccountIDs", sanitizeSliceForLog(filter.GlobalAccountIDs),
+		"subAccountIDs", sanitizeSliceForLog(filter.SubAccountIDs),
+		"instanceIDs", sanitizeSliceForLog(filter.InstanceIDs),
+		"runtimeIDs", sanitizeSliceForLog(filter.RuntimeIDs),
+		"regions", sanitizeSliceForLog(filter.Regions),
+		"shoots", sanitizeSliceForLog(filter.Shoots),
+		"plans", sanitizeSliceForLog(filter.Plans),
 		"states", filter.States,
 	)
 
@@ -509,6 +511,25 @@ func getOpDetail(req *http.Request) pkg.OperationDetail {
 	}
 
 	return opDetail
+}
+
+// sanitizeForLog removes control characters (newlines, carriage returns, tabs, etc.)
+// from a string to prevent log injection attacks.
+func sanitizeForLog(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' || r == '\t' || r < 0x20 {
+			return ' '
+		}
+		return r
+	}, s)
+}
+
+func sanitizeSliceForLog(ss []string) []string {
+	result := make([]string, len(ss))
+	for i, s := range ss {
+		result[i] = sanitizeForLog(s)
+	}
+	return result
 }
 
 func getBoolParam(param string, req *http.Request) bool {
