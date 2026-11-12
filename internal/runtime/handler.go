@@ -196,6 +196,7 @@ func (h *Handler) GetRuntimes(w http.ResponseWriter, req *http.Request) {
 
 	h.logger.Info("GetRuntimes executed",
 		"url", sanitizeForLog(req.URL.RawQuery),
+		"userAgent", sanitizeForLog(req.Header.Get("User-Agent")),
 		"pageSize", pageSize,
 		"page", page,
 		"opDetail", sanitizeForLog(string(opDetail)),
