@@ -521,10 +521,10 @@ func getOpDetail(req *http.Request) pkg.OperationDetail {
 // from a string to prevent log injection attacks.
 func sanitizeForLog(s string) string {
 	return strings.Map(func(r rune) rune {
-		if r == '\n' || r == '\r' || r == '\t' || r < 0x20 {
-			return ' '
+		if r >= 0x20 && r != 0x7e {
+			return r
 		}
-		return r
+		return ' '
 	}, s)
 }
 
