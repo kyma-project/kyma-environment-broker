@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider/configuration"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
@@ -157,12 +158,21 @@ func (s *UpdateRuntimeStep) updateKymaWorker(operation internal.Operation, runti
 		if v := operation.ProvisioningParameters.Parameters.AdditionalVolumeSizeGi; v != nil {
 			volGb += *v
 		}
+		resolvedDiskType := ""
+		if machineTypeChanged && operation.ProviderValues.ProviderType == provider.GCPProviderType {
+			resolvedDiskType = provider.GCPDiskType(resolvedMachineType, operation.ProviderValues.DiskType)
+		}
 		if runtime.Spec.Shoot.Provider.Workers[0].Volume != nil {
 			runtime.Spec.Shoot.Provider.Workers[0].Volume.VolumeSize = fmt.Sprintf("%dGi", volGb)
-		} else {
-			runtime.Spec.Shoot.Provider.Workers[0].Volume = &gardener.Volume{
-				VolumeSize: fmt.Sprintf("%dGi", volGb),
+			if resolvedDiskType != "" {
+				runtime.Spec.Shoot.Provider.Workers[0].Volume.Type = ptr.String(resolvedDiskType)
 			}
+		} else {
+			vol := &gardener.Volume{VolumeSize: fmt.Sprintf("%dGi", volGb)}
+			if resolvedDiskType != "" {
+				vol.Type = ptr.String(resolvedDiskType)
+			}
+			runtime.Spec.Shoot.Provider.Workers[0].Volume = vol
 		}
 	}
 
