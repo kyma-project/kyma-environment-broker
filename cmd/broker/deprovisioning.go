@@ -42,7 +42,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
-			step: deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace),
+			step: deprovisioning.NewFreeCredentialsBindingStepV2(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace),
 		},
 		{
 			step: deprovisioning.NewArchivingStep(db),
