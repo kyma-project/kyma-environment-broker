@@ -132,6 +132,17 @@ func (s *Instance) GetInstanceCountPerBinding(globalAccountID string, bindingNam
 	return result, err
 }
 
+func (s *Instance) CountInstancesReferencingBinding(bindingName string) (int, error) {
+	sess := s.Factory.NewReadSession()
+	var result int
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+		count, err := sess.CountInstancesReferencingBinding(bindingName)
+		result = count
+		return err == nil, nil
+	})
+	return result, err
+}
+
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 	sess := s.Factory.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}

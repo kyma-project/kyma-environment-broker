@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -219,7 +220,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, factory, nil)
+		workersProvider(cfg.InfrastructureManager, providerSpec), providerSpec, factory, nil, &sync.Mutex{})
 
 	provisioningQueue.SpeedUp(testSuiteSpeedUpFactor)
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
@@ -233,7 +234,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db,
-		k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log)
+		k8sClientProvider, cli, configProvider, gardenerClient, "kyma", log, &sync.Mutex{})
 	deprovisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	deprovisioningQueue.SpeedUp(testSuiteSpeedUpFactor)

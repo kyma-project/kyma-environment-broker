@@ -113,6 +113,19 @@ func (s *instances) GetInstanceCountPerBinding(globalAccountID string, bindingNa
 	return counts, nil
 }
 
+func (s *instances) CountInstancesReferencingBinding(bindingName string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	count := 0
+	for _, inst := range s.instances {
+		if inst.SubscriptionSecretName == bindingName && inst.DeletedAt.IsZero() {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (s *instances) GetByID(instanceID string) (*internal.Instance, error) {
 	inst, ok := s.instances[instanceID]
 	if !ok {

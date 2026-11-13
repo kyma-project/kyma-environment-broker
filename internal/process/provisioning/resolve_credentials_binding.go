@@ -24,7 +24,7 @@ type ResolveCredentialsBindingStep struct {
 	instanceStorage    storage.Instances
 	rulesService       *rules.RulesService
 	stepRetryTuple     internal.RetryTuple
-	mu                 sync.Mutex
+	mu                 *sync.Mutex
 	multiAccountConfig *multiaccount.MultiAccountConfig
 }
 
@@ -35,9 +35,17 @@ func NewResolveCredentialsBindingStep(brokerStorage storage.BrokerStorage, garde
 		rulesService:       rulesService,
 		stepRetryTuple:     stepRetryTuple,
 		multiAccountConfig: multiAccountConfig,
+		mu:                 &sync.Mutex{},
 	}
 	step.operationManager = process.NewOperationManager(brokerStorage.Operations(), step.Name(), kebError.AccountPoolDependency)
 	return step
+}
+
+// WithCredentialsBindingMu replaces the step's internal mutex with a shared one.
+// Use the same mutex in FreeCredentialsBindingStepV2 to prevent concurrent execution.
+func (s *ResolveCredentialsBindingStep) WithCredentialsBindingMu(mu *sync.Mutex) *ResolveCredentialsBindingStep {
+	s.mu = mu
+	return s
 }
 
 func (s *ResolveCredentialsBindingStep) Name() string {

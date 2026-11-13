@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"time"
 
 	"k8s.io/client-go/dynamic"
@@ -17,7 +18,7 @@ import (
 
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
-	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, gardenerClient dynamic.Interface, gardenerNamespace string, logs *slog.Logger, credentialsBindingMu *sync.Mutex) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -42,7 +43,8 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
-			step: deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace),
+			step: deprovisioning.NewFreeCredentialsBindingStep(db.Operations(), db.Instances(), gardenerClient, gardenerNamespace).
+				WithCredentialsBindingMu(credentialsBindingMu),
 		},
 		{
 			step: deprovisioning.NewArchivingStep(db),

@@ -21,29 +21,39 @@ spec:
           properties:
             spec:
               type: object
+              x-kubernetes-preserve-unknown-fields: true
               properties:
                 addons:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 cloudProfileName:
                   type: string
                 dns:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 extensions:
                   type: array
                   items:
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 hibernation:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 kubernetes:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 networking:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 maintenance:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 monitoring:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 provider:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 purpose:
                   type: string
                 region:
@@ -54,31 +64,39 @@ spec:
                   type: string
                 seedSelector:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 resources:
                   type: array
                   items:
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 tolerations:
                   type: array
                   items:
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                 exposureClassName:
                   type: string
                 systemComponents:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 controlPlane:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 schedulerName:
                   type: string
                 cloudProfile:
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                 credentialsBindingName:
                   type: string
                 accessRestrictions:
                   type: array
                   items:
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
             status:
               type: object
+              x-kubernetes-preserve-unknown-fields: true
       subresources:
         status: {}

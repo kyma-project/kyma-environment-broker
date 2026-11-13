@@ -653,6 +653,16 @@ func (r readSession) GetInstanceCountPerBinding(globalAccountID string, bindingN
 	return counts, nil
 }
 
+func (r readSession) CountInstancesReferencingBinding(bindingName string) (int, error) {
+	var count int
+	err := r.session.Select("count(*)").
+		From(InstancesTableName).
+		Where("subscription_secret_name = ?", bindingName).
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		LoadOne(&count)
+	return count, err
+}
+
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 

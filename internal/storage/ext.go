@@ -23,6 +23,7 @@ type Instances interface {
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	GetInstanceCountPerBinding(globalAccountID string, bindingNames []string) (map[string]int, error)
+	CountInstancesReferencingBinding(bindingName string) (int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 
