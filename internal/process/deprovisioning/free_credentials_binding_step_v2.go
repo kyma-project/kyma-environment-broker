@@ -120,6 +120,7 @@ func (s *FreeCredentialsBindingStepV2) Run(operation internal.Operation, logger 
 	}
 
 	// Own shoot is gone — check if any other shoot still references the CB.
+	logger.Info("Checking if any other shoot still references the credentials binding - using GardenerAPI")
 	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		msg := fmt.Sprintf("listing Gardener shoots in namespace %s", s.gardenerNS)
