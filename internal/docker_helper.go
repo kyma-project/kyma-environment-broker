@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/netip"
 	"os"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	imagetypes "github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 const (
@@ -23,7 +22,7 @@ type DockerHelper struct {
 }
 
 func NewDockerHandler() (*DockerHelper, error) {
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	dockerClient, err := client.New(client.FromEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -46,18 +45,17 @@ type ContainerCreateRequest struct {
 }
 
 func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() error, error) {
-	_, err := d.client.Ping(context.Background())
+	_, err := d.client.Ping(context.Background(), client.PingOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("ping docker failed with: %w", err)
 	}
 
-	filterBy := filters.NewArgs()
-	filterBy.Add("name", config.Image)
-	image, err := d.client.ImageList(context.Background(), imagetypes.ListOptions{Filters: filterBy})
+	filterBy := make(client.Filters).Add("name", config.Image)
+	result, err := d.client.ImageList(context.Background(), client.ImageListOptions{Filters: filterBy})
 
-	if err != nil || image == nil {
+	if err != nil || len(result.Items) == 0 {
 		slog.Info(fmt.Sprintf("image %s not found... pulling...", config.Image))
-		reader, err := d.client.ImagePull(context.Background(), config.Image, imagetypes.PullOptions{})
+		reader, err := d.client.ImagePull(context.Background(), config.Image, client.ImagePullOptions{})
 		if err != nil || reader == nil {
 			if reader != nil {
 				err := reader.Close()
@@ -74,10 +72,15 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 		}
 	}
 
-	response, err := d.client.ContainerCreate(context.Background(),
-		&container.Config{
-			ExposedPorts: map[nat.Port]struct{}{
-				"5432" + "/tcp": {},
+	postgresPort, err := network.ParsePort("5432/tcp")
+	if err != nil {
+		return nil, fmt.Errorf("parsing port: %w", err)
+	}
+
+	response, err := d.client.ContainerCreate(context.Background(), client.ContainerCreateOptions{
+		Config: &container.Config{
+			ExposedPorts: network.PortSet{
+				postgresPort: struct{}{},
 			},
 			Image: config.Image,
 			Env: []string{
@@ -86,36 +89,35 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 				fmt.Sprintf("POSTGRES_DB=%s", config.Name),
 			},
 		},
-		&container.HostConfig{
-			PortBindings: nat.PortMap{
-				"5432" + "/tcp": []nat.PortBinding{{
-					HostIP:   "0.0.0.0",
+		HostConfig: &container.HostConfig{
+			PortBindings: network.PortMap{
+				postgresPort: []network.PortBinding{{
+					HostIP:   netip.MustParseAddr("0.0.0.0"),
 					HostPort: config.Port,
 				}},
 			},
 		},
-		nil,
-		nil,
-		config.ContainerName)
+		Name: config.ContainerName,
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("during container creation: %w", err)
 	}
 
 	cleanup := func() error {
-		err := d.client.ContainerStop(context.Background(), response.ID, container.StopOptions{})
+		_, err := d.client.ContainerStop(context.Background(), response.ID, client.ContainerStopOptions{})
 		if err != nil {
 			return fmt.Errorf("during container stop: %w", err)
 		}
 
-		err = d.client.ContainerRemove(context.Background(), response.ID, container.RemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
+		_, err = d.client.ContainerRemove(context.Background(), response.ID, client.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
 			return fmt.Errorf("during container removal: %w", err)
 		}
 		return nil
 	}
 
-	if err := d.client.ContainerStart(context.Background(), response.ID, container.StartOptions{}); err != nil {
+	if _, err := d.client.ContainerStart(context.Background(), response.ID, client.ContainerStartOptions{}); err != nil {
 		return cleanup, fmt.Errorf("during container startup: %w", err)
 	}
 
