@@ -11,5 +11,5 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: standard
+  storageClassName: {{ .Values.broker.additionalPropertiesStorageClassName | default "dynamic-rwo" }}
 {{ end }}

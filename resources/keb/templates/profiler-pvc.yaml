@@ -11,5 +11,5 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: standard
+  storageClassName: {{ .Values.profiler.storageClassName | default "dynamic-rwo" }}
 {{ end }}
