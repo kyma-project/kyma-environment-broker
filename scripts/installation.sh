@@ -34,20 +34,24 @@ kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
 echo "Waiting for Postgres pod to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres -n kcp-system --timeout=120s
 echo "Waiting for Postgres to accept connections..."
-for i in $(seq 1 60); do
-  kubectl exec -n kcp-system deploy/postgres -- pg_isready -U postgresadmin && break
-  if [[ $i -eq 60 ]]; then
-    echo "ERROR: Postgres never accepted connections after 180s"
-    echo "Postgres pod status:"
-    kubectl get pods -n kcp-system -l app=postgres -o wide
-    echo "Postgres pod logs:"
-    kubectl logs -n kcp-system deploy/postgres --tail=100
-    echo "Postgres pod description:"
-    kubectl describe pods -n kcp-system -l app=postgres
-    exit 1
+POSTGRES_READY=false
+for i in $(seq 1 80); do
+  if kubectl exec -n kcp-system deploy/postgres -- pg_isready -U postgresadmin 2>/dev/null; then
+    POSTGRES_READY=true
+    break
   fi
   sleep 3
 done
+if [[ "$POSTGRES_READY" != "true" ]]; then
+  echo "ERROR: Postgres never accepted connections after 240s"
+  echo "Postgres pod status:"
+  kubectl get pods -n kcp-system -l app=postgres -o wide
+  echo "Postgres pod logs:"
+  kubectl logs -n kcp-system deploy/postgres --tail=100
+  echo "Postgres pod description:"
+  kubectl describe pods -n kcp-system -l app=postgres
+  exit 1
+fi
 
 # Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | awk '$1=="inet" {print $2}' || ifconfig eth0 | awk '$1=="inet" {print $2}')
