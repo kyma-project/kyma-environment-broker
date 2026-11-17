@@ -11,10 +11,12 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/postgres: unconfined
     spec:
       containers:
         - name: postgres
-          image: postgres:15.1
+          image: postgres:17.5
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432
@@ -22,13 +24,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: postgres-config
-          volumeMounts:
-            - name: initdb
-              mountPath: /docker-entrypoint-initdb.d
-      volumes:
-        - name: initdb
-          configMap:
-            name: postgres-config
-            items:
-              - key: init-readonly-user.sql
-                path: init-readonly-user.sql
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 60
