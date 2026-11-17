@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/postgres: unconfined
     spec:
       containers:
         - name: postgres
