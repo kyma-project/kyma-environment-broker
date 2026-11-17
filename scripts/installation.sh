@@ -29,7 +29,26 @@ kubectl delete validatingwebhookconfiguration istiod-default-validator --ignore-
 
 # Install Postgres
 kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
-kubectl wait --for=condition=available deployment/postgres -n kcp-system --timeout=180s
+
+# Wait for postgres pod to be running
+kubectl wait --for=condition=available deployment/postgres -n kcp-system --timeout=120s
+
+# Wait for postgres to actually accept connections (init script may still be running)
+echo "Waiting for postgres to accept connections..."
+POSTGRES_POD=""
+for i in $(seq 1 30); do
+  POSTGRES_POD=$(kubectl get pod -l app=postgres -n kcp-system -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "$POSTGRES_POD" ]]; then break; fi
+  sleep 2
+done
+for i in $(seq 1 30); do
+  if kubectl exec "$POSTGRES_POD" -n kcp-system -- pg_isready -U postgresadmin -d postgresdb 2>/dev/null; then
+    echo "Postgres is ready."
+    break
+  fi
+  echo "Postgres not ready yet, retrying ($i/30)..."
+  sleep 3
+done
 
 # Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | awk '$1=="inet" {print $2}' || ifconfig eth0 | awk '$1=="inet" {print $2}')
