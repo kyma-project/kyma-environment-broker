@@ -21,10 +21,13 @@ spec:
               name: postgres-port
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "postgresadmin", "-d", "postgresdb"]
-            initialDelaySeconds: 5
+              command:
+                - sh
+                - -c
+                - "pg_isready -U postgresadmin && psql -U postgresadmin -d postgresdb -c 'SELECT 1'"
+            initialDelaySeconds: 10
             periodSeconds: 5
-            failureThreshold: 12
+            failureThreshold: 24
           envFrom:
             - configMapRef:
                 name: postgres-config
