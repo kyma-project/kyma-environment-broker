@@ -206,6 +206,9 @@ broker:
   kcrConfigMapName: "consumption-reporter-config"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
+  # Storage class for the additional-properties PVC. Must support ReadWriteOnce on the target node pool.
+  # Use "dynamic-rwo" for N4 nodes (Hyperdisk), "standard" for legacy nodes.
+  additionalPropertiesStorageClassName: "dynamic-rwo"
   # If true, restricts each global account to only one freemium (free) Kyma runtime.
   # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned.
   onlyOneFreePerGA: "false"
@@ -428,6 +431,9 @@ plansConfiguration: {}
 profiler:
   # Enables memory profiler (true/false).
   memory: false
+  # Storage class for the profiler PVC. Must support ReadWriteOnce on the target node pool.
+  # Use "dynamic-rwo" for N4 nodes (Hyperdisk), "standard" for legacy nodes.
+  storageClassName: "dynamic-rwo"
 
 providersConfiguration: {}
 
