@@ -42,7 +42,7 @@ for i in $(seq 1 30); do
   sleep 2
 done
 for i in $(seq 1 30); do
-  if kubectl exec "$POSTGRES_POD" -n kcp-system -- pg_isready -U postgresadmin -d postgresdb 2>/dev/null; then
+  if kubectl exec "$POSTGRES_POD" -n kcp-system -- pg_isready -h 127.0.0.1 -p 5432 -U postgresadmin -d postgresdb 2>/dev/null; then
     echo "Postgres is ready."
     break
   fi
