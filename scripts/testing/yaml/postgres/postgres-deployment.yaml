@@ -19,6 +19,12 @@ spec:
           ports:
             - containerPort: 5432
               name: postgres-port
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgresadmin", "-d", "postgresdb"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
           envFrom:
             - configMapRef:
                 name: postgres-config
