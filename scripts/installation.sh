@@ -53,6 +53,12 @@ if [[ "$POSTGRES_READY" != "true" ]]; then
   exit 1
 fi
 
+# Create readonly user after Postgres is fully up
+kubectl exec -n kcp-system deploy/postgres -- psql -U postgresadmin -d postgresdb -c \
+  "CREATE USER brokerread1 WITH PASSWORD 'brokerread1read#';"
+kubectl exec -n kcp-system deploy/postgres -- psql -U postgresadmin -d postgresdb -c \
+  "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO brokerread1;"
+
 # Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | awk '$1=="inet" {print $2}' || ifconfig eth0 | awk '$1=="inet" {print $2}')
 KCFG=$(kubectl config view --minify --raw \

@@ -30,16 +30,8 @@ spec:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
-            - name: initdb
-              mountPath: /docker-entrypoint-initdb.d
             - name: pgdata
               mountPath: /var/lib/postgresql/data
       volumes:
-        - name: initdb
-          configMap:
-            name: postgres-config
-            items:
-              - key: init-readonly-user.sql
-                path: init-readonly-user.sql
         - name: pgdata
           emptyDir: {}
