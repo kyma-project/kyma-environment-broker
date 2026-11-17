@@ -26,8 +26,8 @@ spec:
             tcpSocket:
               port: 5432
             initialDelaySeconds: 5
-            periodSeconds: 3
-            failureThreshold: 40
+            periodSeconds: 5
+            failureThreshold: 60
           volumeMounts:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d

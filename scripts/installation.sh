@@ -31,10 +31,11 @@ kubectl delete validatingwebhookconfiguration istiod-default-validator --ignore-
 kubectl apply -f scripts/testing/yaml/postgres -n kcp-system
 
 # Wait for postgres to be ready (readiness probe in the deployment checks TCP port 5432)
-if ! kubectl wait --for=condition=available deployment/postgres -n kcp-system --timeout=150s; then
+if ! kubectl wait --for=condition=available deployment/postgres -n kcp-system --timeout=310s; then
   echo "=== Postgres deployment timed out. Diagnostics: ==="
   kubectl describe pod -l app=postgres -n kcp-system
-  kubectl logs -l app=postgres -n kcp-system --tail=50 || true
+  echo "=== Postgres container logs: ==="
+  kubectl logs -l app=postgres -n kcp-system --tail=100 2>&1 || true
   exit 1
 fi
 
