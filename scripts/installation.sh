@@ -35,10 +35,15 @@ echo "Waiting for Postgres pod to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres -n kcp-system --timeout=120s
 echo "Waiting for Postgres to accept connections..."
 for i in $(seq 1 60); do
-  kubectl exec -n kcp-system deploy/postgres -- pg_isready -U postgres && break
+  kubectl exec -n kcp-system deploy/postgres -- pg_isready -U postgresadmin && break
   if [[ $i -eq 60 ]]; then
     echo "ERROR: Postgres never accepted connections after 180s"
-    kubectl logs -n kcp-system deploy/postgres --tail=50
+    echo "Postgres pod status:"
+    kubectl get pods -n kcp-system -l app=postgres -o wide
+    echo "Postgres pod logs:"
+    kubectl logs -n kcp-system deploy/postgres --tail=100
+    echo "Postgres pod description:"
+    kubectl describe pods -n kcp-system -l app=postgres
     exit 1
   fi
   sleep 3
