@@ -1,0 +1,1 @@
+CREATE INDEX instances_subscription_secret_name ON instances (subscription_secret_name);

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -32,7 +33,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.Provider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
-	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, factory hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
+	workersProvider *workers.Provider, providerSpec *configuration.ProviderSpec, factory hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider, credentialsBindingMu *sync.Mutex) *process.Queue {
 
 	provisioningSteps := []struct {
 		disabled  bool
@@ -49,7 +50,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step: provisioning.NewOverrideKymaModules(db.Operations()),
 		},
 		{
-			step: provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount),
+			step: provisioning.NewResolveCredentialsBindingStep(db, gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}, &cfg.HapMultiHyperscalerAccount).WithCredentialsBindingMu(credentialsBindingMu),
 		},
 		{
 			step: steps.NewDiscoverAvailableZonesCBStep(db, providerSpec, gardenerClient, factory),

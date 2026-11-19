@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -17,13 +18,13 @@ import (
 )
 
 type FreeCredentialsBindingStep struct {
-	operationManager *process.OperationManager
-	instanceStorage  storage.Instances
-	operationStorage storage.Operations
-
-	gardenerClient   dynamic.Interface
-	gardenerNS       string
-	shootWaitTimeout time.Duration
+	operationManager     *process.OperationManager
+	instanceStorage      storage.Instances
+	operationStorage     storage.Operations
+	gardenerClient       dynamic.Interface
+	gardenerNS           string
+	shootWaitTimeout     time.Duration
+	credentialsBindingMu *sync.Mutex // nil when not set; shared with provisioning step
 }
 
 const freeCredentialsBindingStepName = "Free_Credentials_Binding_Step"
@@ -49,6 +50,13 @@ func newFreeCredentialsBindingStepWithShootTimeout(os storage.Operations, is sto
 	}
 }
 
+// WithCredentialsBindingMu sets a shared mutex that is locked for the duration of Run.
+// Use the same mutex in ResolveCredentialsBindingStep to prevent concurrent execution.
+func (s *FreeCredentialsBindingStep) WithCredentialsBindingMu(mu *sync.Mutex) *FreeCredentialsBindingStep {
+	s.credentialsBindingMu = mu
+	return s
+}
+
 func (s *FreeCredentialsBindingStep) Name() string {
 	return freeCredentialsBindingStepName
 }
@@ -60,6 +68,11 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 	// - check if the subscription is internal or not - if yes - do nothing
 	// - check if the subscription is dirty or not - if yes - do nothing
 	// - if not used by other instances, free the subscription
+
+	if s.credentialsBindingMu != nil {
+		s.credentialsBindingMu.Lock()
+		defer s.credentialsBindingMu.Unlock()
+	}
 
 	credentialsBindingName, err := s.findCredentialsBindingName(operation, logger)
 	if err != nil {
@@ -102,8 +115,8 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 			logger.Info(fmt.Sprintf("Shoot %s for this instance still exists, waiting for deletion before releasing credentials binding %s", operation.ShootName, credentialsBindingName))
 			result, backoff, retryErr := s.operationManager.RetryOperation(operation, fmt.Sprintf("shoot %s still exists, waiting for deletion", operation.ShootName), nil, 10*time.Second, s.shootWaitTimeout, logger)
 			if result.State == domain.Failed {
-				// Timed out waiting — mark dirty only if no other shoot references this CB.
-				if s.isLastShootReferencingCB(credentialsBindingName, operation.ShootName, logger) {
+				// Timed out waiting — mark dirty only if no other instance references this CB.
+				if s.isLastInstanceReferencingCB(credentialsBindingName, logger) {
 					s.markCredentialsBindingDirty(credentialsBindingName, logger)
 				}
 			}
@@ -111,21 +124,20 @@ func (s *FreeCredentialsBindingStep) Run(operation internal.Operation, logger *s
 		}
 	}
 
-	// Own shoot is gone — check if any other shoot still references the CB.
-	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
+	// Own shoot is gone — check via DB if any other instance still references the CB.
+	// During deprovisioning the current instance is still in DB (not yet deleted),
+	// so count > 1 means there are other instances using the same CB.
+	count, err := s.instanceStorage.CountInstancesReferencingBinding(credentialsBindingName)
 	if err != nil {
-		msg := fmt.Sprintf("listing Gardener shoots in namespace %s", s.gardenerNS)
+		msg := fmt.Sprintf("counting instances referencing credentials binding %s", credentialsBindingName)
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, logger)
 	}
-	for _, shoot := range shootlist.Items {
-		sh := gardener.Shoot{Unstructured: shoot}
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
-			logger.Info(fmt.Sprintf("Credentials binding %s is still used by shoot %s, nothing to free", credentialsBindingName, sh.GetName()))
-			return operation, 0, nil
-		}
+	if count > 1 {
+		logger.Info(fmt.Sprintf("Credentials binding %s is still referenced by %d instances in DB, nothing to free", credentialsBindingName, count))
+		return operation, 0, nil
 	}
 
-	logger.Info(fmt.Sprintf("Credentials binding %s is not used by any shoot, marking as dirty", credentialsBindingName))
+	logger.Info(fmt.Sprintf("Credentials binding %s is not used by any other instance, marking as dirty", credentialsBindingName))
 	labels := credentialsBinding.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
@@ -168,22 +180,14 @@ func (s *FreeCredentialsBindingStep) findCredentialsBindingName(operation intern
 	return *provisioningOp.ProvisioningParameters.Parameters.TargetSecret, nil
 }
 
-func (s *FreeCredentialsBindingStep) isLastShootReferencingCB(credentialsBindingName, ownShootName string, logger *slog.Logger) bool {
-	shootlist, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNS).List(context.Background(), metav1.ListOptions{})
+// isLastInstanceReferencingCB returns true when the DB shows only this instance references the CB.
+func (s *FreeCredentialsBindingStep) isLastInstanceReferencingCB(credentialsBindingName string, logger *slog.Logger) bool {
+	count, err := s.instanceStorage.CountInstancesReferencingBinding(credentialsBindingName)
 	if err != nil {
-		logger.Warn(fmt.Sprintf("failed to list shoots to check CB references: %s", err))
+		logger.Warn(fmt.Sprintf("failed to query DB for CB instance count, assuming not last: %s", err))
 		return false
 	}
-	for _, shoot := range shootlist.Items {
-		sh := gardener.Shoot{Unstructured: shoot}
-		if sh.GetName() == ownShootName {
-			continue
-		}
-		if sh.GetSpecCredentialsBindingName() == credentialsBindingName {
-			return false
-		}
-	}
-	return true
+	return count <= 1
 }
 
 func (s *FreeCredentialsBindingStep) markCredentialsBindingDirty(credentialsBindingName string, logger *slog.Logger) {

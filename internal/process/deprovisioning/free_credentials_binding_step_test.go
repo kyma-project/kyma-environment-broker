@@ -201,6 +201,116 @@ func TestFreeCredentialsBinding_MarkedDirtyOnTimeout_ifShootStillExists(t *testi
 	assert.Equal(t, "true", gotSB.GetLabels()["dirty"])
 }
 
+func TestFreeCredentialsBinding_MarkedDirty_WhenNoOtherInstanceReferencesCredentialsBinding(t *testing.T) {
+	memoryStorage := storage.NewMemoryStorage()
+
+	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
+	operation.ShootName = testShootName
+	instance := fixGCPInstance(operation.InstanceID)
+	instance.SubscriptionSecretName = subscriptionSecretName
+	instance.GlobalAccountID = operation.GlobalAccountID
+
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+	// Own shoot is gone from Gardener
+	gClient := gardener.NewDynamicFakeClient(
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
+			"tenantName": instance.GlobalAccountID,
+		}),
+	)
+	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+	assert.Zero(t, backoff)
+	assert.NoError(t, err)
+
+	// then — only this instance in DB (count=1), mark dirty
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "true", gotSB.GetLabels()["dirty"])
+}
+
+func TestFreeCredentialsBinding_NotReleased_WhenAnotherInstanceReferencesCredentialsBinding(t *testing.T) {
+	memoryStorage := storage.NewMemoryStorage()
+
+	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
+	operation.ShootName = testShootName
+	instance := fixGCPInstance(operation.InstanceID)
+	instance.SubscriptionSecretName = subscriptionSecretName
+	instance.GlobalAccountID = operation.GlobalAccountID
+
+	// A second instance with the same CB — DB count will be 2.
+	otherInstance := fixture.FixInstance("other-instance-id")
+	otherInstance.GlobalAccountID = operation.GlobalAccountID
+	otherInstance.SubscriptionSecretName = subscriptionSecretName
+	otherInstance.Provider = pkg.GCP
+
+	err := memoryStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = memoryStorage.Instances().Insert(otherInstance)
+	require.NoError(t, err)
+
+	// Own shoot is gone from Gardener
+	gClient := gardener.NewDynamicFakeClient(
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
+			"tenantName": instance.GlobalAccountID,
+		}),
+	)
+	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then — DB shows count=2, CB still in use, skip
+	assert.Zero(t, backoff)
+	assert.NoError(t, err)
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotContains(t, gotSB.GetLabels(), "dirty")
+}
+
+func TestFreeCredentialsBinding_NotMarkedDirtyOnTimeout_ifOtherInstanceReferencesCredentialsBinding(t *testing.T) {
+	memoryStorage := storage.NewMemoryStorage()
+
+	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
+	operation.ShootName = testShootName
+	instance := fixGCPInstance(operation.InstanceID)
+	instance.SubscriptionSecretName = subscriptionSecretName
+	instance.GlobalAccountID = operation.GlobalAccountID
+
+	// A second instance with the same CB — DB count will be 2.
+	otherInstance := fixture.FixInstance("other-instance-id")
+	otherInstance.GlobalAccountID = operation.GlobalAccountID
+	otherInstance.SubscriptionSecretName = subscriptionSecretName
+	otherInstance.Provider = pkg.GCP
+
+	err := memoryStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = memoryStorage.Instances().Insert(otherInstance)
+	require.NoError(t, err)
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	gClient := gardener.NewDynamicFakeClient(
+		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
+			"tenantName": instance.GlobalAccountID,
+		}),
+		newShoot(testShootName),
+	)
+	// negative timeout forces immediate failure on first call
+	step := newFreeCredentialsBindingStepWithShootTimeout(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace, -1*time.Second)
+
+	// when
+	result, _, _ := step.Run(operation, fixLogger())
+
+	// then — timed out but CB still used by another instance, do NOT mark dirty
+	assert.Equal(t, domain.Failed, result.State)
+	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotContains(t, gotSB.GetLabels(), "dirty")
+}
+
 func newCredentialsBinding(name, secretName string, labels map[string]interface{}) *unstructured.Unstructured {
 	secretBinding := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -217,118 +327,6 @@ func newCredentialsBinding(name, secretName string, labels map[string]interface{
 	}
 	secretBinding.SetGroupVersionKind(gardener.CredentialsBindingGVK)
 	return secretBinding
-}
-
-func TestFreeCredentialsBinding_MarkedDirty_WhenOtherInstanceShootExists(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
-
-	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = testShootName
-	instance := fixGCPInstance(operation.InstanceID)
-	instance.SubscriptionSecretName = subscriptionSecretName
-	instance.GlobalAccountID = operation.GlobalAccountID
-
-	err := memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
-			"tenantName": instance.GlobalAccountID,
-		}),
-		// Own shoot is gone; only an unrelated shoot exists (no CB reference)
-		newShoot("shoot-for-other-instance"),
-	)
-	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
-
-	// when
-	_, backoff, err := step.Run(operation, fixLogger())
-	assert.Zero(t, backoff)
-	assert.NoError(t, err)
-
-	// then — no other shoot references the CB, so mark dirty
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, "true", gotSB.GetLabels()["dirty"])
-}
-
-func TestFreeCredentialsBinding_NotReleased_WhenAnotherShootReferencesCredentialsBinding(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
-
-	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = testShootName
-	instance := fixGCPInstance(operation.InstanceID)
-	instance.SubscriptionSecretName = subscriptionSecretName
-	instance.GlobalAccountID = operation.GlobalAccountID
-
-	err := memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
-			"tenantName": instance.GlobalAccountID,
-		}),
-		// Own shoot is gone; another instance's shoot still references the CB
-		newShootWithCredentialsBindingRef("shoot-for-other-instance", subscriptionSecretName),
-	)
-	step := NewFreeCredentialsBindingStep(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace)
-
-	// when
-	_, backoff, err := step.Run(operation, fixLogger())
-
-	// then — CB still in use by another instance, skip
-	assert.Zero(t, backoff)
-	assert.NoError(t, err)
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.NotContains(t, gotSB.GetLabels(), "dirty")
-}
-
-func TestFreeCredentialsBinding_NotMarkedDirtyOnTimeout_ifOtherShootReferencesCredentialsBinding(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
-
-	operation := fixDeprovisioningOperationWithPlanID(broker.AWSPlanID)
-	operation.ShootName = testShootName
-	instance := fixGCPInstance(operation.InstanceID)
-	instance.SubscriptionSecretName = subscriptionSecretName
-	instance.GlobalAccountID = operation.GlobalAccountID
-
-	err := memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-	err = memoryStorage.Operations().InsertOperation(operation)
-	assert.NoError(t, err)
-
-	gClient := gardener.NewDynamicFakeClient(
-		newCredentialsBinding(subscriptionSecretName, "secret-01", map[string]interface{}{
-			"tenantName": instance.GlobalAccountID,
-		}),
-		newShoot(testShootName),
-		newShootWithCredentialsBindingRef("shoot-for-other-instance", subscriptionSecretName),
-	)
-	// negative timeout forces immediate failure on first call
-	step := newFreeCredentialsBindingStepWithShootTimeout(memoryStorage.Operations(), memoryStorage.Instances(), gClient, testNamespace, -1*time.Second)
-
-	// when
-	result, _, _ := step.Run(operation, fixLogger())
-
-	// then — timed out but CB still used by another instance, do NOT mark dirty
-	assert.Equal(t, domain.Failed, result.State)
-	gotSB, err := gClient.Resource(gardener.CredentialsBindingResource).Namespace(testNamespace).Get(context.Background(), subscriptionSecretName, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.NotContains(t, gotSB.GetLabels(), "dirty")
-}
-
-func newShootWithCredentialsBindingRef(name, credentialsBindingName string) *unstructured.Unstructured {
-	shoot := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": testNamespace,
-			},
-			"spec": map[string]interface{}{
-				"credentialsBindingName": credentialsBindingName,
-			},
-		},
-	}
-	shoot.SetGroupVersionKind(gardener.ShootGVK)
-	return shoot
 }
 
 func newShoot(name string) *unstructured.Unstructured {
