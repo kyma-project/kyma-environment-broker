@@ -889,6 +889,7 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
+	parameters.TargetSecret = nil
 	return parameters, nil
 }
 
