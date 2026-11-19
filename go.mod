@@ -20,13 +20,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
-	github.com/jackc/pgx/v5 v5.12.0
+	github.com/jackc/pgx/v5 v5.13.0
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-project/infrastructure-manager v0.0.0-20260608110112-15beee3b62a9
 	github.com/labstack/gommon v0.5.0
 	github.com/lib/pq v1.12.3
-	github.com/moby/moby/api v1.56.1
-	github.com/moby/moby/client v0.6.2
+	github.com/moby/moby/api v1.57.0
+	github.com/moby/moby/client v0.6.3
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/client_model v0.6.3
@@ -43,7 +43,7 @@ require (
 	k8s.io/apimachinery v0.37.2
 	k8s.io/client-go v0.37.2
 	k8s.io/kubectl v0.37.2
-	sigs.k8s.io/controller-runtime v0.25.2
+	sigs.k8s.io/controller-runtime v0.25.3
 )
 
 require (
