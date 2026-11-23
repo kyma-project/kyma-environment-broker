@@ -11,7 +11,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_&#x200b;ADDITIONAL_VOLUME_&#x200b;SIZE_GI_PLANS** | None | Plans for which the additionalVolumeSizeGi parameter is exposed in the schema. Requires dynamicVolumeSizeEnabled to be true. Leave empty to disable the feature. |
 | **APP_BROKER_ALLOWED_&#x200b;GLOBAL_ACCOUNTS** | None | Comma-separated list of global account IDs that are allowed to provision Kyma runtimes when restrictRestrictToAllowedGlobalAccountIDs is true. |
 | **APP_BROKER_AUDIT_&#x200b;LOG_ACCESS** | <code>false</code> | Enables the auditLogAccess parameter in the provisioning and update schemas. |
-| **APP_BROKER_IS_AUDIT_&#x200b;LOG_ACCESS_&#x200b;TEMPORARY_NOT_&#x200b;AVAILABLE** | <code>false</code> | Temporarily blocks enabling auditLogAccess for new provisioning and updates. Clusters that already have it enabled are unaffected. |
 | **APP_BROKER_BINDING_&#x200b;BINDABLE_PLANS** | <code>aws</code> | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". |
 | **APP_BROKER_BINDING_&#x200b;CREATE_BINDING_&#x200b;TIMEOUT** | <code>15s</code> | Timeout for creating a binding, for example, 15s, 1m. |
 | **APP_BROKER_BINDING_&#x200b;ENABLED** | <code>false</code> | Enables or disables the service binding endpoint (true/false). |
@@ -29,6 +28,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users. |
 | **APP_BROKER_GARDENER_&#x200b;SEEDS_CACHE_CONFIG_&#x200b;MAP_NAME** | <code>gardener-seeds-cache</code> | Name of the Kubernetes ConfigMap used as a cache for Gardener seeds. |
 | **APP_BROKER_GVISOR_&#x200b;ENABLED** | <code>false</code> | If true, includes the gVisor container runtime property in every plan schema. |
+| **APP_BROKER_IS_AUDIT_&#x200b;LOG_ACCESS_&#x200b;TEMPORARY_NOT_&#x200b;AVAILABLE** | <code>false</code> | Temporarily blocks enabling auditLogAccess for new provisioning and updates. Clusters that already have it enabled are unaffected. |
 | **APP_BROKER_KCR_&#x200b;CONFIG_MAP_NAME** | <code>consumption-reporter-config</code> | Name of the ConfigMap in kcp-system that provides per-machine-type volume sizes (used when dynamicVolumeSizeEnabled is true). |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage. |
 | **APP_BROKER_ONLY_ONE_&#x200b;FREE_PER_GA** | <code>false</code> | If true, restricts each global account to only one freemium (free) Kyma runtime. When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned. |
