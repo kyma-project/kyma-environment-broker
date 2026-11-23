@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	apicorev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -154,6 +155,52 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SKRClientUnavailableRetries(t *t
 
 	// then — retries on unavailable SKR client
 	assert.NotZero(t, backoff)
+}
+
+func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *testing.T) {
+	// given — secret already exists with full credentials
+	memoryStorage := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests(t)
+	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
+
+	existingSecret := &apicorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      btpmanagercredentials.BtpManagerSecretName,
+			Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+		},
+		Data: map[string][]byte{
+			"clientid":     []byte("original-client-id"),
+			"clientsecret": []byte("original-secret"),
+			"sm_url":       []byte("https://sm.url"),
+			"tokenurl":     []byte("https://token.url"),
+			"cluster_id":   []byte("cluster-id"),
+		},
+	}
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
+
+	// operation carries only the rotated clientsecret — all other fields are empty strings
+	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials = &internal.ServiceManagerOperatorCredentials{
+		ClientSecret: "rotated-secret",
+	}
+	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// when
+	_, backoff, err := step.Run(operation, fixUpdateLogger())
+
+	// then — only clientsecret updated, other keys preserved from existing secret
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+	secret := &apicorev1.Secret{}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+		Name:      btpmanagercredentials.BtpManagerSecretName,
+	}, secret))
+	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
+	assert.Equal(t, []byte("original-client-id"), secret.Data["clientid"])
+	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
+	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
+	assert.Equal(t, []byte("cluster-id"), secret.Data["cluster_id"])
 }
 
 // helpers

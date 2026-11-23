@@ -236,15 +236,42 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	return false, false, nil
 }
 
-// SecretDataEqual reports whether two sap-btp-manager secrets have identical data
-// for all five managed keys.
+// SecretDataEqual reports whether s1 already contains all non-empty values from s2.
+// Keys that are empty (or absent) in s2 are ignored — they are treated as "not provided".
 func SecretDataEqual(s1, s2 *v1.Secret) bool {
 	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
-		if !reflect.DeepEqual(s1.Data[key], s2.Data[key]) {
+		desired := s2.Data[key]
+		if len(desired) == 0 {
+			continue
+		}
+		if !reflect.DeepEqual(s1.Data[key], desired) {
 			return false
 		}
 	}
 	return true
+}
+
+// MergeIntoSecret copies non-empty credential fields and a non-empty clusterID
+// into current's Data in place. Keys with empty values in creds are left unchanged.
+func MergeIntoSecret(current *v1.Secret, creds *internal.ServiceManagerOperatorCredentials, clusterID string) {
+	if current.Data == nil {
+		current.Data = make(map[string][]byte)
+	}
+	if creds.ClientID != "" {
+		current.Data[secretClientId] = []byte(creds.ClientID)
+	}
+	if creds.ClientSecret != "" {
+		current.Data[secretClientSecret] = []byte(creds.ClientSecret)
+	}
+	if creds.ServiceManagerURL != "" {
+		current.Data[secretSmUrl] = []byte(creds.ServiceManagerURL)
+	}
+	if creds.URL != "" {
+		current.Data[secretTokenUrl] = []byte(creds.URL)
+	}
+	if clusterID != "" {
+		current.Data[secretClusterId] = []byte(clusterID)
+	}
 }
 
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {

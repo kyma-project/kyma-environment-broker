@@ -8,6 +8,7 @@ import (
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -52,15 +53,12 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		return operation, 0, nil
 	}
 
+	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
+
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 	if err != nil {
 		log.Error(fmt.Sprintf("kubernetes client not available: %s", err))
 		return s.operationManager.RetryOperation(operation, "unable to get K8S client", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
-	}
-
-	desired, err := btpmanagercredentials.PrepareSecret(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, clusterID)
-	if err != nil {
-		return s.operationManager.OperationFailed(operation, "secret preparation failed", err, log)
 	}
 
 	current := &corev1.Secret{}
@@ -68,28 +66,55 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
 		Name:      btpmanagercredentials.BtpManagerSecretName,
 	}, current)
-	if getErr != nil {
-		if !k8serrors.IsNotFound(getErr) {
-			log.Warn(fmt.Sprintf("failed to get sap-btp-manager secret: %s", getErr))
+
+	if getErr != nil && !k8serrors.IsNotFound(getErr) {
+		log.Warn(fmt.Sprintf("failed to get sap-btp-manager secret: %s", getErr))
+		return operation, updateBTPSecretBackoff, nil
+	}
+
+	if k8serrors.IsNotFound(getErr) {
+		// secret does not exist — create a fresh one with whatever non-empty fields we have
+		fresh := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{Kind: "Secret"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        btpmanagercredentials.BtpManagerSecretName,
+				Namespace:   btpmanagercredentials.BtpManagerSecretNamespace,
+				Labels:      btpmanagercredentials.BtpManagerLabels,
+				Annotations: btpmanagercredentials.BtpManagerAnnotations,
+			},
+			Type: corev1.SecretTypeOpaque,
+		}
+		btpmanagercredentials.MergeIntoSecret(fresh, creds, clusterID)
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: btpmanagercredentials.BtpManagerSecretNamespace}}
+		if err := k8sClient.Create(context.Background(), ns); err != nil && !k8serrors.IsAlreadyExists(err) {
+			log.Warn(fmt.Sprintf("failed to create %s namespace: %s", btpmanagercredentials.BtpManagerSecretNamespace, err))
 			return operation, updateBTPSecretBackoff, nil
 		}
-		// secret does not exist yet — create it
-		if err := btpmanagercredentials.CreateOrUpdateSecret(k8sClient, desired, log); err != nil {
-			err = kebError.AsTemporaryError(err, "failed create/update of the secret")
+		if err := k8sClient.Create(context.Background(), fresh); err != nil {
+			log.Warn(fmt.Sprintf("failed to create sap-btp-manager secret: %s", err))
 			return operation, updateBTPSecretBackoff, nil
 		}
 		return operation, 0, nil
 	}
 
-	if btpmanagercredentials.SecretDataEqual(current, desired) {
+	if btpmanagercredentials.SecretDataEqual(current, buildDesiredSecret(creds, clusterID)) {
 		log.Info("sap-btp-manager secret is up to date, skipping update")
 		return operation, 0, nil
 	}
 
 	log.Info("sap-btp-manager secret differs from desired state, updating")
-	if err := btpmanagercredentials.CreateOrUpdateSecret(k8sClient, desired, log); err != nil {
-		err = kebError.AsTemporaryError(err, "failed create/update of the secret")
+	btpmanagercredentials.MergeIntoSecret(current, creds, clusterID)
+	if err := k8sClient.Update(context.Background(), current); err != nil {
+		log.Warn(fmt.Sprintf("failed to update sap-btp-manager secret: %s", err))
 		return operation, updateBTPSecretBackoff, nil
 	}
 	return operation, 0, nil
+}
+
+// buildDesiredSecret constructs a minimal Secret containing only the non-empty
+// fields from creds and clusterID, used exclusively for comparison purposes.
+func buildDesiredSecret(creds *internal.ServiceManagerOperatorCredentials, clusterID string) *corev1.Secret {
+	s := &corev1.Secret{}
+	btpmanagercredentials.MergeIntoSecret(s, creds, clusterID)
+	return s
 }
