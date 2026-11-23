@@ -424,8 +424,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if b.config.IsAuditLogAccessTemporaryNotAvailable && parameters.AuditLogAccess != nil && *parameters.AuditLogAccess {
-		err := errors.New("auditLogAccess option is currently not available")
+	if err := validateAuditLogAccessAvailability(b.config.IsAuditLogAccessTemporaryNotAvailable, parameters.AuditLogAccess, false); err != nil {
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
