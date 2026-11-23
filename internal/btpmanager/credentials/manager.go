@@ -236,6 +236,17 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	return false, false, nil
 }
 
+// SecretDataEqual reports whether two sap-btp-manager secrets have identical data
+// for all five managed keys.
+func SecretDataEqual(s1, s2 *v1.Secret) bool {
+	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
+		if !reflect.DeepEqual(s1.Data[key], s2.Data[key]) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
 	areSecretEqualByKey := func(key string) (bool, error) {
 		currentValue, ok := s1.Data[key]
