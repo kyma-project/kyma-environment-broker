@@ -3811,3 +3811,78 @@ func TestProvisionInternalOnlyMachinesForExternalCustomer(t *testing.T) {
 		})
 	}
 }
+
+func TestProvisionAuditLogAccessTemporaryNotAvailable(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		flagEnabled    bool
+		rawParameters  string
+		expectedErrMsg string
+	}{
+		"flag disabled, auditLogAccess true: allowed": {
+			flagEnabled:    false,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "region": "eu-central-1", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "",
+		},
+		"flag enabled, auditLogAccess false: allowed": {
+			flagEnabled:    true,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "region": "eu-central-1", "auditLogAccess": false}`, clusterName),
+			expectedErrMsg: "",
+		},
+		"flag enabled, auditLogAccess true: rejected": {
+			flagEnabled:    true,
+			rawParameters:  fmt.Sprintf(`{"name": "%s", "region": "eu-central-1", "auditLogAccess": true}`, clusterName),
+			expectedErrMsg: "auditLogAccess option is currently not available",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			brokerCfg := broker.Config{
+				EnablePlans:                           []string{"aws", broker.TrialPlanName},
+				URL:                                   brokerURL,
+				OnlySingleTrialPerGA:                  false,
+				AuditLogAccess:                        true,
+				IsAuditLogAccessTemporaryNotAvailable: tc.flagEnabled,
+			}
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			memoryStorage := storage.NewMemoryStorage()
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+
+			provisionEndpoint := broker.NewFakeProvisionEndpointBuilder().
+				WithConfig(brokerCfg).
+				WithGardenerConfig(fixGardenerConfig()).
+				WithInfrastructureManager(imConfigFixture).
+				WithStorage(memoryStorage).
+				WithQueue(queue).
+				WithLogger(log).
+				WithDashboardConfig(dashboardConfig).
+				WithKubeconfigBuilder(kcBuilder).
+				WithSchemaService(newSchemaServiceWithBrokerConfig(t, brokerCfg)).
+				WithConfigurationProvider(newProviderSpec(t)).
+				WithValuesProvider(fixValueProvider(t)).
+				Build()
+
+			// when
+			_, err := provisionEndpoint.Provision(
+				fixRequestContext(t, "cf-eu10"),
+				instanceID,
+				domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        broker.AWSPlanID,
+					RawParameters: json.RawMessage(tc.rawParameters),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				},
+				true,
+			)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

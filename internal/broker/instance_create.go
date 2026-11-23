@@ -424,6 +424,11 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if b.config.IsAuditLogAccessTemporaryNotAvailable && parameters.AuditLogAccess != nil && *parameters.AuditLogAccess {
+		err := errors.New("auditLogAccess option is currently not available")
+		return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
 	if err != nil {
 		return fmt.Errorf("while creating plan validator: %w", err)

@@ -3277,3 +3277,81 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
 	createCustomResource(t, runtimeID, customresources.RuntimeCr)
 }
+
+func TestUpdateAuditLogAccessTemporaryNotAvailable(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		flagEnabled           bool
+		initialAuditLogAccess *bool
+		rawParameters         string
+		expectedErrMsg        string
+	}{
+		"flag enabled, not previously enabled, requesting true: rejected": {
+			flagEnabled:           true,
+			initialAuditLogAccess: nil,
+			rawParameters:         `{"auditLogAccess": true}`,
+			expectedErrMsg:        "auditLogAccess option is currently not available",
+		},
+		"flag enabled, previously enabled, requesting true: allowed": {
+			flagEnabled:           true,
+			initialAuditLogAccess: ptr.Bool(true),
+			rawParameters:         `{"auditLogAccess": true}`,
+			expectedErrMsg:        "",
+		},
+		"flag enabled, not previously enabled, requesting false: allowed": {
+			flagEnabled:           true,
+			initialAuditLogAccess: nil,
+			rawParameters:         `{"auditLogAccess": false}`,
+			expectedErrMsg:        "",
+		},
+		"flag disabled, not previously enabled, requesting true: allowed": {
+			flagEnabled:           false,
+			initialAuditLogAccess: nil,
+			rawParameters:         `{"auditLogAccess": true}`,
+			expectedErrMsg:        "",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = broker.AWSPlanID
+			instance.Parameters.Parameters.AuditLogAccess = tc.initialAuditLogAccess
+
+			st := storage.NewMemoryStorage()
+			require.NoError(t, st.Instances().Insert(instance))
+			provisioning := fixProvisioningOperation("provisioning01")
+			provisioning.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+			require.NoError(t, st.Operations().InsertOperation(provisioning))
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
+
+			brokerCfg := broker.Config{
+				AuditLogAccess:                        true,
+				IsAuditLogAccessTemporaryNotAvailable: tc.flagEnabled,
+			}
+			svc := broker.NewUpdate(brokerCfg, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder, fakeKcpK8sClient,
+				newProviderSpec(t), newPlanSpec(t), imConfigFixture,
+				newSchemaServiceWithBrokerConfig(t, brokerCfg),
+				nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{})
+
+			// when
+			_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:     "",
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(tc.rawParameters),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "active": true}`, globalAccountID)),
+			}, true)
+
+			// then
+			if tc.expectedErrMsg != "" {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

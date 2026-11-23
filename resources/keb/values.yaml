@@ -173,6 +173,7 @@ analytics:
 broker:
   # Enables the auditLogAccess parameter in the provisioning and update schemas.
   auditLogAccess: false
+  isAuditLogAccessTemporaryNotAvailable: false
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp".
     bindablePlans: "aws"

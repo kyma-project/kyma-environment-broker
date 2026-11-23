@@ -379,6 +379,14 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	if b.config.IsAuditLogAccessTemporaryNotAvailable && params.AuditLogAccess != nil && *params.AuditLogAccess {
+		previouslyEnabled := previousInstance.Parameters.Parameters.AuditLogAccess != nil && *previousInstance.Parameters.Parameters.AuditLogAccess
+		if !previouslyEnabled {
+			err := errors.New("auditLogAccess option is currently not available")
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
 	operation.PreviousParameters = previousInstance.Parameters
 
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
