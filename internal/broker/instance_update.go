@@ -384,6 +384,8 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	operation.PreviousParameters = previousInstance.Parameters
+
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
