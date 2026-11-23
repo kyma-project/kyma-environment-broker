@@ -88,6 +88,7 @@
 | analytics.oauth2Proxy.<br>image.repository | - | `quay.io/oauth2-proxy/oauth2-proxy` |
 | analytics.oauth2Proxy.<br>image.tag | - | `v7.7.1` |
 | broker.<br>auditLogAccess | Enables the auditLogAccess parameter in the provisioning and update schemas. | `False` |
+| broker.<br>isAuditLogAccessTemporaryNotAvailable | Temporarily blocks enabling auditLogAccess for new provisioning and updates. Clusters that already have it enabled are unaffected. | `False` |
 | broker.binding.<br>bindablePlans | Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp". | `aws` |
 | broker.binding.<br>createBindingTimeout | Timeout for creating a binding, for example, 15s, 1m. | `15s` |
 | broker.binding.<br>enabled | Enables or disables the service binding endpoint (true/false). | `False` |

@@ -379,6 +379,11 @@ func (b *UpdateEndpoint) processUpdateParameters(ctx context.Context, previousIn
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
+	previouslyEnabled := previousInstance.Parameters.Parameters.AuditLogAccess != nil && *previousInstance.Parameters.Parameters.AuditLogAccess
+	if err := validateAuditLogAccessAvailability(b.config.IsAuditLogAccessTemporaryNotAvailable, params.AuditLogAccess, previouslyEnabled); err != nil {
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+	}
+
 	operation.PreviousParameters = previousInstance.Parameters
 
 	updateStorage, err := b.updateInstanceAndOperationParameters(instance, &params, &operation, details, ersContext, logger)
@@ -492,6 +497,13 @@ func validateAuditLogAccessForPlan(planID string, auditLogAccess *bool) error {
 func validateAuditLogAccess(previousInstance *internal.Instance, auditLogAccess *bool) error {
 	if auditLogAccess != nil && !*auditLogAccess && previousInstance.Parameters.Parameters.AuditLogAccess != nil && *previousInstance.Parameters.Parameters.AuditLogAccess {
 		return errors.New("Audit Log Access cannot be disabled once enabled.")
+	}
+	return nil
+}
+
+func validateAuditLogAccessAvailability(temporaryNotAvailable bool, auditLogAccess *bool, previouslyEnabled bool) error {
+	if temporaryNotAvailable && auditLogAccess != nil && *auditLogAccess && !previouslyEnabled {
+		return errors.New("auditLogAccess option is currently not available")
 	}
 	return nil
 }
