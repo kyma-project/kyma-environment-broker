@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,8 +50,18 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 
 	clusterID := operation.InstanceDetails.ServiceManagerClusterID
 	if clusterID == "" {
-		log.Info("ServiceManagerClusterID is empty, skipping BTP operator credentials injection")
-		return operation, 0, nil
+		clusterID = uuid.NewString()
+		updatedOperation, backoff, err := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+			op.InstanceDetails.ServiceManagerClusterID = clusterID
+		}, log)
+		if err != nil {
+			log.Error(fmt.Sprintf("failed to update operation: %s", err))
+		}
+		if backoff != 0 {
+			log.Error("cannot save cluster ID")
+			return updatedOperation, backoff, nil
+		}
+		operation = updatedOperation
 	}
 
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials

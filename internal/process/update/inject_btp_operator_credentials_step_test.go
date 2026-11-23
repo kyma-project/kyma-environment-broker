@@ -119,7 +119,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_EmptyRuntimeIDRetries(t *testing
 	assert.NotEqual(t, "Failed", string(processedOperation.State))
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDSkips(t *testing.T) {
+func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -128,20 +128,22 @@ func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDSkips(t *testing.T
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
 	operation.InstanceDetails.ServiceManagerClusterID = ""
+	// must persist the operation so UpdateOperation can find it
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	_, backoff, err := step.Run(operation, fixUpdateLogger())
 
-	// then — soft skip: no error, zero backoff, no secret written
+	// then — cluster ID generated, secret written
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	secret := &apicorev1.Secret{}
-	getErr := k8sClient.Get(context.Background(), client.ObjectKey{
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
 		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
 		Name:      btpmanagercredentials.BtpManagerSecretName,
-	}, secret)
-	assert.True(t, client.IgnoreNotFound(getErr) == nil && getErr != nil, "expected secret to not exist")
+	}, secret))
+	assert.NotEmpty(t, secret.Data["cluster_id"])
 }
 
 func TestUpdateInjectBTPOperatorCredentialsStep_SKRClientUnavailableRetries(t *testing.T) {
