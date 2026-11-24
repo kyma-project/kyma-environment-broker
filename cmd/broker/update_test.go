@@ -5628,6 +5628,14 @@ func TestUpdateBTPCredentials_SecretUpdatedOnSKR(t *testing.T) {
 	updateOpID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
+	// then — DB instance has the new credentials persisted
+	finalInstance := suite.GetInstance(iid)
+	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "new-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "cid", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "https://sm.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ServiceManagerURL)
+	assert.Equal(t, "https://token.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.URL)
+
 	// then — sap-btp-manager on the SKR cluster has the new credentials
 	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("new-secret"), secret.Data["clientsecret"])
@@ -5746,7 +5754,15 @@ func TestUpdateBTPCredentials_PartialCredentials(t *testing.T) {
 	updateOpID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
-	// then — only clientsecret updated, other keys preserved from initial provisioning
+	// then — DB instance has the merge applied: only clientsecret changed, other fields preserved
+	finalInstance := suite.GetInstance(iid)
+	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "rotated-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "original-cid", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+	assert.Equal(t, "https://sm.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ServiceManagerURL)
+	assert.Equal(t, "https://token.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.URL)
+
+	// then — sap-btp-manager on SKR reflects the same merged state
 	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
 	assert.Equal(t, []byte("original-cid"), secret.Data["clientid"])
