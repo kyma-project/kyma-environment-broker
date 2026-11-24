@@ -63,14 +63,6 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		operation = updatedOperation
 	}
 
-	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
-
-	desired, err := btpmanagercredentials.PrepareSecret(creds, clusterID)
-	if err != nil {
-		log.Error(fmt.Sprintf("credentials are incomplete, cannot build secret: %s", err))
-		return s.operationManager.OperationFailed(operation, "credentials are incomplete", err, log)
-	}
-
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 	if err != nil {
 		log.Error(fmt.Sprintf("kubernetes client not available: %s", err))
@@ -88,16 +80,21 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 		return operation, updateBTPSecretBackoff, nil
 	}
 
-	if getErr == nil {
-		if current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
-			log.Info("sap-btp-manager secret has skip-reconciliation label, skipping update")
-			return operation, 0, nil
-		}
+	if getErr == nil && current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
+		log.Info("sap-btp-manager secret has skip-reconciliation label, skipping update")
+		return operation, 0, nil
+	}
 
-		if btpmanagercredentials.SecretDataEqual(current, desired) {
-			log.Info("sap-btp-manager secret is up to date, skipping update")
-			return operation, 0, nil
-		}
+	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
+	desired, err := btpmanagercredentials.PrepareSecret(creds, clusterID)
+	if err != nil {
+		log.Error(fmt.Sprintf("credentials are incomplete, cannot build secret: %s", err))
+		return s.operationManager.OperationFailed(operation, "credentials are incomplete", err, log)
+	}
+
+	if getErr == nil && btpmanagercredentials.SecretDataEqual(current, desired) {
+		log.Info("sap-btp-manager secret is up to date, skipping update")
+		return operation, 0, nil
 	}
 
 	log.Info("writing sap-btp-manager secret to SKR cluster")
