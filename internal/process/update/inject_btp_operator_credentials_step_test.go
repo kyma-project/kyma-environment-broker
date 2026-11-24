@@ -7,6 +7,7 @@ import (
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -116,7 +117,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_EmptyRuntimeIDRetries(t *testing
 
 	// then — retries, does NOT fail the operation permanently
 	assert.NotZero(t, backoff)
-	assert.NotEqual(t, "Failed", string(processedOperation.State))
+	assert.NotEqual(t, domain.Failed, processedOperation.State)
 }
 
 func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
@@ -247,6 +248,31 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testi
 	}, secret))
 	assert.Equal(t, "1", secret.ResourceVersion)
 	assert.Equal(t, []byte("original-secret"), secret.Data["clientsecret"])
+}
+
+func TestUpdateInjectBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {
+	// given — credentials missing ClientID (would fail PrepareSecret)
+	memoryStorage := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests(t)
+	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+
+	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials = &internal.ServiceManagerOperatorCredentials{
+		ClientID:          "",
+		ClientSecret:      "secret",
+		ServiceManagerURL: "https://sm.url",
+		URL:               "https://token.url",
+	}
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
+	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// when
+	processedOperation, backoff, _ := step.Run(operation, fixUpdateLogger())
+
+	// then — operation fails permanently, not retried
+	assert.Zero(t, backoff)
+	assert.Equal(t, domain.Failed, processedOperation.State)
 }
 
 func fixUpdateOperationWithClusterIDAndCredentials() internal.Operation {

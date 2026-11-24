@@ -290,7 +290,7 @@ func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clus
 		return nil, fmt.Errorf("client Id not set")
 	}
 	if credentials.ClientSecret == "" {
-		return nil, fmt.Errorf("clients ecret not set")
+		return nil, fmt.Errorf("clientsecret not set")
 	}
 	if credentials.ServiceManagerURL == "" {
 		return nil, fmt.Errorf("service manager url not set")
