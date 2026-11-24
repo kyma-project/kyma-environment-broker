@@ -5601,6 +5601,7 @@ func TestUpdateBTPCredentials_SecretUpdatedOnSKR(t *testing.T) {
 			}
 		}`)
 	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -5662,6 +5663,7 @@ func TestUpdateBTPCredentials_NoWriteWhenUnchanged(t *testing.T) {
 			}
 		}`)
 	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -5694,4 +5696,169 @@ func TestUpdateBTPCredentials_NoWriteWhenUnchanged(t *testing.T) {
 	// then — secret ResourceVersion is unchanged (no write to SKR)
 	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, rvBefore, secretAfter.ResourceVersion, "secret should not have been written when credentials are unchanged")
+}
+
+func TestUpdateBTPCredentials_PartialCredentials(t *testing.T) {
+	// given — provision with full credentials
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "original-cid",
+					"clientsecret": "original-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when — PATCH with only clientsecret rotated
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientsecret": "rotated-secret"
+				},
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — only clientsecret updated, other keys preserved from initial provisioning
+	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
+	assert.Equal(t, []byte("original-cid"), secret.Data["clientid"])
+	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
+	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
+	assert.NotEmpty(t, secret.Data["cluster_id"])
+}
+
+func TestUpdateBTPCredentials_SecretHasKEBLabelsAndAnnotations(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "initial-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when — PATCH with new credentials
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "new-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — secret carries the KEB-managed labels and warning annotation
+	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, btpmgrcredentials.BtpManagerLabels, secret.Labels)
+	assert.Equal(t, btpmgrcredentials.BtpManagerAnnotations, secret.Annotations)
+}
+
+func TestUpdateBTPCredentials_NoCredentialsInPatch_SecretUnchanged(t *testing.T) {
+	// given — provision with credentials so the secret exists
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "initial-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster", "region": "us-east-1"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	secretBefore := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	rvBefore := secretBefore.ResourceVersion
+
+	// when — PATCH with machine type only, no sm_operator_credentials
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"machineType": "m5.2xlarge"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — secret not touched (step gated on SMOperatorCredentials != nil)
+	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, rvBefore, secretAfter.ResourceVersion, "secret should not be written when no credentials in PATCH")
 }
