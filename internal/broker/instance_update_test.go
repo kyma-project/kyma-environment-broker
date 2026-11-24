@@ -3355,6 +3355,7 @@ func TestUpdateAuditLogAccessTemporaryNotAvailable(t *testing.T) {
 		})
 	}
 }
+
 // ---------------------------------------------------------------------------
 // SM operator credentials DB-write tests
 // These tests verify that processContext correctly merges SMOperatorCredentials
@@ -3446,8 +3447,8 @@ func TestUpdateEndpoint_SMCredentials_PartialRotation_OtherFieldsPreservedInDB(t
 	// when — PATCH with only clientsecret (CIS rotates the OAuth2 binding but only
 	// sends the changed fields — the other fields are absent/empty in JSON)
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-		ServiceID: "",
-		PlanID:    broker.AWSPlanID,
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
 		RawContext: json.RawMessage(`{"sm_operator_credentials":{"clientsecret":"rotated-secret"}}`),
 	}, true)
 	require.NoError(t, err)

@@ -34,10 +34,10 @@ var (
 )
 
 const (
-	keb                      = "kcp-kyma-environment-broker"
-	kcpNamespace             = "kcp-system"
-	instanceIdLabel          = "kyma-project.io/instance-id"
-	SkipReconciliationLabel  = "kyma-project.io/skip-reconciliation"
+	keb                     = "kcp-kyma-environment-broker"
+	kcpNamespace            = "kcp-system"
+	instanceIdLabel         = "kyma-project.io/instance-id"
+	SkipReconciliationLabel = "kyma-project.io/skip-reconciliation"
 )
 
 const (

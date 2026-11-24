@@ -5925,4 +5925,3 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_SecretNotUpdated(t *testin
 	assert.Equal(t, rvWithLabel, secretAfter.ResourceVersion, "secret should not be written when skip-reconciliation label is set")
 	assert.Equal(t, []byte("initial-secret"), secretAfter.Data["clientsecret"], "clientsecret should remain unchanged")
 }
-
