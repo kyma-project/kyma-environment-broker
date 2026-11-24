@@ -149,7 +149,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			labeledSkrInstanceId := environment.instanceIds[labeledSkrIdx]
 
 			// when secret is labeled with skip-reconciliation
-			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "true")
+			environment.labelSecret(skrToBeSkipped[0].Config, SkipReconciliationLabel, "true")
 
 			maxIndex := max(testDataIndexes)
 			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)
@@ -212,7 +212,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			labeledSkrInstanceId := environment.instanceIds[labeledSkrIdx]
 
 			// when secret is labeled with skip-reconciliation
-			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "true")
+			environment.labelSecret(skrToBeSkipped[0].Config, SkipReconciliationLabel, "true")
 
 			maxIndex := max(testDataIndexes)
 			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)
@@ -250,7 +250,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
 
 			// then we change the label
-			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "false")
+			environment.labelSecret(skrToBeSkipped[0].Config, SkipReconciliationLabel, "false")
 			// when we reconcile
 
 			stats, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
@@ -271,7 +271,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 		t.Run("reconcile when one secret is labeled with skip-reconciliation set not to true", func(t *testing.T) {
 			labeledSkrIdx := 0
 			skrToBeSkipped := environment.getSkrsForSimulateChange([]int{labeledSkrIdx})
-			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "not-true")
+			environment.labelSecret(skrToBeSkipped[0].Config, SkipReconciliationLabel, "not-true")
 
 			maxIndex := max(testDataIndexes)
 			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)

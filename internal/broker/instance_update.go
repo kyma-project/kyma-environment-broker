@@ -221,6 +221,10 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 
 	if b.processingEnabled {
 		previousInstance := *instance
+		if instance.Parameters.ErsContext.SMOperatorCredentials != nil {
+			credsCopy := *instance.Parameters.ErsContext.SMOperatorCredentials
+			previousInstance.Parameters.ErsContext.SMOperatorCredentials = &credsCopy
+		}
 		instance, suspendStatusChange, err := b.processContext(instance, details, lastProvisioningOperation, logger)
 		if err != nil {
 			return domain.UpdateServiceSpec{}, err

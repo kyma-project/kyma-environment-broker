@@ -34,10 +34,10 @@ var (
 )
 
 const (
-	keb                     = "kcp-kyma-environment-broker"
-	kcpNamespace            = "kcp-system"
-	instanceIdLabel         = "kyma-project.io/instance-id"
-	skipReconciliationLabel = "kyma-project.io/skip-reconciliation"
+	keb                      = "kcp-kyma-environment-broker"
+	kcpNamespace             = "kcp-system"
+	instanceIdLabel          = "kyma-project.io/instance-id"
+	SkipReconciliationLabel  = "kyma-project.io/skip-reconciliation"
 )
 
 const (
@@ -210,7 +210,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		return false, false, fmt.Errorf("while getting secret from cluster for instance %s : %s", instance.InstanceID, err)
 	}
 
-	if value, ok := currentSecret.Labels[skipReconciliationLabel]; ok && value == "true" {
+	if value, ok := currentSecret.Labels[SkipReconciliationLabel]; ok && value == "true" {
 		s.logger.Info(fmt.Sprintf("skip reconciliation of sap-btp-manager secret for instance %s", instance.InstanceID))
 		return false, true, nil
 	}

@@ -180,10 +180,15 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredential
 	}
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
 
-	// operation carries only the rotated clientsecret — all other fields are empty strings
+	// In the real pipeline, dto.go merges partial creds with existing DB values before the step runs.
+	// The operation therefore carries fully-merged credentials — only clientsecret is new.
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials = &internal.ServiceManagerOperatorCredentials{
-		ClientSecret: "rotated-secret",
+		ClientID:          "original-client-id",
+		ClientSecret:      "rotated-secret",
+		ServiceManagerURL: "https://sm.url",
+		URL:               "https://token.url",
+		XSAppName:         "sample-app-name",
 	}
 	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
@@ -202,10 +207,47 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredential
 	assert.Equal(t, []byte("original-client-id"), secret.Data["clientid"])
 	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
 	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
-	assert.Equal(t, []byte("cluster-id"), secret.Data["cluster_id"])
 }
 
-// helpers
+func TestUpdateInjectBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
+	// given — secret exists with skip-reconciliation label
+	memoryStorage := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests(t)
+	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
+
+	existingSecret := &apicorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      btpmanagercredentials.BtpManagerSecretName,
+			Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+			Labels: map[string]string{
+				btpmanagercredentials.SkipReconciliationLabel: "true",
+			},
+			ResourceVersion: "1",
+		},
+		Data: map[string][]byte{
+			"clientsecret": []byte("original-secret"),
+		},
+	}
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
+
+	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
+	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// when
+	_, backoff, err := step.Run(operation, fixUpdateLogger())
+
+	// then — step skips, secret not updated, ResourceVersion unchanged
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+	secret := &apicorev1.Secret{}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+		Name:      btpmanagercredentials.BtpManagerSecretName,
+	}, secret))
+	assert.Equal(t, "1", secret.ResourceVersion)
+	assert.Equal(t, []byte("original-secret"), secret.Data["clientsecret"])
+}
 
 func fixUpdateOperationWithClusterIDAndCredentials() internal.Operation {
 	operation := fixture.FixUpdatingOperation("operation-id", "inst-id")
