@@ -5762,6 +5762,12 @@ func TestUpdateBTPCredentials_PartialCredentials(t *testing.T) {
 	assert.Equal(t, "https://sm.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ServiceManagerURL)
 	assert.Equal(t, "https://token.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.URL)
 
+	// then — PreviousParameters holds the pre-merge credentials (original-secret, not rotated-secret)
+	updateOp := suite.GetOperation(updateOpID)
+	require.NotNil(t, updateOp.PreviousParameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "original-secret", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "original-cid", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientID)
+
 	// then — sap-btp-manager on SKR reflects the same merged state
 	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
