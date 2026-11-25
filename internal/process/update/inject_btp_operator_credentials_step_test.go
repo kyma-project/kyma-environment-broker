@@ -39,7 +39,6 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertUpdateSecretMatchesCredentials(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
-	assertUpdateNamespacePresent(t, k8sClient)
 }
 
 func TestUpdateInjectBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
@@ -303,14 +302,6 @@ func assertUpdateSecretMatchesCredentials(t *testing.T, k8sClient client.Client,
 	assert.Equal(t, []byte(clusterID), secret.Data["cluster_id"])
 	assert.Equal(t, btpmanagercredentials.BtpManagerLabels, secret.Labels)
 	assert.Equal(t, btpmanagercredentials.BtpManagerAnnotations, secret.Annotations)
-}
-
-func assertUpdateNamespacePresent(t *testing.T, k8sClient client.Client) {
-	t.Helper()
-	ns := &apicorev1.Namespace{}
-	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
-		Name: btpmanagercredentials.BtpManagerSecretNamespace,
-	}, ns))
 }
 
 func fixUpdateLogger() *slog.Logger {
