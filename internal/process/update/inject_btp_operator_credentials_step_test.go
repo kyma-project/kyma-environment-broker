@@ -38,7 +38,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
-	assertUpdateSecretMatchesCredentials(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
+	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
 }
 
 func TestUpdateInjectBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
@@ -97,7 +97,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testi
 	// then — secret updated with new value
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
-	assertUpdateSecretMatchesCredentials(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
+	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
 }
 
 func TestUpdateInjectBTPOperatorCredentialsStep_EmptyRuntimeIDRetries(t *testing.T) {
@@ -288,7 +288,7 @@ func fixUpdateOperationWithClusterIDAndCredentials() internal.Operation {
 	return operation
 }
 
-func assertUpdateSecretMatchesCredentials(t *testing.T, k8sClient client.Client, creds *internal.ServiceManagerOperatorCredentials, clusterID string) {
+func assertUpdateSecretContent(t *testing.T, k8sClient client.Client, creds *internal.ServiceManagerOperatorCredentials, clusterID string) {
 	t.Helper()
 	secret := &apicorev1.Secret{}
 	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
