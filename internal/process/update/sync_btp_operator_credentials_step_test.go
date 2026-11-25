@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -30,7 +30,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	_, backoff, err := step.Run(operation, fixUpdateLogger())
@@ -41,7 +41,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -49,7 +49,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// first run creates the secret
 	_, _, err := step.Run(operation, fixUpdateLogger())
@@ -76,7 +76,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing
 	assert.Equal(t, rvBefore, secret.ResourceVersion)
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -84,7 +84,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testi
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// first run creates the secret
 	_, _, err := step.Run(operation, fixUpdateLogger())
@@ -100,7 +100,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testi
 	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -111,7 +111,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites
 	operation.InstanceDetails.ServiceManagerClusterID = ""
 	// must persist the operation so UpdateOperation can find it
 	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	_, backoff, err := step.Run(operation, fixUpdateLogger())
@@ -127,11 +127,11 @@ func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites
 	assert.NotEmpty(t, secret.Data["cluster_id"])
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SKRClientUnavailableRetries(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SKRClientUnavailableRetries(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(nil))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(nil))
 
 	// when
 	_, backoff, _ := step.Run(operation, fixUpdateLogger())
@@ -140,7 +140,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SKRClientUnavailableRetries(t *t
 	assert.NotZero(t, backoff)
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *testing.T) {
 	// given — secret already exists with full credentials
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -171,7 +171,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredential
 		URL:               "https://token.url",
 		XSAppName:         "sample-app-name",
 	}
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	_, backoff, err := step.Run(operation, fixUpdateLogger())
@@ -190,7 +190,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredential
 	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 	// given — secret exists with skip-reconciliation label
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -213,7 +213,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testi
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	_, backoff, err := step.Run(operation, fixUpdateLogger())
@@ -230,7 +230,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testi
 	assert.Equal(t, []byte("original-secret"), secret.Data["clientsecret"])
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {
+func TestSyncBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {
 	// given — credentials missing ClientID (would fail PrepareSecret)
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -245,7 +245,7 @@ func TestUpdateInjectBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t 
 		URL:               "https://token.url",
 	}
 	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
 	processedOperation, backoff, _ := step.Run(operation, fixUpdateLogger())

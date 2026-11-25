@@ -44,7 +44,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "btp-operator",
-			step:      update.NewInjectBTPOperatorCredentialsStep(db.Operations(), skrK8sClientProvider),
+			step:      update.NewSyncBTPOperatorCredentialsStep(db.Operations(), skrK8sClientProvider),
 			condition: update.WhenBTPOperatorCredentialsProvided,
 		},
 		{

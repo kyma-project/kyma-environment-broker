@@ -23,24 +23,24 @@ const (
 	updateBTPRetryTimeout  = 2 * time.Minute
 )
 
-type InjectBTPOperatorCredentialsStep struct {
+type SyncBTPOperatorCredentialsStep struct {
 	operationManager  *process.OperationManager
 	k8sClientProvider btpmanagercredentials.K8sClientProvider
 }
 
-func NewInjectBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider btpmanagercredentials.K8sClientProvider) *InjectBTPOperatorCredentialsStep {
-	step := &InjectBTPOperatorCredentialsStep{
+func NewSyncBTPOperatorCredentialsStep(os storage.Operations, k8sClientProvider btpmanagercredentials.K8sClientProvider) *SyncBTPOperatorCredentialsStep {
+	step := &SyncBTPOperatorCredentialsStep{
 		k8sClientProvider: k8sClientProvider,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.BtpManagerDependency)
 	return step
 }
 
-func (s *InjectBTPOperatorCredentialsStep) Name() string {
-	return "Update_Inject_BTP_Operator_Credentials"
+func (s *SyncBTPOperatorCredentialsStep) Name() string {
+	return "Sync_BTP_Operator_Credentials"
 }
 
-func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	clusterID := operation.InstanceDetails.ServiceManagerClusterID
 	if clusterID == "" {
 		clusterID = uuid.NewString()
