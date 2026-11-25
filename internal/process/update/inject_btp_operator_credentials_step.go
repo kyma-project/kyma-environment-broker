@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	updateBTPSecretBackoff = 10 * time.Second
 	updateBTPRetryInterval = 5 * time.Second
 	updateBTPRetryTimeout  = 2 * time.Minute
 )
@@ -77,7 +76,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 
 	if getErr != nil && !k8serrors.IsNotFound(getErr) {
 		log.Warn(fmt.Sprintf("failed to get sap-btp-manager secret: %s", getErr))
-		return operation, updateBTPSecretBackoff, nil
+		return s.operationManager.RetryOperation(operation, "failed to get sap-btp-manager secret", getErr, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
 
 	if getErr == nil && current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
@@ -100,7 +99,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 	log.Info("writing sap-btp-manager secret to SKR cluster")
 	if err := btpmanagercredentials.CreateOrUpdateSecret(k8sClient, desired, log); err != nil {
 		log.Warn(fmt.Sprintf("failed to write sap-btp-manager secret: %s", err))
-		return operation, updateBTPSecretBackoff, nil
+		return s.operationManager.RetryOperation(operation, "failed to write sap-btp-manager secret", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
 	return operation, 0, nil
 }
