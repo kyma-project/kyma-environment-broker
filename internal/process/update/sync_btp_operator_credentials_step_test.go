@@ -1,8 +1,10 @@
 package update
 
 import (
+	"bytes"
 	"context"
 	"log/slog"
+	"strings"
 	"testing"
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
@@ -215,8 +217,12 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
+	// capture log output
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, nil))
+
 	// when
-	_, backoff, err := step.Run(operation, fixUpdateLogger())
+	_, backoff, err := step.Run(operation, logger)
 
 	// then — step skips, secret not updated, ResourceVersion unchanged
 	require.NoError(t, err)
@@ -228,6 +234,13 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 	}, secret))
 	assert.Equal(t, "1", secret.ResourceVersion)
 	assert.Equal(t, []byte("original-secret"), secret.Data["clientsecret"])
+
+	// then — log explains WHY the skip happened (visible in Plutono by runtimeID)
+	logOutput := logBuf.String()
+	assert.True(t, strings.Contains(logOutput, "skip-reconciliation label"),
+		"expected skip-reconciliation label message in logs, got: %s", logOutput)
+	assert.True(t, strings.Contains(logOutput, operation.RuntimeID),
+		"expected runtimeID in skip log, got: %s", logOutput)
 }
 
 func TestSyncBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {

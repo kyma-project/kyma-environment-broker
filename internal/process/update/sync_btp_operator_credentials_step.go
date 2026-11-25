@@ -2,7 +2,6 @@ package update
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -48,7 +47,7 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 			op.InstanceDetails.ServiceManagerClusterID = clusterID
 		}, log)
 		if err != nil {
-			log.Error(fmt.Sprintf("failed to update operation: %s", err))
+			log.Error("failed to update operation", "error", err)
 		}
 		if backoff != 0 {
 			log.Error("cannot save cluster ID")
@@ -57,9 +56,11 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 		operation = updatedOperation
 	}
 
+	log.Info("syncing sap-btp-manager secret", "runtimeID", operation.RuntimeID, "clusterID", clusterID)
+
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 	if err != nil {
-		log.Error(fmt.Sprintf("kubernetes client not available: %s", err))
+		log.Error("kubernetes client not available", "runtimeID", operation.RuntimeID, "error", err)
 		return s.operationManager.RetryOperation(operation, "unable to get K8S client", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
 
@@ -70,31 +71,35 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 	}, current)
 
 	if getErr != nil && !k8serrors.IsNotFound(getErr) {
-		log.Warn(fmt.Sprintf("failed to get sap-btp-manager secret: %s", getErr))
+		log.Warn("failed to get sap-btp-manager secret, will retry", "error", getErr)
 		return s.operationManager.RetryOperation(operation, "failed to get sap-btp-manager secret", getErr, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
 
 	if getErr == nil && current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
-		log.Info("sap-btp-manager secret has skip-reconciliation label, skipping update")
+		log.Info("sap-btp-manager secret has skip-reconciliation label — skipping credential sync",
+			"runtimeID", operation.RuntimeID,
+			"reason", "skip-reconciliation label present on secret",
+		)
 		return operation, 0, nil
 	}
 
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
 	desired, err := btpmanagercredentials.PrepareSecret(creds, clusterID)
 	if err != nil {
-		log.Error(fmt.Sprintf("credentials are incomplete, cannot build secret: %s", err))
+		log.Error("credentials are incomplete, cannot build secret", "error", err)
 		return s.operationManager.OperationFailed(operation, "credentials are incomplete", err, log)
 	}
 
 	if getErr == nil && btpmanagercredentials.SecretDataEqual(current, desired) {
-		log.Info("sap-btp-manager secret is up to date, skipping update")
+		log.Info("sap-btp-manager secret already up to date — skipping write", "runtimeID", operation.RuntimeID)
 		return operation, 0, nil
 	}
 
-	log.Info("writing sap-btp-manager secret to SKR cluster")
+	log.Info("writing sap-btp-manager secret to SKR cluster", "runtimeID", operation.RuntimeID, "secretExists", getErr == nil)
 	if err := btpmanagercredentials.CreateOrUpdateSecret(k8sClient, desired, log); err != nil {
-		log.Warn(fmt.Sprintf("failed to write sap-btp-manager secret: %s", err))
+		log.Warn("failed to write sap-btp-manager secret, will retry", "runtimeID", operation.RuntimeID, "error", err)
 		return s.operationManager.RetryOperation(operation, "failed to write sap-btp-manager secret", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
+	log.Info("sap-btp-manager secret synced successfully", "runtimeID", operation.RuntimeID)
 	return operation, 0, nil
 }

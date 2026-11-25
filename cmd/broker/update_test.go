@@ -5886,6 +5886,72 @@ func TestUpdateBTPCredentials_NoCredentialsInPatch_SecretUnchanged(t *testing.T)
 	assert.Equal(t, rvBefore, secretAfter.ResourceVersion, "secret should not be written when no credentials in PATCH")
 }
 
+func TestUpdateBTPCredentials_ContextAndParametersTogether(t *testing.T) {
+	// Verifies that a PATCH carrying both sm_operator_credentials in the context
+	// and a parameters change (machineType) is handled correctly:
+	// - credentials are synced to the sap-btp-manager secret on SKR
+	// - the parameter change is persisted on the instance
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// provision with full credentials
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "initial-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster", "region": "us-east-1"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when — PATCH with both new credentials AND a parameters change
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "new-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"machineType": "m5.2xlarge"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — credentials updated on SKR
+	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, []byte("new-secret"), secret.Data["clientsecret"])
+	assert.Equal(t, []byte("cid"), secret.Data["clientid"])
+
+	// then — parameter change persisted on the instance
+	finalInstance := suite.GetInstance(iid)
+	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "new-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
 func TestUpdateBTPCredentials_SkipReconciliationLabel_SecretNotUpdated(t *testing.T) {
 	// given — provision with credentials so the initial secret is written
 	suite := NewBrokerSuiteTest(t)
