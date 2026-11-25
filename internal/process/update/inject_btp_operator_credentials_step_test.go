@@ -100,25 +100,6 @@ func TestUpdateInjectBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testi
 	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
 }
 
-func TestUpdateInjectBTPOperatorCredentialsStep_EmptyRuntimeIDRetries(t *testing.T) {
-	// given
-	memoryStorage := storage.NewMemoryStorage()
-	scheme := internal.NewSchemeForTests(t)
-	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
-
-	operation := fixUpdateOperationWithClusterIDAndCredentials()
-	operation.RuntimeID = ""
-	step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
-
-	// when
-	processedOperation, backoff, _ := step.Run(operation, fixUpdateLogger())
-
-	// then — retries, does NOT fail the operation permanently
-	assert.NotZero(t, backoff)
-	assert.NotEqual(t, domain.Failed, processedOperation.State)
-}
-
 func TestUpdateInjectBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()

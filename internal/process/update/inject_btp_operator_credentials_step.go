@@ -41,11 +41,6 @@ func (s *InjectBTPOperatorCredentialsStep) Name() string {
 }
 
 func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if operation.RuntimeID == "" {
-		log.Warn("Runtime ID is empty, retrying")
-		return s.operationManager.RetryOperation(operation, "Runtime ID is empty", nil, updateBTPRetryInterval, updateBTPRetryTimeout, log)
-	}
-
 	clusterID := operation.InstanceDetails.ServiceManagerClusterID
 	if clusterID == "" {
 		clusterID = uuid.NewString()
