@@ -868,4 +868,14 @@ func TestSecretDataEqual(t *testing.T) {
 		s2 := &apicorev1.Secret{Data: map[string][]byte{}}
 		assert.True(t, SecretDataEqual(s1, s2))
 	})
+
+	t.Run("absent key in s2 returns nil and is ignored", func(t *testing.T) {
+		s1 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
+		s2 := &apicorev1.Secret{
+			Data: map[string][]byte{
+				"clientsecret": nil,
+			},
+		}
+		assert.True(t, SecretDataEqual(s1, s2))
+	})
 }
