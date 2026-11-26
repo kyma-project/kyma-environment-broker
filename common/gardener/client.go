@@ -63,6 +63,19 @@ func (c *Client) GetCredentialsBindings(labelSelector string) (*unstructured.Uns
 	return c.Resource(CredentialsBindingResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 }
 
+func (c *Client) GetFirstCredentialsBinding(labelSelector string) (*CredentialsBinding, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	list, err := c.Resource(CredentialsBindingResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector, Limit: 1})
+	if err != nil {
+		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, nil
+	}
+	return NewCredentialsBinding(list.Items[0]), nil
+}
+
 func (c *Client) GetShoots() (*unstructured.UnstructuredList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()

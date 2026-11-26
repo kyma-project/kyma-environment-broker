@@ -171,14 +171,14 @@ func (s *ResolveCredentialsBindingStep) getSharedCredentialsBinding(labelSelecto
 }
 
 func (s *ResolveCredentialsBindingStep) getCredentialsBinding(labelSelector string) (*gardener.CredentialsBinding, error) {
-	credentialsBindings, err := s.gardenerClient.GetCredentialsBindings(labelSelector)
+	credentialsBinding, err := s.gardenerClient.GetFirstCredentialsBinding(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("while getting credentials bindings with selector %q: %w", labelSelector, err)
 	}
-	if credentialsBindings == nil || len(credentialsBindings.Items) == 0 {
+	if credentialsBinding == nil {
 		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-	return gardener.NewCredentialsBinding(credentialsBindings.Items[0]), nil
+	return credentialsBinding, nil
 }
 
 func (s *ResolveCredentialsBindingStep) claimCredentialsBinding(credentialsBinding *gardener.CredentialsBinding, tenantName string) (*gardener.CredentialsBinding, error) {
