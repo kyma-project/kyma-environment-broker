@@ -221,6 +221,10 @@ func (b *UpdateEndpoint) update(ctx context.Context, instanceID string, details 
 
 	if b.processingEnabled {
 		previousInstance := *instance
+		if instance.Parameters.ErsContext.SMOperatorCredentials != nil {
+			credsCopy := *instance.Parameters.ErsContext.SMOperatorCredentials
+			previousInstance.Parameters.ErsContext.SMOperatorCredentials = &credsCopy
+		}
 		instance, suspendStatusChange, err := b.processContext(instance, details, lastProvisioningOperation, logger)
 		if err != nil {
 			return domain.UpdateServiceSpec{}, err
@@ -731,6 +735,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	}
 
 	needUpdateCustomResources := b.handleSubaccountMoveRequest(instance, ersContext, logger)
+	b.insertActionForSMCredentialsUpdate(instance, ersContext, existingSMOperatorCredentials, logger)
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
@@ -750,6 +755,30 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	}
 
 	return newInstance, changed, nil
+}
+
+func (b *UpdateEndpoint) insertActionForSMCredentialsUpdate(instance *internal.Instance, ersContext internal.ERSContext, previousCreds *internal.ServiceManagerOperatorCredentials, logger *slog.Logger) {
+	if ersContext.SMOperatorCredentials == nil {
+		return
+	}
+	oldClientID := ""
+	if previousCreds != nil {
+		oldClientID = previousCreds.ClientID
+	}
+	newClientID := ""
+	if instance.Parameters.ErsContext.SMOperatorCredentials != nil {
+		newClientID = instance.Parameters.ErsContext.SMOperatorCredentials.ClientID
+	}
+	message := fmt.Sprintf("Service Manager credentials updated for instance %s.", instance.InstanceID)
+	if err := b.actionStorage.InsertAction(
+		pkg.SMCredentialsUpdateActionType,
+		instance.InstanceID,
+		message,
+		oldClientID,
+		newClientID,
+	); err != nil {
+		logger.Error(fmt.Sprintf("while inserting action %q with message %s for instance ID %s: %v", pkg.SMCredentialsUpdateActionType, message, instance.InstanceID, err))
+	}
 }
 
 func (b *UpdateEndpoint) handleSubaccountMoveRequest(instance *internal.Instance, ersContext internal.ERSContext, logger *slog.Logger) bool {

@@ -3355,3 +3355,249 @@ func TestUpdateAuditLogAccessTemporaryNotAvailable(t *testing.T) {
 		})
 	}
 }
+
+// ---------------------------------------------------------------------------
+// SM operator credentials DB-write tests
+// These tests verify that processContext correctly merges SMOperatorCredentials
+// into the instance row in the DB — particularly that partial PATCH requests
+// (only some credential fields sent) do NOT wipe the existing DB values.
+// ---------------------------------------------------------------------------
+
+func newSMCredentialsUpdateSvc(t *testing.T, st storage.BrokerStorage) *broker.UpdateEndpoint {
+	t.Helper()
+	h := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	kcBuilder := &kcMock.KcBuilder{}
+	return broker.NewUpdate(
+		broker.Config{},
+		st, h, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(t), fixLogger(), dashboardConfig, kcBuilder,
+		fakeKcpK8sClient, newProviderSpec(t), newPlanSpec(t), imConfigFixture, newSchemaService(t),
+		nil, nil, nil, nil, nil, nil, blocklist.OperationBlocklist{},
+	)
+}
+
+func instanceWithSMCreds(creds *internal.ServiceManagerOperatorCredentials) internal.Instance {
+	return internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: broker.AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: broker.AWSPlanID,
+			ErsContext: internal.ERSContext{
+				Active:                ptr.Bool(true),
+				SMOperatorCredentials: creds,
+			},
+		},
+	}
+}
+
+func fullSMCreds() *internal.ServiceManagerOperatorCredentials {
+	return &internal.ServiceManagerOperatorCredentials{
+		ClientID:          "original-cid",
+		ClientSecret:      "original-secret",
+		ServiceManagerURL: "https://sm.original",
+		URL:               "https://token.original",
+		XSAppName:         "original-app",
+	}
+}
+
+func TestUpdateEndpoint_SMCredentials_FullRotation_PersistedToInstanceDB(t *testing.T) {
+	// given
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	// when — PATCH with completely new full credentials
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID: "",
+		PlanID:    broker.AWSPlanID,
+		RawContext: json.RawMessage(`{
+			"sm_operator_credentials": {
+				"clientid":     "new-cid",
+				"clientsecret": "new-secret",
+				"sm_url":       "https://sm.new",
+				"url":          "https://token.new",
+				"xsappname":    "new-app"
+			}
+		}`),
+	}, true)
+	require.NoError(t, err)
+
+	// then — all 5 fields updated in DB
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "new-cid", creds.ClientID)
+	assert.Equal(t, "new-secret", creds.ClientSecret)
+	assert.Equal(t, "https://sm.new", creds.ServiceManagerURL)
+	assert.Equal(t, "https://token.new", creds.URL)
+	assert.Equal(t, "new-app", creds.XSAppName)
+}
+
+func TestUpdateEndpoint_SMCredentials_PartialRotation_OtherFieldsPreservedInDB(t *testing.T) {
+	// given
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	// when — PATCH with only clientsecret (CIS rotates the OAuth2 binding but only
+	// sends the changed fields — the other fields are absent/empty in JSON)
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"sm_operator_credentials":{"clientsecret":"rotated-secret"}}`),
+	}, true)
+	require.NoError(t, err)
+
+	// then — clientsecret updated, all other fields preserved in DB
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "original-cid", creds.ClientID, "clientid must NOT be wiped by partial PATCH")
+	assert.Equal(t, "rotated-secret", creds.ClientSecret)
+	assert.Equal(t, "https://sm.original", creds.ServiceManagerURL, "sm_url must NOT be wiped")
+	assert.Equal(t, "https://token.original", creds.URL, "url must NOT be wiped")
+	assert.Equal(t, "original-app", creds.XSAppName, "xsappname must NOT be wiped")
+}
+
+func TestUpdateEndpoint_SMCredentials_PartialRotation_OnlyClientID(t *testing.T) {
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"sm_operator_credentials":{"clientid":"rotated-cid"}}`),
+	}, true)
+	require.NoError(t, err)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "rotated-cid", creds.ClientID)
+	assert.Equal(t, "original-secret", creds.ClientSecret, "clientsecret must NOT be wiped")
+	assert.Equal(t, "https://sm.original", creds.ServiceManagerURL)
+	assert.Equal(t, "https://token.original", creds.URL)
+}
+
+func TestUpdateEndpoint_SMCredentials_NilInPATCH_ExistingCredsPreserved(t *testing.T) {
+	// No sm_operator_credentials in PATCH — existing creds must be untouched.
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"active":true}`),
+	}, true)
+	require.NoError(t, err)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "original-cid", creds.ClientID)
+	assert.Equal(t, "original-secret", creds.ClientSecret)
+	assert.Equal(t, "https://sm.original", creds.ServiceManagerURL)
+	assert.Equal(t, "https://token.original", creds.URL)
+}
+
+func TestUpdateEndpoint_SMCredentials_EmptyStructInPATCH_ExistingCredsPreserved(t *testing.T) {
+	// {"sm_operator_credentials":{}} — pointer non-nil, all fields empty string.
+	// Must not wipe existing creds.
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"sm_operator_credentials":{}}`),
+	}, true)
+	require.NoError(t, err)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "original-cid", creds.ClientID)
+	assert.Equal(t, "original-secret", creds.ClientSecret)
+	assert.Equal(t, "https://sm.original", creds.ServiceManagerURL)
+	assert.Equal(t, "https://token.original", creds.URL)
+}
+
+func TestUpdateEndpoint_SMCredentials_NilExistingCreds_FullCredsSet(t *testing.T) {
+	// Instance was provisioned without SM creds. First PATCH with full creds must set all fields.
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(nil)))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID: "",
+		PlanID:    broker.AWSPlanID,
+		RawContext: json.RawMessage(`{
+			"sm_operator_credentials": {
+				"clientid":     "first-cid",
+				"clientsecret": "first-secret",
+				"sm_url":       "https://sm.first",
+				"url":          "https://token.first"
+			}
+		}`),
+	}, true)
+	require.NoError(t, err)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "first-cid", creds.ClientID)
+	assert.Equal(t, "first-secret", creds.ClientSecret)
+	assert.Equal(t, "https://sm.first", creds.ServiceManagerURL)
+	assert.Equal(t, "https://token.first", creds.URL)
+}
+
+func TestUpdateEndpoint_SMCredentials_MultiplePartialPatches_AccumulateCorrectly(t *testing.T) {
+	// Two sequential partial PATCHes: first rotates clientsecret, second rotates sm_url.
+	// After both, the DB row must have the original clientid + new clientsecret + new sm_url.
+	st := storage.NewMemoryStorage()
+	require.NoError(t, st.Instances().Insert(instanceWithSMCreds(fullSMCreds())))
+	require.NoError(t, st.Operations().InsertOperation(fixProvisioningOperation("01")))
+	svc := newSMCredentialsUpdateSvc(t, st)
+
+	// first PATCH: rotate clientsecret
+	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"sm_operator_credentials":{"clientsecret":"secret-v2"}}`),
+	}, true)
+	require.NoError(t, err)
+
+	// second PATCH: rotate sm_url
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:  "",
+		PlanID:     broker.AWSPlanID,
+		RawContext: json.RawMessage(`{"sm_operator_credentials":{"sm_url":"https://sm.v2"}}`),
+	}, true)
+	require.NoError(t, err)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	creds := inst.Parameters.ErsContext.SMOperatorCredentials
+	require.NotNil(t, creds)
+	assert.Equal(t, "original-cid", creds.ClientID, "clientid must survive both patches")
+	assert.Equal(t, "secret-v2", creds.ClientSecret, "clientsecret from first patch must be kept")
+	assert.Equal(t, "https://sm.v2", creds.ServiceManagerURL, "sm_url from second patch must be applied")
+	assert.Equal(t, "https://token.original", creds.URL, "url must survive both patches")
+}

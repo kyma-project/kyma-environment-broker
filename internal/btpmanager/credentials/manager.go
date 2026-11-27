@@ -37,7 +37,7 @@ const (
 	keb                     = "kcp-kyma-environment-broker"
 	kcpNamespace            = "kcp-system"
 	instanceIdLabel         = "kyma-project.io/instance-id"
-	skipReconciliationLabel = "kyma-project.io/skip-reconciliation"
+	SkipReconciliationLabel = "kyma-project.io/skip-reconciliation"
 )
 
 const (
@@ -210,7 +210,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		return false, false, fmt.Errorf("while getting secret from cluster for instance %s : %s", instance.InstanceID, err)
 	}
 
-	if value, ok := currentSecret.Labels[skipReconciliationLabel]; ok && value == "true" {
+	if value, ok := currentSecret.Labels[SkipReconciliationLabel]; ok && value == "true" {
 		s.logger.Info(fmt.Sprintf("skip reconciliation of sap-btp-manager secret for instance %s", instance.InstanceID))
 		return false, true, nil
 	}
@@ -234,6 +234,34 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	}
 
 	return false, false, nil
+}
+
+// SecretStableFieldsMatch reports whether the sm_url and tokenurl in the existing secret
+// match the corresponding fields in the incoming credentials.
+// These fields never change when only a service binding is rotated (only clientsecret changes).
+// A match means the skip-reconciliation label was set for credential rotation, not for user management.
+// Note: clientid is intentionally excluded — it is stored encrypted in the DB and cannot be compared.
+func SecretStableFieldsMatch(existing *v1.Secret, creds *internal.ServiceManagerOperatorCredentials) bool {
+	if existing == nil || creds == nil {
+		return false
+	}
+	return reflect.DeepEqual(existing.Data[secretSmUrl], []byte(creds.ServiceManagerURL)) &&
+		reflect.DeepEqual(existing.Data[secretTokenUrl], []byte(creds.URL))
+}
+
+// SecretSatisfiesDesired reports whether s1 already contains all non-empty values from s2.
+// Keys that are empty (or absent) in s2 are ignored — they are treated as "not provided".
+func SecretSatisfiesDesired(s1, s2 *v1.Secret) bool {
+	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
+		desired := s2.Data[key]
+		if len(desired) == 0 {
+			continue
+		}
+		if !reflect.DeepEqual(s1.Data[key], desired) {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
@@ -275,7 +303,7 @@ func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clus
 		return nil, fmt.Errorf("client Id not set")
 	}
 	if credentials.ClientSecret == "" {
-		return nil, fmt.Errorf("clients ecret not set")
+		return nil, fmt.Errorf("clientsecret not set")
 	}
 	if credentials.ServiceManagerURL == "" {
 		return nil, fmt.Errorf("service manager url not set")

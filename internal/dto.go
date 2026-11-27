@@ -128,7 +128,24 @@ func InheritMissingERSContext(currentOperation, previousOperation ERSContext) ER
 
 func UpdateInstanceERSContext(instance, operation ERSContext) ERSContext {
 	if operation.SMOperatorCredentials != nil {
-		instance.SMOperatorCredentials = operation.SMOperatorCredentials
+		if instance.SMOperatorCredentials == nil {
+			instance.SMOperatorCredentials = &ServiceManagerOperatorCredentials{}
+		}
+		if operation.SMOperatorCredentials.ClientID != "" {
+			instance.SMOperatorCredentials.ClientID = operation.SMOperatorCredentials.ClientID
+		}
+		if operation.SMOperatorCredentials.ClientSecret != "" {
+			instance.SMOperatorCredentials.ClientSecret = operation.SMOperatorCredentials.ClientSecret
+		}
+		if operation.SMOperatorCredentials.ServiceManagerURL != "" {
+			instance.SMOperatorCredentials.ServiceManagerURL = operation.SMOperatorCredentials.ServiceManagerURL
+		}
+		if operation.SMOperatorCredentials.URL != "" {
+			instance.SMOperatorCredentials.URL = operation.SMOperatorCredentials.URL
+		}
+		if operation.SMOperatorCredentials.XSAppName != "" {
+			instance.SMOperatorCredentials.XSAppName = operation.SMOperatorCredentials.XSAppName
+		}
 	}
 	if operation.CommercialModel != nil {
 		instance.CommercialModel = operation.CommercialModel

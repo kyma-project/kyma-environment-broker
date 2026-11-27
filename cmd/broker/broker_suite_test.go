@@ -226,7 +226,7 @@ func newBrokerSuiteTest(t *testing.T, o *suiteOptions) *BrokerSuiteTest {
 	provisionManager.SpeedUp(testSuiteSpeedUpFactor)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, k8sClientProvider, cli, log, workersProvider(cfg.InfrastructureManager, providerSpec),
 		schemaService, plansSpec, configProvider, providerSpec, gardenerClientWithNamespace, factory, nil)
 	updateQueue.SpeedUp(testSuiteSpeedUpFactor)
 	updateManager.SpeedUp(testSuiteSpeedUpFactor)
@@ -1045,11 +1045,11 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByKIM(opID string) {
 	s.k8sDeletionObjectTracker.ProcessRuntimeDeletion(runtime.Name)
 }
 
-func (s *BrokerSuiteTest) AssertBTPOperatorSecret() {
+func (s *BrokerSuiteTest) GetSKRSecret(namespace, name string) *corev1.Secret {
 	secret := &corev1.Secret{}
-	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: "kyma-installer", Name: "btp-operator"}, secret)
+	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, secret)
 	require.NoError(s.t, err)
-	assert.Equal(s.t, "btp-operator", secret.Name)
+	return secret
 }
 
 func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider imv1.Provider, name, machineType string, autoScalerMin, autoScalerMax, zonesNumer int) {

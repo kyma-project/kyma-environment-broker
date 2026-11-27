@@ -10,7 +10,8 @@ Actions are stored in persistent storage and are not deleted even when a runtime
 
 ## Supported Action Types
 
-|     Action Type      | Description                                                                                                              |
-|:--------------------:|--------------------------------------------------------------------------------------------------------------------------|
-| `SubaccountMovement` | Represents the reassignment of a Kyma runtime to a different global account. See [Subaccount Movement](03-75-subaccount-movement.md). |
-|     `PlanUpdate`     | Indicates a change in the service plan for a Kyma runtime. See [Service Plan Updates](03-83-plan-updates.md).                          |
+|          Action Type          | Description                                                                                                              |
+|:-----------------------------:|--------------------------------------------------------------------------------------------------------------------------|
+|      `SubaccountMovement`     | Represents the reassignment of a Kyma runtime to a different global account. See [Subaccount Movement](03-75-subaccount-movement.md). |
+|          `PlanUpdate`         | Indicates a change in the service plan for a Kyma runtime. See [Service Plan Updates](03-83-plan-updates.md).                          |
+| `SMCredentialsUpdate`         | Records an update to the Service Manager operator credentials (`sm_operator_credentials`) for a Kyma runtime. The `oldValue` and `newValue` fields contain the previous and new OAuth2 client IDs. |

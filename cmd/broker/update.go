@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/hyperscalers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -21,7 +22,7 @@ import (
 )
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
-	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
+	cfg Config, skrK8sClientProvider btpmanagercredentials.K8sClientProvider, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService, planSpec *configuration.PlanSpecifications, configProvider config.Provider,
 	providerSpec *configuration.ProviderSpec, gardenerClient *gardener.Client, factory hyperscalers.Factory, kcrVolumeProvider *provider.KCRVolumeProvider) *process.Queue {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
@@ -40,6 +41,11 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		{
 			stage: "cluster",
 			step:  update.NewInitialisationStep(db),
+		},
+		{
+			stage:     "btp-operator",
+			step:      update.NewSyncBTPOperatorCredentialsStep(db.Operations(), skrK8sClientProvider),
+			condition: update.WhenBTPOperatorCredentialsProvided,
 		},
 		{
 			stage: "runtime_resource",
