@@ -395,6 +395,7 @@ type ActionType string
 const (
 	PlanUpdateActionType         ActionType = "plan_update"
 	SubaccountMovementActionType ActionType = "subaccount_movement"
+	SMCredentialsUpdateActionType ActionType = "sm_credentials_update"
 )
 
 type Action struct {
