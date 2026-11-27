@@ -168,6 +168,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, len(testDataIndexes)-1, stats.updatedCnt)
 			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
 			assert.Equal(t, 1, stats.skippedCnt)
+			assert.Equal(t, 1, stats.skippedDiffClusterIDDiffSmURL)
 
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistencyExceptSkippedInstance(labeledSkrInstanceId)
@@ -184,6 +185,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
 			assert.Equal(t, 0, stats.updatedCnt)
 			assert.Equal(t, 1, stats.skippedCnt)
+			assert.Equal(t, 1, stats.skippedDiffClusterIDDiffSmURL)
 			environment.assertClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
 
 			// then we remove the secret
@@ -199,6 +201,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
 			assert.Equal(t, 1, stats.updatedCnt)
 			assert.Zero(t, stats.skippedCnt)
+			assert.Zero(t, stats.skippedDiffClusterIDDiffSmURL)
 
 			environment.assureConsistency()
 			environment.assertAllSecretDataAreSet()
@@ -231,6 +234,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, len(testDataIndexes)-1, stats.updatedCnt)
 			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
 			assert.Equal(t, 1, stats.skippedCnt)
+			assert.Equal(t, 1, stats.skippedDiffClusterIDDiffSmURL)
 
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistencyExceptSkippedInstance(labeledSkrInstanceId)
@@ -247,6 +251,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
 			assert.Equal(t, 0, stats.updatedCnt)
 			assert.Equal(t, 1, stats.skippedCnt)
+			assert.Equal(t, 1, stats.skippedDiffClusterIDDiffSmURL)
 			environment.assertClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
 
 			// then we change the label
@@ -262,6 +267,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
 			assert.Equal(t, 1, stats.updatedCnt)
 			assert.Zero(t, stats.skippedCnt)
+			assert.Zero(t, stats.skippedDiffClusterIDDiffSmURL)
 
 			environment.assureConsistency()
 			environment.assertAllSecretDataAreSet()

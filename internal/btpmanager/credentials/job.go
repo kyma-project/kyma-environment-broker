@@ -21,11 +21,12 @@ type Job struct {
 }
 
 type ReconcileStats struct {
-	instanceCnt     int
-	updatedCnt      int
-	updateErrorsCnt int
-	skippedCnt      int
-	notChangedCnt   int
+	instanceCnt                   int
+	updatedCnt                    int
+	updateErrorsCnt               int
+	skippedCnt                    int
+	notChangedCnt                 int
+	skippedDiffClusterIDDiffSmURL int
 }
 
 func NewJob(manager *Manager, logs *slog.Logger, metricsRegistry *prometheus.Registry, metricsPort string, appName string) *Job {
