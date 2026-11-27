@@ -192,8 +192,9 @@ func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *tes
 	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
 }
 
-func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
-	// given — secret exists with skip-reconciliation label
+func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecret(t *testing.T) {
+	// given — secret has skip-reconciliation label AND stable fields (clientid, sm_url, tokenurl) differ
+	// from the incoming credentials — user intentionally manages this secret
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
 	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
@@ -208,7 +209,11 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 			ResourceVersion: "1",
 		},
 		Data: map[string][]byte{
-			"clientsecret": []byte("original-secret"),
+			"clientid":     []byte("different-client-id"), // differs from incoming creds
+			"clientsecret": []byte("user-managed-secret"),
+			"sm_url":       []byte("https://user-managed-sm.url"),
+			"tokenurl":     []byte("https://user-managed-token.url"),
+			"cluster_id":   []byte("cluster-id"),
 		},
 	}
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
@@ -224,7 +229,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 	// when
 	_, backoff, err := step.Run(operation, logger)
 
-	// then — step skips, secret not updated, ResourceVersion unchanged
+	// then — step skips entirely, secret not touched
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	secret := &apicorev1.Secret{}
@@ -232,8 +237,8 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
 		Name:      btpmanagercredentials.BtpManagerSecretName,
 	}, secret))
-	assert.Equal(t, "1", secret.ResourceVersion)
-	assert.Equal(t, []byte("original-secret"), secret.Data["clientsecret"])
+	assert.Equal(t, "1", secret.ResourceVersion, "secret must not be written when user manages it")
+	assert.Equal(t, "true", secret.Labels[btpmanagercredentials.SkipReconciliationLabel], "skip-reconciliation label must be preserved")
 
 	// then — log explains WHY the skip happened (visible in Plutono by runtimeID)
 	logOutput := logBuf.String()
@@ -241,6 +246,63 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel(t *testing.T) {
 		"expected skip-reconciliation label message in logs, got: %s", logOutput)
 	assert.True(t, strings.Contains(logOutput, operation.RuntimeID),
 		"expected runtimeID in skip log, got: %s", logOutput)
+}
+
+func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_RotationOnly(t *testing.T) {
+	// given — secret has skip-reconciliation label but stable fields (clientid, sm_url, tokenurl) match
+	// the incoming credentials — the label was set only to protect the secret during rotation
+	memoryStorage := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests(t)
+	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
+
+	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
+	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
+
+	// secret has the same clientid/sm_url/tokenurl as the incoming creds, but old clientsecret
+	existingSecret := &apicorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      btpmanagercredentials.BtpManagerSecretName,
+			Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+			Labels: map[string]string{
+				btpmanagercredentials.SkipReconciliationLabel: "true",
+			},
+			ResourceVersion: "1",
+		},
+		Data: map[string][]byte{
+			"clientid":     []byte(creds.ClientID),
+			"clientsecret": []byte("old-secret"),
+			"sm_url":       []byte(creds.ServiceManagerURL),
+			"tokenurl":     []byte(creds.URL),
+			"cluster_id":   []byte(operation.InstanceDetails.ServiceManagerClusterID),
+		},
+	}
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// capture log output
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, nil))
+
+	// when
+	_, backoff, err := step.Run(operation, logger)
+
+	// then — label removed and new clientsecret written
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+	secret := &apicorev1.Secret{}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+		Name:      btpmanagercredentials.BtpManagerSecretName,
+	}, secret))
+	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"], "new clientsecret must be written")
+	assert.NotEqual(t, "true", secret.Labels[btpmanagercredentials.SkipReconciliationLabel], "skip-reconciliation label must be removed")
+
+	// then — log records that label was removed
+	logOutput := logBuf.String()
+	assert.True(t, strings.Contains(logOutput, "removing label"),
+		"expected label-removal message in logs, got: %s", logOutput)
 }
 
 func TestSyncBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {

@@ -5952,8 +5952,9 @@ func TestUpdateBTPCredentials_ContextAndParametersTogether(t *testing.T) {
 	assert.Equal(t, "new-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
 }
 
-func TestUpdateBTPCredentials_SkipReconciliationLabel_SecretNotUpdated(t *testing.T) {
-	// given — provision with credentials so the initial secret is written
+func TestUpdateBTPCredentials_SkipReconciliationLabel_RotationOnly_LabelRemovedAndSecretUpdated(t *testing.T) {
+	// Secret has skip-reconciliation=true but clientid/sm_url/tokenurl match the incoming creds.
+	// This means the label was set only to protect during rotation — KEB removes it and writes new creds.
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -5981,13 +5982,12 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_SecretNotUpdated(t *testin
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
-	// add skip-reconciliation label to the secret on the fake SKR client
+	// add skip-reconciliation label — simulates what an operator does before triggering a rotation
 	existingSecret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	existingSecret.Labels[btpmgrcredentials.SkipReconciliationLabel] = "true"
 	require.NoError(t, suite.k8sSKR.Update(context.Background(), existingSecret))
-	rvWithLabel := existingSecret.ResourceVersion
 
-	// when — PATCH with new credentials
+	// when — PATCH with same clientid/url/sm_url but rotated clientsecret
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -6008,8 +6008,74 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_SecretNotUpdated(t *testin
 	updateOpID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
-	// then — secret not updated because skip-reconciliation label is set
+	// then — label removed and new clientsecret written
 	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
-	assert.Equal(t, rvWithLabel, secretAfter.ResourceVersion, "secret should not be written when skip-reconciliation label is set")
-	assert.Equal(t, []byte("initial-secret"), secretAfter.Data["clientsecret"], "clientsecret should remain unchanged")
+	assert.NotEqual(t, "true", secretAfter.Labels[btpmgrcredentials.SkipReconciliationLabel], "skip-reconciliation label must be removed")
+	assert.Equal(t, []byte("rotated-secret"), secretAfter.Data["clientsecret"], "new clientsecret must be written")
+}
+
+func TestUpdateBTPCredentials_SkipReconciliationLabel_UserManagedSecret_NotTouched(t *testing.T) {
+	// Secret has skip-reconciliation=true AND clientid differs from the incoming creds.
+	// The user intentionally manages this secret — KEB must not touch it.
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "initial-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster", "region": "us-east-1"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// overwrite secret with a different clientid and add skip-reconciliation label
+	// — simulates user who replaced the secret with their own SM binding
+	existingSecret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	existingSecret.Labels[btpmgrcredentials.SkipReconciliationLabel] = "true"
+	existingSecret.Data["clientid"] = []byte("user-managed-client-id") // different from "cid"
+	require.NoError(t, suite.k8sSKR.Update(context.Background(), existingSecret))
+	rvWithLabel := existingSecret.ResourceVersion
+
+	// when — PATCH with new credentials (clientid still "cid", not matching "user-managed-client-id")
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "rotated-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — secret not touched at all
+	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, rvWithLabel, secretAfter.ResourceVersion, "secret must not be written when user manages it")
+	assert.Equal(t, "true", secretAfter.Labels[btpmgrcredentials.SkipReconciliationLabel], "skip-reconciliation label must be preserved")
+	assert.Equal(t, []byte("user-managed-client-id"), secretAfter.Data["clientid"], "user clientid must be preserved")
 }

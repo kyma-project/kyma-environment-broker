@@ -76,11 +76,23 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 	}
 
 	if getErr == nil && current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
-		log.Info("sap-btp-manager secret has skip-reconciliation label — skipping credential sync",
+		creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
+		if !btpmanagercredentials.SecretStableFieldsMatch(current, creds) {
+			log.Info("sap-btp-manager secret has skip-reconciliation label and stable fields differ — user manages this secret, skipping",
+				"runtimeID", operation.RuntimeID,
+			)
+			return operation, 0, nil
+		}
+		// stable fields (clientid, sm_url, tokenurl) match — the label was set only for rotation
+		// remove it and fall through to write the new credentials
+		log.Info("sap-btp-manager secret has skip-reconciliation label but stable fields match — removing label and syncing credentials",
 			"runtimeID", operation.RuntimeID,
-			"reason", "skip-reconciliation label present on secret",
 		)
-		return operation, 0, nil
+		delete(current.Labels, btpmanagercredentials.SkipReconciliationLabel)
+		if err := k8sClient.Update(context.Background(), current); err != nil {
+			log.Warn("failed to remove skip-reconciliation label, will retry", "runtimeID", operation.RuntimeID, "error", err)
+			return s.operationManager.RetryOperation(operation, "failed to remove skip-reconciliation label", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
+		}
 	}
 
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
