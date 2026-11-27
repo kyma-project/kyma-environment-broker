@@ -5628,6 +5628,12 @@ func TestUpdateBTPCredentials_SecretUpdatedOnSKR(t *testing.T) {
 	updateOpID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
+	// then — update operation's PreviousParameters holds the old credentials
+	updateOp := suite.GetOperation(updateOpID)
+	require.NotNil(t, updateOp.PreviousParameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "old-secret", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "cid", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientID)
+
 	// then — DB instance has the new credentials persisted
 	finalInstance := suite.GetInstance(iid)
 	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
@@ -5637,7 +5643,7 @@ func TestUpdateBTPCredentials_SecretUpdatedOnSKR(t *testing.T) {
 	assert.Equal(t, "https://token.url", finalInstance.Parameters.ErsContext.SMOperatorCredentials.URL)
 
 	// then — sap-btp-manager on the SKR cluster has the new credentials
-	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("new-secret"), secret.Data["clientsecret"])
 	assert.Equal(t, []byte("cid"), secret.Data["clientid"])
 	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
@@ -5678,7 +5684,7 @@ func TestUpdateBTPCredentials_NoWriteWhenUnchanged(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// capture ResourceVersion after provisioning wrote the initial secret
-	secretBefore := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretBefore := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	rvBefore := secretBefore.ResourceVersion
 
 	// when — PATCH with the same credentials (no rotation)
@@ -5703,7 +5709,7 @@ func TestUpdateBTPCredentials_NoWriteWhenUnchanged(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// then — secret ResourceVersion is unchanged (no write to SKR)
-	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretAfter := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, rvBefore, secretAfter.ResourceVersion, "secret should not have been written when credentials are unchanged")
 }
 
@@ -5768,8 +5774,14 @@ func TestUpdateBTPCredentials_PartialCredentials(t *testing.T) {
 	assert.Equal(t, "original-secret", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientSecret)
 	assert.Equal(t, "original-cid", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientID)
 
+	// then — the instance the operation belongs to has the new merged credentials
+	updatedInstance := suite.GetInstance(updateOp.InstanceID)
+	require.NotNil(t, updatedInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "rotated-secret", updatedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "original-cid", updatedInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+
 	// then — sap-btp-manager on SKR reflects the same merged state
-	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
 	assert.Equal(t, []byte("original-cid"), secret.Data["clientid"])
 	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
@@ -5828,7 +5840,7 @@ func TestUpdateBTPCredentials_SecretHasKEBLabelsAndAnnotations(t *testing.T) {
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then — secret carries the KEB-managed labels and warning annotation
-	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, btpmgrcredentials.BtpManagerLabels, secret.Labels)
 	assert.Equal(t, btpmgrcredentials.BtpManagerAnnotations, secret.Annotations)
 }
@@ -5862,7 +5874,7 @@ func TestUpdateBTPCredentials_NoCredentialsInPatch_SecretUnchanged(t *testing.T)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
-	secretBefore := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretBefore := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	rvBefore := secretBefore.ResourceVersion
 
 	// when — PATCH with machine type only, no sm_operator_credentials
@@ -5882,8 +5894,14 @@ func TestUpdateBTPCredentials_NoCredentialsInPatch_SecretUnchanged(t *testing.T)
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then — secret not touched (step gated on SMOperatorCredentials != nil)
-	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretAfter := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, rvBefore, secretAfter.ResourceVersion, "secret should not be written when no credentials in PATCH")
+
+	// then — instance credentials are unchanged in the DB
+	finalInstance := suite.GetInstance(iid)
+	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "initial-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "cid", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
 }
 
 func TestUpdateBTPCredentials_ContextAndParametersTogether(t *testing.T) {
@@ -5942,7 +5960,7 @@ func TestUpdateBTPCredentials_ContextAndParametersTogether(t *testing.T) {
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then — credentials updated on SKR
-	secret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, []byte("new-secret"), secret.Data["clientsecret"])
 	assert.Equal(t, []byte("cid"), secret.Data["clientid"])
 
@@ -5950,6 +5968,76 @@ func TestUpdateBTPCredentials_ContextAndParametersTogether(t *testing.T) {
 	finalInstance := suite.GetInstance(iid)
 	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
 	assert.Equal(t, "new-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+}
+
+func TestUpdateBTPCredentials_PartialCredentialsAndParametersTogether(t *testing.T) {
+	// Verifies that a PATCH carrying only clientsecret (partial credentials) together with a
+	// parameters change (machineType) correctly merges credentials and persists both changes.
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// provision with full credentials
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "original-cid",
+					"clientsecret": "original-secret",
+					"url": "https://token.url",
+					"sm_url": "https://sm.url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"name": "testing-cluster", "region": "us-east-1"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when — PATCH with only clientsecret AND a parameters change
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+				"sm_operator_credentials": {
+					"clientsecret": "rotated-secret"
+				},
+				"globalaccount_id": "g-account-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {"machineType": "m5.2xlarge"}
+		}`)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	updateOpID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOpID, domain.Succeeded)
+
+	// then — SKR secret has the new clientsecret, other fields preserved
+	secret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"])
+	assert.Equal(t, []byte("original-cid"), secret.Data["clientid"])
+	assert.Equal(t, []byte("https://sm.url"), secret.Data["sm_url"])
+	assert.Equal(t, []byte("https://token.url"), secret.Data["tokenurl"])
+
+	// then — instance has merged credentials and the parameter change
+	finalInstance := suite.GetInstance(iid)
+	require.NotNil(t, finalInstance.Parameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "rotated-secret", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "original-cid", finalInstance.Parameters.ErsContext.SMOperatorCredentials.ClientID)
+
+	// then — PreviousParameters holds the original credentials
+	updateOp := suite.GetOperation(updateOpID)
+	require.NotNil(t, updateOp.PreviousParameters.ErsContext.SMOperatorCredentials)
+	assert.Equal(t, "original-secret", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientSecret)
+	assert.Equal(t, "original-cid", updateOp.PreviousParameters.ErsContext.SMOperatorCredentials.ClientID)
 }
 
 func TestUpdateBTPCredentials_SkipReconciliationLabel_RotationOnly_LabelRemovedAndSecretUpdated(t *testing.T) {
@@ -5983,7 +6071,7 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_RotationOnly_LabelRemovedA
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// add skip-reconciliation label — simulates what an operator does before triggering a rotation
-	existingSecret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	existingSecret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	existingSecret.Labels[btpmgrcredentials.SkipReconciliationLabel] = "true"
 	require.NoError(t, suite.k8sSKR.Update(context.Background(), existingSecret))
 
@@ -6009,7 +6097,7 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_RotationOnly_LabelRemovedA
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then — label removed and new clientsecret written
-	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretAfter := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.NotEqual(t, "true", secretAfter.Labels[btpmgrcredentials.SkipReconciliationLabel], "skip-reconciliation label must be removed")
 	assert.Equal(t, []byte("rotated-secret"), secretAfter.Data["clientsecret"], "new clientsecret must be written")
 }
@@ -6046,7 +6134,7 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_UserManagedSecret_NotTouch
 
 	// overwrite secret with different sm_url/tokenurl and add skip-reconciliation label
 	// — simulates user who replaced the secret with credentials from a different SM instance
-	existingSecret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	existingSecret := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	existingSecret.Labels[btpmgrcredentials.SkipReconciliationLabel] = "true"
 	existingSecret.Data["sm_url"] = []byte("https://user-managed-sm.url")        // different from "https://sm.url"
 	existingSecret.Data["tokenurl"] = []byte("https://user-managed-token.url")  // different from "https://token.url"
@@ -6075,7 +6163,7 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_UserManagedSecret_NotTouch
 	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 
 	// then — secret not touched at all
-	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
+	secretAfter := suite.GetSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, rvWithLabel, secretAfter.ResourceVersion, "secret must not be written when user manages it")
 	assert.Equal(t, "true", secretAfter.Labels[btpmgrcredentials.SkipReconciliationLabel], "skip-reconciliation label must be preserved")
 	assert.Equal(t, []byte("https://user-managed-sm.url"), secretAfter.Data["sm_url"], "user sm_url must be preserved")

@@ -249,9 +249,9 @@ func SecretStableFieldsMatch(existing *v1.Secret, creds *internal.ServiceManager
 		reflect.DeepEqual(existing.Data[secretTokenUrl], []byte(creds.URL))
 }
 
-// SecretDataEqual reports whether s1 already contains all non-empty values from s2.
+// SecretSatisfiesDesired reports whether s1 already contains all non-empty values from s2.
 // Keys that are empty (or absent) in s2 are ignored — they are treated as "not provided".
-func SecretDataEqual(s1, s2 *v1.Secret) bool {
+func SecretSatisfiesDesired(s1, s2 *v1.Secret) bool {
 	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
 		desired := s2.Data[key]
 		if len(desired) == 0 {

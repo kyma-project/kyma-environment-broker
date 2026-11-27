@@ -1045,7 +1045,7 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByKIM(opID string) {
 	s.k8sDeletionObjectTracker.ProcessRuntimeDeletion(runtime.Name)
 }
 
-func (s *BrokerSuiteTest) AssertSKRSecret(namespace, name string) *corev1.Secret {
+func (s *BrokerSuiteTest) GetSKRSecret(namespace, name string) *corev1.Secret {
 	secret := &corev1.Secret{}
 	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, secret)
 	require.NoError(s.t, err)

@@ -811,7 +811,7 @@ func getString(m map[string][]byte, key string) string {
 	return string(value)
 }
 
-func TestSecretDataEqual(t *testing.T) {
+func TestSecretSatisfiesDesired(t *testing.T) {
 	secret := func(clientid, clientsecret, smURL, tokenURL, clusterID string) *apicorev1.Secret {
 		return &apicorev1.Secret{
 			Data: map[string][]byte{
@@ -826,31 +826,31 @@ func TestSecretDataEqual(t *testing.T) {
 
 	t.Run("identical secrets are equal", func(t *testing.T) {
 		s := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
-		assert.True(t, SecretDataEqual(s, s))
+		assert.True(t, SecretSatisfiesDesired(s, s))
 	})
 
 	t.Run("equal secrets with same values are equal", func(t *testing.T) {
 		s1 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
 		s2 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
-		assert.True(t, SecretDataEqual(s1, s2))
+		assert.True(t, SecretSatisfiesDesired(s1, s2))
 	})
 
 	t.Run("different clientsecret is not equal", func(t *testing.T) {
 		s1 := secret("cid", "old-secret", "https://sm.url", "https://token.url", "cluster-1")
 		s2 := secret("cid", "new-secret", "https://sm.url", "https://token.url", "cluster-1")
-		assert.False(t, SecretDataEqual(s1, s2))
+		assert.False(t, SecretSatisfiesDesired(s1, s2))
 	})
 
 	t.Run("different clientid is not equal", func(t *testing.T) {
 		s1 := secret("old-cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
 		s2 := secret("new-cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
-		assert.False(t, SecretDataEqual(s1, s2))
+		assert.False(t, SecretSatisfiesDesired(s1, s2))
 	})
 
 	t.Run("different cluster_id is not equal", func(t *testing.T) {
 		s1 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
 		s2 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-2")
-		assert.False(t, SecretDataEqual(s1, s2))
+		assert.False(t, SecretSatisfiesDesired(s1, s2))
 	})
 
 	t.Run("empty key in s2 is ignored", func(t *testing.T) {
@@ -860,22 +860,12 @@ func TestSecretDataEqual(t *testing.T) {
 				"clientsecret": []byte("secret"),
 			},
 		}
-		assert.True(t, SecretDataEqual(s1, s2))
+		assert.True(t, SecretSatisfiesDesired(s1, s2))
 	})
 
 	t.Run("all keys empty in s2 is equal to anything", func(t *testing.T) {
 		s1 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
 		s2 := &apicorev1.Secret{Data: map[string][]byte{}}
-		assert.True(t, SecretDataEqual(s1, s2))
-	})
-
-	t.Run("absent key in s2 returns nil and is ignored", func(t *testing.T) {
-		s1 := secret("cid", "secret", "https://sm.url", "https://token.url", "cluster-1")
-		s2 := &apicorev1.Secret{
-			Data: map[string][]byte{
-				"clientsecret": nil,
-			},
-		}
-		assert.True(t, SecretDataEqual(s1, s2))
+		assert.True(t, SecretSatisfiesDesired(s1, s2))
 	})
 }

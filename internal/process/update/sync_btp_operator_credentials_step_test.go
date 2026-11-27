@@ -320,7 +320,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_RotationOnly(t *
 }
 
 func TestSyncBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing.T) {
-	// given — credentials missing ClientID (would fail PrepareSecret)
+	// given — credentials missing ClientID and no existing secret on cluster
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
 	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
@@ -339,9 +339,57 @@ func TestSyncBTPOperatorCredentialsStep_IncompleteCredsFailsOperation(t *testing
 	// when
 	processedOperation, backoff, _ := step.Run(operation, fixUpdateLogger())
 
-	// then — operation fails permanently, not retried
+	// then — no existing secret to fall back on, so operation fails permanently
 	assert.Zero(t, backoff)
 	assert.Equal(t, domain.Failed, processedOperation.State)
+}
+
+func TestSyncBTPOperatorCredentialsStep_IncompleteCredsSkipsWhenSecretExists(t *testing.T) {
+	// given — credentials missing ClientID but existing secret is already on the cluster
+	memoryStorage := storage.NewMemoryStorage()
+	scheme := internal.NewSchemeForTests(t)
+	require.NoError(t, apiextensionsv1.AddToScheme(scheme))
+
+	existingSecret := &apicorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      btpmanagercredentials.BtpManagerSecretName,
+			Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+			ResourceVersion: "1",
+		},
+		Data: map[string][]byte{
+			"clientid":     []byte("original-client-id"),
+			"clientsecret": []byte("original-secret"),
+			"sm_url":       []byte("https://sm.url"),
+			"tokenurl":     []byte("https://token.url"),
+			"cluster_id":   []byte("cluster-id"),
+		},
+	}
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(existingSecret).Build()
+
+	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials = &internal.ServiceManagerOperatorCredentials{
+		ClientID:          "",
+		ClientSecret:      "secret",
+		ServiceManagerURL: "https://sm.url",
+		URL:               "https://token.url",
+	}
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
+	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
+
+	// when
+	result, backoff, err := step.Run(operation, fixUpdateLogger())
+
+	// then — existing secret preserved, operation not failed
+	require.NoError(t, err)
+	assert.Zero(t, backoff)
+	assert.NotEqual(t, domain.Failed, result.State)
+	secret := &apicorev1.Secret{}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: btpmanagercredentials.BtpManagerSecretNamespace,
+		Name:      btpmanagercredentials.BtpManagerSecretName,
+	}, secret))
+	assert.Equal(t, "1", secret.ResourceVersion, "existing secret must not be overwritten")
+	assert.Contains(t, result.Description, "incomplete credentials but existing secret preserved")
 }
 
 func fixUpdateOperationWithClusterIDAndCredentials() internal.Operation {

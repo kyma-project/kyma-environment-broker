@@ -100,11 +100,16 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
 	desired, err := btpmanagercredentials.PrepareSecret(creds, clusterID)
 	if err != nil {
-		log.Error("credentials are incomplete, cannot build secret", "error", err)
+		if getErr == nil {
+			// Existing secret on the cluster is still valid — skip rather than fail permanently.
+			log.Info("credentials are incomplete but existing secret is present — skipping write", "runtimeID", operation.RuntimeID, "error", err)
+			return s.setDescription(operation, "BTP operator secret not updated: incomplete credentials but existing secret preserved", log)
+		}
+		log.Error("credentials are incomplete and no existing secret to fall back on", "error", err)
 		return s.operationManager.OperationFailed(operation, "credentials are incomplete", err, log)
 	}
 
-	if getErr == nil && btpmanagercredentials.SecretDataEqual(current, desired) {
+	if getErr == nil && btpmanagercredentials.SecretSatisfiesDesired(current, desired) {
 		log.Info("sap-btp-manager secret already up to date — skipping write", "runtimeID", operation.RuntimeID)
 		return s.setDescription(operation, "BTP operator secret already up to date — no write needed", log)
 	}
