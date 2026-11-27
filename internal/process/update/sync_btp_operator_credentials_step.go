@@ -75,16 +75,17 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 		return s.operationManager.RetryOperation(operation, "failed to get sap-btp-manager secret", getErr, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
 
+	skipLabelRemoved := false
 	if getErr == nil && current.Labels[btpmanagercredentials.SkipReconciliationLabel] == "true" {
 		creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
 		if !btpmanagercredentials.SecretStableFieldsMatch(current, creds) {
+			// sm_url or tokenurl differ — user intentionally manages this secret
 			log.Info("sap-btp-manager secret has skip-reconciliation label and stable fields differ — user manages this secret, skipping",
 				"runtimeID", operation.RuntimeID,
 			)
-			return operation, 0, nil
+			return s.setDescription(operation, "BTP operator secret not updated: skip-reconciliation label present and stable fields differ — user manages this secret", log)
 		}
-		// stable fields (clientid, sm_url, tokenurl) match — the label was set only for rotation
-		// remove it and fall through to write the new credentials
+		// sm_url and tokenurl match — label was set only for credential rotation; remove it
 		log.Info("sap-btp-manager secret has skip-reconciliation label but stable fields match — removing label and syncing credentials",
 			"runtimeID", operation.RuntimeID,
 		)
@@ -93,6 +94,7 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 			log.Warn("failed to remove skip-reconciliation label, will retry", "runtimeID", operation.RuntimeID, "error", err)
 			return s.operationManager.RetryOperation(operation, "failed to remove skip-reconciliation label", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 		}
+		skipLabelRemoved = true
 	}
 
 	creds := operation.ProvisioningParameters.ErsContext.SMOperatorCredentials
@@ -104,7 +106,7 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 
 	if getErr == nil && btpmanagercredentials.SecretDataEqual(current, desired) {
 		log.Info("sap-btp-manager secret already up to date — skipping write", "runtimeID", operation.RuntimeID)
-		return operation, 0, nil
+		return s.setDescription(operation, "BTP operator secret already up to date — no write needed", log)
 	}
 
 	log.Info("writing sap-btp-manager secret to SKR cluster", "runtimeID", operation.RuntimeID, "secretExists", getErr == nil)
@@ -112,6 +114,22 @@ func (s *SyncBTPOperatorCredentialsStep) Run(operation internal.Operation, log *
 		log.Warn("failed to write sap-btp-manager secret, will retry", "runtimeID", operation.RuntimeID, "error", err)
 		return s.operationManager.RetryOperation(operation, "failed to write sap-btp-manager secret", err, updateBTPRetryInterval, updateBTPRetryTimeout, log)
 	}
+
+	if skipLabelRemoved {
+		log.Info("sap-btp-manager secret synced successfully, skip-reconciliation label removed", "runtimeID", operation.RuntimeID)
+		return s.setDescription(operation, "BTP operator secret updated: skip-reconciliation label removed and credentials synced", log)
+	}
 	log.Info("sap-btp-manager secret synced successfully", "runtimeID", operation.RuntimeID)
-	return operation, 0, nil
+	return s.setDescription(operation, "BTP operator secret updated with new credentials", log)
+}
+
+// setDescription persists a human-readable outcome description on the operation and returns it.
+func (s *SyncBTPOperatorCredentialsStep) setDescription(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	updated, backoff, err := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.Description = description
+	}, log)
+	if err != nil {
+		log.Error("failed to persist step description", "error", err)
+	}
+	return updated, backoff, nil
 }

@@ -32,15 +32,17 @@ func TestSyncBTPOperatorCredentialsStep_SecretAbsent(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
-	_, backoff, err := step.Run(operation, fixUpdateLogger())
+	result, backoff, err := step.Run(operation, fixUpdateLogger())
 
 	// then
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
+	assert.Equal(t, "BTP operator secret updated with new credentials", result.Description)
 }
 
 func TestSyncBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
@@ -51,6 +53,7 @@ func TestSyncBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// first run creates the secret
@@ -66,9 +69,9 @@ func TestSyncBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
 	rvBefore := secret.ResourceVersion
 
 	// when — run again with same credentials
-	_, backoff, err := step.Run(operation, fixUpdateLogger())
+	result, backoff, err := step.Run(operation, fixUpdateLogger())
 
-	// then — no write, ResourceVersion unchanged
+	// then — no write, ResourceVersion unchanged, description set
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{
@@ -76,6 +79,7 @@ func TestSyncBTPOperatorCredentialsStep_SecretMatchingNoWrite(t *testing.T) {
 		Name:      btpmanagercredentials.BtpManagerSecretName,
 	}, secret))
 	assert.Equal(t, rvBefore, secret.ResourceVersion)
+	assert.Equal(t, "BTP operator secret already up to date — no write needed", result.Description)
 }
 
 func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testing.T) {
@@ -86,6 +90,7 @@ func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// first run creates the secret
@@ -94,12 +99,13 @@ func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnRotation(t *testing.T) {
 
 	// when — credentials are rotated
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
-	_, backoff, err := step.Run(operation, fixUpdateLogger())
+	result, backoff, err := step.Run(operation, fixUpdateLogger())
 
-	// then — secret updated with new value
+	// then — secret updated with new value, description set
 	require.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertUpdateSecretContent(t, k8sClient, operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.InstanceDetails.ServiceManagerClusterID)
+	assert.Equal(t, "BTP operator secret updated with new credentials", result.Description)
 }
 
 func TestSyncBTPOperatorCredentialsStep_EmptyClusterIDGeneratesAndWrites(t *testing.T) {
@@ -173,6 +179,7 @@ func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *tes
 		URL:               "https://token.url",
 		XSAppName:         "sample-app-name",
 	}
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// when
@@ -220,6 +227,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecre
 
 	operation := fixUpdateOperationWithClusterIDAndCredentials()
 	operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-secret"
+	require.NoError(t, memoryStorage.Operations().InsertOperation(operation))
 	step := NewSyncBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 	// capture log output
@@ -227,7 +235,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecre
 	logger := slog.New(slog.NewTextHandler(&logBuf, nil))
 
 	// when
-	_, backoff, err := step.Run(operation, logger)
+	result, backoff, err := step.Run(operation, logger)
 
 	// then — step skips entirely, secret not touched
 	require.NoError(t, err)
@@ -239,6 +247,9 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecre
 	}, secret))
 	assert.Equal(t, "1", secret.ResourceVersion, "secret must not be written when user manages it")
 	assert.Equal(t, "true", secret.Labels[btpmanagercredentials.SkipReconciliationLabel], "skip-reconciliation label must be preserved")
+
+	// then — description records the user-managed skip outcome
+	assert.Contains(t, result.Description, "user manages this secret")
 
 	// then — log explains WHY the skip happened (visible in Plutono by runtimeID)
 	logOutput := logBuf.String()
@@ -286,7 +297,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_RotationOnly(t *
 	logger := slog.New(slog.NewTextHandler(&logBuf, nil))
 
 	// when
-	_, backoff, err := step.Run(operation, logger)
+	result, backoff, err := step.Run(operation, logger)
 
 	// then — label removed and new clientsecret written
 	require.NoError(t, err)
@@ -298,6 +309,9 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_RotationOnly(t *
 	}, secret))
 	assert.Equal(t, []byte("rotated-secret"), secret.Data["clientsecret"], "new clientsecret must be written")
 	assert.NotEqual(t, "true", secret.Labels[btpmanagercredentials.SkipReconciliationLabel], "skip-reconciliation label must be removed")
+
+	// then — description records label-removal + credential sync
+	assert.Contains(t, result.Description, "skip-reconciliation label removed")
 
 	// then — log records that label was removed
 	logOutput := logBuf.String()
