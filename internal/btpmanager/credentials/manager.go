@@ -236,16 +236,16 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	return false, false, nil
 }
 
-// SecretStableFieldsMatch reports whether the clientid, sm_url, and tokenurl in the existing
-// secret match the corresponding fields in the incoming credentials.
-// These three fields never change when only a service binding is rotated (only clientsecret changes).
+// SecretStableFieldsMatch reports whether the sm_url and tokenurl in the existing secret
+// match the corresponding fields in the incoming credentials.
+// These fields never change when only a service binding is rotated (only clientsecret changes).
 // A match means the skip-reconciliation label was set for credential rotation, not for user management.
+// Note: clientid is intentionally excluded — it is stored encrypted in the DB and cannot be compared.
 func SecretStableFieldsMatch(existing *v1.Secret, creds *internal.ServiceManagerOperatorCredentials) bool {
 	if existing == nil || creds == nil {
 		return false
 	}
-	return reflect.DeepEqual(existing.Data[secretClientId], []byte(creds.ClientID)) &&
-		reflect.DeepEqual(existing.Data[secretSmUrl], []byte(creds.ServiceManagerURL)) &&
+	return reflect.DeepEqual(existing.Data[secretSmUrl], []byte(creds.ServiceManagerURL)) &&
 		reflect.DeepEqual(existing.Data[secretTokenUrl], []byte(creds.URL))
 }
 

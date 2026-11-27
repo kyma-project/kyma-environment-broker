@@ -193,7 +193,7 @@ func TestSyncBTPOperatorCredentialsStep_SecretUpdatedOnPartialCredentials(t *tes
 }
 
 func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecret(t *testing.T) {
-	// given — secret has skip-reconciliation label AND stable fields (clientid, sm_url, tokenurl) differ
+	// given — secret has skip-reconciliation label AND stable fields (sm_url, tokenurl) differ
 	// from the incoming credentials — user intentionally manages this secret
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)
@@ -209,10 +209,10 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecre
 			ResourceVersion: "1",
 		},
 		Data: map[string][]byte{
-			"clientid":     []byte("different-client-id"), // differs from incoming creds
+			"clientid":     []byte("different-client-id"),
 			"clientsecret": []byte("user-managed-secret"),
-			"sm_url":       []byte("https://user-managed-sm.url"),
-			"tokenurl":     []byte("https://user-managed-token.url"),
+			"sm_url":       []byte("https://user-managed-sm.url"),    // differs from incoming creds
+			"tokenurl":     []byte("https://user-managed-token.url"), // differs from incoming creds
 			"cluster_id":   []byte("cluster-id"),
 		},
 	}
@@ -249,7 +249,7 @@ func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_UserManagedSecre
 }
 
 func TestSyncBTPOperatorCredentialsStep_SkipReconciliationLabel_RotationOnly(t *testing.T) {
-	// given — secret has skip-reconciliation label but stable fields (clientid, sm_url, tokenurl) match
+	// given — secret has skip-reconciliation label but stable fields (sm_url, tokenurl) match
 	// the incoming credentials — the label was set only to protect the secret during rotation
 	memoryStorage := storage.NewMemoryStorage()
 	scheme := internal.NewSchemeForTests(t)

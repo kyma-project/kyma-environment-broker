@@ -6044,15 +6044,16 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_UserManagedSecret_NotTouch
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
-	// overwrite secret with a different clientid and add skip-reconciliation label
-	// — simulates user who replaced the secret with their own SM binding
+	// overwrite secret with different sm_url/tokenurl and add skip-reconciliation label
+	// — simulates user who replaced the secret with credentials from a different SM instance
 	existingSecret := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	existingSecret.Labels[btpmgrcredentials.SkipReconciliationLabel] = "true"
-	existingSecret.Data["clientid"] = []byte("user-managed-client-id") // different from "cid"
+	existingSecret.Data["sm_url"] = []byte("https://user-managed-sm.url")        // different from "https://sm.url"
+	existingSecret.Data["tokenurl"] = []byte("https://user-managed-token.url")  // different from "https://token.url"
 	require.NoError(t, suite.k8sSKR.Update(context.Background(), existingSecret))
 	rvWithLabel := existingSecret.ResourceVersion
 
-	// when — PATCH with new credentials (clientid still "cid", not matching "user-managed-client-id")
+	// when — PATCH with new credentials (sm_url/tokenurl still the original values, not matching the user-managed ones)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -6077,5 +6078,5 @@ func TestUpdateBTPCredentials_SkipReconciliationLabel_UserManagedSecret_NotTouch
 	secretAfter := suite.AssertSKRSecret(btpmgrcredentials.BtpManagerSecretNamespace, btpmgrcredentials.BtpManagerSecretName)
 	assert.Equal(t, rvWithLabel, secretAfter.ResourceVersion, "secret must not be written when user manages it")
 	assert.Equal(t, "true", secretAfter.Labels[btpmgrcredentials.SkipReconciliationLabel], "skip-reconciliation label must be preserved")
-	assert.Equal(t, []byte("user-managed-client-id"), secretAfter.Data["clientid"], "user clientid must be preserved")
+	assert.Equal(t, []byte("https://user-managed-sm.url"), secretAfter.Data["sm_url"], "user sm_url must be preserved")
 }
